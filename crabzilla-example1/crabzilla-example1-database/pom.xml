@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>rodolfodpk</groupId>
+        <artifactId>crabzilla-example1</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>crabzilla-example1-database</artifactId>
+    <packaging>jar</packaging>
+
+    <properties>
+        <jdbc.user>root</jdbc.user>
+        <jdbc.password>my-secret-pw</jdbc.password>
+        <jdbc.url>jdbc:mysql://localhost:3306/example1db?serverTimezone=UTC</jdbc.url>
+        <jdbc.driver>com.mysql.jdbc.Driver</jdbc.driver>
+    </properties>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jooq</groupId>
+            <artifactId>jooq</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jooq</groupId>
+            <artifactId>jooq-meta</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jooq</groupId>
+            <artifactId>jooq-codegen</artifactId>
+        </dependency>
+
+    </dependencies>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>4.2.0</version>
+                <configuration>
+                    <url>${jdbc.url}</url>
+                    <driver>com.mysql.cj.jdbc.Driver</driver>
+                    <user>${jdbc.user}</user>
+                    <password>${jdbc.password}</password>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>mysql</groupId>
+                        <artifactId>mysql-connector-java</artifactId>
+                        <version>6.0.6</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>jooq</id>
+            <!--
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>-->
+            <!--<properties>-->
+            <!--<jdbc.user>${jdbc.user}</jdbc.user>-->
+            <!--<jdbc.password>${jdbc.password}</jdbc.password>-->
+            <!--<jdbc.url>${jdbc.url}</jdbc.url>-->
+            <!--<jdbc.driver>${jdbc.driver}</jdbc.driver>-->
+            <!--</properties>-->
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jooq</groupId>
+                        <artifactId>jooq-codegen-maven</artifactId>
+                        <version>3.9.2</version>
+                        <!-- The plugin should hook into the generate goal -->
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>generate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <dependencies/>
+                        <configuration>
+                            <jdbc>
+                                <driver>${jdbc.driver}</driver>
+                                <url>${jdbc.url}</url>
+                                <user>${jdbc.user}</user>
+                                <password>${jdbc.password}</password>
+                            </jdbc>
+                            <generator>
+                                <database>
+                                    <name>org.jooq.util.mysql.MySQLDatabase</name>
+                                    <includes>.*</includes>
+                                    <excludes></excludes>
+                                    <inputSchema>example1db</inputSchema>
+                                    <unsignedTypes>false</unsignedTypes>
+                                    <forcedTypes>
+                                        <!--<forcedType>-->
+                                        <!--&lt;!&ndash; Specify any data type from org.jooq.impl.SQLDataType &ndash;&gt;-->
+                                        <!--<name>DECIMAL</name>-->
+                                        <!--&lt;!&ndash; Add a Java regular expression matching fully-qualified columns.-->
+                                        <!--Use the pipe to separate several expressions.-->
+                                        <!--If provided, both "expressions" and "types" must match. &ndash;&gt;-->
+                                        <!--<expressions></expressions>-->
+                                        <!--&lt;!&ndash; Add a Java regular expression matching data types to be forced to-->
+                                        <!--have this type. If provided, both "expressions" and "types" must match. &ndash;&gt;-->
+                                        <!--<types>.*</types>-->
+                                        <!--</forcedType>-->
+                                        <forcedType>
+                                            <!-- Specify any data type from org.jooq.impl.SQLDataType -->
+                                            <name>BOOLEAN</name>
+                                            <!-- Add a Java regular expression matching fully-qualified columns.
+                                            Use the pipe to separate several expressions.
+                                            If provided, both "expressions" and "types" must match. -->
+                                            <expressions>is_active</expressions>
+                                            <!-- Add a Java regular expression matching data types to be forced to
+                                            have this type. If provided, both "expressions" and "types" must match. -->
+                                            <types>.*</types>
+                                        </forcedType>
+                                        <!--<forcedType>-->
+                                        <!--&lt;!&ndash; Specify any data type from org.jooq.impl.SQLDataType &ndash;&gt;-->
+                                        <!--<name>INTEGER</name>-->
+                                        <!--&lt;!&ndash; Add a Java regular expression matching fully-qualified columns.-->
+                                        <!--Use the pipe to separate several expressions.-->
+                                        <!--If provided, both "expressions" and "types" must match. &ndash;&gt;-->
+                                        <!--<expressions>|</expressions>-->
+                                        <!--&lt;!&ndash; Add a Java regular expression matching data types to be forced to-->
+                                        <!--have this type. If provided, both "expressions" and "types" must match. &ndash;&gt;-->
+                                        <!--<types>.*</types>-->
+                                        <!--</forcedType>-->
+                                    </forcedTypes>
+                                </database>
+                                <target>
+                                    <packageName>example1.datamodel</packageName>
+                                    <directory>src/main/java</directory>
+                                </target>
+                                <generate>
+                                    <pojos>true</pojos>
+                                    <fluentSetters>true</fluentSetters>
+                                </generate>
+                            </generator>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>

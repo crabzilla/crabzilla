@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>rodolfodpk</groupId>
+        <artifactId>crabzilla</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>crabzilla-example1</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>crabzilla-example1-core</module>
+        <module>crabzilla-example1-database</module>
+        <module>crabzilla-example1-runtime</module>
+    </modules>
+
+    <dependencies>
+
+        <!-- own -->
+
+        <dependency>
+            <groupId>rodolfodpk</groupId>
+            <artifactId>crabzilla-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>rodolfodpk</groupId>
+            <artifactId>crabzilla-stack1</artifactId>
+        </dependency>
+
+    </dependencies>
+
+
+</project>
