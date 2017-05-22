@@ -22,13 +22,14 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -41,7 +42,7 @@ public class CaffeinedSnapshotReaderFnTest {
   Cache<String, Snapshot<Customer>> cache;
 
   @Mock
-  EventRepository dao;
+  EventRepository eventRepository;
 
   @BeforeEach
   public void init() throws Exception {
@@ -55,23 +56,19 @@ public class CaffeinedSnapshotReaderFnTest {
   @Test
   public void on_empty_history_then_returns_version_0() throws ExecutionException {
 
-    final CustomerId id = new CustomerId("customer#1");
+    val id = new CustomerId("customer#1");
 
-    final Snapshot<Customer> expectedSnapshot =
-            new Snapshot<>(supplier.get(), new Version(0L));
+    val expectedSnapshot = new Snapshot<Customer>(supplier.get(), new Version(0));
 
-    final SnapshotData expectedHistory = new SnapshotData(new Version(0), Arrays.asList());
+    when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.empty());
 
-    when(dao.getAll(id.getStringValue())).thenReturn(expectedHistory);
+    val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, supplier, dependencyInjectionFn, stateTransitionFn);
 
-    final CaffeinedSnapshotReaderFn<Customer> reader = new CaffeinedSnapshotReaderFn<>(cache, dao, supplier,
-            dependencyInjectionFn, stateTransitionFn);
+    assertThat(expectedSnapshot).isEqualTo(reader.getSnapshotMessage(id.getStringValue()).getSnapshot());
 
-    assertThat(reader.getSnapshot(id.getStringValue())).isEqualTo(expectedSnapshot);
+    verify(eventRepository).getAll(id.getStringValue());
 
-    verify(dao).getAll(id.getStringValue());
-
-    verifyNoMoreInteractions(dao);
+    verifyNoMoreInteractions(eventRepository);
 
   }
 
@@ -81,27 +78,25 @@ public class CaffeinedSnapshotReaderFnTest {
     final CustomerId id = new CustomerId("customer#1");
     final String name = "customer#1 name";
 
-    final Customer expectedInstance = Customer.of(id, name, false, null);
+    val expectedInstance = Customer.of(id, name, false, null);
+    val expectedSnapshot = new Snapshot<>(expectedInstance, Version.create(1L));
+    val command = new CreateCustomerCmd(UUID.randomUUID(), id, name);
+    val expectedHistory =
+            new SnapshotData(new Version(1), asList(new CustomerCreated(id, command.getName())));
 
-    final Snapshot<Customer> expectedSnapshot =
-            new Snapshot<>(expectedInstance, Version.create(1L));
+    when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.of(expectedHistory));
 
-    final CreateCustomerCmd command = new CreateCustomerCmd(UUID.randomUUID(), id, name);
+    val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, supplier, dependencyInjectionFn, stateTransitionFn);
 
-    final SnapshotData expectedHistory =
-            new SnapshotData(new Version(1), Arrays.asList(new CustomerCreated(id, command.getName())));
+    val resultingSnapshotData = reader.getSnapshotMessage(id.getStringValue());
 
-    when(dao.getAll(id.getStringValue())).thenReturn(expectedHistory);
+    assertThat(expectedSnapshot).isEqualTo(resultingSnapshotData.getSnapshot());
 
-    final CaffeinedSnapshotReaderFn<Customer> reader = new CaffeinedSnapshotReaderFn<>(cache, dao, supplier,
-            dependencyInjectionFn, stateTransitionFn);
+    verify(eventRepository).getAll(id.getStringValue());
 
-    assertThat(reader.getSnapshot(id.getStringValue())).isEqualTo(expectedSnapshot);
+    verify(eventRepository).getAllAfterVersion(id.getStringValue(), new Version(1));
 
-    verify(dao).getAll(id.getStringValue());
-
-    verifyNoMoreInteractions(dao);
-
+    verifyNoMoreInteractions(eventRepository);
 
   }
 
@@ -114,11 +109,11 @@ public class CaffeinedSnapshotReaderFnTest {
     final CreateCustomerCmd command = new CreateCustomerCmd(UUID.randomUUID(), id, name);
 
     final SnapshotData expectedHistory =
-            new SnapshotData(new Version(1), Arrays.asList(new CustomerCreated(id, command.getName())));
+            new SnapshotData(new Version(1), asList(new CustomerCreated(id, command.getName())));
 
-    when(dao.getAll(id.getStringValue())).thenReturn(expectedHistory);
+    when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.of(expectedHistory));
 
-    verifyNoMoreInteractions(dao);
+    verifyNoMoreInteractions(eventRepository);
 
   }
 
@@ -138,33 +133,24 @@ public class CaffeinedSnapshotReaderFnTest {
     val cachedSnapshot = new Snapshot<Customer>(cachedInstance, cachedVersion);
     val expectedSnapshot = new Snapshot<Customer>(expectedInstance, expectedVersion);
 
-    final LocalDateTime activated_on = LocalDateTime.now();
-
-    // cached history
-    final CreateCustomerCmd command1 = new CreateCustomerCmd(UUID.randomUUID(), id, name);
-
-    final SnapshotData cachedHistory =
-            new SnapshotData(new Version(1), Arrays.asList(new CustomerCreated(id, command1.getName())));
-
-    final SnapshotData nonCachedHistory =
-            new SnapshotData(new Version(2), Arrays.asList(new CustomerActivated(reason, activated_on)));
+    val activated_on = LocalDateTime.now();
+    val nonCachedHistory = new SnapshotData(new Version(2), asList(new CustomerActivated(reason, activated_on)));
 
     // prepare
 
     cache.put(id.getStringValue(), cachedSnapshot);
 
-    when(dao.getAllAfterVersion(id.getStringValue(), cachedVersion)).thenReturn(nonCachedHistory);
+    when(eventRepository.getAllAfterVersion(id.getStringValue(), cachedVersion)).thenReturn(Optional.of(nonCachedHistory));
 
-    final CaffeinedSnapshotReaderFn<Customer> reader = new CaffeinedSnapshotReaderFn<>(cache, dao, supplier,
-            dependencyInjectionFn, stateTransitionFn);
+    val reader = new CaffeinedSnapshotReaderFn<Customer>(cache, eventRepository, supplier, dependencyInjectionFn, stateTransitionFn);
 
-    Snapshot<Customer> resultingSnapshot = reader.getSnapshot(id.getStringValue());
+    val resultingSnapshotMsg = reader.getSnapshotMessage(id.getStringValue());
 
-    assertThat(expectedSnapshot).isEqualTo(resultingSnapshot);
+    assertThat(expectedSnapshot).isEqualTo(resultingSnapshotMsg.getSnapshot());
 
-    verify(dao).getAllAfterVersion(eq(id.getStringValue()), eq(cachedVersion));
+    verify(eventRepository).getAllAfterVersion(eq(id.getStringValue()), eq(cachedVersion));
 
-    verifyNoMoreInteractions(dao);
+    verifyNoMoreInteractions(eventRepository);
 
   }
 

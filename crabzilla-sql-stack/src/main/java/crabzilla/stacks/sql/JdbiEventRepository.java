@@ -10,6 +10,7 @@ import crabzilla.stack.EventRepository;
 import crabzilla.stack.ProjectionData;
 import crabzilla.stack.SnapshotData;
 import lombok.NonNull;
+import lombok.val;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.StatementContext;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -102,9 +104,9 @@ public class JdbiEventRepository implements EventRepository {
   @Override
   public List<ProjectionData> getAllSince(long sinceUowSequence, int maxResultSize) {
 
-    logger.debug("will load a maximum of {} units of work since sequence {}", maxResultSize, sinceUowSequence);
+    logger.info("will load a maximum of {} units of work since sequence {}", maxResultSize, sinceUowSequence);
 
-    final List<ProjectionData> projectionDataList = dbi
+    List<ProjectionData> projectionDataList = dbi
       .withHandle(new HandleCallback<List<ProjectionData>>() {
 
         final String sql = String.format("select uow_id, uow_seq_number, ar_id, uow_events " +
@@ -119,22 +121,26 @@ public class JdbiEventRepository implements EventRepository {
       }
     );
 
+    if (projectionDataList == null) {
+      projectionDataList = new ArrayList<>();
+    }
+
     logger.info("Found {} units of work since sequence {}", projectionDataList.size(), sinceUowSequence);
     return projectionDataList;
 
   }
 
   @Override
-  public SnapshotData getAll(String id) {
+  public Optional<SnapshotData> getAll(String id) {
     return getAllAfterVersion(id, new Version(0L));
   }
 
   @Override
-  public SnapshotData getAllAfterVersion(@NonNull String id, @NonNull Version version) {
+  public Optional<SnapshotData> getAllAfterVersion(@NonNull String id, @NonNull Version version) {
 
-    logger.debug("will load {}", id);
+    logger.info("will load {}", id);
 
-    final List<SnapshotData> eventsListAsJson = dbi
+    List<SnapshotData> snapshotDataList = dbi
             .withHandle(h -> h.createQuery(getAllAfterVersionSql)
                     .bind(AR_ID, id.toString())
                     .bind(AR_NAME, aggregateRootName)
@@ -142,19 +148,25 @@ public class JdbiEventRepository implements EventRepository {
                     .map(new SnapshtoDataMapper()).list()
             );
 
-    logger.debug("found {} units of work for id {} and version > {}",
-            eventsListAsJson.size(), id.toString(), version.getValueAsLong());
-
-    // TODO use flatmap instead
-    final ArrayList<Event> result = new ArrayList<>();
-    Version finalVersion = new Version(0L);
-
-    for (SnapshotData snapshotData : eventsListAsJson) {
-      snapshotData.getEvents().forEach(e -> result.add(e));
-      finalVersion = snapshotData.getVersion();
+    if (snapshotDataList == null) {
+      snapshotDataList = new ArrayList<>();
     }
 
-    return new SnapshotData(finalVersion, result);
+    logger.info("found {} units of work for id {} and version > {}",
+            snapshotDataList.size(), id.toString(), version.getValueAsLong());
+
+    if (snapshotDataList.isEmpty()) {
+      return Optional.empty();
+    }
+
+    val finalVersion = snapshotDataList.get(snapshotDataList.size()-1).getVersion();
+
+    final List<Event> flatMappedToEvents = snapshotDataList.stream()
+            .flatMap(sd -> sd.getEvents().stream()).collect(Collectors.toList());
+
+    val result = new SnapshotData(finalVersion, flatMappedToEvents);
+
+    return Optional.of(result);
 
   }
 
@@ -163,72 +175,72 @@ public class JdbiEventRepository implements EventRepository {
 
     requireNonNull(unitOfWork);
 
-    logger.debug("appending uow to units_of_work with id {}", unitOfWork.getTargetId());
+    logger.info("appending uow to units_of_work with id {}", unitOfWork.getTargetId());
 
     dbi.inTransaction(TransactionIsolationLevel.SERIALIZABLE, (conn, status) -> {
 
-              // TODO check if the command was not handled already
+      // TODO check if the command was not handled already
 
-              final Long currentVersion = conn.createQuery(selectAggRootSql)
-                      .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
-                      .bind(AR_NAME, aggregateRootName)
-                      .map(LongColumnMapper.WRAPPER).first();
+      final Long currentVersion = conn.createQuery(selectAggRootSql)
+              .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
+              .bind(AR_NAME, aggregateRootName)
+              .map(LongColumnMapper.WRAPPER).first();
 
-              newVersionIsCurrentVersionPlus1(unitOfWork, currentVersion);
+      newVersionIsCurrentVersionPlus1(unitOfWork, currentVersion);
 
-              int result1;
+      int result1;
 
-              if (currentVersion == null) {
+      if (currentVersion == null) {
 
-                result1 = conn.createStatement(insertAggRootSql)
-                        .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
-                        .bind(AR_NAME, aggregateRootName)
-                        .bind(NEW_VERSION, unitOfWork.getVersion().getValueAsLong())
-                        .bind(LAST_UPDATED_ON, new Timestamp(Instant.now().getEpochSecond()))
-                        .execute();
+        result1 = conn.createStatement(insertAggRootSql)
+                .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
+                .bind(AR_NAME, aggregateRootName)
+                .bind(NEW_VERSION, unitOfWork.getVersion().getValueAsLong())
+                .bind(LAST_UPDATED_ON, new Timestamp(Instant.now().getEpochSecond()))
+                .execute();
 
-              } else {
+      } else {
 
-                result1 = conn.createStatement(updateAggRootSql)
-                        .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
-                        .bind(AR_NAME, aggregateRootName)
-                        .bind(NEW_VERSION, unitOfWork.getVersion().getValueAsLong())
-                        .bind(CURR_VERSION, unitOfWork.getVersion().getValueAsLong() - 1)
-                        .bind(LAST_UPDATED_ON, new Timestamp(Instant.now().getEpochSecond()))
-                        .execute();
-              }
+        result1 = conn.createStatement(updateAggRootSql)
+                .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
+                .bind(AR_NAME, aggregateRootName)
+                .bind(NEW_VERSION, unitOfWork.getVersion().getValueAsLong())
+                .bind(CURR_VERSION, unitOfWork.getVersion().getValueAsLong() - 1)
+                .bind(LAST_UPDATED_ON, new Timestamp(Instant.now().getEpochSecond()))
+                .execute();
+      }
 
-              final String cmdAsJson = gson.toJson(unitOfWork.getCommand(), Command.class);
-              final String eventsAsJson = gson.toJson(unitOfWork.getEvents(), listTypeToken.getType());
+      final String cmdAsJson = gson.toJson(unitOfWork.getCommand(), Command.class);
+      final String eventsAsJson = gson.toJson(unitOfWork.getEvents(), listTypeToken.getType());
 
-              int result2 = conn.createStatement(insertUowSql)
-                      .bind(UOW_ID, unitOfWork.getUnitOfWorkId().toString())
-                      .bind(UOW_EVENTS, eventsAsJson)
-                      .bind(CMD_ID, unitOfWork.getCommand().getCommandId().toString())
-                      .bind(CMD_DATA, cmdAsJson)
-                      .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
-                      .bind(AR_NAME, aggregateRootName)
-                      .bind(VERSION, unitOfWork.getVersion().getValueAsLong())
-                      .bind(INSERTED_ON, new Timestamp(Instant.now().getEpochSecond()))
-                      .execute();
+      int result2 = conn.createStatement(insertUowSql)
+              .bind(UOW_ID, unitOfWork.getUnitOfWorkId().toString())
+              .bind(UOW_EVENTS, eventsAsJson)
+              .bind(CMD_ID, unitOfWork.getCommand().getCommandId().toString())
+              .bind(CMD_DATA, cmdAsJson)
+              .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
+              .bind(AR_NAME, aggregateRootName)
+              .bind(VERSION, unitOfWork.getVersion().getValueAsLong())
+              .bind(INSERTED_ON, new Timestamp(Instant.now().getEpochSecond()))
+              .execute();
 
-              // TODO schedular commands emitidos aqui ?? SIM (e remove CommandScheduler)
+      // TODO schedular commands emitidos aqui ?? SIM (e remove CommandScheduler)
 
 //              uow.collectEvents().stream()
 //            .filter(event -> event instanceof CommandScheduling) // TODO tem que ter idempotency disto
 //            .map(event -> (CommandScheduling) e)
 //            .forEachOrdered(cs -> commandScheduler.schedule(commandId, cs));
 
-              if (result1 + result2 == 2) {
-                return true;
-              }
+      if (result1 + result2 == 2) {
+        return true;
+      }
 
-              throw new DbConcurrencyException(
-                      String.format("id = [%s], current_version = %d, new_version = %d",
-                              unitOfWork.getTargetId().getStringValue(),
-                              currentVersion, unitOfWork.getVersion().getValueAsLong()));
+      throw new DbConcurrencyException(
+              String.format("id = [%s], current_version = %d, new_version = %d",
+                      unitOfWork.getTargetId().getStringValue(),
+                      currentVersion, unitOfWork.getVersion().getValueAsLong()));
 
-            }
+    }
 
     );
 

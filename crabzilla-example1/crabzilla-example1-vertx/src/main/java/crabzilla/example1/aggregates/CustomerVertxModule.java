@@ -18,7 +18,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class CustomerStackModule extends AbstractModule implements SnapshotReaderModule<Customer> {
+public class CustomerVertxModule extends AbstractModule implements SnapshotReaderModule<Customer> {
 
   @Override
   protected void configure() {

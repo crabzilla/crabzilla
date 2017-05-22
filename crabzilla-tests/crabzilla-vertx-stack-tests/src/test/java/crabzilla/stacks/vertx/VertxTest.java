@@ -16,6 +16,7 @@ import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.Snapshot;
+import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
 import crabzilla.stacks.vertx.codecs.CommandCodec;
 import crabzilla.stacks.vertx.verticles.CommandHandlerVerticle;
@@ -36,6 +37,7 @@ import org.mockito.MockitoAnnotations;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static crabzilla.util.StringHelper.commandHandlerId;
 import static org.mockito.ArgumentMatchers.eq;
@@ -50,6 +52,8 @@ public class VertxTest {
   Vertx vertx;
   @Inject
   Gson gson;
+  @Inject
+  Supplier<Customer> supplier;
 
   @Mock
   SnapshotReaderFn<Customer> snapshotReaderFn;
@@ -57,6 +61,7 @@ public class VertxTest {
   EventRepository eventRepository;
 
   Cache<String, Snapshot<Customer>> cache = Caffeine.newBuilder().build();
+
 
   @Before
   public void setUp(TestContext context) {
@@ -67,13 +72,13 @@ public class VertxTest {
       protected void configure() {
         bind(new TypeLiteral<SnapshotReaderFn<Customer>>() {;}).toInstance(snapshotReaderFn);
         bind(EventRepository.class).toInstance(eventRepository);
-        bind(new TypeLiteral<Cache<String, Snapshot<Customer>>>() {;}).toInstance(cache);
       }
     })).injectMembers(this);
 
     val cmdHandler = new CustomerCmdHandlerFnJavaslang(new CustomerStateTransitionFnJavaslang(), customer -> customer);
 
-    val verticle = new CommandHandlerVerticle<>(Customer.class, snapshotReaderFn, cmdHandler, eventRepository, cache, vertx);
+    val verticle =
+            new CommandHandlerVerticle<Customer>(Customer.class, snapshotReaderFn, cmdHandler, eventRepository, cache, vertx);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
 
@@ -91,8 +96,12 @@ public class VertxTest {
 
     val customerId = new CustomerId("customer#1");
 
-    when(snapshotReaderFn.getSnapshot(eq(customerId.getStringValue())))
-            .thenReturn(new Snapshot<>(new CustomerSupplierFn().get(), new Version(0)));
+    val expectedMesage = new SnapshotMessage<Customer>(
+            new Snapshot<>(new CustomerSupplierFn().get(), new Version(0)),
+            SnapshotMessage.LoadedFromEnum.FROM_DB);
+
+    when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue())))
+            .thenReturn(expectedMesage);
 
     val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "customer1");
 
@@ -100,7 +109,7 @@ public class VertxTest {
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
-      verify(snapshotReaderFn).getSnapshot(eq(createCustomerCmd.getTargetId().getStringValue()));
+      verify(snapshotReaderFn).getSnapshotMessage(eq(createCustomerCmd.getTargetId().getStringValue()));
 
       val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer1");
       val expectedUow = UnitOfWork.of(createCustomerCmd, new Version(1), Arrays.asList(expectedEvent));

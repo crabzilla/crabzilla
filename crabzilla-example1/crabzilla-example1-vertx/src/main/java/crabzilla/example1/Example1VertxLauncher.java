@@ -36,15 +36,13 @@ public class Example1VertxLauncher {
 
     Guice.createInjector(new Example1VertxModule()).injectMembers(launcher);
 
-    launcher.vertx.deployVerticle(launcher.comdVerticle, event -> {
-      log.info("Deployed ? {}", event.succeeded());
-    });
+    launcher.vertx.deployVerticle(launcher.comdVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
 
-    launcher.test();
+    launcher.postNewCustomerJustForTest();
 
   }
 
-  private void test() {
+  private void postNewCustomerJustForTest() {
 
     val customerId = new CustomerId(UUID.randomUUID().toString());
 
@@ -53,7 +51,7 @@ public class Example1VertxLauncher {
     val options = new DeliveryOptions().setCodecName(new CommandCodec(gson).name());
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
-      log.info("Successful test? {}", asyncResult.succeeded());
+      log.info("Successful postNewCustomerJustForTest? {}", asyncResult.succeeded());
       log.info("Result: {}", asyncResult.result().body());
 
       log.info("Matches command ? {}", ((UnitOfWork)asyncResult.result().body()).getCommand().equals(createCustomerCmd));

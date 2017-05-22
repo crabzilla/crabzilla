@@ -15,9 +15,9 @@ public interface EventRepository {
 
 	List<ProjectionData> getAllSince(long sinceUowSequence, int maxResultSize);
 
-	SnapshotData getAll(String aggregateRootId);
+	Optional<SnapshotData> getAll(String aggregateRootId);
 
-	SnapshotData getAllAfterVersion(String aggregateRootId, Version version);
+	Optional<SnapshotData> getAllAfterVersion(String aggregateRootId, Version version);
 
   class DbConcurrencyException extends RuntimeException {
 

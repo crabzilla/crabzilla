@@ -13,4 +13,8 @@ public class Snapshot<A> {
     return version.nextVersion();
   }
 
+  public boolean isEmpty() {
+    return version.getValueAsLong()==0L;
+  }
+
 }

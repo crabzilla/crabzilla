@@ -8,6 +8,7 @@ import crabzilla.model.Event;
 import crabzilla.stack.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static java.util.Objects.requireNonNull;
+import static crabzilla.stack.SnapshotMessage.LoadedFromEnum;
 
 @Slf4j
 public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements SnapshotReaderFn<A> {
@@ -46,37 +47,49 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
 	}
 
 	@Override
-	public Snapshot<A> getSnapshot(final String id) {
-
-		requireNonNull(id);
+	public SnapshotMessage<A> getSnapshotMessage(@NonNull final String id) {
 
 		logger.debug("cache.get(id)", id);
 
-    final AtomicBoolean wasDaoCalled = new AtomicBoolean(false);
+    val wasDaoCalled = new AtomicBoolean(false);
 
-    final Snapshot<A> cachedSnapshot = cache.get(id, s -> {
+    val cachedSnapshot = cache.get(id, s -> {
 			logger.debug("cache.getInstance(id) does not contain anything for this id. Will have to search on dao", id);
-			final SnapshotData dataFromDb = dao.getAll(id);
-      wasDaoCalled.set(true);
-			return createSnapshot(EMPTY_SNAPSHOT, dataFromDb.getVersion(), dataFromDb.getEvents());
+			val dataFromDb = dao.getAll(id);
+      return dataFromDb.map(snapshotData ->
+              createSnapshot(EMPTY_SNAPSHOT, snapshotData.getVersion(), snapshotData.getEvents()))
+              .orElse(EMPTY_SNAPSHOT);
 		});
 
-    if (wasDaoCalled.get()) {
-      return cachedSnapshot;
+    if (wasDaoCalled.get()) { // so hopefully all data from db was loaded
+      return new SnapshotMessage<>(cachedSnapshot, LoadedFromEnum.FROM_DB);
     }
 
+    if (cachedSnapshot.isEmpty()) {
+      return new SnapshotMessage<>(cachedSnapshot, LoadedFromEnum.FROM_CACHE);
+    }
+
+    val cachedVersion = cachedSnapshot.getVersion();
+
 		logger.debug("id {} cached lastSnapshotData has version {}. will check if there any version beyond it",
-						id, cachedSnapshot.getVersion());
+						id, cachedVersion);
 
-		final SnapshotData nonCachedSnapshotData = dao.getAllAfterVersion(id, cachedSnapshot.getVersion());
+		val nonCachedSnapshotData = dao.getAllAfterVersion(id, cachedVersion);
 
-		logger.debug("id {} found {} pending transactions. Last version is now {}",
-						id, nonCachedSnapshotData.getEvents().size(), nonCachedSnapshotData.getVersion());
+		if (nonCachedSnapshotData.isPresent()) {
 
-		final Version finalVersion = nonCachedSnapshotData.getEvents().isEmpty() ?
-            cachedSnapshot.getVersion() : nonCachedSnapshotData.getVersion();
+		  val resultingSnapshotData = nonCachedSnapshotData.get();
 
-    return createSnapshot(cachedSnapshot, finalVersion, nonCachedSnapshotData.getEvents());
+      logger.debug("id {} found {} pending transactions. Last version is now {}",
+              id, resultingSnapshotData.getEvents().size(), resultingSnapshotData.getVersion());
+
+      val resultingSnapshot = createSnapshot(cachedSnapshot, resultingSnapshotData.getVersion(), resultingSnapshotData.getEvents());
+
+      return new SnapshotMessage<>(resultingSnapshot, LoadedFromEnum.FROM_BOTH);
+
+    }
+
+    return new SnapshotMessage<>(cachedSnapshot, LoadedFromEnum.FROM_CACHE);
 
 	}
 

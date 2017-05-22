@@ -15,8 +15,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <junit.jupiter.version>5.0.0-M4</junit.jupiter.version>
-        <junit.platform.version>1.0.0-M4</junit.platform.version>
     </properties>
 
     <dependencies>
@@ -33,24 +31,6 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
-
-        <!--&lt;!&ndash;Vertx &ndash;&gt;-->
-        <!--<dependency>-->
-            <!--<groupId>io.vertx</groupId>-->
-            <!--<artifactId>vertx-core</artifactId>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>io.vertx</groupId>-->
-            <!--<artifactId>vertx-web</artifactId>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>io.vertx</groupId>-->
-            <!--<artifactId>vertx-circuit-breaker</artifactId>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>io.vertx</groupId>-->
-            <!--<artifactId>vertx-hazelcast</artifactId>-->
-        <!--</dependency>-->
 
         <!--Test -->
 
@@ -148,18 +128,6 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.junit.platform</groupId>
-                        <artifactId>junit-platform-surefire-provider</artifactId>
-                        <version>${junit.platform.version}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.junit.jupiter</groupId>
-                        <artifactId>junit-jupiter-engine</artifactId>
-                        <version>${junit.jupiter.version}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
 
         </plugins>

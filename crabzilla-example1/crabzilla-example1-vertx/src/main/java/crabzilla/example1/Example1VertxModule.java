@@ -10,7 +10,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import crabzilla.UnitOfWork;
 import crabzilla.example1.aggregates.CustomerModule;
-import crabzilla.example1.aggregates.CustomerStackModule;
+import crabzilla.example1.aggregates.CustomerVertxModule;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
@@ -38,7 +38,7 @@ public class Example1VertxModule extends AbstractModule {
   protected void configure() {
 
     install(new CustomerModule());
-    install(new CustomerStackModule());
+    install(new CustomerVertxModule());
 
     install( new DatabaseModule());
     install(new Example1SqlModule());

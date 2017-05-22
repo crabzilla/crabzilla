@@ -7,6 +7,7 @@ import crabzilla.model.Command;
 import crabzilla.model.CommandHandlerFn;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.Snapshot;
+import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
 import crabzilla.util.HeadersConstants;
 import crabzilla.util.StringHelper;
@@ -21,6 +22,7 @@ import org.apache.camel.spi.IdempotentRepository;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class CommandHandlingRoute<A extends AggregateRoot> extends RouteBuilder {
 
@@ -29,22 +31,27 @@ public class CommandHandlingRoute<A extends AggregateRoot> extends RouteBuilder 
   static final String RESULT = "result";
   static final String IS_ERROR = "IS_ERROR";
 
+  final Snapshot<A> EMPTY_SNAPSHOT ;
   final Class<A> aggregateRootClass;
   final SnapshotReaderFn<A> snapshotReaderFn;
   final CommandHandlerFn<A> handler;
+  final Supplier<A> supplier;
   final EventRepository writeModelRepo;
   final Gson gson ;
   final IdempotentRepository<String> idempotentRepo;
 
-  public CommandHandlingRoute(@NonNull Class<A> aggregateRootClass,
+  public CommandHandlingRoute(Snapshot<A> empty_snapshot, @NonNull Class<A> aggregateRootClass,
                               @NonNull SnapshotReaderFn<A> snapshotReaderFn,
                               @NonNull CommandHandlerFn<A> handler,
+                              @NonNull Supplier<A> supplier,
                               @NonNull EventRepository writeModelRepo,
                               @NonNull Gson gson,
                               @NonNull IdempotentRepository<String> idempotentRepo) {
+    EMPTY_SNAPSHOT = empty_snapshot;
     this.aggregateRootClass = aggregateRootClass;
     this.snapshotReaderFn = snapshotReaderFn;
     this.handler = handler;
+    this.supplier = supplier;
     this.writeModelRepo = writeModelRepo;
     this.gson = gson;
     this.idempotentRepo = idempotentRepo;
@@ -135,10 +142,11 @@ public class CommandHandlingRoute<A extends AggregateRoot> extends RouteBuilder 
     public void process(Exchange e) throws Exception {
 
       final Command command = e.getIn().getBody(Command.class);
-      final Snapshot<A> snapshot = snapshotReaderFn.getSnapshot(command.getTargetId().getStringValue());
+      final SnapshotMessage<A> snapshotMsg = snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
       Optional<UnitOfWork> result ;
       try {
-        result = handler.handle(command, snapshot);
+        result = handler.handle(command, snapshotMsg.getSnapshot());
+        // TODO check if snapshotDataMsg is new and add it to cache
       } catch (Exception ex) {
         result = Optional.empty();
       }

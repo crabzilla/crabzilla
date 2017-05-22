@@ -7,6 +7,7 @@ import crabzilla.model.Command;
 import crabzilla.model.CommandHandlerFn;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.Snapshot;
+import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -45,7 +46,6 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
     this.vertx = vertx;
   }
 
-
   @Override
   public void start() throws Exception {
 
@@ -56,11 +56,16 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
           log.info("received a command {}", request.body() );
 
           final Command command = request.body();
-          final Snapshot<A> snapshot = snapshotReaderFn.getSnapshot(command.getTargetId().getStringValue());
+          final SnapshotMessage<A> snapshotDataMsg = snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
+          final Snapshot<A> snapshot = snapshotDataMsg.getSnapshot();
+
+          if (ifSnapshotIsNotFromCache(snapshotDataMsg)) {
+            cache.put(command.getCommandId().toString(), snapshotDataMsg.getSnapshot());
+          }
+
           final Optional<UnitOfWork> unitOfWork = handler.handle(command, snapshot);
 
           if (unitOfWork.isPresent()) {
-            cache.put(command.getCommandId().toString(), snapshot);
             eventRepository.append(unitOfWork.get());
             vertx.eventBus().publish("events-projection",  unitOfWork.get());
           }
@@ -82,6 +87,15 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
     });
 
+  }
+
+  /**
+   * Test if snapshot isn't from cache then populate the cache
+   * @param snapshotDataMsg
+   * @return boolean
+  */
+  private boolean ifSnapshotIsNotFromCache(SnapshotMessage<A> snapshotDataMsg) {
+    return !snapshotDataMsg.getLoadedFromEnum().equals(SnapshotMessage.LoadedFromEnum.FROM_CACHE);
   }
 
 }
