@@ -83,7 +83,8 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
       logger.debug("id {} found {} pending transactions. Last version is now {}",
               id, resultingSnapshotData.getEvents().size(), resultingSnapshotData.getVersion());
 
-      val resultingSnapshot = createSnapshot(cachedSnapshot, resultingSnapshotData.getVersion(), resultingSnapshotData.getEvents());
+      val resultingSnapshot = createSnapshot(cachedSnapshot, resultingSnapshotData.getVersion(),
+                                              resultingSnapshotData.getEvents());
 
       return new SnapshotMessage<>(resultingSnapshot, LoadedFromEnum.FROM_BOTH);
 

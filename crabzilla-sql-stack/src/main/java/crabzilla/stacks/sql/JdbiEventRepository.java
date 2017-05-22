@@ -142,7 +142,7 @@ public class JdbiEventRepository implements EventRepository {
 
     List<SnapshotData> snapshotDataList = dbi
             .withHandle(h -> h.createQuery(getAllAfterVersionSql)
-                    .bind(AR_ID, id.toString())
+                    .bind(AR_ID, id)
                     .bind(AR_NAME, aggregateRootName)
                     .bind(VERSION, version.getValueAsLong())
                     .map(new SnapshtoDataMapper()).list()
@@ -153,7 +153,7 @@ public class JdbiEventRepository implements EventRepository {
     }
 
     logger.info("found {} units of work for id {} and version > {}",
-            snapshotDataList.size(), id.toString(), version.getValueAsLong());
+            snapshotDataList.size(), id, version.getValueAsLong());
 
     if (snapshotDataList.isEmpty()) {
       return Optional.empty();
