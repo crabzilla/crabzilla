@@ -25,7 +25,7 @@ public class Customer implements AggregateRoot {
   boolean isActive;
   String reason;
 
-  List<Event> create(CustomerId id, String name) {
+  protected List<Event> create(CustomerId id, String name) {
 
     validState(this.id == null, "customer already created");
 

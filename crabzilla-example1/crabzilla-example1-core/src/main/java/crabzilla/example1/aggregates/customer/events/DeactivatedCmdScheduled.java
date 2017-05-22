@@ -10,6 +10,7 @@ import java.time.Instant;
 @Value
 public class DeactivatedCmdScheduled implements Event, CommandScheduling {
 
+  String targetAggregateRoot;
   DeactivateCustomerCmd scheduledCommand;
   Instant scheduledAt;
 

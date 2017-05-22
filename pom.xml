@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>rodolfodpk</groupId>
+    <groupId>crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -11,14 +11,14 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <junit.jupiter.version>5.0.0-M4</junit.jupiter.version>
-        <junit.platform.version>1.0.0-M4</junit.platform.version>
     </properties>
 
     <modules>
         <module>crabzilla-core</module>
-        <module>crabzilla-stack1</module>
         <module>crabzilla-example1</module>
+        <module>crabzilla-sql-stack</module>
+        <module>crabzilla-camel-stack</module>
+        <module>crabzilla-vertx-stack</module>
         <module>crabzilla-tests</module>
     </modules>
 
@@ -42,56 +42,17 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
-        <!-- test -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>2.7.4</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>3.5.0</version>
-            <scope>test</scope>
-        </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.awaitility</groupId>-->
-            <!--<artifactId>awaitility</artifactId>-->
-            <!--<version>2.0.0</version>-->
-            <!--<scope>test</scope>-->
-        <!--</dependency>-->
-
     </dependencies>
 
     <dependencyManagement>
         <dependencies>
 
             <dependency>
-                <groupId>rodolfodpk</groupId>
+                <groupId>crabzilla</groupId>
                 <artifactId>crabzilla-dependencies</artifactId>
                 <version>1.0-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-
-            <!-- own -->
-            <dependency>
-                <groupId>rodolfodpk</groupId>
-                <artifactId>crabzilla-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>rodolfodpk</groupId>
-                <artifactId>crabzilla-stack1</artifactId>
-                <version>${project.version}</version>
             </dependency>
 
         </dependencies>
@@ -132,23 +93,6 @@
                         <goals> <goal>testCompile</goal> </goals>
                     </execution>
                 </executions>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.junit.platform</groupId>
-                        <artifactId>junit-platform-surefire-provider</artifactId>
-                        <version>${junit.platform.version}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.junit.jupiter</groupId>
-                        <artifactId>junit-jupiter-engine</artifactId>
-                        <version>${junit.jupiter.version}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
 
         </plugins>
