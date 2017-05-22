@@ -67,6 +67,7 @@ public class JdbiEventRepositoryIt {
     }).injectMembers(this);
 
     repo = new JdbiEventRepository("customer", gson, dbi);
+
     dbi.inTransaction((TransactionCallback<Void>) (handle, transactionStatus) -> {
       handle.execute("delete from idempotency");
       handle.execute("delete from aggregate_roots");

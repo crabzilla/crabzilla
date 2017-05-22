@@ -2,9 +2,7 @@ package crabzilla.stacks.sql;
 
 
 import com.github.benmanes.caffeine.cache.Cache;
-import crabzilla.Version;
 import crabzilla.model.AggregateRoot;
-import crabzilla.model.Event;
 import crabzilla.stack.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -12,11 +10,7 @@ import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static crabzilla.stack.SnapshotMessage.LoadedFromEnum;
 
@@ -25,26 +19,17 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
 
 	private static final Logger logger = LoggerFactory.getLogger(CaffeinedSnapshotReaderFn.class);
 
-	final Snapshot<A> EMPTY_SNAPSHOT ;
-
   final Cache<String, Snapshot<A>> cache;
-	final EventRepository dao;
-  final Supplier<A> supplier;
-  final Function<A, A> dependencyInjectionFn;
-  final BiFunction<Event, A, A> stateTransitionFn;
+	final EventRepository eventRepository;
+  final SnapshotFactory<A> snapshotFactory;
 
 	public CaffeinedSnapshotReaderFn(@NonNull Cache<String, Snapshot<A>> cache,
-                                   @NonNull EventRepository dao,
-                                   @NonNull Supplier<A> supplier,
-                                   @NonNull Function<A, A> dependencyInjectionFn,
-                                   @NonNull BiFunction<Event, A, A> stateTransitionFn) {
-		this.EMPTY_SNAPSHOT = new Snapshot<>(supplier.get(), new Version(0L));
+                                   @NonNull EventRepository eventRepository,
+                                   @NonNull SnapshotFactory<A> snapshotFactory) {
 	  this.cache = cache;
-		this.dao = dao;
-		this.supplier = supplier;
-		this.dependencyInjectionFn = dependencyInjectionFn;
-		this.stateTransitionFn = stateTransitionFn;
-	}
+		this.eventRepository = eventRepository;
+    this.snapshotFactory = snapshotFactory;
+  }
 
 	@Override
 	public SnapshotMessage<A> getSnapshotMessage(@NonNull final String id) {
@@ -54,11 +39,10 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
     val wasDaoCalled = new AtomicBoolean(false);
 
     val cachedSnapshot = cache.get(id, s -> {
-			logger.debug("cache.getInstance(id) does not contain anything for this id. Will have to search on dao", id);
-			val dataFromDb = dao.getAll(id);
-      return dataFromDb.map(snapshotData ->
-              createSnapshot(EMPTY_SNAPSHOT, snapshotData.getVersion(), snapshotData.getEvents()))
-              .orElse(EMPTY_SNAPSHOT);
+			logger.debug("cache.getInstance(id) does not contain anything for this id. Will have to search on eventRepository", id);
+			val dataFromDb = eventRepository.getAll(id);
+			wasDaoCalled.set(true);
+      return dataFromDb.map(snapshotFactory::createSnapshot).orElseGet(snapshotFactory::getEmptySnapshot);
 		});
 
     if (wasDaoCalled.get()) { // so hopefully all data from db was loaded
@@ -74,7 +58,7 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
 		logger.debug("id {} cached lastSnapshotData has version {}. will check if there any version beyond it",
 						id, cachedVersion);
 
-		val nonCachedSnapshotData = dao.getAllAfterVersion(id, cachedVersion);
+		val nonCachedSnapshotData = eventRepository.getAllAfterVersion(id, cachedVersion);
 
 		if (nonCachedSnapshotData.isPresent()) {
 
@@ -83,7 +67,7 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
       logger.debug("id {} found {} pending transactions. Last version is now {}",
               id, resultingSnapshotData.getEvents().size(), resultingSnapshotData.getVersion());
 
-      val resultingSnapshot = createSnapshot(cachedSnapshot, resultingSnapshotData.getVersion(),
+      val resultingSnapshot = snapshotFactory.createSnapshot(cachedSnapshot, resultingSnapshotData.getVersion(),
                                               resultingSnapshotData.getEvents());
 
       return new SnapshotMessage<>(resultingSnapshot, LoadedFromEnum.FROM_BOTH);
@@ -93,13 +77,5 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
     return new SnapshotMessage<>(cachedSnapshot, LoadedFromEnum.FROM_CACHE);
 
 	}
-
-	private Snapshot<A> createSnapshot(Snapshot<A> originalSnapshot, Version newVersion, List<Event> newEvents) {
-
-    final StateTransitionsTracker<A> tracker = new StateTransitionsTracker<>(originalSnapshot.getInstance(),
-            stateTransitionFn, dependencyInjectionFn);
-
-    return new Snapshot<>(tracker.applyEvents(newEvents).currentState(), newVersion);
-  }
 
 }

@@ -10,6 +10,7 @@ import crabzilla.example1.aggregates.customer.CustomerSupplierFn;
 import crabzilla.model.CommandHandlerFn;
 import crabzilla.model.Event;
 import crabzilla.stack.AggregateRootModule;
+import crabzilla.stack.SnapshotFactory;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -39,6 +40,14 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
   public CommandHandlerFn<Customer> cmdHandler(final BiFunction<Event, Customer, Customer> stateTransFn,
                                                final Function<Customer, Customer> depInjectionFn) {
     return new CustomerCmdHandlerFnJavaslang(stateTransFn, depInjectionFn);
+  }
+
+  @Provides
+  @Singleton
+  public SnapshotFactory<Customer> snapshotFactory(Supplier<Customer> supplier,
+                                                   Function<Customer, Customer> depInjectionFn,
+                                                   BiFunction<Event, Customer, Customer> stateTransFn) {
+    return new SnapshotFactory<>(supplier, depInjectionFn, stateTransFn);
   }
 
 }

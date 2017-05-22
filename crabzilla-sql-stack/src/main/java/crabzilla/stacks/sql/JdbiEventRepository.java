@@ -27,7 +27,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -116,14 +115,11 @@ public class JdbiEventRepository implements EventRepository {
         public List<ProjectionData> withHandle(Handle h) {
           return h.createQuery(sql)
                   .bind(UOW_SEQ_NUMBER, sinceUowSequence)
-                  .map(new ProjectionDataMapper()).list();
+                  .map(new ProjectionDataMapper())
+                  .list();
         }
       }
     );
-
-    if (projectionDataList == null) {
-      projectionDataList = new ArrayList<>();
-    }
 
     logger.info("Found {} units of work since sequence {}", projectionDataList.size(), sinceUowSequence);
     return projectionDataList;
@@ -131,12 +127,12 @@ public class JdbiEventRepository implements EventRepository {
   }
 
   @Override
-  public Optional<SnapshotData> getAll(String id) {
+  public Optional<SnapshotData> getAll(@NonNull final String id) {
     return getAllAfterVersion(id, new Version(0L));
   }
 
   @Override
-  public Optional<SnapshotData> getAllAfterVersion(@NonNull String id, @NonNull Version version) {
+  public Optional<SnapshotData> getAllAfterVersion(@NonNull final String id, @NonNull final Version version) {
 
     logger.info("will load {}", id);
 
@@ -147,10 +143,6 @@ public class JdbiEventRepository implements EventRepository {
                     .bind(VERSION, version.getValueAsLong())
                     .map(new SnapshtoDataMapper()).list()
             );
-
-    if (snapshotDataList == null) {
-      snapshotDataList = new ArrayList<>();
-    }
 
     logger.info("found {} units of work for id {} and version > {}",
             snapshotDataList.size(), id, version.getValueAsLong());
@@ -171,7 +163,7 @@ public class JdbiEventRepository implements EventRepository {
   }
 
   @Override
-  public void append(final UnitOfWork unitOfWork) throws DbConcurrencyException {
+  public void append(@NonNull final UnitOfWork unitOfWork) throws DbConcurrencyException {
 
     requireNonNull(unitOfWork);
 

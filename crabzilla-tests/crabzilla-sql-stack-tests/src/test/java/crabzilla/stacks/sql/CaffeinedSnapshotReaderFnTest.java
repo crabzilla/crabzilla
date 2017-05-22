@@ -10,10 +10,10 @@ import crabzilla.example1.aggregates.customer.CustomerSupplierFn;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
-import crabzilla.model.Event;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.Snapshot;
 import crabzilla.stack.SnapshotData;
+import crabzilla.stack.SnapshotFactory;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,23 +22,21 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.Mockito.*;
 
 @DisplayName("A SnapshotReaderFn")
 public class CaffeinedSnapshotReaderFnTest {
 
-  Supplier<Customer> supplier ;
-  Function<Customer, Customer> dependencyInjectionFn ;
-  BiFunction<Event, Customer, Customer> stateTransitionFn ;
+  SnapshotFactory<Customer> snapshotFactory;
+
   Cache<String, Snapshot<Customer>> cache;
 
   @Mock
@@ -47,9 +45,7 @@ public class CaffeinedSnapshotReaderFnTest {
   @BeforeEach
   public void init() throws Exception {
     MockitoAnnotations.initMocks(this);
-    supplier = new CustomerSupplierFn();
-    dependencyInjectionFn  = customer -> customer;
-    stateTransitionFn = new CustomerStateTransitionFnJavaslang();
+    snapshotFactory = new SnapshotFactory<>(new CustomerSupplierFn(), c -> c, new CustomerStateTransitionFnJavaslang());
     cache = Caffeine.newBuilder().build();
   }
 
@@ -58,11 +54,11 @@ public class CaffeinedSnapshotReaderFnTest {
 
     val id = new CustomerId("customer#1");
 
-    val expectedSnapshot = new Snapshot<Customer>(supplier.get(), new Version(0));
+    val expectedSnapshot = snapshotFactory.getEmptySnapshot();
 
     when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.empty());
 
-    val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, supplier, dependencyInjectionFn, stateTransitionFn);
+    val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, snapshotFactory);
 
     assertThat(expectedSnapshot).isEqualTo(reader.getSnapshotMessage(id.getStringValue()).getSnapshot());
 
@@ -81,20 +77,20 @@ public class CaffeinedSnapshotReaderFnTest {
     val expectedInstance = Customer.of(id, name, false, null);
     val expectedSnapshot = new Snapshot<>(expectedInstance, Version.create(1L));
     val command = new CreateCustomerCmd(UUID.randomUUID(), id, name);
-    val expectedHistory =
-            new SnapshotData(new Version(1), asList(new CustomerCreated(id, command.getName())));
+    val expectedSnapshotData =
+            new SnapshotData(new Version(1), singletonList(new CustomerCreated(id, command.getName())));
 
-    when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.of(expectedHistory));
+    when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.of(expectedSnapshotData));
 
-    val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, supplier, dependencyInjectionFn, stateTransitionFn);
+    val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, snapshotFactory);
 
-    val resultingSnapshotData = reader.getSnapshotMessage(id.getStringValue());
+    val resultingSnapshotMsg = reader.getSnapshotMessage(id.getStringValue());
 
-    assertThat(expectedSnapshot).isEqualTo(resultingSnapshotData.getSnapshot());
+    assertThat(expectedSnapshot).isEqualTo(resultingSnapshotMsg.getSnapshot());
 
     verify(eventRepository).getAll(id.getStringValue());
 
-    verify(eventRepository).getAllAfterVersion(id.getStringValue(), new Version(1));
+    assertThat(snapshotFactory.createSnapshot(expectedSnapshotData)).isEqualTo(resultingSnapshotMsg.getSnapshot());
 
     verifyNoMoreInteractions(eventRepository);
 
@@ -103,15 +99,29 @@ public class CaffeinedSnapshotReaderFnTest {
   @Test
   public void on_cache_then_hits_db_to_check_newer_version() {
 
-    final CustomerId id = new CustomerId("customer#1");
-    final String name = "customer#1 name";
+    val id = new CustomerId("customer#1");
+    val name = "customer#1 name";
+    val command = new CreateCustomerCmd(UUID.randomUUID(), id, name);
+    val expectedSnapshotData = new SnapshotData(new Version(1),
+            Collections.singletonList(new CustomerCreated(id, command.getName())));
 
-    final CreateCustomerCmd command = new CreateCustomerCmd(UUID.randomUUID(), id, name);
+    // prepare
 
-    final SnapshotData expectedHistory =
-            new SnapshotData(new Version(1), asList(new CustomerCreated(id, command.getName())));
+    when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.of(expectedSnapshotData));
 
-    when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.of(expectedHistory));
+    cache.put(id.getStringValue(), snapshotFactory.createSnapshot(expectedSnapshotData));
+
+    // run
+
+    val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, snapshotFactory);
+
+    val resultingSnapshotMsg = reader.getSnapshotMessage(id.getStringValue());
+
+    // verify
+
+    assertThat(snapshotFactory.createSnapshot(expectedSnapshotData)).isEqualTo(resultingSnapshotMsg.getSnapshot());
+
+    verify(eventRepository).getAllAfterVersion(id.getStringValue(), expectedSnapshotData.getVersion());
 
     verifyNoMoreInteractions(eventRepository);
 
@@ -142,7 +152,9 @@ public class CaffeinedSnapshotReaderFnTest {
 
     when(eventRepository.getAllAfterVersion(id.getStringValue(), cachedVersion)).thenReturn(Optional.of(nonCachedHistory));
 
-    val reader = new CaffeinedSnapshotReaderFn<Customer>(cache, eventRepository, supplier, dependencyInjectionFn, stateTransitionFn);
+    val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, snapshotFactory);
+
+    // run
 
     val resultingSnapshotMsg = reader.getSnapshotMessage(id.getStringValue());
 

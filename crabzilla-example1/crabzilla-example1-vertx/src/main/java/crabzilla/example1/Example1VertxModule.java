@@ -38,10 +38,9 @@ public class Example1VertxModule extends AbstractModule {
   protected void configure() {
 
     install(new CustomerModule());
-    install(new CustomerVertxModule());
-
-    install( new DatabaseModule());
     install(new Example1SqlModule());
+    install(new CustomerVertxModule());
+    install(new DatabaseModule());
 
     bind(SampleService.class).to(SampleServiceImpl.class).asEagerSingleton();
 
@@ -51,7 +50,6 @@ public class Example1VertxModule extends AbstractModule {
     config.entrySet().forEach(e -> {
       final String key = e.getKey().replace("crabzilla-stack1.", "");
       final String value = e.getValue().render().replace("\"", "");
-//      System.out.println(key + "=" + value);
       props.put(key, value);
     });
 

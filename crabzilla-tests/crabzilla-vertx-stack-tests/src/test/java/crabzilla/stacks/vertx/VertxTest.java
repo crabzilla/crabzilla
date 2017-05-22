@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
 import com.google.inject.util.Modules;
 import crabzilla.UnitOfWork;
@@ -37,7 +36,6 @@ import org.mockito.MockitoAnnotations;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 import static crabzilla.util.StringHelper.commandHandlerId;
 import static org.mockito.ArgumentMatchers.eq;
@@ -46,14 +44,10 @@ import static org.mockito.Mockito.*;
 @RunWith(VertxUnitRunner.class)
 public class VertxTest {
 
-  static final Injector injector = Guice.createInjector(new Example1VertxModule());
-
   @Inject
   Vertx vertx;
   @Inject
   Gson gson;
-  @Inject
-  Supplier<Customer> supplier;
 
   @Mock
   SnapshotReaderFn<Customer> snapshotReaderFn;

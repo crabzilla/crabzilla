@@ -7,14 +7,13 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.services.SampleServiceImpl;
-import crabzilla.model.Event;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.Snapshot;
+import crabzilla.stack.SnapshotFactory;
 import crabzilla.stack.SnapshotReaderFn;
 import crabzilla.stacks.sql.CaffeinedSnapshotReaderFn;
 import crabzilla.stacks.sql.SnapshotReaderModule;
 
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -29,10 +28,8 @@ public class CustomerVertxModule extends AbstractModule implements SnapshotReade
   @Singleton
   public SnapshotReaderFn<Customer> snapshotReader(final Cache<String, Snapshot<Customer>> cache,
                                                    final EventRepository eventRepo,
-                                                   final Supplier<Customer> supplier,
-                                                   final Function<Customer, Customer> dependencyInjectionFn,
-                                                   final BiFunction<Event, Customer, Customer> stateTransitionFn) {
-    return new CaffeinedSnapshotReaderFn<>(cache, eventRepo, supplier, dependencyInjectionFn, stateTransitionFn);
+                                                   final SnapshotFactory<Customer> snapshotFactory) {
+    return new CaffeinedSnapshotReaderFn<>(cache, eventRepo, snapshotFactory);
   }
 
   @Provides
