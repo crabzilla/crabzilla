@@ -14,10 +14,7 @@ import crabzilla.example1.aggregates.CustomerVertxModule;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
-import crabzilla.model.AggregateRootId;
-import crabzilla.model.Command;
-import crabzilla.model.CommandHandlerFn;
-import crabzilla.model.Event;
+import crabzilla.model.*;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.Snapshot;
 import crabzilla.stack.SnapshotReaderFn;
@@ -78,9 +75,11 @@ public class Example1VertxModule extends AbstractModule {
   @Singleton
   CommandHandlerVerticle<Customer> handler(SnapshotReaderFn<Customer> snapshotReaderFn,
                                            CommandHandlerFn<Customer> cmdHandler,
+                                           CommandValidatorFn validatorFn,
                                            EventRepository eventStore, Vertx vertx,
-                                           Cache<String, Snapshot<Customer>> cache) { // TODO add CommandValidator
-    return new CommandHandlerVerticle<>(Customer.class, snapshotReaderFn, cmdHandler, eventStore, cache, vertx);
+                                           Cache<String, Snapshot<Customer>> cache) {
+    return
+      new CommandHandlerVerticle<>(Customer.class, snapshotReaderFn, cmdHandler, validatorFn, eventStore, cache, vertx);
   }
 
 }

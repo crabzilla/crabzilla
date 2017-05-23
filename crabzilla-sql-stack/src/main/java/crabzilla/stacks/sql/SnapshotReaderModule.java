@@ -2,6 +2,7 @@ package crabzilla.stacks.sql;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import crabzilla.model.AggregateRoot;
+import crabzilla.model.CommandValidatorFn;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.Snapshot;
 import crabzilla.stack.SnapshotFactory;
@@ -19,5 +20,7 @@ public interface SnapshotReaderModule<A extends AggregateRoot> {
   Cache<String,  Snapshot<A>> cache();
 
   Supplier<Function<A, A>> depInjectionFnSupplier(final Function<A, A> depInjectionFn);
+
+  Supplier<CommandValidatorFn> depInjectionFnSupplier(CommandValidatorFn cmdValidator);
 
 }

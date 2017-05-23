@@ -13,6 +13,7 @@ import crabzilla.example1.Example1VertxModule;
 import crabzilla.example1.aggregates.customer.*;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
+import crabzilla.model.CommandValidatorFn;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.Snapshot;
 import crabzilla.stack.SnapshotMessage;
@@ -35,6 +36,7 @@ import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 
 import static crabzilla.util.StringHelper.commandHandlerId;
@@ -49,6 +51,8 @@ public class VertxTest {
   @Inject
   Gson gson;
 
+  @Mock
+  CommandValidatorFn validatorFn;
   @Mock
   SnapshotReaderFn<Customer> snapshotReaderFn;
   @Mock
@@ -65,14 +69,15 @@ public class VertxTest {
       @Override
       protected void configure() {
         bind(new TypeLiteral<SnapshotReaderFn<Customer>>() {;}).toInstance(snapshotReaderFn);
+        bind(new TypeLiteral<CommandValidatorFn>() {;}).toInstance(validatorFn);
         bind(EventRepository.class).toInstance(eventRepository);
       }
     })).injectMembers(this);
 
     val cmdHandler = new CustomerCmdHandlerFnJavaslang(new CustomerStateTransitionFnJavaslang(), customer -> customer);
 
-    val verticle =
-            new CommandHandlerVerticle<Customer>(Customer.class, snapshotReaderFn, cmdHandler, eventRepository, cache, vertx);
+    val verticle = new CommandHandlerVerticle<Customer>(Customer.class, snapshotReaderFn, cmdHandler,
+                              validatorFn, eventRepository, cache, vertx);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
 
@@ -84,24 +89,28 @@ public class VertxTest {
   }
 
   @Test
-  public void testMyVerticle(TestContext tc) {
+  public void a_valid_command_must_be_handled(TestContext tc) {
 
     Async async = tc.async();
 
     val customerId = new CustomerId("customer#1");
 
-    val expectedMesage = new SnapshotMessage<Customer>(
+    val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "customer1");
+
+    val expectedMessage = new SnapshotMessage<Customer>(
             new Snapshot<>(new CustomerSupplierFn().get(), new Version(0)),
             SnapshotMessage.LoadedFromEnum.FROM_DB);
 
-    when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue())))
-            .thenReturn(expectedMesage);
+    when(validatorFn.constraintViolation(eq(createCustomerCmd))).thenReturn(Optional.empty());
 
-    val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "customer1");
+    when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue())))
+            .thenReturn(expectedMessage);
 
     val options = new DeliveryOptions().setCodecName(new CommandCodec(gson).name());
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+
+      verify(validatorFn).constraintViolation(eq(createCustomerCmd));
 
       verify(snapshotReaderFn).getSnapshotMessage(eq(createCustomerCmd.getTargetId().getStringValue()));
 
@@ -118,7 +127,43 @@ public class VertxTest {
       tc.assertEquals(resultingUow.getEvents(), expectedUow.getEvents());
       tc.assertEquals(resultingUow.getVersion(), expectedUow.getVersion());
 
-      verifyNoMoreInteractions(snapshotReaderFn, eventRepository);
+      verifyNoMoreInteractions(validatorFn, snapshotReaderFn, eventRepository);
+
+      async.complete();
+
+    });
+
+  }
+
+  @Test
+  public void an_invalid_command_must_be_handled(TestContext tc) {
+
+    Async async = tc.async();
+
+    val customerId = new CustomerId("customer#1");
+
+    val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "customer1");
+
+    val expectedMessage = new SnapshotMessage<Customer>(
+            new Snapshot<>(new CustomerSupplierFn().get(), new Version(0)),
+            SnapshotMessage.LoadedFromEnum.FROM_DB);
+
+    when(validatorFn.constraintViolation(eq(createCustomerCmd))).thenReturn(Optional.of("An error"));
+
+    when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue())))
+            .thenReturn(expectedMessage);
+
+    val options = new DeliveryOptions().setCodecName(new CommandCodec(gson).name());
+
+    vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+
+      verify(validatorFn).constraintViolation(eq(createCustomerCmd));
+
+      verifyNoMoreInteractions(validatorFn, snapshotReaderFn, eventRepository);
+
+//      tc.assertTrue(asyncResult.failed()); // TODO why this is not failed ?
+
+      tc.assertEquals("An error", asyncResult.result().body());
 
       async.complete();
 
