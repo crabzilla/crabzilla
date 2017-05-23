@@ -1,38 +1,40 @@
 package crabzilla.util;
 
 import crabzilla.model.AggregateRoot;
+import lombok.experimental.UtilityClass;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@UtilityClass
 public class StringHelper {
 
 	static final String COMMAND_HANDLER = "handle-cmd-";
 
-	public static String commandHandlerId(Class<? extends AggregateRoot> aggregateRootClass) {
+	public  String commandHandlerId(Class<? extends AggregateRoot> aggregateRootClass) {
 		return COMMAND_HANDLER + camelCaseToSnakeCase(aggregateRootClass.getSimpleName());
 	}
 
 
-	public static String aggregateRootId(Class<? extends AggregateRoot> aggregateRootClass) {
+	public String aggregateRootId(Class<? extends AggregateRoot> aggregateRootClass) {
 		return camelCaseToSnakeCase(aggregateRootClass.getSimpleName());
 	}
 
-	static String aggregateRootId(String aggregateRootClassSimpleName) {
+	String aggregateRootId(String aggregateRootClassSimpleName) {
 		return camelCaseToSnakeCase(aggregateRootClassSimpleName);
 	}
 
-	public static String commandId(Class<?> commandClass) {
+	public String commandId(Class<?> commandClass) {
 		return camelCaseToSnakeCase(commandClass.getSimpleName());
 	}
 
 	
-	public static String aggrCmdRoot(String prefix,
+	public String aggrCmdRoot(String prefix,
                                    Class<? extends AggregateRoot> aggregateRootClass, Class<?> commandClass) {
 		return camelCaseToSnakeCase(prefix + aggregateRootClass.getSimpleName() + "-" + commandClass.getSimpleName());
 	}
 
-	private static String camelCaseToSnakeCase(String start) {
+	private String camelCaseToSnakeCase(String start) {
 		Matcher m = Pattern.compile("(?<=[a-z])[A-Z]").matcher(start);
 		StringBuffer sb = new StringBuffer();
 		while (m.find()) {
@@ -42,11 +44,11 @@ public class StringHelper {
 		return sb.toString().toLowerCase();
 	}
 
-  private static String snakeCaseToCamelCase() {
+  private String snakeCaseToCamelCase() {
     return snakeCaseToCamelCase();
   }
 
-  public static String snakeCaseToCamelCase(String start) {
+  public String snakeCaseToCamelCase(String start) {
 		StringBuffer sb = new StringBuffer();
 		for (String s : start.split("_")) {
 			sb.append(Character.toUpperCase(s.charAt(0)));
@@ -57,7 +59,7 @@ public class StringHelper {
 		return sb.toString().toLowerCase();
 	}
 
-	public static String camelizedCron(String cron) {
+	public String camelizedCron(String cron) {
 		return cron.replace(' ', '+');
 	}
 

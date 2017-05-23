@@ -2,11 +2,12 @@ package crabzilla.model;
 
 import crabzilla.UnitOfWork;
 import crabzilla.stack.Snapshot;
+import crabzilla.util.Either;
+import crabzilla.util.Eithers;
 import crabzilla.util.MultiMethod;
 import lombok.NonNull;
+import lombok.val;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -23,19 +24,14 @@ public abstract class CommandHandlerFn<A extends AggregateRoot> {
     this.mm = MultiMethod.getMultiMethod(this.getClass(), "handle");
   }
 
-  public Optional<UnitOfWork> handle(final Command command, final Snapshot<A> snapshot) {
+  public Either<Exception, UnitOfWork> handle(final Command command, final Snapshot<A> snapshot) {
 
     try {
-      return ((Optional<UnitOfWork>) mm.invoke(this, command, snapshot));
-    } catch (IllegalAccessException e) {
-      e.printStackTrace();
-    } catch (NoSuchMethodException e) {
-      e.printStackTrace();
-    } catch (InvocationTargetException e) {
-      e.printStackTrace();
+      val optUnitOfWork = ((UnitOfWork)mm.invoke(this, command, snapshot));
+      return Eithers.right(optUnitOfWork);
+    } catch (Exception e) {
+      return Eithers.left(e);
     }
-
-    return Optional.empty();
 
   }
 

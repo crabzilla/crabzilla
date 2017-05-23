@@ -110,6 +110,9 @@ public class VertxTest {
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
+//      System.out.println(asyncResult.failed());
+//      System.out.println(asyncResult.cause().getMessage());
+
       verify(validatorFn).constraintViolation(eq(createCustomerCmd));
 
       verify(snapshotReaderFn).getSnapshotMessage(eq(createCustomerCmd.getTargetId().getStringValue()));

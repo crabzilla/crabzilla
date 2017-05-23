@@ -11,7 +11,7 @@ import lombok.experimental.Wither;
 
 import java.util.List;
 
-import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.Validate.validState;
 
 @Value
@@ -25,21 +25,22 @@ public class Customer implements AggregateRoot {
   boolean isActive;
   String reason;
 
-  protected List<Event> create(CustomerId id, String name) {
+  List<Event> create(CustomerId id, String name) {
 
+//    validState(false, "an error, just because I want to force it");
     validState(this.id == null, "customer already created");
 
-    return asList(new CustomerCreated(id, name));
+    return singletonList(new CustomerCreated(id, name));
   }
 
   List<Event> activate(String reason) {
 
-    return asList(new CustomerActivated(reason, service.now()));
+    return singletonList(new CustomerActivated(reason, service.now()));
   }
 
   List<Event> deactivate(String reason) {
 
-    return asList(new CustomerDeactivated(reason, service.now()));
+    return singletonList(new CustomerDeactivated(reason, service.now()));
   }
 
   public static Customer of(CustomerId id, String name, boolean isActive, String reason) {

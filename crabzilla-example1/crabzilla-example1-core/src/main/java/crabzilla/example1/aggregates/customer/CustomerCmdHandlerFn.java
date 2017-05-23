@@ -13,7 +13,6 @@ import lombok.val;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -27,30 +26,26 @@ public class CustomerCmdHandlerFn extends CommandHandlerFn<Customer> {
     super(stateTransitionFn, dependencyInjectionFn);
   }
 
-  public Optional<UnitOfWork> handle(CreateCustomerCmd cmd, Snapshot<Customer> snapshot) {
-      val u = of(cmd, snapshot.nextVersion(), snapshot.getInstance().create(cmd.getTargetId(), cmd.getName()));
-      return Optional.of(u);
+  public UnitOfWork handle(CreateCustomerCmd cmd, Snapshot<Customer> snapshot) {
+      return of(cmd, snapshot.nextVersion(), snapshot.getInstance().create(cmd.getTargetId(), cmd.getName()));
   }
 
-  public Optional<UnitOfWork> handle(ActivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
-    val u = of(cmd, snapshot.nextVersion(), snapshot.getInstance().activate(cmd.getReason()));
-    return Optional.of(u);
+  public UnitOfWork handle(ActivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
+    return of(cmd, snapshot.nextVersion(), snapshot.getInstance().activate(cmd.getReason()));
   }
 
-  public Optional<UnitOfWork> handle(DeactivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
-    val u = of(cmd, snapshot.nextVersion(), snapshot.getInstance().deactivate(cmd.getReason()));
-    return Optional.of(u);
+  public UnitOfWork handle(DeactivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
+    return of(cmd, snapshot.nextVersion(), snapshot.getInstance().deactivate(cmd.getReason()));
   }
 
-  public Optional<UnitOfWork> handle(CreateActivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
+  public UnitOfWork handle(CreateActivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
     val tracker = new StateTransitionsTracker<Customer>(snapshot.getInstance(), stateTransitionFn,
             dependencyInjectionFn);
     final List<Event> events = tracker
             .applyEvents(snapshot.getInstance().create(cmd.getTargetId(), cmd.getName()))
             .applyEvents(tracker.currentState().activate(cmd.getReason()))
             .collectEvents();
-    val uow = of(cmd, snapshot.nextVersion(), events);
-    return Optional.of(uow);
+    return of(cmd, snapshot.nextVersion(), events);
   }
 
 }

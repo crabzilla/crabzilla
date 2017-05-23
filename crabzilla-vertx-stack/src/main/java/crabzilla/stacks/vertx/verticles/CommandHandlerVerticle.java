@@ -10,6 +10,7 @@ import crabzilla.stack.EventRepository;
 import crabzilla.stack.Snapshot;
 import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
+import crabzilla.util.Either;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -19,8 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import javax.inject.Inject;
-import java.util.Optional;
 
+import static crabzilla.util.Eithers.getLeft;
+import static crabzilla.util.Eithers.getRight;
 import static crabzilla.util.StringHelper.commandHandlerId;
 
 @Slf4j
@@ -60,32 +62,36 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         log.info("received a command {}", request.body());
 
-        final Command command = request.body();
-
+        val command = request.body();
         val constraint = validatorFn.constraintViolation(command);
 
         if (constraint.isPresent()) {
           throw new IllegalArgumentException(constraint.get());
         }
 
-        final SnapshotMessage<A> snapshotDataMsg =
-                snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
-
-        final Snapshot<A> snapshot = snapshotDataMsg.getSnapshot();
+        val snapshotDataMsg = snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
 
         if (ifSnapshotIsNotFromCache(snapshotDataMsg)) {
           // then populate the cache
           cache.put(command.getCommandId().toString(), snapshotDataMsg.getSnapshot());
         }
 
-        final Optional<UnitOfWork> unitOfWork = handler.handle(command, snapshot);
+        final Either<Exception, UnitOfWork> either = handler.handle(command, snapshotDataMsg.getSnapshot());
 
-        if (unitOfWork.isPresent()) {
-          eventRepository.append(unitOfWork.get());
-          vertx.eventBus().publish("events-projection",  unitOfWork.get());
+        val optException = getLeft(either);
+
+        if (optException.isPresent()) {
+          throw new RuntimeException(optException.get().getMessage(), optException.get());
         }
 
-        future.complete(unitOfWork.orElse(null));
+        val optUnitOfWork = getRight(either);
+
+        if (optUnitOfWork.isPresent()) {
+          eventRepository.append(optUnitOfWork.get());
+          vertx.eventBus().publish("events-projection", optUnitOfWork.get());
+        }
+
+        future.complete(optUnitOfWork.orElse(null));
 
       }, result -> {
 

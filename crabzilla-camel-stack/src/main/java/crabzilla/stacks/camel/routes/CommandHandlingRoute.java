@@ -9,6 +9,8 @@ import crabzilla.stack.EventRepository;
 import crabzilla.stack.Snapshot;
 import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
+import crabzilla.util.Either;
+import crabzilla.util.Eithers;
 import crabzilla.util.HeadersConstants;
 import crabzilla.util.StringHelper;
 import lombok.NonNull;
@@ -143,15 +145,15 @@ public class CommandHandlingRoute<A extends AggregateRoot> extends RouteBuilder 
 
       final Command command = e.getIn().getBody(Command.class);
       final SnapshotMessage<A> snapshotMsg = snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
-      Optional<UnitOfWork> result ;
+      Either<Exception,UnitOfWork> result ;
       try {
         result = handler.handle(command, snapshotMsg.getSnapshot());
         // TODO check if snapshotDataMsg is new and add it to cache
       } catch (Exception ex) {
-        result = Optional.empty();
+        result = Eithers.left(ex);
       }
       e.getOut().setBody(command, Command.class);
-      e.getOut().setHeader(IS_ERROR, !result.isPresent());
+      e.getOut().setHeader(IS_ERROR, result.match(err-> true, uow -> false));
       e.getOut().setHeader(HeadersConstants.COMMAND_ID, command.getCommandId());
       e.getOut().setHeader(RESULT, result);
     }
