@@ -17,33 +17,33 @@ import static crabzilla.stack.SnapshotMessage.LoadedFromEnum;
 @Slf4j
 public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements SnapshotReaderFn<A> {
 
-	private static final Logger logger = LoggerFactory.getLogger(CaffeinedSnapshotReaderFn.class);
+  private static final Logger logger = LoggerFactory.getLogger(CaffeinedSnapshotReaderFn.class);
 
   final Cache<String, Snapshot<A>> cache;
-	final EventRepository eventRepository;
+  final EventRepository eventRepository;
   final SnapshotFactory<A> snapshotFactory;
 
-	public CaffeinedSnapshotReaderFn(@NonNull Cache<String, Snapshot<A>> cache,
+  public CaffeinedSnapshotReaderFn(@NonNull Cache<String, Snapshot<A>> cache,
                                    @NonNull EventRepository eventRepository,
                                    @NonNull SnapshotFactory<A> snapshotFactory) {
-	  this.cache = cache;
-		this.eventRepository = eventRepository;
+    this.cache = cache;
+    this.eventRepository = eventRepository;
     this.snapshotFactory = snapshotFactory;
   }
 
-	@Override
-	public SnapshotMessage<A> getSnapshotMessage(@NonNull final String id) {
+  @Override
+  public SnapshotMessage<A> getSnapshotMessage(@NonNull final String id) {
 
-		logger.debug("cache.get(id)", id);
+    logger.debug("cache.get(id)", id);
 
     val wasDaoCalled = new AtomicBoolean(false);
 
     val cachedSnapshot = cache.get(id, s -> {
-			logger.debug("cache.getInstance(id) does not contain anything for this id. Will have to search on eventRepository", id);
-			val dataFromDb = eventRepository.getAll(id);
-			wasDaoCalled.set(true);
+      logger.debug("cache.getInstance(id) does not contain anything for this id. Will have to search on eventRepository", id);
+      val dataFromDb = eventRepository.getAll(id);
+      wasDaoCalled.set(true);
       return dataFromDb.map(snapshotFactory::createSnapshot).orElseGet(snapshotFactory::getEmptySnapshot);
-		});
+    });
 
     if (wasDaoCalled.get()) { // so hopefully all data from db was loaded
       return new SnapshotMessage<>(cachedSnapshot, LoadedFromEnum.FROM_DB);
@@ -55,20 +55,20 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
 
     val cachedVersion = cachedSnapshot.getVersion();
 
-		logger.debug("id {} cached lastSnapshotData has version {}. will check if there any version beyond it",
-						id, cachedVersion);
+    logger.debug("id {} cached lastSnapshotData has version {}. will check if there any version beyond it",
+            id, cachedVersion);
 
-		val nonCachedSnapshotData = eventRepository.getAllAfterVersion(id, cachedVersion);
+    val nonCachedSnapshotData = eventRepository.getAllAfterVersion(id, cachedVersion);
 
-		if (nonCachedSnapshotData.isPresent()) {
+    if (nonCachedSnapshotData.isPresent()) {
 
-		  val resultingSnapshotData = nonCachedSnapshotData.get();
+      val resultingSnapshotData = nonCachedSnapshotData.get();
 
       logger.debug("id {} found {} pending transactions. Last version is now {}",
               id, resultingSnapshotData.getEvents().size(), resultingSnapshotData.getVersion());
 
       val resultingSnapshot = snapshotFactory.createSnapshot(cachedSnapshot, resultingSnapshotData.getVersion(),
-                                              resultingSnapshotData.getEvents());
+              resultingSnapshotData.getEvents());
 
       return new SnapshotMessage<>(resultingSnapshot, LoadedFromEnum.FROM_BOTH);
 
@@ -76,6 +76,6 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
 
     return new SnapshotMessage<>(cachedSnapshot, LoadedFromEnum.FROM_CACHE);
 
-	}
+  }
 
 }

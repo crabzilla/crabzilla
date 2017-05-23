@@ -56,53 +56,54 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
     vertx.eventBus().consumer(commandHandlerId(aggregateRootClass), (Message<Command> request) -> {
 
-        vertx.executeBlocking((Future<UnitOfWork> future) -> {
+      vertx.executeBlocking((Future<UnitOfWork> future) -> {
 
-          log.info("received a command {}", request.body());
+        log.info("received a command {}", request.body());
 
-          final Command command = request.body();
+        final Command command = request.body();
 
-          val constraint = validatorFn.constraintViolation(command);
+        val constraint = validatorFn.constraintViolation(command);
 
-          if (constraint.isPresent()) {
-            throw new IllegalArgumentException(constraint.get());
-          }
+        if (constraint.isPresent()) {
+          throw new IllegalArgumentException(constraint.get());
+        }
 
-          final SnapshotMessage<A> snapshotDataMsg = snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
-          final Snapshot<A> snapshot = snapshotDataMsg.getSnapshot();
+        final SnapshotMessage<A> snapshotDataMsg = snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
+        final Snapshot<A> snapshot = snapshotDataMsg.getSnapshot();
 
-          if (ifSnapshotIsNotFromCache(snapshotDataMsg)) {
-            cache.put(command.getCommandId().toString(), snapshotDataMsg.getSnapshot());
-          }
+        if (ifSnapshotIsNotFromCache(snapshotDataMsg)) {
+          // then populate the cache
+          cache.put(command.getCommandId().toString(), snapshotDataMsg.getSnapshot());
+        }
 
-          final Optional<UnitOfWork> unitOfWork = handler.handle(command, snapshot);
+        final Optional<UnitOfWork> unitOfWork = handler.handle(command, snapshot);
 
-          if (unitOfWork.isPresent()) {
-            eventRepository.append(unitOfWork.get());
-            vertx.eventBus().publish("events-projection",  unitOfWork.get());
-          }
+        if (unitOfWork.isPresent()) {
+          eventRepository.append(unitOfWork.get());
+          vertx.eventBus().publish("events-projection",  unitOfWork.get());
+        }
 
-          future.complete(unitOfWork.orElse(null));
+        future.complete(unitOfWork.orElse(null));
 
-        }, result -> {
+      }, result -> {
 
-          if (result.succeeded()) {
-            log.info("success: {}", result.result());
-            request.reply(result.result());
-          }
-          if (result.failed()) {
-            log.info("error: {}", result.cause().getMessage());
-            request.reply(result.cause().getMessage());
-          }
+        if (result.succeeded()) {
+          log.info("success: {}", result.result());
+          request.reply(result.result());
+        }
+        if (result.failed()) {
+          log.info("error: {}", result.cause().getMessage());
+          request.reply(result.cause().getMessage());
+        }
 
-        });
+      });
 
     });
 
   }
 
   /**
-   * Test if snapshot isn't from cache then populate the cache
+   * Test if snapshot isn't from cache
    * @param snapshotDataMsg
    * @return boolean
   */

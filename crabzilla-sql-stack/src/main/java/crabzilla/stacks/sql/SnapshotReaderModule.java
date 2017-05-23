@@ -17,7 +17,7 @@ public interface SnapshotReaderModule<A extends AggregateRoot> {
                                      final EventRepository eventRepo,
                                      final SnapshotFactory<A> snapshotFactory);
 
-  Cache<String,  Snapshot<A>> cache();
+  Cache<String, Snapshot<A>> cache();
 
   Supplier<Function<A, A>> depInjectionFnSupplier(final Function<A, A> depInjectionFn);
 
