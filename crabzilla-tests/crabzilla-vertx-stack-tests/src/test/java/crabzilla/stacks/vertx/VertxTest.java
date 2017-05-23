@@ -161,9 +161,9 @@ public class VertxTest {
 
       verifyNoMoreInteractions(validatorFn, snapshotReaderFn, eventRepository);
 
-//      tc.assertTrue(asyncResult.failed()); // TODO why this is not failed ?
+      tc.assertTrue(asyncResult.failed());
 
-      tc.assertEquals("An error", asyncResult.result().body());
+      tc.assertEquals("An error", asyncResult.cause().getMessage());
 
       async.complete();
 

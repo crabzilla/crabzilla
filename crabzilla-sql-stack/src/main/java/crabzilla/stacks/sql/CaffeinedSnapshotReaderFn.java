@@ -64,7 +64,7 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
 
       val resultingSnapshotData = nonCachedSnapshotData.get();
 
-      logger.debug("id {} found {} pending transactions. Last version is now {}",
+      logger.debug("id {} found {} pending events. Last version is now {}",
               id, resultingSnapshotData.getEvents().size(), resultingSnapshotData.getVersion());
 
       val resultingSnapshot = snapshotFactory.createSnapshot(cachedSnapshot, resultingSnapshotData.getVersion(),

@@ -68,7 +68,9 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
           throw new IllegalArgumentException(constraint.get());
         }
 
-        final SnapshotMessage<A> snapshotDataMsg = snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
+        final SnapshotMessage<A> snapshotDataMsg =
+                snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
+
         final Snapshot<A> snapshot = snapshotDataMsg.getSnapshot();
 
         if (ifSnapshotIsNotFromCache(snapshotDataMsg)) {
@@ -93,7 +95,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
         }
         if (result.failed()) {
           log.info("error: {}", result.cause().getMessage());
-          request.reply(result.cause().getMessage());
+          request.fail(400, result.cause().getMessage());
         }
 
       });
