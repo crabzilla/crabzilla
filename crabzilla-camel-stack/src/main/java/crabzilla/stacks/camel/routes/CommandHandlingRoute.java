@@ -1,18 +1,13 @@
 package crabzilla.stacks.camel.routes;
 
 import com.google.gson.Gson;
-import crabzilla.UnitOfWork;
-import crabzilla.model.AggregateRoot;
-import crabzilla.model.Command;
-import crabzilla.model.CommandHandlerFn;
-import crabzilla.model.Snapshot;
+import crabzilla.model.util.Either;
+import crabzilla.model.util.Eithers;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
-import crabzilla.util.Either;
-import crabzilla.util.Eithers;
-import crabzilla.util.HeadersConstants;
-import crabzilla.util.StringHelper;
+import crabzilla.stack.util.HeadersConstants;
+import crabzilla.stack.util.StringHelper;
 import lombok.NonNull;
 import lombok.val;
 import org.apache.camel.Exchange;

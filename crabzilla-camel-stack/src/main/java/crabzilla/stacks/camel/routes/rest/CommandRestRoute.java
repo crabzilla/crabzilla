@@ -1,7 +1,7 @@
 package crabzilla.stacks.camel.routes.rest;
 
-import crabzilla.UnitOfWork;
 import crabzilla.model.AggregateRoot;
+import crabzilla.model.UnitOfWork;
 import lombok.NonNull;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.rest.RestBindingMode;
@@ -9,8 +9,8 @@ import org.apache.camel.model.rest.RestParamType;
 
 import java.util.List;
 
-import static crabzilla.util.HeadersConstants.*;
-import static crabzilla.util.StringHelper.*;
+import static crabzilla.stack.util.HeadersConstants.*;
+import static crabzilla.stack.util.StringHelper.*;
 
 public class CommandRestRoute<A extends AggregateRoot> extends RouteBuilder {
 

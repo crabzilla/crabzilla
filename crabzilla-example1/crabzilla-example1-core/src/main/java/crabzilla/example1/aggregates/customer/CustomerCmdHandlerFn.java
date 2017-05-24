@@ -1,14 +1,10 @@
 package crabzilla.example1.aggregates.customer;
 
-import crabzilla.UnitOfWork;
 import crabzilla.example1.aggregates.customer.commands.ActivateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateActivateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.DeactivateCustomerCmd;
-import crabzilla.model.CommandHandlerFn;
-import crabzilla.model.Event;
-import crabzilla.model.Snapshot;
-import crabzilla.model.StateTransitionsTracker;
+import crabzilla.model.*;
 import lombok.val;
 
 import javax.inject.Inject;
@@ -16,7 +12,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static crabzilla.UnitOfWork.of;
+import static crabzilla.model.UnitOfWork.of;
 
 public class CustomerCmdHandlerFn extends CommandHandlerFn<Customer> {
 

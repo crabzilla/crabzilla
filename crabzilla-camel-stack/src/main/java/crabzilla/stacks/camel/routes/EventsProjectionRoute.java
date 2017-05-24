@@ -2,7 +2,7 @@ package crabzilla.stacks.camel.routes;
 
 import crabzilla.model.EventsProjector;
 import crabzilla.model.ProjectionData;
-import crabzilla.util.HeadersConstants;
+import crabzilla.stack.util.HeadersConstants;
 import lombok.NonNull;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;

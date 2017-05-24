@@ -1,13 +1,12 @@
 package crabzilla.example1.aggregates.customer;
 
-import crabzilla.UnitOfWork;
 import crabzilla.example1.aggregates.customer.commands.ActivateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateActivateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.DeactivateCustomerCmd;
 import crabzilla.model.*;
-import crabzilla.util.Either;
-import crabzilla.util.Eithers;
+import crabzilla.model.util.Either;
+import crabzilla.model.util.Eithers;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
@@ -16,7 +15,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static crabzilla.UnitOfWork.of;
+import static crabzilla.model.UnitOfWork.of;
 import static javaslang.API.*;
 import static javaslang.Predicates.instanceOf;
 

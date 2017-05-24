@@ -15,7 +15,6 @@
     <modules>
         <module>crabzilla-example1-core</module>
         <module>crabzilla-example1-database</module>
-        <module>crabzilla-example1-sql</module>
         <module>crabzilla-example1-vertx</module>
     </modules>
 

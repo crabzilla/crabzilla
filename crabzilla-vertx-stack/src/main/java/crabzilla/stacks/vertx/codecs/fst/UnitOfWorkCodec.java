@@ -1,6 +1,6 @@
 package crabzilla.stacks.vertx.codecs.fst;
 
-import crabzilla.UnitOfWork;
+import crabzilla.model.UnitOfWork;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 import org.nustaq.serialization.FSTConfiguration;

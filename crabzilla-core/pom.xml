@@ -10,7 +10,12 @@
     </parent>
 
     <artifactId>crabzilla-core</artifactId>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>crabzilla-core-model</module>
+        <module>crabzilla-core-stack</module>
+    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

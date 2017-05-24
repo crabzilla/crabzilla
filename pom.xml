@@ -15,11 +15,10 @@
 
     <modules>
         <module>crabzilla-core</module>
-        <module>crabzilla-example1</module>
-        <module>crabzilla-sql-stack</module>
-        <module>crabzilla-camel-stack</module>
         <module>crabzilla-vertx-stack</module>
+        <module>crabzilla-example1</module>
         <module>crabzilla-tests</module>
+        <!--<module>crabzilla-camel-stack</module>-->
     </modules>
 
     <dependencies>

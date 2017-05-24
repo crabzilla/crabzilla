@@ -8,20 +8,18 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import crabzilla.UnitOfWork;
 import crabzilla.example1.aggregates.CustomerModule;
-import crabzilla.example1.aggregates.CustomerVertxModule;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
 import crabzilla.model.*;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotReaderFn;
-import crabzilla.stacks.sql.JdbiEventRepository;
 import crabzilla.stacks.vertx.codecs.fst.AggregateRootIdCodec;
 import crabzilla.stacks.vertx.codecs.fst.CommandCodec;
 import crabzilla.stacks.vertx.codecs.fst.EventCodec;
 import crabzilla.stacks.vertx.codecs.fst.UnitOfWorkCodec;
+import crabzilla.stacks.vertx.sql.JdbiEventRepository;
 import crabzilla.stacks.vertx.verticles.CommandHandlerVerticle;
 import io.vertx.core.Vertx;
 import org.nustaq.serialization.FSTConfiguration;
@@ -42,7 +40,6 @@ public class Example1VertxModule extends AbstractModule {
 
     install(new CustomerModule());
     install(new Example1SqlModule());
-    install(new CustomerVertxModule());
     install(new DatabaseModule());
 
     bind(SampleService.class).to(SampleServiceImpl.class).asEagerSingleton();

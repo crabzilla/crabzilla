@@ -2,10 +2,10 @@ package crabzilla.example1;
 
 import com.google.gson.Gson;
 import com.google.inject.Guice;
-import crabzilla.UnitOfWork;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
+import crabzilla.model.UnitOfWork;
 import crabzilla.stacks.vertx.codecs.gson.CommandCodec;
 import crabzilla.stacks.vertx.verticles.CommandHandlerVerticle;
 import io.vertx.core.Vertx;
@@ -22,7 +22,7 @@ import lombok.val;
 import javax.inject.Inject;
 import java.util.UUID;
 
-import static crabzilla.util.StringHelper.commandHandlerId;
+import static crabzilla.stack.util.StringHelper.commandHandlerId;
 import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.lang.System.setProperty;
 
@@ -59,7 +59,7 @@ public class Example1VertxLauncher {
 
         Guice.createInjector(new Example1VertxModule(vertx)).injectMembers(launcher);
 
-//        launcher.vertx.deployVerticle(launcher.comdVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
+        launcher.vertx.deployVerticle(launcher.comdVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
 
         // a test
         launcher.postNewCustomerJustForTest();
