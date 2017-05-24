@@ -19,11 +19,6 @@
 
     <dependencies>
 
-        <dependency>
-            <groupId>crabzilla</groupId>
-            <artifactId>crabzilla-sql-stack</artifactId>
-        </dependency>
-
         <!-- util -->
 
         <dependency>
@@ -55,6 +50,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-unit</artifactId>
             <scope>test</scope>
@@ -66,11 +67,11 @@
             <scope>test</scope>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>org.assertj</groupId>-->
-            <!--<artifactId>assertj-core</artifactId>-->
-            <!--<scope>test</scope>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 

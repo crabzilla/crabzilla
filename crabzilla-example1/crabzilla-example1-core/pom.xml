@@ -18,7 +18,7 @@
 
         <dependency>
             <groupId>crabzilla</groupId>
-            <artifactId>crabzilla-core</artifactId>
+            <artifactId>crabzilla-core-model</artifactId>
         </dependency>
 
         <!-- util -->

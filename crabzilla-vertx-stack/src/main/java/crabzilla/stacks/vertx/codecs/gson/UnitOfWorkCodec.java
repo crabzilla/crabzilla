@@ -1,7 +1,7 @@
 package crabzilla.stacks.vertx.codecs.gson;
 
 import com.google.gson.Gson;
-import crabzilla.UnitOfWork;
+import crabzilla.model.UnitOfWork;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 

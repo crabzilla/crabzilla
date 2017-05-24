@@ -7,14 +7,14 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.TypeLiteral;
 import com.google.inject.util.Modules;
-import crabzilla.UnitOfWork;
-import crabzilla.Version;
 import crabzilla.example1.Example1VertxModule;
 import crabzilla.example1.aggregates.customer.*;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.CommandValidatorFn;
 import crabzilla.model.Snapshot;
+import crabzilla.model.UnitOfWork;
+import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
@@ -39,7 +39,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
-import static crabzilla.util.StringHelper.commandHandlerId;
+import static crabzilla.stack.util.StringHelper.commandHandlerId;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 

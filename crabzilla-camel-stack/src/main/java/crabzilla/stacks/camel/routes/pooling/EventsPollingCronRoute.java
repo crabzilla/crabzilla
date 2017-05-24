@@ -1,6 +1,6 @@
 package crabzilla.stacks.camel.routes.pooling;
 
-import crabzilla.util.StringHelper;
+import crabzilla.stack.util.StringHelper;
 import lombok.NonNull;
 import org.apache.camel.builder.RouteBuilder;
 

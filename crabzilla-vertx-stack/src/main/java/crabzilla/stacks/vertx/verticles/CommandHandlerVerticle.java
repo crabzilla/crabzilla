@@ -1,11 +1,10 @@
 package crabzilla.stacks.vertx.verticles;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import crabzilla.UnitOfWork;
 import crabzilla.model.*;
+import crabzilla.model.util.Either;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotReaderFn;
-import crabzilla.util.Either;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -17,9 +16,9 @@ import lombok.val;
 
 import javax.inject.Inject;
 
-import static crabzilla.util.Eithers.getLeft;
-import static crabzilla.util.Eithers.getRight;
-import static crabzilla.util.StringHelper.commandHandlerId;
+import static crabzilla.model.util.Eithers.getLeft;
+import static crabzilla.model.util.Eithers.getRight;
+import static crabzilla.stack.util.StringHelper.commandHandlerId;
 
 @Slf4j
 public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVerticle {
