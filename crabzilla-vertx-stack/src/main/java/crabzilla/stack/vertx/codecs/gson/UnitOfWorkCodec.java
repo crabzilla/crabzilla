@@ -1,25 +1,25 @@
-package crabzilla.stacks.vertx.codecs.gson;
+package crabzilla.stack.vertx.codecs.gson;
 
 import com.google.gson.Gson;
-import crabzilla.model.AggregateRootId;
+import crabzilla.model.UnitOfWork;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 
 import javax.inject.Inject;
 
-public class AggregateRootIdCodec implements MessageCodec<AggregateRootId, AggregateRootId> {
+public class UnitOfWorkCodec implements MessageCodec<UnitOfWork, UnitOfWork> {
 
   final Gson gson;
 
   @Inject
-  public AggregateRootIdCodec(Gson gson) {
+  public UnitOfWorkCodec(Gson gson) {
     this.gson = gson;
   }
 
   @Override
-  public void encodeToWire(Buffer buffer, AggregateRootId aggregateRootId) {
+  public void encodeToWire(Buffer buffer, UnitOfWork unitOfWork) {
 
-    final String ajJson = gson.toJson(aggregateRootId, AggregateRootId.class);
+    final String ajJson = gson.toJson(unitOfWork, UnitOfWork.class);
 
     // Length of JSON: is NOT characters count
     int length = ajJson.getBytes().length;
@@ -30,7 +30,7 @@ public class AggregateRootIdCodec implements MessageCodec<AggregateRootId, Aggre
   }
 
   @Override
-  public AggregateRootId decodeFromWire(int pos, Buffer buffer) {
+  public UnitOfWork decodeFromWire(int pos, Buffer buffer) {
 
     // My custom message starting from this *position* of buffer
     int _pos = pos;
@@ -42,12 +42,12 @@ public class AggregateRootIdCodec implements MessageCodec<AggregateRootId, Aggre
     // Jump 4 because getInt() == 4 bytes
     final String jsonStr = buffer.getString(_pos += 4, _pos += length);
 
-    return gson.fromJson(jsonStr, AggregateRootId.class);
+    return gson.fromJson(jsonStr, UnitOfWork.class);
   }
 
   @Override
-  public AggregateRootId transform(AggregateRootId AggregateRootId) {
-    return AggregateRootId;
+  public UnitOfWork transform(UnitOfWork UnitOfWork) {
+    return UnitOfWork;
   }
 
   @Override

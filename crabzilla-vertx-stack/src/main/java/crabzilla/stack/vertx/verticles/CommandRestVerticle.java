@@ -1,4 +1,4 @@
-package crabzilla.stacks.vertx.verticles;
+package crabzilla.stack.vertx.verticles;
 
 import crabzilla.model.AggregateRoot;
 import io.vertx.core.AbstractVerticle;

@@ -1,4 +1,4 @@
-package crabzilla.stacks.vertx;
+package crabzilla.stack.vertx;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -18,8 +18,8 @@ import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
-import crabzilla.stacks.vertx.codecs.gson.CommandCodec;
-import crabzilla.stacks.vertx.verticles.CommandHandlerVerticle;
+import crabzilla.stack.vertx.codecs.gson.CommandCodec;
+import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.ext.unit.Async;

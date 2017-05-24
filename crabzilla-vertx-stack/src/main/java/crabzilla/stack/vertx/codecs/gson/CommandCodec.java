@@ -1,36 +1,45 @@
-package crabzilla.stacks.vertx.codecs.gson;
+package crabzilla.stack.vertx.codecs.gson;
 
 import com.google.gson.Gson;
-import crabzilla.model.UnitOfWork;
+import crabzilla.model.Command;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 
 import javax.inject.Inject;
 
-public class UnitOfWorkCodec implements MessageCodec<UnitOfWork, UnitOfWork> {
+public class CommandCodec implements MessageCodec<Command, Command> {
 
   final Gson gson;
 
   @Inject
-  public UnitOfWorkCodec(Gson gson) {
+  public CommandCodec(Gson gson) {
     this.gson = gson;
   }
 
   @Override
-  public void encodeToWire(Buffer buffer, UnitOfWork unitOfWork) {
+  public void encodeToWire(Buffer buffer, Command command) {
 
-    final String ajJson = gson.toJson(unitOfWork, UnitOfWork.class);
+    try {
 
-    // Length of JSON: is NOT characters count
-    int length = ajJson.getBytes().length;
+      System.out.println("will encode " + command);
 
-    // Write data into given buffer
-    buffer.appendInt(length);
-    buffer.appendString(ajJson);
+      final String ajJson = gson.toJson(command, Command.class);
+
+      // Length of JSON: is NOT characters count
+      int length = ajJson.getBytes().length;
+
+      // Write data into given buffer
+      buffer.appendInt(length);
+      buffer.appendString(ajJson);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
   }
 
   @Override
-  public UnitOfWork decodeFromWire(int pos, Buffer buffer) {
+  public Command decodeFromWire(int pos, Buffer buffer) {
 
     // My custom message starting from this *position* of buffer
     int _pos = pos;
@@ -42,12 +51,13 @@ public class UnitOfWorkCodec implements MessageCodec<UnitOfWork, UnitOfWork> {
     // Jump 4 because getInt() == 4 bytes
     final String jsonStr = buffer.getString(_pos += 4, _pos += length);
 
-    return gson.fromJson(jsonStr, UnitOfWork.class);
+    return gson.fromJson(jsonStr, Command.class);
+
   }
 
   @Override
-  public UnitOfWork transform(UnitOfWork UnitOfWork) {
-    return UnitOfWork;
+  public Command transform(Command command) {
+    return command;
   }
 
   @Override

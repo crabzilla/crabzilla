@@ -1,4 +1,4 @@
-package crabzilla.stacks.vertx.sql;
+package crabzilla.stack.vertx.sql;
 
 
 import com.github.benmanes.caffeine.cache.Cache;
