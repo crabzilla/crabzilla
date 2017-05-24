@@ -1,7 +1,5 @@
-package crabzilla.stack;
+package crabzilla.model;
 
-import crabzilla.model.AggregateRoot;
-import crabzilla.model.Event;
 import lombok.NonNull;
 
 import java.util.ArrayList;

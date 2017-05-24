@@ -44,9 +44,7 @@ public class StringHelper {
 		return sb.toString().toLowerCase();
 	}
 
-  private String snakeCaseToCamelCase() {
-    return snakeCaseToCamelCase();
-  }
+
 
   public String snakeCaseToCamelCase(String start) {
 		StringBuffer sb = new StringBuffer();

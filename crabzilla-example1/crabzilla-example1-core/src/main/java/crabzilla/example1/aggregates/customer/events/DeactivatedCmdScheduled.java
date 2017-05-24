@@ -1,8 +1,8 @@
 package crabzilla.example1.aggregates.customer.events;
 
 import crabzilla.example1.aggregates.customer.commands.DeactivateCustomerCmd;
+import crabzilla.model.CommandScheduling;
 import crabzilla.model.Event;
-import crabzilla.stack.CommandScheduling;
 import lombok.Value;
 
 import java.time.Instant;

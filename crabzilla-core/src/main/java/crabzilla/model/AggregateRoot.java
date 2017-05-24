@@ -1,6 +1,8 @@
 package crabzilla.model;
 
-public interface AggregateRoot {
+import java.io.Serializable;
+
+public interface AggregateRoot extends Serializable {
 
   AggregateRootId getId();
 

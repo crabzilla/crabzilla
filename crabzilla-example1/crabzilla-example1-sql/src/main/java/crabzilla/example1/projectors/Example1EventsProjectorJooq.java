@@ -5,7 +5,7 @@ import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.example1.aggregates.customer.events.CustomerDeactivated;
 import crabzilla.model.Event;
 import crabzilla.model.EventsProjector;
-import crabzilla.stack.ProjectionData;
+import crabzilla.model.ProjectionData;
 import javaslang.Tuple;
 import lombok.Getter;
 import lombok.NonNull;

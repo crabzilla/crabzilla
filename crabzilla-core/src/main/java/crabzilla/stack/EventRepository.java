@@ -2,6 +2,7 @@ package crabzilla.stack;
 
 import crabzilla.UnitOfWork;
 import crabzilla.Version;
+import crabzilla.model.ProjectionData;
 
 import java.util.List;
 import java.util.Optional;

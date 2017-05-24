@@ -1,4 +1,4 @@
-package crabzilla.stacks.vertx.codecs;
+package crabzilla.stacks.vertx.codecs.gson;
 
 import com.google.gson.Gson;
 import crabzilla.UnitOfWork;
@@ -19,7 +19,7 @@ public class UnitOfWorkCodec implements MessageCodec<UnitOfWork, UnitOfWork> {
   @Override
   public void encodeToWire(Buffer buffer, UnitOfWork unitOfWork) {
 
-    final String ajJson = gson.toJson(unitOfWork);
+    final String ajJson = gson.toJson(unitOfWork, UnitOfWork.class);
 
     // Length of JSON: is NOT characters count
     int length = ajJson.getBytes().length;
@@ -40,7 +40,7 @@ public class UnitOfWorkCodec implements MessageCodec<UnitOfWork, UnitOfWork> {
 
     // Get JSON string by it`s length
     // Jump 4 because getInt() == 4 bytes
-    final String jsonStr = buffer.getString(_pos+=4, _pos+=length);
+    final String jsonStr = buffer.getString(_pos += 4, _pos += length);
 
     return gson.fromJson(jsonStr, UnitOfWork.class);
   }
@@ -49,7 +49,7 @@ public class UnitOfWorkCodec implements MessageCodec<UnitOfWork, UnitOfWork> {
   public UnitOfWork transform(UnitOfWork UnitOfWork) {
     return UnitOfWork;
   }
-  
+
   @Override
   public String name() {
     // Each codec must have a unique name.

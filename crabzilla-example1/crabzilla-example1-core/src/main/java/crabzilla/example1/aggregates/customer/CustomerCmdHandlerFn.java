@@ -7,8 +7,8 @@ import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.DeactivateCustomerCmd;
 import crabzilla.model.CommandHandlerFn;
 import crabzilla.model.Event;
-import crabzilla.stack.Snapshot;
-import crabzilla.stack.StateTransitionsTracker;
+import crabzilla.model.Snapshot;
+import crabzilla.model.StateTransitionsTracker;
 import lombok.val;
 
 import javax.inject.Inject;

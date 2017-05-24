@@ -1,32 +1,29 @@
-package crabzilla.stacks.vertx.codecs;
+package crabzilla.stacks.vertx.codecs.fst;
 
-import com.google.gson.Gson;
 import crabzilla.model.Event;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
+import org.nustaq.serialization.FSTConfiguration;
 
 import javax.inject.Inject;
 
 public class EventCodec implements MessageCodec<Event, Event> {
 
-  final Gson gson;
+  final FSTConfiguration fst;
 
   @Inject
-  public EventCodec(Gson gson) {
-    this.gson = gson;
+  public EventCodec(FSTConfiguration fst) {
+    this.fst = fst;
   }
 
   @Override
   public void encodeToWire(Buffer buffer, Event Event) {
 
-    final String ajJson = gson.toJson(Event);
-
-    // Length of JSON: is NOT characters count
-    int length = ajJson.getBytes().length;
+    final byte barray[] = fst.asByteArray(Event);
 
     // Write data into given buffer
-    buffer.appendInt(length);
-    buffer.appendString(ajJson);
+    buffer.appendInt(barray.length);
+    buffer.appendBytes(barray);
   }
 
   @Override
@@ -40,9 +37,16 @@ public class EventCodec implements MessageCodec<Event, Event> {
 
     // Get JSON string by it`s length
     // Jump 4 because getInt() == 4 bytes
-    final String jsonStr = buffer.getString(_pos+=4, _pos+=length);
+    final byte[] content = buffer.getBytes(_pos += 4, _pos += length);
+    Object readObj;
 
-    return gson.fromJson(jsonStr, Event.class);
+    try {
+      readObj = fst.getObjectInput(content).readObject();
+    } catch (Exception e) {
+      throw new RuntimeException("When decodingFromWire", e);
+    }
+
+    return (Event) readObj;
   }
 
   @Override

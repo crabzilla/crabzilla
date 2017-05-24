@@ -1,32 +1,29 @@
-package crabzilla.stacks.vertx.codecs;
+package crabzilla.stacks.vertx.codecs.fst;
 
-import com.google.gson.Gson;
 import crabzilla.model.AggregateRootId;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
+import org.nustaq.serialization.FSTConfiguration;
 
 import javax.inject.Inject;
 
 public class AggregateRootIdCodec implements MessageCodec<AggregateRootId, AggregateRootId> {
 
-  final Gson gson;
+  final FSTConfiguration fst;
 
   @Inject
-  public AggregateRootIdCodec(Gson gson) {
-    this.gson = gson;
+  public AggregateRootIdCodec(FSTConfiguration fst) {
+    this.fst = fst;
   }
 
   @Override
-  public void encodeToWire(Buffer buffer, AggregateRootId AggregateRootId) {
+  public void encodeToWire(Buffer buffer, AggregateRootId aggregateRootId) {
 
-    final String ajJson = gson.toJson(AggregateRootId);
-
-    // Length of JSON: is NOT characters count
-    int length = ajJson.getBytes().length;
+    final byte barray[] = fst.asByteArray(aggregateRootId);
 
     // Write data into given buffer
-    buffer.appendInt(length);
-    buffer.appendString(ajJson);
+    buffer.appendInt(barray.length);
+    buffer.appendBytes(barray);
   }
 
   @Override
@@ -40,9 +37,16 @@ public class AggregateRootIdCodec implements MessageCodec<AggregateRootId, Aggre
 
     // Get JSON string by it`s length
     // Jump 4 because getInt() == 4 bytes
-    final String jsonStr = buffer.getString(_pos+=4, _pos+=length);
+    final byte[] content = buffer.getBytes(_pos += 4, _pos += length);
+    Object readObj;
 
-    return gson.fromJson(jsonStr, AggregateRootId.class);
+    try {
+      readObj = fst.getObjectInput(content).readObject();
+    } catch (Exception e) {
+      throw new RuntimeException("When decodingFromWire", e);
+    }
+
+    return (AggregateRootId) readObj;
   }
 
   @Override
@@ -54,7 +58,7 @@ public class AggregateRootIdCodec implements MessageCodec<AggregateRootId, Aggre
   public String name() {
     // Each codec must have a unique name.
     // This is used to identify a codec when sending a message and for unregistering codecs.
-     return this.getClass().getSimpleName();
+    return this.getClass().getSimpleName();
   }
 
   @Override

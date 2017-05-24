@@ -6,11 +6,12 @@ import crabzilla.model.Event;
 import lombok.NonNull;
 import lombok.Value;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
 @Value
-public class UnitOfWork {
+public class UnitOfWork implements Serializable {
 
   @NonNull
   final UUID unitOfWorkId;

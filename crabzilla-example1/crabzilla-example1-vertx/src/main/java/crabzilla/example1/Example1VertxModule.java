@@ -16,20 +16,26 @@ import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
 import crabzilla.model.*;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.Snapshot;
 import crabzilla.stack.SnapshotReaderFn;
 import crabzilla.stacks.sql.JdbiEventRepository;
-import crabzilla.stacks.vertx.codecs.AggregateRootIdCodec;
-import crabzilla.stacks.vertx.codecs.CommandCodec;
-import crabzilla.stacks.vertx.codecs.EventCodec;
-import crabzilla.stacks.vertx.codecs.UnitOfWorkCodec;
+import crabzilla.stacks.vertx.codecs.fst.AggregateRootIdCodec;
+import crabzilla.stacks.vertx.codecs.fst.CommandCodec;
+import crabzilla.stacks.vertx.codecs.fst.EventCodec;
+import crabzilla.stacks.vertx.codecs.fst.UnitOfWorkCodec;
 import crabzilla.stacks.vertx.verticles.CommandHandlerVerticle;
 import io.vertx.core.Vertx;
+import org.nustaq.serialization.FSTConfiguration;
 import org.skife.jdbi.v2.DBI;
 
 import java.util.Properties;
 
 public class Example1VertxModule extends AbstractModule {
+
+  final Vertx vertx;
+
+  public Example1VertxModule(Vertx vertx) {
+    this.vertx = vertx;
+  }
 
   @Override
   protected void configure() {
@@ -56,12 +62,21 @@ public class Example1VertxModule extends AbstractModule {
 
   @Provides
   @Singleton
-  Vertx vertx(Gson gson) {
-    final Vertx vertx = Vertx.vertx();
-    vertx.eventBus().registerDefaultCodec(AggregateRootId.class, new AggregateRootIdCodec(gson));
-    vertx.eventBus().registerDefaultCodec(Command.class, new CommandCodec(gson));
-    vertx.eventBus().registerDefaultCodec(Event.class, new EventCodec(gson));
-    vertx.eventBus().registerDefaultCodec(UnitOfWork.class, new UnitOfWorkCodec(gson));
+  FSTConfiguration conf() {
+    return FSTConfiguration.createDefaultConfiguration();
+  }
+
+  @Provides
+  @Singleton
+  Vertx vertx(Gson gson, FSTConfiguration fst) {
+    vertx.eventBus().registerDefaultCodec(AggregateRootId.class, new AggregateRootIdCodec(fst));
+    vertx.eventBus().registerDefaultCodec(Command.class, new CommandCodec(fst));
+    vertx.eventBus().registerDefaultCodec(Event.class, new EventCodec(fst));
+    vertx.eventBus().registerDefaultCodec(UnitOfWork.class, new UnitOfWorkCodec(fst));
+//    vertx.eventBus().registerDefaultCodec(AggregateRootId.class, new AggregateRootIdCodec(gson));
+//    vertx.eventBus().registerDefaultCodec(Command.class, new CommandCodec(gson));
+//    vertx.eventBus().registerDefaultCodec(Event.class, new EventCodec(gson));
+//    vertx.eventBus().registerDefaultCodec(UnitOfWork.class, new UnitOfWorkCodec(gson));
     return vertx;
   }
 

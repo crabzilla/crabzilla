@@ -1,25 +1,25 @@
-package crabzilla.stacks.vertx.codecs;
+package crabzilla.stacks.vertx.codecs.gson;
 
 import com.google.gson.Gson;
-import crabzilla.model.Command;
+import crabzilla.model.AggregateRootId;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 
 import javax.inject.Inject;
 
-public class CommandCodec implements MessageCodec<Command, Command> {
+public class AggregateRootIdCodec implements MessageCodec<AggregateRootId, AggregateRootId> {
 
   final Gson gson;
 
   @Inject
-  public CommandCodec(Gson gson) {
+  public AggregateRootIdCodec(Gson gson) {
     this.gson = gson;
   }
 
   @Override
-  public void encodeToWire(Buffer buffer, crabzilla.model.Command command) {
+  public void encodeToWire(Buffer buffer, AggregateRootId aggregateRootId) {
 
-    final String ajJson = gson.toJson(command);
+    final String ajJson = gson.toJson(aggregateRootId, AggregateRootId.class);
 
     // Length of JSON: is NOT characters count
     int length = ajJson.getBytes().length;
@@ -30,7 +30,7 @@ public class CommandCodec implements MessageCodec<Command, Command> {
   }
 
   @Override
-  public crabzilla.model.Command decodeFromWire(int pos, Buffer buffer) {
+  public AggregateRootId decodeFromWire(int pos, Buffer buffer) {
 
     // My custom message starting from this *position* of buffer
     int _pos = pos;
@@ -40,21 +40,21 @@ public class CommandCodec implements MessageCodec<Command, Command> {
 
     // Get JSON string by it`s length
     // Jump 4 because getInt() == 4 bytes
-    final String jsonStr = buffer.getString(_pos+=4, _pos+=length);
+    final String jsonStr = buffer.getString(_pos += 4, _pos += length);
 
-    return gson.fromJson(jsonStr, crabzilla.model.Command.class);
+    return gson.fromJson(jsonStr, AggregateRootId.class);
   }
 
   @Override
-  public crabzilla.model.Command transform(Command command) {
-    return command;
+  public AggregateRootId transform(AggregateRootId AggregateRootId) {
+    return AggregateRootId;
   }
 
   @Override
   public String name() {
     // Each codec must have a unique name.
     // This is used to identify a codec when sending a message and for unregistering codecs.
-     return this.getClass().getSimpleName();
+    return this.getClass().getSimpleName();
   }
 
   @Override

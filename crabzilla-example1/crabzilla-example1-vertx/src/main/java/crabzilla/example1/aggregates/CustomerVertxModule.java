@@ -9,18 +9,18 @@ import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.services.SampleServiceImpl;
 import crabzilla.model.Command;
 import crabzilla.model.CommandValidatorFn;
+import crabzilla.model.Snapshot;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.Snapshot;
 import crabzilla.stack.SnapshotFactory;
 import crabzilla.stack.SnapshotReaderFn;
+import crabzilla.stacks.sql.AggregateRootStackModule;
 import crabzilla.stacks.sql.CaffeinedSnapshotReaderFn;
-import crabzilla.stacks.sql.SnapshotReaderModule;
 
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class CustomerVertxModule extends AbstractModule implements SnapshotReaderModule<Customer> {
+public class CustomerVertxModule extends AbstractModule implements AggregateRootStackModule<Customer> {
 
   @Override
   protected void configure() {
@@ -49,14 +49,16 @@ public class CustomerVertxModule extends AbstractModule implements SnapshotReade
 
   @Provides
   @Singleton
-  Function<Customer, Customer> dependencyInjectionFn(final SampleServiceImpl service) {
-    return (c) -> c.withService(service);
+  public Supplier<CommandValidatorFn> depInjectionFnSupplier(CommandValidatorFn cmdValidator) {
+    return () -> cmdValidator;
   }
+
+  //
 
   @Provides
   @Singleton
-  public Supplier<CommandValidatorFn> depInjectionFnSupplier(CommandValidatorFn cmdValidator) {
-    return () -> cmdValidator;
+  Function<Customer, Customer> dependencyInjectionFn(final SampleServiceImpl service) {
+    return (c) -> c.withService(service);
   }
 
   @Provides

@@ -2,18 +2,14 @@ package crabzilla.stacks.vertx.verticles;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import crabzilla.UnitOfWork;
-import crabzilla.model.AggregateRoot;
-import crabzilla.model.Command;
-import crabzilla.model.CommandHandlerFn;
-import crabzilla.model.CommandValidatorFn;
+import crabzilla.model.*;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.Snapshot;
-import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
 import crabzilla.util.Either;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -30,23 +26,24 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
   final Class<A> aggregateRootClass;
   final SnapshotReaderFn<A> snapshotReaderFn;
-  final CommandHandlerFn<A> handler;
+  final CommandHandlerFn<A> cmdHandler;
   final CommandValidatorFn validatorFn;
-  final EventRepository eventRepository;
   final Cache<String, Snapshot<A>> cache;
+
+  final EventRepository eventRepository;
   final Vertx vertx;
 
   @Inject
   public CommandHandlerVerticle(@NonNull final Class<A> aggregateRootClass,
                                 @NonNull final SnapshotReaderFn<A> snapshotReaderFn,
-                                @NonNull final CommandHandlerFn<A> handler,
+                                @NonNull final CommandHandlerFn<A> cmdHandler,
                                 @NonNull final CommandValidatorFn validatorFn,
                                 @NonNull final EventRepository eventRepository,
                                 @NonNull final Cache<String, Snapshot<A>> cache,
                                 @NonNull final Vertx vertx) {
     this.aggregateRootClass = aggregateRootClass;
     this.snapshotReaderFn = snapshotReaderFn;
-    this.handler = handler;
+    this.cmdHandler = cmdHandler;
     this.validatorFn = validatorFn;
     this.eventRepository = eventRepository;
     this.cache = cache;
@@ -71,12 +68,12 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         val snapshotDataMsg = snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
 
-        if (ifSnapshotIsNotFromCache(snapshotDataMsg)) {
+        if (snapshotDataMsg.hasNewSnapshot()) {
           // then populate the cache
           cache.put(command.getCommandId().toString(), snapshotDataMsg.getSnapshot());
         }
 
-        final Either<Exception, UnitOfWork> either = handler.handle(command, snapshotDataMsg.getSnapshot());
+        final Either<Exception, UnitOfWork> either = cmdHandler.handle(command, snapshotDataMsg.getSnapshot());
 
         val optException = getLeft(either);
 
@@ -87,8 +84,25 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
         val optUnitOfWork = getRight(either);
 
         if (optUnitOfWork.isPresent()) {
+
           eventRepository.append(optUnitOfWork.get());
-          vertx.eventBus().publish("events-projection", optUnitOfWork.get());
+
+          val options = new DeliveryOptions().setCodecName("CommandCodec");
+
+          vertx.eventBus().send("events-projection", optUnitOfWork.get(), options, asyncResult -> {
+
+            log.info("Successful events-projection? {}", asyncResult.succeeded());
+
+            if (asyncResult.succeeded()) {
+              log.info("Result: {}", asyncResult.result().body());
+            } else {
+              // TODO on error send msg to events pooler
+              log.info("Cause: {}", asyncResult.cause());
+              log.info("Message: {}", asyncResult.cause().getMessage());
+            }
+
+          });
+
         }
 
         future.complete(optUnitOfWork.orElse(null));
@@ -101,6 +115,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
         }
         if (result.failed()) {
           log.info("error: {}", result.cause().getMessage());
+          result.cause().printStackTrace();
           request.fail(400, result.cause().getMessage());
         }
 
@@ -108,15 +123,6 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
     });
 
-  }
-
-  /**
-   * Test if snapshot isn't from cache
-   * @param snapshotDataMsg
-   * @return boolean
-  */
-  private boolean ifSnapshotIsNotFromCache(SnapshotMessage<A> snapshotDataMsg) {
-    return !snapshotDataMsg.getLoadedFromEnum().equals(SnapshotMessage.LoadedFromEnum.FROM_CACHE);
   }
 
 }

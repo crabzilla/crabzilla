@@ -34,6 +34,14 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- serialization -->
+
+        <dependency>
+            <groupId>de.ruedigermoeller</groupId>
+            <artifactId>fst</artifactId>
+            <version>2.50</version>
+        </dependency>
+
         <!--Vertx -->
         <dependency>
             <groupId>io.vertx</groupId>

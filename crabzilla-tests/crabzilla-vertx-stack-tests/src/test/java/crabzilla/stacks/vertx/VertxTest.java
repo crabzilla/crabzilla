@@ -14,11 +14,11 @@ import crabzilla.example1.aggregates.customer.*;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.CommandValidatorFn;
+import crabzilla.model.Snapshot;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.Snapshot;
 import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
-import crabzilla.stacks.vertx.codecs.CommandCodec;
+import crabzilla.stacks.vertx.codecs.gson.CommandCodec;
 import crabzilla.stacks.vertx.verticles.CommandHandlerVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -65,7 +65,8 @@ public class VertxTest {
   public void setUp(TestContext context) {
 
     MockitoAnnotations.initMocks(this);
-    Guice.createInjector(Modules.override(new Example1VertxModule()).with(new AbstractModule() {
+    vertx = Vertx.vertx();
+    Guice.createInjector(Modules.override(new Example1VertxModule(vertx)).with(new AbstractModule() {
       @Override
       protected void configure() {
         bind(new TypeLiteral<SnapshotReaderFn<Customer>>() {;}).toInstance(snapshotReaderFn);

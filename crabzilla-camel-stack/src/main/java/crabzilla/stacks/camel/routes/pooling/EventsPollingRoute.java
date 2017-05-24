@@ -1,8 +1,8 @@
 package crabzilla.stacks.camel.routes.pooling;
 
 import crabzilla.model.EventsProjector;
+import crabzilla.model.ProjectionData;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.ProjectionData;
 import lombok.NonNull;
 import org.apache.camel.Predicate;
 import org.apache.camel.builder.RouteBuilder;

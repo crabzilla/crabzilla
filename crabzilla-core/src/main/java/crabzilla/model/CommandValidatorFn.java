@@ -18,8 +18,7 @@ public abstract class CommandValidatorFn {
       mm.invoke(this, command);
       return Optional.empty();
     } catch (Exception e) {
-      e.printStackTrace();
-      return Optional.of(e.getMessage()); // TODO capture messages from domain
+      return Optional.of(e.getMessage()); // TODO single or list ?
     }
 
   }

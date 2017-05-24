@@ -1,7 +1,6 @@
 package crabzilla.model;
 
 import crabzilla.UnitOfWork;
-import crabzilla.stack.Snapshot;
 import crabzilla.util.Either;
 import crabzilla.util.Eithers;
 import crabzilla.util.MultiMethod;

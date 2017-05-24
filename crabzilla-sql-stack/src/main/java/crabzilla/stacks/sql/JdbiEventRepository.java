@@ -6,8 +6,8 @@ import crabzilla.UnitOfWork;
 import crabzilla.Version;
 import crabzilla.model.Command;
 import crabzilla.model.Event;
+import crabzilla.model.ProjectionData;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.ProjectionData;
 import crabzilla.stack.SnapshotData;
 import lombok.NonNull;
 import lombok.val;
@@ -141,7 +141,7 @@ public class JdbiEventRepository implements EventRepository {
                     .bind(AR_ID, id)
                     .bind(AR_NAME, aggregateRootName)
                     .bind(VERSION, version.getValueAsLong())
-                    .map(new SnapshtoDataMapper()).list()
+                    .map(new SnapshotDataMapper()).list()
             );
 
     logger.info("found {} units of work for id {} and version > {}",
@@ -248,7 +248,7 @@ public class JdbiEventRepository implements EventRepository {
   }
 
 
-  class SnapshtoDataMapper implements ResultSetMapper<SnapshotData> {
+  class SnapshotDataMapper implements ResultSetMapper<SnapshotData> {
     @Override
     public SnapshotData map(int i, ResultSet resultSet, StatementContext statementContext) throws SQLException {
       final List<Event> events = gson.fromJson(resultSet.getString(UOW_EVENTS), listTypeToken.getType());

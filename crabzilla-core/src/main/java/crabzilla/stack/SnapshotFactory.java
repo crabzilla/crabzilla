@@ -3,6 +3,8 @@ package crabzilla.stack;
 import crabzilla.Version;
 import crabzilla.model.AggregateRoot;
 import crabzilla.model.Event;
+import crabzilla.model.Snapshot;
+import crabzilla.model.StateTransitionsTracker;
 import lombok.val;
 
 import java.util.List;

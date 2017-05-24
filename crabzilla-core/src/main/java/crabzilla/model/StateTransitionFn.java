@@ -1,9 +1,9 @@
 package crabzilla.model;
 
 import crabzilla.util.MultiMethod;
+import lombok.extern.slf4j.Slf4j;
 
-import java.lang.reflect.InvocationTargetException;
-
+@Slf4j
 public abstract class StateTransitionFn<A extends AggregateRoot> {
 
   private final MultiMethod mm ;
@@ -16,15 +16,9 @@ public abstract class StateTransitionFn<A extends AggregateRoot> {
 
     try {
       return ((A) mm.invoke(this, event, instance));
-    } catch (IllegalAccessException e) {
-      e.printStackTrace();
-    } catch (NoSuchMethodException e) {
-      e.printStackTrace();
-    } catch (InvocationTargetException e) {
-      e.printStackTrace();
+    } catch (Exception e) {
+      throw new RuntimeException("Errors should never happen when applying events", e);
     }
-
-    return instance;
 
   }
 

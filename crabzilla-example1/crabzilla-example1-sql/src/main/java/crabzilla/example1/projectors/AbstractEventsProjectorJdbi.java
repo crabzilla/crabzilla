@@ -2,7 +2,7 @@ package crabzilla.example1.projectors;
 
 import crabzilla.model.Event;
 import crabzilla.model.EventsProjector;
-import crabzilla.stack.ProjectionData;
+import crabzilla.model.ProjectionData;
 import javaslang.Tuple;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

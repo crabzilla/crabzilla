@@ -3,7 +3,11 @@ package crabzilla.stacks.sql;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import crabzilla.model.AggregateRoot;
-import crabzilla.stack.*;
+import crabzilla.model.Snapshot;
+import crabzilla.stack.EventRepository;
+import crabzilla.stack.SnapshotFactory;
+import crabzilla.stack.SnapshotMessage;
+import crabzilla.stack.SnapshotReaderFn;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -45,7 +49,7 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
       return dataFromDb.map(snapshotFactory::createSnapshot).orElseGet(snapshotFactory::getEmptySnapshot);
     });
 
-    if (wasDaoCalled.get()) { // so hopefully all data from db was loaded
+    if (wasDaoCalled.get()) { // hopefully all data was loaded from db
       return new SnapshotMessage<>(cachedSnapshot, LoadedFromEnum.FROM_DB);
     }
 

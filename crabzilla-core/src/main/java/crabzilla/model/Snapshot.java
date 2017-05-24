@@ -1,4 +1,4 @@
-package crabzilla.stack;
+package crabzilla.model;
 
 import crabzilla.Version;
 import lombok.Value;

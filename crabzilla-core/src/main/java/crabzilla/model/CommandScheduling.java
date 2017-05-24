@@ -1,6 +1,4 @@
-package crabzilla.stack;
-
-import crabzilla.model.Command;
+package crabzilla.model;
 
 import java.time.Instant;
 
