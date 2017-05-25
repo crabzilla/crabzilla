@@ -1,6 +1,5 @@
 package crabzilla.example1;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -23,16 +22,17 @@ import crabzilla.example1.aggregates.customer.events.CustomerDeactivated;
 import crabzilla.example1.aggregates.customer.events.DeactivatedCmdScheduled;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
-import crabzilla.model.*;
+import crabzilla.model.AggregateRootId;
+import crabzilla.model.Command;
+import crabzilla.model.Event;
+import crabzilla.model.UnitOfWork;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.SnapshotReaderFn;
 import crabzilla.stack.vertx.codecs.fst.AggregateRootIdCodec;
 import crabzilla.stack.vertx.codecs.fst.CommandCodec;
 import crabzilla.stack.vertx.codecs.fst.EventCodec;
 import crabzilla.stack.vertx.codecs.fst.UnitOfWorkCodec;
 import crabzilla.stack.vertx.gson.RuntimeTypeAdapterFactory;
 import crabzilla.stack.vertx.sql.JdbiEventRepository;
-import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
 import io.vertx.core.Vertx;
 import lombok.val;
 import net.dongliu.gson.GsonJava8TypeAdapterFactory;
@@ -94,17 +94,6 @@ public class Example1VertxModule extends AbstractModule {
   @Singleton
   EventRepository eventRepository(Gson gson, DBI dbi) {
     return new JdbiEventRepository(Customer.class.getSimpleName(), gson, dbi);
-  }
-
-  @Provides
-  @Singleton
-  CommandHandlerVerticle<Customer> handler(SnapshotReaderFn<Customer> snapshotReaderFn,
-                                           CommandHandlerFn<Customer> cmdHandler,
-                                           CommandValidatorFn validatorFn,
-                                           EventRepository eventStore, Vertx vertx,
-                                           Cache<String, Snapshot<Customer>> cache) {
-    return
-      new CommandHandlerVerticle<>(Customer.class, snapshotReaderFn, cmdHandler, validatorFn, eventStore, cache, vertx);
   }
 
   // gson
