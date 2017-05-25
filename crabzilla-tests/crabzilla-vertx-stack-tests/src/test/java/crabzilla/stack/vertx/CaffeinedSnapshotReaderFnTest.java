@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
@@ -144,7 +144,7 @@ public class CaffeinedSnapshotReaderFnTest {
     val cachedSnapshot = new Snapshot<Customer>(cachedInstance, cachedVersion);
     val expectedSnapshot = new Snapshot<Customer>(expectedInstance, expectedVersion);
 
-    val activated_on = LocalDateTime.now();
+    val activated_on = Instant.now();
     val nonCachedHistory = new SnapshotData(new Version(2), asList(new CustomerActivated(reason, activated_on)));
 
     // prepare

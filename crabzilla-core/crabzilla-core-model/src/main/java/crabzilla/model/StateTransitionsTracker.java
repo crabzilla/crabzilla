@@ -28,16 +28,15 @@ public class StateTransitionsTracker<A extends AggregateRoot> {
 
   public StateTransitionsTracker<A> applyEvents(@NonNull List<Event> events) {
     events.forEach(e -> {
-      final A newInstance = applyEventsFn.apply(e, currentState());
+      val newInstance = applyEventsFn.apply(e, currentState());
       stateTransitions.add(new StateTransition<>(newInstance, e));
     });
     return this;
   }
 
-  public StateTransitionsTracker<A> applyEvents(Function<A, List<Event>> function) {
-    val targetInstance = stateTransitions.size() == 0 ? originalInstance : currentState();
-    function.apply(targetInstance);
-    return this;
+  public StateTransitionsTracker<A> applyEvents(@NonNull Function<A, List<Event>> function) {
+    val newEvents = function.apply(currentState());
+    return applyEvents(newEvents);
   }
 
   public List<Event> collectEvents() {
@@ -45,9 +44,12 @@ public class StateTransitionsTracker<A extends AggregateRoot> {
   }
 
   public A currentState() {
-    final A current = stateTransitions.size() == 0 ?
+    val current = stateTransitions.size() == 0 ?
             originalInstance : stateTransitions.get(stateTransitions.size() - 1).newInstance;
-    return dependencyInjectionFn.apply(current);
+    System.out.println("*** before injection = " + current);
+    val injectedCurrent = dependencyInjectionFn.apply(current);
+    System.out.println("*** after injection = " + current);
+    return injectedCurrent ;
   }
 
   public boolean isEmpty() {

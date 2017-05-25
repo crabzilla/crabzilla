@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.function.Supplier;
 
@@ -83,7 +83,7 @@ public class StateTransitionsTrackerTest {
       @DisplayName("when adding an activate customer event")
       public class WhenAddingActivateEvent {
 
-        private CustomerActivated customerActivated = new CustomerActivated("is ok", LocalDateTime.now());
+        private CustomerActivated customerActivated = new CustomerActivated("is ok", Instant.now());
         private Customer expectedCustomer = Customer.of(id, "customer-1", true,
                 customerActivated.getReason());
 
