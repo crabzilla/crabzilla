@@ -1,6 +1,6 @@
 package crabzilla.example1.services;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 public class SampleServiceImpl implements SampleService {
@@ -9,8 +9,8 @@ public class SampleServiceImpl implements SampleService {
     return UUID.randomUUID();
   }
 
-  public LocalDateTime now() {
-    return LocalDateTime.now();
+  public Instant now() {
+    return Instant.now();
   }
 
 }
