@@ -9,8 +9,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.util.Objects.requireNonNull;
-
 public class StateTransitionsTracker<A extends AggregateRoot> {
 
   final A originalInstance;
@@ -44,12 +42,8 @@ public class StateTransitionsTracker<A extends AggregateRoot> {
   }
 
   public A currentState() {
-    val current = stateTransitions.size() == 0 ?
-            originalInstance : stateTransitions.get(stateTransitions.size() - 1).newInstance;
-    System.out.println("*** before injection = " + current);
-    val injectedCurrent = dependencyInjectionFn.apply(current);
-    System.out.println("*** after injection = " + current);
-    return injectedCurrent ;
+    val current = isEmpty() ? originalInstance : stateTransitions.get(stateTransitions.size() - 1).newInstance;
+    return  dependencyInjectionFn.apply(current);
   }
 
   public boolean isEmpty() {
@@ -60,9 +54,7 @@ public class StateTransitionsTracker<A extends AggregateRoot> {
     private final T newInstance;
     private final Event afterThisEvent;
 
-    StateTransition(T newInstance, Event afterThisEvent) {
-      requireNonNull(newInstance);
-      requireNonNull(afterThisEvent);
+    StateTransition(@NonNull T newInstance, @NonNull Event afterThisEvent) {
       this.newInstance = newInstance;
       this.afterThisEvent = afterThisEvent;
     }

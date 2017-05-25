@@ -2,7 +2,8 @@ package crabzilla.model;
 
 import crabzilla.model.util.MultiMethod;
 
-import java.util.Optional;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class CommandValidatorFn {
 
@@ -12,13 +13,13 @@ public abstract class CommandValidatorFn {
     this.mm = MultiMethod.getMultiMethod(this.getClass(), "validate");
   }
 
-  public Optional<String> constraintViolation(Command command) {
+  @SuppressWarnings(value = "unchecked")
+  public List<String> constraintViolations(Command command) {
 
     try {
-      mm.invoke(this, command);
-      return Optional.empty();
+      return (List<String>) mm.invoke(this, command);
     } catch (Exception e) {
-      return Optional.of(e.getMessage()); // TODO single or list ?
+      return Collections.singletonList(e.getMessage());
     }
 
   }

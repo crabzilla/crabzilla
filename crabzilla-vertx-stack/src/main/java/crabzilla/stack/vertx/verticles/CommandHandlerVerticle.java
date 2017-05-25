@@ -59,10 +59,10 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
         log.info("received a command {}", request.body());
 
         val command = request.body();
-        val constraint = validatorFn.constraintViolation(command);
+        val constraints = validatorFn.constraintViolations(command);
 
-        if (constraint.isPresent()) {
-          throw new IllegalArgumentException(constraint.get());
+        if (!constraints.isEmpty()) {
+          throw new IllegalArgumentException(constraints.stream().reduce("", (a,b) -> a + b + "\n"));
         }
 
         val snapshotDataMsg = snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
