@@ -24,7 +24,7 @@ public class StateTransitionsTracker<A extends AggregateRoot> {
     this.dependencyInjectionFn = dependencyInjectionFn;
   }
 
-  public StateTransitionsTracker<A> applyEvents(@NonNull List<Event> events) {
+  private StateTransitionsTracker<A> applyEvents(@NonNull List<Event> events) {
     events.forEach(e -> {
       val newInstance = applyEventsFn.apply(e, currentState());
       stateTransitions.add(new StateTransition<>(newInstance, e));

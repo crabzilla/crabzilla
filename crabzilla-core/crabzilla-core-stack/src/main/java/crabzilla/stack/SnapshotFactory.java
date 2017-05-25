@@ -3,6 +3,7 @@ package crabzilla.stack;
 import crabzilla.model.*;
 import lombok.val;
 
+import javax.inject.Inject;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -15,6 +16,7 @@ public class SnapshotFactory<A extends AggregateRoot> {
   final BiFunction<Event, A, A> stateTransitionFn;
   final Snapshot<A> EMPTY_SNAPSHOT ;
 
+  @Inject
   public SnapshotFactory(Supplier<A> supplier, Function<A, A> dependencyInjectionFn, BiFunction<Event, A, A> stateTransitionFn) {
     this.supplier = supplier;
     this.dependencyInjectionFn = dependencyInjectionFn;
@@ -32,7 +34,7 @@ public class SnapshotFactory<A extends AggregateRoot> {
     val tracker = new StateTransitionsTracker<A>(originalSnapshot.getInstance(),
             stateTransitionFn, dependencyInjectionFn);
 
-    return new Snapshot<>(tracker.applyEvents(newEvents).currentState(), newVersion);
+    return new Snapshot<>(tracker.applyEvents(c -> newEvents).currentState(), newVersion);
   }
 
   public Snapshot<A> getEmptySnapshot() {

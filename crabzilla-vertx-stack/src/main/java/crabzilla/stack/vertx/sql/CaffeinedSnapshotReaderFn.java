@@ -14,6 +14,7 @@ import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static crabzilla.stack.SnapshotMessage.LoadedFromEnum;
@@ -27,6 +28,7 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
   final EventRepository eventRepository;
   final SnapshotFactory<A> snapshotFactory;
 
+  @Inject
   public CaffeinedSnapshotReaderFn(@NonNull Cache<String, Snapshot<A>> cache,
                                    @NonNull EventRepository eventRepository,
                                    @NonNull SnapshotFactory<A> snapshotFactory) {

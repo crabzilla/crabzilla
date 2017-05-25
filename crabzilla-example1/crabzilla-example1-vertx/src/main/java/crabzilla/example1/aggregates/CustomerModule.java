@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
 import crabzilla.example1.aggregates.customer.*;
 import crabzilla.example1.services.SampleServiceImpl;
 import crabzilla.model.CommandHandlerFn;
@@ -16,6 +17,8 @@ import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotFactory;
 import crabzilla.stack.SnapshotReaderFn;
 import crabzilla.stack.vertx.sql.CaffeinedSnapshotReaderFn;
+import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
+import io.vertx.core.Vertx;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -25,7 +28,8 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
 
   @Override
   protected void configure() {
-
+    bind(new TypeLiteral<SnapshotFactory<Customer>>() {;});
+    bind(new TypeLiteral<CaffeinedSnapshotReaderFn<Customer>>() {;});
   }
 
   @Provides
@@ -42,22 +46,9 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
 
   @Provides
   @Singleton
-  public SnapshotFactory<Customer> snapshotFactory(Supplier<Customer> supplier, Supplier<Function<Customer, Customer>> depInjectionFn, BiFunction<Event, Customer, Customer> stateTransFn) {
-    return new SnapshotFactory<>(supplier, depInjectionFn.get(), stateTransFn);
-  }
-
-  @Provides
-  @Singleton
-  public CommandHandlerFn<Customer> cmdHandlerFn(BiFunction<Event, Customer, Customer> stateTransFn, Supplier<Function<Customer, Customer>> depInjectionFn) {
-    return new CustomerCmdHandlerFnJavaslang(stateTransFn, depInjectionFn.get());
-  }
-
-  // dep injection
-
-  @Provides
-  @Singleton
-  public Supplier<Function<Customer, Customer>> depInjectionFnSupplier(Function<Customer, Customer> depInjectionFn) {
-    return () -> depInjectionFn;
+  public CommandHandlerFn<Customer> cmdHandlerFn(Function<Customer, Customer> depInjectionFn,
+                                                 BiFunction<Event, Customer, Customer> stateTransFn) {
+    return new CustomerCmdHandlerFnJavaslang(stateTransFn, depInjectionFn);
   }
 
   @Provides
@@ -66,43 +57,27 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
     return (c) -> c.withService(service);
   }
 
-  // validator
-
-  @Provides
-  @Singleton
-  public Supplier<CommandValidatorFn> cmdValidatorSupplier(CommandValidatorFn cmdValidator) {
-    return () -> cmdValidator;
-  }
-
   @Provides
   @Singleton
   CommandValidatorFn cmdValidator() {
     return new CustomerCommandValidatorFn();
   }
 
-  // snapshotReader
-
   @Provides
   @Singleton
-  public Supplier<SnapshotReaderFn<Customer>> snapshotReaderFn(SnapshotReaderFn<Customer> snapshotReaderFn) {
-    return () -> snapshotReaderFn;
+  CommandHandlerVerticle<Customer> handler(SnapshotReaderFn<Customer> snapshotReaderFn,
+                                           CommandHandlerFn<Customer> cmdHandler,
+                                           CommandValidatorFn validatorFn,
+                                           EventRepository eventStore, Vertx vertx,
+                                           Cache<String, Snapshot<Customer>> cache) {
+    return new CommandHandlerVerticle<>(Customer.class, snapshotReaderFn, cmdHandler, validatorFn, eventStore,
+            cache, vertx);
   }
 
   @Provides
   @Singleton
-  public SnapshotReaderFn<Customer> snapshotReader(final Cache<String, Snapshot<Customer>> cache,
-                                                   final EventRepository eventRepo,
-                                                   final SnapshotFactory<Customer> snapshotFactory) {
-    return new CaffeinedSnapshotReaderFn<>(cache, eventRepo, snapshotFactory);
-  }
-
-  // external
-
-  @Provides
-  @Singleton
-  public Cache<String, Snapshot<Customer>> cache() {
+  Cache<String, Snapshot<Customer>> cache() {
     return Caffeine.newBuilder().build();
   }
 
 }
-
