@@ -8,7 +8,6 @@ import crabzilla.model.*;
 import lombok.val;
 
 import javax.inject.Inject;
-import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -35,9 +34,8 @@ public class CustomerCmdHandlerFn extends CommandHandlerFn<Customer> {
   }
 
   public UnitOfWork handle(CreateActivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
-    val tracker = new StateTransitionsTracker<Customer>(snapshot.getInstance(), stateTransitionFn,
-            dependencyInjectionFn);
-    final List<Event> events = tracker
+    val tracker = new StateTransitionsTracker<Customer>(snapshot.getInstance(), stateTransitionFn, dependencyInjectionFn);
+    val events = tracker
             .applyEvents(customer -> customer.create(cmd.getTargetId(), cmd.getName()))
             .applyEvents(customer -> customer.activate(cmd.getReason()))
             .collectEvents();

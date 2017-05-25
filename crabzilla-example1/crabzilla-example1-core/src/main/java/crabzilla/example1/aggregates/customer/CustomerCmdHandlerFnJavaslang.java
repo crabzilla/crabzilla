@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import javax.inject.Inject;
-import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -65,9 +64,9 @@ public class CustomerCmdHandlerFnJavaslang extends CommandHandlerFn<Customer> {
 
             Case(instanceOf(CreateActivateCustomerCmd.class), (command) -> {
 
-              val tracker = new StateTransitionsTracker<Customer>(targetInstance,
-                      stateTransitionFn, dependencyInjectionFn);
-              final List<Event> events = tracker
+              val tracker = new StateTransitionsTracker<Customer>(targetInstance, stateTransitionFn,
+                      dependencyInjectionFn);
+              val events = tracker
                       .applyEvents(customer -> customer.create(command.getTargetId(), command.getName()))
                       .applyEvents(customer -> customer.activate(command.getReason()))
                       .collectEvents();

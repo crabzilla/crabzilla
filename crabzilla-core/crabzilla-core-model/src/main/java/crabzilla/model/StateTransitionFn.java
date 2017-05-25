@@ -12,6 +12,7 @@ public abstract class StateTransitionFn<A extends AggregateRoot> {
     this.mm = MultiMethod.getMultiMethod(this.getClass(), "on");
   }
 
+  @SuppressWarnings(value = "unchecked")
   public A on(Event event, A instance) {
 
     try {

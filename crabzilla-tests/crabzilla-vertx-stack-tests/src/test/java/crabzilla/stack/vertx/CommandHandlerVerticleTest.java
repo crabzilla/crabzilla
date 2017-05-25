@@ -41,7 +41,7 @@ import org.mockito.MockitoAnnotations;
 import javax.inject.Inject;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Optional;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -110,7 +110,7 @@ public class CommandHandlerVerticleTest {
             new Snapshot<>(new CustomerSupplierFn().get(), new Version(0)),
             SnapshotMessage.LoadedFromEnum.FROM_DB);
 
-    when(validatorFn.constraintViolation(eq(createCustomerCmd))).thenReturn(Optional.empty());
+    when(validatorFn.constraintViolations(eq(createCustomerCmd))).thenReturn(Collections.emptyList());
 
     when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue())))
             .thenReturn(expectedMessage);
@@ -122,7 +122,7 @@ public class CommandHandlerVerticleTest {
 //      System.out.println(asyncResult.failed());
 //      System.out.println(asyncResult.cause().getMessage());
 
-      verify(validatorFn).constraintViolation(eq(createCustomerCmd));
+      verify(validatorFn).constraintViolations(eq(createCustomerCmd));
 
       verify(snapshotReaderFn).getSnapshotMessage(eq(createCustomerCmd.getTargetId().getStringValue()));
 
@@ -160,7 +160,7 @@ public class CommandHandlerVerticleTest {
             new Snapshot<>(new CustomerSupplierFn().get(), new Version(0)),
             SnapshotMessage.LoadedFromEnum.FROM_DB);
 
-    when(validatorFn.constraintViolation(eq(createCustomerCmd))).thenReturn(Optional.of("An error"));
+    when(validatorFn.constraintViolations(eq(createCustomerCmd))).thenReturn(Collections.singletonList("An error"));
 
     when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue())))
             .thenReturn(expectedMessage);
@@ -169,13 +169,13 @@ public class CommandHandlerVerticleTest {
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
-      verify(validatorFn).constraintViolation(eq(createCustomerCmd));
+      verify(validatorFn).constraintViolations(eq(createCustomerCmd));
 
       verifyNoMoreInteractions(validatorFn, snapshotReaderFn, eventRepository);
 
       tc.assertTrue(asyncResult.failed());
 
-      tc.assertEquals("An error", asyncResult.cause().getMessage());
+      tc.assertEquals("An error\n", asyncResult.cause().getMessage());
 
       async.complete();
 
@@ -197,7 +197,7 @@ public class CommandHandlerVerticleTest {
             new Snapshot<>(new CustomerSupplierFn().get(), new Version(0)),
             SnapshotMessage.LoadedFromEnum.FROM_DB);
 
-    when(validatorFn.constraintViolation(eq(createCustomerCmd))).thenReturn(Optional.empty());
+    when(validatorFn.constraintViolations(eq(createCustomerCmd))).thenReturn(Collections.emptyList());
 
     when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue())))
             .thenReturn(expectedMessage);
@@ -209,7 +209,7 @@ public class CommandHandlerVerticleTest {
 //      System.out.println(asyncResult.failed());
 //      System.out.println(asyncResult.cause().getMessage());
 
-      verify(validatorFn).constraintViolation(eq(createCustomerCmd));
+      verify(validatorFn).constraintViolations(eq(createCustomerCmd));
 
       verify(snapshotReaderFn).getSnapshotMessage(eq(createCustomerCmd.getTargetId().getStringValue()));
 

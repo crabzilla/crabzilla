@@ -5,19 +5,18 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import crabzilla.example1.aggregates.customer.Customer;
-import crabzilla.example1.aggregates.customer.CustomerCmdHandlerFnJavaslang;
-import crabzilla.example1.aggregates.customer.CustomerStateTransitionFnJavaslang;
-import crabzilla.example1.aggregates.customer.CustomerSupplierFn;
+import crabzilla.example1.aggregates.customer.*;
 import crabzilla.example1.services.SampleServiceImpl;
-import crabzilla.model.*;
+import crabzilla.model.CommandHandlerFn;
+import crabzilla.model.CommandValidatorFn;
+import crabzilla.model.Event;
+import crabzilla.model.Snapshot;
 import crabzilla.stack.AggregateRootModule;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotFactory;
 import crabzilla.stack.SnapshotReaderFn;
 import crabzilla.stack.vertx.sql.CaffeinedSnapshotReaderFn;
 
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -78,12 +77,7 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
   @Provides
   @Singleton
   CommandValidatorFn cmdValidator() {
-    return new CommandValidatorFn() {
-      @Override
-      public Optional<String> constraintViolation(Command command) {
-        return Optional.empty(); // TODO
-      }
-    };
+    return new CustomerCommandValidatorFn();
   }
 
   // snapshotReader
