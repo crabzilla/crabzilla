@@ -1,4 +1,4 @@
-package crabzilla.stacks.vertx.verticles;
+package crabzilla.stack.vertx.verticles;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import crabzilla.model.*;
@@ -90,14 +90,12 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
           vertx.eventBus().send("events-projection", optUnitOfWork.get(), options, asyncResult -> {
 
-            log.info("Successful events-projection? {}", asyncResult.succeeded());
-
             if (asyncResult.succeeded()) {
-              log.info("Result: {}", asyncResult.result().body());
+              log.info("success result: {}", asyncResult.result().body());
             } else {
               // TODO on error send msg to events pooler
-              log.info("Cause: {}", asyncResult.cause());
-              log.info("Message: {}", asyncResult.cause().getMessage());
+              log.info("error cause: {}", asyncResult.cause());
+              log.info("error message: {}", asyncResult.cause().getMessage());
             }
 
           });

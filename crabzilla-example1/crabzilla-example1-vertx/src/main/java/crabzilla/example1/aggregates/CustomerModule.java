@@ -15,7 +15,7 @@ import crabzilla.stack.AggregateRootModule;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotFactory;
 import crabzilla.stack.SnapshotReaderFn;
-import crabzilla.stacks.vertx.sql.CaffeinedSnapshotReaderFn;
+import crabzilla.stack.vertx.sql.CaffeinedSnapshotReaderFn;
 
 import java.util.Optional;
 import java.util.function.BiFunction;

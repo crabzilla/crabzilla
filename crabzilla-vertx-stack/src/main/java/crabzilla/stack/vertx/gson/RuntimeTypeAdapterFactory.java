@@ -1,4 +1,4 @@
-package crabzilla.stacks.vertx.gson;
+package crabzilla.stack.vertx.gson;
 /*
  * Copyright (C) 2011 Google Inc.
  *

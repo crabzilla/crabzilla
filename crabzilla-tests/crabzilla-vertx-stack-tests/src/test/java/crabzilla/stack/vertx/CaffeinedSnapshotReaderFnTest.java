@@ -1,4 +1,4 @@
-package crabzilla.stacks.vertx;
+package crabzilla.stack.vertx;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -14,7 +14,7 @@ import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotData;
 import crabzilla.stack.SnapshotFactory;
-import crabzilla.stacks.vertx.sql.CaffeinedSnapshotReaderFn;
+import crabzilla.stack.vertx.sql.CaffeinedSnapshotReaderFn;
 import lombok.val;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;

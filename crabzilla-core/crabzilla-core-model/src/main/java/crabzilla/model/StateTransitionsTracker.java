@@ -1,6 +1,7 @@
 package crabzilla.model;
 
 import lombok.NonNull;
+import lombok.val;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,12 @@ public class StateTransitionsTracker<A extends AggregateRoot> {
       final A newInstance = applyEventsFn.apply(e, currentState());
       stateTransitions.add(new StateTransition<>(newInstance, e));
     });
+    return this;
+  }
+
+  public StateTransitionsTracker<A> applyEvents(Function<A, List<Event>> function) {
+    val targetInstance = stateTransitions.size() == 0 ? originalInstance : currentState();
+    function.apply(targetInstance);
     return this;
   }
 

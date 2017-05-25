@@ -1,41 +1,29 @@
-package crabzilla.stacks.vertx.codecs.gson;
+package crabzilla.stack.vertx.codecs.fst;
 
-import com.google.gson.Gson;
 import crabzilla.model.Command;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
+import org.nustaq.serialization.FSTConfiguration;
 
 import javax.inject.Inject;
 
 public class CommandCodec implements MessageCodec<Command, Command> {
 
-  final Gson gson;
+  final FSTConfiguration fst;
 
   @Inject
-  public CommandCodec(Gson gson) {
-    this.gson = gson;
+  public CommandCodec(FSTConfiguration fst) {
+    this.fst = fst;
   }
 
   @Override
-  public void encodeToWire(Buffer buffer, Command command) {
+  public void encodeToWire(Buffer buffer, Command Command) {
 
-    try {
+    final byte barray[] = fst.asByteArray(Command);
 
-      System.out.println("will encode " + command);
-
-      final String ajJson = gson.toJson(command, Command.class);
-
-      // Length of JSON: is NOT characters count
-      int length = ajJson.getBytes().length;
-
-      // Write data into given buffer
-      buffer.appendInt(length);
-      buffer.appendString(ajJson);
-
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
+    // Write data into given buffer
+    buffer.appendInt(barray.length);
+    buffer.appendBytes(barray);
   }
 
   @Override
@@ -49,15 +37,21 @@ public class CommandCodec implements MessageCodec<Command, Command> {
 
     // Get JSON string by it`s length
     // Jump 4 because getInt() == 4 bytes
-    final String jsonStr = buffer.getString(_pos += 4, _pos += length);
+    final byte[] content = buffer.getBytes(_pos += 4, _pos += length);
+    Object readObj;
 
-    return gson.fromJson(jsonStr, Command.class);
+    try {
+      readObj = fst.getObjectInput(content).readObject();
+    } catch (Exception e) {
+      throw new RuntimeException("When decodingFromWire", e);
+    }
 
+    return (Command) readObj;
   }
 
   @Override
-  public Command transform(Command command) {
-    return command;
+  public Command transform(Command Command) {
+    return Command;
   }
 
   @Override

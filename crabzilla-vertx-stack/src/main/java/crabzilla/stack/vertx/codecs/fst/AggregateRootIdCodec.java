@@ -1,25 +1,25 @@
-package crabzilla.stacks.vertx.codecs.fst;
+package crabzilla.stack.vertx.codecs.fst;
 
-import crabzilla.model.Event;
+import crabzilla.model.AggregateRootId;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 import org.nustaq.serialization.FSTConfiguration;
 
 import javax.inject.Inject;
 
-public class EventCodec implements MessageCodec<Event, Event> {
+public class AggregateRootIdCodec implements MessageCodec<AggregateRootId, AggregateRootId> {
 
   final FSTConfiguration fst;
 
   @Inject
-  public EventCodec(FSTConfiguration fst) {
+  public AggregateRootIdCodec(FSTConfiguration fst) {
     this.fst = fst;
   }
 
   @Override
-  public void encodeToWire(Buffer buffer, Event Event) {
+  public void encodeToWire(Buffer buffer, AggregateRootId aggregateRootId) {
 
-    final byte barray[] = fst.asByteArray(Event);
+    final byte barray[] = fst.asByteArray(aggregateRootId);
 
     // Write data into given buffer
     buffer.appendInt(barray.length);
@@ -27,7 +27,7 @@ public class EventCodec implements MessageCodec<Event, Event> {
   }
 
   @Override
-  public Event decodeFromWire(int pos, Buffer buffer) {
+  public AggregateRootId decodeFromWire(int pos, Buffer buffer) {
 
     // My custom message starting from this *position* of buffer
     int _pos = pos;
@@ -46,12 +46,12 @@ public class EventCodec implements MessageCodec<Event, Event> {
       throw new RuntimeException("When decodingFromWire", e);
     }
 
-    return (Event) readObj;
+    return (AggregateRootId) readObj;
   }
 
   @Override
-  public Event transform(Event Event) {
-    return Event;
+  public AggregateRootId transform(AggregateRootId AggregateRootId) {
+    return AggregateRootId;
   }
 
   @Override

@@ -1,4 +1,4 @@
-package crabzilla.stacks.vertx.sql;
+package crabzilla.stack.vertx.sql;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

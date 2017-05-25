@@ -1,4 +1,4 @@
-package crabzilla.stacks.vertx.codecs.gson;
+package crabzilla.stack.vertx.codecs.gson;
 
 import com.google.gson.Gson;
 import crabzilla.model.Event;

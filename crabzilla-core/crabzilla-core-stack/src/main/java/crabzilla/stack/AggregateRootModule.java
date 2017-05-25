@@ -9,14 +9,11 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-// except the first,  all next Supplier methods are to force submodules to provide these suppliers
 public interface AggregateRootModule<A extends AggregateRoot> {
 
   Supplier<A> supplier() ;
 
   BiFunction<Event, A, A> stateTransitionFn() ;
-
-  Supplier<Function<A, A>> depInjectionFnSupplier(final Function<A, A> depInjectionFn);
 
   SnapshotFactory<A> snapshotFactory(Supplier<A> supplier,
                                      Supplier<Function<A, A>> depInjectionFn,
@@ -24,6 +21,10 @@ public interface AggregateRootModule<A extends AggregateRoot> {
 
   CommandHandlerFn<A> cmdHandlerFn(final BiFunction<Event, A, A> stateTransFn,
                                    final Supplier<Function<A, A>> depInjectionFn) ;
+
+  // next Supplier methods are only a way to force submodules to provide these suppliers results
+
+  Supplier<Function<A, A>> depInjectionFnSupplier(final Function<A, A> depInjectionFn);
 
   Supplier<CommandValidatorFn> cmdValidatorSupplier(CommandValidatorFn cmdValidator);
 

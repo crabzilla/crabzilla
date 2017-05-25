@@ -1,4 +1,4 @@
-package crabzilla.stacks.vertx.verticles;
+package crabzilla.stack.vertx.verticles;
 
 public class EventsProjectionVerticle {
 }

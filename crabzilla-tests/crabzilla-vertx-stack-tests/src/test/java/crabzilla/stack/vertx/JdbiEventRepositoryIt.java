@@ -1,4 +1,4 @@
-package crabzilla.stacks.vertx;
+package crabzilla.stack.vertx;
 
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
@@ -14,7 +14,7 @@ import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
-import crabzilla.stacks.vertx.sql.JdbiEventRepository;
+import crabzilla.stack.vertx.sql.JdbiEventRepository;
 import io.vertx.core.Vertx;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
