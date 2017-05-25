@@ -32,7 +32,7 @@ public class SnapshotFactory<A extends AggregateRoot> {
     val tracker = new StateTransitionsTracker<A>(originalSnapshot.getInstance(),
             stateTransitionFn, dependencyInjectionFn);
 
-    return new Snapshot<>(tracker.applyEvents(newEvents).currentState(), newVersion);
+    return new Snapshot<>(tracker.applyEvents(c -> newEvents).currentState(), newVersion);
   }
 
   public Snapshot<A> getEmptySnapshot() {

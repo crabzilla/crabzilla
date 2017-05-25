@@ -13,9 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.function.Supplier;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("A StateTransitionsTracker")
@@ -28,7 +29,6 @@ public class StateTransitionsTrackerTest {
   @BeforeEach
   void instantiate() {
     MockitoAnnotations.initMocks(this);
-
   }
 
   @Test
@@ -60,12 +60,12 @@ public class StateTransitionsTrackerTest {
     public class WhenAddingNewEvent {
 
       final CustomerId id = new CustomerId("c1");
-      private CustomerCreated createdEvent = new CustomerCreated(id, "customer-1");
+      private CustomerCreated customerCreated = new CustomerCreated(id, "customer-1");
       private Customer expectedCustomer = Customer.of(id, "customer-1", false, null);
 
       @BeforeEach
       void apply_create_event() {
-        tracker.applyEvents(Arrays.asList(createdEvent));
+        tracker.applyEvents(c -> singletonList(customerCreated));
       }
 
       @Test
@@ -75,7 +75,7 @@ public class StateTransitionsTrackerTest {
 
       @Test
       void has_only_create_event() {
-        assertThat(tracker.collectEvents()).contains(createdEvent);
+        assertThat(tracker.collectEvents()).contains(customerCreated);
         assertThat(tracker.collectEvents().size()).isEqualTo(1);
       }
 
@@ -89,7 +89,7 @@ public class StateTransitionsTrackerTest {
 
         @BeforeEach
         void apply_activate_event() {
-          tracker.applyEvents(Arrays.asList(customerActivated));
+          tracker.applyEvents(c -> singletonList(customerActivated));
         }
 
         @Test
@@ -99,13 +99,48 @@ public class StateTransitionsTrackerTest {
 
         @Test
         void has_both_create_and_activated_evenst() {
-          assertThat(tracker.collectEvents().get(0)).isEqualTo(createdEvent);
+          assertThat(tracker.collectEvents().get(0)).isEqualTo(customerCreated);
           assertThat(tracker.collectEvents().get(1)).isEqualTo(customerActivated);
           assertThat(tracker.collectEvents().size()).isEqualTo(2);
         }
 
       }
 
+    }
+
+  }
+
+  @Nested
+  @DisplayName("when adding both create and activate events")
+  public class WhenAddingCreateActivateEvent {
+
+    final String IS_OK = "is ok";
+
+    final CustomerId id = new CustomerId("c1");
+    private CustomerCreated customerCreated = new CustomerCreated(id, "customer-1");
+    private CustomerActivated customerActivated = new CustomerActivated(IS_OK, Instant.now());
+    private Customer expectedCustomer = Customer.of(id, "customer-1", true, IS_OK);
+
+    @BeforeEach
+    void instantiate() {
+      // given
+      tracker = new StateTransitionsTracker<>(supplier.get(), new CustomerStateTransitionFnJavaslang(), customer -> customer);
+      // when
+      tracker.applyEvents(c -> asList(customerCreated, customerActivated));
+    }
+
+    // then
+
+    @Test
+    void has_new_state() {
+      assertThat(tracker.currentState()).isEqualTo(expectedCustomer);
+    }
+
+    @Test
+    void has_both_event() {
+      assertThat(tracker.collectEvents()).contains(customerCreated);
+      assertThat(tracker.collectEvents()).contains(customerActivated);
+      assertThat(tracker.collectEvents().size()).isEqualTo(2);
     }
 
   }
