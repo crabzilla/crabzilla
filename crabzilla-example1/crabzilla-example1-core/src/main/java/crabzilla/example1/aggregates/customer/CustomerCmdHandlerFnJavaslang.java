@@ -68,8 +68,8 @@ public class CustomerCmdHandlerFnJavaslang extends CommandHandlerFn<Customer> {
               val tracker = new StateTransitionsTracker<Customer>(targetInstance,
                       stateTransitionFn, dependencyInjectionFn);
               final List<Event> events = tracker
-                      .applyEvents(targetInstance.create((CustomerId) cmd.getTargetId(), command.getName()))
-                      .applyEvents(tracker.currentState().activate(command.getReason()))
+                      .applyEvents(customer -> customer.create(command.getTargetId(), command.getName()))
+                      .applyEvents(customer -> customer.activate(command.getReason()))
                       .collectEvents();
               return of(cmd, targetVersion.nextVersion(), events);
             }),

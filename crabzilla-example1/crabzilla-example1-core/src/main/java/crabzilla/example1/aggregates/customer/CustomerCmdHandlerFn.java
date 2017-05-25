@@ -38,8 +38,8 @@ public class CustomerCmdHandlerFn extends CommandHandlerFn<Customer> {
     val tracker = new StateTransitionsTracker<Customer>(snapshot.getInstance(), stateTransitionFn,
             dependencyInjectionFn);
     final List<Event> events = tracker
-            .applyEvents(snapshot.getInstance().create(cmd.getTargetId(), cmd.getName()))
-            .applyEvents(tracker.currentState().activate(cmd.getReason()))
+            .applyEvents(customer -> customer.create(cmd.getTargetId(), cmd.getName()))
+            .applyEvents(customer -> customer.activate(cmd.getReason()))
             .collectEvents();
     return of(cmd, snapshot.nextVersion(), events);
   }
