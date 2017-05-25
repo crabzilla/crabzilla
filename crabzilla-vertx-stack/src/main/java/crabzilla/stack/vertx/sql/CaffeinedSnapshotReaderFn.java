@@ -40,16 +40,16 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
 
     logger.debug("cache.get(id)", id);
 
-    val wasDaoCalled = new AtomicBoolean(false);
+    val wasEventRepoCalled = new AtomicBoolean(false);
 
     val cachedSnapshot = cache.get(id, s -> {
-      logger.debug("cache.getInstance(id) does not contain anything for this id. Will have to search on eventRepository", id);
+      logger.debug("cache.getInstance(id) does not contain anything for id {}. Will have to search on eventRepository", id);
       val dataFromDb = eventRepository.getAll(id);
-      wasDaoCalled.set(true);
+      wasEventRepoCalled.set(true);
       return dataFromDb.map(snapshotFactory::createSnapshot).orElseGet(snapshotFactory::getEmptySnapshot);
     });
 
-    if (wasDaoCalled.get()) { // hopefully all data was loaded from db
+    if (wasEventRepoCalled.get()) { // hopefully all data was loaded from db
       return new SnapshotMessage<>(cachedSnapshot, LoadedFromEnum.FROM_DB);
     }
 
