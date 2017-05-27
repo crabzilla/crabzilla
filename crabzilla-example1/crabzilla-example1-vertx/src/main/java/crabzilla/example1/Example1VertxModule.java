@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -27,12 +28,13 @@ import crabzilla.model.Command;
 import crabzilla.model.Event;
 import crabzilla.model.UnitOfWork;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.vertx.codecs.fst.AggregateRootIdCodec;
-import crabzilla.stack.vertx.codecs.fst.CommandCodec;
-import crabzilla.stack.vertx.codecs.fst.EventCodec;
-import crabzilla.stack.vertx.codecs.fst.UnitOfWorkCodec;
+import crabzilla.stack.vertx.CommandHandlingResponse;
+import crabzilla.stack.vertx.codecs.fst.*;
 import crabzilla.stack.vertx.gson.RuntimeTypeAdapterFactory;
 import crabzilla.stack.vertx.sql.JdbiEventRepository;
+import crabzilla.stack.vertx.verticles.EventsProjectionVerticle;
+import io.vertx.circuitbreaker.CircuitBreaker;
+import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
 import lombok.val;
 import net.dongliu.gson.GsonJava8TypeAdapterFactory;
@@ -56,6 +58,7 @@ public class Example1VertxModule extends AbstractModule {
     install(new DatabaseModule());
 
     bind(SampleService.class).to(SampleServiceImpl.class).asEagerSingleton();
+    bind(EventsProjectionVerticle.class).asEagerSingleton();
 
     final Config config = ConfigFactory.load();
     final Properties props =  new Properties();
@@ -79,6 +82,7 @@ public class Example1VertxModule extends AbstractModule {
   @Provides
   @Singleton
   Vertx vertx(Gson gson, FSTConfiguration fst) {
+    vertx.eventBus().registerDefaultCodec(CommandHandlingResponse.class, new GenericCodec<>(fst));
     vertx.eventBus().registerDefaultCodec(AggregateRootId.class, new AggregateRootIdCodec(fst));
     vertx.eventBus().registerDefaultCodec(Command.class, new CommandCodec(fst));
     vertx.eventBus().registerDefaultCodec(Event.class, new EventCodec(fst));
@@ -88,6 +92,21 @@ public class Example1VertxModule extends AbstractModule {
 //    vertx.eventBus().registerDefaultCodec(Event.class, new EventCodec(gson));
 //    vertx.eventBus().registerDefaultCodec(UnitOfWork.class, new UnitOfWorkCodec(gson));
     return vertx;
+  }
+
+  @Provides
+  @Singleton
+  @Named("cmd-handler")
+  CircuitBreaker circuitBreaker() {
+    return CircuitBreaker.create("cmd-handler-circuit-breaker", vertx,
+            new CircuitBreakerOptions()
+                    .setMaxFailures(5) // number SUCCESS failure before opening the circuit
+                    .setTimeout(2000) // consider a failure if the operation does not succeed in time
+                    .setFallbackOnFailure(true) // do we call the fallback on failure
+                    .setResetTimeout(10000) // time spent in open state before attempting to re-try
+    );
+    //.fallback((error) -> );
+
   }
 
   @Provides

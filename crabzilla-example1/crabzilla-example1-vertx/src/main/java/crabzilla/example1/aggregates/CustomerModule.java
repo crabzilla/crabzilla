@@ -18,8 +18,10 @@ import crabzilla.stack.SnapshotFactory;
 import crabzilla.stack.SnapshotReaderFn;
 import crabzilla.stack.vertx.sql.CaffeinedSnapshotReaderFn;
 import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
+import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Vertx;
 
+import javax.inject.Named;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -29,7 +31,8 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
   @Override
   protected void configure() {
     bind(new TypeLiteral<SnapshotFactory<Customer>>() {;});
-    bind(new TypeLiteral<CaffeinedSnapshotReaderFn<Customer>>() {;});
+    bind(new TypeLiteral<SnapshotReaderFn<Customer>>() {;})
+            .to(new TypeLiteral<CaffeinedSnapshotReaderFn<Customer>>() {;});
   }
 
   @Provides
@@ -51,6 +54,8 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
     return new CustomerCmdHandlerFnJavaslang(stateTransFn, depInjectionFn);
   }
 
+  // outside the interface but necessary to run
+
   @Provides
   @Singleton
   Function<Customer, Customer> depInjectionFn(final SampleServiceImpl service) {
@@ -69,9 +74,10 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
                                            CommandHandlerFn<Customer> cmdHandler,
                                            CommandValidatorFn validatorFn,
                                            EventRepository eventStore, Vertx vertx,
-                                           Cache<String, Snapshot<Customer>> cache) {
+                                           Cache<String, Snapshot<Customer>> cache,
+                                           @Named("cmd-handler") CircuitBreaker circuitBreaker) {
     return new CommandHandlerVerticle<>(Customer.class, snapshotReaderFn, cmdHandler, validatorFn, eventStore,
-            cache, vertx);
+            cache, vertx, circuitBreaker);
   }
 
   @Provides

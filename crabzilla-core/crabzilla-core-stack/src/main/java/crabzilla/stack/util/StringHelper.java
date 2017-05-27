@@ -10,11 +10,15 @@ import java.util.regex.Pattern;
 public class StringHelper {
 
 	static final String COMMAND_HANDLER = "handle-cmd-";
+	static final String EVENTS_HANDLER = "%s-handle-events";
 
 	public  String commandHandlerId(Class<? extends AggregateRoot> aggregateRootClass) {
 		return COMMAND_HANDLER + camelCaseToSnakeCase(aggregateRootClass.getSimpleName());
 	}
 
+	public  String eventsHandlerId(String bcName) {
+		return String.format(EVENTS_HANDLER, bcName);
+	}
 
 	public String aggregateRootId(Class<? extends AggregateRoot> aggregateRootClass) {
 		return camelCaseToSnakeCase(aggregateRootClass.getSimpleName());

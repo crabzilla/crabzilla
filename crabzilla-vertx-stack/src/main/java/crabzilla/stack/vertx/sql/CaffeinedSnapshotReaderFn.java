@@ -68,13 +68,13 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
 
     if (nonCachedSnapshotData.isPresent()) {
 
-      val resultingSnapshotData = nonCachedSnapshotData.get();
+      val nonCached = nonCachedSnapshotData.get();
 
       logger.debug("id {} found {} pending events. Last version is now {}",
-              id, resultingSnapshotData.getEvents().size(), resultingSnapshotData.getVersion());
+              id, nonCached.getEvents().size(), nonCached.getVersion());
 
-      val resultingSnapshot = snapshotFactory.createSnapshot(cachedSnapshot, resultingSnapshotData.getVersion(),
-              resultingSnapshotData.getEvents());
+      val resultingSnapshot = snapshotFactory.applyNewEventsToSnapshot(cachedSnapshot, nonCached.getVersion(),
+              nonCached.getEvents());
 
       return new SnapshotMessage<>(resultingSnapshot, LoadedFromEnum.FROM_BOTH);
 

@@ -26,13 +26,21 @@
             <artifactId>crabzilla-core-stack</artifactId>
         </dependency>
 
-        <!-- util -->
+        <!-- provided -->
 
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.derive4j</groupId>
+            <artifactId>derive4j</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- util -->
 
         <dependency>
             <groupId>javax.inject</groupId>
@@ -43,6 +51,7 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
+
 
         <!-- cache -->
 

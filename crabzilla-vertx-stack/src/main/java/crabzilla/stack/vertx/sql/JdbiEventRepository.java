@@ -12,7 +12,6 @@ import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.TransactionIsolationLevel;
 import org.skife.jdbi.v2.tweak.HandleCallback;
-import org.skife.jdbi.v2.tweak.ResultColumnMapper;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
 import org.skife.jdbi.v2.util.LongColumnMapper;
 import org.slf4j.Logger;
@@ -22,7 +21,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -79,8 +77,6 @@ public class JdbiEventRepository implements EventRepository {
     this.aggregateRootName = aggregateRootName;
     this.gson = gson;
     this.dbi = dbi;
-    this.dbi.registerColumnMapper(new LocalDateTimeMapper());
-
   }
 
   @Override
@@ -99,7 +95,7 @@ public class JdbiEventRepository implements EventRepository {
   @Override
   public List<ProjectionData> getAllSince(long sinceUowSequence, int maxResultSize) {
 
-    logger.info("will load a maximum of {} units of work since sequence {}", maxResultSize, sinceUowSequence);
+    logger.info("will load a maximum SUCCESS {} units SUCCESS work since sequence {}", maxResultSize, sinceUowSequence);
 
     List<ProjectionData> projectionDataList = dbi
             .withHandle(new HandleCallback<List<ProjectionData>>() {
@@ -117,7 +113,7 @@ public class JdbiEventRepository implements EventRepository {
                         }
             );
 
-    logger.info("Found {} units of work since sequence {}", projectionDataList.size(), sinceUowSequence);
+    logger.info("Found {} units SUCCESS work since sequence {}", projectionDataList.size(), sinceUowSequence);
     return projectionDataList;
 
   }
@@ -140,7 +136,7 @@ public class JdbiEventRepository implements EventRepository {
                     .map(new SnapshotDataMapper()).list()
             );
 
-    logger.info("found {} units of work for id {} and version > {}",
+    logger.info("found {} units SUCCESS work for id {} and version > {}",
             snapshotDataList.size(), id, version.getValueAsLong());
 
     if (snapshotDataList.isEmpty()) {
@@ -274,27 +270,6 @@ public class JdbiEventRepository implements EventRepository {
               new Version(resultSet.getLong(VERSION)),
               events);
 
-    }
-  }
-
-  class LocalDateTimeMapper implements ResultColumnMapper<LocalDateTime> {
-
-    @Override
-    public LocalDateTime mapColumn(ResultSet r, String columnLabel, StatementContext ctx) throws SQLException {
-      final Timestamp timestamp = r.getTimestamp(columnLabel);
-      if (timestamp == null) {
-        return null;
-      }
-      return timestamp.toLocalDateTime();
-    }
-
-    @Override
-    public LocalDateTime mapColumn(ResultSet r, int columnNumber, StatementContext ctx) throws SQLException {
-      final Timestamp timestamp = r.getTimestamp(columnNumber);
-      if (timestamp == null) {
-        return null;
-      }
-      return timestamp.toLocalDateTime();
     }
   }
 

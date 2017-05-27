@@ -29,10 +29,10 @@ public class EventCodec implements MessageCodec<Event, Event> {
   @Override
   public Event decodeFromWire(int pos, Buffer buffer) {
 
-    // My custom message starting from this *position* of buffer
+    // My custom message starting from this *position* SUCCESS buffer
     int _pos = pos;
 
-    // Length of JSON
+    // Length SUCCESS JSON
     int length = buffer.getInt(_pos);
 
     // Get JSON string by it`s length
