@@ -21,12 +21,10 @@ import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.example1.aggregates.customer.events.CustomerDeactivated;
 import crabzilla.example1.aggregates.customer.events.DeactivatedCmdScheduled;
+import crabzilla.example1.projectors.Example1EventsProjectorJooq;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
-import crabzilla.model.AggregateRootId;
-import crabzilla.model.Command;
-import crabzilla.model.Event;
-import crabzilla.model.UnitOfWork;
+import crabzilla.model.*;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.vertx.CommandHandlingResponse;
 import crabzilla.stack.vertx.codecs.fst.*;
@@ -38,9 +36,18 @@ import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
 import lombok.val;
 import net.dongliu.gson.GsonJava8TypeAdapterFactory;
+import org.jooq.Configuration;
+import org.jooq.ConnectionProvider;
+import org.jooq.SQLDialect;
+import org.jooq.TransactionProvider;
+import org.jooq.conf.Settings;
+import org.jooq.impl.DataSourceConnectionProvider;
+import org.jooq.impl.DefaultConfiguration;
+import org.jooq.impl.DefaultTransactionProvider;
 import org.nustaq.serialization.FSTConfiguration;
 import org.skife.jdbi.v2.DBI;
 
+import javax.sql.DataSource;
 import java.util.Properties;
 
 public class Example1VertxModule extends AbstractModule {
@@ -113,6 +120,28 @@ public class Example1VertxModule extends AbstractModule {
   @Singleton
   EventRepository eventRepository(Gson gson, DBI dbi) {
     return new JdbiEventRepository(Customer.class.getSimpleName(), gson, dbi);
+  }
+
+  @Provides
+  @Singleton
+  EventsProjector eventsProjector(Gson gson, Configuration jooq) {
+    return new Example1EventsProjectorJooq("example1", jooq) ;
+  }
+
+  @Provides
+  @Singleton
+  Configuration cfg(DataSource ds) {
+    DefaultConfiguration cfg = new DefaultConfiguration();
+//    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+//    cfg.set(() -> new QuerySniper(executor, dbQueryTimeoutMs));
+    cfg.set(ds);
+    cfg.set(SQLDialect.MYSQL);
+    Settings settings = new Settings();
+    cfg.setSettings(settings);
+    ConnectionProvider cp = new DataSourceConnectionProvider(ds);
+    TransactionProvider tp = new DefaultTransactionProvider(cp);
+    cfg.setTransactionProvider(tp);
+    return cfg;
   }
 
   // gson
