@@ -5,8 +5,9 @@ import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmdValidato
 import crabzilla.model.CommandValidatorFn;
 import lombok.val;
 
-import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.emptyList;
 
 public class CustomerCommandValidatorFn extends CommandValidatorFn {
 
@@ -14,7 +15,7 @@ public class CustomerCommandValidatorFn extends CommandValidatorFn {
 
       val either = new CreateCustomerCmdValidator().validate(cmd).toEither();
 
-      return either.isRight() ? Collections.emptyList() : either.getLeft().toJavaList();
+      return either.isRight() ? emptyList() : either.getLeft().toJavaList();
 
     }
 

@@ -26,10 +26,15 @@ public class SnapshotFactory<A extends AggregateRoot> {
 
   public Snapshot<A> createSnapshot(SnapshotData snapshotData) {
 
-    return createSnapshot(EMPTY_SNAPSHOT, snapshotData.getVersion(), snapshotData.getEvents());
+    return applyNewEventsToSnapshot(EMPTY_SNAPSHOT, snapshotData.getVersion(), snapshotData.getEvents());
   }
 
-  public Snapshot<A> createSnapshot(Snapshot<A> originalSnapshot, Version newVersion, List<Event> newEvents) {
+  public Snapshot<A> applyNewEventsToSnapshot(Snapshot<A> originalSnapshot, Version newVersion, List<Event> newEvents) {
+
+    if (originalSnapshot.getVersion().getValueAsLong() >= newVersion.getValueAsLong()) {
+      throw new RuntimeException(String.format("Cannot upgrade to version %s since my version is %s",
+              newVersion, originalSnapshot.getVersion()));
+    }
 
     val tracker = new StateTransitionsTracker<A>(originalSnapshot.getInstance(),
             stateTransitionFn, dependencyInjectionFn);

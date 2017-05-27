@@ -8,13 +8,13 @@ import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.model.UnitOfWork;
 import crabzilla.stack.vertx.codecs.gson.CommandCodec;
 import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
+import crabzilla.stack.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.logging.SLF4JLogDelegateFactory;
-import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -30,7 +30,9 @@ import static java.lang.System.setProperty;
 public class Example1VertxLauncher {
 
   @Inject
-  CommandHandlerVerticle<Customer> comdVerticle;
+  CommandHandlerVerticle<Customer> cmdVerticle;
+  @Inject
+  EventsProjectionVerticle projectionVerticle;
 
   @Inject
   Vertx vertx;
@@ -40,11 +42,9 @@ public class Example1VertxLauncher {
 
   public static void main(String args[]) throws InterruptedException {
 
-    final Example1VertxLauncher launcher = new Example1VertxLauncher();
-
-    ClusterManager mgr = new HazelcastClusterManager();
-
-    VertxOptions options = new VertxOptions().setClusterManager(mgr);
+    val launcher = new Example1VertxLauncher();
+    val clusterManager = new HazelcastClusterManager();
+    val options = new VertxOptions().setClusterManager(clusterManager);
 
     Vertx.clusteredVertx(options, res -> {
 
@@ -52,20 +52,21 @@ public class Example1VertxLauncher {
 
         Vertx vertx = res.result();
         EventBus eventBus = vertx.eventBus();
-        System.out.println("We now have a clustered event bus: " + eventBus);
+        log.info("We now have a clustered event bus: " + eventBus);
 
         setProperty (LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory.class.getName ());
         LoggerFactory.getLogger (LoggerFactory.class); // Required for Logback to work in Vertx
 
         Guice.createInjector(new Example1VertxModule(vertx)).injectMembers(launcher);
 
-        launcher.vertx.deployVerticle(launcher.comdVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
+        launcher.vertx.deployVerticle(launcher.cmdVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
+        launcher.vertx.deployVerticle(launcher.projectionVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
 
         // a test
         launcher.postNewCustomerJustForTest();
 
       } else {
-        System.out.println("Failed: " + res.cause());
+        log.error("Failed: ", res.cause());
       }
     });
 
@@ -74,9 +75,7 @@ public class Example1VertxLauncher {
   private void postNewCustomerJustForTest() {
 
     val customerId = new CustomerId(UUID.randomUUID().toString());
-
-    val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "customer2");
-
+    val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "a good customer");
     val options = new DeliveryOptions().setCodecName(new CommandCodec(gson).name());
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {

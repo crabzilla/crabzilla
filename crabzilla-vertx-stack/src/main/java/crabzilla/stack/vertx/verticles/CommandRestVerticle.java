@@ -20,7 +20,7 @@ public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVertic
   @Override
   public void start() throws Exception {
 
-    vertx.createHttpServer()
+      vertx.createHttpServer()
       .requestHandler(httpRequest -> {
         System.out.println("----> " + LocalDateTime.now() + httpRequest.getHeader("User-Agent"));
         vertx.eventBus().send("hello-input", httpRequest.getParam("name") + " " + LocalDateTime.now(), response -> {
