@@ -75,7 +75,7 @@
         </dependency>
         <dependency>
             <groupId>org.jdbi</groupId>
-            <artifactId>jdbi3</artifactId>
+            <artifactId>jdbi</artifactId>
         </dependency>
 
     </dependencies>
