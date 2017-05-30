@@ -79,8 +79,10 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
         }
 
         circuitBreaker.fallback(throwable -> {
+
                           log.error("Fallback for command " + command.getCommandId(), throwable);
                           return FALLBACK(command.getCommandId());
+
                     }).execute(uowFuture2 -> {
 
           val snapshotDataMsg = snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
@@ -107,10 +109,9 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
           }
 
           val uow = optUnitOfWork.get();
+          val uowSequence = eventRepository.append(uow);
 
-          eventRepository.append(uow);
-
-          uowFuture2.complete(SUCCESS(uow));
+          uowFuture2.complete(SUCCESS(uow, uowSequence));
 
         }).setHandler( (AsyncResult<Object> ar2) -> {
 
@@ -119,11 +120,15 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
             // TODO to use another circuit breaker for events publishing
             val resp = (CommandHandlingResponse) ar2.result();
             if (resp.getResult().equals(RESULT.SUCCESS)) {
-              vertx.eventBus().publish(eventsHandlerId("example1"), resp.getUnitOfWork().get(), uowOptions);
+              val uow = resp.getUnitOfWork().get();
+              val uowSequence = resp.getUowSequence().get();
+              val projectionData =
+                      new ProjectionData(uow.getUnitOfWorkId().toString(), uowSequence,
+                              uow.getTargetId().getStringValue(), uow.getEvents());
+              vertx.eventBus().publish(eventsHandlerId("example1"), projectionData, uowOptions);
             }
             request.reply(ar2.result());
-          }
-          if (ar2.failed()) {
+          } else {
             log.info("error cause: {}", ar2.cause());
             log.info("error message: {}", ar2.cause().getMessage());
             ar2.cause().printStackTrace();
@@ -137,8 +142,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
         if (ar1.succeeded()) {
           log.info("success: {}", ar1.result());
           request.reply(ar1.result());
-        }
-        if (ar1.failed()) {
+        } else {
           log.info("error cause: {}", ar1.cause());
           log.info("error message: {}", ar1.cause().getMessage());
           ar1.cause().printStackTrace();

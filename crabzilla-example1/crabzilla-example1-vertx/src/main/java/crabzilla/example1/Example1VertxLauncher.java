@@ -5,7 +5,6 @@ import com.google.inject.Guice;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
-import crabzilla.model.UnitOfWork;
 import crabzilla.stack.vertx.codecs.gson.CommandCodec;
 import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
 import crabzilla.stack.vertx.verticles.EventsProjectionVerticle;
@@ -84,7 +83,6 @@ public class Example1VertxLauncher {
 
       if (asyncResult.succeeded()) {
         log.info("Result: {}", asyncResult.result().body());
-        log.info("Matches command ? {}", ((UnitOfWork)asyncResult.result().body()).getCommand().equals(createCustomerCmd));
       } else {
         log.info("Cause: {}", asyncResult.cause());
         log.info("Message: {}", asyncResult.cause().getMessage());

@@ -19,39 +19,30 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-
-import static java.util.Objects.requireNonNull;
 
 public class JdbiEventRepository implements EventRepository {
 
   static final Logger logger = LoggerFactory.getLogger(JdbiEventRepository.class);
 
-  static final String getUowSql = "select * from units_of_work where uow_id = :uow_id ";
+  static final String SQL_SELECT_UOW = "select * from units_of_work where uow_id = :uow_id ";
 
-  static final String getAllAfterVersionSql = "select version, uow_events " +
+  static final String SQL_SELECT_AFTER_VERSION = "select version, uow_events " +
           "from units_of_work where ar_id = :ar_id and ar_name = :ar_name " +
           " and version > :version " +
           "order by version";
 
-  static final String selectAggRootSql =
-          "select version from aggregate_roots where ar_id = :ar_id and ar_name = :ar_name";
+  static final String SQL_SELECT_CURRENT_VERSION =
+          "select max(version) from units_of_work where ar_id = :ar_id and ar_name = :ar_name group by ar_id, ar_name";
 
-  static final String insertAggRootSql = "insert into aggregate_roots (ar_id, ar_name, version, last_updated_on) " +
-          "values (:ar_id, :ar_name, :new_version, :last_updated_on) ";
-
-  static final String updateAggRootSql =
-          "update aggregates_root set version_number = :new_version, last_updated_on = :last_updated_on " +
-                  "where ar_id = :ar_id and ar_name = :ar_name and version_number = :curr_version";
-
-  static final String insertUowSql = "insert into units_of_work " +
-          "(uow_id, uow_events, cmd_id, cmd_data, ar_id, ar_name, version, inserted_on) " +
-          "values (:uow_id, :uow_events, :cmd_id, :cmd_data, :ar_id, :ar_name, :version, :inserted_on)";
+  static final String SQL_INSERT_UOW = "insert into units_of_work " +
+          "(uow_id, uow_events, cmd_id, cmd_data, ar_id, ar_name, version) " +
+          "values (:uow_id, :uow_events, :cmd_id, :cmd_data, :ar_id, :ar_name, :version)";
 
   static final String UOW_ID = "uow_id";
   static final String UOW_EVENTS = "uow_events";
@@ -60,11 +51,7 @@ public class JdbiEventRepository implements EventRepository {
   static final String AR_ID = "ar_id";
   static final String AR_NAME = "ar_name";
   static final String VERSION = "version";
-  static final String INSERTED_ON = "inserted_on";
   static final String UOW_SEQ_NUMBER = "uow_seq_number";
-  static final String NEW_VERSION = "new_version";
-  static final String LAST_UPDATED_ON = "last_updated_on";
-  static final String CURR_VERSION = "curr_version";
 
   private final String aggregateRootName;
   private final Gson gson;
@@ -83,7 +70,7 @@ public class JdbiEventRepository implements EventRepository {
   public Optional<UnitOfWork> get(@NonNull UUID uowId) {
 
     final UnitOfWork uow = dbi
-            .withHandle(h -> h.createQuery(getUowSql)
+            .withHandle(h -> h.createQuery(SQL_SELECT_UOW)
                     .bind(UOW_ID, uowId.toString())
                     .map(new UnitOfWorkMapper()).first()
             );
@@ -95,32 +82,34 @@ public class JdbiEventRepository implements EventRepository {
   @Override
   public List<ProjectionData> getAllSince(long sinceUowSequence, int maxResultSize) {
 
-    logger.info("will load a maximum SUCCESS {} units SUCCESS work since sequence {}", maxResultSize, sinceUowSequence);
+    logger.info("will load a maximum of {} units of work since sequence {}", maxResultSize, sinceUowSequence);
 
     List<ProjectionData> projectionDataList = dbi
-            .withHandle(new HandleCallback<List<ProjectionData>>() {
+      .withHandle(new HandleCallback<List<ProjectionData>>() {
 
-                          final String sql = String.format("select uow_id, uow_seq_number, ar_id, uow_events " +
-                                          "from units_of_work where uow_seq_number > %d order by uow_seq_number limit %d",
-                                  sinceUowSequence, maxResultSize);
+        final String sql = String.format("select uow_id, uow_seq_number, ar_id, uow_events " +
+                        "from units_of_work where uow_seq_number > %d order by uow_seq_number limit %d",
+                sinceUowSequence, maxResultSize);
 
-                          public List<ProjectionData> withHandle(Handle h) {
-                            return h.createQuery(sql)
-                                    .bind(UOW_SEQ_NUMBER, sinceUowSequence)
-                                    .map(new ProjectionDataMapper())
-                                    .list();
-                          }
-                        }
-            );
+        public List<ProjectionData> withHandle(Handle h) {
+          return h.createQuery(sql)
+                  .bind(UOW_SEQ_NUMBER, sinceUowSequence)
+                  .map(new ProjectionDataMapper())
+                  .list();
+        }
+      }
+    );
 
-    logger.info("Found {} units SUCCESS work since sequence {}", projectionDataList.size(), sinceUowSequence);
+    logger.info("Found {} units of work since sequence {}", projectionDataList.size(), sinceUowSequence);
     return projectionDataList;
 
   }
 
   @Override
   public Optional<SnapshotData> getAll(@NonNull final String id) {
+
     return getAllAfterVersion(id, new Version(0L));
+
   }
 
   @Override
@@ -129,14 +118,14 @@ public class JdbiEventRepository implements EventRepository {
     logger.info("will load {}", id);
 
     List<SnapshotData> snapshotDataList = dbi
-            .withHandle(h -> h.createQuery(getAllAfterVersionSql)
+            .withHandle(h -> h.createQuery(SQL_SELECT_AFTER_VERSION)
                     .bind(AR_ID, id)
                     .bind(AR_NAME, aggregateRootName)
                     .bind(VERSION, version.getValueAsLong())
                     .map(new SnapshotDataMapper()).list()
             );
 
-    logger.info("found {} units SUCCESS work for id {} and version > {}",
+    logger.info("found {} units of work for id {} and version > {}",
             snapshotDataList.size(), id, version.getValueAsLong());
 
     if (snapshotDataList.isEmpty()) {
@@ -155,78 +144,60 @@ public class JdbiEventRepository implements EventRepository {
   }
 
   @Override
-  public void append(@NonNull final UnitOfWork unitOfWork) throws DbConcurrencyException {
+  public Long append(@NonNull final UnitOfWork unitOfWork) {
 
-    requireNonNull(unitOfWork);
+    val uowSequence = new AtomicReference<Long>(0L);
 
     logger.info("appending uow to units_of_work with id {}", unitOfWork.getTargetId());
 
     dbi.inTransaction(TransactionIsolationLevel.SERIALIZABLE, (conn, status) -> {
 
-              // TODO check if the command was not handled already
+      // TODO check if the command was not handled already
 
-              final Long currentVersion = conn.createQuery(selectAggRootSql)
-                      .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
-                      .bind(AR_NAME, aggregateRootName)
-                      .map(LongColumnMapper.WRAPPER).first();
+      val currentVersion = Optional.ofNullable(conn.createQuery(SQL_SELECT_CURRENT_VERSION)
+              .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
+              .bind(AR_NAME, aggregateRootName)
+              .map(LongColumnMapper.WRAPPER).first());
 
-              newVersionIsCurrentVersionPlus1(unitOfWork, currentVersion);
+      newVersionIsCurrentVersionPlus1(unitOfWork, currentVersion.orElse(0L));
 
-              int result1;
+      val cmdAsJson = gson.toJson(unitOfWork.getCommand(), Command.class);
+      val eventsAsJson = gson.toJson(unitOfWork.getEvents(), listTypeToken.getType());
 
-              if (currentVersion == null) {
+      final Map<String, Object> keysMap = conn.createStatement(SQL_INSERT_UOW)
+              .bind(UOW_ID, unitOfWork.getUnitOfWorkId().toString())
+              .bind(UOW_EVENTS, eventsAsJson)
+              .bind(CMD_ID, unitOfWork.getCommand().getCommandId().toString())
+              .bind(CMD_DATA, cmdAsJson)
+              .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
+              .bind(AR_NAME, aggregateRootName)
+              .bind(VERSION, unitOfWork.getVersion().getValueAsLong())
+              .executeAndReturnGeneratedKeys().first();
 
-                result1 = conn.createStatement(insertAggRootSql)
-                        .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
-                        .bind(AR_NAME, aggregateRootName)
-                        .bind(NEW_VERSION, unitOfWork.getVersion().getValueAsLong())
-                        .bind(LAST_UPDATED_ON, new Timestamp(Instant.now().getEpochSecond()))
-                        .execute();
-
-              } else {
-
-                result1 = conn.createStatement(updateAggRootSql)
-                        .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
-                        .bind(AR_NAME, aggregateRootName)
-                        .bind(NEW_VERSION, unitOfWork.getVersion().getValueAsLong())
-                        .bind(CURR_VERSION, unitOfWork.getVersion().getValueAsLong() - 1)
-                        .bind(LAST_UPDATED_ON, new Timestamp(Instant.now().getEpochSecond()))
-                        .execute();
-              }
-
-              final String cmdAsJson = gson.toJson(unitOfWork.getCommand(), Command.class);
-              final String eventsAsJson = gson.toJson(unitOfWork.getEvents(), listTypeToken.getType());
-
-              int result2 = conn.createStatement(insertUowSql)
-                      .bind(UOW_ID, unitOfWork.getUnitOfWorkId().toString())
-                      .bind(UOW_EVENTS, eventsAsJson)
-                      .bind(CMD_ID, unitOfWork.getCommand().getCommandId().toString())
-                      .bind(CMD_DATA, cmdAsJson)
-                      .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
-                      .bind(AR_NAME, aggregateRootName)
-                      .bind(VERSION, unitOfWork.getVersion().getValueAsLong())
-                      .bind(INSERTED_ON, new Timestamp(Instant.now().getEpochSecond()))
-                      .execute();
-
-              // TODO schedular commands emitidos aqui ?? SIM (e remove CommandScheduler)
+      // TODO decide about to also save scheduled commands
 
 //              uow.collectEvents().stream()
-//            .filter(event -> event instanceof CommandScheduling) // TODO tem que ter idempotency disto
+//            .filter(event -> event instanceof CommandScheduling) // TODO idempotency here
 //            .map(event -> (CommandScheduling) e)
 //            .forEachOrdered(cs -> commandScheduler.schedule(commandId, cs));
 
-              if (result1 + result2 == 2) {
-                return true;
-              }
+      if (keysMap.size()==1) {
+        keysMap.keySet().forEach(s -> System.out.println(s)) ;
+        keysMap.values().forEach(s -> System.out.println(s)) ;
+        uowSequence.set(((Number) keysMap.values().stream().findFirst().get()).longValue());
+        return true;
+      }
 
-              throw new DbConcurrencyException(
-                      String.format("id = [%s], current_version = %d, new_version = %d",
-                              unitOfWork.getTargetId().getStringValue(),
-                              currentVersion, unitOfWork.getVersion().getValueAsLong()));
+      throw new DbConcurrencyException(
+              String.format("id = [%s], current_version = %d, new_version = %d",
+                      unitOfWork.getTargetId().getStringValue(),
+                      currentVersion, unitOfWork.getVersion().getValueAsLong()));
 
-            }
+      }
 
     );
+
+    return uowSequence.get();
 
   }
 

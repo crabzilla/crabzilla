@@ -16,6 +16,7 @@ import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.vertx.sql.JdbiEventRepository;
 import io.vertx.core.Vertx;
+import lombok.val;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -73,13 +74,14 @@ public class JdbiEventRepositoryIt {
   @Test
   public void can_append_a_unit_of_work() throws EventRepository.DbConcurrencyException {
 
-    final CustomerId id = new CustomerId("customer#1");
-    final CreateCustomerCmd command = new CreateCustomerCmd(UUID.randomUUID(), id, "customer1");
-    final CustomerCreated event = new CustomerCreated(id, command.getName());
-    final UnitOfWork uow1 = UnitOfWork.of(command, Version.create(1), Arrays.asList(event));
+    val id = new CustomerId("customer#1");
+    val command = new CreateCustomerCmd(UUID.randomUUID(), id, "customer1");
+    val event = new CustomerCreated(id, command.getName());
+    val uow1 = UnitOfWork.of(command, Version.create(1), Arrays.asList(event));
 
-    repo.append(uow1);
+    val uowSequence = repo.append(uow1);
 
+    AssertionsForClassTypes.assertThat(0L).isLessThan(uowSequence.longValue());
     AssertionsForClassTypes.assertThat(repo.get(uow1.getUnitOfWorkId()).get()).isEqualTo(uow1);
 
   }

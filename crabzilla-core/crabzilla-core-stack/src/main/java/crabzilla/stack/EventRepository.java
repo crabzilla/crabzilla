@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface EventRepository {
 
-	void append(UnitOfWork unitOfWork) throws DbConcurrencyException;
+	Long append(UnitOfWork unitOfWork);
 
 	Optional<UnitOfWork> get(UUID uowId);
 
