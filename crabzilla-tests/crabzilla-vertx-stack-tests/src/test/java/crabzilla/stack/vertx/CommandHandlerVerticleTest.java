@@ -53,8 +53,8 @@ import static org.mockito.Mockito.*;
 @RunWith(VertxUnitRunner.class)
 public class CommandHandlerVerticleTest {
 
-  @Inject
   Vertx vertx;
+
   @Inject
   Gson gson;
   @Inject

@@ -21,8 +21,8 @@ public class EventsPollingRoute extends RouteBuilder {
   final int eventsBackoffIdlesThreshold;
   final int eventsBackoffMultiplier;
   final int eventsMaxRowsPerPooling;
-	public final AtomicInteger failures = new AtomicInteger();
-	public final AtomicInteger idles = new AtomicInteger();
+	final AtomicInteger failures = new AtomicInteger();
+	final AtomicInteger idles = new AtomicInteger();
   final AtomicInteger backoffCount = new AtomicInteger();
 
   static final String RESULT_SIZE_HEADER = "RESULT_SIZE_HEADER";
