@@ -3,6 +3,7 @@ package crabzilla.example1.projectors;
 import crabzilla.model.Event;
 import crabzilla.model.EventsProjector;
 import crabzilla.model.ProjectionData;
+import crabzilla.model.util.MultiMethod;
 import javaslang.Tuple;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -19,11 +20,13 @@ public abstract class AbstractEventsProjectorJdbi implements EventsProjector {
 
   @Getter
   private final String eventsChannelId;
-  private final DBI dbi;
+  protected final DBI dbi;
+  private final MultiMethod mm ;
 
   public AbstractEventsProjectorJdbi(String eventsChannelId, final DBI dbi) {
     this.eventsChannelId = eventsChannelId;
     this.dbi = dbi;
+    this.mm = MultiMethod.getMultiMethod(this.getClass(), "handle");
   }
 
   public Long getLastUowSeq() {
@@ -42,6 +45,14 @@ public abstract class AbstractEventsProjectorJdbi implements EventsProjector {
   }
 
   @Transaction(TransactionIsolationLevel.SERIALIZABLE)
-  public abstract void handle(final String id, final Event event);
+  private void handle(final String id, final Event event) {
+
+    try {
+      mm.invoke(this, id, event);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+  }
 
 }

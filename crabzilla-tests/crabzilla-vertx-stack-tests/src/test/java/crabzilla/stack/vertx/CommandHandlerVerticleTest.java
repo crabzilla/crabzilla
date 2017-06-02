@@ -40,7 +40,7 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import static crabzilla.stack.util.StringHelper.commandHandlerId;
-import static crabzilla.stack.vertx.CommandHandlingResponse.RESULT;
+import static crabzilla.stack.vertx.CommandExecution.RESULT;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -90,7 +90,7 @@ public class CommandHandlerVerticleTest {
     val cmdHandler = new CustomerCmdHandlerFnJavaslang(new CustomerStateTransitionFnJavaslang(), dependencyInjectionFn);
 
     val verticle = new CommandHandlerVerticle<Customer>(Customer.class, snapshotReaderFn, cmdHandler,
-                              validatorFn, eventRepository, cache, vertx, circuitBreaker);
+                              validatorFn, eventRepository, cache, vertx, circuitBreaker, eventsProjector);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
 
@@ -134,7 +134,7 @@ public class CommandHandlerVerticleTest {
 
       tc.assertTrue(asyncResult.succeeded());
 
-      val response = (CommandHandlingResponse) asyncResult.result().body();
+      val response = (CommandExecution) asyncResult.result().body();
 
       tc.assertEquals(RESULT.SUCCESS, response.getResult());
 
@@ -181,7 +181,7 @@ public class CommandHandlerVerticleTest {
 
       tc.assertTrue(asyncResult.succeeded());
 
-      val response = (CommandHandlingResponse) asyncResult.result().body();
+      val response = (CommandExecution) asyncResult.result().body();
 
       tc.assertEquals(RESULT.VALIDATION_ERROR, response.getResult());
 

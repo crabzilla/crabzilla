@@ -182,8 +182,6 @@ public class JdbiEventRepository implements EventRepository {
 //            .forEachOrdered(cs -> commandScheduler.schedule(commandId, cs));
 
       if (keysMap.size()==1) {
-        keysMap.keySet().forEach(s -> System.out.println(s)) ;
-        keysMap.values().forEach(s -> System.out.println(s)) ;
         uowSequence.set(((Number) keysMap.values().stream().findFirst().get()).longValue());
         return true;
       }

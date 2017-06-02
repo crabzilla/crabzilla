@@ -21,12 +21,12 @@ import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.example1.aggregates.customer.events.CustomerDeactivated;
 import crabzilla.example1.aggregates.customer.events.DeactivatedCmdScheduled;
-import crabzilla.example1.projectors.Example1EventsProjectorJooq;
+import crabzilla.example1.projectors.Example1EventsProjectorJdbi;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
 import crabzilla.model.*;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.vertx.CommandHandlingResponse;
+import crabzilla.stack.vertx.CommandExecution;
 import crabzilla.stack.vertx.codecs.fst.*;
 import crabzilla.stack.vertx.gson.RuntimeTypeAdapterFactory;
 import crabzilla.stack.vertx.sql.JdbiEventRepository;
@@ -89,7 +89,7 @@ public class Example1VertxModule extends AbstractModule {
   @Provides
   @Singleton
   Vertx vertx(Gson gson, FSTConfiguration fst) {
-    vertx.eventBus().registerDefaultCodec(CommandHandlingResponse.class, new GenericCodec<>(fst));
+    vertx.eventBus().registerDefaultCodec(CommandExecution.class, new GenericCodec<>(fst));
     vertx.eventBus().registerDefaultCodec(AggregateRootId.class, new AggregateRootIdCodec(fst));
     vertx.eventBus().registerDefaultCodec(Command.class, new CommandCodec(fst));
     vertx.eventBus().registerDefaultCodec(Event.class, new EventCodec(fst));
@@ -124,8 +124,9 @@ public class Example1VertxModule extends AbstractModule {
 
   @Provides
   @Singleton
-  EventsProjector eventsProjector(Gson gson, Configuration jooq) {
-    return new Example1EventsProjectorJooq("example1", jooq) ;
+  EventsProjector eventsProjector(Gson gson, Configuration jooq, DBI dbi) {
+//    return new Example1EventsProjectorJooq("example1", jooq) ;
+  return  new Example1EventsProjectorJdbi("example1", dbi);
   }
 
   @Provides
