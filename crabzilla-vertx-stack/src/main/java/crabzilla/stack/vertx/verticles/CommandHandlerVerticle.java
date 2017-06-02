@@ -36,7 +36,6 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   final EventRepository eventRepository;
   final Vertx vertx;
   final CircuitBreaker circuitBreaker;
-  final EventsProjector eventsProjector;
 
   @Inject
   public CommandHandlerVerticle(@NonNull final Class<A> aggregateRootClass,
@@ -46,7 +45,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
                                 @NonNull final EventRepository eventRepository,
                                 @NonNull final Cache<String, Snapshot<A>> cache,
                                 @NonNull final Vertx vertx,
-                                @NonNull @Named("cmd-handler") final CircuitBreaker circuitBreaker, EventsProjector eventsProjector) {
+                                @NonNull @Named("cmd-handler") final CircuitBreaker circuitBreaker) {
     this.aggregateRootClass = aggregateRootClass;
     this.snapshotReaderFn = snapshotReaderFn;
     this.cmdHandler = cmdHandler;
@@ -55,7 +54,6 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
     this.cache = cache;
     this.vertx = vertx;
     this.circuitBreaker = circuitBreaker;
-    this.eventsProjector = eventsProjector;
   }
 
   @Override
