@@ -13,7 +13,10 @@ import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
-import crabzilla.model.*;
+import crabzilla.model.CommandValidatorFn;
+import crabzilla.model.Snapshot;
+import crabzilla.model.UnitOfWork;
+import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
@@ -66,8 +69,6 @@ public class CommandHandlerVerticleTest {
   SnapshotReaderFn<Customer> snapshotReaderFn;
   @Mock
   EventRepository eventRepository;
-  @Mock
-  EventsProjector eventsProjector;
 
   Cache<String, Snapshot<Customer>> cache = Caffeine.newBuilder().build();
 
@@ -83,14 +84,13 @@ public class CommandHandlerVerticleTest {
         bind(new TypeLiteral<SnapshotReaderFn<Customer>>() {;}).toInstance(snapshotReaderFn);
         bind(new TypeLiteral<CommandValidatorFn>() {;}).toInstance(validatorFn);
         bind(EventRepository.class).toInstance(eventRepository);
-        bind(EventsProjector.class).toInstance(eventsProjector);
       }
     })).injectMembers(this);
 
     val cmdHandler = new CustomerCmdHandlerFnJavaslang(new CustomerStateTransitionFnJavaslang(), dependencyInjectionFn);
 
     val verticle = new CommandHandlerVerticle<Customer>(Customer.class, snapshotReaderFn, cmdHandler,
-                              validatorFn, eventRepository, cache, vertx, circuitBreaker, eventsProjector);
+                              validatorFn, eventRepository, cache, vertx, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
 
