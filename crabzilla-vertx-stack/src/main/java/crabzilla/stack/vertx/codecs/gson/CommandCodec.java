@@ -21,8 +21,6 @@ public class CommandCodec implements MessageCodec<Command, Command> {
 
     try {
 
-      System.out.println("will encode " + command);
-
       final String ajJson = gson.toJson(command, Command.class);
 
       // Length of JSON: is NOT characters count

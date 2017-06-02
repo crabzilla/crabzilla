@@ -8,10 +8,7 @@ import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import crabzilla.example1.aggregates.customer.*;
 import crabzilla.example1.services.SampleServiceImpl;
-import crabzilla.model.CommandHandlerFn;
-import crabzilla.model.CommandValidatorFn;
-import crabzilla.model.Event;
-import crabzilla.model.Snapshot;
+import crabzilla.model.*;
 import crabzilla.stack.AggregateRootModule;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotFactory;
@@ -75,9 +72,10 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
                                            CommandValidatorFn validatorFn,
                                            EventRepository eventStore, Vertx vertx,
                                            Cache<String, Snapshot<Customer>> cache,
-                                           @Named("cmd-handler") CircuitBreaker circuitBreaker) {
+                                           @Named("cmd-handler") CircuitBreaker circuitBreaker,
+                                           EventsProjector eventsProjector) {
     return new CommandHandlerVerticle<>(Customer.class, snapshotReaderFn, cmdHandler, validatorFn, eventStore,
-            cache, vertx, circuitBreaker);
+            cache, vertx, circuitBreaker, eventsProjector);
   }
 
   @Provides

@@ -47,10 +47,13 @@ public class Example1EventsProjectorJooq implements EventsProjector {
               .map(e -> Tuple.of(uowdata.getTargetId(), e)))
               .forEach(tuple -> handle(ctx, tuple._1(), tuple._2())));
 
+    log.info("wrote {} events for eventsChannelId {}", uowList.size(), eventsChannelId);
   }
 
 
   public void handle(final Configuration ctx, final String id, final Event event) {
+
+    log.info("event {} from channel {}", event, eventsChannelId);
 
     Match(event).of(
 
