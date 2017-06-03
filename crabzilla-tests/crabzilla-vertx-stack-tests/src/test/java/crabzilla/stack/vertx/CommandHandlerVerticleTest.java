@@ -57,17 +57,22 @@ public class CommandHandlerVerticleTest {
   @Mock
   EventRepository eventRepository;
 
-  @Before
-  public void setUp(TestContext context) {
-
-    MockitoAnnotations.initMocks(this);
-
-    vertx = Vertx.vertx();
+  Vertx vertx() {
+    val vertx = Vertx.vertx();
     vertx.eventBus().registerDefaultCodec(CommandExecution.class, new GenericCodec<>(fst));
     vertx.eventBus().registerDefaultCodec(AggregateRootId.class, new AggregateRootIdCodec(fst));
     vertx.eventBus().registerDefaultCodec(Command.class, new CommandCodec(fst));
     vertx.eventBus().registerDefaultCodec(Event.class, new EventCodec(fst));
     vertx.eventBus().registerDefaultCodec(UnitOfWork.class, new UnitOfWorkCodec(fst));
+    return vertx;
+  }
+
+  @Before
+  public void setUp(TestContext context) {
+
+    MockitoAnnotations.initMocks(this);
+
+    vertx = vertx();
     cache = Caffeine.newBuilder().build();
     circuitBreaker = CircuitBreaker.create("cmd-handler-circuit-breaker", vertx,
             new CircuitBreakerOptions()
