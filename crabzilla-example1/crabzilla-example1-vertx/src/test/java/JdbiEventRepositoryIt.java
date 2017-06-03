@@ -1,5 +1,4 @@
-package crabzilla.stack.vertx;
-
+// TODO move from here to tests module (by decoupling from guice modules)
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;

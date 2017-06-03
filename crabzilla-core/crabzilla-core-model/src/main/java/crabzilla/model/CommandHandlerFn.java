@@ -6,6 +6,7 @@ import crabzilla.model.util.MultiMethod;
 import lombok.NonNull;
 import lombok.val;
 
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -22,11 +23,13 @@ public abstract class CommandHandlerFn<A extends AggregateRoot> {
     this.mm = MultiMethod.getMultiMethod(this.getClass(), "handle");
   }
 
-  public Either<Exception, UnitOfWork> handle(final Command command, final Snapshot<A> snapshot) {
+  public Either<Exception, Optional<UnitOfWork>> handle(final Command command, final Snapshot<A> snapshot) {
 
     try {
-      val optUnitOfWork = ((UnitOfWork)mm.invoke(this, command, snapshot));
-      return Eithers.right(optUnitOfWork);
+      val unitOfWork = ((UnitOfWork) mm.invoke(this, command, snapshot));
+      return Eithers.right(Optional.ofNullable(unitOfWork));
+    } catch (IllegalAccessException | NoSuchMethodException e) {
+      return Eithers.right(Optional.empty());
     } catch (Exception e) {
       return Eithers.left(e);
     }

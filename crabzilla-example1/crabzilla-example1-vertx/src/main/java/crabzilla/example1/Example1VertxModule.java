@@ -21,7 +21,7 @@ import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.example1.aggregates.customer.events.CustomerDeactivated;
 import crabzilla.example1.aggregates.customer.events.DeactivatedCmdScheduled;
-import crabzilla.example1.projectors.Example1EventsProjectorJdbi;
+import crabzilla.example1.projectors.Example1EventsProjector;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
 import crabzilla.model.*;
@@ -136,9 +136,8 @@ public class Example1VertxModule extends AbstractModule {
 
   @Provides
   @Singleton
-  EventsProjector eventsProjector(Gson gson, Configuration jooq, DBI dbi) {
-//    return new Example1EventsProjectorJooq("example1", jooq) ;
-  return  new Example1EventsProjectorJdbi("example1", dbi);
+  EventsProjector eventsProjector(Gson gson, Configuration jooq) {
+    return new Example1EventsProjector("example1", jooq) ;
   }
 
   @Provides

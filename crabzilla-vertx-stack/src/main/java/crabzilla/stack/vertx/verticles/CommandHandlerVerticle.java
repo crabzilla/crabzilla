@@ -15,6 +15,7 @@ import lombok.val;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.Optional;
 
 import static crabzilla.model.util.Eithers.getLeft;
 import static crabzilla.model.util.Eithers.getRight;
@@ -101,7 +102,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
         cache.put(command.getCommandId().toString(), snapshotDataMsg.getSnapshot());
       }
 
-      final Either<Exception, UnitOfWork> either = cmdHandler.handle(command, snapshotDataMsg.getSnapshot());
+      final Either<Exception, Optional<UnitOfWork>> either = cmdHandler.handle(command, snapshotDataMsg.getSnapshot());
 
       val optException = getLeft(either);
 
@@ -113,12 +114,12 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
       val optUnitOfWork = getRight(either);
 
-      if (!optUnitOfWork.isPresent()) {
+      if (!optUnitOfWork.get().isPresent()) {
         future.complete(UNKNOWN_COMMAND(command.getCommandId()));
         return;
       }
 
-      val uow = optUnitOfWork.get();
+      val uow = optUnitOfWork.get().get();
       val uowSequence = eventRepository.append(uow);
       val cmdHandleResp = SUCCESS(uow, uowSequence);
 
