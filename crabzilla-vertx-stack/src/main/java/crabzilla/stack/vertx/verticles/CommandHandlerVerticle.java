@@ -7,10 +7,7 @@ import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotReaderFn;
 import crabzilla.stack.vertx.CommandExecution;
 import io.vertx.circuitbreaker.CircuitBreaker;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import io.vertx.core.eventbus.Message;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -59,92 +56,97 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   @Override
   public void start() throws Exception {
 
-    vertx.eventBus().consumer(commandHandlerId(aggregateRootClass), (Message<Command> msg) -> {
+    vertx.eventBus().consumer(commandHandlerId(aggregateRootClass), msgHandler());
 
-      vertx.executeBlocking((Future<CommandExecution> future1) -> {
+  }
+
+  Handler<Message<Command>> msgHandler() {
+
+    return (Message<Command> msg) -> {
+
+      vertx.executeBlocking((Future<CommandExecution> future) -> {
 
         val command = msg.body();
 
-        log.info("received a command {}", command);
+        log.info("received a uowHandler {}", command);
 
         val constraints = validatorFn.constraintViolations(command);
 
         if (!constraints.isEmpty()) {
-          future1.complete(VALIDATION_ERROR(command.getCommandId(), constraints));
-          return ;
+          future.complete(VALIDATION_ERROR(command.getCommandId(), constraints));
+          return;
         }
 
         circuitBreaker.fallback(throwable -> {
 
-              log.error("Fallback for command " + command.getCommandId(), throwable);
-              return FALLBACK(command.getCommandId());
+          log.error("Fallback for uowHandler " + command.getCommandId(), throwable);
+          return FALLBACK(command.getCommandId()); })
 
-          }).execute(future2 -> {
+        .execute(cmdHandler(command))
 
-          val snapshotDataMsg = snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
+        .setHandler(resultHandler(msg));
 
-          if (snapshotDataMsg.hasNewSnapshot()) {
-            cache.put(command.getCommandId().toString(), snapshotDataMsg.getSnapshot());
-          }
+      }, false, resultHandler(msg));
 
-          final Either<Exception, UnitOfWork> either = cmdHandler.handle(command, snapshotDataMsg.getSnapshot());
+    };
+  }
 
-          val optException = getLeft(either);
+  Handler<Future<CommandExecution>> cmdHandler(final Command command) {
 
-          if (optException.isPresent()) {
-            log.error("Business logic error for command " + command.getCommandId(), optException.get());
-            future2.complete(BUSINESS_ERROR(command.getCommandId()));
-            return ;
-          }
+    return future -> {
 
-          val optUnitOfWork = getRight(either);
+      val snapshotDataMsg = snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
 
-          if (!optUnitOfWork.isPresent()) {
-            future2.complete(UNKNOWN_COMMAND(command.getCommandId()));
-            return ;
-          }
+      if (snapshotDataMsg.hasNewSnapshot()) {
+        cache.put(command.getCommandId().toString(), snapshotDataMsg.getSnapshot());
+      }
 
-          val uow = optUnitOfWork.get();
-          val uowSequence = eventRepository.append(uow);
-          val cmdHandleResp = SUCCESS(uow, uowSequence);
+      final Either<Exception, UnitOfWork> either = cmdHandler.handle(command, snapshotDataMsg.getSnapshot());
 
-          future2.complete(cmdHandleResp);
+      val optException = getLeft(either);
 
-        }).setHandler( (AsyncResult<Object> ar2) -> {
+      if (optException.isPresent()) {
+        log.error("Business logic error for uowHandler " + command.getCommandId(), optException.get());
+        future.complete(BUSINESS_ERROR(command.getCommandId()));
+        return;
+      }
 
-          if (ar2.succeeded()) {
+      val optUnitOfWork = getRight(either);
 
-            val resp = (CommandExecution) ar2.result();
-            log.info("success: {}", resp);
-            msg.reply(resp);
+      if (!optUnitOfWork.isPresent()) {
+        future.complete(UNKNOWN_COMMAND(command.getCommandId()));
+        return;
+      }
 
-          } else {
+      val uow = optUnitOfWork.get();
+      val uowSequence = eventRepository.append(uow);
+      val cmdHandleResp = SUCCESS(uow, uowSequence);
 
-            log.info("error cause: {}", ar2.cause());
-            log.info("error message: {}", ar2.cause().getMessage());
-            ar2.cause().printStackTrace();
-            msg.fail(400, ar2.cause().getMessage());
-          }
+      future.complete(cmdHandleResp);
 
-        });
-
-      }, ar1 -> {
-
-        if (ar1.succeeded()) {
-          log.info("success: {}", ar1.result());
-          msg.reply(ar1.result());
-
-        } else {
-          log.info("error cause: {}", ar1.cause());
-          log.info("error message: {}", ar1.cause().getMessage());
-          ar1.cause().printStackTrace();
-          msg.fail(400, ar1.cause().getMessage());
-        }
-
-      });
-
-    });
+    };
 
   }
 
+  Handler<AsyncResult<CommandExecution>> resultHandler(Message<Command> msg) {
+
+    return (AsyncResult<CommandExecution> resultHandler) -> {
+
+      if (resultHandler.succeeded()) {
+
+        val resp = resultHandler.result();
+        log.info("success: {}", resp);
+        msg.reply(resp);
+
+      } else {
+
+        log.error("error cause: {}", resultHandler.cause());
+        log.error("error message: {}", resultHandler.cause().getMessage());
+        resultHandler.cause().printStackTrace();
+        // TODO customize conform commandResult
+        msg.fail(400, resultHandler.cause().getMessage());
+      }
+
+    };
+  }
 }

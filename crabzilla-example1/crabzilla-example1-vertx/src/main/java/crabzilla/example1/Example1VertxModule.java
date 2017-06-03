@@ -112,10 +112,22 @@ public class Example1VertxModule extends AbstractModule {
                     .setFallbackOnFailure(true) // do we call the fallback on failure
                     .setResetTimeout(10000) // time spent in open state before attempting to re-try
     );
-    //.fallback((error) -> );
 
   }
 
+  @Provides
+  @Singleton
+  @Named("events-projection")
+  CircuitBreaker circuitBreakerEvents() {
+    return CircuitBreaker.create("events-projection-circuit-breaker", vertx,
+            new CircuitBreakerOptions()
+                    .setMaxFailures(5) // number SUCCESS failure before opening the circuit
+                    .setTimeout(2000) // consider a failure if the operation does not succeed in time
+                    .setFallbackOnFailure(true) // do we call the fallback on failure
+                    .setResetTimeout(10000) // time spent in open state before attempting to re-try
+    );
+
+  }
   @Provides
   @Singleton
   EventRepository eventRepository(Gson gson, DBI dbi) {
