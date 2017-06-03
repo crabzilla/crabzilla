@@ -46,7 +46,7 @@ public class EventsProjectionVerticle extends AbstractVerticle {
 
       vertx.executeBlocking((Future<String> future) -> {
 
-        log.info("Received ProjectionData {} ", msg);
+        log.info("Received ProjectionData msg {} ", msg);
 
         val uow = msg.body();
         val uowSequence = new Long(msg.headers().get("uowSequence"));

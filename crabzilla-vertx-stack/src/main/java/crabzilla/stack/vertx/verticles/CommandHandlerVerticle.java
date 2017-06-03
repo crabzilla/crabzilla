@@ -86,7 +86,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         .setHandler(resultHandler(msg));
 
-      }, resultHandler(msg));
+      }, false, resultHandler(msg));
 
     };
   }

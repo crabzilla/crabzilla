@@ -2,27 +2,19 @@ package crabzilla.stack.vertx;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.gson.Gson;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.TypeLiteral;
-import com.google.inject.util.Modules;
-import crabzilla.example1.Example1VertxModule;
 import crabzilla.example1.aggregates.customer.*;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
-import crabzilla.model.CommandValidatorFn;
-import crabzilla.model.Snapshot;
-import crabzilla.model.UnitOfWork;
-import crabzilla.model.Version;
+import crabzilla.model.*;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
-import crabzilla.stack.vertx.codecs.gson.CommandCodec;
+import crabzilla.stack.vertx.codecs.fst.*;
 import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
+import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.ext.unit.Async;
@@ -36,11 +28,9 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.nustaq.serialization.FSTConfiguration;
 
-import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.UUID;
-import java.util.function.Function;
 
 import static crabzilla.stack.util.StringHelper.commandHandlerId;
 import static crabzilla.stack.vertx.CommandExecution.RESULT;
@@ -53,14 +43,11 @@ import static org.mockito.Mockito.*;
 @RunWith(VertxUnitRunner.class)
 public class CommandHandlerVerticleTest {
 
-  Vertx vertx;
+  static final FSTConfiguration fst = FSTConfiguration.createDefaultConfiguration();
+  static final SampleService service = new SampleServiceImpl();
 
-  @Inject
-  Gson gson;
-  @Inject
-  Function<Customer, Customer> dependencyInjectionFn;
-  @Inject
-  @Named("cmd-handler")
+  Vertx vertx;
+  Cache<String, Snapshot<Customer>> cache;
   CircuitBreaker circuitBreaker;
 
   @Mock
@@ -70,24 +57,28 @@ public class CommandHandlerVerticleTest {
   @Mock
   EventRepository eventRepository;
 
-  Cache<String, Snapshot<Customer>> cache = Caffeine.newBuilder().build();
-
   @Before
   public void setUp(TestContext context) {
 
     MockitoAnnotations.initMocks(this);
-    vertx = Vertx.vertx();
-    Guice.createInjector(Modules.override(new Example1VertxModule(vertx)).with(new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(SampleService.class).to(SampleServiceImpl.class).asEagerSingleton();
-        bind(new TypeLiteral<SnapshotReaderFn<Customer>>() {;}).toInstance(snapshotReaderFn);
-        bind(new TypeLiteral<CommandValidatorFn>() {;}).toInstance(validatorFn);
-        bind(EventRepository.class).toInstance(eventRepository);
-      }
-    })).injectMembers(this);
 
-    val cmdHandler = new CustomerCmdHandlerFnJavaslang(new CustomerStateTransitionFnJavaslang(), dependencyInjectionFn);
+    vertx = Vertx.vertx();
+    vertx.eventBus().registerDefaultCodec(CommandExecution.class, new GenericCodec<>(fst));
+    vertx.eventBus().registerDefaultCodec(AggregateRootId.class, new AggregateRootIdCodec(fst));
+    vertx.eventBus().registerDefaultCodec(Command.class, new CommandCodec(fst));
+    vertx.eventBus().registerDefaultCodec(Event.class, new EventCodec(fst));
+    vertx.eventBus().registerDefaultCodec(UnitOfWork.class, new UnitOfWorkCodec(fst));
+    cache = Caffeine.newBuilder().build();
+    circuitBreaker = CircuitBreaker.create("cmd-handler-circuit-breaker", vertx,
+            new CircuitBreakerOptions()
+                    .setMaxFailures(5) // number SUCCESS failure before opening the circuit
+                    .setTimeout(2000) // consider a failure if the operation does not succeed in time
+                    .setFallbackOnFailure(true) // do we call the fallback on failure
+                    .setResetTimeout(10000) // time spent in open state before attempting to re-try
+    );
+
+    val cmdHandler =
+            new CustomerCmdHandlerFnJavaslang(new CustomerStateTransitionFnJavaslang(), (c) -> c.withService(service));
 
     val verticle = new CommandHandlerVerticle<Customer>(Customer.class, snapshotReaderFn, cmdHandler,
                               validatorFn, eventRepository, cache, vertx, circuitBreaker);
@@ -118,7 +109,7 @@ public class CommandHandlerVerticleTest {
 
     when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue()))).thenReturn(expectedMessage);
 
-    val options = new DeliveryOptions().setCodecName(new CommandCodec(gson).name());
+    val options = new DeliveryOptions().setCodecName(new CommandCodec(fst).name());
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
@@ -171,7 +162,7 @@ public class CommandHandlerVerticleTest {
     when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue())))
             .thenReturn(expectedMessage);
 
-    val options = new DeliveryOptions().setCodecName(new CommandCodec(gson).name());
+    val options = new DeliveryOptions().setCodecName(new CommandCodec(fst).name());
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
