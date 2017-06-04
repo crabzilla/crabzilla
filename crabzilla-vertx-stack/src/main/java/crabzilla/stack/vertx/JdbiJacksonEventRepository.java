@@ -1,4 +1,4 @@
-package crabzilla.stack.vertx.sql;
+package crabzilla.stack.vertx;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
