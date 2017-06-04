@@ -1,25 +1,24 @@
 package crabzilla.stack.vertx.codecs.fst;
 
-import crabzilla.model.Command;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 import org.nustaq.serialization.FSTConfiguration;
 
 import javax.inject.Inject;
 
-public class CommandCodec implements MessageCodec<Command, Command> {
+public class FstGenericCodec<T> implements MessageCodec<T, T> {
 
   final FSTConfiguration fst;
 
   @Inject
-  public CommandCodec(FSTConfiguration fst) {
+  public FstGenericCodec(FSTConfiguration fst) {
     this.fst = fst;
   }
 
   @Override
-  public void encodeToWire(Buffer buffer, Command Command) {
+  public void encodeToWire(Buffer buffer, T obj) {
 
-    final byte barray[] = fst.asByteArray(Command);
+    final byte barray[] = fst.asByteArray(obj);
 
     // Write data into given buffer
     buffer.appendInt(barray.length);
@@ -27,7 +26,7 @@ public class CommandCodec implements MessageCodec<Command, Command> {
   }
 
   @Override
-  public Command decodeFromWire(int pos, Buffer buffer) {
+  public T decodeFromWire(int pos, Buffer buffer) {
 
     // My custom message starting from this *position* SUCCESS buffer
     int _pos = pos;
@@ -46,12 +45,12 @@ public class CommandCodec implements MessageCodec<Command, Command> {
       throw new RuntimeException("When decodingFromWire", e);
     }
 
-    return (Command) readObj;
+    return (T) readObj;
   }
 
   @Override
-  public Command transform(Command Command) {
-    return Command;
+  public T transform(T obj) {
+    return obj;
   }
 
   @Override

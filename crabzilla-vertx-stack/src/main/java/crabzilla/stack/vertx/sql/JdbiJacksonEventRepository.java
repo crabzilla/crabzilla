@@ -1,11 +1,12 @@
 package crabzilla.stack.vertx.sql;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import crabzilla.model.*;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotData;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.val;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
@@ -26,9 +27,9 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-public class JdbiEventRepository implements EventRepository {
+public class JdbiJacksonEventRepository implements EventRepository {
 
-  static final Logger logger = LoggerFactory.getLogger(JdbiEventRepository.class);
+  static final Logger logger = LoggerFactory.getLogger(JdbiJacksonEventRepository.class);
 
   static final String SQL_SELECT_UOW = "select * from units_of_work where uow_id = :uow_id ";
 
@@ -54,15 +55,14 @@ public class JdbiEventRepository implements EventRepository {
   static final String UOW_SEQ_NUMBER = "uow_seq_number";
 
   private final String aggregateRootName;
-  private final Gson gson;
+  private final ObjectMapper mapper;
   private final DBI dbi;
 
-  private final TypeToken<List<Event>> listTypeToken = new TypeToken<List<Event>>() {
-  };
+  private final TypeReference<List<Event>> eventsListTpe =  new TypeReference<List<Event>>() {};
 
-  public JdbiEventRepository(@NonNull String aggregateRootName, @NonNull Gson gson, @NonNull DBI dbi) {
+  public JdbiJacksonEventRepository(@NonNull String aggregateRootName, @NonNull ObjectMapper mapper, @NonNull DBI dbi) {
     this.aggregateRootName = aggregateRootName;
-    this.gson = gson;
+    this.mapper = mapper;
     this.dbi = dbi;
   }
 
@@ -148,28 +148,28 @@ public class JdbiEventRepository implements EventRepository {
 
     val uowSequence = new AtomicReference<Long>(0L);
 
-    logger.info("appending uow to units_of_work with id {}", unitOfWork.getTargetId());
+    logger.info("appending uow to units_of_work with id {}", unitOfWork.targetId());
 
     dbi.inTransaction(TransactionIsolationLevel.SERIALIZABLE, (conn, status) -> {
 
       // TODO check if the command was not handled already
 
-      val currentVersion = Optional.ofNullable(conn.createQuery(SQL_SELECT_CURRENT_VERSION)
-              .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
+      Optional<Long> currentVersion = Optional.ofNullable(conn.createQuery(SQL_SELECT_CURRENT_VERSION)
+              .bind(AR_ID, unitOfWork.targetId().getStringValue())
               .bind(AR_NAME, aggregateRootName)
               .map(LongColumnMapper.WRAPPER).first());
 
       newVersionIsCurrentVersionPlus1(unitOfWork, currentVersion.orElse(0L));
 
-      val cmdAsJson = gson.toJson(unitOfWork.getCommand(), Command.class);
-      val eventsAsJson = gson.toJson(unitOfWork.getEvents(), listTypeToken.getType());
+      val cmdAsJson = mapper.writerFor(Command.class).writeValueAsString(unitOfWork.getCommand());
+      val eventsAsJson = mapper.writerFor(eventsListTpe).writeValueAsString(unitOfWork.getEvents());
 
       final Map<String, Object> keysMap = conn.createStatement(SQL_INSERT_UOW)
               .bind(UOW_ID, unitOfWork.getUnitOfWorkId().toString())
               .bind(UOW_EVENTS, eventsAsJson)
               .bind(CMD_ID, unitOfWork.getCommand().getCommandId().toString())
               .bind(CMD_DATA, cmdAsJson)
-              .bind(AR_ID, unitOfWork.getTargetId().getStringValue())
+              .bind(AR_ID, unitOfWork.targetId().getStringValue())
               .bind(AR_NAME, aggregateRootName)
               .bind(VERSION, unitOfWork.getVersion().getValueAsLong())
               .executeAndReturnGeneratedKeys().first();
@@ -188,7 +188,7 @@ public class JdbiEventRepository implements EventRepository {
 
       throw new DbConcurrencyException(
               String.format("id = [%s], current_version = %d, new_version = %d",
-                      unitOfWork.getTargetId().getStringValue(),
+                      unitOfWork.targetId().getStringValue(),
                       currentVersion, unitOfWork.getVersion().getValueAsLong()));
 
       }
@@ -203,7 +203,7 @@ public class JdbiEventRepository implements EventRepository {
     if ((currentVersion == null ? 0 : currentVersion) != unitOfWork.getVersion().getValueAsLong() - 1) {
       throw new DbConcurrencyException(
               String.format("ar_id = [%s], current_version = %d, new_version = %d",
-                      unitOfWork.getTargetId().getStringValue(),
+                      unitOfWork.targetId().getStringValue(),
                       currentVersion, unitOfWork.getVersion().getValueAsLong()));
     }
   }
@@ -211,16 +211,18 @@ public class JdbiEventRepository implements EventRepository {
 
   class SnapshotDataMapper implements ResultSetMapper<SnapshotData> {
     @Override
+    @SneakyThrows
     public SnapshotData map(int i, ResultSet resultSet, StatementContext statementContext) throws SQLException {
-      final List<Event> events = gson.fromJson(resultSet.getString(UOW_EVENTS), listTypeToken.getType());
+      final List<Event> events = mapper.readerFor(eventsListTpe).readValue(resultSet.getString(UOW_EVENTS));
       return new SnapshotData(new Version(resultSet.getLong(VERSION)), events);
     }
   }
 
   class ProjectionDataMapper implements ResultSetMapper<ProjectionData> {
     @Override
+    @SneakyThrows
     public ProjectionData map(int i, ResultSet resultSet, StatementContext statementContext) throws SQLException {
-      final List<Event> events = gson.fromJson(resultSet.getString(UOW_EVENTS), listTypeToken.getType());
+      final List<Event> events = mapper.readerFor(eventsListTpe).readValue(resultSet.getString(UOW_EVENTS));
       return new ProjectionData(resultSet.getString(UOW_ID),
               resultSet.getLong(UOW_SEQ_NUMBER),
               resultSet.getString(AR_ID),
@@ -231,10 +233,10 @@ public class JdbiEventRepository implements EventRepository {
 
   class UnitOfWorkMapper implements ResultSetMapper<UnitOfWork> {
     @Override
+    @SneakyThrows
     public UnitOfWork map(int i, ResultSet resultSet, StatementContext statementContext) throws SQLException {
-      final Command command = gson.fromJson(resultSet.getString(CMD_DATA), Command.class);
-      final List<Event> events = gson.fromJson(resultSet.getString(UOW_EVENTS), listTypeToken.getType());
-
+      final Command command = mapper.readerFor(Command.class).readValue(resultSet.getString(CMD_DATA));
+      final List<Event> events = mapper.readerFor(eventsListTpe).readValue(resultSet.getString(UOW_EVENTS));
       return new UnitOfWork(UUID.fromString(resultSet.getString(UOW_ID)), command,
               new Version(resultSet.getLong(VERSION)),
               events);

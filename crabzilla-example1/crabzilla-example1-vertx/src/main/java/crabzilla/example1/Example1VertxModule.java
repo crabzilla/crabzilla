@@ -1,8 +1,6 @@
 package crabzilla.example1;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -12,30 +10,20 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import crabzilla.example1.aggregates.CustomerModule;
 import crabzilla.example1.aggregates.customer.Customer;
-import crabzilla.example1.aggregates.customer.CustomerId;
-import crabzilla.example1.aggregates.customer.commands.ActivateCustomerCmd;
-import crabzilla.example1.aggregates.customer.commands.CreateActivateCustomerCmd;
-import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
-import crabzilla.example1.aggregates.customer.commands.DeactivateCustomerCmd;
-import crabzilla.example1.aggregates.customer.events.CustomerActivated;
-import crabzilla.example1.aggregates.customer.events.CustomerCreated;
-import crabzilla.example1.aggregates.customer.events.CustomerDeactivated;
-import crabzilla.example1.aggregates.customer.events.DeactivatedCmdScheduled;
-import crabzilla.example1.projectors.Example1EventsProjectorJdbi;
+import crabzilla.example1.projectors.Example1EventsProjector;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
 import crabzilla.model.*;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.vertx.CommandExecution;
-import crabzilla.stack.vertx.codecs.fst.*;
-import crabzilla.stack.vertx.gson.RuntimeTypeAdapterFactory;
-import crabzilla.stack.vertx.sql.JdbiEventRepository;
+import crabzilla.stack.vertx.codecs.fst.JacksonGenericCodec;
+import crabzilla.stack.vertx.sql.JdbiJacksonEventRepository;
 import crabzilla.stack.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.Json;
 import lombok.val;
-import net.dongliu.gson.GsonJava8TypeAdapterFactory;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.SQLDialect;
@@ -88,16 +76,23 @@ public class Example1VertxModule extends AbstractModule {
 
   @Provides
   @Singleton
-  Vertx vertx(Gson gson, FSTConfiguration fst) {
-    vertx.eventBus().registerDefaultCodec(CommandExecution.class, new GenericCodec<>(fst));
-    vertx.eventBus().registerDefaultCodec(AggregateRootId.class, new AggregateRootIdCodec(fst));
-    vertx.eventBus().registerDefaultCodec(Command.class, new CommandCodec(fst));
-    vertx.eventBus().registerDefaultCodec(Event.class, new EventCodec(fst));
-    vertx.eventBus().registerDefaultCodec(UnitOfWork.class, new UnitOfWorkCodec(fst));
-//    vertx.eventBus().registerDefaultCodec(AggregateRootId.class, new AggregateRootIdCodec(gson));
-//    vertx.eventBus().registerDefaultCodec(Command.class, new CommandCodec(gson));
-//    vertx.eventBus().registerDefaultCodec(Event.class, new EventCodec(gson));
-//    vertx.eventBus().registerDefaultCodec(UnitOfWork.class, new UnitOfWorkCodec(gson));
+  Vertx vertx(ObjectMapper mapper) {
+
+    vertx.eventBus().registerDefaultCodec(CommandExecution.class,
+            new JacksonGenericCodec<>(mapper, CommandExecution.class));
+
+    vertx.eventBus().registerDefaultCodec(AggregateRootId.class,
+            new JacksonGenericCodec<>(mapper, AggregateRootId.class));
+
+    vertx.eventBus().registerDefaultCodec(Command.class,
+            new JacksonGenericCodec<>(mapper, Command.class));
+
+    vertx.eventBus().registerDefaultCodec(Event.class,
+            new JacksonGenericCodec<>(mapper, Event.class));
+
+    vertx.eventBus().registerDefaultCodec(UnitOfWork.class,
+            new JacksonGenericCodec<>(mapper, UnitOfWork.class));
+
     return vertx;
   }
 
@@ -130,15 +125,14 @@ public class Example1VertxModule extends AbstractModule {
   }
   @Provides
   @Singleton
-  EventRepository eventRepository(Gson gson, DBI dbi) {
-    return new JdbiEventRepository(Customer.class.getSimpleName(), gson, dbi);
+  EventRepository eventRepository(ObjectMapper mapper, DBI dbi) {
+    return new JdbiJacksonEventRepository(Customer.class.getSimpleName(), mapper, dbi);
   }
 
   @Provides
   @Singleton
-  EventsProjector eventsProjector(Gson gson, Configuration jooq, DBI dbi) {
-//    return new Example1EventsProjectorJooq("example1", jooq) ;
-  return  new Example1EventsProjectorJdbi("example1", dbi);
+  EventsProjector eventsProjector(Configuration jooq) {
+    return new Example1EventsProjector("example1", jooq) ;
   }
 
   @Provides
@@ -157,41 +151,13 @@ public class Example1VertxModule extends AbstractModule {
     return cfg;
   }
 
-  // gson
-
-
   @Provides
   @Singleton
-  Gson gson() {
-
-    RuntimeTypeAdapterFactory<AggregateRootId> rtaIds  = RuntimeTypeAdapterFactory.of(AggregateRootId.class)
-            .registerSubtype(CustomerId.class);
-
-    RuntimeTypeAdapterFactory<Command> rtaCommands  = RuntimeTypeAdapterFactory.of(Command.class)
-            .registerSubtype(CreateCustomerCmd.class)
-            .registerSubtype(ActivateCustomerCmd.class)
-            .registerSubtype(DeactivateCustomerCmd.class)
-            .registerSubtype(CreateActivateCustomerCmd.class);
-
-    RuntimeTypeAdapterFactory<Event> rtaEvents = RuntimeTypeAdapterFactory.of(Event.class)
-            .registerSubtype(CustomerCreated.class)
-            .registerSubtype(CustomerActivated.class)
-            .registerSubtype(CustomerDeactivated.class)
-            .registerSubtype(DeactivatedCmdScheduled.class);
-
-    val gsonBuilder = new GsonBuilder();
-
-    gsonBuilder.setPrettyPrinting();
-    gsonBuilder.registerTypeAdapterFactory(new GsonJava8TypeAdapterFactory());
-    gsonBuilder.registerTypeAdapterFactory(rtaIds);
-    gsonBuilder.registerTypeAdapterFactory(rtaCommands);
-    gsonBuilder.registerTypeAdapterFactory(rtaEvents);
-
-    gsonBuilder.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES); // snake case
-
-    val gson = gsonBuilder.create();
-
-    return gson;
+  ObjectMapper mapper() {
+    val mapper = Json.mapper;
+    mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
+    mapper.findAndRegisterModules();
+    return mapper;
   }
 
 }

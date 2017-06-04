@@ -20,13 +20,13 @@ import static javaslang.API.*;
 import static javaslang.Predicates.instanceOf;
 
 @Slf4j
-public class Example1EventsProjectorJooq implements EventsProjector {
+public class Example1EventsProjector implements EventsProjector {
 
   @Getter
   private final String eventsChannelId;
   private final Configuration jooqCfg;
 
-  public Example1EventsProjectorJooq(@NonNull final String eventsChannelId, @NonNull final Configuration jooqCfg) {
+  public Example1EventsProjector(@NonNull final String eventsChannelId, @NonNull final Configuration jooqCfg) {
     this.eventsChannelId = eventsChannelId;
     this.jooqCfg = jooqCfg;
   }

@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import javax.inject.Inject;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -28,13 +29,13 @@ public class CustomerCmdHandlerFnJavaslang extends CommandHandlerFn<Customer> {
   }
 
   @Override
-  public Either<Exception, UnitOfWork> handle(final Command cmd, final Snapshot<Customer> snapshot) {
+  public Either<Exception, Optional<UnitOfWork>> handle(final Command cmd, final Snapshot<Customer> snapshot) {
 
     log.info("Will handle command {}", cmd);
 
     try {
       val uow = _handle(cmd, snapshot);
-      return Eithers.right(uow);
+      return Eithers.right(Optional.ofNullable(uow));
     } catch (Exception e) {
       return Eithers.left(e);
     }

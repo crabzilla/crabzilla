@@ -1,6 +1,5 @@
-package crabzilla.stack.vertx;
-
-import com.google.gson.Gson;
+// TODO move from here to tests module (by decoupling from guice modules)
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.name.Names;
@@ -14,7 +13,7 @@ import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.vertx.sql.JdbiEventRepository;
+import crabzilla.stack.vertx.sql.JdbiJacksonEventRepository;
 import io.vertx.core.Vertx;
 import lombok.val;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -29,15 +28,15 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.UUID;
 
-@DisplayName("A JdbiEventRepository")
-public class JdbiEventRepositoryIt {
+@DisplayName("A JdbiJacksonEventRepository")
+public class JdbiJacksonEventRepositoryIt {
 
   @Inject
-  Gson gson;
+  ObjectMapper mapper;
   @Inject
   DBI dbi;
 
-  JdbiEventRepository repo;
+  JdbiJacksonEventRepository repo;
 
   @BeforeEach
   public void setup() {
@@ -61,7 +60,7 @@ public class JdbiEventRepositoryIt {
       }
     }).injectMembers(this);
 
-    repo = new JdbiEventRepository("customer", gson, dbi);
+    repo = new JdbiJacksonEventRepository("customer", mapper, dbi);
 
     dbi.inTransaction((TransactionCallback<Void>) (handle, transactionStatus) -> {
       handle.execute("delete from idempotency");

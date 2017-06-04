@@ -52,7 +52,7 @@ public class EventsProjectionVerticle extends AbstractVerticle {
         val uowSequence = new Long(msg.headers().get("uowSequence"));
         val projectionData =
                 new ProjectionData(uow.getUnitOfWorkId().toString(), uowSequence,
-                        uow.getTargetId().getStringValue(), uow.getEvents());
+                        uow.targetId().getStringValue(), uow.getEvents());
 
         circuitBreaker.fallback(throwable -> {
           log.warn("Fallback for uowHandler ");

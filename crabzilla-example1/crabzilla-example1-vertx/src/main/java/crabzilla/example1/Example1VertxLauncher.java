@@ -1,11 +1,9 @@
 package crabzilla.example1;
 
-import com.google.gson.Gson;
 import com.google.inject.Guice;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
-import crabzilla.stack.vertx.codecs.gson.CommandCodec;
 import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
 import crabzilla.stack.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.core.Vertx;
@@ -35,9 +33,6 @@ public class Example1VertxLauncher {
 
   @Inject
   Vertx vertx;
-
-  @Inject
-  Gson gson;
 
   public static void main(String args[]) throws InterruptedException {
 
@@ -75,7 +70,7 @@ public class Example1VertxLauncher {
 
     val customerId = new CustomerId(UUID.randomUUID().toString());
     val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "a good customer");
-    val options = new DeliveryOptions().setCodecName(new CommandCodec(gson).name());
+    val options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 

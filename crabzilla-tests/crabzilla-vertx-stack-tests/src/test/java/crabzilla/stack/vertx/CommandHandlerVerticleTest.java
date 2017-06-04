@@ -1,25 +1,29 @@
 package crabzilla.stack.vertx;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import crabzilla.example1.aggregates.customer.*;
+import crabzilla.example1.aggregates.customer.Customer;
+import crabzilla.example1.aggregates.customer.CustomerId;
+import crabzilla.example1.aggregates.customer.CustomerSupplierFn;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
-import crabzilla.example1.services.SampleService;
-import crabzilla.example1.services.SampleServiceImpl;
 import crabzilla.model.*;
+import crabzilla.model.util.Eithers;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
-import crabzilla.stack.vertx.codecs.fst.*;
+import crabzilla.stack.vertx.codecs.fst.JacksonGenericCodec;
 import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.json.Json;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import lombok.Value;
 import lombok.val;
 import org.junit.After;
 import org.junit.Before;
@@ -30,6 +34,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.nustaq.serialization.FSTConfiguration;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static crabzilla.stack.util.StringHelper.commandHandlerId;
@@ -44,7 +49,6 @@ import static org.mockito.Mockito.*;
 public class CommandHandlerVerticleTest {
 
   static final FSTConfiguration fst = FSTConfiguration.createDefaultConfiguration();
-  static final SampleService service = new SampleServiceImpl();
 
   Vertx vertx;
   Cache<String, Snapshot<Customer>> cache;
@@ -55,15 +59,33 @@ public class CommandHandlerVerticleTest {
   @Mock
   SnapshotReaderFn<Customer> snapshotReaderFn;
   @Mock
+  CommandHandlerFn<Customer> cmdHandlerFn;
+  @Mock
   EventRepository eventRepository;
 
   Vertx vertx() {
+
     val vertx = Vertx.vertx();
-    vertx.eventBus().registerDefaultCodec(CommandExecution.class, new GenericCodec<>(fst));
-    vertx.eventBus().registerDefaultCodec(AggregateRootId.class, new AggregateRootIdCodec(fst));
-    vertx.eventBus().registerDefaultCodec(Command.class, new CommandCodec(fst));
-    vertx.eventBus().registerDefaultCodec(Event.class, new EventCodec(fst));
-    vertx.eventBus().registerDefaultCodec(UnitOfWork.class, new UnitOfWorkCodec(fst));
+
+    val mapper = Json.mapper;
+    mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
+    mapper.findAndRegisterModules();
+
+    vertx.eventBus().registerDefaultCodec(CommandExecution.class,
+            new JacksonGenericCodec<>(mapper, CommandExecution.class));
+
+    vertx.eventBus().registerDefaultCodec(AggregateRootId.class,
+            new JacksonGenericCodec<>(mapper, AggregateRootId.class));
+
+    vertx.eventBus().registerDefaultCodec(Command.class,
+            new JacksonGenericCodec<>(mapper, Command.class));
+
+    vertx.eventBus().registerDefaultCodec(Event.class,
+            new JacksonGenericCodec<>(mapper, Event.class));
+
+    vertx.eventBus().registerDefaultCodec(UnitOfWork.class,
+            new JacksonGenericCodec<>(mapper, UnitOfWork.class));
+
     return vertx;
   }
 
@@ -82,10 +104,7 @@ public class CommandHandlerVerticleTest {
                     .setResetTimeout(10000) // time spent in open state before attempting to re-try
     );
 
-    val cmdHandler =
-            new CustomerCmdHandlerFnJavaslang(new CustomerStateTransitionFnJavaslang(), (c) -> c.withService(service));
-
-    val verticle = new CommandHandlerVerticle<Customer>(Customer.class, snapshotReaderFn, cmdHandler,
+    val verticle = new CommandHandlerVerticle<Customer>(Customer.class, snapshotReaderFn, cmdHandlerFn,
                               validatorFn, eventRepository, cache, vertx, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
@@ -98,44 +117,42 @@ public class CommandHandlerVerticleTest {
   }
 
   @Test
-  public void valid_command_must_result_SUCCESS(TestContext tc) {
+  public void valid_command_get_SUCCESS(TestContext tc) {
 
     Async async = tc.async();
 
     val customerId = new CustomerId("customer#1");
-
     val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
-
-    val expectedMessage = new SnapshotMessage<Customer>(
-            new Snapshot<>(new CustomerSupplierFn().get(), new Version(0)),
-            SnapshotMessage.LoadedFromEnum.FROM_DB);
+    val expectedSnapshot = new Snapshot<Customer>(new CustomerSupplierFn().get(), new Version(0));
+    val expectedMessage = new SnapshotMessage<Customer>(expectedSnapshot, SnapshotMessage.LoadedFromEnum.FROM_DB);
+    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
+    val expectedUow = UnitOfWork.of(createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
     when(validatorFn.constraintViolations(eq(createCustomerCmd))).thenReturn(emptyList());
-
     when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue()))).thenReturn(expectedMessage);
+    when(cmdHandlerFn.handle(eq(createCustomerCmd), eq(expectedSnapshot)))
+            .thenReturn(Eithers.right(Optional.of(expectedUow)));
+    when(eventRepository.append(any(UnitOfWork.class))).thenReturn(1L);
 
-    val options = new DeliveryOptions().setCodecName(new CommandCodec(fst).name());
+    val options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       verify(validatorFn).constraintViolations(eq(createCustomerCmd));
-
       verify(snapshotReaderFn).getSnapshotMessage(eq(createCustomerCmd.getTargetId().getStringValue()));
+      verify(cmdHandlerFn).handle(createCustomerCmd, expectedSnapshot);
 
       ArgumentCaptor<UnitOfWork> argument = ArgumentCaptor.forClass(UnitOfWork.class);
-
       verify(eventRepository).append(argument.capture());
 
-      verifyNoMoreInteractions(validatorFn, snapshotReaderFn, eventRepository);
+      verifyNoMoreInteractions(validatorFn, snapshotReaderFn, cmdHandlerFn, eventRepository);
 
       tc.assertTrue(asyncResult.succeeded());
 
       val response = (CommandExecution) asyncResult.result().body();
 
       tc.assertEquals(RESULT.SUCCESS, response.getResult());
-
-      val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
-      val expectedUow = UnitOfWork.of(createCustomerCmd, new Version(1), asList(expectedEvent));
+      tc.assertEquals(1L, response.getUowSequence().get());
 
       val resultUnitOfWork = response.getUnitOfWork().get();
 
@@ -150,30 +167,28 @@ public class CommandHandlerVerticleTest {
   }
 
   @Test
-  public void an_invalid_command_must_result_VALIDATION_ERROR(TestContext tc) {
+  public void an_invalid_command_get_VALIDATION_ERROR(TestContext tc) {
 
     Async async = tc.async();
 
     val customerId = new CustomerId("customer#1");
 
     val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "customer1");
-
-    val expectedMessage = new SnapshotMessage<Customer>(
-            new Snapshot<>(new CustomerSupplierFn().get(), new Version(0)),
-            SnapshotMessage.LoadedFromEnum.FROM_DB);
+    val expectedSnapshot = new Snapshot<Customer>(new CustomerSupplierFn().get(), new Version(0));
+    val expectedMessage = new SnapshotMessage<Customer>(expectedSnapshot, SnapshotMessage.LoadedFromEnum.FROM_DB);
 
     when(validatorFn.constraintViolations(eq(createCustomerCmd))).thenReturn(singletonList("An error"));
 
     when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue())))
             .thenReturn(expectedMessage);
 
-    val options = new DeliveryOptions().setCodecName(new CommandCodec(fst).name());
+    val options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       verify(validatorFn).constraintViolations(eq(createCustomerCmd));
 
-      verifyNoMoreInteractions(validatorFn, snapshotReaderFn, eventRepository);
+      verifyNoMoreInteractions(validatorFn, snapshotReaderFn, cmdHandlerFn, eventRepository);
 
       tc.assertTrue(asyncResult.succeeded());
 
@@ -188,5 +203,50 @@ public class CommandHandlerVerticleTest {
     });
 
   }
+
+  @Value
+  class UnknownCommand implements Command {
+    UUID commandId;
+    CustomerId targetId;
+  }
+
+  @Test
+  public void an_unknown_command_get_UNKNOWN_COMMAND(TestContext tc) {
+
+    Async async = tc.async();
+
+    val customerId = new CustomerId("customer#1");
+    val createCustomerCmd = new UnknownCommand(UUID.randomUUID(), customerId);
+    val expectedSnapshot = new Snapshot<Customer>(new CustomerSupplierFn().get(), new Version(0));
+    val expectedMessage = new SnapshotMessage<Customer>(expectedSnapshot, SnapshotMessage.LoadedFromEnum.FROM_DB);
+
+    when(validatorFn.constraintViolations(eq(createCustomerCmd))).thenReturn(emptyList());
+    when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue())))
+            .thenReturn(expectedMessage);
+    when(cmdHandlerFn.handle(eq(createCustomerCmd), eq(expectedSnapshot)))
+            .thenReturn(Eithers.right(Optional.empty()));
+
+    val options = new DeliveryOptions().setCodecName("Command");
+
+    vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+
+      verify(validatorFn).constraintViolations(eq(createCustomerCmd));
+      verify(snapshotReaderFn).getSnapshotMessage(eq(createCustomerCmd.getTargetId().getStringValue()));
+      verify(cmdHandlerFn).handle(createCustomerCmd, expectedSnapshot);
+
+      verifyNoMoreInteractions(validatorFn, snapshotReaderFn, cmdHandlerFn, eventRepository);
+
+      tc.assertTrue(asyncResult.succeeded());
+
+      val response = (CommandExecution) asyncResult.result().body();
+
+      tc.assertEquals(RESULT.UNKNOWN_COMMAND, response.getResult());
+
+      async.complete();
+
+    });
+
+  }
+
 
 }
