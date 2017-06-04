@@ -1,6 +1,5 @@
-package crabzilla.stack.vertx;
+package crabzilla.stack.vertx.verticles;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import crabzilla.example1.aggregates.customer.Customer;
@@ -13,13 +12,11 @@ import crabzilla.model.util.Eithers;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
-import crabzilla.stack.vertx.codecs.fst.JacksonGenericCodec;
-import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
+import crabzilla.stack.vertx.CommandExecution;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.json.Json;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -63,38 +60,14 @@ public class CommandHandlerVerticleTest {
   @Mock
   EventRepository eventRepository;
 
-  Vertx vertx() {
 
-    val vertx = Vertx.vertx();
-
-    val mapper = Json.mapper;
-    mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
-    mapper.findAndRegisterModules();
-
-    vertx.eventBus().registerDefaultCodec(CommandExecution.class,
-            new JacksonGenericCodec<>(mapper, CommandExecution.class));
-
-    vertx.eventBus().registerDefaultCodec(AggregateRootId.class,
-            new JacksonGenericCodec<>(mapper, AggregateRootId.class));
-
-    vertx.eventBus().registerDefaultCodec(Command.class,
-            new JacksonGenericCodec<>(mapper, Command.class));
-
-    vertx.eventBus().registerDefaultCodec(Event.class,
-            new JacksonGenericCodec<>(mapper, Event.class));
-
-    vertx.eventBus().registerDefaultCodec(UnitOfWork.class,
-            new JacksonGenericCodec<>(mapper, UnitOfWork.class));
-
-    return vertx;
-  }
 
   @Before
   public void setUp(TestContext context) {
 
     MockitoAnnotations.initMocks(this);
 
-    vertx = vertx();
+    vertx = new VertxFactory().vertx();
     cache = Caffeine.newBuilder().build();
     circuitBreaker = CircuitBreaker.create("cmd-handler-circuit-breaker", vertx,
             new CircuitBreakerOptions()

@@ -16,7 +16,7 @@ import crabzilla.stack.AggregateRootModule;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotFactory;
 import crabzilla.stack.SnapshotReaderFn;
-import crabzilla.stack.vertx.sql.CaffeinedSnapshotReaderFn;
+import crabzilla.stack.vertx.CaffeinedSnapshotReaderFn;
 import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Vertx;

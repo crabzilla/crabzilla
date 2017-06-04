@@ -13,7 +13,7 @@ import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.vertx.sql.JdbiJacksonEventRepository;
+import crabzilla.stack.vertx.JdbiJacksonEventRepository;
 import io.vertx.core.Vertx;
 import lombok.val;
 import org.assertj.core.api.AssertionsForClassTypes;
