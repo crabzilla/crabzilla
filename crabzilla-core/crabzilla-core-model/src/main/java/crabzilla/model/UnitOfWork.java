@@ -23,7 +23,8 @@ public class UnitOfWork implements Serializable {
     return new UnitOfWork(UUID.randomUUID(), command, version, events);
   }
 
-  public AggregateRootId getTargetId() {
+
+  public AggregateRootId targetId() {
     return command.getTargetId();
   }
 

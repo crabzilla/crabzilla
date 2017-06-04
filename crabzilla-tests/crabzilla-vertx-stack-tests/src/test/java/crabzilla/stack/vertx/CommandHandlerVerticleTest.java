@@ -1,5 +1,6 @@
 package crabzilla.stack.vertx;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import crabzilla.example1.aggregates.customer.Customer;
@@ -12,12 +13,13 @@ import crabzilla.model.util.Eithers;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.SnapshotReaderFn;
-import crabzilla.stack.vertx.codecs.fst.*;
+import crabzilla.stack.vertx.codecs.fst.JacksonGenericCodec;
 import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.json.Json;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -62,12 +64,28 @@ public class CommandHandlerVerticleTest {
   EventRepository eventRepository;
 
   Vertx vertx() {
+
     val vertx = Vertx.vertx();
-    vertx.eventBus().registerDefaultCodec(CommandExecution.class, new GenericCodec<>(fst));
-    vertx.eventBus().registerDefaultCodec(AggregateRootId.class, new AggregateRootIdCodec(fst));
-    vertx.eventBus().registerDefaultCodec(Command.class, new CommandCodec(fst));
-    vertx.eventBus().registerDefaultCodec(Event.class, new EventCodec(fst));
-    vertx.eventBus().registerDefaultCodec(UnitOfWork.class, new UnitOfWorkCodec(fst));
+
+    val mapper = Json.mapper;
+    mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
+    mapper.findAndRegisterModules();
+
+    vertx.eventBus().registerDefaultCodec(CommandExecution.class,
+            new JacksonGenericCodec<>(mapper, CommandExecution.class));
+
+    vertx.eventBus().registerDefaultCodec(AggregateRootId.class,
+            new JacksonGenericCodec<>(mapper, AggregateRootId.class));
+
+    vertx.eventBus().registerDefaultCodec(Command.class,
+            new JacksonGenericCodec<>(mapper, Command.class));
+
+    vertx.eventBus().registerDefaultCodec(Event.class,
+            new JacksonGenericCodec<>(mapper, Event.class));
+
+    vertx.eventBus().registerDefaultCodec(UnitOfWork.class,
+            new JacksonGenericCodec<>(mapper, UnitOfWork.class));
+
     return vertx;
   }
 
@@ -116,15 +134,17 @@ public class CommandHandlerVerticleTest {
             .thenReturn(Eithers.right(Optional.of(expectedUow)));
     when(eventRepository.append(any(UnitOfWork.class))).thenReturn(1L);
 
-    val options = new DeliveryOptions().setCodecName(new CommandCodec(fst).name());
+    val options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       verify(validatorFn).constraintViolations(eq(createCustomerCmd));
       verify(snapshotReaderFn).getSnapshotMessage(eq(createCustomerCmd.getTargetId().getStringValue()));
       verify(cmdHandlerFn).handle(createCustomerCmd, expectedSnapshot);
+
       ArgumentCaptor<UnitOfWork> argument = ArgumentCaptor.forClass(UnitOfWork.class);
       verify(eventRepository).append(argument.capture());
+
       verifyNoMoreInteractions(validatorFn, snapshotReaderFn, cmdHandlerFn, eventRepository);
 
       tc.assertTrue(asyncResult.succeeded());
@@ -162,7 +182,7 @@ public class CommandHandlerVerticleTest {
     when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue())))
             .thenReturn(expectedMessage);
 
-    val options = new DeliveryOptions().setCodecName(new CommandCodec(fst).name());
+    val options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
@@ -206,7 +226,7 @@ public class CommandHandlerVerticleTest {
     when(cmdHandlerFn.handle(eq(createCustomerCmd), eq(expectedSnapshot)))
             .thenReturn(Eithers.right(Optional.empty()));
 
-    val options = new DeliveryOptions().setCodecName(new CommandCodec(fst).name());
+    val options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 

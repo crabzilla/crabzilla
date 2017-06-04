@@ -54,16 +54,6 @@
             <artifactId>caffeine</artifactId>
         </dependency>
 
-        <!-- gson -->
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.dongliu</groupId>
-            <artifactId>gson-java8-datatype</artifactId>
-        </dependency>
-
         <!-- database -->
         <dependency>
             <groupId>mysql</groupId>
