@@ -22,7 +22,7 @@ public class JacksonGenericCodec<T> implements MessageCodec<T, T> {
   @SneakyThrows
   public void encodeToWire(Buffer buffer, T obj) {
 
-    final byte barray[] = mapper.writeValueAsBytes(obj);
+    final byte barray[] = mapper.writerFor(clazz).writeValueAsBytes(obj);
 
     // Write data into given buffer
     buffer.appendInt(barray.length);
@@ -43,9 +43,12 @@ public class JacksonGenericCodec<T> implements MessageCodec<T, T> {
     final byte[] content = buffer.getBytes(_pos += 4, _pos += length);
     Object readObj;
 
+    System.out.println("-------> " + new String(content));
+
     try {
       readObj = mapper.readValue(content, clazz);
     } catch (Exception e) {
+      e.printStackTrace();
       throw new RuntimeException("When decodingFromWire", e);
     }
 

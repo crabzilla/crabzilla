@@ -4,6 +4,7 @@ import com.google.inject.Guice;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
+import crabzilla.model.Command;
 import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
 import crabzilla.stack.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.core.Vertx;
@@ -54,7 +55,7 @@ public class Example1VertxLauncher {
         Guice.createInjector(new Example1VertxModule(vertx)).injectMembers(launcher);
 
         launcher.vertx.deployVerticle(launcher.cmdVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
-        launcher.vertx.deployVerticle(launcher.projectionVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
+//        launcher.vertx.deployVerticle(launcher.projectionVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
 
         // a test
         launcher.postNewCustomerJustForTest();
@@ -72,7 +73,7 @@ public class Example1VertxLauncher {
     val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "a good customer");
     val options = new DeliveryOptions().setCodecName("Command");
 
-    vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(commandHandlerId(Customer.class), ((Command)createCustomerCmd), options, asyncResult -> {
 
       log.info("Successful postNewCustomerJustForTest? {}", asyncResult.succeeded());
 
