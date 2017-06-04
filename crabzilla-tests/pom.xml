@@ -24,13 +24,6 @@
 
     <dependencies>
 
-        <dependency>
-            <groupId>crabzilla</groupId>
-            <artifactId>crabzilla-example1-vertx</artifactId>
-            <!--<scope>test</scope>-->
-            <version>${project.version}</version>
-        </dependency>
-
         <!-- util -->
 
         <dependency>
