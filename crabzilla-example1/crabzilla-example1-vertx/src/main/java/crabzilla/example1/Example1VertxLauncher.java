@@ -6,6 +6,7 @@ import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.model.Command;
 import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
+import crabzilla.stack.vertx.verticles.CommandRestVerticle;
 import crabzilla.stack.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -27,6 +28,8 @@ import static java.lang.System.setProperty;
 @Slf4j
 public class Example1VertxLauncher {
 
+  @Inject
+  CommandRestVerticle<Customer> restVersicle;
   @Inject
   CommandHandlerVerticle<Customer> cmdVerticle;
   @Inject
@@ -54,6 +57,7 @@ public class Example1VertxLauncher {
 
         Guice.createInjector(new Example1VertxModule(vertx)).injectMembers(launcher);
 
+        launcher.vertx.deployVerticle(launcher.restVersicle, event -> log.info("Deployed ? {}", event.succeeded()));
         launcher.vertx.deployVerticle(launcher.cmdVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
 //        launcher.vertx.deployVerticle(launcher.projectionVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
 

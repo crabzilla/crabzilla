@@ -69,7 +69,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         val command = msg.body();
 
-        log.info("received a uowHandler {}", command);
+        log.info("received a command {}", command);
 
         val constraints = validatorFn.constraintViolations(command);
 
@@ -80,7 +80,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         circuitBreaker.fallback(throwable -> {
 
-          log.error("Fallback for uowHandler " + command.getCommandId(), throwable);
+          log.error("Fallback for command " + command.getCommandId(), throwable);
           return FALLBACK(command.getCommandId()); })
 
         .execute(cmdHandler(command))
@@ -107,7 +107,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
       val optException = getLeft(either);
 
       if (optException.isPresent()) {
-        log.error("Business logic error for uowHandler " + command.getCommandId(), optException.get());
+        log.error("Business logic error for command " + command.getCommandId(), optException.get());
         future.complete(BUSINESS_ERROR(command.getCommandId()));
         return;
       }
