@@ -39,7 +39,7 @@ public class Example1EventsProjector implements EventsProjector {
   @Override
   public void handle(final List<ProjectionData> uowList) {
 
-    log.info("writing {} events for eventsChannelId {}", uowList.size(), eventsChannelId);
+    log.info("writing {} units for eventsChannelId {}", uowList.size(), eventsChannelId);
 
     DSL.using(jooqCfg)
       .transaction(ctx -> uowList.stream()
@@ -47,7 +47,7 @@ public class Example1EventsProjector implements EventsProjector {
               .map(e -> Tuple.of(uowdata.getTargetId(), e)))
               .forEach(tuple -> handle(ctx, tuple._1(), tuple._2())));
 
-    log.info("wrote {} events for eventsChannelId {}", uowList.size(), eventsChannelId);
+    log.info("wrote {} units for eventsChannelId {}", uowList.size(), eventsChannelId);
   }
 
 
@@ -59,20 +59,20 @@ public class Example1EventsProjector implements EventsProjector {
 
       Case(instanceOf(CustomerCreated.class), (e) ->
               run(() -> DSL.using(ctx).insertInto(CUSTOMER_SUMMARY)
-                      .values(e.getId(), e.getName(), false))
+                        .values(id, e.getName(), false).execute())
       ),
 
       Case(instanceOf(CustomerActivated.class), (e) ->
               run(() -> DSL.using(ctx).update(CUSTOMER_SUMMARY)
                                       .set(CUSTOMER_SUMMARY.IS_ACTIVE, true)
-                                      .where(CUSTOMER_SUMMARY.ID.eq(id)))
+                                      .where(CUSTOMER_SUMMARY.ID.eq(id)).execute())
 
       ),
 
       Case(instanceOf(CustomerDeactivated.class), (e) ->
               run(() -> DSL.using(ctx).update(CUSTOMER_SUMMARY)
                       .set(CUSTOMER_SUMMARY.IS_ACTIVE, false)
-                      .where(CUSTOMER_SUMMARY.ID.eq(id)))
+                      .where(CUSTOMER_SUMMARY.ID.eq(id)).execute())
       ),
 
       Case($(), e -> run(() -> log.warn("{} does not have any event projection handler", e)))

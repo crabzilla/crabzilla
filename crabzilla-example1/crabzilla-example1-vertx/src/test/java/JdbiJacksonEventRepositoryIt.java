@@ -1,11 +1,7 @@
 // TODO move from here to tests module (by decoupling from guice modules)
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.name.Names;
-import com.google.inject.util.Modules;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import crabzilla.example1.Example1VertxModule;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
@@ -25,7 +21,6 @@ import org.skife.jdbi.v2.TransactionCallback;
 
 import javax.inject.Inject;
 import java.util.Arrays;
-import java.util.Properties;
 import java.util.UUID;
 
 @DisplayName("A JdbiJacksonEventRepository")
@@ -40,30 +35,13 @@ public class JdbiJacksonEventRepositoryIt {
 
   @BeforeEach
   public void setup() {
-    Guice.createInjector(Modules.combine(
-            new Example1VertxModule(Vertx.vertx())), new AbstractModule() {
 
-      @Override
-      protected void configure() {
-
-        final Config config = ConfigFactory.load();
-        final Properties props =  new Properties();
-        config.entrySet().forEach(e -> {
-          final String key = e.getKey().replace("crabzilla-stack1.", "");
-          final String value = e.getValue().render().replace("\"", "");
-          props.put(key, value);
-        });
-        Names.bindProperties(binder(), props);
-
-//        bind(new TypeLiteral<Function<Customer, Customer>>() {;}).toInstance(c -> c);
-
-      }
-    }).injectMembers(this);
+    Guice.createInjector(new Example1VertxModule(Vertx.vertx())).injectMembers(this);
 
     repo = new JdbiJacksonEventRepository("customer", mapper, dbi);
 
     dbi.inTransaction((TransactionCallback<Void>) (handle, transactionStatus) -> {
-      handle.execute("delete from idempotency");
+      handle.execute("delete from customer_summary");
       handle.execute("delete from aggregate_roots");
       handle.execute("delete from units_of_work");
       return null;

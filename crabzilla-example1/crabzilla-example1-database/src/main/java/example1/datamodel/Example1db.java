@@ -4,7 +4,10 @@
 package example1.datamodel;
 
 
-import example1.datamodel.tables.*;
+import example1.datamodel.tables.CustomerSummary;
+import example1.datamodel.tables.EventsChannels;
+import example1.datamodel.tables.SchemaVersion;
+import example1.datamodel.tables.UnitsOfWork;
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
@@ -28,7 +31,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Example1db extends SchemaImpl {
 
-    private static final long serialVersionUID = 1321179614;
+    private static final long serialVersionUID = 522892212;
 
     /**
      * The reference instance of <code>example1db</code>
@@ -36,24 +39,14 @@ public class Example1db extends SchemaImpl {
     public static final Example1db EXAMPLE1DB = new Example1db();
 
     /**
-     * The table <code>example1db.aggregate_roots</code>.
-     */
-    public final AggregateRoots AGGREGATE_ROOTS = example1.datamodel.tables.AggregateRoots.AGGREGATE_ROOTS;
-
-    /**
      * The table <code>example1db.customer_summary</code>.
      */
     public final CustomerSummary CUSTOMER_SUMMARY = example1.datamodel.tables.CustomerSummary.CUSTOMER_SUMMARY;
 
     /**
-     * The table <code>example1db.events_projection_channels</code>.
+     * The table <code>example1db.events_channels</code>.
      */
-    public final EventsProjectionChannels EVENTS_PROJECTION_CHANNELS = example1.datamodel.tables.EventsProjectionChannels.EVENTS_PROJECTION_CHANNELS;
-
-    /**
-     * The table <code>example1db.idempotency</code>.
-     */
-    public final Idempotency IDEMPOTENCY = example1.datamodel.tables.Idempotency.IDEMPOTENCY;
+    public final EventsChannels EVENTS_CHANNELS = example1.datamodel.tables.EventsChannels.EVENTS_CHANNELS;
 
     /**
      * The table <code>example1db.schema_version</code>.
@@ -90,10 +83,8 @@ public class Example1db extends SchemaImpl {
 
     private final List<Table<?>> getTables0() {
         return Arrays.<Table<?>>asList(
-            AggregateRoots.AGGREGATE_ROOTS,
             CustomerSummary.CUSTOMER_SUMMARY,
-            EventsProjectionChannels.EVENTS_PROJECTION_CHANNELS,
-            Idempotency.IDEMPOTENCY,
+            EventsChannels.EVENTS_CHANNELS,
             SchemaVersion.SCHEMA_VERSION,
             UnitsOfWork.UNITS_OF_WORK);
     }
