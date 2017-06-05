@@ -4,7 +4,10 @@
 package example1.datamodel;
 
 
-import example1.datamodel.tables.*;
+import example1.datamodel.tables.CustomerSummary;
+import example1.datamodel.tables.EventsChannels;
+import example1.datamodel.tables.SchemaVersion;
+import example1.datamodel.tables.UnitsOfWork;
 
 import javax.annotation.Generated;
 
@@ -23,24 +26,14 @@ import javax.annotation.Generated;
 public class Tables {
 
     /**
-     * The table <code>example1db.aggregate_roots</code>.
-     */
-    public static final AggregateRoots AGGREGATE_ROOTS = example1.datamodel.tables.AggregateRoots.AGGREGATE_ROOTS;
-
-    /**
      * The table <code>example1db.customer_summary</code>.
      */
     public static final CustomerSummary CUSTOMER_SUMMARY = example1.datamodel.tables.CustomerSummary.CUSTOMER_SUMMARY;
 
     /**
-     * The table <code>example1db.events_projection_channels</code>.
+     * The table <code>example1db.events_channels</code>.
      */
-    public static final EventsProjectionChannels EVENTS_PROJECTION_CHANNELS = example1.datamodel.tables.EventsProjectionChannels.EVENTS_PROJECTION_CHANNELS;
-
-    /**
-     * The table <code>example1db.idempotency</code>.
-     */
-    public static final Idempotency IDEMPOTENCY = example1.datamodel.tables.Idempotency.IDEMPOTENCY;
+    public static final EventsChannels EVENTS_CHANNELS = example1.datamodel.tables.EventsChannels.EVENTS_CHANNELS;
 
     /**
      * The table <code>example1db.schema_version</code>.
