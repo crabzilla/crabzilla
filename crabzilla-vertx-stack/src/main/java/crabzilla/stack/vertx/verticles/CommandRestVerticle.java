@@ -1,24 +1,35 @@
 package crabzilla.stack.vertx.verticles;
 
 import crabzilla.model.AggregateRoot;
+import crabzilla.model.Command;
+import crabzilla.stack.vertx.CommandExecution;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.Json;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import java.lang.reflect.Field;
 import java.util.Set;
 
-import static crabzilla.stack.util.StringHelper.aggregateRootId;
-import static crabzilla.stack.util.StringHelper.commandHandlerId;
+import static crabzilla.stack.util.StringHelper.*;
 
+@Slf4j
 public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVerticle {
 
+  final Vertx vertx;
   final Class<A> aggregateRootClass;
 
-  public CommandRestVerticle(@NonNull Class<A> aggregateRootClass) {
+  public CommandRestVerticle(Vertx vertx, @NonNull Class<A> aggregateRootClass) {
+    this.vertx = vertx;
     this.aggregateRootClass = aggregateRootClass;
   }
 
@@ -27,19 +38,8 @@ public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVertic
 
     val router = Router.router(vertx);
 
-    router.route(HttpMethod.PUT, "/" + aggregateRootId(aggregateRootClass) + "/commands").handler(routingContext -> {
-      val commandAsJson = routingContext.getBodyAsJson();
-      val httpResp = routingContext.request().response();
-      vertx.eventBus().send(commandHandlerId(aggregateRootClass), commandAsJson, response -> {
-        if (response.succeeded()) {
-          /* Send the result from HelloWorldService to the http connection. */
-          httpResp.end(response.result().body().toString());
-        } else {
-          // logger.error("Can't send message to hello service", response.cause());
-          httpResp.setStatusCode(500).end(response.cause().getMessage());
-        }
-      });
-    });
+    router.route(HttpMethod.PUT, "/" + aggregateRootId(aggregateRootClass) + "/commands")
+          .handler(contextHandler());
 
     // Getting the routes
     for (Route r : router.getRoutes()) {
@@ -53,6 +53,35 @@ public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVertic
     val server = vertx.createHttpServer();
 
     server.requestHandler(router::accept).listen(8080);
+  }
+
+  Handler<RoutingContext> contextHandler() {
+    return routingContext -> {
+      routingContext.request().bodyHandler(buff -> {
+        val command = Json.decodeValue(new String(buff.getBytes()), Command.class);
+        val httpResp = routingContext.request().response();
+        val options = new DeliveryOptions().setCodecName("Command");
+        vertx.<CommandExecution>eventBus().send(commandHandlerId(aggregateRootClass), command, options, response -> {
+          if (response.succeeded()) {
+            val result = (CommandExecution) response.result().body();
+            val headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence().get().toString());
+            val optionsUow = new DeliveryOptions().setCodecName("UnitOfWork").setHeaders(headers);
+            vertx.<String>eventBus().send(eventsHandlerId("example1"), result.getUnitOfWork().get(), optionsUow, resp -> {
+              if (resp.succeeded()) {
+                log.info("success: {}", resp);
+              } else {
+                log.error("error cause: {}", resp.cause());
+                log.error("error message: {}", resp.cause().getMessage());
+              }
+            });
+            httpResp.end(response.result().body().toString());
+          } else {
+            httpResp.setStatusCode(500).end(response.cause().getMessage());
+          }
+        });
+      });
+
+    };
   }
 
 }

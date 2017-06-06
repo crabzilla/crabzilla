@@ -3,6 +3,7 @@ import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
+import crabzilla.model.Command;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
 import io.vertx.core.json.Json;
@@ -30,12 +31,16 @@ public class JacksonJsonTest {
   @Test
   public void one_event() throws Exception {
 
-    val id = new CustomerId("customer#1");
+    val id = new CustomerId(UUID.randomUUID().toString());
     val command = new CreateCustomerCmd(UUID.randomUUID(), id, "customer1");
     val event = new CustomerCreated(id, command.getName());
     val uow1 = UnitOfWork.of(command, Version.create(1), Collections.singletonList(event));
 
     val uowAsJson = mapper.writeValueAsString(uow1);
+
+    System.out.println(mapper.writerFor(Command.class).writeValueAsString(command));
+
+    System.out.println(uowAsJson);
 
     val uow2 = mapper.readValue(uowAsJson, UnitOfWork.class);
 

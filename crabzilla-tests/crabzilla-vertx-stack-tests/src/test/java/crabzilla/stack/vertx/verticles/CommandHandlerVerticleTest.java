@@ -29,7 +29,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.nustaq.serialization.FSTConfiguration;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -45,8 +44,6 @@ import static org.mockito.Mockito.*;
 @RunWith(VertxUnitRunner.class)
 public class CommandHandlerVerticleTest {
 
-  static final FSTConfiguration fst = FSTConfiguration.createDefaultConfiguration();
-
   Vertx vertx;
   Cache<String, Snapshot<Customer>> cache;
   CircuitBreaker circuitBreaker;
@@ -59,8 +56,6 @@ public class CommandHandlerVerticleTest {
   CommandHandlerFn<Customer> cmdHandlerFn;
   @Mock
   EventRepository eventRepository;
-
-
 
   @Before
   public void setUp(TestContext context) {

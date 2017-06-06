@@ -89,8 +89,8 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
 
   @Provides
   @Singleton
-  CommandRestVerticle<Customer> restVerticle() {
-    return new CommandRestVerticle<>(Customer.class);
+  CommandRestVerticle<Customer> restVerticle(Vertx vertx) {
+    return new CommandRestVerticle<>(vertx, Customer.class);
   }
 
 }
