@@ -43,8 +43,6 @@ public class JacksonGenericCodec<T> implements MessageCodec<T, T> {
     final byte[] content = buffer.getBytes(_pos += 4, _pos += length);
     Object readObj;
 
-    System.out.println("-------> " + new String(content));
-
     try {
       readObj = mapper.readValue(content, clazz);
     } catch (Exception e) {

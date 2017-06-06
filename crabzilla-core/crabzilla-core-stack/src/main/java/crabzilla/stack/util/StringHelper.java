@@ -12,7 +12,7 @@ public class StringHelper {
 	static final String COMMAND_HANDLER = "handle-cmd-";
 	static final String EVENTS_HANDLER = "%s-handle-events";
 
-	public  String commandHandlerId(Class<? extends AggregateRoot> aggregateRootClass) {
+	public String commandHandlerId(Class<? extends AggregateRoot> aggregateRootClass) {
 		return COMMAND_HANDLER + camelCaseToSnakeCase(aggregateRootClass.getSimpleName());
 	}
 

@@ -16,11 +16,13 @@ import lombok.val;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Optional;
+import java.util.UUID;
 
 import static crabzilla.model.util.Eithers.getLeft;
 import static crabzilla.model.util.Eithers.getRight;
 import static crabzilla.stack.util.StringHelper.commandHandlerId;
 import static crabzilla.stack.vertx.CommandExecution.*;
+import static java.util.Collections.singletonList;
 
 @Slf4j
 public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVerticle {
@@ -69,7 +71,13 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         val command = msg.body();
 
-        log.info("received a uowHandler {}", command);
+        if (command==null) { // TODO optional commandId
+          future.complete(VALIDATION_ERROR(UUID.randomUUID(),
+                  singletonList("Command cannot be null. Check if JSON payload is valid.")));
+          return;
+        }
+
+        log.info("received a command {}", command);
 
         val constraints = validatorFn.constraintViolations(command);
 
@@ -80,7 +88,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         circuitBreaker.fallback(throwable -> {
 
-          log.error("Fallback for uowHandler " + command.getCommandId(), throwable);
+          log.error("Fallback for command " + command.getCommandId(), throwable);
           return FALLBACK(command.getCommandId()); })
 
         .execute(cmdHandler(command))

@@ -21,7 +21,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.nustaq.serialization.FSTConfiguration;
 
 import java.util.UUID;
 
@@ -34,8 +33,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(VertxUnitRunner.class)
 public class EventProjectionVerticleTest {
-
-  static final FSTConfiguration fst = FSTConfiguration.createDefaultConfiguration();
 
   Vertx vertx;
   CircuitBreaker circuitBreaker;

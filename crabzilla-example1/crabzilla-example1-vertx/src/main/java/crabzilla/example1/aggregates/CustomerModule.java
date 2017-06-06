@@ -18,6 +18,7 @@ import crabzilla.stack.SnapshotFactory;
 import crabzilla.stack.SnapshotReaderFn;
 import crabzilla.stack.vertx.CaffeinedSnapshotReaderFn;
 import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
+import crabzilla.stack.vertx.verticles.CommandRestVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Vertx;
 
@@ -84,6 +85,12 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
   @Singleton
   Cache<String, Snapshot<Customer>> cache() {
     return Caffeine.newBuilder().build();
+  }
+
+  @Provides
+  @Singleton
+  CommandRestVerticle<Customer> restVerticle(Vertx vertx) {
+    return new CommandRestVerticle<>(vertx, Customer.class);
   }
 
 }
