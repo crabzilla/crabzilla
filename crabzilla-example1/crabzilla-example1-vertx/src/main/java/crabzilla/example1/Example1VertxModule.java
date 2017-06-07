@@ -10,14 +10,14 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import crabzilla.example1.aggregates.CustomerModule;
 import crabzilla.example1.aggregates.customer.Customer;
-import crabzilla.example1.projectors.Example1EventsProjector;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
 import crabzilla.model.*;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.vertx.CommandExecution;
+import crabzilla.stack.EventsProjector;
 import crabzilla.stack.vertx.JdbiJacksonEventRepository;
 import crabzilla.stack.vertx.codecs.JacksonGenericCodec;
+import crabzilla.stack.vertx.verticles.CommandExecution;
 import crabzilla.stack.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
@@ -55,6 +55,12 @@ public class Example1VertxModule extends AbstractModule {
     bind(SampleService.class).to(SampleServiceImpl.class).asEagerSingleton();
     bind(EventsProjectionVerticle.class).asEagerSingleton();
 
+    setCfgProps();
+
+  }
+
+  private void setCfgProps() {
+
     final Config config = ConfigFactory.load();
     final Properties props =  new Properties();
 
@@ -65,7 +71,6 @@ public class Example1VertxModule extends AbstractModule {
     });
 
     Names.bindProperties(binder(), props);
-
   }
 
   @Provides

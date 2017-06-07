@@ -1,11 +1,11 @@
-package crabzilla.example1.projectors;
+package crabzilla.example1;
 
 import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.example1.aggregates.customer.events.CustomerDeactivated;
 import crabzilla.model.Event;
-import crabzilla.model.EventsProjector;
-import crabzilla.model.ProjectionData;
+import crabzilla.stack.EventsProjector;
+import crabzilla.stack.ProjectionData;
 import javaslang.Tuple;
 import lombok.Getter;
 import lombok.NonNull;

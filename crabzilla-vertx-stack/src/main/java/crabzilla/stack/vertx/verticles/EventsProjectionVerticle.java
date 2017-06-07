@@ -1,7 +1,7 @@
 package crabzilla.stack.vertx.verticles;
 
-import crabzilla.model.EventsProjector;
-import crabzilla.model.ProjectionData;
+import crabzilla.stack.EventsProjector;
+import crabzilla.stack.ProjectionData;
 import crabzilla.model.UnitOfWork;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.*;

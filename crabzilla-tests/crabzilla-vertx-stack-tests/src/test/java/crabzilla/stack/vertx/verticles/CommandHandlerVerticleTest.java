@@ -7,12 +7,14 @@ import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.CustomerSupplierFn;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
-import crabzilla.model.*;
+import crabzilla.model.Command;
+import crabzilla.model.Snapshot;
+import crabzilla.model.UnitOfWork;
+import crabzilla.model.Version;
+import crabzilla.model.util.Either;
 import crabzilla.model.util.Eithers;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotMessage;
-import crabzilla.stack.SnapshotReaderFn;
-import crabzilla.stack.vertx.CommandExecution;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
@@ -30,11 +32,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static crabzilla.stack.util.StringHelper.commandHandlerId;
-import static crabzilla.stack.vertx.CommandExecution.RESULT;
+import static crabzilla.stack.vertx.verticles.CommandExecution.RESULT;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -49,11 +54,11 @@ public class CommandHandlerVerticleTest {
   CircuitBreaker circuitBreaker;
 
   @Mock
-  CommandValidatorFn validatorFn;
+  Function<Command, List<String>> validatorFn;
   @Mock
-  SnapshotReaderFn<Customer> snapshotReaderFn;
+  Function<String, SnapshotMessage<Customer>> snapshotReaderFn;
   @Mock
-  CommandHandlerFn<Customer> cmdHandlerFn;
+  BiFunction<Command, Snapshot<Customer>, Either<Exception, Optional<UnitOfWork>>> cmdHandlerFn;
   @Mock
   EventRepository eventRepository;
 
@@ -96,9 +101,9 @@ public class CommandHandlerVerticleTest {
     val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
     val expectedUow = UnitOfWork.of(createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
-    when(validatorFn.constraintViolations(eq(createCustomerCmd))).thenReturn(emptyList());
-    when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue()))).thenReturn(expectedMessage);
-    when(cmdHandlerFn.handle(eq(createCustomerCmd), eq(expectedSnapshot)))
+    when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
+    when(snapshotReaderFn.apply(eq(customerId.getStringValue()))).thenReturn(expectedMessage);
+    when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(expectedSnapshot)))
             .thenReturn(Eithers.right(Optional.of(expectedUow)));
     when(eventRepository.append(any(UnitOfWork.class))).thenReturn(1L);
 
@@ -106,9 +111,9 @@ public class CommandHandlerVerticleTest {
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
-      verify(validatorFn).constraintViolations(eq(createCustomerCmd));
-      verify(snapshotReaderFn).getSnapshotMessage(eq(createCustomerCmd.getTargetId().getStringValue()));
-      verify(cmdHandlerFn).handle(createCustomerCmd, expectedSnapshot);
+      verify(validatorFn).apply(eq(createCustomerCmd));
+      verify(snapshotReaderFn).apply(eq(createCustomerCmd.getTargetId().getStringValue()));
+      verify(cmdHandlerFn).apply(createCustomerCmd, expectedSnapshot);
 
       ArgumentCaptor<UnitOfWork> argument = ArgumentCaptor.forClass(UnitOfWork.class);
       verify(eventRepository).append(argument.capture());
@@ -145,16 +150,16 @@ public class CommandHandlerVerticleTest {
     val expectedSnapshot = new Snapshot<Customer>(new CustomerSupplierFn().get(), new Version(0));
     val expectedMessage = new SnapshotMessage<Customer>(expectedSnapshot, SnapshotMessage.LoadedFromEnum.FROM_DB);
 
-    when(validatorFn.constraintViolations(eq(createCustomerCmd))).thenReturn(singletonList("An error"));
+    when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(singletonList("An error"));
 
-    when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue())))
+    when(snapshotReaderFn.apply(eq(customerId.getStringValue())))
             .thenReturn(expectedMessage);
 
     val options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
-      verify(validatorFn).constraintViolations(eq(createCustomerCmd));
+      verify(validatorFn).apply(eq(createCustomerCmd));
 
       verifyNoMoreInteractions(validatorFn, snapshotReaderFn, cmdHandlerFn, eventRepository);
 
@@ -188,19 +193,19 @@ public class CommandHandlerVerticleTest {
     val expectedSnapshot = new Snapshot<Customer>(new CustomerSupplierFn().get(), new Version(0));
     val expectedMessage = new SnapshotMessage<Customer>(expectedSnapshot, SnapshotMessage.LoadedFromEnum.FROM_DB);
 
-    when(validatorFn.constraintViolations(eq(createCustomerCmd))).thenReturn(emptyList());
-    when(snapshotReaderFn.getSnapshotMessage(eq(customerId.getStringValue())))
+    when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
+    when(snapshotReaderFn.apply(eq(customerId.getStringValue())))
             .thenReturn(expectedMessage);
-    when(cmdHandlerFn.handle(eq(createCustomerCmd), eq(expectedSnapshot)))
+    when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(expectedSnapshot)))
             .thenReturn(Eithers.right(Optional.empty()));
 
     val options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
-      verify(validatorFn).constraintViolations(eq(createCustomerCmd));
-      verify(snapshotReaderFn).getSnapshotMessage(eq(createCustomerCmd.getTargetId().getStringValue()));
-      verify(cmdHandlerFn).handle(createCustomerCmd, expectedSnapshot);
+      verify(validatorFn).apply(eq(createCustomerCmd));
+      verify(snapshotReaderFn).apply(eq(createCustomerCmd.getTargetId().getStringValue()));
+      verify(cmdHandlerFn).apply(createCustomerCmd, expectedSnapshot);
 
       verifyNoMoreInteractions(validatorFn, snapshotReaderFn, cmdHandlerFn, eventRepository);
 

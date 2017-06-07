@@ -1,11 +1,13 @@
 package crabzilla.stack.vertx.verticles;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import crabzilla.model.*;
+import crabzilla.model.AggregateRoot;
+import crabzilla.model.Command;
+import crabzilla.model.Snapshot;
+import crabzilla.model.UnitOfWork;
 import crabzilla.model.util.Either;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.SnapshotReaderFn;
-import crabzilla.stack.vertx.CommandExecution;
+import crabzilla.stack.SnapshotMessage;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.*;
 import io.vertx.core.eventbus.Message;
@@ -15,22 +17,25 @@ import lombok.val;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static crabzilla.model.util.Eithers.getLeft;
 import static crabzilla.model.util.Eithers.getRight;
 import static crabzilla.stack.util.StringHelper.commandHandlerId;
-import static crabzilla.stack.vertx.CommandExecution.*;
+import static crabzilla.stack.vertx.verticles.CommandExecution.*;
 import static java.util.Collections.singletonList;
 
 @Slf4j
 public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVerticle {
 
   final Class<A> aggregateRootClass;
-  final SnapshotReaderFn<A> snapshotReaderFn;
-  final CommandHandlerFn<A> cmdHandler;
-  final CommandValidatorFn validatorFn;
+  final Function<String, SnapshotMessage<A>> snapshotReaderFn;
+  final BiFunction<Command, Snapshot<A>, Either<Exception, Optional<UnitOfWork>>> cmdHandler;
+  final Function<Command, List<String>> validatorFn;
   final Cache<String, Snapshot<A>> cache;
 
   final EventRepository eventRepository;
@@ -39,9 +44,9 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
   @Inject
   public CommandHandlerVerticle(@NonNull final Class<A> aggregateRootClass,
-                                @NonNull final SnapshotReaderFn<A> snapshotReaderFn,
-                                @NonNull final CommandHandlerFn<A> cmdHandler,
-                                @NonNull final CommandValidatorFn validatorFn,
+                                @NonNull final Function<String, SnapshotMessage<A>> snapshotReaderFn,
+                                @NonNull final BiFunction<Command, Snapshot<A>, Either<Exception, Optional<UnitOfWork>>> cmdHandler,
+                                @NonNull final Function<Command, List<String>> validatorFn,
                                 @NonNull final EventRepository eventRepository,
                                 @NonNull final Cache<String, Snapshot<A>> cache,
                                 @NonNull final Vertx vertx,
@@ -79,7 +84,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         log.info("received a command {}", command);
 
-        val constraints = validatorFn.constraintViolations(command);
+        val constraints = validatorFn.apply(command);
 
         if (!constraints.isEmpty()) {
           future.complete(VALIDATION_ERROR(command.getCommandId(), constraints));
@@ -104,13 +109,13 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
     return future -> {
 
-      val snapshotDataMsg = snapshotReaderFn.getSnapshotMessage(command.getTargetId().getStringValue());
+      val snapshotDataMsg = snapshotReaderFn.apply(command.getTargetId().getStringValue());
 
       if (snapshotDataMsg.hasNewSnapshot()) {
         cache.put(command.getCommandId().toString(), snapshotDataMsg.getSnapshot());
       }
 
-      final Either<Exception, Optional<UnitOfWork>> either = cmdHandler.handle(command, snapshotDataMsg.getSnapshot());
+      final Either<Exception, Optional<UnitOfWork>> either = cmdHandler.apply(command, snapshotDataMsg.getSnapshot());
 
       val optException = getLeft(either);
 

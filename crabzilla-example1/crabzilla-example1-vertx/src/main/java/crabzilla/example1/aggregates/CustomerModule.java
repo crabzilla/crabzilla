@@ -8,14 +8,15 @@ import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import crabzilla.example1.aggregates.customer.*;
 import crabzilla.example1.services.SampleServiceImpl;
-import crabzilla.model.CommandHandlerFn;
-import crabzilla.model.CommandValidatorFn;
+import crabzilla.model.Command;
 import crabzilla.model.Event;
 import crabzilla.model.Snapshot;
+import crabzilla.model.UnitOfWork;
+import crabzilla.model.util.Either;
 import crabzilla.stack.AggregateRootModule;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotFactory;
-import crabzilla.stack.SnapshotReaderFn;
+import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.vertx.CaffeinedSnapshotReaderFn;
 import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
 import crabzilla.stack.vertx.verticles.CommandRestVerticle;
@@ -23,6 +24,8 @@ import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Vertx;
 
 import javax.inject.Named;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -31,8 +34,7 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
 
   @Override
   protected void configure() {
-    bind(new TypeLiteral<SnapshotFactory<Customer>>() {;});
-    bind(new TypeLiteral<SnapshotReaderFn<Customer>>() {;})
+    bind(new TypeLiteral<Function<String, SnapshotMessage<Customer>>>() {;})
             .to(new TypeLiteral<CaffeinedSnapshotReaderFn<Customer>>() {;});
   }
 
@@ -50,9 +52,17 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
 
   @Provides
   @Singleton
-  public CommandHandlerFn<Customer> cmdHandlerFn(Function<Customer, Customer> depInjectionFn,
-                                                 BiFunction<Event, Customer, Customer> stateTransFn) {
+  public BiFunction<Command, Snapshot<Customer>, Either<Exception, Optional<UnitOfWork>>> cmdHandlerFn(
+          Function<Customer, Customer> depInjectionFn, BiFunction<Event, Customer, Customer> stateTransFn) {
     return new CustomerCmdHandlerFnJavaslang(stateTransFn, depInjectionFn);
+  }
+
+  @Provides
+  @Singleton
+  public SnapshotFactory<Customer> snapshotFactory(Supplier<Customer> supplier,
+                                                   Function<Customer, Customer> depInjectionFn,
+                                                   BiFunction<Event, Customer, Customer> stateTransitionFn) {
+    return new SnapshotFactory<>(supplier, depInjectionFn, stateTransitionFn);
   }
 
   // outside the interface but necessary to run
@@ -65,20 +75,8 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
 
   @Provides
   @Singleton
-  CommandValidatorFn cmdValidator() {
+  Function<Command, List<String>> cmdValidator() {
     return new CustomerCommandValidatorFn();
-  }
-
-  @Provides
-  @Singleton
-  CommandHandlerVerticle<Customer> handler(SnapshotReaderFn<Customer> snapshotReaderFn,
-                                           CommandHandlerFn<Customer> cmdHandler,
-                                           CommandValidatorFn validatorFn,
-                                           EventRepository eventStore, Vertx vertx,
-                                           Cache<String, Snapshot<Customer>> cache,
-                                           @Named("cmd-handler") CircuitBreaker circuitBreaker) {
-    return new CommandHandlerVerticle<>(Customer.class, snapshotReaderFn, cmdHandler, validatorFn, eventStore,
-            cache, vertx, circuitBreaker);
   }
 
   @Provides
@@ -91,6 +89,18 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
   @Singleton
   CommandRestVerticle<Customer> restVerticle(Vertx vertx) {
     return new CommandRestVerticle<>(vertx, Customer.class);
+  }
+
+  @Provides
+  @Singleton
+  CommandHandlerVerticle<Customer> handler(Function<String, SnapshotMessage<Customer>> snapshotReaderFn,
+                                           BiFunction<Command, Snapshot<Customer>, Either<Exception, Optional<UnitOfWork>>> cmdHandler,
+                                           Function<Command, List<String>> validatorFn,
+                                           EventRepository eventStore, Vertx vertx,
+                                           Cache<String, Snapshot<Customer>> cache,
+                                           @Named("cmd-handler") CircuitBreaker circuitBreaker) {
+    return new CommandHandlerVerticle<>(Customer.class, snapshotReaderFn, cmdHandler, validatorFn, eventStore,
+            cache, vertx, circuitBreaker);
   }
 
 }

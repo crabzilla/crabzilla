@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import crabzilla.model.*;
 import crabzilla.stack.EventRepository;
+import crabzilla.stack.ProjectionData;
 import crabzilla.stack.SnapshotData;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -60,14 +61,15 @@ public class JdbiJacksonEventRepository implements EventRepository {
 
   private final TypeReference<List<Event>> eventsListTpe =  new TypeReference<List<Event>>() {};
 
-  public JdbiJacksonEventRepository(@NonNull String aggregateRootName, @NonNull ObjectMapper mapper, @NonNull DBI dbi) {
+  public JdbiJacksonEventRepository(@NonNull final String aggregateRootName, @NonNull final ObjectMapper mapper,
+                                    @NonNull final DBI dbi) {
     this.aggregateRootName = aggregateRootName;
     this.mapper = mapper;
     this.dbi = dbi;
   }
 
   @Override
-  public Optional<UnitOfWork> get(@NonNull UUID uowId) {
+  public Optional<UnitOfWork> get(@NonNull final UUID uowId) {
 
     final UnitOfWork uow = dbi
             .withHandle(h -> h.createQuery(SQL_SELECT_UOW)
@@ -84,7 +86,7 @@ public class JdbiJacksonEventRepository implements EventRepository {
 
     logger.info("will load a maximum of {} units of work since sequence {}", maxResultSize, sinceUowSequence);
 
-    List<ProjectionData> projectionDataList = dbi
+    final List<ProjectionData> projectionDataList = dbi
       .withHandle(new HandleCallback<List<ProjectionData>>() {
 
         final String sql = String.format("select uow_id, uow_seq_number, ar_id, uow_events " +
@@ -117,7 +119,7 @@ public class JdbiJacksonEventRepository implements EventRepository {
 
     logger.info("will load {}", id);
 
-    List<SnapshotData> snapshotDataList = dbi
+    final List<SnapshotData> snapshotDataList = dbi
             .withHandle(h -> h.createQuery(SQL_SELECT_AFTER_VERSION)
                     .bind(AR_ID, id)
                     .bind(AR_NAME, aggregateRootName)

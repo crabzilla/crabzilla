@@ -20,21 +20,26 @@ import static javaslang.API.*;
 import static javaslang.Predicates.instanceOf;
 
 @Slf4j
-public class CustomerCmdHandlerFnJavaslang extends CommandHandlerFn<Customer> {
+public class CustomerCmdHandlerFnJavaslang
+        implements BiFunction<Command, Snapshot<Customer>, Either<Exception, Optional<UnitOfWork>>> {
+
+  private final BiFunction<Event, Customer, Customer> stateTransitionFn;
+  private final Function<Customer, Customer> dependencyInjectionFn;
 
   @Inject
   public CustomerCmdHandlerFnJavaslang(final BiFunction<Event, Customer, Customer> stateTransitionFn,
                                        final Function<Customer, Customer> dependencyInjectionFn) {
-    super(stateTransitionFn, dependencyInjectionFn);
+    this.stateTransitionFn = stateTransitionFn;
+    this.dependencyInjectionFn = dependencyInjectionFn;
   }
 
   @Override
-  public Either<Exception, Optional<UnitOfWork>> handle(final Command cmd, final Snapshot<Customer> snapshot) {
+  public Either<Exception, Optional<UnitOfWork>> apply(final Command cmd, final Snapshot<Customer> snapshot) {
 
-    log.info("Will handle command {}", cmd);
+    log.info("Will apply command {}", cmd);
 
     try {
-      val uow = _handle(cmd, snapshot);
+      val uow = handle(cmd, snapshot);
       return Eithers.right(Optional.ofNullable(uow));
     } catch (Exception e) {
       return Eithers.left(e);
@@ -42,7 +47,7 @@ public class CustomerCmdHandlerFnJavaslang extends CommandHandlerFn<Customer> {
 
   }
 
-  private UnitOfWork _handle(final Command cmd, final Snapshot<Customer> snapshot) {
+  private UnitOfWork handle(final Command cmd, final Snapshot<Customer> snapshot) {
 
     val targetInstance = snapshot.getInstance();
     val targetVersion = snapshot.getVersion();
@@ -76,7 +81,7 @@ public class CustomerCmdHandlerFnJavaslang extends CommandHandlerFn<Customer> {
 
             Case($(), o -> {
 
-              log.warn("Can't handle command {}", cmd);
+              log.warn("Can't apply command {}", cmd);
               return null;
             })
 

@@ -4,15 +4,15 @@ import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.example1.aggregates.customer.events.CustomerDeactivated;
 import crabzilla.model.Event;
-import javaslang.Function2;
+
+import java.util.function.BiFunction;
 
 import static javaslang.API.Case;
 import static javaslang.API.Match;
 import static javaslang.Predicates.instanceOf;
 
-public class CustomerStateTransitionFnJavaslang implements Function2<Event, Customer, Customer> {
+public class CustomerStateTransitionFnJavaslang implements BiFunction<Event, Customer, Customer> {
 
-  @Override
   public Customer apply(final Event event, final Customer instance) {
 
     return Match(event).of(

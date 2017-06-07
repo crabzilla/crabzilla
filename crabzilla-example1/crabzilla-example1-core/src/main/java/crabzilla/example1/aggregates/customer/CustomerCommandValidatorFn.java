@@ -2,14 +2,14 @@ package crabzilla.example1.aggregates.customer;
 
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmdValidator;
-import crabzilla.model.CommandValidatorFn;
+import crabzilla.model.AbstractCommandValidatorFn;
 import lombok.val;
 
 import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public class CustomerCommandValidatorFn extends CommandValidatorFn {
+public class CustomerCommandValidatorFn extends AbstractCommandValidatorFn {
 
     public List<String> validate(CreateCustomerCmd cmd) {
 

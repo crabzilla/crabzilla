@@ -1,4 +1,4 @@
-package crabzilla.stack.vertx;
+package crabzilla.stack.vertx.verticles;
 
 import crabzilla.model.UnitOfWork;
 import lombok.AccessLevel;
@@ -33,31 +33,37 @@ public class CommandExecution implements Serializable {
   @Getter(AccessLevel.NONE)
   UnitOfWork unitOfWork;
 
-  public Optional<Long> getUowSequence() {
+  Optional<Long> getUowSequence() {
     return RESULT.SUCCESS.equals(result) ? Optional.of(uowSequence) : Optional.empty();
   }
 
-  public Optional<List<String>> getConstraints() {
+    Optional<List<String>> getConstraints() {
     return RESULT.VALIDATION_ERROR.equals(result) ? Optional.of(constraints) : Optional.empty();
   }
 
-  public Optional<UnitOfWork> getUnitOfWork() {
+  Optional<UnitOfWork> getUnitOfWork() {
     return RESULT.SUCCESS.equals(result) ? Optional.of(unitOfWork) : Optional.empty();
   }
 
-  public static CommandExecution VALIDATION_ERROR(UUID commandId, List<String> constraints) {
+  static CommandExecution VALIDATION_ERROR(UUID commandId, List<String> constraints) {
     return new CommandExecution(commandId, RESULT.VALIDATION_ERROR, 0L, constraints, null);
   }
-  public static CommandExecution FALLBACK(UUID commandId) {
+
+  static CommandExecution FALLBACK(UUID commandId) {
     return new CommandExecution(commandId, RESULT.FALLBACK, 0L, Collections.emptyList(), null);
 
-  }  public static CommandExecution BUSINESS_ERROR(UUID commandId) {
+  }
+
+  static CommandExecution BUSINESS_ERROR(UUID commandId) {
     return new CommandExecution(commandId, RESULT.BUSINESS_ERROR, 0L, Collections.emptyList(), null);
 
-  }  public static CommandExecution UNKNOWN_COMMAND(UUID commandId) {
+  }
+
+  static CommandExecution UNKNOWN_COMMAND(UUID commandId) {
     return new CommandExecution(commandId, RESULT.UNKNOWN_COMMAND, 0L, Collections.emptyList(), null);
   }
-  public static CommandExecution SUCCESS(UnitOfWork uow, Long uowSequence) {
+
+  static CommandExecution SUCCESS(UnitOfWork uow, Long uowSequence) {
     return new CommandExecution(uow.getCommand().getCommandId(), RESULT.SUCCESS, uowSequence,
             Collections.emptyList(), uow);
   }
