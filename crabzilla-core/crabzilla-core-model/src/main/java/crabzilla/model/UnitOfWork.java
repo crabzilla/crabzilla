@@ -24,7 +24,7 @@ public class UnitOfWork implements Serializable {
   }
 
 
-  public AggregateRootId targetId() {
+  public EntityId targetId() {
     return command.getTargetId();
   }
 

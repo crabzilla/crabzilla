@@ -17,8 +17,4 @@ public interface AggregateRootModule<A extends AggregateRoot> {
   BiFunction<Command, Snapshot<A>, Either<Exception, Optional<UnitOfWork>>> cmdHandlerFn(
           Function<A, A> depInjectionFn, BiFunction<Event, A, A> stateTransFn) ;
 
-  SnapshotFactory<A> snapshotFactory(Supplier<A> supplier,
-                                     Function<A, A> depInjectionFn,
-                                     BiFunction<Event, A, A> stateTransitionFn);
-
 }

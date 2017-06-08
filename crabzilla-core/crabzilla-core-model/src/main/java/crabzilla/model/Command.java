@@ -7,6 +7,6 @@ public interface Command extends Serializable {
 
   UUID getCommandId();
 
-  AggregateRootId getTargetId();
+  EntityId getTargetId();
 
 }

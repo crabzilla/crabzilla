@@ -2,7 +2,10 @@ package crabzilla.stack.vertx;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import crabzilla.model.*;
+import crabzilla.model.Command;
+import crabzilla.model.Event;
+import crabzilla.model.UnitOfWork;
+import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.ProjectionData;
 import crabzilla.stack.SnapshotData;
@@ -179,8 +182,8 @@ public class JdbiJacksonEventRepository implements EventRepository {
       // TODO decide about to also save scheduled commands
 
 //              uow.collectEvents().stream()
-//            .filter(event -> event instanceof CommandScheduling) // TODO idempotency here
-//            .map(event -> (CommandScheduling) e)
+//            .filter(event -> event instanceof CommandSchedulingEvent) // TODO idempotency here
+//            .map(event -> (CommandSchedulingEvent) e)
 //            .forEachOrdered(cs -> commandScheduler.schedule(commandId, cs));
 
       if (keysMap.size()==1) {

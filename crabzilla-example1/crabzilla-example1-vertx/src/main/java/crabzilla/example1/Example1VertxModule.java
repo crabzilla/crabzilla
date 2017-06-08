@@ -12,7 +12,10 @@ import crabzilla.example1.aggregates.CustomerModule;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
-import crabzilla.model.*;
+import crabzilla.model.Command;
+import crabzilla.model.EntityId;
+import crabzilla.model.Event;
+import crabzilla.model.UnitOfWork;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.EventsProjector;
 import crabzilla.stack.vertx.JdbiJacksonEventRepository;
@@ -86,8 +89,8 @@ public class Example1VertxModule extends AbstractModule {
     vertx.eventBus().registerDefaultCodec(CommandExecution.class,
             new JacksonGenericCodec<>(mapper, CommandExecution.class));
 
-    vertx.eventBus().registerDefaultCodec(AggregateRootId.class,
-            new JacksonGenericCodec<>(mapper, AggregateRootId.class));
+    vertx.eventBus().registerDefaultCodec(EntityId.class,
+            new JacksonGenericCodec<>(mapper, EntityId.class));
 
     vertx.eventBus().registerDefaultCodec(Command.class,
             new JacksonGenericCodec<>(mapper, Command.class));

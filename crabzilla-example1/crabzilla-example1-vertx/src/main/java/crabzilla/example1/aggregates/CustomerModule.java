@@ -36,6 +36,7 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
   protected void configure() {
     bind(new TypeLiteral<Function<String, SnapshotMessage<Customer>>>() {;})
             .to(new TypeLiteral<CaffeinedSnapshotReaderFn<Customer>>() {;});
+    bind(new TypeLiteral<SnapshotFactory<Customer>>() {;});
   }
 
   @Provides
@@ -55,14 +56,6 @@ public class CustomerModule extends AbstractModule implements AggregateRootModul
   public BiFunction<Command, Snapshot<Customer>, Either<Exception, Optional<UnitOfWork>>> cmdHandlerFn(
           Function<Customer, Customer> depInjectionFn, BiFunction<Event, Customer, Customer> stateTransFn) {
     return new CustomerCmdHandlerFnJavaslang(stateTransFn, depInjectionFn);
-  }
-
-  @Provides
-  @Singleton
-  public SnapshotFactory<Customer> snapshotFactory(Supplier<Customer> supplier,
-                                                   Function<Customer, Customer> depInjectionFn,
-                                                   BiFunction<Event, Customer, Customer> stateTransitionFn) {
-    return new SnapshotFactory<>(supplier, depInjectionFn, stateTransitionFn);
   }
 
   // outside the interface but necessary to run
