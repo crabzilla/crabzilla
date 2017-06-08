@@ -60,7 +60,7 @@ public class CaffeinedSnapshotReaderFnTest {
 
     val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, snapshotFactory);
 
-    AssertionsForClassTypes.assertThat(expectedSnapshot).isEqualTo(reader.getSnapshotMessage(id.getStringValue()).getSnapshot());
+    AssertionsForClassTypes.assertThat(expectedSnapshot).isEqualTo(reader.apply(id.getStringValue()).getSnapshot());
 
     verify(eventRepository).getAll(id.getStringValue());
 
@@ -84,7 +84,7 @@ public class CaffeinedSnapshotReaderFnTest {
 
     val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, snapshotFactory);
 
-    val resultingSnapshotMsg = reader.getSnapshotMessage(id.getStringValue());
+    val resultingSnapshotMsg = reader.apply(id.getStringValue());
 
     AssertionsForClassTypes.assertThat(expectedSnapshot).isEqualTo(resultingSnapshotMsg.getSnapshot());
 
@@ -115,7 +115,7 @@ public class CaffeinedSnapshotReaderFnTest {
 
     val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, snapshotFactory);
 
-    val resultingSnapshotMsg = reader.getSnapshotMessage(id.getStringValue());
+    val resultingSnapshotMsg = reader.apply(id.getStringValue());
 
     // verify
 
@@ -156,7 +156,7 @@ public class CaffeinedSnapshotReaderFnTest {
 
     // run
 
-    val resultingSnapshotMsg = reader.getSnapshotMessage(id.getStringValue());
+    val resultingSnapshotMsg = reader.apply(id.getStringValue());
 
     AssertionsForClassTypes.assertThat(expectedSnapshot).isEqualTo(resultingSnapshotMsg.getSnapshot());
 

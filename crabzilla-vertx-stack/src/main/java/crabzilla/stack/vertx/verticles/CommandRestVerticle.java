@@ -2,7 +2,6 @@ package crabzilla.stack.vertx.verticles;
 
 import crabzilla.model.AggregateRoot;
 import crabzilla.model.Command;
-import crabzilla.stack.vertx.CommandExecution;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;

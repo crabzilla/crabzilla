@@ -1,4 +1,4 @@
-package crabzilla.model;
+package crabzilla.stack;
 
 import java.util.List;
 

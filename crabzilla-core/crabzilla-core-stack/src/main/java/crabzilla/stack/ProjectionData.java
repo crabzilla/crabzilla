@@ -1,5 +1,6 @@
-package crabzilla.model;
+package crabzilla.stack;
 
+import crabzilla.model.Event;
 import lombok.Value;
 
 import java.io.Serializable;

@@ -3,22 +3,23 @@ package crabzilla.model;
 import crabzilla.model.util.MultiMethod;
 
 import java.util.List;
+import java.util.function.Function;
 
 import static java.util.Collections.singletonList;
 
-public abstract class CommandValidatorFn {
+public abstract class AbstractCommandValidatorFn implements Function<Command, List<String>> {
 
   private final MultiMethod mm ;
 
-  public CommandValidatorFn() {
+  public AbstractCommandValidatorFn() {
     this.mm = MultiMethod.getMultiMethod(this.getClass(), "validate");
   }
 
   @SuppressWarnings(value = "unchecked")
-  public List<String> constraintViolations(Command command) {
+  public List<String> apply(Command command) {
 
     if (command == null) {
-      return singletonList("Command cannot be null. May be it's json is invalid");
+      return singletonList("Command cannot be null.");
     }
 
     try {

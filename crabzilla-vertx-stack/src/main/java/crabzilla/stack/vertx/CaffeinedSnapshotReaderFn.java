@@ -7,7 +7,6 @@ import crabzilla.model.Snapshot;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.SnapshotFactory;
 import crabzilla.stack.SnapshotMessage;
-import crabzilla.stack.SnapshotReaderFn;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -16,11 +15,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import static crabzilla.stack.SnapshotMessage.LoadedFromEnum;
 
 @Slf4j
-public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements SnapshotReaderFn<A> {
+public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Function<String, SnapshotMessage<A>> {
 
   private static final Logger logger = LoggerFactory.getLogger(CaffeinedSnapshotReaderFn.class);
 
@@ -29,16 +29,15 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
   final SnapshotFactory<A> snapshotFactory;
 
   @Inject
-  public CaffeinedSnapshotReaderFn(@NonNull Cache<String, Snapshot<A>> cache,
-                                   @NonNull EventRepository eventRepository,
-                                   @NonNull SnapshotFactory<A> snapshotFactory) {
+  CaffeinedSnapshotReaderFn(@NonNull Cache<String, Snapshot<A>> cache,
+                            @NonNull EventRepository eventRepository,
+                            @NonNull SnapshotFactory<A> snapshotFactory) {
     this.cache = cache;
     this.eventRepository = eventRepository;
     this.snapshotFactory = snapshotFactory;
   }
 
-  @Override
-  public SnapshotMessage<A> getSnapshotMessage(@NonNull final String id) {
+  public SnapshotMessage<A> apply(@NonNull final String id) {
 
     logger.debug("cache.get(id)", id);
 
@@ -55,7 +54,7 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Snaps
       return new SnapshotMessage<>(cachedSnapshot, LoadedFromEnum.FROM_DB);
     }
 
-    if (cachedSnapshot.isEmpty()) {
+    if (cachedSnapshot == null || cachedSnapshot.isEmpty()) {
       return new SnapshotMessage<>(cachedSnapshot, LoadedFromEnum.FROM_CACHE);
     }
 

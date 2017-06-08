@@ -1,6 +1,5 @@
 package crabzilla.stack;
 
-import crabzilla.model.ProjectionData;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
 

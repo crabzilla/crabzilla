@@ -9,8 +9,8 @@ import java.util.regex.Pattern;
 @UtilityClass
 public class StringHelper {
 
-	static final String COMMAND_HANDLER = "handle-cmd-";
-	static final String EVENTS_HANDLER = "%s-handle-events";
+	static final String COMMAND_HANDLER = "apply-cmd-";
+	static final String EVENTS_HANDLER = "%s-apply-events";
 
 	public String commandHandlerId(Class<? extends AggregateRoot> aggregateRootClass) {
 		return COMMAND_HANDLER + camelCaseToSnakeCase(aggregateRootClass.getSimpleName());

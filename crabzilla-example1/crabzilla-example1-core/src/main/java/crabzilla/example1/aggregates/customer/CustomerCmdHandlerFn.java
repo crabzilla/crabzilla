@@ -13,7 +13,7 @@ import java.util.function.Function;
 
 import static crabzilla.model.UnitOfWork.of;
 
-public class CustomerCmdHandlerFn extends CommandHandlerFn<Customer> {
+public class CustomerCmdHandlerFn extends AbstractCommandHandlerFn<Customer> {
 
   @Inject
   public CustomerCmdHandlerFn(final BiFunction<Event, Customer, Customer> stateTransitionFn,
