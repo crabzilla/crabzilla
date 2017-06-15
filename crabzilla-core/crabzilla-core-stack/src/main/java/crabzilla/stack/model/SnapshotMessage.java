@@ -1,4 +1,4 @@
-package crabzilla.stack;
+package crabzilla.stack.model;
 
 import crabzilla.model.AggregateRoot;
 import crabzilla.model.Snapshot;
@@ -17,7 +17,7 @@ public class SnapshotMessage<A extends AggregateRoot> implements Serializable {
   LoadedFromEnum loadedFromEnum;
 
   public boolean hasNewSnapshot() {
-    return !loadedFromEnum.equals(SnapshotMessage.LoadedFromEnum.FROM_CACHE);
+    return !loadedFromEnum.equals(LoadedFromEnum.FROM_CACHE);
   }
 
 }

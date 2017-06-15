@@ -6,7 +6,7 @@ import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.ProjectionData;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
-import crabzilla.stack.model.EventsProjector;
+import crabzilla.stack.EventsProjector;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;

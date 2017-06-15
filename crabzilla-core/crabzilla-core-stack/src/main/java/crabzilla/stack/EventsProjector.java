@@ -1,4 +1,4 @@
-package crabzilla.stack.model;
+package crabzilla.stack;
 
 import crabzilla.model.ProjectionData;
 

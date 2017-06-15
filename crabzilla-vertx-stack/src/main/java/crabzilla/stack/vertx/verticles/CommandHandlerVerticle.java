@@ -7,7 +7,7 @@ import crabzilla.model.Snapshot;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.util.Either;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.SnapshotMessage;
+import crabzilla.stack.model.SnapshotMessage;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.*;
 import io.vertx.core.eventbus.Message;

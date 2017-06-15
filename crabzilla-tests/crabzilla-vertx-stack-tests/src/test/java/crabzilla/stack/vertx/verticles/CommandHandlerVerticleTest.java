@@ -14,7 +14,7 @@ import crabzilla.model.Version;
 import crabzilla.model.util.Either;
 import crabzilla.model.util.Eithers;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.SnapshotMessage;
+import crabzilla.stack.model.SnapshotMessage;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;

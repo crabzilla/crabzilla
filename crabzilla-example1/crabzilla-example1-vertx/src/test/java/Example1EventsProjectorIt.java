@@ -6,7 +6,7 @@ import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.ProjectionData;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.model.EventsProjector;
+import crabzilla.stack.EventsProjector;
 import example1.datamodel.tables.pojos.CustomerSummary;
 import io.vertx.core.Vertx;
 import lombok.val;

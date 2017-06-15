@@ -16,7 +16,9 @@ public class CustomerModule extends AbstractModule {
 
   @Override
   protected void configure() {
+
     bind(CustomerComponentsFactory.class).asEagerSingleton();
+
   }
 
   @Provides

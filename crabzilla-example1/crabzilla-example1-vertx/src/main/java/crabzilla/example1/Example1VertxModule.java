@@ -17,11 +17,10 @@ import crabzilla.model.EntityId;
 import crabzilla.model.Event;
 import crabzilla.model.UnitOfWork;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.model.EventsProjector;
+import crabzilla.stack.EventsProjector;
 import crabzilla.stack.vertx.JdbiJacksonEventRepository;
 import crabzilla.stack.vertx.codecs.JacksonGenericCodec;
 import crabzilla.stack.vertx.verticles.CommandExecution;
-import crabzilla.stack.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
@@ -56,7 +55,7 @@ public class Example1VertxModule extends AbstractModule {
     install(new DatabaseModule());
 
     bind(SampleService.class).to(SampleServiceImpl.class).asEagerSingleton();
-    bind(EventsProjectionVerticle.class).asEagerSingleton();
+    bind(Example1ComponentsFactory.class).asEagerSingleton();
 
     setCfgProps();
 

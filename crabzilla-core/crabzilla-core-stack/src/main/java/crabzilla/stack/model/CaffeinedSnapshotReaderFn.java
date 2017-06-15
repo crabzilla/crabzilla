@@ -1,9 +1,10 @@
-package crabzilla.stack;
+package crabzilla.stack.model;
 
 
 import com.github.benmanes.caffeine.cache.Cache;
 import crabzilla.model.AggregateRoot;
 import crabzilla.model.Snapshot;
+import crabzilla.stack.EventRepository;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -12,7 +13,7 @@ import javax.inject.Inject;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-import static crabzilla.stack.SnapshotMessage.LoadedFromEnum;
+import static crabzilla.stack.model.SnapshotMessage.LoadedFromEnum;
 
 @Slf4j
 public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Function<String, SnapshotMessage<A>> {

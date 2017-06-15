@@ -4,8 +4,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import crabzilla.model.*;
 import crabzilla.model.util.Either;
-import crabzilla.stack.SnapshotFactory;
-import crabzilla.stack.SnapshotMessage;
 
 import java.util.List;
 import java.util.Optional;

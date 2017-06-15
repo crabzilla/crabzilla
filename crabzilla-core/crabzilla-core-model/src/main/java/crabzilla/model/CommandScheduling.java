@@ -1,9 +1,8 @@
 package crabzilla.model;
 
-import java.io.Serializable;
 import java.time.Instant;
 
-public interface CommandScheduling extends Serializable {
+public interface CommandScheduling extends Event {
 
   String getTargetAggregateRoot();
   Command getScheduledCommand();

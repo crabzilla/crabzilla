@@ -8,9 +8,9 @@ import crabzilla.model.Event;
 import crabzilla.model.Snapshot;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.util.Either;
-import crabzilla.stack.CaffeinedSnapshotReaderFn;
-import crabzilla.stack.SnapshotMessage;
 import crabzilla.stack.model.AggregateRootComponentsFactory;
+import crabzilla.stack.model.CaffeinedSnapshotReaderFn;
+import crabzilla.stack.model.SnapshotMessage;
 import crabzilla.stack.vertx.JdbiJacksonEventRepository;
 import org.skife.jdbi.v2.DBI;
 
