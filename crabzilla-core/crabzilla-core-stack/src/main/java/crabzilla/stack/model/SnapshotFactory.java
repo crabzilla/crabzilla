@@ -27,27 +27,27 @@ public class SnapshotFactory<A extends AggregateRoot> {
     this.EMPTY_SNAPSHOT = new Snapshot<>(supplier.get(), new Version(0));
   }
 
+  public Snapshot<A> getEmptySnapshot() {
+
+    return EMPTY_SNAPSHOT;
+  }
+
   public Snapshot<A> createSnapshot(EventRepository.SnapshotData snapshotData) {
 
     return applyNewEventsToSnapshot(EMPTY_SNAPSHOT, snapshotData.getVersion(), snapshotData.getEvents());
   }
 
-  public Snapshot<A> applyNewEventsToSnapshot(Snapshot<A> originalSnapshot, Version newVersion, List<Event> newEvents) {
+  Snapshot<A> applyNewEventsToSnapshot(Snapshot<A> originalSnapshot, Version newVersion, List<Event> newEvents) {
 
     if (originalSnapshot.getVersion().getValueAsLong() >= newVersion.getValueAsLong()) {
       throw new RuntimeException(String.format("Cannot upgrade to version %s since my version is %s",
               newVersion, originalSnapshot.getVersion()));
     }
 
-    val tracker = new StateTransitionsTracker<A>(originalSnapshot.getInstance(),
-            stateTransitionFn, dependencyInjectionFn);
+    val tracker = new StateTransitionsTracker<A>(originalSnapshot.getInstance(), stateTransitionFn,
+            dependencyInjectionFn);
 
     return new Snapshot<>(tracker.applyEvents(c -> newEvents).currentState(), newVersion);
-  }
-
-  public Snapshot<A> getEmptySnapshot() {
-
-    return EMPTY_SNAPSHOT;
   }
 
 }

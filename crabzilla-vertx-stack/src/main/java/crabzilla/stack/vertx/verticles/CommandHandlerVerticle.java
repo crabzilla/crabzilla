@@ -25,7 +25,7 @@ import java.util.function.Function;
 
 import static crabzilla.model.util.Eithers.getLeft;
 import static crabzilla.model.util.Eithers.getRight;
-import static crabzilla.stack.util.StringHelper.commandHandlerId;
+import static crabzilla.stack.vertx.util.StringHelper.commandHandlerId;
 import static crabzilla.stack.vertx.verticles.CommandExecution.*;
 import static java.util.Collections.singletonList;
 

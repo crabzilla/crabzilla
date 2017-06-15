@@ -9,7 +9,6 @@ import com.google.inject.name.Names;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import crabzilla.example1.aggregates.CustomerModule;
-import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
 import crabzilla.model.Command;
@@ -18,7 +17,6 @@ import crabzilla.model.Event;
 import crabzilla.model.UnitOfWork;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.EventsProjector;
-import crabzilla.stack.vertx.JdbiJacksonEventRepository;
 import crabzilla.stack.vertx.codecs.JacksonGenericCodec;
 import crabzilla.stack.vertx.verticles.CommandExecution;
 import io.vertx.circuitbreaker.CircuitBreaker;
@@ -35,7 +33,6 @@ import org.jooq.impl.DataSourceConnectionProvider;
 import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.DefaultTransactionProvider;
 import org.nustaq.serialization.FSTConfiguration;
-import org.skife.jdbi.v2.DBI;
 
 import javax.sql.DataSource;
 import java.util.Properties;
@@ -73,6 +70,18 @@ public class Example1VertxModule extends AbstractModule {
     });
 
     Names.bindProperties(binder(), props);
+  }
+
+  @Provides
+  @Singleton
+  EventRepository eventRepository(Example1ComponentsFactory f) {
+    return f.eventRepository();
+  }
+
+  @Provides
+  @Singleton
+  EventsProjector eventsProjector(Example1ComponentsFactory f) {
+    return f.eventsProjector() ;
   }
 
   @Provides
@@ -129,17 +138,6 @@ public class Example1VertxModule extends AbstractModule {
                     .setResetTimeout(10000) // time spent in open state before attempting to re-try
     );
 
-  }
-  @Provides
-  @Singleton
-  EventRepository eventRepository(ObjectMapper mapper, DBI dbi) {
-    return new JdbiJacksonEventRepository(Customer.class.getSimpleName(), mapper, dbi);
-  }
-
-  @Provides
-  @Singleton
-  EventsProjector eventsProjector(Configuration jooq) {
-    return new Example1EventsProjector("example1", jooq) ;
   }
 
   @Provides

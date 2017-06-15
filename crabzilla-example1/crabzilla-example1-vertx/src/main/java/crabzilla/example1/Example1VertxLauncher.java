@@ -20,7 +20,7 @@ import lombok.val;
 import javax.inject.Inject;
 import java.util.UUID;
 
-import static crabzilla.stack.util.StringHelper.commandHandlerId;
+import static crabzilla.stack.vertx.util.StringHelper.commandHandlerId;
 import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.lang.System.setProperty;
 

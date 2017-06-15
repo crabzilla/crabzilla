@@ -24,7 +24,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.UUID;
 
-import static crabzilla.stack.util.StringHelper.eventsHandlerId;
+import static crabzilla.stack.vertx.util.StringHelper.eventsHandlerId;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.eq;

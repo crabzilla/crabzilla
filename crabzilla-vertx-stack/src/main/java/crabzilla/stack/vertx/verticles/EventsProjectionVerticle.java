@@ -13,7 +13,7 @@ import lombok.val;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import static crabzilla.stack.util.StringHelper.eventsHandlerId;
+import static crabzilla.stack.vertx.util.StringHelper.eventsHandlerId;
 import static java.util.Collections.singletonList;
 
 @Slf4j

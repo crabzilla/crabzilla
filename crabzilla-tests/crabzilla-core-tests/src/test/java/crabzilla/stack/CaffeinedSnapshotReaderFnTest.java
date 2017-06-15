@@ -1,4 +1,4 @@
-package crabzilla.stack.vertx;
+package crabzilla.stack;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -11,7 +11,6 @@ import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.Snapshot;
 import crabzilla.model.Version;
-import crabzilla.stack.EventRepository;
 import crabzilla.stack.model.CaffeinedSnapshotReaderFn;
 import crabzilla.stack.model.SnapshotFactory;
 import lombok.val;
@@ -20,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.time.Instant;
@@ -64,7 +64,7 @@ public class CaffeinedSnapshotReaderFnTest {
 
     verify(eventRepository).getAll(id.getStringValue());
 
-    verifyNoMoreInteractions(eventRepository);
+    Mockito.verifyNoMoreInteractions(eventRepository);
 
   }
 
@@ -92,7 +92,7 @@ public class CaffeinedSnapshotReaderFnTest {
 
     AssertionsForClassTypes.assertThat(snapshotFactory.createSnapshot(expectedSnapshotData)).isEqualTo(resultingSnapshotMsg.getSnapshot());
 
-    verifyNoMoreInteractions(eventRepository);
+    Mockito.verifyNoMoreInteractions(eventRepository);
 
   }
 
@@ -123,7 +123,7 @@ public class CaffeinedSnapshotReaderFnTest {
 
     verify(eventRepository).getAllAfterVersion(id.getStringValue(), expectedSnapshotData.getVersion());
 
-    verifyNoMoreInteractions(eventRepository);
+    Mockito.verifyNoMoreInteractions(eventRepository);
 
   }
 
@@ -162,7 +162,7 @@ public class CaffeinedSnapshotReaderFnTest {
 
     verify(eventRepository).getAllAfterVersion(eq(id.getStringValue()), eq(cachedVersion));
 
-    verifyNoMoreInteractions(eventRepository);
+    Mockito.verifyNoMoreInteractions(eventRepository);
 
   }
 

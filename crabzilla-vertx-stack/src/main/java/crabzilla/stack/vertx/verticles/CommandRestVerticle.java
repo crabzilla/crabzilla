@@ -19,7 +19,7 @@ import lombok.val;
 import java.lang.reflect.Field;
 import java.util.Set;
 
-import static crabzilla.stack.util.StringHelper.*;
+import static crabzilla.stack.vertx.util.StringHelper.*;
 
 @Slf4j
 public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVerticle {
@@ -62,12 +62,13 @@ public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVertic
         val options = new DeliveryOptions().setCodecName("Command");
         vertx.<CommandExecution>eventBus().send(commandHandlerId(aggregateRootClass), command, options, response -> {
           if (response.succeeded()) {
+            log.info("success commands handler: {}", response);
             val result = (CommandExecution) response.result().body();
             val headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence().get().toString());
             val optionsUow = new DeliveryOptions().setCodecName("UnitOfWork").setHeaders(headers);
             vertx.<String>eventBus().send(eventsHandlerId("example1"), result.getUnitOfWork().get(), optionsUow, resp -> {
               if (resp.succeeded()) {
-                log.info("success: {}", resp);
+                log.info("success events handler: {}", resp);
               } else {
                 log.error("error cause: {}", resp.cause());
                 log.error("error message: {}", resp.cause().getMessage());

@@ -38,7 +38,7 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static crabzilla.stack.util.StringHelper.commandHandlerId;
+import static crabzilla.stack.vertx.util.StringHelper.commandHandlerId;
 import static crabzilla.stack.vertx.verticles.CommandExecution.RESULT;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;

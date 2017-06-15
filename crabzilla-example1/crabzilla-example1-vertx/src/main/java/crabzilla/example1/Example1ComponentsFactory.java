@@ -41,4 +41,5 @@ public class Example1ComponentsFactory implements StackComponentsFactory {
   public ProjectionRepository projectionRepository() {
     return new JdbiJacksonProjectionRepository(jackson, jdbi);
   }
+
 }
