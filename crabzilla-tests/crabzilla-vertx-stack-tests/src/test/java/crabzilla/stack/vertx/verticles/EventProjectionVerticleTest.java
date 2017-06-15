@@ -3,10 +3,10 @@ package crabzilla.stack.vertx.verticles;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
+import crabzilla.model.ProjectionData;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
-import crabzilla.stack.EventsProjector;
-import crabzilla.stack.ProjectionData;
+import crabzilla.stack.model.EventsProjector;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
@@ -73,7 +73,7 @@ public class EventProjectionVerticleTest {
     val customerId = new CustomerId("customer#1");
     val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
     val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
-    val expectedUow = UnitOfWork.of(createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    val expectedUow = UnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
     val uowSequence = 1L;
     val options = new DeliveryOptions().setCodecName(UnitOfWork.class.getSimpleName())
                                        .addHeader("uowSequence", uowSequence + "");

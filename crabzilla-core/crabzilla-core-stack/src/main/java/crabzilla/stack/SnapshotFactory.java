@@ -24,7 +24,7 @@ public class SnapshotFactory<A extends AggregateRoot> {
     this.EMPTY_SNAPSHOT = new Snapshot<>(supplier.get(), new Version(0));
   }
 
-  public Snapshot<A> createSnapshot(SnapshotData snapshotData) {
+  public Snapshot<A> createSnapshot(EventRepository.SnapshotData snapshotData) {
 
     return applyNewEventsToSnapshot(EMPTY_SNAPSHOT, snapshotData.getVersion(), snapshotData.getEvents());
   }

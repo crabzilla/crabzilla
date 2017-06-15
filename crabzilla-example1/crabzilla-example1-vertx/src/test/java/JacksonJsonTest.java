@@ -34,7 +34,7 @@ public class JacksonJsonTest {
     val id = new CustomerId(UUID.randomUUID().toString());
     val command = new CreateCustomerCmd(UUID.randomUUID(), id, "customer1");
     val event = new CustomerCreated(id, command.getName());
-    val uow1 = UnitOfWork.of(command, Version.create(1), Collections.singletonList(event));
+    val uow1 = UnitOfWork.unitOfWork(command, Version.create(1), Collections.singletonList(event));
 
     val uowAsJson = mapper.writeValueAsString(uow1);
 
@@ -56,7 +56,7 @@ public class JacksonJsonTest {
     val event1 = new CustomerCreated(id, command.getName());
     val event2 = new CustomerActivated("a rgood reason", Instant.now());
 
-    val uow1 = UnitOfWork.of(command, Version.create(1), asList(event1,  event2));
+    val uow1 = UnitOfWork.unitOfWork(command, Version.create(1), asList(event1,  event2));
 
     val uowAsJson = mapper.writeValueAsString(uow1);
 

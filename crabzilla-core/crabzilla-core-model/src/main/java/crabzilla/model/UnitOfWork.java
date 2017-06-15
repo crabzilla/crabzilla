@@ -19,7 +19,7 @@ public class UnitOfWork implements Serializable {
   @NonNull
   final List<Event> events;
 
-  public static UnitOfWork of(Command command, Version version, List<Event> events) {
+  public static UnitOfWork unitOfWork(Command command, Version version, List<Event> events) {
     return new UnitOfWork(UUID.randomUUID(), command, version, events);
   }
 

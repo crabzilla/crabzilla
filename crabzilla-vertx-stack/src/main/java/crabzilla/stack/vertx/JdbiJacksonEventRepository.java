@@ -7,16 +7,12 @@ import crabzilla.model.Event;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.ProjectionData;
-import crabzilla.stack.SnapshotData;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.TransactionIsolationLevel;
-import org.skife.jdbi.v2.tweak.HandleCallback;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
 import org.skife.jdbi.v2.util.LongColumnMapper;
 import org.slf4j.Logger;
@@ -81,32 +77,6 @@ public class JdbiJacksonEventRepository implements EventRepository {
             );
 
     return Optional.ofNullable(uow);
-
-  }
-
-  @Override
-  public List<ProjectionData> getAllSince(long sinceUowSequence, int maxResultSize) {
-
-    logger.info("will load a maximum of {} units of work since sequence {}", maxResultSize, sinceUowSequence);
-
-    final List<ProjectionData> projectionDataList = dbi
-      .withHandle(new HandleCallback<List<ProjectionData>>() {
-
-        final String sql = String.format("select uow_id, uow_seq_number, ar_id, uow_events " +
-                        "from units_of_work where uow_seq_number > %d order by uow_seq_number limit %d",
-                sinceUowSequence, maxResultSize);
-
-        public List<ProjectionData> withHandle(Handle h) {
-          return h.createQuery(sql)
-                  .bind(UOW_SEQ_NUMBER, sinceUowSequence)
-                  .map(new ProjectionDataMapper())
-                  .list();
-        }
-      }
-    );
-
-    logger.info("Found {} units of work since sequence {}", projectionDataList.size(), sinceUowSequence);
-    return projectionDataList;
 
   }
 
@@ -220,19 +190,6 @@ public class JdbiJacksonEventRepository implements EventRepository {
     public SnapshotData map(int i, ResultSet resultSet, StatementContext statementContext) throws SQLException {
       final List<Event> events = mapper.readerFor(eventsListTpe).readValue(resultSet.getString(UOW_EVENTS));
       return new SnapshotData(new Version(resultSet.getLong(VERSION)), events);
-    }
-  }
-
-  class ProjectionDataMapper implements ResultSetMapper<ProjectionData> {
-    @Override
-    @SneakyThrows
-    public ProjectionData map(int i, ResultSet resultSet, StatementContext statementContext) throws SQLException {
-      final List<Event> events = mapper.readerFor(eventsListTpe).readValue(resultSet.getString(UOW_EVENTS));
-      return new ProjectionData(resultSet.getString(UOW_ID),
-              resultSet.getLong(UOW_SEQ_NUMBER),
-              resultSet.getString(AR_ID),
-              events
-      );
     }
   }
 

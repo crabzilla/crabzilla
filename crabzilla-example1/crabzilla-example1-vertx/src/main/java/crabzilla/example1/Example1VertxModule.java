@@ -17,7 +17,7 @@ import crabzilla.model.EntityId;
 import crabzilla.model.Event;
 import crabzilla.model.UnitOfWork;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.EventsProjector;
+import crabzilla.stack.model.EventsProjector;
 import crabzilla.stack.vertx.JdbiJacksonEventRepository;
 import crabzilla.stack.vertx.codecs.JacksonGenericCodec;
 import crabzilla.stack.vertx.verticles.CommandExecution;

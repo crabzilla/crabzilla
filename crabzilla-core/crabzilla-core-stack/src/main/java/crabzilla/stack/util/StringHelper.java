@@ -24,20 +24,6 @@ public class StringHelper {
 		return camelCaseToSnakeCase(aggregateRootClass.getSimpleName());
 	}
 
-	String aggregateRootId(String aggregateRootClassSimpleName) {
-		return camelCaseToSnakeCase(aggregateRootClassSimpleName);
-	}
-
-	public String commandId(Class<?> commandClass) {
-		return camelCaseToSnakeCase(commandClass.getSimpleName());
-	}
-
-	
-	public String aggrCmdRoot(String prefix,
-                                   Class<? extends AggregateRoot> aggregateRootClass, Class<?> commandClass) {
-		return camelCaseToSnakeCase(prefix + aggregateRootClass.getSimpleName() + "-" + commandClass.getSimpleName());
-	}
-
 	private String camelCaseToSnakeCase(String start) {
 		Matcher m = Pattern.compile("(?<=[a-z])[A-Z]").matcher(start);
 		StringBuffer sb = new StringBuffer();

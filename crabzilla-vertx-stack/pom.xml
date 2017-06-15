@@ -53,13 +53,6 @@
         </dependency>
 
 
-        <!-- cache -->
-
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-        </dependency>
-
         <!-- gson -->
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
@@ -117,18 +110,8 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-jdbc-client</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-sql-common</artifactId>
-        </dependency>
 
         <!--Test -->
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <scope>test</scope>
-        </dependency>
 
         <dependency>
             <groupId>junit</groupId>

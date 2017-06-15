@@ -1,8 +1,11 @@
 package crabzilla.stack;
 
+import crabzilla.model.Event;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
+import lombok.Value;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,9 +16,7 @@ public interface EventRepository {
 
 	Optional<UnitOfWork> get(UUID uowId);
 
-	List<ProjectionData> getAllSince(long sinceUowSequence, int maxResultSize);
-
-	Optional<SnapshotData> getAll(String aggregateRootId);
+  Optional<SnapshotData> getAll(String aggregateRootId);
 
 	Optional<SnapshotData> getAllAfterVersion(String aggregateRootId, Version version);
 
@@ -26,4 +27,13 @@ public interface EventRepository {
     }
 
   }
+
+  @Value
+  class SnapshotData implements Serializable {
+
+    Version version;
+    List<Event> events;
+
+  }
+
 }

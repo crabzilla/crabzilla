@@ -1,12 +1,9 @@
-package crabzilla.stack.vertx;
+package crabzilla.stack;
 
 
 import com.github.benmanes.caffeine.cache.Cache;
 import crabzilla.model.AggregateRoot;
 import crabzilla.model.Snapshot;
-import crabzilla.stack.EventRepository;
-import crabzilla.stack.SnapshotFactory;
-import crabzilla.stack.SnapshotMessage;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -29,9 +26,9 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Funct
   final SnapshotFactory<A> snapshotFactory;
 
   @Inject
-  CaffeinedSnapshotReaderFn(@NonNull Cache<String, Snapshot<A>> cache,
-                            @NonNull EventRepository eventRepository,
-                            @NonNull SnapshotFactory<A> snapshotFactory) {
+  public CaffeinedSnapshotReaderFn(@NonNull Cache<String, Snapshot<A>> cache,
+                                   @NonNull EventRepository eventRepository,
+                                   @NonNull SnapshotFactory<A> snapshotFactory) {
     this.cache = cache;
     this.eventRepository = eventRepository;
     this.snapshotFactory = snapshotFactory;

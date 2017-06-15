@@ -1,28 +1,3 @@
---
---DROP TABLE if exists idempotency ;
---
---CREATE TABLE idempotency (
---    partition_name VARCHAR(36) NOT NULL,
---    slot_id VARCHAR(36) NOT NULL,
---    inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
---    PRIMARY KEY (partition_name, slot_id)
---    )
---    PARTITION BY KEY(partition_name)
---    ;
---
---
---DROP TABLE if exists aggregate_roots ;
---
---CREATE TABLE aggregate_roots (
---    ar_name VARCHAR(36) NOT NULL,
---    ar_id VARCHAR(36) NOT NULL,
---    version BIGINT NOT NULL,
---    last_updated_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
---    PRIMARY KEY (ar_name, ar_id)
---    )
---    PARTITION BY KEY(ar_name)
---    ;
-
 
 DROP TABLE if exists units_of_work ;
 
@@ -44,13 +19,3 @@ CREATE TABLE units_of_work (
     ;
 
 CREATE INDEX idx_ar_id ON units_of_work (ar_id);
-
-
-DROP TABLE if exists events_channels ;
-
-CREATE TABLE events_channels (
-    channel_name VARCHAR(36) NOT NULL,
-    uow_last_seq BIGINT ,
-    PRIMARY KEY (channel_name)
-    )
-    ;

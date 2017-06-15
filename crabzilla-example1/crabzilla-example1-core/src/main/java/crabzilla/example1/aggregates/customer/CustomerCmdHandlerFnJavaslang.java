@@ -15,10 +15,13 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static crabzilla.model.UnitOfWork.of;
+import static crabzilla.model.UnitOfWork.unitOfWork;
 import static javaslang.API.*;
 import static javaslang.Predicates.instanceOf;
 
+// consider an example with some real business logic (a CreditService, for example)
+// consider an example with a function per command using guice mapBinder to inject these functions here. for this,
+// command handler deve estar em um modulo depois de core e antes de vertx
 @Slf4j
 public class CustomerCmdHandlerFnJavaslang
         implements BiFunction<Command, Snapshot<Customer>, Either<Exception, Optional<UnitOfWork>>> {
@@ -54,36 +57,35 @@ public class CustomerCmdHandlerFnJavaslang
 
     final UnitOfWork uow = Match(cmd).of(
 
-            Case(instanceOf(CreateCustomerCmd.class), (command) ->
+      Case(instanceOf(CreateCustomerCmd.class), (command) ->
 
-                    of(cmd, targetVersion.nextVersion(),
-                            targetInstance.create(command.getTargetId(), command.getName()))
-            ),
+        unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.create(command.getTargetId(), command.getName()))
+      ),
 
-            Case(instanceOf(ActivateCustomerCmd.class), (command) ->
+      Case(instanceOf(ActivateCustomerCmd.class), (command) ->
 
-                    of(cmd, targetVersion.nextVersion(), targetInstance.activate(command.getReason()))),
+        unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.activate(command.getReason()))),
 
-            Case(instanceOf(DeactivateCustomerCmd.class), (command) ->
+      Case(instanceOf(DeactivateCustomerCmd.class), (command) ->
 
-                    of(cmd, targetVersion.nextVersion(), targetInstance.deactivate(command.getReason()))),
+        unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.deactivate(command.getReason()))),
 
-            Case(instanceOf(CreateActivateCustomerCmd.class), (command) -> {
+      Case(instanceOf(CreateActivateCustomerCmd.class), (command) -> {
 
-              val tracker = new StateTransitionsTracker<Customer>(targetInstance, stateTransitionFn,
-                      dependencyInjectionFn);
-              val events = tracker
-                      .applyEvents(customer -> customer.create(command.getTargetId(), command.getName()))
-                      .applyEvents(customer -> customer.activate(command.getReason()))
-                      .collectEvents();
-              return of(cmd, targetVersion.nextVersion(), events);
-            }),
+        val tracker = new StateTransitionsTracker<Customer>(targetInstance, stateTransitionFn,
+                dependencyInjectionFn);
+        val events = tracker
+                .applyEvents(customer -> customer.create(command.getTargetId(), command.getName()))
+                .applyEvents(customer -> customer.activate(command.getReason()))
+                .collectEvents();
+        return unitOfWork(cmd, targetVersion.nextVersion(), events);
+      }),
 
-            Case($(), o -> {
+      Case($(), o -> {
 
-              log.warn("Can't apply command {}", cmd);
-              return null;
-            })
+        log.warn("Can't apply command {}", cmd);
+        return null;
+      })
 
     );
 

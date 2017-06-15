@@ -120,7 +120,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
       val optException = getLeft(either);
 
       if (optException.isPresent()) {
-        log.error("Business logic error for uowHandler " + command.getCommandId(), optException.get());
+        log.error("Business logic error for command " + command.getCommandId(), optException.get());
         future.complete(BUSINESS_ERROR(command.getCommandId()));
         return;
       }

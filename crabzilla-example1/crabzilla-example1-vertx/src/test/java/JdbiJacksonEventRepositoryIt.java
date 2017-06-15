@@ -54,7 +54,7 @@ public class JdbiJacksonEventRepositoryIt {
     val id = new CustomerId("customer#1");
     val command = new CreateCustomerCmd(UUID.randomUUID(), id, "customer1");
     val event = new CustomerCreated(id, command.getName());
-    val uow1 = UnitOfWork.of(command, Version.create(1), Arrays.asList(event));
+    val uow1 = UnitOfWork.unitOfWork(command, Version.create(1), Arrays.asList(event));
 
     val uowSequence = repo.append(uow1);
 

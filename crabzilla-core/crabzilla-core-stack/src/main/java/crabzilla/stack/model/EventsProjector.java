@@ -1,4 +1,6 @@
-package crabzilla.stack;
+package crabzilla.stack.model;
+
+import crabzilla.model.ProjectionData;
 
 import java.util.List;
 

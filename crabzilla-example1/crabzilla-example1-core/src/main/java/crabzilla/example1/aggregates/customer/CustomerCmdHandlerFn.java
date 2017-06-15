@@ -11,7 +11,7 @@ import javax.inject.Inject;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static crabzilla.model.UnitOfWork.of;
+import static crabzilla.model.UnitOfWork.unitOfWork;
 
 public class CustomerCmdHandlerFn extends AbstractCommandHandlerFn<Customer> {
 
@@ -22,15 +22,15 @@ public class CustomerCmdHandlerFn extends AbstractCommandHandlerFn<Customer> {
   }
 
   public UnitOfWork handle(CreateCustomerCmd cmd, Snapshot<Customer> snapshot) {
-      return of(cmd, snapshot.nextVersion(), snapshot.getInstance().create(cmd.getTargetId(), cmd.getName()));
+      return unitOfWork(cmd, snapshot.nextVersion(), snapshot.getInstance().create(cmd.getTargetId(), cmd.getName()));
   }
 
   public UnitOfWork handle(ActivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
-    return of(cmd, snapshot.nextVersion(), snapshot.getInstance().activate(cmd.getReason()));
+    return unitOfWork(cmd, snapshot.nextVersion(), snapshot.getInstance().activate(cmd.getReason()));
   }
 
   public UnitOfWork handle(DeactivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
-    return of(cmd, snapshot.nextVersion(), snapshot.getInstance().deactivate(cmd.getReason()));
+    return unitOfWork(cmd, snapshot.nextVersion(), snapshot.getInstance().deactivate(cmd.getReason()));
   }
 
   public UnitOfWork handle(CreateActivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
@@ -39,7 +39,7 @@ public class CustomerCmdHandlerFn extends AbstractCommandHandlerFn<Customer> {
             .applyEvents(customer -> customer.create(cmd.getTargetId(), cmd.getName()))
             .applyEvents(customer -> customer.activate(cmd.getReason()))
             .collectEvents();
-    return of(cmd, snapshot.nextVersion(), events);
+    return unitOfWork(cmd, snapshot.nextVersion(), events);
   }
 
 }

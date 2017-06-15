@@ -99,7 +99,7 @@ public class CommandHandlerVerticleTest {
     val expectedSnapshot = new Snapshot<Customer>(new CustomerSupplierFn().get(), new Version(0));
     val expectedMessage = new SnapshotMessage<Customer>(expectedSnapshot, SnapshotMessage.LoadedFromEnum.FROM_DB);
     val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
-    val expectedUow = UnitOfWork.of(createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    val expectedUow = UnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
     when(snapshotReaderFn.apply(eq(customerId.getStringValue()))).thenReturn(expectedMessage);

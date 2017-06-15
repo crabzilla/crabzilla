@@ -11,8 +11,8 @@ import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.Snapshot;
 import crabzilla.model.Version;
+import crabzilla.stack.CaffeinedSnapshotReaderFn;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.SnapshotData;
 import crabzilla.stack.SnapshotFactory;
 import lombok.val;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -58,7 +58,7 @@ public class CaffeinedSnapshotReaderFnTest {
 
     when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.empty());
 
-    val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, snapshotFactory);
+    val reader = new CaffeinedSnapshotReaderFn<Customer>(cache, eventRepository, snapshotFactory);
 
     AssertionsForClassTypes.assertThat(expectedSnapshot).isEqualTo(reader.apply(id.getStringValue()).getSnapshot());
 
@@ -78,7 +78,7 @@ public class CaffeinedSnapshotReaderFnTest {
     val expectedSnapshot = new Snapshot<>(expectedInstance, Version.create(1L));
     val command = new CreateCustomerCmd(UUID.randomUUID(), id, name);
     val expectedSnapshotData =
-            new SnapshotData(new Version(1), singletonList(new CustomerCreated(id, command.getName())));
+            new EventRepository.SnapshotData(new Version(1), singletonList(new CustomerCreated(id, command.getName())));
 
     when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.of(expectedSnapshotData));
 
@@ -102,7 +102,7 @@ public class CaffeinedSnapshotReaderFnTest {
     val id = new CustomerId("customer#1");
     val name = "customer#1 name";
     val command = new CreateCustomerCmd(UUID.randomUUID(), id, name);
-    val expectedSnapshotData = new SnapshotData(new Version(1),
+    val expectedSnapshotData = new EventRepository.SnapshotData(new Version(1),
             Collections.singletonList(new CustomerCreated(id, command.getName())));
 
     // prepare
@@ -144,7 +144,7 @@ public class CaffeinedSnapshotReaderFnTest {
     val expectedSnapshot = new Snapshot<Customer>(expectedInstance, expectedVersion);
 
     val activated_on = Instant.now();
-    val nonCachedHistory = new SnapshotData(new Version(2), asList(new CustomerActivated(reason, activated_on)));
+    val nonCachedHistory = new EventRepository.SnapshotData(new Version(2), asList(new CustomerActivated(reason, activated_on)));
 
     // prepare
 
