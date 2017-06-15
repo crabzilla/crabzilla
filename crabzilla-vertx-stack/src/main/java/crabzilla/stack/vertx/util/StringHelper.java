@@ -1,7 +1,6 @@
 package crabzilla.stack.vertx.util;
 
 import crabzilla.model.AggregateRoot;
-import lombok.experimental.UtilityClass;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
