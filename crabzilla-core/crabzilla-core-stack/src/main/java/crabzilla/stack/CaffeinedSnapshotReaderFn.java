@@ -7,8 +7,6 @@ import crabzilla.model.Snapshot;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,8 +16,6 @@ import static crabzilla.stack.SnapshotMessage.LoadedFromEnum;
 
 @Slf4j
 public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Function<String, SnapshotMessage<A>> {
-
-  private static final Logger logger = LoggerFactory.getLogger(CaffeinedSnapshotReaderFn.class);
 
   final Cache<String, Snapshot<A>> cache;
   final EventRepository eventRepository;
@@ -36,12 +32,12 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Funct
 
   public SnapshotMessage<A> apply(@NonNull final String id) {
 
-    logger.debug("cache.get(id)", id);
+    log.debug("cache.get(id)", id);
 
     val wasEventRepoCalled = new AtomicBoolean(false);
 
     val cachedSnapshot = cache.get(id, s -> {
-      logger.debug("cache.getInstance(id) does not contain anything for id {}. Will have to search on eventRepository", id);
+      log.debug("cache.getInstance(id) does not contain anything for id {}. Will have to search on eventRepository", id);
       val dataFromDb = eventRepository.getAll(id);
       wasEventRepoCalled.set(true);
       return dataFromDb.map(snapshotFactory::createSnapshot).orElseGet(snapshotFactory::getEmptySnapshot);
@@ -57,7 +53,7 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Funct
 
     val cachedVersion = cachedSnapshot.getVersion();
 
-    logger.debug("id {} cached lastSnapshotData has version {}. will check if there any version beyond it",
+    log.debug("id {} cached lastSnapshotData has version {}. will check if there any version beyond it",
             id, cachedVersion);
 
     val nonCachedSnapshotData = eventRepository.getAllAfterVersion(id, cachedVersion);
@@ -66,7 +62,7 @@ public class CaffeinedSnapshotReaderFn<A extends AggregateRoot> implements Funct
 
       val nonCached = nonCachedSnapshotData.get();
 
-      logger.debug("id {} found {} pending events. Last version is now {}",
+      log.debug("id {} found {} pending events. Last version is now {}",
               id, nonCached.getEvents().size(), nonCached.getVersion());
 
       val resultingSnapshot = snapshotFactory.applyNewEventsToSnapshot(cachedSnapshot, nonCached.getVersion(),
