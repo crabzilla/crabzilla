@@ -37,20 +37,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- cache -->
-
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-        </dependency>
-
-        <!-- log -->
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-        </dependency>
-
     </dependencies>
 
     <dependencyManagement>

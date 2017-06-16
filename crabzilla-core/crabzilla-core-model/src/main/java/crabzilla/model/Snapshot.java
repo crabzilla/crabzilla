@@ -1,12 +1,18 @@
 package crabzilla.model;
 
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
-@Value
+@AllArgsConstructor
+@Getter
+@EqualsAndHashCode
+@ToString
 public class Snapshot<A> {
 
-  final A instance;
-  final Version version;
+  private final A instance;
+  private final Version version;
 
   public Version nextVersion() {
     return version.nextVersion();

@@ -9,9 +9,11 @@ import crabzilla.model.Snapshot;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.util.Either;
 import crabzilla.stack.model.AggregateRootComponentsFactory;
-import crabzilla.stack.model.CaffeinedSnapshotReaderFn;
 import crabzilla.stack.model.SnapshotMessage;
 import crabzilla.stack.vertx.JdbiJacksonEventRepository;
+import crabzilla.stack.vertx.ShareableSnapshot;
+import crabzilla.stack.vertx.VertxSnapshotReaderFn;
+import io.vertx.core.shareddata.LocalMap;
 import org.skife.jdbi.v2.DBI;
 
 import javax.inject.Inject;
@@ -26,12 +28,15 @@ class CustomerComponentsFactory implements AggregateRootComponentsFactory<Custom
   private final SampleService service;
   private final ObjectMapper jackson;
   private final DBI jdbi;
+  private final LocalMap<String, ShareableSnapshot<Customer>> localMap;
 
   @Inject
-  public CustomerComponentsFactory(SampleService service, ObjectMapper jackson, DBI jdbi) {
+  public CustomerComponentsFactory(SampleService service, ObjectMapper jackson, DBI jdbi,
+                                   LocalMap<String, ShareableSnapshot<Customer>> localMap) {
     this.service = service;
     this.jackson = jackson;
     this.jdbi = jdbi;
+    this.localMap = localMap;
   }
 
   @Override
@@ -57,8 +62,8 @@ class CustomerComponentsFactory implements AggregateRootComponentsFactory<Custom
 
   @Override
   public Function<String, SnapshotMessage<Customer>> snapshotReaderFn() {
-    return new CaffeinedSnapshotReaderFn<>(cache(),
-            new JdbiJacksonEventRepository(Customer.class.getName(), jackson, jdbi), snaphotFactory());
+    return new VertxSnapshotReaderFn<>(localMap, new JdbiJacksonEventRepository(Customer.class.getName(),
+            jackson, jdbi), snaphotFactory());
   }
 
 }

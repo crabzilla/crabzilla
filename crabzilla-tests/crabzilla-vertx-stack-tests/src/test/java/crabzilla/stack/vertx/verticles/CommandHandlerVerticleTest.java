@@ -1,7 +1,5 @@
 package crabzilla.stack.vertx.verticles;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.CustomerSupplierFn;
@@ -15,10 +13,12 @@ import crabzilla.model.util.Either;
 import crabzilla.model.util.Eithers;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.model.SnapshotMessage;
+import crabzilla.stack.vertx.ShareableSnapshot;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.shareddata.LocalMap;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -30,7 +30,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,12 +44,13 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(VertxUnitRunner.class)
 public class CommandHandlerVerticleTest {
 
   Vertx vertx;
-  Cache<String, Snapshot<Customer>> cache;
+  LocalMap<String, ShareableSnapshot<Customer>> cache;
   CircuitBreaker circuitBreaker;
 
   @Mock
@@ -65,10 +65,11 @@ public class CommandHandlerVerticleTest {
   @Before
   public void setUp(TestContext context) {
 
-    MockitoAnnotations.initMocks(this);
+    initMocks(this);
 
     vertx = new VertxFactory().vertx();
-    cache = Caffeine.newBuilder().build();
+    val sharedData = vertx.sharedData();
+    cache = sharedData.getLocalMap("CustomerSnapshots");
     circuitBreaker = CircuitBreaker.create("cmd-handler-circuit-breaker", vertx,
             new CircuitBreakerOptions()
                     .setMaxFailures(5) // number SUCCESS failure before opening the circuit

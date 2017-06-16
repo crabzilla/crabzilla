@@ -1,6 +1,5 @@
 package crabzilla.stack.vertx.verticles;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import crabzilla.model.AggregateRoot;
 import crabzilla.model.Command;
 import crabzilla.model.Snapshot;
@@ -8,9 +7,11 @@ import crabzilla.model.UnitOfWork;
 import crabzilla.model.util.Either;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.model.SnapshotMessage;
+import crabzilla.stack.vertx.ShareableSnapshot;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.*;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.shareddata.LocalMap;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -36,7 +37,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   final Function<String, SnapshotMessage<A>> snapshotReaderFn;
   final BiFunction<Command, Snapshot<A>, Either<Exception, Optional<UnitOfWork>>> cmdHandler;
   final Function<Command, List<String>> validatorFn;
-  final Cache<String, Snapshot<A>> cache;
+  final LocalMap<String, ShareableSnapshot<A>> cache;
 
   final EventRepository eventRepository;
   final Vertx vertx;
@@ -48,7 +49,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
                                 @NonNull final BiFunction<Command, Snapshot<A>, Either<Exception, Optional<UnitOfWork>>> cmdHandler,
                                 @NonNull final Function<Command, List<String>> validatorFn,
                                 @NonNull final EventRepository eventRepository,
-                                @NonNull final Cache<String, Snapshot<A>> cache,
+                                @NonNull final LocalMap<String, ShareableSnapshot<A>> cache,
                                 @NonNull final Vertx vertx,
                                 @NonNull @Named("cmd-handler") final CircuitBreaker circuitBreaker) {
     this.aggregateRootClass = aggregateRootClass;
@@ -112,7 +113,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
       val snapshotDataMsg = snapshotReaderFn.apply(command.getTargetId().getStringValue());
 
       if (snapshotDataMsg.hasNewSnapshot()) {
-        cache.put(command.getCommandId().toString(), snapshotDataMsg.getSnapshot());
+        cache.put(command.getCommandId().toString(), new ShareableSnapshot<>(snapshotDataMsg.getSnapshot()));
       }
 
       final Either<Exception, Optional<UnitOfWork>> either = cmdHandler.apply(command, snapshotDataMsg.getSnapshot());

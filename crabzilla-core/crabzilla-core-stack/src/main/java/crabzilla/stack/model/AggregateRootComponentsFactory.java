@@ -1,7 +1,5 @@
 package crabzilla.stack.model;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import crabzilla.model.*;
 import crabzilla.model.util.Either;
 
@@ -27,10 +25,6 @@ public interface AggregateRootComponentsFactory<A extends AggregateRoot> {
 
   default SnapshotFactory<A> snaphotFactory() {
     return new SnapshotFactory<>(supplierFn(), depInjectionFn(), stateTransitionFn());
-  }
-
-  default Cache<String, Snapshot<A>> cache() {
-    return Caffeine.newBuilder().build();
   }
 
 }

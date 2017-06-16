@@ -2,8 +2,8 @@ package crabzilla.example1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import crabzilla.example1.aggregates.customer.Customer;
+import crabzilla.stack.EventProjector;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.EventsProjector;
 import crabzilla.stack.ProjectionRepository;
 import crabzilla.stack.StackComponentsFactory;
 import crabzilla.stack.vertx.JdbiJacksonEventRepository;
@@ -33,8 +33,8 @@ public class Example1ComponentsFactory implements StackComponentsFactory {
   }
 
   @Override
-  public EventsProjector eventsProjector() {
-    return new Example1EventsProjector("example1", jooq) ;
+  public EventProjector eventsProjector() {
+    return new Example1EventProjector("example1", jooq) ;
   }
 ;
   @Override

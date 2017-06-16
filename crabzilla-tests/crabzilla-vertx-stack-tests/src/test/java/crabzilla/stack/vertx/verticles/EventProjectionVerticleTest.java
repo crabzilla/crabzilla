@@ -6,7 +6,7 @@ import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.ProjectionData;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
-import crabzilla.stack.EventsProjector;
+import crabzilla.stack.EventProjector;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
@@ -38,7 +38,7 @@ public class EventProjectionVerticleTest {
   CircuitBreaker circuitBreaker;
 
   @Mock
-  EventsProjector eventsProjector;
+  EventProjector eventProjector;
 
   @Before
   public void setUp(TestContext context) {
@@ -54,7 +54,7 @@ public class EventProjectionVerticleTest {
                     .setResetTimeout(10000) // time spent in open state before attempting to re-try
     );
 
-    val verticle = new EventsProjectionVerticle(vertx, eventsProjector, circuitBreaker);
+    val verticle = new EventsProjectionVerticle(vertx, eventProjector, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
 
@@ -84,9 +84,9 @@ public class EventProjectionVerticleTest {
 
     vertx.eventBus().send(eventsHandlerId("example1"), expectedUow, options, asyncResult -> {
 
-      verify(eventsProjector).handle(eq(asList(projectionData)));
+      verify(eventProjector).handle(eq(asList(projectionData)));
 
-      verifyNoMoreInteractions(eventsProjector);
+      verifyNoMoreInteractions(eventProjector);
 
       tc.assertTrue(asyncResult.succeeded());
 

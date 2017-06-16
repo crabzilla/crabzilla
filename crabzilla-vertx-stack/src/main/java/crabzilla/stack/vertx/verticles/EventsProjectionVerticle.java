@@ -2,7 +2,7 @@ package crabzilla.stack.vertx.verticles;
 
 import crabzilla.model.ProjectionData;
 import crabzilla.model.UnitOfWork;
-import crabzilla.stack.EventsProjector;
+import crabzilla.stack.EventProjector;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.*;
 import io.vertx.core.eventbus.Message;
@@ -20,15 +20,15 @@ import static java.util.Collections.singletonList;
 public class EventsProjectionVerticle extends AbstractVerticle {
 
   final Vertx vertx;
-  final EventsProjector eventsProjector;
+  final EventProjector eventProjector;
   final CircuitBreaker circuitBreaker;
 
   @Inject
   public EventsProjectionVerticle(@NonNull Vertx vertx,
-                                  @NonNull EventsProjector eventsProjector,
+                                  @NonNull EventProjector eventProjector,
                                   @NonNull @Named("events-projection") CircuitBreaker circuitBreaker) {
     this.vertx = vertx;
-    this.eventsProjector = eventsProjector;
+    this.eventProjector = eventProjector;
     this.circuitBreaker = circuitBreaker;
   }
 
@@ -73,7 +73,7 @@ public class EventsProjectionVerticle extends AbstractVerticle {
 
     return future -> {
 
-      eventsProjector.handle(singletonList(projectionData));
+      eventProjector.handle(singletonList(projectionData));
 
       future.complete("roger that");
 

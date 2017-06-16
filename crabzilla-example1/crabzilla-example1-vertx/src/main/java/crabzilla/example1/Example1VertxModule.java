@@ -15,8 +15,8 @@ import crabzilla.model.Command;
 import crabzilla.model.EntityId;
 import crabzilla.model.Event;
 import crabzilla.model.UnitOfWork;
+import crabzilla.stack.EventProjector;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.EventsProjector;
 import crabzilla.stack.vertx.codecs.JacksonGenericCodec;
 import crabzilla.stack.vertx.verticles.CommandExecution;
 import io.vertx.circuitbreaker.CircuitBreaker;
@@ -80,7 +80,7 @@ public class Example1VertxModule extends AbstractModule {
 
   @Provides
   @Singleton
-  EventsProjector eventsProjector(Example1ComponentsFactory f) {
+  EventProjector eventsProjector(Example1ComponentsFactory f) {
     return f.eventsProjector() ;
   }
 

@@ -7,21 +7,19 @@ import crabzilla.model.ProjectionData;
 import crabzilla.stack.ProjectionRepository;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.tweak.HandleCallback;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
+@Slf4j
 public class JdbiJacksonProjectionRepository implements ProjectionRepository {
-
-  static final Logger logger = LoggerFactory.getLogger(JdbiJacksonProjectionRepository.class);
 
   static final String UOW_ID = "uow_id";
   static final String UOW_EVENTS = "uow_events";
@@ -41,7 +39,7 @@ public class JdbiJacksonProjectionRepository implements ProjectionRepository {
  @Override
   public List<ProjectionData> getAllSince(long sinceUowSequence, int maxResultSize) {
 
-    logger.info("will load a maximum of {} units unitOfWork work since sequence {}", maxResultSize, sinceUowSequence);
+    log.info("will load a maximum of {} units unitOfWork work since sequence {}", maxResultSize, sinceUowSequence);
 
     final List<ProjectionData> projectionDataList = dbi
       .withHandle(new HandleCallback<List<ProjectionData>>() {
@@ -59,7 +57,7 @@ public class JdbiJacksonProjectionRepository implements ProjectionRepository {
       }
     );
 
-    logger.info("Found {} units of work since sequence {}", projectionDataList.size(), sinceUowSequence);
+    log.info("Found {} units of work since sequence {}", projectionDataList.size(), sinceUowSequence);
     return projectionDataList;
 
   }

@@ -52,7 +52,6 @@ public class JdbiJacksonEventRepository implements EventRepository {
   static final String AR_ID = "ar_id";
   static final String AR_NAME = "ar_name";
   static final String VERSION = "version";
-  static final String UOW_SEQ_NUMBER = "uow_seq_number";
 
   private final String aggregateRootName;
   private final ObjectMapper mapper;

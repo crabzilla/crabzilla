@@ -5,7 +5,7 @@ import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.example1.aggregates.customer.events.CustomerDeactivated;
 import crabzilla.model.Event;
 import crabzilla.model.ProjectionData;
-import crabzilla.stack.EventsProjector;
+import crabzilla.stack.EventProjector;
 import javaslang.Tuple;
 import lombok.Getter;
 import lombok.NonNull;
@@ -20,13 +20,13 @@ import static javaslang.API.*;
 import static javaslang.Predicates.instanceOf;
 
 @Slf4j
-public class Example1EventsProjector implements EventsProjector {
+public class Example1EventProjector implements EventProjector {
 
   @Getter
   private final String eventsChannelId;
   private final Configuration jooqCfg;
 
-  Example1EventsProjector(@NonNull final String eventsChannelId, @NonNull final Configuration jooqCfg) {
+  Example1EventProjector(@NonNull final String eventsChannelId, @NonNull final Configuration jooqCfg) {
     this.eventsChannelId = eventsChannelId;
     this.jooqCfg = jooqCfg;
   }

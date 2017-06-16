@@ -40,6 +40,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- log -->
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+        </dependency>
+
         <!-- util -->
 
         <dependency>

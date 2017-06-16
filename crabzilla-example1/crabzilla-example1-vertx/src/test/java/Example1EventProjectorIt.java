@@ -5,8 +5,8 @@ import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.ProjectionData;
+import crabzilla.stack.EventProjector;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.EventsProjector;
 import example1.datamodel.tables.pojos.CustomerSummary;
 import io.vertx.core.Vertx;
 import lombok.val;
@@ -25,15 +25,15 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("An Example1EventsProjector")
-public class Example1EventsProjectorIt {
+@DisplayName("An Example1EventProjector")
+public class Example1EventProjectorIt {
 
   @Inject
   ObjectMapper mapper;
   @Inject
   Configuration jooq;
   @Inject
-  EventsProjector eventsProjector;
+  EventProjector eventProjector;
 
   @BeforeEach
   public void setup() {
@@ -51,7 +51,7 @@ public class Example1EventsProjectorIt {
     val event2 = new CustomerActivated("a good reason", Instant.now());
     val projectionData = new ProjectionData(UUID.randomUUID().toString(), 1L, id.getStringValue(), asList(event1, event2));
 
-    eventsProjector.handle(singletonList(projectionData));
+    eventProjector.handle(singletonList(projectionData));
 
     val fromDb = DSL.using(jooq)
             .selectFrom(CUSTOMER_SUMMARY)

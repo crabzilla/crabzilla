@@ -8,22 +8,15 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.jdbc.JDBCClient;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class VertxProjectionRepository implements ProjectionRepository {
-
-  static final Logger logger = LoggerFactory.getLogger(VertxProjectionRepository.class);
-
-  static final String UOW_ID = "uow_id";
-  static final String UOW_EVENTS = "uow_events";
-  static final String CMD_DATA = "cmd_data";
-  static final String VERSION = "version";
 
   private final String aggregateRootName;
   private final JDBCClient client;
@@ -38,7 +31,7 @@ public class VertxProjectionRepository implements ProjectionRepository {
   @Override
   public List<ProjectionData> getAllSince(long sinceUowSequence, int maxResultSize) {
 
-    logger.info("will load a maximum of {} units unitOfWork work since sequence {}", maxResultSize, sinceUowSequence);
+    log.info("will load a maximum of {} units unitOfWork work since sequence {}", maxResultSize, sinceUowSequence);
 
     val SELECT_SINCE_UOW_SEQ = "select uow_id, uow_seq_number, ar_id, uow_events " +
             "from units_of_work where uow_seq_number > ? order by uow_seq_number limit %d";
@@ -61,12 +54,12 @@ public class VertxProjectionRepository implements ProjectionRepository {
           }
         });
       } else {
-        logger.error("Decide what to do"); // TODO
+        log.error("Decide what to do"); // TODO
         // Failed to get connection - deal with it
       }
     });
 
-    logger.info("Found {} units of work since sequence {}", result.size(), sinceUowSequence);
+    log.info("Found {} units of work since sequence {}", result.size(), sinceUowSequence);
     return result;
 
   }

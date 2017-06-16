@@ -37,7 +37,7 @@ public class SnapshotFactory<A extends AggregateRoot> {
     return applyNewEventsToSnapshot(EMPTY_SNAPSHOT, snapshotData.getVersion(), snapshotData.getEvents());
   }
 
-  Snapshot<A> applyNewEventsToSnapshot(Snapshot<A> originalSnapshot, Version newVersion, List<Event> newEvents) {
+  public Snapshot<A> applyNewEventsToSnapshot(Snapshot<A> originalSnapshot, Version newVersion, List<Event> newEvents) {
 
     if (originalSnapshot.getVersion().getValueAsLong() >= newVersion.getValueAsLong()) {
       throw new RuntimeException(String.format("Cannot upgrade to version %s since my version is %s",

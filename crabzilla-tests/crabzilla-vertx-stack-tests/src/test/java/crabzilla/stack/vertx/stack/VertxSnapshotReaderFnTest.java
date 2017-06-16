@@ -1,7 +1,5 @@
-package crabzilla.stack;
+package crabzilla.stack.vertx.stack;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.CustomerStateTransitionFnJavaslang;
@@ -11,16 +9,17 @@ import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.Snapshot;
 import crabzilla.model.Version;
-import crabzilla.stack.model.CaffeinedSnapshotReaderFn;
+import crabzilla.stack.EventRepository;
 import crabzilla.stack.model.SnapshotFactory;
+import crabzilla.stack.vertx.ShareableSnapshot;
+import crabzilla.stack.vertx.VertxSnapshotReaderFn;
+import io.vertx.core.Vertx;
+import io.vertx.core.shareddata.LocalMap;
 import lombok.val;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -30,23 +29,26 @@ import java.util.concurrent.ExecutionException;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-@DisplayName("A SnapshotReaderFn")
-public class CaffeinedSnapshotReaderFnTest {
+@DisplayName("A VertxSnapshotReaderFn")
+public class VertxSnapshotReaderFnTest {
 
   SnapshotFactory<Customer> snapshotFactory;
 
-  Cache<String, Snapshot<Customer>> cache;
+  LocalMap<String, ShareableSnapshot<Customer>> cache;
 
   @Mock
   EventRepository eventRepository;
 
   @BeforeEach
   public void init() throws Exception {
-    MockitoAnnotations.initMocks(this);
+    initMocks(this);
     snapshotFactory = new SnapshotFactory<>(new CustomerSupplierFn(), c -> c, new CustomerStateTransitionFnJavaslang());
-    cache = Caffeine.newBuilder().build();
+    val sharedData = Vertx.vertx().sharedData();
+    cache = sharedData.getLocalMap("CustomerSnapshot");
   }
 
   @Test
@@ -58,13 +60,13 @@ public class CaffeinedSnapshotReaderFnTest {
 
     when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.empty());
 
-    val reader = new CaffeinedSnapshotReaderFn<Customer>(cache, eventRepository, snapshotFactory);
+    val reader = new VertxSnapshotReaderFn<Customer>(cache, eventRepository, snapshotFactory);
 
-    AssertionsForClassTypes.assertThat(expectedSnapshot).isEqualTo(reader.apply(id.getStringValue()).getSnapshot());
+    assertThat(expectedSnapshot).isEqualTo(reader.apply(id.getStringValue()).getSnapshot());
 
     verify(eventRepository).getAll(id.getStringValue());
 
-    Mockito.verifyNoMoreInteractions(eventRepository);
+    verifyNoMoreInteractions(eventRepository);
 
   }
 
@@ -82,17 +84,17 @@ public class CaffeinedSnapshotReaderFnTest {
 
     when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.of(expectedSnapshotData));
 
-    val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, snapshotFactory);
+    val reader = new VertxSnapshotReaderFn<Customer>(cache, eventRepository, snapshotFactory);
 
     val resultingSnapshotMsg = reader.apply(id.getStringValue());
 
-    AssertionsForClassTypes.assertThat(expectedSnapshot).isEqualTo(resultingSnapshotMsg.getSnapshot());
+    assertThat(expectedSnapshot).isEqualTo(resultingSnapshotMsg.getSnapshot());
 
     verify(eventRepository).getAll(id.getStringValue());
 
-    AssertionsForClassTypes.assertThat(snapshotFactory.createSnapshot(expectedSnapshotData)).isEqualTo(resultingSnapshotMsg.getSnapshot());
+    assertThat(snapshotFactory.createSnapshot(expectedSnapshotData)).isEqualTo(resultingSnapshotMsg.getSnapshot());
 
-    Mockito.verifyNoMoreInteractions(eventRepository);
+    verifyNoMoreInteractions(eventRepository);
 
   }
 
@@ -109,21 +111,21 @@ public class CaffeinedSnapshotReaderFnTest {
 
     when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.of(expectedSnapshotData));
 
-    cache.put(id.getStringValue(), snapshotFactory.createSnapshot(expectedSnapshotData));
+    cache.put(id.getStringValue(), new ShareableSnapshot<>(snapshotFactory.createSnapshot(expectedSnapshotData)));
 
     // run
 
-    val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, snapshotFactory);
+    val reader = new VertxSnapshotReaderFn<Customer>(cache, eventRepository, snapshotFactory);
 
     val resultingSnapshotMsg = reader.apply(id.getStringValue());
 
     // verify
 
-    AssertionsForClassTypes.assertThat(snapshotFactory.createSnapshot(expectedSnapshotData)).isEqualTo(resultingSnapshotMsg.getSnapshot());
+    assertThat(snapshotFactory.createSnapshot(expectedSnapshotData)).isEqualTo(resultingSnapshotMsg.getSnapshot());
 
     verify(eventRepository).getAllAfterVersion(id.getStringValue(), expectedSnapshotData.getVersion());
 
-    Mockito.verifyNoMoreInteractions(eventRepository);
+    verifyNoMoreInteractions(eventRepository);
 
   }
 
@@ -148,21 +150,21 @@ public class CaffeinedSnapshotReaderFnTest {
 
     // prepare
 
-    cache.put(id.getStringValue(), cachedSnapshot);
+    cache.put(id.getStringValue(), new ShareableSnapshot<>(cachedSnapshot));
 
     when(eventRepository.getAllAfterVersion(id.getStringValue(), cachedVersion)).thenReturn(Optional.of(nonCachedHistory));
 
-    val reader = new CaffeinedSnapshotReaderFn<>(cache, eventRepository, snapshotFactory);
+    val reader = new VertxSnapshotReaderFn<Customer>(cache, eventRepository, snapshotFactory);
 
     // run
 
     val resultingSnapshotMsg = reader.apply(id.getStringValue());
 
-    AssertionsForClassTypes.assertThat(expectedSnapshot).isEqualTo(resultingSnapshotMsg.getSnapshot());
+    assertThat(expectedSnapshot).isEqualTo(resultingSnapshotMsg.getSnapshot());
 
     verify(eventRepository).getAllAfterVersion(eq(id.getStringValue()), eq(cachedVersion));
 
-    Mockito.verifyNoMoreInteractions(eventRepository);
+    verifyNoMoreInteractions(eventRepository);
 
   }
 

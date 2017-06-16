@@ -4,7 +4,7 @@ public interface StackComponentsFactory {
 
  EventRepository eventRepository() ;
 
- EventsProjector eventsProjector() ;
+ EventProjector eventsProjector() ;
 
  ProjectionRepository projectionRepository() ;
 

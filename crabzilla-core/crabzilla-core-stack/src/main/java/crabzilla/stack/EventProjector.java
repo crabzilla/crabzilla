@@ -4,7 +4,7 @@ import crabzilla.model.ProjectionData;
 
 import java.util.List;
 
-public interface EventsProjector {
+public interface EventProjector {
 
   String getEventsChannelId();
 
