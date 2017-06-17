@@ -1,4 +1,4 @@
-package crabzilla.example1.aggregates.customer;
+package crabzilla.example1.extra.aggregates.customer;
 
 import com.google.inject.Guice;
 import com.google.inject.Inject;

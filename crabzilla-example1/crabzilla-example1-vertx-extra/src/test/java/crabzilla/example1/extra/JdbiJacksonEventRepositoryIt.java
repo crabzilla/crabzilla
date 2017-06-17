@@ -1,15 +1,14 @@
-// TODO move from here to tests module (by decoupling from guice modules)
+package crabzilla.example1.extra;// TODO move from here to tests module (by decoupling from guice modules)
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
-import crabzilla.example1.Example1VertxModule;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
+import crabzilla.example1.extra.implementations.JdbiJacksonEventRepository;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.vertx.JdbiJacksonEventRepository;
 import io.vertx.core.Vertx;
 import lombok.val;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -36,7 +35,7 @@ public class JdbiJacksonEventRepositoryIt {
   @BeforeEach
   public void setup() {
 
-    Guice.createInjector(new Example1VertxModule(Vertx.vertx())).injectMembers(this);
+    Guice.createInjector(new Example1ExtraModule(Vertx.vertx())).injectMembers(this);
 
     repo = new JdbiJacksonEventRepository("customer", mapper, dbi);
 

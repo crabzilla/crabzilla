@@ -1,12 +1,12 @@
-package crabzilla.example1;
+package crabzilla.example1.extra;
 
 import com.google.inject.Guice;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
-import crabzilla.stack.vertx.verticles.CommandHandlerVerticle;
-import crabzilla.stack.vertx.verticles.CommandRestVerticle;
-import crabzilla.stack.vertx.verticles.EventsProjectionVerticle;
+import crabzilla.example1.extra.implementations.CaffeineCommandHandlerVerticle;
+import crabzilla.stack.vertx.CommandRestVerticle;
+import crabzilla.stack.vertx.EventsProjectionVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -25,12 +25,12 @@ import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_
 import static java.lang.System.setProperty;
 
 @Slf4j
-public class Example1VertxLauncher {
+public class Example1ExtraLauncher {
 
   @Inject
   CommandRestVerticle<Customer> restVersicle;
   @Inject
-  CommandHandlerVerticle<Customer> cmdVerticle;
+  CaffeineCommandHandlerVerticle<Customer> cmdVerticle;
   @Inject
   EventsProjectionVerticle projectionVerticle;
 
@@ -39,7 +39,7 @@ public class Example1VertxLauncher {
 
   public static void main(String args[]) throws InterruptedException {
 
-    val launcher = new Example1VertxLauncher();
+    val launcher = new Example1ExtraLauncher();
     val clusterManager = new HazelcastClusterManager();
     val options = new VertxOptions().setClusterManager(clusterManager);
 
@@ -54,7 +54,7 @@ public class Example1VertxLauncher {
         setProperty (LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory.class.getName ());
         LoggerFactory.getLogger (LoggerFactory.class); // Required for Logback to work in Vertx
 
-        Guice.createInjector(new Example1VertxModule(vertx)).injectMembers(launcher);
+        Guice.createInjector(new Example1ExtraModule(vertx)).injectMembers(launcher);
 
         launcher.vertx.deployVerticle(launcher.restVersicle, event -> log.info("Deployed ? {}", event.succeeded()));
         launcher.vertx.deployVerticle(launcher.cmdVerticle, event -> log.info("Deployed ? {}", event.succeeded()));

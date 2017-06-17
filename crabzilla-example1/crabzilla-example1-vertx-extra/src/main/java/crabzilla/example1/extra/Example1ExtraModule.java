@@ -1,4 +1,4 @@
-package crabzilla.example1;
+package crabzilla.example1.extra;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
@@ -8,7 +8,8 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import crabzilla.example1.aggregates.CustomerModule;
+import com.zaxxer.hikari.HikariDataSource;
+import crabzilla.example1.extra.aggregates.ExtraCustomerModule;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
 import crabzilla.model.Command;
@@ -17,12 +18,13 @@ import crabzilla.model.Event;
 import crabzilla.model.UnitOfWork;
 import crabzilla.stack.EventProjector;
 import crabzilla.stack.EventRepository;
+import crabzilla.stack.vertx.CommandExecution;
 import crabzilla.stack.vertx.codecs.JacksonGenericCodec;
-import crabzilla.stack.vertx.verticles.CommandExecution;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
+import io.vertx.ext.jdbc.JDBCClient;
 import lombok.val;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
@@ -34,25 +36,24 @@ import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.DefaultTransactionProvider;
 import org.nustaq.serialization.FSTConfiguration;
 
-import javax.sql.DataSource;
 import java.util.Properties;
 
-public class Example1VertxModule extends AbstractModule {
+public class Example1ExtraModule extends AbstractModule {
 
   final Vertx vertx;
 
-  public Example1VertxModule(Vertx vertx) {
+  public Example1ExtraModule(Vertx vertx) {
     this.vertx = vertx;
   }
 
   @Override
   protected void configure() {
 
-    install(new CustomerModule());
     install(new DatabaseModule());
+    install(new ExtraCustomerModule());
 
     bind(SampleService.class).to(SampleServiceImpl.class).asEagerSingleton();
-    bind(Example1ComponentsFactory.class).asEagerSingleton();
+    bind(Example1ExtraComponentsFactory.class).asEagerSingleton();
 
     setCfgProps();
 
@@ -74,13 +75,13 @@ public class Example1VertxModule extends AbstractModule {
 
   @Provides
   @Singleton
-  EventRepository eventRepository(Example1ComponentsFactory f) {
+  EventRepository eventRepository(Example1ExtraComponentsFactory f) {
     return f.eventRepository();
   }
 
   @Provides
   @Singleton
-  EventProjector eventsProjector(Example1ComponentsFactory f) {
+  EventProjector eventsProjector(Example1ExtraComponentsFactory f) {
     return f.eventsProjector() ;
   }
 
@@ -114,6 +115,12 @@ public class Example1VertxModule extends AbstractModule {
 
   @Provides
   @Singleton
+  JDBCClient jdbcClient(Vertx vertx, HikariDataSource dataSource) {
+    return JDBCClient.create(vertx, dataSource);
+  }
+
+  @Provides
+  @Singleton
   @Named("cmd-handler")
   CircuitBreaker circuitBreaker() {
     return CircuitBreaker.create("cmd-handler-circuit-breaker", vertx,
@@ -142,7 +149,7 @@ public class Example1VertxModule extends AbstractModule {
 
   @Provides
   @Singleton
-  Configuration cfg(DataSource ds) {
+  Configuration cfg(HikariDataSource ds) {
     DefaultConfiguration cfg = new DefaultConfiguration();
 //    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 //    cfg.set(() -> new QuerySniper(executor, dbQueryTimeoutMs));

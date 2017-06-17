@@ -1,34 +1,31 @@
 package crabzilla.example1;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.stack.EventProjector;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.ProjectionRepository;
 import crabzilla.stack.StackComponentsFactory;
-import crabzilla.stack.vertx.JdbiJacksonEventRepository;
-import crabzilla.stack.vertx.JdbiJacksonProjectionRepository;
+import crabzilla.stack.vertx.VertxEventRepository;
+import crabzilla.stack.vertx.VertxProjectionRepository;
+import io.vertx.ext.jdbc.JDBCClient;
 import org.jooq.Configuration;
-import org.skife.jdbi.v2.DBI;
 
 import javax.inject.Inject;
 
-public class Example1ComponentsFactory implements StackComponentsFactory {
+class Example1ComponentsFactory implements StackComponentsFactory {
 
   private final Configuration jooq;
-  private final ObjectMapper jackson;
-  private final DBI jdbi;
+  private final JDBCClient jdbcClient;
 
   @Inject
-  public Example1ComponentsFactory(Configuration jooq, ObjectMapper jackson, DBI jdbi) {
+  public Example1ComponentsFactory(Configuration jooq, JDBCClient jdbcClient) {
     this.jooq = jooq;
-    this.jackson = jackson;
-    this.jdbi = jdbi;
+    this.jdbcClient = jdbcClient;
   }
 
   @Override
   public EventRepository eventRepository() {
-    return new JdbiJacksonEventRepository(Customer.class.getSimpleName(), jackson, jdbi);
+    return new VertxEventRepository(Customer.class.getSimpleName(), jdbcClient);
 
   }
 
@@ -39,7 +36,7 @@ public class Example1ComponentsFactory implements StackComponentsFactory {
 ;
   @Override
   public ProjectionRepository projectionRepository() {
-    return new JdbiJacksonProjectionRepository(jackson, jdbi);
+    return new VertxProjectionRepository(jdbcClient);
   }
 
 }

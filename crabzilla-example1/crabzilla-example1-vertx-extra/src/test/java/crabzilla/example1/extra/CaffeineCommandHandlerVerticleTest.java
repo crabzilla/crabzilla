@@ -1,10 +1,13 @@
-package crabzilla.stack.vertx.verticles;
+package crabzilla.example1.extra;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.CustomerSupplierFn;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
+import crabzilla.example1.extra.implementations.CaffeineCommandHandlerVerticle;
 import crabzilla.model.Command;
 import crabzilla.model.Snapshot;
 import crabzilla.model.UnitOfWork;
@@ -13,12 +16,11 @@ import crabzilla.model.util.Either;
 import crabzilla.model.util.Eithers;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.model.SnapshotMessage;
-import crabzilla.stack.vertx.ShareableSnapshot;
+import crabzilla.stack.vertx.CommandExecution;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.shareddata.LocalMap;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -37,8 +39,8 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static crabzilla.stack.vertx.CommandExecution.RESULT;
 import static crabzilla.stack.vertx.util.StringHelper.commandHandlerId;
-import static crabzilla.stack.vertx.verticles.CommandExecution.RESULT;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -47,10 +49,10 @@ import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(VertxUnitRunner.class)
-public class CommandHandlerVerticleTest {
+public class CaffeineCommandHandlerVerticleTest {
 
   Vertx vertx;
-  LocalMap<String, ShareableSnapshot<Customer>> cache;
+  Cache<String, Snapshot<Customer>> cache;
   CircuitBreaker circuitBreaker;
 
   @Mock
@@ -68,8 +70,7 @@ public class CommandHandlerVerticleTest {
     initMocks(this);
 
     vertx = new VertxFactory().vertx();
-    val sharedData = vertx.sharedData();
-    cache = sharedData.getLocalMap("CustomerSnapshots");
+    cache = Caffeine.newBuilder().build();
     circuitBreaker = CircuitBreaker.create("cmd-handler-circuit-breaker", vertx,
             new CircuitBreakerOptions()
                     .setMaxFailures(5) // number SUCCESS failure before opening the circuit
@@ -78,7 +79,7 @@ public class CommandHandlerVerticleTest {
                     .setResetTimeout(10000) // time spent in open state before attempting to re-try
     );
 
-    val verticle = new CommandHandlerVerticle<Customer>(Customer.class, snapshotReaderFn, cmdHandlerFn,
+    val verticle = new CaffeineCommandHandlerVerticle<Customer>(Customer.class, snapshotReaderFn, cmdHandlerFn,
                               validatorFn, eventRepository, cache, vertx, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());

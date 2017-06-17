@@ -7,6 +7,7 @@ import crabzilla.example1.aggregates.customer.commands.DeactivateCustomerCmd;
 import crabzilla.model.*;
 import crabzilla.model.util.Either;
 import crabzilla.model.util.Eithers;
+import javaslang.API;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
@@ -62,7 +63,7 @@ public class CustomerCmdHandlerFnJavaslang
         unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.create(command.getTargetId(), command.getName()))
       ),
 
-      Case(instanceOf(ActivateCustomerCmd.class), (command) ->
+      API.Case(instanceOf(ActivateCustomerCmd.class), (command) ->
 
         unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.activate(command.getReason()))),
 

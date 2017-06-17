@@ -1,4 +1,4 @@
-package crabzilla.stack.vertx.verticles;
+package crabzilla.stack.vertx;
 
 import crabzilla.model.ProjectionData;
 import crabzilla.model.UnitOfWork;

@@ -1,3 +1,5 @@
+package crabzilla.example1.extra;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;

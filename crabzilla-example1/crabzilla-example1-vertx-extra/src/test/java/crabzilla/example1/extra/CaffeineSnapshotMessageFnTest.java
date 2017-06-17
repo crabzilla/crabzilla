@@ -1,5 +1,7 @@
-package crabzilla.stack.vertx.stack;
+package crabzilla.example1.extra;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.CustomerStateTransitionFnJavaslang;
@@ -7,14 +9,12 @@ import crabzilla.example1.aggregates.customer.CustomerSupplierFn;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
+import crabzilla.example1.extra.implementations.CaffeineSnapshotMessageFn;
 import crabzilla.model.Snapshot;
 import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.model.SnapshotFactory;
 import crabzilla.stack.vertx.ShareableSnapshot;
-import crabzilla.stack.vertx.VertxSnapshotReaderFn;
-import io.vertx.core.Vertx;
-import io.vertx.core.shareddata.LocalMap;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,12 +33,12 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-@DisplayName("A VertxSnapshotReaderFn")
-public class VertxSnapshotReaderFnTest {
+@DisplayName("A CaffeineSnapshotMessageFn")
+public class CaffeineSnapshotMessageFnTest {
 
   SnapshotFactory<Customer> snapshotFactory;
 
-  LocalMap<String, ShareableSnapshot<Customer>> cache;
+  Cache<String, Snapshot<Customer>> cache;
 
   @Mock
   EventRepository eventRepository;
@@ -47,8 +47,7 @@ public class VertxSnapshotReaderFnTest {
   public void init() throws Exception {
     initMocks(this);
     snapshotFactory = new SnapshotFactory<>(new CustomerSupplierFn(), c -> c, new CustomerStateTransitionFnJavaslang());
-    val sharedData = Vertx.vertx().sharedData();
-    cache = sharedData.getLocalMap("CustomerSnapshot");
+    cache = Caffeine.newBuilder().build();
   }
 
   @Test
@@ -60,7 +59,7 @@ public class VertxSnapshotReaderFnTest {
 
     when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.empty());
 
-    val reader = new VertxSnapshotReaderFn<Customer>(cache, eventRepository, snapshotFactory);
+    val reader = new CaffeineSnapshotMessageFn<Customer>(cache, eventRepository, snapshotFactory);
 
     assertThat(expectedSnapshot).isEqualTo(reader.apply(id.getStringValue()).getSnapshot());
 
@@ -84,7 +83,7 @@ public class VertxSnapshotReaderFnTest {
 
     when(eventRepository.getAll(id.getStringValue())).thenReturn(Optional.of(expectedSnapshotData));
 
-    val reader = new VertxSnapshotReaderFn<Customer>(cache, eventRepository, snapshotFactory);
+    val reader = new CaffeineSnapshotMessageFn<Customer>(cache, eventRepository, snapshotFactory);
 
     val resultingSnapshotMsg = reader.apply(id.getStringValue());
 
@@ -115,7 +114,7 @@ public class VertxSnapshotReaderFnTest {
 
     // run
 
-    val reader = new VertxSnapshotReaderFn<Customer>(cache, eventRepository, snapshotFactory);
+    val reader = new CaffeineSnapshotMessageFn<Customer>(cache, eventRepository, snapshotFactory);
 
     val resultingSnapshotMsg = reader.apply(id.getStringValue());
 
@@ -154,7 +153,7 @@ public class VertxSnapshotReaderFnTest {
 
     when(eventRepository.getAllAfterVersion(id.getStringValue(), cachedVersion)).thenReturn(Optional.of(nonCachedHistory));
 
-    val reader = new VertxSnapshotReaderFn<Customer>(cache, eventRepository, snapshotFactory);
+    val reader = new CaffeineSnapshotMessageFn<Customer>(cache, eventRepository, snapshotFactory);
 
     // run
 

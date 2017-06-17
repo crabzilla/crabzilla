@@ -40,13 +40,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- cache -->
-
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-        </dependency>
-
         <!-- log -->
 
         <dependency>
@@ -67,7 +60,7 @@
         </dependency>
 
 
-        <!-- gson -->
+        <!-- json -->
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-parameter-names</artifactId>
@@ -89,10 +82,6 @@
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jdbi</groupId>
-            <artifactId>jdbi</artifactId>
         </dependency>
 
         <!-- serialization -->
@@ -125,18 +114,17 @@
             <artifactId>vertx-jdbc-client</artifactId>
         </dependency>
 
-        <!--Test -->
+        <!-- test -->
 
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-unit</artifactId>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -146,11 +134,17 @@
             <scope>test</scope>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>org.assertj</groupId>-->
-            <!--<artifactId>assertj-core</artifactId>-->
-            <!--<scope>test</scope>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-unit</artifactId>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 

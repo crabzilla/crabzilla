@@ -1,6 +1,5 @@
 package crabzilla.example1.aggregates;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import crabzilla.example1.aggregates.customer.*;
 import crabzilla.example1.services.SampleService;
 import crabzilla.model.Command;
@@ -10,11 +9,11 @@ import crabzilla.model.UnitOfWork;
 import crabzilla.model.util.Either;
 import crabzilla.stack.model.AggregateRootComponentsFactory;
 import crabzilla.stack.model.SnapshotMessage;
-import crabzilla.stack.vertx.JdbiJacksonEventRepository;
 import crabzilla.stack.vertx.ShareableSnapshot;
-import crabzilla.stack.vertx.VertxSnapshotReaderFn;
+import crabzilla.stack.vertx.VertxEventRepository;
+import crabzilla.stack.vertx.VertxSnapshotMessageFn;
 import io.vertx.core.shareddata.LocalMap;
-import org.skife.jdbi.v2.DBI;
+import io.vertx.ext.jdbc.JDBCClient;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -26,16 +25,15 @@ import java.util.function.Supplier;
 class CustomerComponentsFactory implements AggregateRootComponentsFactory<Customer> {
 
   private final SampleService service;
-  private final ObjectMapper jackson;
-  private final DBI jdbi;
   private final LocalMap<String, ShareableSnapshot<Customer>> localMap;
+  private final JDBCClient jdbcClient;
 
   @Inject
-  public CustomerComponentsFactory(SampleService service, ObjectMapper jackson, DBI jdbi,
-                                   LocalMap<String, ShareableSnapshot<Customer>> localMap) {
+  public CustomerComponentsFactory(SampleService service,
+                                   LocalMap<String, ShareableSnapshot<Customer>> localMap,
+                                   JDBCClient jdbcClient) {
     this.service = service;
-    this.jackson = jackson;
-    this.jdbi = jdbi;
+    this.jdbcClient = jdbcClient;
     this.localMap = localMap;
   }
 
@@ -45,7 +43,7 @@ class CustomerComponentsFactory implements AggregateRootComponentsFactory<Custom
   }
 
   @Override
-  public BiFunction<Event, Customer, Customer> stateTransitionFn() {return new CustomerStateTransitionFnJavaslang(); }
+  public BiFunction<Event, Customer, Customer> stateTransitionFn() {return new CustomerStateTransitionFn(); }
 
   @Override
   public Function<Command, List<String>> cmdValidatorFn() {
@@ -54,7 +52,7 @@ class CustomerComponentsFactory implements AggregateRootComponentsFactory<Custom
 
   @Override
   public BiFunction<Command, Snapshot<Customer>, Either<Exception, Optional<UnitOfWork>>> cmdHandlerFn() {
-    return new CustomerCmdHandlerFnJavaslang(stateTransitionFn(), depInjectionFn());
+    return new CustomerCmdHandlerFn(stateTransitionFn(), depInjectionFn());
   }
 
   @Override
@@ -62,8 +60,8 @@ class CustomerComponentsFactory implements AggregateRootComponentsFactory<Custom
 
   @Override
   public Function<String, SnapshotMessage<Customer>> snapshotReaderFn() {
-    return new VertxSnapshotReaderFn<>(localMap, new JdbiJacksonEventRepository(Customer.class.getName(),
-            jackson, jdbi), snaphotFactory());
+    return new VertxSnapshotMessageFn<>(localMap, new VertxEventRepository(Customer.class.getName(),
+            jdbcClient), snaphotFactory());
   }
 
 }

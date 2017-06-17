@@ -1,10 +1,12 @@
-package crabzilla.stack.vertx.verticles;
+package crabzilla.example1.extra;
+
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import crabzilla.model.Command;
 import crabzilla.model.EntityId;
 import crabzilla.model.Event;
 import crabzilla.model.UnitOfWork;
+import crabzilla.stack.vertx.CommandExecution;
 import crabzilla.stack.vertx.codecs.JacksonGenericCodec;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -12,7 +14,7 @@ import lombok.val;
 
 public class VertxFactory {
 
-  Vertx vertx() {
+  public Vertx vertx() {
 
     val vertx = Vertx.vertx();
 

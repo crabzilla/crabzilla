@@ -1,4 +1,4 @@
-package crabzilla.stack.vertx.verticles;
+package crabzilla.stack.vertx;
 
 import crabzilla.model.UnitOfWork;
 import lombok.AccessLevel;
@@ -37,44 +37,44 @@ public class CommandExecution implements Serializable {
   @Getter(AccessLevel.NONE)
   UnitOfWork unitOfWork;
 
-  Optional<UUID> getCommandId() {
+  public Optional<UUID> getCommandId() {
     return Optional.ofNullable(commandId);
   }
 
-  Optional<List<String>> getConstraints() {
+  public Optional<List<String>> getConstraints() {
     return RESULT.VALIDATION_ERROR.equals(result) ? Optional.of(constraints) : Optional.empty();
   }
 
-  Optional<Long> getUowSequence() {
+  public Optional<Long> getUowSequence() {
     return RESULT.SUCCESS.equals(result) ? Optional.of(uowSequence) : Optional.empty();
   }
 
-  Optional<UnitOfWork> getUnitOfWork() {
+  public Optional<UnitOfWork> getUnitOfWork() {
     return RESULT.SUCCESS.equals(result) ? Optional.of(unitOfWork) : Optional.empty();
   }
 
-  static CommandExecution VALIDATION_ERROR(@NonNull List<String> constraints) {
+  public static CommandExecution VALIDATION_ERROR(@NonNull List<String> constraints) {
     return new CommandExecution(RESULT.VALIDATION_ERROR, null, constraints, 0L,null);
   }
 
-  static CommandExecution VALIDATION_ERROR(@NonNull UUID commandId, @NonNull List<String> constraints) {
+  public static CommandExecution VALIDATION_ERROR(@NonNull UUID commandId, @NonNull List<String> constraints) {
     return new CommandExecution(RESULT.VALIDATION_ERROR, commandId, constraints, 0L,null);
   }
 
-  static CommandExecution FALLBACK(@NonNull UUID commandId) {
+  public static CommandExecution FALLBACK(@NonNull UUID commandId) {
     return new CommandExecution(RESULT.FALLBACK, commandId, emptyList(), 0L,null);
   }
 
-  static CommandExecution BUSINESS_ERROR(@NonNull UUID commandId) {
+  public static CommandExecution BUSINESS_ERROR(@NonNull UUID commandId) {
     return new CommandExecution(RESULT.BUSINESS_ERROR, commandId, emptyList(), 0L,null);
 
   }
 
-  static CommandExecution UNKNOWN_COMMAND(@NonNull UUID commandId) {
+  public static CommandExecution UNKNOWN_COMMAND(@NonNull UUID commandId) {
     return new CommandExecution(RESULT.UNKNOWN_COMMAND, commandId, emptyList(), 0L,null);
   }
 
-  static CommandExecution SUCCESS(@NonNull UnitOfWork uow, @NonNull Long uowSequence) {
+  public static CommandExecution SUCCESS(@NonNull UnitOfWork uow, @NonNull Long uowSequence) {
     return new CommandExecution(RESULT.SUCCESS, uow.getCommand().getCommandId(), emptyList(), uowSequence, uow);
   }
 }

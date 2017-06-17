@@ -1,4 +1,4 @@
-package crabzilla.stack.vertx;
+package crabzilla.example1.extra.implementations;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

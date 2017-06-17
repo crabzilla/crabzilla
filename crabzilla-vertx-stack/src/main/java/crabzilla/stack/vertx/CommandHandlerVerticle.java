@@ -1,4 +1,4 @@
-package crabzilla.stack.vertx.verticles;
+package crabzilla.stack.vertx;
 
 import crabzilla.model.AggregateRoot;
 import crabzilla.model.Command;
@@ -7,11 +7,9 @@ import crabzilla.model.UnitOfWork;
 import crabzilla.model.util.Either;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.model.SnapshotMessage;
-import crabzilla.stack.vertx.ShareableSnapshot;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.*;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.LocalMap;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +25,6 @@ import java.util.function.Function;
 import static crabzilla.model.util.Eithers.getLeft;
 import static crabzilla.model.util.Eithers.getRight;
 import static crabzilla.stack.vertx.util.StringHelper.commandHandlerId;
-import static crabzilla.stack.vertx.verticles.CommandExecution.*;
 import static java.util.Collections.singletonList;
 
 @Slf4j
@@ -78,7 +75,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
         val command = msg.body();
 
         if (command==null) {
-          future.complete(VALIDATION_ERROR(singletonList("Command cannot be null. Check if JSON payload is valid.")));
+          future.complete(CommandExecution.VALIDATION_ERROR(singletonList("Command cannot be null. Check if JSON payload is valid.")));
           return;
         }
 
@@ -87,14 +84,14 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
         val constraints = validatorFn.apply(command);
 
         if (!constraints.isEmpty()) {
-          future.complete(VALIDATION_ERROR(command.getCommandId(), constraints));
+          future.complete(CommandExecution.VALIDATION_ERROR(command.getCommandId(), constraints));
           return;
         }
 
         circuitBreaker.fallback(throwable -> {
 
           log.error("Fallback for command " + command.getCommandId(), throwable);
-          return FALLBACK(command.getCommandId()); })
+          return CommandExecution.FALLBACK(command.getCommandId()); })
 
         .execute(cmdHandler(command))
 
@@ -122,20 +119,20 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
       if (optException.isPresent()) {
         log.error("Business logic error for command " + command.getCommandId(), optException.get());
-        future.complete(BUSINESS_ERROR(command.getCommandId()));
+        future.complete(CommandExecution.BUSINESS_ERROR(command.getCommandId()));
         return;
       }
 
       val optUnitOfWork = getRight(either);
 
       if (!optUnitOfWork.get().isPresent()) {
-        future.complete(UNKNOWN_COMMAND(command.getCommandId()));
+        future.complete(CommandExecution.UNKNOWN_COMMAND(command.getCommandId()));
         return;
       }
 
       val uow = optUnitOfWork.get().get();
       val uowSequence = eventRepository.append(uow);
-      val cmdHandleResp = SUCCESS(uow, uowSequence);
+      val cmdHandleResp = CommandExecution.SUCCESS(uow, uowSequence);
 
       future.complete(cmdHandleResp);
 

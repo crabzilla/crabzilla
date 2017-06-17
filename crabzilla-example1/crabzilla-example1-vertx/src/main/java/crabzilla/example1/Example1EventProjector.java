@@ -26,7 +26,7 @@ public class Example1EventProjector implements EventProjector {
   private final String eventsChannelId;
   private final Configuration jooqCfg;
 
-  Example1EventProjector(@NonNull final String eventsChannelId, @NonNull final Configuration jooqCfg) {
+  public Example1EventProjector(@NonNull final String eventsChannelId, @NonNull final Configuration jooqCfg) {
     this.eventsChannelId = eventsChannelId;
     this.jooqCfg = jooqCfg;
   }

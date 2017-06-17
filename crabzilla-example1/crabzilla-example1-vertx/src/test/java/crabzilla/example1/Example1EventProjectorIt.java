@@ -1,6 +1,7 @@
+package crabzilla.example1;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
-import crabzilla.example1.Example1VertxModule;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
@@ -38,7 +39,7 @@ public class Example1EventProjectorIt {
   @BeforeEach
   public void setup() {
 
-    Guice.createInjector(new Example1VertxModule(Vertx.vertx())).injectMembers(this);
+    Guice.createInjector(new Example1Module(Vertx.vertx())).injectMembers(this);
     DSL.using(jooq).transaction(ctx -> DSL.using(ctx).execute("DELETE FROM customer_summary"));
   }
 
