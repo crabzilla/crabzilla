@@ -40,7 +40,7 @@ public class VertxEventRepository implements EventRepository {
 
   private final TypeReference<List<Event>> eventsListTpe =  new TypeReference<List<Event>>() {};
 
-  public VertxEventRepository(@NonNull String aggregateRootName,@NonNull JDBCClient client) {
+  public VertxEventRepository(@NonNull String aggregateRootName, @NonNull JDBCClient client) {
     this.aggregateRootName = aggregateRootName;
     this.client = client;
   }
@@ -52,10 +52,10 @@ public class VertxEventRepository implements EventRepository {
     val SELECT_UOW_BY_ID = "select * from units_of_work where uow_id =? ";
     val params = new JsonArray().add(uowId.toString());
 
-    client.getConnection(res -> {
-      if (res.succeeded()) {
-        val connection = res.result();
-        connection.queryWithParams(SELECT_UOW_BY_ID, params, res2 -> {
+    client.getConnection(getConn -> {
+      if (getConn.succeeded()) {
+        val sqlConn = getConn.result();
+        sqlConn.queryWithParams(SELECT_UOW_BY_ID, params, res2 -> {
           if (res2.succeeded()) {
             val rs = res2.result();
             val rows = rs.getRows();
@@ -67,7 +67,13 @@ public class VertxEventRepository implements EventRepository {
               result.set(Optional.of(uow));
             }
           }
-        });
+        }).setAutoCommit(false, setCommit -> {
+          if (setCommit.succeeded()) {
+            // OK!
+          } else {
+            // Failed!
+          }
+        }).close();
       } else {
         logger.error("Decide what to do"); // TODO
         // Failed to get connection - deal with it
@@ -96,10 +102,10 @@ public class VertxEventRepository implements EventRepository {
     val list = new ArrayList<SnapshotData>();
     val params = new JsonArray().add(id).add(aggregateRootName).add(version.getValueAsLong());
 
-    client.getConnection(res -> {
-      if (res.succeeded()) {
-        val connection = res.result();
-        connection.queryStreamWithParams(SELECT_AFTER_VERSION, params, stream -> {
+    client.getConnection(getConn -> {
+      if (getConn.succeeded()) {
+        val sqlConn = getConn.result();
+        sqlConn.queryStreamWithParams(SELECT_AFTER_VERSION, params, stream -> {
           if (stream.succeeded()) {
             stream.result().handler(row -> {
               val events = readEvents(row.getString(0));
@@ -107,7 +113,13 @@ public class VertxEventRepository implements EventRepository {
               list.add(snapshotData);
             });
           }
-        });
+        }).setAutoCommit(false, res2 -> {
+          if (res2.succeeded()) {
+            // OK!
+          } else {
+            // Failed!
+          }
+        }).close();
       } else {
         logger.error("Decide what to do"); // TODO
         // Failed to get connection - deal with it
@@ -144,19 +156,19 @@ public class VertxEventRepository implements EventRepository {
             "(uow_id, uow_events, cmd_id, cmd_data, ar_id, ar_name, version, inserted_on) " +
             "values (:uow_id, :uow_events, :cmd_id, :cmd_data, :ar_id, :ar_name, :version, :inserted_on)";
 
-    client.getConnection(res1 -> {
+    client.getConnection(getConn -> {
 
-      if (res1.succeeded()) {
+      if (getConn.succeeded()) {
 
-        val connection = res1.result();
+        val sqlConn = getConn.result();
 
-        connection.setAutoCommit(false, res2 -> {
+        sqlConn.setAutoCommit(false, setCommit -> {
 
-          if (res2.succeeded()) {
+          if (setCommit.succeeded()) {
 
-            connection.setTransactionIsolation(TransactionIsolation.SERIALIZABLE, res3 -> {
+            sqlConn.setTransactionIsolation(TransactionIsolation.SERIALIZABLE, setTxIsolation -> {
 
-              if (res3.succeeded()) {
+              if (setTxIsolation.succeeded()) {
 
                 final AtomicReference<Optional<Long>> currentVersion =
                         new AtomicReference<>(Optional.empty());
@@ -165,11 +177,11 @@ public class VertxEventRepository implements EventRepository {
                         .add(unitOfWork.getUnitOfWorkId().toString())
                         .add(aggregateRootName);
 
-                connection.queryWithParams(SELECT_CURRENT_VERSION, params1, res4 -> {
+                sqlConn.queryWithParams(SELECT_CURRENT_VERSION, params1, sqlQuery -> {
 
-                  if (res4.succeeded()) {
+                  if (sqlQuery.succeeded()) {
 
-                    val rs = res4.result();
+                    val rs = sqlQuery.result();
                     val rows = rs.getRows();
 
                     for (JsonObject row : rows) {
@@ -190,20 +202,20 @@ public class VertxEventRepository implements EventRepository {
                             .add(aggregateRootName)
                             .add(unitOfWork.getVersion().getValueAsLong());
 
-                    connection.updateWithParams(INSERT_UOW, params2, res5 -> {
+                    sqlConn.updateWithParams(INSERT_UOW, params2, sqlUpdate -> {
 
-                      if (res5.succeeded()) {
+                      if (sqlUpdate.succeeded()) {
 
-                        val result = res5.result();
+                        val result = sqlUpdate.result();
                         System.out.println("Updated no. of rows: " + result.getUpdated());
                         System.out.println("Generated keys: " + result.getKeys());
 
-                        connection.commit(res6 -> {
+                        sqlConn.commit(sqlCommit -> {
 
-                          if (res6.succeeded()) {
+                          if (sqlCommit.succeeded()) {
                             uowSequence.set(result.getKeys().getLong(0));
                           } else {
-                            logger.error("Error 6", res6.cause());
+                            logger.error("Error 6", sqlCommit.cause());
                           }
 
                         });
@@ -222,7 +234,7 @@ public class VertxEventRepository implements EventRepository {
                   }
                 });
               }
-            });
+            }).close();
           } else {
             // Failed!
           }

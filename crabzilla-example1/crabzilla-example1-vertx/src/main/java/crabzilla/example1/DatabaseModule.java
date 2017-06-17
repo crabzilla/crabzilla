@@ -18,26 +18,6 @@ public class DatabaseModule extends PrivateModule {
 
   }
 
-  @Provides
-  @Singleton
-  @Exposed
-  public HikariDataSource hikariDataSource(HikariConfig config) {
-    return new HikariDataSource(config);
-  }
-
-  @Provides
-  @Singleton
-  @Exposed
-  DBI cfg(DataSource ds, @Named("database.query.timeout.ms") int dbQueryTimeoutMs) {
-    return new DBI(ds);
-  }
-
-  @Provides
-  @Singleton
-  @Exposed
-  public DataSource dataSource(HikariDataSource dataSource) {
-    return dataSource;
-  }
 
   @Provides
   @Singleton
@@ -61,6 +41,27 @@ public class DatabaseModule extends PrivateModule {
     // config.setTransactionIsolation("TRANSACTION_REPEATABLE_READ");
     config.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
     return config;
+  }
+
+  @Provides
+  @Singleton
+  @Exposed
+  public HikariDataSource hikariDataSource(HikariConfig config) {
+    return new HikariDataSource(config);
+  }
+
+  @Provides
+  @Singleton
+  @Exposed
+  DBI dbi(DataSource ds) {
+    return new DBI(ds);
+  }
+
+  @Provides
+  @Singleton
+  @Exposed
+  public DataSource dataSource(HikariDataSource dataSource) {
+    return dataSource;
   }
 
 }

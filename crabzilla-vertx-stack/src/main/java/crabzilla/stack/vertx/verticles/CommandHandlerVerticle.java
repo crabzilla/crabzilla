@@ -11,6 +11,7 @@ import crabzilla.stack.vertx.ShareableSnapshot;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.*;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.LocalMap;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -77,9 +77,8 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         val command = msg.body();
 
-        if (command==null) { // TODO optional commandId
-          future.complete(VALIDATION_ERROR(UUID.randomUUID(),
-                  singletonList("Command cannot be null. Check if JSON payload is valid.")));
+        if (command==null) {
+          future.complete(VALIDATION_ERROR(singletonList("Command cannot be null. Check if JSON payload is valid.")));
           return;
         }
 
@@ -110,6 +109,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
     return future -> {
 
+      // TODO this call should be a Future ?
       val snapshotDataMsg = snapshotReaderFn.apply(command.getTargetId().getStringValue());
 
       if (snapshotDataMsg.hasNewSnapshot()) {

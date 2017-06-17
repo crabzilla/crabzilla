@@ -5,6 +5,7 @@ import crabzilla.model.AggregateRoot;
 import crabzilla.stack.EventRepository;
 import crabzilla.stack.model.SnapshotFactory;
 import crabzilla.stack.model.SnapshotMessage;
+import io.vertx.core.Future;
 import io.vertx.core.shareddata.LocalMap;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;

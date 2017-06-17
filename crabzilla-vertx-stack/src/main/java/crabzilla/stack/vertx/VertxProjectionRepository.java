@@ -18,13 +18,11 @@ import java.util.List;
 @Slf4j
 public class VertxProjectionRepository implements ProjectionRepository {
 
-  private final String aggregateRootName;
   private final JDBCClient client;
 
   private final TypeReference<List<Event>> eventsListTpe =  new TypeReference<List<Event>>() {};
 
-  public VertxProjectionRepository(@NonNull String aggregateRootName, @NonNull JDBCClient client) {
-    this.aggregateRootName = aggregateRootName;
+  public VertxProjectionRepository(@NonNull JDBCClient client) {
     this.client = client;
   }
 
@@ -38,11 +36,14 @@ public class VertxProjectionRepository implements ProjectionRepository {
     val result = new ArrayList<ProjectionData>();
     val params = new JsonArray().add(sinceUowSequence);
 
-    client.getConnection(res -> {
-      if (res.succeeded()) {
-        val connection = res.result();
+    // TODO check
+    // https://github.com/vert-x3/vertx-examples/blob/master/jdbc-examples/src/main/java/io/vertx/example/jdbc/streaming/JDBCExample.java
+
+    client.getConnection(getSqlConn -> {
+      if (getSqlConn.succeeded()) {
+        val sqlConnection = getSqlConn.result();
         val sql = String.format(SELECT_SINCE_UOW_SEQ, maxResultSize);
-        connection.queryStreamWithParams(sql, params, stream -> {
+        sqlConnection.queryStreamWithParams(sql, params, stream -> {
           if (stream.succeeded()) {
             stream.result().handler(row -> {
               // uow_id, uow_seq_number, ar_id, uow_events
@@ -52,7 +53,13 @@ public class VertxProjectionRepository implements ProjectionRepository {
               result.add(projectionData);
             });
           }
-        });
+        }).setAutoCommit(false, setCommit -> {
+          if (setCommit.succeeded()) {
+            // OK!
+          } else {
+            // Failed!
+          }
+        }).close();
       } else {
         log.error("Decide what to do"); // TODO
         // Failed to get connection - deal with it
