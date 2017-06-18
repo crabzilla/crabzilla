@@ -64,7 +64,7 @@ public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVertic
           if (response.succeeded()) {
             log.info("success commands handler: {}", response);
             val result = (CommandExecution) response.result().body();
-            if (result.getResult().equals(CommandExecution.RESULT.SUCCESS)) {
+            if (CommandExecution.RESULT.SUCCESS.equals(result.getResult())) {
               val headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence().get().toString());
               val optionsUow = new DeliveryOptions().setCodecName("UnitOfWork").setHeaders(headers);
               vertx.<String>eventBus().send(eventsHandlerId("example1"), result.getUnitOfWork().get(), optionsUow, resp -> {

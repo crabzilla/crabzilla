@@ -8,13 +8,10 @@ import crabzilla.model.Event;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.ext.sql.TransactionIsolation;
 import lombok.NonNull;
 import lombok.val;
 import org.slf4j.Logger;
@@ -27,6 +24,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+
+import static crabzilla.stack.vertx.VertxSqlHelper.*;
 
 public class VertxEventRepository implements EventRepository {
 
@@ -101,7 +100,7 @@ public class VertxEventRepository implements EventRepository {
             "   and version > ? " +
             " order by version";
 
-    val list = new ArrayList<SnapshotData>();
+    val list = new ArrayList<SnapshotData>(); // TODO Why using query stream and populating a List ??!!
     val params = new JsonArray().add(id).add(aggregateRootName).add(version.getValueAsLong());
 
     client.getConnection(getConn -> {
@@ -149,104 +148,74 @@ public class VertxEventRepository implements EventRepository {
   @Override
   public Long append(@NonNull final UnitOfWork unitOfWork) {
 
+    final AtomicReference<Optional<Long>> currentVersion =
+            new AtomicReference<>(Optional.empty());
+
     final AtomicReference<Long> uowSequence = new AtomicReference<>(0L);
 
     val SELECT_CURRENT_VERSION =
-            "select max(version) from aggregate_roots where ar_id = ? and ar_name = ? group by ar_id";
+            "select max(version) from units_of_work where ar_id = ? and ar_name = ? group by ar_id";
 
     val INSERT_UOW = "insert into units_of_work " +
-            "(uow_id, uow_events, cmd_id, cmd_data, ar_id, ar_name, version, inserted_on) " +
-            "values (:uow_id, :uow_events, :cmd_id, :cmd_data, :ar_id, :ar_name, :version, :inserted_on)";
+            "(uow_id, uow_events, cmd_id, cmd_data, ar_id, ar_name, version) " +
+            "values (?, ?, ?, ?, ?, ?, ?)";
 
-    client.getConnection(getConn -> {
 
-      if (getConn.succeeded()) {
+    client.getConnection(conn -> {
 
-        val sqlConn = getConn.result();
+      if (conn.failed()) {
+        System.err.println(conn.cause().getMessage());
+        return;
+      }
 
-        sqlConn.setAutoCommit(false, setCommit -> {
+      // start a transaction
+      startTx(conn.result(), beginTrans -> {
 
-          if (setCommit.succeeded()) {
+        // check current version
 
-            sqlConn.setTransactionIsolation(TransactionIsolation.READ_COMMITTED, setTxIsolation -> {
+        val params1 = new JsonArray()
+                .add(unitOfWork.getUnitOfWorkId().toString())
+                .add(aggregateRootName);
 
-              if (setTxIsolation.succeeded()) {
+        queryWithParams(conn.result(), SELECT_CURRENT_VERSION, params1, rs -> {
+          for (JsonObject row : rs.getRows()) {
+            currentVersion.set(Optional.of(row.getLong(VERSION)));
+          }
+        });
 
-                final AtomicReference<Optional<Long>> currentVersion =
-                        new AtomicReference<>(Optional.empty());
+        newVersionIsCurrentVersionPlus1(unitOfWork, currentVersion.get().orElse(0L));
 
-                val params1 = new JsonArray()
-                        .add(unitOfWork.getUnitOfWorkId().toString())
-                        .add(aggregateRootName);
+        //insert
 
-                sqlConn.queryWithParams(SELECT_CURRENT_VERSION, params1, sqlQuery -> {
+        val cmdAsJson = writeValueAsString(Json.mapper.writerFor(Command.class), unitOfWork.getCommand());
+        val eventsAsJson = writeValueAsString(Json.mapper.writerFor(eventsListTpe), unitOfWork.getEvents());
 
-                  if (sqlQuery.succeeded()) {
+        val params2 = new JsonArray()
+                .add(unitOfWork.getUnitOfWorkId().toString())
+                .add(eventsAsJson)
+                .add(unitOfWork.getCommand().getCommandId().toString())
+                .add(cmdAsJson)
+                .add(unitOfWork.targetId().getStringValue())
+                .add(aggregateRootName)
+                .add(unitOfWork.getVersion().getValueAsLong());
 
-                    val rs = sqlQuery.result();
-                    val rows = rs.getRows();
+        updateWithParams(conn.result(), INSERT_UOW, params2, updateResult -> {
+          uowSequence.set(updateResult.getKeys().getLong(0));
+        });
 
-                    for (JsonObject row : rows) {
-                      currentVersion.set(Optional.of(row.getLong(VERSION)));
-                    }
+        // commit data
+        commitTx(conn.result(), commitTrans -> {
 
-                    newVersionIsCurrentVersionPlus1(unitOfWork, currentVersion.get().orElse(0L));
-
-                    val cmdAsJson = writeValueAsString(Json.mapper.writerFor(Command.class), unitOfWork.getCommand());
-                    val eventsAsJson = writeValueAsString(Json.mapper.writerFor(eventsListTpe), unitOfWork.getEvents());
-
-                    val params2 = new JsonArray()
-                            .add(unitOfWork.getUnitOfWorkId().toString())
-                            .add(eventsAsJson)
-                            .add(unitOfWork.getCommand().getCommandId().toString())
-                            .add(cmdAsJson)
-                            .add(unitOfWork.targetId().getStringValue())
-                            .add(aggregateRootName)
-                            .add(unitOfWork.getVersion().getValueAsLong());
-
-                    sqlConn.updateWithParams(INSERT_UOW, params2, sqlUpdate -> {
-
-                      if (sqlUpdate.succeeded()) {
-
-                        val result = sqlUpdate.result();
-                        System.out.println("Updated no. of rows: " + result.getUpdated());
-                        System.out.println("Generated keys: " + result.getKeys());
-
-                        sqlConn.commit(sqlCommit -> {
-
-                          if (sqlCommit.succeeded()) {
-                            uowSequence.set(result.getKeys().getLong(0));
-                          } else {
-                            logger.error("Error 6", sqlCommit.cause());
-                          }
-
-                        });
-
-                      } else {
-
-                        // Failed!
-
-                        throw new DbConcurrencyException(
-                                String.format("id = [%s], current_version = %d, new_version = %d",
-                                        unitOfWork.targetId().getStringValue(),
-                                        currentVersion.get().orElse(0L),
-                                        unitOfWork.getVersion().getValueAsLong()));
-                      }
-                    });
-                  }
-                });
-              } else {
-                logger.error("set isolation level error");
+            // and close the connection
+            conn.result().close(done -> {
+              if (done.failed()) {
+                throw new RuntimeException(done.cause());
               }
             });
-          } else {
-            logger.error("commit error");
-          }
-        }).close();
-      } else {
-        logger.error("Decide what to do"); // TODO
-        // Failed to get connection - deal with it
-      }
+          });
+
+      });
+
     });
 
     // TODO decide about to save scheduled commands here
@@ -259,13 +228,9 @@ public class VertxEventRepository implements EventRepository {
 
   }
 
-  Handler<AsyncResult<Void>> onSetCommit() {
-    return null;
-  }
-
-  private void newVersionIsCurrentVersionPlus1(UnitOfWork unitOfWork, Long currentVersion) throws DbConcurrencyException {
+  private void newVersionIsCurrentVersionPlus1(UnitOfWork unitOfWork, Long currentVersion) throws EventRepository.DbConcurrencyException {
     if ((currentVersion == null ? 0 : currentVersion) != unitOfWork.getVersion().getValueAsLong() - 1) {
-      throw new DbConcurrencyException(
+      throw new EventRepository.DbConcurrencyException(
               String.format("ar_id = [%s], current_version = %d, new_version = %d",
                       unitOfWork.targetId().getStringValue(),
                       currentVersion, unitOfWork.getVersion().getValueAsLong()));

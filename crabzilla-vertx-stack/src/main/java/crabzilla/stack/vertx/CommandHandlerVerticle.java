@@ -71,41 +71,37 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
     return (Message<Command> msg) -> {
 
-      vertx.executeBlocking((Future<CommandExecution> future) -> {
+      val command = msg.body();
 
-        val command = msg.body();
+      if (command==null) {
+        msg.reply(VALIDATION_ERROR(singletonList("Command cannot be null. Check if JSON payload is valid.")));
+        return;
+      }
 
-        if (command==null) {
-          future.complete(VALIDATION_ERROR(singletonList("Command cannot be null. Check if JSON payload is valid.")));
-          return;
+      log.info("received a command {}", command);
+
+      val constraints = validatorFn.apply(command);
+
+      if (!constraints.isEmpty()) {
+        msg.reply(VALIDATION_ERROR(command.getCommandId(), constraints));
+        return;
+      }
+
+      circuitBreaker.fallback(throwable -> {
+
+        if (throwable.getCause() instanceof EventRepository.DbConcurrencyException) {
+          log.error("DbConcurrencyException for command {} message {}" + command.getCommandId(), throwable.getMessage());
+          return CONCURRENCY_ERROR(command.getCommandId(), throwable.getMessage());
         }
 
-        log.info("received a command {}", command);
+        log.error("Fallback for command " + command.getCommandId(), throwable);
+        return FALLBACK(command.getCommandId());
 
-        val constraints = validatorFn.apply(command);
+      })
 
-        if (!constraints.isEmpty()) {
-          future.complete(VALIDATION_ERROR(command.getCommandId(), constraints));
-          return;
-        }
+      .execute(cmdHandler(command))
 
-        circuitBreaker.fallback(throwable -> {
-
-          if (throwable.getCause() instanceof EventRepository.DbConcurrencyException) {
-            log.error("DbConcurrencyException for command {} message {}" + command.getCommandId(), throwable.getMessage());
-            return CONCURRENCY_ERROR(command.getCommandId(), throwable.getMessage());
-          }
-
-          log.error("Fallback for command " + command.getCommandId(), throwable);
-          return FALLBACK(command.getCommandId());
-
-        })
-
-        .execute(cmdHandler(command))
-
-        .setHandler(resultHandler(msg));
-
-      }, false, resultHandler(msg));
+      .setHandler(resultHandler(msg));
 
     };
   }
@@ -114,7 +110,6 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
     return future -> {
 
-      // TODO this call should be a Future ?
       val snapshotDataMsg = snapshotReaderFn.apply(command.getTargetId().getStringValue());
 
       if (snapshotDataMsg.hasNewSnapshot()) {
