@@ -54,31 +54,33 @@ public class VertxEventRepository implements EventRepository {
     val params = new JsonArray().add(uowId.toString());
 
     client.getConnection(getConn -> {
-      if (getConn.succeeded()) {
-        val sqlConn = getConn.result();
-        sqlConn.queryWithParams(SELECT_UOW_BY_ID, params, res2 -> {
-          if (res2.succeeded()) {
-            val rs = res2.result();
-            val rows = rs.getRows();
-            for (JsonObject row : rows) {
-              val command = Json.decodeValue(row.getString(CMD_DATA), Command.class);
-              final List<Event> events = readEvents(row.getString(UOW_EVENTS));
-              val uow = new UnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
-                      new Version(row.getLong(VERSION)), events);
-              result.set(Optional.of(uow));
-            }
-          }
-        }).setAutoCommit(false, setCommit -> {
-          if (setCommit.succeeded()) {
-            logger.info("commit success");
-          } else {
-            logger.error("commit error");
-          }
-        }).close();
-      } else {
-        logger.error("Decide what to do"); // TODO
-        // Failed to get connection - deal with it
+
+      if (getConn.failed()) {
+        throw new RuntimeException(getConn.cause());
       }
+
+      val sqlConn = getConn.result();
+
+      sqlConn.queryWithParams(SELECT_UOW_BY_ID, params, res2 -> {
+        if (res2.succeeded()) {
+          val rs = res2.result();
+          val rows = rs.getRows();
+          for (JsonObject row : rows) {
+            val command = Json.decodeValue(row.getString(CMD_DATA), Command.class);
+            final List<Event> events = readEvents(row.getString(UOW_EVENTS));
+            val uow = new UnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
+                    new Version(row.getLong(VERSION)), events);
+            result.set(Optional.of(uow));
+          }
+        }
+      });
+
+      sqlConn.close(done -> {
+        if (done.failed()) {
+          throw new RuntimeException(done.cause());
+        }
+      });
+
     });
 
     return result.get();
@@ -100,31 +102,33 @@ public class VertxEventRepository implements EventRepository {
             "   and version > ? " +
             " order by version";
 
-    val list = new ArrayList<SnapshotData>(); // TODO Why using query stream and populating a List ??!!
+    val list = new ArrayList<SnapshotData>(); // TODO Why using query stream but populating a List ??!!
     val params = new JsonArray().add(id).add(aggregateRootName).add(version.getValueAsLong());
 
     client.getConnection(getConn -> {
-      if (getConn.succeeded()) {
-        val sqlConn = getConn.result();
-        sqlConn.queryStreamWithParams(SELECT_AFTER_VERSION, params, stream -> {
-          if (stream.succeeded()) {
-            stream.result().handler(row -> {
-              val events = readEvents(row.getString(0));
-              val snapshotData = new SnapshotData(new Version(row.getLong(1)), events);
-              list.add(snapshotData);
-            });
-          }
-        }).setAutoCommit(false, setCommit -> {
-          if (setCommit.succeeded()) {
-            logger.info("commit success");
-          } else {
-            logger.error("commit error");
-          }
-        }).close();
-      } else {
-        logger.error("Decide what to do"); // TODO
-        // Failed to get connection - deal with it
+
+      if (getConn.failed()) {
+        throw new RuntimeException(getConn.cause());
       }
+
+      val sqlConn = getConn.result();
+
+      sqlConn.queryStreamWithParams(SELECT_AFTER_VERSION, params, stream -> {
+        if (stream.succeeded()) {
+          stream.result().handler(row -> {
+            val events = readEvents(row.getString(0));
+            val snapshotData = new SnapshotData(new Version(row.getLong(1)), events);
+            list.add(snapshotData);
+          });
+        }
+      });
+
+      sqlConn.close(done -> {
+        if (done.failed()) {
+          throw new RuntimeException(done.cause());
+        }
+      });
+
     });
 
     logger.info("found {} units of work for id {} and version > {}",
@@ -164,11 +168,10 @@ public class VertxEventRepository implements EventRepository {
     client.getConnection(conn -> {
 
       if (conn.failed()) {
-        System.err.println(conn.cause().getMessage());
-        return;
+        throw new RuntimeException(conn.cause());
       }
 
-      // start a transaction
+      // start a transaction // TODO tx isolation level
       startTx(conn.result(), beginTrans -> {
 
         // check current version
@@ -183,7 +186,7 @@ public class VertxEventRepository implements EventRepository {
           }
         });
 
-        newVersionIsCurrentVersionPlus1(unitOfWork, currentVersion.get().orElse(0L));
+        assertNewVersionIsCurrentVersionPlus1(unitOfWork, currentVersion.get().orElse(0L));
 
         //insert
 
@@ -212,7 +215,7 @@ public class VertxEventRepository implements EventRepository {
                 throw new RuntimeException(done.cause());
               }
             });
-          });
+        });
 
       });
 
@@ -228,7 +231,7 @@ public class VertxEventRepository implements EventRepository {
 
   }
 
-  private void newVersionIsCurrentVersionPlus1(UnitOfWork unitOfWork, Long currentVersion) throws EventRepository.DbConcurrencyException {
+  private void assertNewVersionIsCurrentVersionPlus1(UnitOfWork unitOfWork, Long currentVersion) throws EventRepository.DbConcurrencyException {
     if ((currentVersion == null ? 0 : currentVersion) != unitOfWork.getVersion().getValueAsLong() - 1) {
       throw new EventRepository.DbConcurrencyException(
               String.format("ar_id = [%s], current_version = %d, new_version = %d",
