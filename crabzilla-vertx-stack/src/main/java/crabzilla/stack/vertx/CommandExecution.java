@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 @Value
 @Wither
@@ -21,6 +22,7 @@ public class CommandExecution implements Serializable {
   public enum RESULT {
     VALIDATION_ERROR,
     FALLBACK,
+    CONCURRENCY_ERROR,
     BUSINESS_ERROR,
     UNKNOWN_COMMAND,
     SUCCESS
@@ -42,7 +44,8 @@ public class CommandExecution implements Serializable {
   }
 
   public Optional<List<String>> getConstraints() {
-    return RESULT.VALIDATION_ERROR.equals(result) ? Optional.of(constraints) : Optional.empty();
+    return RESULT.VALIDATION_ERROR.equals(result) || RESULT.CONCURRENCY_ERROR.equals(result) ?
+            Optional.of(constraints) : Optional.empty();
   }
 
   public Optional<Long> getUowSequence() {
@@ -59,6 +62,10 @@ public class CommandExecution implements Serializable {
 
   public static CommandExecution VALIDATION_ERROR(@NonNull UUID commandId, @NonNull List<String> constraints) {
     return new CommandExecution(RESULT.VALIDATION_ERROR, commandId, constraints, 0L,null);
+  }
+
+  public static CommandExecution CONCURRENCY_ERROR(UUID commandId, String message) {
+    return new CommandExecution(RESULT.CONCURRENCY_ERROR, commandId, singletonList(message), 0L,null);
   }
 
   public static CommandExecution FALLBACK(@NonNull UUID commandId) {

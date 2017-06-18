@@ -81,7 +81,7 @@ public class EventsProjectionVerticle extends AbstractVerticle {
 
   }
 
-  Handler<AsyncResult<String>> resultHandler(Message<UnitOfWork> msg) {
+  Handler<AsyncResult<String>> resultHandler(final Message<UnitOfWork> msg) {
 
     return (AsyncResult<String> resultHandler) -> {
 

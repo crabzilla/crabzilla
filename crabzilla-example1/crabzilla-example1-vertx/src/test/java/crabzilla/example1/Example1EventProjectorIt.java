@@ -40,6 +40,7 @@ public class Example1EventProjectorIt {
   public void setup() {
 
     Guice.createInjector(new Example1Module(Vertx.vertx())).injectMembers(this);
+    DSL.using(jooq).transaction(ctx -> DSL.using(ctx).execute("DELETE FROM units_of_work"));
     DSL.using(jooq).transaction(ctx -> DSL.using(ctx).execute("DELETE FROM customer_summary"));
   }
 

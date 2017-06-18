@@ -8,6 +8,8 @@ import crabzilla.model.Event;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
 import crabzilla.stack.EventRepository;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -46,7 +48,7 @@ public class VertxEventRepository implements EventRepository {
   }
 
   @Override
-  public Optional<UnitOfWork> get(@NonNull UUID uowId) {
+  public Optional<UnitOfWork> get(@NonNull final UUID uowId) {
 
     val result = new AtomicReference<Optional<UnitOfWork>>(Optional.empty());
     val SELECT_UOW_BY_ID = "select * from units_of_work where uow_id =? ";
@@ -69,9 +71,9 @@ public class VertxEventRepository implements EventRepository {
           }
         }).setAutoCommit(false, setCommit -> {
           if (setCommit.succeeded()) {
-            // OK!
+            logger.info("commit success");
           } else {
-            // Failed!
+            logger.error("commit error");
           }
         }).close();
       } else {
@@ -113,11 +115,11 @@ public class VertxEventRepository implements EventRepository {
               list.add(snapshotData);
             });
           }
-        }).setAutoCommit(false, res2 -> {
-          if (res2.succeeded()) {
-            // OK!
+        }).setAutoCommit(false, setCommit -> {
+          if (setCommit.succeeded()) {
+            logger.info("commit success");
           } else {
-            // Failed!
+            logger.error("commit error");
           }
         }).close();
       } else {
@@ -166,7 +168,7 @@ public class VertxEventRepository implements EventRepository {
 
           if (setCommit.succeeded()) {
 
-            sqlConn.setTransactionIsolation(TransactionIsolation.SERIALIZABLE, setTxIsolation -> {
+            sqlConn.setTransactionIsolation(TransactionIsolation.READ_COMMITTED, setTxIsolation -> {
 
               if (setTxIsolation.succeeded()) {
 
@@ -233,12 +235,14 @@ public class VertxEventRepository implements EventRepository {
                     });
                   }
                 });
+              } else {
+                logger.error("set isolation level error");
               }
-            }).close();
+            });
           } else {
-            // Failed!
+            logger.error("commit error");
           }
-        });
+        }).close();
       } else {
         logger.error("Decide what to do"); // TODO
         // Failed to get connection - deal with it
@@ -253,6 +257,10 @@ public class VertxEventRepository implements EventRepository {
 
     return uowSequence.get();
 
+  }
+
+  Handler<AsyncResult<Void>> onSetCommit() {
+    return null;
   }
 
   private void newVersionIsCurrentVersionPlus1(UnitOfWork unitOfWork, Long currentVersion) throws DbConcurrencyException {

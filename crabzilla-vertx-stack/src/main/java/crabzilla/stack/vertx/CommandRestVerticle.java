@@ -64,18 +64,24 @@ public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVertic
           if (response.succeeded()) {
             log.info("success commands handler: {}", response);
             val result = (CommandExecution) response.result().body();
-            val headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence().get().toString());
-            val optionsUow = new DeliveryOptions().setCodecName("UnitOfWork").setHeaders(headers);
-            vertx.<String>eventBus().send(eventsHandlerId("example1"), result.getUnitOfWork().get(), optionsUow, resp -> {
-              if (resp.succeeded()) {
-                log.info("success events handler: {}", resp);
-              } else {
-                log.error("error cause: {}", resp.cause());
-                log.error("error message: {}", resp.cause().getMessage());
-              }
-            });
-            httpResp.end(response.result().body().toString());
+            if (result.getResult().equals(CommandExecution.RESULT.SUCCESS)) {
+              val headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence().get().toString());
+              val optionsUow = new DeliveryOptions().setCodecName("UnitOfWork").setHeaders(headers);
+              vertx.<String>eventBus().send(eventsHandlerId("example1"), result.getUnitOfWork().get(), optionsUow, resp -> {
+                if (resp.succeeded()) {
+                  log.info("success events handler: {}", resp);
+                } else {
+                  log.error("error cause: {}", resp.cause());
+                  log.error("error message: {}", resp.cause().getMessage());
+                }
+              });
+              httpResp.end(response.result().body().toString());
+            } else {
+              //  TODO inform more details
+              httpResp.setStatusCode(500).end(result.getConstraints().get().get(0));
+            }
           } else {
+            //  TODO inform more details
             httpResp.setStatusCode(500).end(response.cause().getMessage());
           }
         });

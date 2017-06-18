@@ -32,19 +32,4 @@ public class StringHelper {
 		return sb.toString().toLowerCase();
 	}
 
-  private static String snakeCaseToCamelCase(String start) {
-		StringBuffer sb = new StringBuffer();
-		for (String s : start.split("_")) {
-			sb.append(Character.toUpperCase(s.charAt(0)));
-			if (s.length() > 1) {
-				sb.append(s.substring(1, s.length()).toLowerCase());
-			}
-		}
-		return sb.toString().toLowerCase();
-	}
-
-	private static String camelizedCron(String cron) {
-		return cron.replace(' ', '+');
-	}
-
 }

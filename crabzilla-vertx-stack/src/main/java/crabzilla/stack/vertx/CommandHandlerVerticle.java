@@ -24,6 +24,7 @@ import java.util.function.Function;
 
 import static crabzilla.model.util.Eithers.getLeft;
 import static crabzilla.model.util.Eithers.getRight;
+import static crabzilla.stack.vertx.CommandExecution.*;
 import static crabzilla.stack.vertx.util.StringHelper.commandHandlerId;
 import static java.util.Collections.singletonList;
 
@@ -75,7 +76,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
         val command = msg.body();
 
         if (command==null) {
-          future.complete(CommandExecution.VALIDATION_ERROR(singletonList("Command cannot be null. Check if JSON payload is valid.")));
+          future.complete(VALIDATION_ERROR(singletonList("Command cannot be null. Check if JSON payload is valid.")));
           return;
         }
 
@@ -84,14 +85,21 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
         val constraints = validatorFn.apply(command);
 
         if (!constraints.isEmpty()) {
-          future.complete(CommandExecution.VALIDATION_ERROR(command.getCommandId(), constraints));
+          future.complete(VALIDATION_ERROR(command.getCommandId(), constraints));
           return;
         }
 
         circuitBreaker.fallback(throwable -> {
 
+          if (throwable.getCause() instanceof EventRepository.DbConcurrencyException) {
+            log.error("DbConcurrencyException for command {} message {}" + command.getCommandId(), throwable.getMessage());
+            return CONCURRENCY_ERROR(command.getCommandId(), throwable.getMessage());
+          }
+
           log.error("Fallback for command " + command.getCommandId(), throwable);
-          return CommandExecution.FALLBACK(command.getCommandId()); })
+          return FALLBACK(command.getCommandId());
+
+        })
 
         .execute(cmdHandler(command))
 
@@ -140,7 +148,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
   }
 
-  Handler<AsyncResult<CommandExecution>> resultHandler(Message<Command> msg) {
+  Handler<AsyncResult<CommandExecution>> resultHandler(final Message<Command> msg) {
 
     return (AsyncResult<CommandExecution> resultHandler) -> {
 

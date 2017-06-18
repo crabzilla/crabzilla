@@ -61,7 +61,7 @@ public class Example1ExtraLauncher {
         launcher.vertx.deployVerticle(launcher.projectionVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
 
         // a test
-        launcher.postNewCustomerJustForTest();
+     //   launcher.postNewCustomerJustForTest();
 
       } else {
         log.error("Failed: ", res.cause());

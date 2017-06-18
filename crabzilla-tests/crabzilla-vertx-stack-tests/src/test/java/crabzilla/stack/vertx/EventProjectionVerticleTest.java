@@ -20,7 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import java.util.UUID;
 
@@ -30,6 +29,7 @@ import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(VertxUnitRunner.class)
 public class EventProjectionVerticleTest {
@@ -43,7 +43,7 @@ public class EventProjectionVerticleTest {
   @Before
   public void setUp(TestContext context) {
 
-    MockitoAnnotations.initMocks(this);
+    initMocks(this);
 
     vertx = new VertxFactory().vertx();
     circuitBreaker = CircuitBreaker.create("cmd-handler-circuit-breaker", vertx,

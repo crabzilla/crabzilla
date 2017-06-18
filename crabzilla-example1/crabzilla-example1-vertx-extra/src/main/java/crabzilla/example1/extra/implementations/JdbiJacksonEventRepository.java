@@ -121,6 +121,7 @@ public class JdbiJacksonEventRepository implements EventRepository {
   public Long append(@NonNull final UnitOfWork unitOfWork) {
 
     val uowSequence = new AtomicReference<Long>(0L);
+    val concurrencyException =  new AtomicReference<DbConcurrencyException>();
 
     logger.info("appending uow to units_of_work with id {}", unitOfWork.targetId());
 
@@ -160,14 +161,18 @@ public class JdbiJacksonEventRepository implements EventRepository {
         return true;
       }
 
-      throw new DbConcurrencyException(
+      concurrencyException.set(new DbConcurrencyException(
               String.format("id = [%s], current_version = %d, new_version = %d",
                       unitOfWork.targetId().getStringValue(),
-                      currentVersion, unitOfWork.getVersion().getValueAsLong()));
+                      currentVersion, unitOfWork.getVersion().getValueAsLong())));
 
-      }
+      return false;
 
-    );
+    });
+
+    if (concurrencyException.get() !=  null) {
+      throw concurrencyException.get();
+    }
 
     return uowSequence.get();
 

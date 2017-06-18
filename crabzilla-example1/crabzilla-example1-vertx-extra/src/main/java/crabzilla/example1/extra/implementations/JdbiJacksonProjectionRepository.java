@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import crabzilla.model.Event;
 import crabzilla.model.ProjectionData;
-import crabzilla.stack.ProjectionRepository;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +16,10 @@ import org.skife.jdbi.v2.tweak.ResultSetMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.function.BiFunction;
 
 @Slf4j
-public class JdbiJacksonProjectionRepository implements ProjectionRepository {
+public class JdbiJacksonProjectionRepository implements BiFunction<Long, Integer, List<ProjectionData>> {
 
   static final String UOW_ID = "uow_id";
   static final String UOW_EVENTS = "uow_events";
@@ -37,7 +37,7 @@ public class JdbiJacksonProjectionRepository implements ProjectionRepository {
   }
 
  @Override
-  public List<ProjectionData> getAllSince(long sinceUowSequence, int maxResultSize) {
+  public List<ProjectionData> apply(Long sinceUowSequence, Integer maxResultSize) {
 
     log.info("will load a maximum of {} units unitOfWork work since sequence {}", maxResultSize, sinceUowSequence);
 

@@ -93,8 +93,15 @@ public class CaffeineCommandHandlerVerticle<A extends AggregateRoot> extends Abs
 
         circuitBreaker.fallback(throwable -> {
 
+          if (throwable.getCause() instanceof EventRepository.DbConcurrencyException) {
+            log.error("DbConcurrencyException for command {} message {}" + command.getCommandId(), throwable.getMessage());
+            return CONCURRENCY_ERROR(command.getCommandId(), throwable.getMessage());
+          }
+
           log.error("Fallback for command " + command.getCommandId(), throwable);
-          return FALLBACK(command.getCommandId()); })
+          return FALLBACK(command.getCommandId());
+
+        })
 
         .execute(cmdHandler(command))
 

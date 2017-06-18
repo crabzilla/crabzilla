@@ -8,6 +8,7 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.zaxxer.hikari.HikariDataSource;
 import crabzilla.example1.aggregates.CustomerModule;
 import crabzilla.example1.services.SampleService;
 import crabzilla.example1.services.SampleServiceImpl;
@@ -35,7 +36,6 @@ import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.DefaultTransactionProvider;
 import org.nustaq.serialization.FSTConfiguration;
 
-import javax.sql.DataSource;
 import java.util.Properties;
 
 class Example1Module extends AbstractModule {
@@ -115,7 +115,7 @@ class Example1Module extends AbstractModule {
 
   @Provides
   @Singleton
-  JDBCClient jdbcClient(Vertx vertx, DataSource dataSource) {
+  JDBCClient jdbcClient(Vertx vertx, HikariDataSource dataSource) {
     return JDBCClient.create(vertx, dataSource);
   }
 
@@ -149,7 +149,7 @@ class Example1Module extends AbstractModule {
 
   @Provides
   @Singleton
-  Configuration cfg(DataSource ds) {
+  Configuration cfg(HikariDataSource ds) {
     DefaultConfiguration cfg = new DefaultConfiguration();
 //    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 //    cfg.set(() -> new QuerySniper(executor, dbQueryTimeoutMs));

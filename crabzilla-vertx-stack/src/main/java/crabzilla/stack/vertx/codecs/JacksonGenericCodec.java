@@ -46,7 +46,6 @@ public class JacksonGenericCodec<T> implements MessageCodec<T, T> {
     try {
       readObj = mapper.readValue(content, clazz);
     } catch (Exception e) {
-      e.printStackTrace();
       throw new RuntimeException("When decodingFromWire", e);
     }
 

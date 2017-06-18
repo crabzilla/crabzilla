@@ -3,7 +3,6 @@ package crabzilla.stack.vertx;
 import com.fasterxml.jackson.core.type.TypeReference;
 import crabzilla.model.Event;
 import crabzilla.model.ProjectionData;
-import crabzilla.stack.ProjectionRepository;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.jdbc.JDBCClient;
@@ -14,9 +13,10 @@ import lombok.val;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 
 @Slf4j
-public class VertxProjectionRepository implements ProjectionRepository {
+public class VertxProjectionRepository implements BiFunction<Long, Integer, List<ProjectionData>> {
 
   private final JDBCClient client;
 
@@ -27,7 +27,7 @@ public class VertxProjectionRepository implements ProjectionRepository {
   }
 
   @Override
-  public List<ProjectionData> getAllSince(long sinceUowSequence, int maxResultSize) {
+  public List<ProjectionData> apply(Long sinceUowSequence, Integer maxResultSize) {
 
     log.info("will load a maximum of {} units unitOfWork work since sequence {}", maxResultSize, sinceUowSequence);
 
@@ -71,7 +71,7 @@ public class VertxProjectionRepository implements ProjectionRepository {
 
   }
 
-  List<Event> readEvents(String eventsAsJson) {
+  private List<Event> readEvents(String eventsAsJson) {
     try {
       return Json.mapper.readerFor(eventsListTpe).readValue(eventsAsJson);
     } catch (IOException e) {

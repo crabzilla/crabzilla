@@ -5,14 +5,16 @@ import crabzilla.example1.Example1EventProjector;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.extra.implementations.JdbiJacksonEventRepository;
 import crabzilla.example1.extra.implementations.JdbiJacksonProjectionRepository;
+import crabzilla.model.ProjectionData;
 import crabzilla.stack.EventProjector;
 import crabzilla.stack.EventRepository;
-import crabzilla.stack.ProjectionRepository;
 import crabzilla.stack.StackComponentsFactory;
 import org.jooq.Configuration;
 import org.skife.jdbi.v2.DBI;
 
 import javax.inject.Inject;
+import java.util.List;
+import java.util.function.BiFunction;
 
 public class Example1ExtraComponentsFactory implements StackComponentsFactory {
 
@@ -30,7 +32,6 @@ public class Example1ExtraComponentsFactory implements StackComponentsFactory {
   @Override
   public EventRepository eventRepository() {
     return new JdbiJacksonEventRepository(Customer.class.getSimpleName(), jackson, jdbi);
-
   }
 
   @Override
@@ -39,7 +40,7 @@ public class Example1ExtraComponentsFactory implements StackComponentsFactory {
   }
 ;
   @Override
-  public ProjectionRepository projectionRepository() {
+  public BiFunction<Long, Integer, List<ProjectionData>> projectionRepository() {
     return new JdbiJacksonProjectionRepository(jackson, jdbi);
   }
 
