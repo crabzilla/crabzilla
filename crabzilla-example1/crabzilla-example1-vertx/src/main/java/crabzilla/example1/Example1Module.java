@@ -62,7 +62,7 @@ class Example1Module extends AbstractModule {
   private void setCfgProps() {
 
     final Config config = ConfigFactory.load();
-    final Properties props =  new Properties();
+    final Properties props = new Properties();
 
     config.entrySet().forEach(e -> {
       final String key = e.getKey().replace("crabzilla-stack1.", "");
