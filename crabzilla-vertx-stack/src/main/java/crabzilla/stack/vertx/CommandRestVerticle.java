@@ -67,14 +67,7 @@ public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVertic
             if (CommandExecution.RESULT.SUCCESS.equals(result.getResult())) {
               val headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence().get().toString());
               val optionsUow = new DeliveryOptions().setCodecName("UnitOfWork").setHeaders(headers);
-              vertx.<String>eventBus().send(eventsHandlerId("example1"), result.getUnitOfWork().get(), optionsUow, resp -> {
-                if (resp.succeeded()) {
-                  log.info("success events handler: {}", resp);
-                } else {
-                  log.error("error cause: {}", resp.cause());
-                  log.error("error message: {}", resp.cause().getMessage());
-                }
-              });
+              vertx.<String>eventBus().publish(eventsHandlerId("example1"), result.getUnitOfWork().get(), optionsUow);
               httpResp.end(response.result().body().toString());
             } else {
               //  TODO inform more details
