@@ -2,7 +2,21 @@
 
 Yet another Event Sourcing experiment
 
-Currently it's just some code with poor test coverage but with an ambitious goal: to help you write your domain model with very little framework overhead. The approach is to using functions everywhere and ideally your domain model code will be very testable and side effect free. Then you will be able to deploy your domain model into a reactive engine built with Vertx. This engine provides verticles and components for the full CQRS / Events Sourcing lifecycle. Here are some of them:  
+## Status
+
+Currently it's just some code with poor test coverage but the "dirty explorations phase" is probably done. I think the future is more predictable: to write tests, documents, refactor a bit, etc 
+
+## Goal for version 1.0.0
+
+It has an ambitious goal: to help you write your domain model with very little framework overhead and smoothly deploy it on a state of art Java 8 reactive applications platform backed by a rock solid relational database of your choice.
+
+## How
+
+The approach is to use functions everywhere within your domain. Ideally your domain model code will be very testable and side effect free. Then you will be able to deploy your domain model into a reactive engine built with Vertx. This engine provides verticles and components for the full CQRS / Events Sourcing lifecycle. 
+
+# What
+
+Here are some of them:  
 
 1. A REST verticle to receive commands 
 
