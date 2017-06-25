@@ -14,7 +14,7 @@ It has an ambitious goal: to help you write your domain model with very little f
 
 The approach is to use functions everywhere within your domain. Ideally your domain model code will be very testable and side effect free. Then you will be able to deploy your domain model into a reactive engine built with Vertx. This engine provides verticles and components for the full CQRS / Events Sourcing lifecycle. 
 
-# What
+## What
 
 Here are some of them:  
 
