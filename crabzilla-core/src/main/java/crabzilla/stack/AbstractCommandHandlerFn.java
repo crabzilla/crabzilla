@@ -1,9 +1,6 @@
 package crabzilla.stack;
 
 import crabzilla.model.*;
-import crabzilla.model.util.Either;
-import crabzilla.model.util.Eithers;
-import crabzilla.model.util.MultiMethod;
 import lombok.NonNull;
 import lombok.val;
 

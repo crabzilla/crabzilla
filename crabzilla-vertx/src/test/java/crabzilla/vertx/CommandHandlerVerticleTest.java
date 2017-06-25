@@ -7,8 +7,6 @@ import crabzilla.example1.aggregates.customer.CustomerSupplierFn;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.*;
-import crabzilla.model.util.Either;
-import crabzilla.model.util.Eithers;
 import crabzilla.vertx.repositories.VertxEventRepository;
 import crabzilla.vertx.verticles.CommandHandlerVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;

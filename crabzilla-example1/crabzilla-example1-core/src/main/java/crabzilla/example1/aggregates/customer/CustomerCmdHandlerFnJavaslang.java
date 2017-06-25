@@ -5,8 +5,6 @@ import crabzilla.example1.aggregates.customer.commands.CreateActivateCustomerCmd
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.DeactivateCustomerCmd;
 import crabzilla.model.*;
-import crabzilla.model.util.Either;
-import crabzilla.model.util.Eithers;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 

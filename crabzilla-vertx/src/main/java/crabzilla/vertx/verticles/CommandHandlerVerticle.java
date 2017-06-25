@@ -2,7 +2,6 @@ package crabzilla.vertx.verticles;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import crabzilla.model.*;
-import crabzilla.model.util.Either;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.repositories.VertxEventRepository;
 import crabzilla.vertx.util.DbConcurrencyException;
