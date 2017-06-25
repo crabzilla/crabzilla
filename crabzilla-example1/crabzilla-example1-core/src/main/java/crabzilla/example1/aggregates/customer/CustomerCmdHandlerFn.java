@@ -4,7 +4,11 @@ import crabzilla.example1.aggregates.customer.commands.ActivateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateActivateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.DeactivateCustomerCmd;
-import crabzilla.model.*;
+import crabzilla.model.Event;
+import crabzilla.model.Snapshot;
+import crabzilla.model.StateTransitionsTracker;
+import crabzilla.model.UnitOfWork;
+import crabzilla.stack.AbstractCommandHandlerFn;
 import lombok.val;
 
 import javax.inject.Inject;

@@ -4,7 +4,7 @@ import com.google.inject.Guice;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
-import crabzilla.example1.extra.implementations.CaffeineCommandHandlerVerticle;
+import crabzilla.stack.vertx.CommandHandlerVerticle;
 import crabzilla.stack.vertx.CommandRestVerticle;
 import crabzilla.stack.vertx.EventsProjectionVerticle;
 import io.vertx.core.Vertx;
@@ -30,7 +30,7 @@ public class Example1ExtraLauncher {
   @Inject
   CommandRestVerticle<Customer> restVersicle;
   @Inject
-  CaffeineCommandHandlerVerticle<Customer> cmdVerticle;
+  CommandHandlerVerticle<Customer> cmdVerticle;
   @Inject
   EventsProjectionVerticle projectionVerticle;
 
