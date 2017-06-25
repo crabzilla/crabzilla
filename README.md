@@ -4,7 +4,7 @@ Yet another Event Sourcing experiment
 
 ## Status
 
-Currently it's just some code with poor test coverage but the "dirty explorations phase" is probably done. I think the future is more predictable: to write tests, documents, refactor a bit, etc 
+Currently it's just some code with poor test coverage but the "~~dirty~~ explorations phase" is probably done. I think the future is more predictable: to write tests, documents, refactor, etc 
 
 ## Goal for version 1.0.0
 
