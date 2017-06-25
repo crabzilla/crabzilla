@@ -18,8 +18,6 @@ import static javaslang.API.*;
 import static javaslang.Predicates.instanceOf;
 
 // consider an example with some real business logic (a CreditService, for example)
-// consider an example with a function per command using guice mapBinder to inject these functions here. for this,
-// command handler deve estar em um modulo depois de core e antes de vertx
 @Slf4j
 public class CustomerCmdHandlerFnJavaslang
         implements BiFunction<Command, Snapshot<Customer>, Either<Exception, Optional<UnitOfWork>>> {
