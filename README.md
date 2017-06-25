@@ -26,7 +26,7 @@ Here are some of them:
 
 4. An eventbus consumer to handle events projection to the read model database. Current example is using JOOQ.
 
-There are other components covering features like command scheduling to be developed. 
+Version 1.0.0 scope also has other components covering features for sagas (or process managers) and command scheduling. 
 
 ## Reactive
 
