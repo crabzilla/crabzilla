@@ -1,4 +1,4 @@
-package crabzilla.model.util;
+package crabzilla.model;
 
 import org.derive4j.Data;
 

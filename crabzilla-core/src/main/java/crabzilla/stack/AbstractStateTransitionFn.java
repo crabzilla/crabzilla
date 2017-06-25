@@ -2,7 +2,6 @@ package crabzilla.stack;
 
 import crabzilla.model.AggregateRoot;
 import crabzilla.model.Event;
-import crabzilla.model.util.MultiMethod;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.function.BiFunction;

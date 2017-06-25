@@ -1,7 +1,6 @@
 package crabzilla.stack;
 
 import crabzilla.model.Command;
-import crabzilla.model.util.MultiMethod;
 
 import java.util.List;
 import java.util.function.Function;

@@ -1,7 +1,6 @@
 package crabzilla.stack;
 
 import crabzilla.model.*;
-import crabzilla.model.util.Either;
 
 import java.util.List;
 import java.util.Optional;
