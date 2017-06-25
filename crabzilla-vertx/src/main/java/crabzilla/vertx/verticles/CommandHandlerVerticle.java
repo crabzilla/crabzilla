@@ -44,7 +44,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
                                 @NonNull final VertxEventRepository eventRepository,
                                 @NonNull final Cache<String, Snapshot<A>> cache,
                                 @NonNull final Vertx vertx,
-                                @NonNull @Named("cmd-handler") final CircuitBreaker circuitBreaker) {
+                                @NonNull @Named("cmd-handler") final CircuitBreaker circuitBreaker /* TODO map binder*/) {
     this.aggregateRootClass = aggregateRootClass;
     this.cmdHandler = cmdHandler;
     this.validatorFn = validatorFn;
