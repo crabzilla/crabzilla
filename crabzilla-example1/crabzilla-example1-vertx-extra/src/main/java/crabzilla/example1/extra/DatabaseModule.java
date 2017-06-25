@@ -5,7 +5,6 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.skife.jdbi.v2.DBI;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -47,13 +46,6 @@ class DatabaseModule extends PrivateModule {
   @Exposed
   public HikariDataSource hikariDataSource(HikariConfig config) {
     return new HikariDataSource(config);
-  }
-
-  @Provides
-  @Singleton
-  @Exposed
-  DBI dbi(HikariDataSource ds) {
-    return new DBI(ds);
   }
 
 }

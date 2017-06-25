@@ -3,7 +3,7 @@ package crabzilla.example1.aggregates.customer;
 import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.example1.aggregates.customer.events.CustomerDeactivated;
-import crabzilla.model.AbstractStateTransitionFn;
+import crabzilla.stack.AbstractStateTransitionFn;
 
 public class CustomerStateTransitionFn extends AbstractStateTransitionFn<Customer> {
 

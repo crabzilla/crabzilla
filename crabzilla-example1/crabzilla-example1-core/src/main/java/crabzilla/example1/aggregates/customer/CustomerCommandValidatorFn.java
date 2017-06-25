@@ -2,7 +2,7 @@ package crabzilla.example1.aggregates.customer;
 
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmdValidator;
-import crabzilla.model.AbstractCommandValidatorFn;
+import crabzilla.stack.AbstractCommandValidatorFn;
 import lombok.val;
 
 import java.util.List;

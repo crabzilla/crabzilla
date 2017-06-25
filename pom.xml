@@ -14,10 +14,13 @@
     </properties>
 
     <modules>
+
         <module>crabzilla-core</module>
-        <module>crabzilla-vertx-stack</module>
         <module>crabzilla-example1</module>
-        <module>crabzilla-tests</module>
+        <module>crabzilla-vertx</module>
+        <module>crabzilla-vertx-example1</module>
+
+        <!--<module>crabzilla-tests</module>-->
         <!--<module>crabzilla-camel-stack</module>-->
     </modules>
 

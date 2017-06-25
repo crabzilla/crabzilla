@@ -10,12 +10,7 @@
     </parent>
 
     <artifactId>crabzilla-core</artifactId>
-    <packaging>pom</packaging>
-
-    <modules>
-        <module>crabzilla-core-model</module>
-        <module>crabzilla-core-stack</module>
-    </modules>
+    <packaging>jar</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -33,8 +28,30 @@
         <dependency>
             <groupId>org.derive4j</groupId>
             <artifactId>derive4j</artifactId>
+            <version>0.12.2</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- test -->
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
 
     </dependencies>
 
