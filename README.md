@@ -30,5 +30,5 @@ Version 1.0.0 scope also has other components covering features for sagas (or pr
 
 ## Reactive
 
-All i/o (http, jdbc) is using reactive apis from Vertx. You don't need to use reactive apis within your domain code to, for example, to call external services. You can let your domain code very simple and testable / mockable but even so you will achieve a much better performance and resilience. 
+All command handling i/o (http, jdbc) is using reactive apis from Vertx. You don't need to use reactive apis within your domain code to, for example, to call external services. You can let your domain code very simple and testable / mockable but even so you will achieve a much better performance and resilience. The only pieces of your code that will have side effects are those related to the projection of domain events to your read model.
 
