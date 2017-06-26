@@ -6,12 +6,15 @@ import crabzilla.model.Snapshot;
 import crabzilla.stack.AggregateRootComponentsFactory;
 import crabzilla.vertx.verticles.CommandHandlerVerticle;
 import crabzilla.vertx.verticles.CommandRestVerticle;
+import io.vertx.circuitbreaker.CircuitBreaker;
 
 public interface VertxAggregateRootComponentsFactory<A extends AggregateRoot>
 
         extends AggregateRootComponentsFactory<A> {
 
   Cache<String, Snapshot<A>> cache() ;
+
+  CircuitBreaker circuitBreaker();
 
   CommandRestVerticle<A> restVerticle();
 

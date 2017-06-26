@@ -121,20 +121,6 @@ class Example1Module extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named("cmd-handler")
-  CircuitBreaker circuitBreaker() {
-    return CircuitBreaker.create("cmd-handler-circuit-breaker", vertx,
-            new CircuitBreakerOptions()
-                    .setMaxFailures(5) // number SUCCESS failure before opening the circuit
-                    .setTimeout(2000) // consider a failure if the operation does not succeed in time
-                    .setFallbackOnFailure(true) // do we call the fallback on failure
-                    .setResetTimeout(10000) // time spent in open state before attempting to re-try
-    );
-
-  }
-
-  @Provides
-  @Singleton
   @Named("events-projection")
   CircuitBreaker circuitBreakerEvents() {
     return CircuitBreaker.create("events-projection-circuit-breaker", vertx,

@@ -4,13 +4,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import crabzilla.example1.aggregates.customer.Customer;
-import crabzilla.vertx.repositories.VertxEventRepository;
 import crabzilla.vertx.verticles.CommandHandlerVerticle;
 import crabzilla.vertx.verticles.CommandRestVerticle;
-import io.vertx.circuitbreaker.CircuitBreaker;
-import io.vertx.core.Vertx;
-
-import javax.inject.Named;
 
 public class CustomerModule extends AbstractModule {
 
@@ -23,20 +18,16 @@ public class CustomerModule extends AbstractModule {
 
   @Provides
   @Singleton
-  CommandRestVerticle<Customer> restVerticle(Vertx vertx) {
-    return new CommandRestVerticle<>(vertx, Customer.class);
+  CommandRestVerticle<Customer> restVerticle(CustomerComponentsFactory componentsFactory) {
+
+    return componentsFactory.restVerticle();
   }
 
   @Provides
   @Singleton
-  CommandHandlerVerticle<Customer> handler(CustomerComponentsFactory componentsFactory,
-                                           Vertx vertx,
-                                           VertxEventRepository eventStore,
-                                           @Named("cmd-handler") CircuitBreaker circuitBreaker) {
+  CommandHandlerVerticle<Customer> handler(CustomerComponentsFactory componentsFactory) {
 
-    return new CommandHandlerVerticle<>(Customer.class, componentsFactory.cmdHandlerFn(),
-            componentsFactory.cmdValidatorFn(), componentsFactory.snaphotFactory(), eventStore,
-            componentsFactory.cache(), vertx, circuitBreaker);
+    return componentsFactory.cmdHandlerVerticle();
   }
 
 }

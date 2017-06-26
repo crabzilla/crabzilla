@@ -7,13 +7,16 @@ import java.util.regex.Pattern;
 
 public class StringHelper {
 
-	static final String COMMAND_HANDLER = "apply-cmd-";
-	static final String EVENTS_HANDLER = "%s-apply-events";
+	static final String COMMAND_HANDLER = "cmd-handler";
+	static final String EVENTS_HANDLER = "%s-events-handler";
 
 	public static String commandHandlerId(Class<? extends AggregateRoot> aggregateRootClass) {
 		return COMMAND_HANDLER + camelCaseToSnakeCase(aggregateRootClass.getSimpleName());
 	}
 
+	public static String circuitBreakerId(Class<? extends AggregateRoot> aggregateRootClass) {
+		return COMMAND_HANDLER + camelCaseToSnakeCase(aggregateRootClass.getSimpleName());
+	}
 	public static String eventsHandlerId(String bcName) {
 		return String.format(EVENTS_HANDLER, bcName);
 	}
