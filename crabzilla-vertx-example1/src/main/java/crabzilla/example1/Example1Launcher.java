@@ -4,9 +4,9 @@ import com.google.inject.Guice;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
-import crabzilla.vertx.verticles.CommandHandlerVerticle;
-import crabzilla.vertx.verticles.CommandRestVerticle;
 import crabzilla.vertx.verticles.EventsProjectionVerticle;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import javax.inject.Inject;
+import java.util.Map;
 import java.util.UUID;
 
 import static crabzilla.vertx.util.StringHelper.commandHandlerId;
@@ -28,9 +29,8 @@ import static java.lang.System.setProperty;
 public class Example1Launcher {
 
   @Inject
-  CommandRestVerticle<Customer> restVersicle;
-  @Inject
-  CommandHandlerVerticle<Customer> cmdVerticle;
+  Map<String, Verticle> aggregateRootVerticles;
+
   @Inject
   EventsProjectionVerticle projectionVerticle;
 
@@ -43,7 +43,7 @@ public class Example1Launcher {
     val clusterManager = new HazelcastClusterManager();
     val options = new VertxOptions().setClusterManager(clusterManager);
 
-    Vertx.clusteredVertx(options, res -> {
+    Vertx.clusteredVertx(options, (AsyncResult<Vertx> res) -> {
 
       if (res.succeeded()) {
 
@@ -56,8 +56,10 @@ public class Example1Launcher {
 
         Guice.createInjector(new Example1Module(vertx)).injectMembers(launcher);
 
-        launcher.vertx.deployVerticle(launcher.restVersicle, event -> log.info("Deployed ? {}", event.succeeded()));
-        launcher.vertx.deployVerticle(launcher.cmdVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
+        for (Map.Entry<String,Verticle> v: launcher.aggregateRootVerticles.entrySet()) {
+          launcher.vertx.deployVerticle(v.getValue(), event -> log.info("Deployed {} ? {}", v.getKey(), event.succeeded()));
+        }
+
         launcher.vertx.deployVerticle(launcher.projectionVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
 
         // a test

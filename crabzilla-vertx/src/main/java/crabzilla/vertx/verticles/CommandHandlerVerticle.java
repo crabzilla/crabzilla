@@ -12,8 +12,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
-import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -36,7 +34,6 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   final Vertx vertx;
   final CircuitBreaker circuitBreaker;
 
-  @Inject
   public CommandHandlerVerticle(@NonNull final Class<A> aggregateRootClass,
                                 @NonNull final BiFunction<Command, Snapshot<A>, Either<Exception, Optional<UnitOfWork>>> cmdHandler,
                                 @NonNull final Function<Command, List<String>> validatorFn,
@@ -44,7 +41,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
                                 @NonNull final VertxEventRepository eventRepository,
                                 @NonNull final Cache<String, Snapshot<A>> cache,
                                 @NonNull final Vertx vertx,
-                                @NonNull @Named("cmd-handler") final CircuitBreaker circuitBreaker /* TODO map binder*/) {
+                                @NonNull final CircuitBreaker circuitBreaker) {
     this.aggregateRootClass = aggregateRootClass;
     this.cmdHandler = cmdHandler;
     this.validatorFn = validatorFn;

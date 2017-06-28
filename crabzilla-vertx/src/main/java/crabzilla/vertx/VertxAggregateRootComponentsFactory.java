@@ -1,20 +1,13 @@
 package crabzilla.vertx;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import crabzilla.model.AggregateRoot;
-import crabzilla.model.Snapshot;
-import crabzilla.stack.AggregateRootComponentsFactory;
+import crabzilla.stack.AggregateRootFunctionsFactory;
 import crabzilla.vertx.verticles.CommandHandlerVerticle;
 import crabzilla.vertx.verticles.CommandRestVerticle;
-import io.vertx.circuitbreaker.CircuitBreaker;
 
 public interface VertxAggregateRootComponentsFactory<A extends AggregateRoot>
 
-        extends AggregateRootComponentsFactory<A> {
-
-  Cache<String, Snapshot<A>> cache() ;
-
-  CircuitBreaker circuitBreaker();
+        extends AggregateRootFunctionsFactory<A> {
 
   CommandRestVerticle<A> restVerticle();
 

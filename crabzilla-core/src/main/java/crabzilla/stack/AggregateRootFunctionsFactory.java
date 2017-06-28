@@ -8,7 +8,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public interface AggregateRootComponentsFactory<A extends AggregateRoot> {
+public interface AggregateRootFunctionsFactory<A extends AggregateRoot> {
 
   Supplier<A> supplierFn() ;
 
