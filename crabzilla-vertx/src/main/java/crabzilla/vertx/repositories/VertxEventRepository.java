@@ -175,46 +175,49 @@ public class VertxEventRepository  {
                 .add(unitOfWork.getUnitOfWorkId().toString())
                 .add(aggregateRootName);
 
-        final AtomicReference<Optional<Long>> currentVersion =
-                new AtomicReference<>(Optional.empty());
-
         queryWithParams(sqlConn, SELECT_CURRENT_VERSION, params1, rs -> {
+
+          Long currentVersion = 0L;
+
           for (JsonObject row : rs.getRows()) {
-            currentVersion.set(Optional.of(row.getLong(VERSION)));
+            currentVersion = row.getLong(VERSION);
           }
-        });
 
-        log.debug("Found version  {}", currentVersion);
+          log.debug("Found version  {}", currentVersion);
 
-        assertNewVersionIsCurrentVersionPlus1(unitOfWork, currentVersion.get().orElse(0L));
+          assertNewVersionIsCurrentVersionPlus1(unitOfWork, currentVersion);
 
-        //insert
+          //insert
 
-        val cmdAsJson = writeValueAsString(Json.mapper.writerFor(Command.class), unitOfWork.getCommand());
-        val eventsAsJson = writeValueAsString(Json.mapper.writerFor(eventsListTpe), unitOfWork.getEvents());
+          val cmdAsJson = writeValueAsString(Json.mapper.writerFor(Command.class), unitOfWork.getCommand());
+          val eventsAsJson = writeValueAsString(Json.mapper.writerFor(eventsListTpe), unitOfWork.getEvents());
 
-        val params2 = new JsonArray()
-                .add(unitOfWork.getUnitOfWorkId().toString())
-                .add(eventsAsJson)
-                .add(unitOfWork.getCommand().getCommandId().toString())
-                .add(cmdAsJson)
-                .add(unitOfWork.targetId().getStringValue())
-                .add(aggregateRootName)
-                .add(unitOfWork.getVersion().getValueAsLong());
+          val params2 = new JsonArray()
+                  .add(unitOfWork.getUnitOfWorkId().toString())
+                  .add(eventsAsJson)
+                  .add(unitOfWork.getCommand().getCommandId().toString())
+                  .add(cmdAsJson)
+                  .add(unitOfWork.targetId().getStringValue())
+                  .add(aggregateRootName)
+                  .add(unitOfWork.getVersion().getValueAsLong());
 
-        updateWithParams(sqlConn, INSERT_UOW, params2, updateResult -> {
-          handler.handle(updateResult.getKeys().getLong(0));
-        });
+          updateWithParams(sqlConn, INSERT_UOW, params2, updateResult -> {
 
-        // commit data
-        commitTx(sqlConn, commitTrans -> {
+            handler.handle(updateResult.getKeys().getLong(0));
 
-            // and close the connection
-            sqlConn.close(done -> {
-              if (done.failed()) {
-                throw new RuntimeException(done.cause());
-              }
+            // commit data
+            commitTx(sqlConn, commitTrans -> {
+
+              // and close the connection
+              sqlConn.close(done -> {
+                if (done.failed()) {
+                  throw new RuntimeException(done.cause());
+                }
+              });
             });
+
+          });
+
         });
 
       });
