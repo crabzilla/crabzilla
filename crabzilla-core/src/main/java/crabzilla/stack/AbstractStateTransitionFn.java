@@ -12,6 +12,8 @@ import java.util.function.BiFunction;
 @Slf4j
 public abstract class AbstractStateTransitionFn<A extends AggregateRoot> implements BiFunction<Event, A, A> {
 
+  static final String METHOD_NAME = "on";
+
   @SuppressWarnings(value = "unchecked")
   public A apply(Event event, A instance) {
 
@@ -20,7 +22,7 @@ public abstract class AbstractStateTransitionFn<A extends AggregateRoot> impleme
     final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
     try {
-      final MethodHandle methodHandle = lookup.bind(this, "on", methodType);
+      final MethodHandle methodHandle = lookup.bind(this, METHOD_NAME, methodType);
       return (A) methodHandle.invokeWithArguments(event, instance);
     } catch (Throwable e) {
       throw new RuntimeException("Errors should never happen when applying events", e);
