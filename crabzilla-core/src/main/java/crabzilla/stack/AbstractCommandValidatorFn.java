@@ -2,6 +2,9 @@ package crabzilla.stack;
 
 import crabzilla.model.Command;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.function.Function;
 
@@ -9,11 +12,7 @@ import static java.util.Collections.singletonList;
 
 public abstract class AbstractCommandValidatorFn implements Function<Command, List<String>> {
 
-  private final MultiMethod mm ;
-
-  public AbstractCommandValidatorFn() {
-    this.mm = MultiMethod.getMultiMethod(this.getClass(), "validate");
-  }
+  static final String METHOD_NAME = "validate";
 
   @SuppressWarnings(value = "unchecked")
   public List<String> apply(Command command) {
@@ -22,9 +21,14 @@ public abstract class AbstractCommandValidatorFn implements Function<Command, Li
       return singletonList("Command cannot be null.");
     }
 
+    final MethodType methodType =
+            MethodType.methodType(List.class, new Class<?>[] {command.getClass()});
+    final MethodHandles.Lookup lookup = MethodHandles.lookup();
+
     try {
-      return (List<String>) mm.invoke(this, command);
-    } catch (Exception e) {
+      final MethodHandle methodHandle = lookup.bind(this, METHOD_NAME, methodType);
+      return (List<String>) methodHandle.invokeWithArguments(command);
+    } catch (Throwable e) {
       return singletonList(e.getMessage());
     }
 

@@ -25,7 +25,7 @@ import static java.util.Collections.singletonList;
 public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVerticle {
 
   final Class<A> aggregateRootClass;
-  final BiFunction<Command, Snapshot<A>, Either<Exception, Optional<UnitOfWork>>> cmdHandler;
+  final BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandler;
   final Function<Command, List<String>> validatorFn;
   final Cache<String, Snapshot<A>> cache;
   final SnapshotFactory<A> snapshotFactory;
@@ -35,7 +35,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   final CircuitBreaker circuitBreaker;
 
   public CommandHandlerVerticle(@NonNull final Class<A> aggregateRootClass,
-                                @NonNull final BiFunction<Command, Snapshot<A>, Either<Exception, Optional<UnitOfWork>>> cmdHandler,
+                                @NonNull final BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandler,
                                 @NonNull final Function<Command, List<String>> validatorFn,
                                 @NonNull final SnapshotFactory<A> snapshotFactory,
                                 @NonNull final VertxEventRepository eventRepository,

@@ -56,7 +56,7 @@ public class CustomerFactory implements VertxAggregateRootComponentsFactory<Cust
   }
 
   @Override
-  public BiFunction<Command, Snapshot<Customer>, Either<Exception, Optional<UnitOfWork>>> cmdHandlerFn() {
+  public BiFunction<Command, Snapshot<Customer>, Either<Throwable, Optional<UnitOfWork>>> cmdHandlerFn() {
     return new CustomerCmdHandlerFn(stateTransitionFn(), depInjectionFn());
   }
 

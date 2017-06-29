@@ -18,7 +18,7 @@ public interface AggregateRootFunctionsFactory<A extends AggregateRoot> {
 
   Function<Command, List<String>> cmdValidatorFn() ;
 
-  BiFunction<Command, Snapshot<A>, Either<Exception, Optional<UnitOfWork>>> cmdHandlerFn() ;
+  BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandlerFn() ;
 
   default SnapshotFactory<A> snaphotFactory() {
     return new SnapshotFactory<>(supplierFn(), depInjectionFn(), stateTransitionFn());

@@ -20,7 +20,7 @@ import static javaslang.Predicates.instanceOf;
 // consider an example with some real business logic (a CreditService, for example)
 @Slf4j
 public class CustomerCmdHandlerFnJavaslang
-        implements BiFunction<Command, Snapshot<Customer>, Either<Exception, Optional<UnitOfWork>>> {
+        implements BiFunction<Command, Snapshot<Customer>, Either<Throwable, Optional<UnitOfWork>>> {
 
   private final BiFunction<Event, Customer, Customer> stateTransitionFn;
   private final Function<Customer, Customer> dependencyInjectionFn;
@@ -33,7 +33,7 @@ public class CustomerCmdHandlerFnJavaslang
   }
 
   @Override
-  public Either<Exception, Optional<UnitOfWork>> apply(final Command cmd, final Snapshot<Customer> snapshot) {
+  public Either<Throwable, Optional<UnitOfWork>> apply(final Command cmd, final Snapshot<Customer> snapshot) {
 
     log.info("Will apply command {}", cmd);
 

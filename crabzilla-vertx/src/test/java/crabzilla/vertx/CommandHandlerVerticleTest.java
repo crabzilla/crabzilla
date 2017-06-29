@@ -56,7 +56,7 @@ public class CommandHandlerVerticleTest {
   @Mock
   Function<Command, List<String>> validatorFn;
   @Mock
-  BiFunction<Command, Snapshot<Customer>, Either<Exception, Optional<UnitOfWork>>> cmdHandlerFn;
+  BiFunction<Command, Snapshot<Customer>, Either<Throwable, Optional<UnitOfWork>>> cmdHandlerFn;
   @Mock
   VertxEventRepository eventRepository;
   @Mock
