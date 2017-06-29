@@ -13,6 +13,7 @@ import static java.util.Collections.singletonList;
 public abstract class AbstractCommandValidatorFn implements Function<Command, List<String>> {
 
   static final String METHOD_NAME = "validate";
+  final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
   @SuppressWarnings(value = "unchecked")
   public List<String> apply(Command command) {
@@ -23,7 +24,6 @@ public abstract class AbstractCommandValidatorFn implements Function<Command, Li
 
     final MethodType methodType =
             MethodType.methodType(List.class, new Class<?>[] {command.getClass()});
-    final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
     try {
       final MethodHandle methodHandle = lookup.bind(this, METHOD_NAME, methodType);

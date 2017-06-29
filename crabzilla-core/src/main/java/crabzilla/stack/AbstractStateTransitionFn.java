@@ -13,13 +13,13 @@ import java.util.function.BiFunction;
 public abstract class AbstractStateTransitionFn<A extends AggregateRoot> implements BiFunction<Event, A, A> {
 
   static final String METHOD_NAME = "on";
+  final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
   @SuppressWarnings(value = "unchecked")
   public A apply(Event event, A instance) {
 
     final MethodType methodType =
             MethodType.methodType(instance.getClass(), new Class<?>[] {event.getClass(), instance.getClass()});
-    final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
     try {
       final MethodHandle methodHandle = lookup.bind(this, METHOD_NAME, methodType);
