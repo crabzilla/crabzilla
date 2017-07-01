@@ -27,7 +27,6 @@ public class Customer implements AggregateRoot {
 
   List<Event> create(CustomerId id, String name) {
 
-//    validState(false, "an error, just because I want to force it");
     validState(this.id == null, "customer already created");
 
     return singletonList(new CustomerCreated(id, name));
