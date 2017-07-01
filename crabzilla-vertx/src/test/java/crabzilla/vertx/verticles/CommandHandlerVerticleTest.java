@@ -1,4 +1,4 @@
-package crabzilla.vertx;
+package crabzilla.vertx.verticles;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import crabzilla.example1.aggregates.customer.Customer;
@@ -7,8 +7,9 @@ import crabzilla.example1.aggregates.customer.CustomerSupplierFn;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.*;
+import crabzilla.vertx.CommandExecution;
+import crabzilla.vertx.VertxFactory;
 import crabzilla.vertx.repositories.VertxEventRepository;
-import crabzilla.vertx.verticles.CommandHandlerVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Handler;

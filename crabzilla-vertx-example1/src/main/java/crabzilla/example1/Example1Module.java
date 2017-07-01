@@ -1,6 +1,9 @@
 package crabzilla.example1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -65,7 +68,7 @@ class Example1Module extends AbstractModule {
     final Properties props = new Properties();
 
     config.entrySet().forEach(e -> {
-      final String key = e.getKey().replace("crabzilla-stack1.", "");
+      final String key = e.getKey().replace("example1.", "");
       final String value = e.getValue().render().replace("\"", "");
       props.put(key, value);
     });
@@ -154,7 +157,9 @@ class Example1Module extends AbstractModule {
   ObjectMapper mapper() {
     val mapper = Json.mapper;
     mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
-    mapper.findAndRegisterModules();
+    mapper.registerModule(new ParameterNamesModule())
+            .registerModule(new Jdk8Module())
+            .registerModule(new JavaTimeModule());
     return mapper;
   }
 

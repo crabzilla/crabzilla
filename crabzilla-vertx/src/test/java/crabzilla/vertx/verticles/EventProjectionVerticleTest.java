@@ -1,11 +1,13 @@
-package crabzilla.vertx;
+package crabzilla.vertx.verticles;
 
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
-import crabzilla.vertx.verticles.EventsProjectionVerticle;
+import crabzilla.vertx.EventProjector;
+import crabzilla.vertx.ProjectionData;
+import crabzilla.vertx.VertxFactory;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
