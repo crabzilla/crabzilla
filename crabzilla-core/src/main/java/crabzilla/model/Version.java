@@ -16,16 +16,18 @@ public class Version implements Serializable {
     this.valueAsLong = valueAsLong;
   }
 
+  public Version nextVersion() {
+    return new Version(valueAsLong + 1);
+  }
+
+  public static Version VERSION_ZERO = new Version(0);
+
   public static Version create(long version) {
     return new Version(version);
   }
 
   public static Version create(int version) {
     return new Version(version);
-  }
-
-  public Version nextVersion() {
-    return new Version(valueAsLong + 1);
   }
 
 }

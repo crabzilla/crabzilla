@@ -147,10 +147,10 @@ public class VertxEventRepository  {
       });
   }
 
-  public void append(@NonNull final UnitOfWork unitOfWork, Handler<Long> handler) {
+  public void append(@NonNull final UnitOfWork unitOfWork, Handler<Either<Throwable, Long>> handler) {
 
     val SELECT_CURRENT_VERSION =
-            "select max(version) from units_of_work where ar_id = ? and ar_name = ? group by ar_id";
+            "select max(version) as last_version from units_of_work where ar_id = ? and ar_name = ? ";
 
     val INSERT_UOW = "insert into units_of_work " +
             "(uow_id, uow_events, cmd_id, cmd_data, ar_id, ar_name, version) " +
@@ -171,22 +171,37 @@ public class VertxEventRepository  {
         // check current version
 
         val params1 = new JsonArray()
-                .add(unitOfWork.getUnitOfWorkId().toString())
+                .add(unitOfWork.targetId().getStringValue())
                 .add(aggregateRootName);
 
         queryWithParams(sqlConn, SELECT_CURRENT_VERSION, params1, rs -> {
 
-          Long currentVersion = 0L;
+          Long currentVersion = rs.getRows().get(0).getLong("last_version");
 
-          for (JsonObject row : rs.getRows()) {
-            currentVersion = row.getLong(VERSION);
+          currentVersion = currentVersion == null ? 0L : currentVersion;
+
+          log.info("Found version  {}", currentVersion);
+
+          if (currentVersion != unitOfWork.getVersion().getValueAsLong() - 1) {
+
+            val error = new DbConcurrencyException (
+                    String.format("ar_id = [%s], current_version = %d, new_version = %d",
+                            unitOfWork.targetId().getStringValue(),
+                            currentVersion, unitOfWork.getVersion().getValueAsLong())) ;
+
+            handler.handle(Eithers.left(error));
+
+            // and close the connection
+            sqlConn.close(done -> {
+              if (done.failed()) {
+                throw new RuntimeException(done.cause());
+              }
+            });
+
+            return ;
           }
 
-          log.debug("Found version  {}", currentVersion);
-
-          assertNewVersionIsCurrentVersionPlus1(unitOfWork, currentVersion);
-
-          //insert
+          // if version is OK, then insert
 
           val cmdAsJson = writeValueAsString(Json.mapper.writerFor(Command.class), unitOfWork.getCommand());
           val eventsAsJson = writeValueAsString(Json.mapper.writerFor(eventsListTpe), unitOfWork.getEvents());
@@ -202,7 +217,7 @@ public class VertxEventRepository  {
 
           updateWithParams(sqlConn, INSERT_UOW, params2, updateResult -> {
 
-            handler.handle(updateResult.getKeys().getLong(0));
+            handler.handle(Eithers.right(updateResult.getKeys().getLong(0)));
 
             // commit data
             commitTx(sqlConn, commitTrans -> {
@@ -228,16 +243,6 @@ public class VertxEventRepository  {
     ////            .filter(event -> event instanceof CommandSchedulingEvent) // TODO idempotency
     ////            .map(event -> (CommandSchedulingEvent) e)
     ////            .forEachOrdered(cs -> commandScheduler.schedule(commandId, cs));
-
-  }
-
-  private void assertNewVersionIsCurrentVersionPlus1(UnitOfWork unitOfWork, Long currentVersion) throws DbConcurrencyException {
-    if ((currentVersion == null ? 0 : currentVersion) != unitOfWork.getVersion().getValueAsLong() - 1) {
-      throw new DbConcurrencyException (
-              String.format("ar_id = [%s], current_version = %d, new_version = %d",
-                      unitOfWork.targetId().getStringValue(),
-                      currentVersion, unitOfWork.getVersion().getValueAsLong()));
-    }
 
   }
 

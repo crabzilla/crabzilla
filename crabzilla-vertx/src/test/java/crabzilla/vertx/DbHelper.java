@@ -1,6 +1,7 @@
 package crabzilla.vertx;
 
 import io.vertx.ext.jdbc.JDBCClient;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import java.io.IOException;
@@ -8,9 +9,11 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+@Slf4j
 public class DbHelper {
 
   public static void initDb(JDBCClient jdbcClient, String sql) {
+    log.info(sql);
     jdbcClient.getConnection(conn -> {
       if (conn.failed()) {
         throw new RuntimeException(conn.cause());

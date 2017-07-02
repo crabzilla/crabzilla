@@ -109,8 +109,8 @@ public class CommandHandlerVerticleTest {
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Handler.class));
 
-    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Handler<Long>>) (uow, handler) ->
-            handler.handle(1L)))
+    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Handler<Either<Throwable, Long>>>) (uow, handler) ->
+            handler.handle(Eithers.right(1L))))
             .when(eventRepository).append(eq(expectedUow), any(Handler.class));
 
     when(snapshotFactory.getEmptySnapshot()).thenReturn(initialSnapshot);

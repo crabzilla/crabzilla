@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import crabzilla.model.*;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.repositories.VertxEventRepository;
-import crabzilla.vertx.util.DbConcurrencyException;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.*;
 import io.vertx.core.eventbus.Message;
@@ -81,14 +80,8 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
       circuitBreaker.fallback(throwable -> {
 
-        log.error("fallback", throwable);
-
-        if (throwable.getCause() instanceof DbConcurrencyException) {
-          log.error("DbConcurrencyException for command {} message {}" + command.getCommandId(), throwable.getMessage());
-          return CONCURRENCY_ERROR(command.getCommandId(), throwable.getMessage());
-        }
-
         log.error("Fallback for command " + command.getCommandId(), throwable);
+
         return FALLBACK(command.getCommandId());
 
       })
@@ -152,9 +145,9 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
     return future2 ->
 
-      cmdHandler.apply(command, resultingSnapshot).match(exception -> {
+      cmdHandler.apply(command, resultingSnapshot).match(cmdHandlerError -> {
 
-        log.error("Business logic error for command " + command.getCommandId(), exception);
+        log.error("Business logic error for command " + command.getCommandId(), cmdHandlerError);
         future2.complete(BUSINESS_ERROR(command.getCommandId()));
         return null;
 
@@ -162,16 +155,25 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         if (unitOfWork.isPresent()) {
 
-          eventRepository.append(unitOfWork.get(), uowSequence -> {
-            val cmdHandleResp = SUCCESS(unitOfWork.get(), uowSequence);
-            future2.complete(cmdHandleResp);
-          });
+          eventRepository.append(unitOfWork.get(), appendResult -> appendResult.match(cmdAppendError -> {
 
-      } else {
+            log.error("Exception for command {} message {}" + command.getCommandId(), cmdAppendError.getMessage());
+            future2.complete(CONCURRENCY_ERROR(command.getCommandId(), cmdAppendError.getMessage()));
+            return null;
 
-          future2.complete(UNKNOWN_COMMAND(command.getCommandId()));
+            }, uowSequence -> {
 
-      }
+            future2.complete(SUCCESS(unitOfWork.get(), uowSequence));
+            return null;
+
+          }));
+
+        } else {
+
+            future2.complete(UNKNOWN_COMMAND(command.getCommandId()));
+
+        }
+
       return null;
 
     });
