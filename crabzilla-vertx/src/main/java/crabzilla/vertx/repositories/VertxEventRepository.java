@@ -165,7 +165,7 @@ public class VertxEventRepository  {
 
       val sqlConn = conn.result();
 
-      // start a transaction // TODO tx isolation level
+      // start a transaction 
       startTx(sqlConn, startTx -> {
 
         // check current version

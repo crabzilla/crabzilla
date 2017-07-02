@@ -21,10 +21,10 @@ import static java.util.Collections.singletonList;
 public class CommandExecution implements Serializable {
 
   public enum RESULT {
-    VALIDATION_ERROR,
     FALLBACK,
+    VALIDATION_ERROR,
+    HANDLING_ERROR,
     CONCURRENCY_ERROR,
-    BUSINESS_ERROR,
     UNKNOWN_COMMAND,
     SUCCESS
   }
@@ -73,8 +73,8 @@ public class CommandExecution implements Serializable {
     return new CommandExecution(FALLBACK, commandId, emptyList(), 0L, null);
   }
 
-  public static CommandExecution BUSINESS_ERROR(@NonNull UUID commandId) {
-    return new CommandExecution(BUSINESS_ERROR, commandId, emptyList(), 0L, null);
+  public static CommandExecution HANDLING_ERROR(@NonNull UUID commandId) {
+    return new CommandExecution(HANDLING_ERROR, commandId, emptyList(), 0L, null);
 
   }
 

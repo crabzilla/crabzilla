@@ -129,17 +129,17 @@ public class VertxEventRepositoryIT {
 
       repo.get(expectedUow1.getUnitOfWorkId(), (Optional<UnitOfWork> uow) -> {
 
-        System.out.println(uow);
+        log.debug("uow {}", uow);
 
         if (uow.isPresent()) {
           assertThat(uow.get()).isEqualTo(expectedUow1);
         } else {
-          throw new RuntimeException("not found");
+          fail("not found");
         }
 
         repo.selectAfterVersion(expectedUow1.targetId().getStringValue(), Version.VERSION_ZERO, data -> {
 
-          System.out.println(data);
+          log.debug("data {}", data);
           assertThat(data.getVersion()).isEqualTo(expectedUow1.getVersion());
           assertThat(data.getEvents()).isEqualTo(expectedUow1.getEvents());
 
@@ -170,7 +170,7 @@ public class VertxEventRepositoryIT {
 
       repo.get(expectedUow2.getUnitOfWorkId(), (Optional<UnitOfWork> uow) -> {
 
-        System.out.println(uow);
+        log.debug("uow {}", uow);
 
         if (uow.isPresent()) {
           assertThat(uow.get()).isEqualTo(expectedUow2);
@@ -180,7 +180,7 @@ public class VertxEventRepositoryIT {
 
         repo.selectAfterVersion(expectedUow2.targetId().getStringValue(), new Version(1), data -> {
 
-          System.out.println(data);
+          log.debug("data {}", data);
           assertThat(data.getVersion()).isEqualTo(expectedUow2.getVersion());
           assertThat(data.getEvents()).isEqualTo(expectedUow2.getEvents());
 

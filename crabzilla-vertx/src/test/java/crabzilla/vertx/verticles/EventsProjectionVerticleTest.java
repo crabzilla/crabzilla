@@ -33,7 +33,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(VertxUnitRunner.class)
-public class EventProjectionVerticleTest {
+public class EventsProjectionVerticleTest {
 
   Vertx vertx;
   CircuitBreaker circuitBreaker;

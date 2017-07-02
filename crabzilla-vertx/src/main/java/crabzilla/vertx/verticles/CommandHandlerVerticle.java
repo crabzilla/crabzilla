@@ -147,8 +147,8 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
       cmdHandler.apply(command, resultingSnapshot).match(cmdHandlerError -> {
 
-        log.error("Business logic error for command " + command.getCommandId(), cmdHandlerError);
-        future2.complete(BUSINESS_ERROR(command.getCommandId()));
+        log.error("Command handling error for command {} message {}", command.getCommandId(), cmdHandlerError.getMessage());
+        future2.complete(HANDLING_ERROR(command.getCommandId()));
         return null;
 
       }, (Function<Optional<UnitOfWork>, Void>) unitOfWork -> {
@@ -157,7 +157,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
           eventRepository.append(unitOfWork.get(), appendResult -> appendResult.match(cmdAppendError -> {
 
-            log.error("Exception for command {} message {}" + command.getCommandId(), cmdAppendError.getMessage());
+            log.error("Exception for command {} message {}", command.getCommandId(), cmdAppendError.getMessage());
             future2.complete(CONCURRENCY_ERROR(command.getCommandId(), cmdAppendError.getMessage()));
             return null;
 
