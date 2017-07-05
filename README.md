@@ -32,8 +32,11 @@ Version 1.0.0 scope also has other components covering features for sagas (or pr
 
 All command handling i/o (http, jdbc) is using reactive apis from Vertx. You don't need to use reactive apis within your domain code to, for example, to call external services. You can let your domain code very simple and testable / mockable but even so you will achieve a much better performance and resilience. The only pieces of your code that will have side effects are those related to the projection of domain events to your read model.
 
-## Getting started
+## References
 
 1. To know more about CQRS, please read [this](https://gist.github.com/kellabyte/1964094) 
 2. To know more about Event Sourcing, please read [Event Sourcing in practice](https://ookami86.github.io/event-sourcing-in-practice/#title.md)
-2. TODO -> explain trade offs for [these pratical problems](https://ookami86.github.io/event-sourcing-in-practice/#making-eventsourcing-work/01-issues-in-practice.md)
+
+## TODOs
+
+1. To explain trade offs for [these pratical problems](https://ookami86.github.io/event-sourcing-in-practice/#making-eventsourcing-work/01-issues-in-practice.md)
