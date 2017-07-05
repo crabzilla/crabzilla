@@ -36,4 +36,4 @@ All command handling i/o (http, jdbc) is using reactive apis from Vertx. You don
 
 1. To know more about CQRS, please read [this](https://gist.github.com/kellabyte/1964094) 
 2. To know more about Event Sourcing, please read [Event Sourcing in practice](https://ookami86.github.io/event-sourcing-in-practice/#title.md)
-2. TODO..
+2. TODO -> explain trade offs for [these pratical problems](https://ookami86.github.io/event-sourcing-in-practice/#making-eventsourcing-work/01-issues-in-practice.md)
