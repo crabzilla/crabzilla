@@ -39,4 +39,4 @@ All command handling i/o (http, jdbc) is using reactive apis from Vertx. You don
 
 ## TODOs
 
-1. To explain trade offs for [these pratical problems](https://ookami86.github.io/event-sourcing-in-practice/#making-eventsourcing-work/01-issues-in-practice.md)
+1. To explain trade offs for [these practical problems](https://ookami86.github.io/event-sourcing-in-practice/#making-eventsourcing-work/01-issues-in-practice.md)
