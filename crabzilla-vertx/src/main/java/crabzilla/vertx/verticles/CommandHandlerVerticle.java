@@ -3,7 +3,7 @@ package crabzilla.vertx.verticles;
 import com.github.benmanes.caffeine.cache.Cache;
 import crabzilla.model.*;
 import crabzilla.vertx.CommandExecution;
-import crabzilla.vertx.repositories.VertxEventRepository;
+import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.*;
 import io.vertx.core.eventbus.Message;
@@ -29,7 +29,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   final Cache<String, Snapshot<A>> cache;
   final SnapshotFactory<A> snapshotFactory;
 
-  final VertxEventRepository eventRepository;
+  final VertxUnitOfWorkRepository eventRepository;
   final Vertx vertx;
   final CircuitBreaker circuitBreaker;
 
@@ -37,7 +37,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
                                 @NonNull final BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandler,
                                 @NonNull final Function<Command, List<String>> validatorFn,
                                 @NonNull final SnapshotFactory<A> snapshotFactory,
-                                @NonNull final VertxEventRepository eventRepository,
+                                @NonNull final VertxUnitOfWorkRepository eventRepository,
                                 @NonNull final Cache<String, Snapshot<A>> cache,
                                 @NonNull final Vertx vertx,
                                 @NonNull final CircuitBreaker circuitBreaker) {

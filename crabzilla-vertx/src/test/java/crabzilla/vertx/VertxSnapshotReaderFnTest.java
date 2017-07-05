@@ -10,7 +10,7 @@
 //import crabzilla.model.Snapshot;
 //import crabzilla.model.SnapshotFactory;
 //import crabzilla.model.Version;
-//import crabzilla.vertx.repositories.VertxEventRepository;
+//import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
 //import lombok.val;
 //import org.junit.jupiter.api.BeforeEach;
 //import org.junit.jupiter.api.DisplayName;
@@ -37,7 +37,7 @@
 //  Cache<String, Snapshot<Customer>> cache;
 //
 //  @Mock
-//  VertxEventRepository eventRepository;
+//  VertxUnitOfWorkRepository eventRepository;
 //
 //  @BeforeEach
 //  public void init() throws Exception {

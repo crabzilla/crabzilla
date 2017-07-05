@@ -6,7 +6,7 @@ import crabzilla.example1.aggregates.customer.*;
 import crabzilla.example1.services.SampleService;
 import crabzilla.model.*;
 import crabzilla.vertx.VertxAggregateRootComponentsFactory;
-import crabzilla.vertx.repositories.VertxEventRepository;
+import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
 import crabzilla.vertx.verticles.CommandHandlerVerticle;
 import crabzilla.vertx.verticles.CommandRestVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
@@ -28,11 +28,11 @@ public class CustomerFactory implements VertxAggregateRootComponentsFactory<Cust
 
   private final SampleService service;
   private final Vertx vertx;
-  private final VertxEventRepository eventStore;
+  private final VertxUnitOfWorkRepository eventStore;
 
   @Inject
   public CustomerFactory(SampleService service, Vertx vertx,
-                         VertxEventRepository eventStore) {
+                         VertxUnitOfWorkRepository eventStore) {
     this.service = service;
     this.vertx = vertx;
     this.eventStore = eventStore;

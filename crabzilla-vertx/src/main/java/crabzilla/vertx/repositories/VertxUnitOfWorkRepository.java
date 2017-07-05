@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import static crabzilla.vertx.repositories.VertxSqlHelper.*;
 
 @Slf4j
-public class VertxEventRepository  {
+public class VertxUnitOfWorkRepository {
 
   private static final String UOW_ID = "uow_id";
   private static final String UOW_EVENTS = "uow_events";
@@ -36,7 +36,7 @@ public class VertxEventRepository  {
 
   private final TypeReference<List<Event>> eventsListTpe =  new TypeReference<List<Event>>() {};
 
-  public VertxEventRepository(@NonNull Class<? extends AggregateRoot> aggregateRootName, @NonNull JDBCClient client) {
+  public VertxUnitOfWorkRepository(@NonNull Class<? extends AggregateRoot> aggregateRootName, @NonNull JDBCClient client) {
     this.aggregateRootName = aggregateRootName.getSimpleName();
     this.client = client;
   }
@@ -168,7 +168,7 @@ public class VertxEventRepository  {
       // start a transaction 
       startTx(sqlConn, startTx -> {
 
-        // check current version
+        // check current version  // TODO also check if command was not already processed given the commandId
 
         val params1 = new JsonArray()
                 .add(unitOfWork.targetId().getStringValue())

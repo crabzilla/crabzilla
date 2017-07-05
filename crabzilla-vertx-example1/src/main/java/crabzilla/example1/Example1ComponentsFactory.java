@@ -4,7 +4,7 @@ import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.vertx.EventProjector;
 import crabzilla.vertx.ProjectionData;
 import crabzilla.vertx.VertxBoundedContextComponentsFactory;
-import crabzilla.vertx.repositories.VertxEventRepository;
+import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
 import crabzilla.vertx.repositories.VertxProjectionRepository;
 import io.vertx.ext.jdbc.JDBCClient;
 import org.jooq.Configuration;
@@ -25,8 +25,8 @@ class Example1ComponentsFactory implements VertxBoundedContextComponentsFactory 
   }
 
   @Override
-  public VertxEventRepository eventRepository() {
-    return new VertxEventRepository(Customer.class, jdbcClient);
+  public VertxUnitOfWorkRepository eventRepository() {
+    return new VertxUnitOfWorkRepository(Customer.class, jdbcClient);
 
   }
 

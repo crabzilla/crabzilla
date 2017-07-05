@@ -17,7 +17,7 @@ import static crabzilla.model.UnitOfWork.unitOfWork;
 import static javaslang.API.*;
 import static javaslang.Predicates.instanceOf;
 
-// consider an example with some real business logic (a CreditService, for example)
+// TODO consider an example with some real business logic (a CreditService, for example)
 @Slf4j
 public class CustomerCmdHandlerFnJavaslang
         implements BiFunction<Command, Snapshot<Customer>, Either<Throwable, Optional<UnitOfWork>>> {

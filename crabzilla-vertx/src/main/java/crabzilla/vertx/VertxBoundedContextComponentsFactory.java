@@ -1,13 +1,13 @@
 package crabzilla.vertx;
 
-import crabzilla.vertx.repositories.VertxEventRepository;
+import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
 
 import java.util.List;
 import java.util.function.BiFunction;
 
 public interface VertxBoundedContextComponentsFactory {
 
- VertxEventRepository eventRepository() ;
+ VertxUnitOfWorkRepository eventRepository() ;
 
  EventProjector eventsProjector() ;
 

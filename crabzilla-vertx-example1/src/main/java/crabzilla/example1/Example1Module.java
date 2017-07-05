@@ -22,7 +22,7 @@ import crabzilla.model.UnitOfWork;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.EventProjector;
 import crabzilla.vertx.codecs.JacksonGenericCodec;
-import crabzilla.vertx.repositories.VertxEventRepository;
+import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
@@ -78,7 +78,7 @@ class Example1Module extends AbstractModule {
 
   @Provides
   @Singleton
-  VertxEventRepository eventRepository(Example1ComponentsFactory f) {
+  VertxUnitOfWorkRepository eventRepository(Example1ComponentsFactory f) {
     return f.eventRepository();
   }
 

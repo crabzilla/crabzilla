@@ -9,7 +9,7 @@ import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.*;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.VertxFactory;
-import crabzilla.vertx.repositories.VertxEventRepository;
+import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
 import crabzilla.vertx.util.DbConcurrencyException;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
@@ -61,7 +61,7 @@ public class CommandHandlerVerticleTest {
   @Mock
   BiFunction<Command, Snapshot<Customer>, Either<Throwable, Optional<UnitOfWork>>> cmdHandlerFn;
   @Mock
-  VertxEventRepository eventRepository;
+  VertxUnitOfWorkRepository eventRepository;
   @Mock
   SnapshotFactory<Customer> snapshotFactory;
 

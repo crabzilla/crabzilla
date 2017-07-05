@@ -48,13 +48,13 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @Slf4j
-public class VertxEventRepositoryIT {
+public class VertxUnitOfWorkRepositoryIT {
 
   static Vertx vertx;
   static JDBCClient jdbcClient;
   static DBI dbi;
 
-  VertxEventRepository repo;
+  VertxUnitOfWorkRepository repo;
 
   final CustomerId customerId = new CustomerId("customer#1");
   final CreateCustomerCmd createCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
@@ -108,7 +108,7 @@ public class VertxEventRepositoryIT {
   @Before
   public void setup(TestContext context) throws IOException, URISyntaxException {
 
-    this.repo = new VertxEventRepository(Customer.class, jdbcClient);
+    this.repo = new VertxUnitOfWorkRepository(Customer.class, jdbcClient);
 
   }
 

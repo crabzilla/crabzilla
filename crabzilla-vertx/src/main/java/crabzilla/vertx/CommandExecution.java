@@ -26,7 +26,8 @@ public class CommandExecution implements Serializable {
     HANDLING_ERROR,
     CONCURRENCY_ERROR,
     UNKNOWN_COMMAND,
-    SUCCESS
+    SUCCESS,
+    COMMAND_ALREADY_PROCESSED // TODO
   }
 
   RESULT result;

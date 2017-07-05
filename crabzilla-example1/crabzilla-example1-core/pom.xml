@@ -12,10 +12,6 @@
     <artifactId>crabzilla-example1-core</artifactId>
     <packaging>jar</packaging>
 
-    <properties>
-        <kotlin.version>1.1.3</kotlin.version>
-    </properties>
-
     <dependencies>
 
         <!-- own -->
@@ -38,7 +34,6 @@
         </dependency>
 
         <!-- test -->
-
 
         <dependency>
             <groupId>org.junit.vintage</groupId>
@@ -64,49 +59,12 @@
             <scope>test</scope>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>org.jetbrains.kotlin</groupId>-->
-            <!--<artifactId>kotlin-stdlib-jre8</artifactId>-->
-            <!--<version>${kotlin.version}</version>-->
-            <!--<scope>test</scope>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.jetbrains.kotlin</groupId>-->
-            <!--<artifactId>kotlin-test</artifactId>-->
-            <!--<version>${kotlin.version}</version>-->
-            <!--<scope>test</scope>-->
-        <!--</dependency>-->
-
     </dependencies>
 
 
     <build>
         <testSourceDirectory>src/test</testSourceDirectory>
         <plugins>
-            <!--<plugin>-->
-                <!--<groupId>org.jetbrains.kotlin</groupId>-->
-                <!--<artifactId>kotlin-maven-plugin</artifactId>-->
-                <!--<version>${kotlin.version}</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>compile</id>-->
-                        <!--<phase>compile</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>compile</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                    <!--<execution>-->
-                        <!--<id>test-compile</id>-->
-                        <!--<phase>test-compile</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>test-compile</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-                <!--<configuration>-->
-                    <!--<jvmTarget>1.8</jvmTarget>-->
-                <!--</configuration>-->
-            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -138,6 +96,44 @@
                         <id>java-test-compile</id>
                         <phase>test-compile</phase>
                         <goals> <goal>testCompile</goal> </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.19</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.platform</groupId>
+                        <artifactId>junit-platform-surefire-provider</artifactId>
+                        <version>${junit.platform.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>${junit.jupiter.version}</version>
+                    </dependency>
+                </dependencies>
+                <!--<configuration>-->
+                    <!--<excludedGroups>crabzilla.vertx.IntegrationTest</excludedGroups>-->
+                <!--</configuration>-->
+            </plugin>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.19</version>
+                <configuration>
+                    <includes>
+                        <include>**/*.java</include>
+                    </includes>
+                    <!--<groups>crabzilla.vertx.IntegrationTest</groups>-->
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
