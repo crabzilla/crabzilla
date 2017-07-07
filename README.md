@@ -24,9 +24,18 @@ Ideally your domain model code will be built of immutable data or plain function
 
 ## How to run the example
 
-1. Build it running unit tests but skipping integration tests:
+1. Clone [crabzilla-dependencies](https://github.com/crabzilla/crabzilla-dependencies) and build it:
 
 ```bash
+git clone https://github.com/crabzilla/crabzilla-dependencies
+cd crabzilla-dependencies
+mvn clean install 
+```
+
+2. Clone Crabzilla and build it running unit tests but skipping integration tests:
+
+```bash
+git clone https://github.com/crabzilla/crabzilla
 cd crabzilla
 mvn clean install -DskipITs=true
 ```
