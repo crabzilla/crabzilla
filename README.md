@@ -14,26 +14,8 @@ It has an ambitious goal: to help you write your domain model with very little f
 
 The approach is to use functions [everywhere](crabzilla-core/src/main/java/crabzilla/stack/AggregateRootFunctionsFactory.java) within your domain. The [state transitions function](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerStateTransitionFn.java) and the [commands handler](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerCmdHandlerFn.java) are the most related to CQRS ES. There are [more](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerStateTransitionFnJavaslang.java) [examples](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerCmdHandlerFnJavaslang.java) of these same functions in [Vavr](http://www.vavr.io/). Ideally your domain model code will be immutable data or functions so it will be very testable, side effect free and with minimal dependencies. Then you will be able to deploy your domain model into a reactive engine built with Vertx. This engine provides verticles and components for the full CQRS / Events Sourcing lifecycle. 
 
-## What
 
-Here are some of them:  
-
-1. A REST verticle to receive commands 
-
-2. An eventbus consumer to handle commands. It will invoke your domain functions with business code. Except by the EventsProjector your domain code will be side effect free. If the services used by your aggregates are side effect free, all the side effects related to command handling will occurs within [VertxCommandHandlerVerticle](crabzilla-vertx/src/main/java/crabzilla/vertx/verticles/CommandHandlerVerticle.java). Isolating side effects is a goal of Functional Programming.   
-
-3. An event store implementation. The current implementation is based on a relational database. Others may be implemented in the future but right now the goal is to help you to develop and deploy your domain with a very simple (but robust) software stack. The current example is based on MYSQL using JSON columns. 
-
-4. An eventbus consumer to handle events projection to the read model database. Current example is using JOOQ.
-
-Version 1.0.0 scope also has other components covering features for sagas (or process managers) and command scheduling. 
-
-## Reactive
-
-All command handling i/o (http, jdbc) is using reactive apis from Vertx. You don't need to use reactive apis within your domain code to, for example, to call external services from your aggregates. You can let your domain code very simple and testable / mockable but even so you will achieve a much better performance and resilience. 
-
-## Getting started
-
+## How to run the example
 
 1. Build it running unit tests but skipping integration tests:
 
@@ -75,36 +57,4 @@ mvn verify -DskipUTs=true
 ```bash
 java -jar crabzilla-vertx-example1/target/crabzilla-vertx-example1-1.0-SNAPSHOT-fat.jar 
 ```
-
-## References
-
-1. To know more about CQRS, please read [this](https://gist.github.com/kellabyte/1964094) 
-2. To know more about Event Sourcing, please read [Event Sourcing in practice](https://ookami86.github.io/event-sourcing-in-practice/#title.md)
-
-## Trade offs 
-
-[Greg Young: Don't write a new CQRS ES framework!](https://www.youtube.com/watch?v=LDW0QWie21s)
-
-Since Crabzilla was not built to solve any specific business problem, let's check how it deal with [these practical problems](https://ookami86.github.io/event-sourcing-in-practice/#making-eventsourcing-work/01-issues-in-practice.md):
-
-1. [Problem: Confusing Event Sourcing and Command Sourcing](https://ookami86.github.io/event-sourcing-in-practice/#making-eventsourcing-work/02-confusing-event-sourcing-with-command-sourcing.md)
-
-Crabzilla is an Event Sourcing framework.
-
-2. [Problem: Side-effects](https://ookami86.github.io/event-sourcing-in-practice/#slide-38)
-
-Crabzilla approach is based on the first solution of this slide: "Separate side-effect and state change". This allows you to apply past events in order to build your aggregate root state (forming a snapshot) without triggering any side effect, even if the services used by your aggregate root have side effects. The [VertxCommandHandlerVerticle](crabzilla-vertx/src/main/java/crabzilla/vertx/verticles/CommandHandlerVerticle.java) is where all cache and database side effects occurs when a command is handled. The exception is when the services used by your aggregate root does have side effects. In this case **you** are responsible to manage idempotent processing or even doing rollbacks on side effects triggered by these services. For example, if you aggregate root uses 2 services with side effects but something goes wrong on the second call, what do you should do? You may have to retry the command. Remember: you don't have 2PC transactions as a silver bullet anymore.
-
-3. [Problem: Reporting & Queries](https://ookami86.github.io/event-sourcing-in-practice/#slide-42)
-
-Crabzilla has an example where a query model (or read model) is populated by an implementation of [EventsProjector](crabzilla-vertx-example1/src/main/java/crabzilla/example1/Example1EventProjector.java)
-
-4. [Problem: Evolving events](https://ookami86.github.io/event-sourcing-in-practice/#slide-51)
-
-Crabzilla approach is based on the third solution of the slide: Snapshotting. More specifically, before going into the database to scan for new events, Crabzilla will load the current [Snapshot](crabzilla-core/src/main/java/crabzilla/model/Snapshot.java) from a [Caffeine](https://github.com/ben-manes/caffeine) cache. And Caffeine lets you to plug the sync/async functions to retrieve / compute the Snapshot instance.
-
-5. [Problem: Concurrent writes](https://ookami86.github.io/event-sourcing-in-practice/#making-eventsourcing-work/18-concurrent-modifictations.md)
-
-[VertxUnitOfWorkRepository](crabzilla-vertx/src/main/java/crabzilla/vertx/repositories/VertxUnitOfWorkRepository.java) uses optimistic locking when appending [UnitOfWork](crabzilla-core/src/main/java/crabzilla/model/UnitOfWork.java) instances. A command handling may fail because of a concurrency error. If you need a retry, you or your client will need to retry manually, since Vertx CircuitBreaker does not have retries (probably to not block the eventloop). Again, if the services used by your aggregates are side effect free, replaying commands is safe but if they aren't, you will have to manage it.
-
 
