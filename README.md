@@ -12,7 +12,7 @@ It has an ambitious goal: to help you write your domain model with very little f
 
 ## How
 
-The approach is to use functions everywhere within your domain. Ideally your domain model code will be very testable and side effect free. Then you will be able to deploy your domain model into a reactive engine built with Vertx. This engine provides verticles and components for the full CQRS / Events Sourcing lifecycle. 
+The approach is to use functions [everywhere](crabzilla-core/src/main/java/crabzilla/stack/AggregateRootFunctionsFactory.java) within your domain. The [state transitions function](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerStateTransitionFn.java) and the [commands handler](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerCmdHandlerFn.java) are the most related to CQRS ES. Ideally your domain model code will be very testable and side effect free. Then you will be able to deploy your domain model into a reactive engine built with Vertx. This engine provides verticles and components for the full CQRS / Events Sourcing lifecycle. 
 
 ## What
 
@@ -42,27 +42,27 @@ cd crabzilla
 mvn clean install -DskipITs=true
 ```
 
-1. Starts a MySql instance. You can use docker-compose:
+2. Starts a MySql instance. You can use docker-compose:
 
 ```bash
 docker-compose build
 docker-compose up
 ```
 
-2. Create the database schema using [Flyway](https://flywaydb.org/):
+3. Create the database schema using [Flyway](https://flywaydb.org/):
 
 ```bash
 cd crabzilla-example1/crabzilla-example1-database
 mvn compile flyway:migrate
 ```
 
-3. Optionally, you may want to regenerate classes reflecting the database using [JOOQ](https://www.jooq.org/)
+4. Optionally, you may want to regenerate classes reflecting the database using [JOOQ](https://www.jooq.org/)
 
 ```bash
 mvn clean compile -P jooq
 ```
 
-4. Now you can run integration tests against database, skipping the unit tests:
+5. Now you can run integration tests against database, skipping the unit tests:
 
 ```bash
 # go back to crabzilla root
@@ -70,7 +70,7 @@ cd ../..
 mvn verify -DskipUTs=true 
 ```
 
-5. Now you finally can run the example:
+6. Now you finally can run the current [example](crabzilla-vertx-example1/src/main/java/crabzilla/example1/Example1Launcher.java):
 
 ```bash
 java -jar crabzilla-vertx-example1/target/crabzilla-vertx-example1-1.0-SNAPSHOT-fat.jar 
