@@ -101,7 +101,7 @@ Crabzilla has an example where a query model (or read model) is populated by an 
 
 4. [Problem: Evolving events](https://ookami86.github.io/event-sourcing-in-practice/#slide-51)
 
-Crabzilla approach is based on the third solution of the slide: Snapshotting. More specifically, before going into the database to scan for new events, Crabzilla will load the current [Snapshot](crabzilla-core/src/main/java/crabzilla/model/Snapshot.java) from a [Caffeine](https://github.com/ben-manes/caffeine) cache. You can load the Snapshot from a pre calculated table or from all raw events data.
+Crabzilla approach is based on the third solution of the slide: Snapshotting. More specifically, before going into the database to scan for new events, Crabzilla will load the current [Snapshot](crabzilla-core/src/main/java/crabzilla/model/Snapshot.java) from a [Caffeine](https://github.com/ben-manes/caffeine) cache. And Caffeine lets you to plug the sync/async functions to retrieve / compute the Snapshot instance.
 
 5. [Problem: Concurrent writes](https://ookami86.github.io/event-sourcing-in-practice/#making-eventsourcing-work/18-concurrent-modifictations.md)
 
