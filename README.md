@@ -43,7 +43,6 @@ mvn clean install -DskipITs=true
 2. Start a MySql instance. You can use docker-compose:
 
 ```bash
-docker-compose build
 docker-compose up
 ```
 
