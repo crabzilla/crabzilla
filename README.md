@@ -83,7 +83,7 @@ java -jar crabzilla-vertx-example1/target/crabzilla-vertx-example1-1.0-SNAPSHOT-
 
 ## Trade offs 
 
-[Greg Young: Don't write a new CQRS ES framework! This is not a framework: it's a reference application.](https://www.youtube.com/watch?v=LDW0QWie21s)
+[Greg Young: Don't write a new CQRS ES framework!](https://www.youtube.com/watch?v=LDW0QWie21s)
 
 Since Crabzilla was not built to solve any specific business problem, let's check how it deal with [these practical problems](https://ookami86.github.io/event-sourcing-in-practice/#making-eventsourcing-work/01-issues-in-practice.md):
 
