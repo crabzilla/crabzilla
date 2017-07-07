@@ -12,7 +12,7 @@ It has an ambitious goal: to help you write your domain model with very little f
 
 ## How
 
-The approach is to use functions [everywhere](crabzilla-core/src/main/java/crabzilla/stack/AggregateRootFunctionsFactory.java) within your domain. The [state transitions function](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerStateTransitionFn.java) and the [commands handler](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerCmdHandlerFn.java) are the most related to CQRS ES. Ideally your domain model code will be very testable and side effect free. Then you will be able to deploy your domain model into a reactive engine built with Vertx. This engine provides verticles and components for the full CQRS / Events Sourcing lifecycle. 
+The approach is to use functions [everywhere](crabzilla-core/src/main/java/crabzilla/stack/AggregateRootFunctionsFactory.java) within your domain. The [state transitions function](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerStateTransitionFn.java) and the [commands handler](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerCmdHandlerFn.java) are the most related to CQRS ES. There are [more](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerStateTransitionFnJavaslang.java) [examples](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerCmdHandlerFnJavaslang.java) of these same functions in [Vavr](http://www.vavr.io/). Ideally your domain model code will be very testable and side effect free. Then you will be able to deploy your domain model into a reactive engine built with Vertx. This engine provides verticles and components for the full CQRS / Events Sourcing lifecycle. 
 
 ## What
 
@@ -20,7 +20,7 @@ Here are some of them:
 
 1. A REST verticle to receive commands 
 
-2. An eventbus consumer to handle commands. It will invoke your domain function with business code. There are [samples](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerCmdHandlerFnJavaslang.java) using [Vavr](http://www.vavr.io/) pattern matching or you can extend some very simple [abstract classes](crabzilla-core/src/main/java/crabzilla/stack/AbstractCommandsHandlerFn.java) from crabzila.stack package. An interesting aspect: since your domain code is side effect free (well, except the EventsProjector), the side effects related to command handling will occurs within this verticle. Isolating side effects is a goal of Functional Programming.   
+2. An eventbus consumer to handle commands. It will invoke your domain functions with business code. Except by the EventsProjector your domain code will be side effect free. If the services used by your aggregate roots are side effect free, all the side effects related to command handling will occurs within [VertxCommandHandlerVerticle](crabzilla-vertx/src/main/java/crabzilla/vertx/verticles/CommandHandlerVerticle.java). Isolating side effects is a goal of Functional Programming.   
 
 3. An event store implementation. The current implementation is based on a relational database. Others may be implemented in the future but right now the goal is to help you to develop and deploy your domain with a very simple (but robust) software stack. The current example is based on MYSQL using JSON columns. 
 
