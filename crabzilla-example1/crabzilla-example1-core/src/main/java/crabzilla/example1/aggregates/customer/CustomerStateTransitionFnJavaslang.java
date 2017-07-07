@@ -4,7 +4,6 @@ import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.example1.aggregates.customer.events.CustomerDeactivated;
 import crabzilla.model.Event;
-import javaslang.API;
 
 import java.util.function.BiFunction;
 
@@ -24,7 +23,7 @@ public class CustomerStateTransitionFnJavaslang implements BiFunction<Event, Cus
       Case(instanceOf(CustomerActivated.class),
               (e) -> instance.withReason(e.getReason()).withActive(true)),
 
-      API.Case(instanceOf(CustomerDeactivated.class),
+      Case(instanceOf(CustomerDeactivated.class),
               (e) -> instance.withReason(e.getReason()).withActive(false))
 
     );
