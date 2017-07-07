@@ -8,7 +8,7 @@ Currently it's just some code with poor test coverage but the "~~dirty~~ explora
 
 ## Goal for version 1.0.0
 
-It has an ambitious goal: to help you write your domain model with very little framework overhead and smoothly deploy it on a state of art Java 8 reactive applications platform backed by a rock solid relational database of your choice.
+To help you write your domain model with very little framework overhead and smoothly deploy it on a state of art Java 8 reactive applications platform backed by a rock solid relational database of your choice.
 
 ## How
 
@@ -18,6 +18,7 @@ The approach is to use functions [everywhere](crabzilla-core/src/main/java/crabz
 | :------------- | :------------- | :----- |
 | State transition | [CustomerStateTransitionFn](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerStateTransitionFn.java)| [CustomerStateTransitionFnJavaslang](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerStateTransitionFnJavaslang.java)  |
 | Command handling | [CustomerCmdHandlerFn](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerCmdHandlerFn.java)  | [CustomerCmdHandlerFnJavaslang](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerCmdHandlerFnJavaslang.java)|
+
 
 
 Ideally your domain model code will be built of immutable data or plain functions so in the end it will be very testable, side effect free and with minimal dependencies. Then you will be able to deploy your domain model into a reactive engine built with [Vertx](http://vertx.io/). This engine provides verticles and components for the full CQRS / Events Sourcing lifecycle. 
