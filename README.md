@@ -64,3 +64,4 @@ mvn verify -DskipUTs=true
 java -jar crabzilla-vertx-example1/target/crabzilla-vertx-example1-1.0-SNAPSHOT-fat.jar 
 ```
 
+You can find more info on [wiki](https://github.com/crabzilla/crabzilla/wiki)
