@@ -1,6 +1,6 @@
 package crabzilla.vertx.verticles;
 
-import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import crabzilla.model.*;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
@@ -26,7 +26,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   final Class<A> aggregateRootClass;
   final BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandler;
   final Function<Command, List<String>> validatorFn;
-  final Cache<String, Snapshot<A>> cache;
+  final LoadingCache<String, Snapshot<A>> cache;
   final SnapshotFactory<A> snapshotFactory;
 
   final VertxUnitOfWorkRepository eventRepository;
@@ -38,7 +38,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
                                 @NonNull final Function<Command, List<String>> validatorFn,
                                 @NonNull final SnapshotFactory<A> snapshotFactory,
                                 @NonNull final VertxUnitOfWorkRepository eventRepository,
-                                @NonNull final Cache<String, Snapshot<A>> cache,
+                                @NonNull final LoadingCache<String, Snapshot<A>> cache,
                                 @NonNull final Vertx vertx,
                                 @NonNull final CircuitBreaker circuitBreaker) {
     this.aggregateRootClass = aggregateRootClass;

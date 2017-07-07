@@ -1,6 +1,6 @@
 package crabzilla.vertx.verticles;
 
-import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.CustomerSupplierFn;
@@ -55,7 +55,7 @@ public class CommandHandlerVerticleTest {
   CircuitBreaker circuitBreaker;
 
   @Mock
-  Cache<String, Snapshot<Customer>> cache;
+  LoadingCache<String, Snapshot<Customer>> cache;
   @Mock
   Function<Command, List<String>> validatorFn;
   @Mock

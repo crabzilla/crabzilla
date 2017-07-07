@@ -2,6 +2,7 @@ package crabzilla.example1.aggregates;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import crabzilla.example1.aggregates.customer.*;
 import crabzilla.example1.services.SampleService;
 import crabzilla.model.*;
@@ -68,10 +69,10 @@ public class CustomerFactory implements VertxAggregateRootComponentsFactory<Cust
   @Override
   public CommandHandlerVerticle<Customer> cmdHandlerVerticle() {
 
-    final Cache<String, Snapshot<Customer>> cache = Caffeine.newBuilder()
+    final LoadingCache<String, Snapshot<Customer>> cache = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(5, TimeUnit.MINUTES)
-            .build();
+            .build(key -> null); // TODO you can plug your snapshot here!
 
     val circuitBreaker = CircuitBreaker.create(circuitBreakerId(Customer.class), vertx,
             new CircuitBreakerOptions()
