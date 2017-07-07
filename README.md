@@ -93,7 +93,7 @@ Crabzilla is an Event Sourcing framework.
 
 2. [Problem: Side-effects](https://ookami86.github.io/event-sourcing-in-practice/#slide-38)
 
-Crabzilla approach is based on the first solution of this slide: "Separate side-effect and state change". This allows you to apply past events in order to build your aggregate root state (forming a snapshot) without triggering any side effect, even if the services used by your aggregate root have side effects. The [VertxCommandHandlerVerticle]() is where all cache and database side effects occurs when a command is handled. The exception is when the services used by your aggregate root have side effects. In this case you are responsible to manage idempotent processing or even doing rollbacks on side effects triggered by services.
+Crabzilla approach is based on the first solution of this slide: "Separate side-effect and state change". This allows you to apply past events in order to build your aggregate root state (forming a snapshot) without triggering any side effect, even if the services used by your aggregate root have side effects. The [VertxCommandHandlerVerticle](crabzilla-vertx/src/main/java/crabzilla/vertx/verticles/CommandHandlerVerticle.java) is where all cache and database side effects occurs when a command is handled. The exception is when the services used by your aggregate root does have side effects. In this case **you** are responsible to manage idempotent processing or even doing rollbacks on side effects triggered by services.
 
 3. [Problem: Reporting & Queries](https://ookami86.github.io/event-sourcing-in-practice/#slide-42)
 
