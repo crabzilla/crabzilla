@@ -9,7 +9,7 @@ import java.lang.invoke.MethodType;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-public abstract class AbstractCommandHandlerFn<A extends AggregateRoot>
+public abstract class AbstractCommandsHandlerFn<A extends AggregateRoot>
         implements BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> {
 
   static final String METHOD_NAME = "handle";

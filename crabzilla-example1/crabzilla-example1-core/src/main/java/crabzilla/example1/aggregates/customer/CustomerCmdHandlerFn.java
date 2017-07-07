@@ -8,7 +8,7 @@ import crabzilla.model.Event;
 import crabzilla.model.Snapshot;
 import crabzilla.model.StateTransitionsTracker;
 import crabzilla.model.UnitOfWork;
-import crabzilla.stack.AbstractCommandHandlerFn;
+import crabzilla.stack.AbstractCommandsHandlerFn;
 import lombok.val;
 
 import javax.inject.Inject;
@@ -17,7 +17,7 @@ import java.util.function.Function;
 
 import static crabzilla.model.UnitOfWork.unitOfWork;
 
-public class CustomerCmdHandlerFn extends AbstractCommandHandlerFn<Customer> {
+public class CustomerCmdHandlerFn extends AbstractCommandsHandlerFn<Customer> {
 
   private final BiFunction<Event, Customer, Customer> stateTransitionFn;
   private final Function<Customer, Customer> dependencyInjectionFn;

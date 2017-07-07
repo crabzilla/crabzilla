@@ -12,11 +12,12 @@ import example1.datamodel.tables.records.CustomerSummaryRecord;
 import example1.datamodel.tables.records.EventsChannelsRecord;
 import example1.datamodel.tables.records.SchemaVersionRecord;
 import example1.datamodel.tables.records.UnitsOfWorkRecord;
+
+import javax.annotation.Generated;
+
 import org.jooq.Identity;
 import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
-
-import javax.annotation.Generated;
 
 
 /**

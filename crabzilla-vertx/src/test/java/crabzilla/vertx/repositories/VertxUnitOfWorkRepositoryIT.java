@@ -14,7 +14,6 @@ import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
-import crabzilla.vertx.IntegrationTest;
 import crabzilla.vertx.util.DbConcurrencyException;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -25,7 +24,6 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.*;
-import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.skife.jdbi.v2.DBI;
@@ -44,7 +42,6 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-@Category(IntegrationTest.class)
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @Slf4j
@@ -78,9 +75,9 @@ public class VertxUnitOfWorkRepositoryIT {
 
     HikariConfig config = new HikariConfig();
     config.setDriverClassName("com.mysql.cj.jdbc.Driver");
-    config.setJdbcUrl("jdbc:mysql://localhost:3306/example1db?serverTimezone=UTC&useSSL=false");
+    config.setJdbcUrl("jdbc:mysql://127.0.0.1:3306/example1db?serverTimezone=UTC&useSSL=false");
     config.setUsername("root");
-    config.setPassword("my-secret-pw");
+    config.setPassword("my-secret-pwd");
     config.setAutoCommit(false);
     config.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
 

@@ -4,6 +4,7 @@ import com.google.inject.Guice;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
+import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Verticle;
@@ -79,7 +80,7 @@ public class Example1Launcher {
     val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "a good customer");
     val options = new DeliveryOptions().setCodecName("Command");
 
-    vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().<CommandExecution>send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       log.info("Successful postNewCustomerJustForTest? {}", asyncResult.succeeded());
 
