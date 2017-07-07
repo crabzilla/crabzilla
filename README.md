@@ -31,7 +31,7 @@ cd crabzilla
 mvn clean install -DskipITs=true
 ```
 
-2. Starts a MySql instance. You can use docker-compose:
+2. Start a MySql instance. You can use docker-compose:
 
 ```bash
 docker-compose build
