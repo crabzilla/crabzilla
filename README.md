@@ -105,6 +105,6 @@ Crabzilla approach is based on the third solution of the slide: Snapshotting. Mo
 
 5. [Problem: Concurrent writes](https://ookami86.github.io/event-sourcing-in-practice/#making-eventsourcing-work/18-concurrent-modifictations.md)
 
-[VertxUnitOfWorkRepository](crabzilla-vertx/src/main/java/crabzilla/vertx/repositories/VertxUnitOfWorkRepository.java) uses optimistic locking when appending UnitOfWork instances. 
+[VertxUnitOfWorkRepository](crabzilla-vertx/src/main/java/crabzilla/vertx/repositories/VertxUnitOfWorkRepository.java) uses optimistic locking when appending UnitOfWork instances. A command handling may failbecause of a concurrency error. If you need a retry, you or your client will need to retry manually, since Vertx CircuitBreaker does not have retries (probably to not block the eventloop). Again, if the services used by your aggregates are side effect free, replaying commands is safe but if they aren't, you will have to manage it.
 
 
