@@ -20,7 +20,7 @@ Here are some of them:
 
 1. A REST verticle to receive commands 
 
-2. An eventbus consumer to handle commands. It will invoke your domain functions with business code. Except by the EventsProjector your domain code will be side effect free. If the services used by your aggregate roots are side effect free, all the side effects related to command handling will occurs within [VertxCommandHandlerVerticle](crabzilla-vertx/src/main/java/crabzilla/vertx/verticles/CommandHandlerVerticle.java). Isolating side effects is a goal of Functional Programming.   
+2. An eventbus consumer to handle commands. It will invoke your domain functions with business code. Except by the EventsProjector your domain code will be side effect free. If the services used by your aggregates are side effect free, all the side effects related to command handling will occurs within [VertxCommandHandlerVerticle](crabzilla-vertx/src/main/java/crabzilla/vertx/verticles/CommandHandlerVerticle.java). Isolating side effects is a goal of Functional Programming.   
 
 3. An event store implementation. The current implementation is based on a relational database. Others may be implemented in the future but right now the goal is to help you to develop and deploy your domain with a very simple (but robust) software stack. The current example is based on MYSQL using JSON columns. 
 
@@ -30,7 +30,7 @@ Version 1.0.0 scope also has other components covering features for sagas (or pr
 
 ## Reactive
 
-All command handling i/o (http, jdbc) is using reactive apis from Vertx. You don't need to use reactive apis within your domain code to, for example, to call external services. You can let your domain code very simple and testable / mockable but even so you will achieve a much better performance and resilience. 
+All command handling i/o (http, jdbc) is using reactive apis from Vertx. You don't need to use reactive apis within your domain code to, for example, to call external services from your aggregates. You can let your domain code very simple and testable / mockable but even so you will achieve a much better performance and resilience. 
 
 ## Getting started
 
