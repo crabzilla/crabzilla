@@ -20,7 +20,7 @@ Here are some of them:
 
 1. A REST verticle to receive commands 
 
-2. An eventbus consumer to handle commands. It will invoke your domain function with business code. There are samples using Vavr pattern matching or you can extend some very simple abstract classes from crabzila.stack package. An interesting aspect: since your domain code is side effect free (well, except the EventsProjector), the side effects related to command handling will occurs within this verticle. Isolating your side effects is a goal of Functional  Programming.   
+2. An eventbus consumer to handle commands. It will invoke your domain function with business code. There are [samples](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerCmdHandlerFnJavaslang.java) using [Vavr](http://www.vavr.io/) pattern matching or you can extend some very simple [abstract classes](crabzilla-core/src/main/java/crabzilla/stack/AbstractCommandsHandlerFn.java) from crabzila.stack package. An interesting aspect: since your domain code is side effect free (well, except the EventsProjector), the side effects related to command handling will occurs within this verticle. Isolating side effects is a goal of Functional Programming.   
 
 3. An event store implementation. The current implementation is based on a relational database. Others may be implemented in the future but right now the goal is to help you to develop and deploy your domain with a very simple (but robust) software stack. The current example is based on MYSQL using JSON columns. 
 
