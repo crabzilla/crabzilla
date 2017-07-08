@@ -4,29 +4,23 @@ import crabzilla.example1.aggregates.customer.commands.ActivateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateActivateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.DeactivateCustomerCmd;
-import crabzilla.model.Event;
 import crabzilla.model.Snapshot;
-import crabzilla.model.StateTransitionsTracker;
+import crabzilla.model.StateTransitionsTrackerFactory;
 import crabzilla.model.UnitOfWork;
 import crabzilla.stack.AbstractCommandsHandlerFn;
 import lombok.val;
 
 import javax.inject.Inject;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static crabzilla.model.UnitOfWork.unitOfWork;
 
 public class CustomerCmdHandlerFn extends AbstractCommandsHandlerFn<Customer> {
 
-  private final BiFunction<Event, Customer, Customer> stateTransitionFn;
-  private final Function<Customer, Customer> dependencyInjectionFn;
+  protected final StateTransitionsTrackerFactory<Customer> trackerFactory;
 
   @Inject
-  public CustomerCmdHandlerFn(final BiFunction<Event, Customer, Customer> stateTransitionFn,
-                              final Function<Customer, Customer> dependencyInjectionFn) {
-    this.stateTransitionFn = stateTransitionFn;
-    this.dependencyInjectionFn = dependencyInjectionFn;
+  public CustomerCmdHandlerFn(StateTransitionsTrackerFactory<Customer> trackerFactory) {
+    this.trackerFactory = trackerFactory;
   }
 
   public UnitOfWork handle(CreateCustomerCmd cmd, Snapshot<Customer> snapshot) {
@@ -42,7 +36,7 @@ public class CustomerCmdHandlerFn extends AbstractCommandsHandlerFn<Customer> {
   }
 
   public UnitOfWork handle(CreateActivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
-    val tracker = new StateTransitionsTracker<Customer>(snapshot.getInstance(), stateTransitionFn, dependencyInjectionFn);
+    val tracker = trackerFactory.create(snapshot.getInstance());
     val events = tracker
             .applyEvents(customer -> customer.create(cmd.getTargetId(), cmd.getName()))
             .applyEvents(customer -> customer.activate(cmd.getReason()))

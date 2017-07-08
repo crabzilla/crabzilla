@@ -8,7 +8,7 @@
 //import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 //import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 //import crabzilla.model.Snapshot;
-//import crabzilla.model.SnapshotFactory;
+//import crabzilla.model.Snapshotter;
 //import crabzilla.model.Version;
 //import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
 //import lombok.val;
@@ -32,7 +32,7 @@
 //@DisplayName("A VertxSnapshotReaderFn")
 //public class VertxSnapshotReaderFnTest {
 //
-//  SnapshotFactory<Customer> snapshotFactory;
+//  Snapshotter<Customer> snapshotFactory;
 //
 //  Cache<String, Snapshot<Customer>> cache;
 //
@@ -42,7 +42,7 @@
 //  @BeforeEach
 //  public void init() throws Exception {
 //    initMocks(this);
-//    snapshotFactory = new SnapshotFactory<>(new CustomerSupplierFn(), c -> c, new CustomerStateTransitionFnJavaslang());
+//    snapshotFactory = new Snapshotter<>(new CustomerSupplierFn(), c -> c, new CustomerStateTransitionFnJavaslang());
 //    cache = Caffeine.newBuilder().build();
 //  }
 //

@@ -63,7 +63,7 @@ public class CommandHandlerVerticleTest {
   @Mock
   VertxUnitOfWorkRepository eventRepository;
   @Mock
-  SnapshotFactory<Customer> snapshotFactory;
+  Snapshotter<Customer> snapshotter;
 
   @Before
   public void setUp(TestContext context) {
@@ -80,7 +80,7 @@ public class CommandHandlerVerticleTest {
     );
 
     val verticle = new CommandHandlerVerticle<Customer>(Customer.class, cmdHandlerFn,
-                              validatorFn, snapshotFactory, eventRepository, cache, vertx, circuitBreaker);
+                              validatorFn, snapshotter, eventRepository, cache, vertx, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
 
@@ -115,7 +115,7 @@ public class CommandHandlerVerticleTest {
             handler.handle(Eithers.right(1L))))
             .when(eventRepository).append(eq(expectedUow), any(Handler.class));
 
-    when(snapshotFactory.getEmptySnapshot()).thenReturn(initialSnapshot);
+    when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
     when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(Eithers.right(Optional.of(expectedUow)));
 
@@ -181,7 +181,7 @@ public class CommandHandlerVerticleTest {
             handler.handle(Eithers.left(new DbConcurrencyException(FORCED_CONCURRENCY_EXCEPTION)))))
             .when(eventRepository).append(eq(expectedUow), any(Handler.class));
 
-    when(snapshotFactory.getEmptySnapshot()).thenReturn(initialSnapshot);
+    when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
     when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(Eithers.right(Optional.of(expectedUow)));
 
@@ -241,7 +241,7 @@ public class CommandHandlerVerticleTest {
             handler.handle(Eithers.right(1L))))
             .when(eventRepository).append(eq(expectedUow), any(Handler.class));
 
-    when(snapshotFactory.getEmptySnapshot()).thenReturn(initialSnapshot);
+    when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
 
     when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(Eithers.left(new RuntimeException("SOME ERROR WITHIN COMMAND HANDLER")));
@@ -332,7 +332,7 @@ public class CommandHandlerVerticleTest {
             eq(initialSnapshot.getVersion()),
             any(Handler.class));
 
-    when(snapshotFactory.getEmptySnapshot()).thenReturn(initialSnapshot);
+    when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
 
     when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(Eithers.right(Optional.empty()));

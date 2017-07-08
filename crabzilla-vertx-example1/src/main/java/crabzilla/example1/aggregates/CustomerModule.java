@@ -15,8 +15,10 @@ public class CustomerModule extends AbstractModule {
   @Override
   protected void configure() {
 
+    // to bind aggregate functions
     bind(CustomerFactory.class).asEagerSingleton();
 
+    // to bind verticles for this aggregate
     TypeLiteral<CommandRestVerticle<Customer>> restType = new TypeLiteral<CommandRestVerticle<Customer>>() {};
     TypeLiteral<CommandHandlerVerticle<Customer>> handlerType = new TypeLiteral<CommandHandlerVerticle<Customer>>() {};
 
@@ -24,19 +26,18 @@ public class CustomerModule extends AbstractModule {
 
     mapbinder.addBinding("customer.rest").to(restType);
     mapbinder.addBinding("customer.handler").to(handlerType);
+
   }
 
   @Provides
   @Singleton
   CommandRestVerticle<Customer> restVerticle(CustomerFactory componentsFactory) {
-
     return componentsFactory.restVerticle();
   }
 
   @Provides
   @Singleton
   CommandHandlerVerticle<Customer> handler(CustomerFactory componentsFactory) {
-
     return componentsFactory.cmdHandlerVerticle();
   }
 

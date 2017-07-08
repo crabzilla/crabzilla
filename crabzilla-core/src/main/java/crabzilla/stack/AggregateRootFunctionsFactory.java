@@ -20,8 +20,5 @@ public interface AggregateRootFunctionsFactory<A extends AggregateRoot> {
 
   BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandlerFn() ;
 
-  default SnapshotFactory<A> snaphotFactory() {
-    return new SnapshotFactory<>(supplierFn(), depInjectionFn(), stateTransitionFn());
-  }
-
+  Snapshotter<A> snapshotter() ;
 }

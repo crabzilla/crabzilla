@@ -9,16 +9,16 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class StateTransitionsTracker<A extends AggregateRoot> {
+public class StateTransitionsTracker<A extends AggregateRoot>  {
 
   final A originalInstance;
   final BiFunction<Event, A, A> applyEventsFn;
   final Function<A, A> dependencyInjectionFn;
   final List<StateTransition<A>> stateTransitions = new ArrayList<>();
 
-  public StateTransitionsTracker(@NonNull A originalInstance,
-                                 @NonNull BiFunction<Event, A, A> applyEventsFn,
-                                 @NonNull Function<A, A> dependencyInjectionFn) {
+  public StateTransitionsTracker(A originalInstance,
+                                 BiFunction<Event, A, A> applyEventsFn,
+                                 Function<A, A> dependencyInjectionFn) {
     this.originalInstance = originalInstance;
     this.applyEventsFn = applyEventsFn;
     this.dependencyInjectionFn = dependencyInjectionFn;

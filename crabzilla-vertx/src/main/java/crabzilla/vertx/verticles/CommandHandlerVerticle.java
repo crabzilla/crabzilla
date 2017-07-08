@@ -27,7 +27,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   final BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandler;
   final Function<Command, List<String>> validatorFn;
   final LoadingCache<String, Snapshot<A>> cache;
-  final SnapshotFactory<A> snapshotFactory;
+  final Snapshotter<A> snapshotter;
 
   final VertxUnitOfWorkRepository eventRepository;
   final Vertx vertx;
@@ -36,7 +36,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   public CommandHandlerVerticle(@NonNull final Class<A> aggregateRootClass,
                                 @NonNull final BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandler,
                                 @NonNull final Function<Command, List<String>> validatorFn,
-                                @NonNull final SnapshotFactory<A> snapshotFactory,
+                                @NonNull final Snapshotter<A> snapshotter,
                                 @NonNull final VertxUnitOfWorkRepository eventRepository,
                                 @NonNull final LoadingCache<String, Snapshot<A>> cache,
                                 @NonNull final Vertx vertx,
@@ -44,7 +44,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
     this.aggregateRootClass = aggregateRootClass;
     this.cmdHandler = cmdHandler;
     this.validatorFn = validatorFn;
-    this.snapshotFactory = snapshotFactory;
+    this.snapshotter = snapshotter;
     this.eventRepository = eventRepository;
     this.cache = cache;
     this.vertx = vertx;
@@ -103,7 +103,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
       val snapshotFromCache = cache.getIfPresent(targetId);
 
-      val cachedSnapshot = snapshotFromCache == null ? snapshotFactory.getEmptySnapshot() : snapshotFromCache;
+      val cachedSnapshot = snapshotFromCache == null ? snapshotter.getEmptySnapshot() : snapshotFromCache;
 
       log.debug("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
               targetId, cachedSnapshot.getVersion());
@@ -116,7 +116,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
                 nonCached.getVersion());
 
         val resultingSnapshot = totalOfNonCachedEvents > 0 ?
-                snapshotFactory.applyNewEventsToSnapshot(cachedSnapshot, nonCached.getVersion(), nonCached.getEvents())
+                snapshotter.applyNewEventsToSnapshot(cachedSnapshot, nonCached.getVersion(), nonCached.getEvents())
                 : cachedSnapshot;
 
         if (totalOfNonCachedEvents > 0) {

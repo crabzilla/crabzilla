@@ -1,6 +1,5 @@
 package crabzilla.example1.aggregates;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import crabzilla.example1.aggregates.customer.*;
@@ -58,7 +57,12 @@ public class CustomerFactory implements VertxAggregateRootComponentsFactory<Cust
 
   @Override
   public BiFunction<Command, Snapshot<Customer>, Either<Throwable, Optional<UnitOfWork>>> cmdHandlerFn() {
-    return new CustomerCmdHandlerFn(stateTransitionFn(), depInjectionFn());
+    return new CustomerCmdHandlerFn(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn(), depInjectionFn()));
+  }
+
+  @Override
+  public Snapshotter<Customer> snapshotter() {
+    return new Snapshotter<>(supplierFn(), instance -> new StateTransitionsTracker<>(instance, stateTransitionFn(), depInjectionFn()));
   }
 
   @Override
@@ -83,7 +87,7 @@ public class CustomerFactory implements VertxAggregateRootComponentsFactory<Cust
     );
 
     return new CommandHandlerVerticle<>(Customer.class, cmdHandlerFn(),
-            cmdValidatorFn(), snaphotFactory(), eventStore, cache, vertx, circuitBreaker);
+            cmdValidatorFn(), snapshotter(), eventStore, cache, vertx, circuitBreaker);
   }
 
 }

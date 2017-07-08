@@ -11,7 +11,6 @@ import lombok.val;
 import javax.inject.Inject;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static crabzilla.model.UnitOfWork.unitOfWork;
 import static javaslang.API.*;
@@ -22,14 +21,11 @@ import static javaslang.Predicates.instanceOf;
 public class CustomerCmdHandlerFnJavaslang
         implements BiFunction<Command, Snapshot<Customer>, Either<Throwable, Optional<UnitOfWork>>> {
 
-  private final BiFunction<Event, Customer, Customer> stateTransitionFn;
-  private final Function<Customer, Customer> dependencyInjectionFn;
+  protected final StateTransitionsTrackerFactory<Customer> trackerFactory;
 
   @Inject
-  public CustomerCmdHandlerFnJavaslang(final BiFunction<Event, Customer, Customer> stateTransitionFn,
-                                       final Function<Customer, Customer> dependencyInjectionFn) {
-    this.stateTransitionFn = stateTransitionFn;
-    this.dependencyInjectionFn = dependencyInjectionFn;
+  public CustomerCmdHandlerFnJavaslang(StateTransitionsTrackerFactory<Customer> trackerFactory) {
+    this.trackerFactory = trackerFactory;
   }
 
   @Override
@@ -68,8 +64,7 @@ public class CustomerCmdHandlerFnJavaslang
 
       Case(instanceOf(CreateActivateCustomerCmd.class), (command) -> {
 
-        val tracker = new StateTransitionsTracker<Customer>(targetInstance, stateTransitionFn,
-                dependencyInjectionFn);
+        val tracker = trackerFactory.create(targetInstance);
         val events = tracker
                 .applyEvents(customer -> customer.create(command.getTargetId(), command.getName()))
                 .applyEvents(customer -> customer.activate(command.getReason()))
