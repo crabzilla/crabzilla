@@ -156,7 +156,6 @@ class Example1Module extends AbstractModule {
   @Singleton
   ObjectMapper mapper() {
     val mapper = Json.mapper;
-    mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
     mapper.registerModule(new ParameterNamesModule())
             .registerModule(new Jdk8Module())
             .registerModule(new JavaTimeModule());

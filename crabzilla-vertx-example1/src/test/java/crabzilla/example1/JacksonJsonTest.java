@@ -1,10 +1,14 @@
 package crabzilla.example1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
+import crabzilla.model.Command;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
 import io.vertx.core.json.Json;
@@ -25,8 +29,10 @@ public class JacksonJsonTest {
 
   @BeforeEach
   public void setup() {
-    mapper.findAndRegisterModules();
-    mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
+    mapper.registerModule(new ParameterNamesModule())
+            .registerModule(new Jdk8Module())
+            .registerModule(new JavaTimeModule());
+   // mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
   }
 
   @Test
@@ -39,8 +45,8 @@ public class JacksonJsonTest {
 
     val uowAsJson = mapper.writeValueAsString(uow1);
 
-//    System.out.println(mapper.writerFor(Command.class).writeValueAsString(command));
-//    System.out.println(uowAsJson);
+    System.out.println(mapper.writerFor(Command.class).writeValueAsString(command));
+    System.out.println(uowAsJson);
 
     val uow2 = mapper.readValue(uowAsJson, UnitOfWork.class);
 
@@ -60,7 +66,7 @@ public class JacksonJsonTest {
 
     val uowAsJson = mapper.writeValueAsString(uow1);
 
-    //System.out.println(uowAsJson);
+    System.out.println(uowAsJson);
 
     val uow2 = mapper.readValue(uowAsJson, UnitOfWork.class);
 
