@@ -16,9 +16,9 @@ public class StateTransitionsTracker<A extends AggregateRoot>  {
   final Function<A, A> dependencyInjectionFn;
   final List<StateTransition<A>> stateTransitions = new ArrayList<>();
 
-  public StateTransitionsTracker(A originalInstance,
-                                 BiFunction<Event, A, A> applyEventsFn,
-                                 Function<A, A> dependencyInjectionFn) {
+  public StateTransitionsTracker(@NonNull A originalInstance,
+                                 @NonNull BiFunction<Event, A, A> applyEventsFn,
+                                 @NonNull Function<A, A> dependencyInjectionFn) {
     this.originalInstance = originalInstance;
     this.applyEventsFn = applyEventsFn;
     this.dependencyInjectionFn = dependencyInjectionFn;
