@@ -12,6 +12,7 @@ import crabzilla.vertx.verticles.CommandRestVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
+import io.vertx.ext.jdbc.JDBCClient;
 import lombok.val;
 
 import javax.inject.Inject;
@@ -28,15 +29,13 @@ public class CustomerFactory implements VertxAggregateRootComponentsFactory<Cust
 
   private final SampleService service;
   private final Vertx vertx;
-  private final VertxUnitOfWorkRepository eventStore;
+  private final JDBCClient jdbcClient;
 
   @Inject
-  public CustomerFactory(SampleService service, Vertx vertx,
-                         VertxUnitOfWorkRepository eventStore) {
+  public CustomerFactory(SampleService service, Vertx vertx, JDBCClient jdbcClient) {
     this.service = service;
     this.vertx = vertx;
-    this.eventStore = eventStore;
-
+    this.jdbcClient = jdbcClient;
   }
 
   @Override
@@ -87,7 +86,12 @@ public class CustomerFactory implements VertxAggregateRootComponentsFactory<Cust
     );
 
     return new CommandHandlerVerticle<>(Customer.class, cmdHandlerFn(),
-            cmdValidatorFn(), snapshotter(), eventStore, cache, vertx, circuitBreaker);
+            cmdValidatorFn(), snapshotter(), uowRepository(), cache, vertx, circuitBreaker);
+  }
+
+  @Override
+  public VertxUnitOfWorkRepository uowRepository() {
+    return new VertxUnitOfWorkRepository(Customer.class, jdbcClient);
   }
 
 }

@@ -25,12 +25,6 @@ class Example1ComponentsFactory implements VertxBoundedContextComponentsFactory 
   }
 
   @Override
-  public VertxUnitOfWorkRepository eventRepository() {
-    return new VertxUnitOfWorkRepository(Customer.class, jdbcClient);
-
-  }
-
-  @Override
   public EventProjector eventsProjector() {
     return new Example1EventProjector("example1", jooq) ;
   }
