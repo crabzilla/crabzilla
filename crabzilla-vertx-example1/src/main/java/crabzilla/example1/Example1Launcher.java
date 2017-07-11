@@ -3,6 +3,7 @@ package crabzilla.example1;
 import com.google.inject.Guice;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
+import crabzilla.example1.aggregates.customer.commands.ActivateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.verticles.EventsProjectionVerticle;
@@ -64,7 +65,7 @@ public class Example1Launcher {
         launcher.vertx.deployVerticle(launcher.projectionVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
 
         // a test
-        launcher.postNewCustomerJustForTest();
+        launcher.justForTest();
 
       } else {
         log.error("Failed: ", res.cause());
@@ -73,19 +74,38 @@ public class Example1Launcher {
 
   }
 
-  private void postNewCustomerJustForTest() {
+  private void justForTest() {
 
     val customerId = new CustomerId(UUID.randomUUID().toString());
 //    val customerId = new CustomerId("customer123");
     val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "a good customer");
     val options = new DeliveryOptions().setCodecName("Command");
 
+    // create customer command
     vertx.eventBus().<CommandExecution>send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
-      log.info("Successful postNewCustomerJustForTest? {}", asyncResult.succeeded());
+      log.info("Successful create customer test? {}", asyncResult.succeeded());
 
       if (asyncResult.succeeded()) {
+
         log.info("Result: {}", asyncResult.result().body());
+
+        val activateCustomerCmd = new ActivateCustomerCmd(UUID.randomUUID(), createCustomerCmd.getTargetId(), "because I want it");
+
+        // activate customer command
+        vertx.eventBus().<CommandExecution>send(commandHandlerId(Customer.class), activateCustomerCmd, options, asyncResult2 -> {
+
+          log.info("Successful activate customer test? {}", asyncResult2.succeeded());
+
+          if (asyncResult2.succeeded()) {
+            log.info("Result: {}", asyncResult2.result().body());
+          } else {
+            log.info("Cause: {}", asyncResult2.cause());
+            log.info("Message: {}", asyncResult2.cause().getMessage());
+          }
+
+        });
+
       } else {
         log.info("Cause: {}", asyncResult.cause());
         log.info("Message: {}", asyncResult.cause().getMessage());

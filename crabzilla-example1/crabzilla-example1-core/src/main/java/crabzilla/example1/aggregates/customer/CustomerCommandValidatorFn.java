@@ -1,5 +1,6 @@
 package crabzilla.example1.aggregates.customer;
 
+import crabzilla.example1.aggregates.customer.commands.ActivateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmdValidator;
 import crabzilla.stack.AbstractCommandValidatorFn;
@@ -19,4 +20,9 @@ public class CustomerCommandValidatorFn extends AbstractCommandValidatorFn {
 
     }
 
+  public List<String> validate(ActivateCustomerCmd cmd) {
+
+    return emptyList(); // it's always valid
+
+  }
 }
