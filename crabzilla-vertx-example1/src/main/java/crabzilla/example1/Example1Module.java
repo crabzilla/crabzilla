@@ -36,7 +36,6 @@ import org.jooq.conf.Settings;
 import org.jooq.impl.DataSourceConnectionProvider;
 import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.DefaultTransactionProvider;
-import org.nustaq.serialization.FSTConfiguration;
 
 import java.util.Properties;
 
@@ -79,12 +78,6 @@ class Example1Module extends AbstractModule {
   @Singleton
   EventProjector eventsProjector(Example1ComponentsFactory f) {
     return f.eventsProjector() ;
-  }
-
-  @Provides
-  @Singleton
-  FSTConfiguration conf() {
-    return FSTConfiguration.createDefaultConfiguration();
   }
 
   @Provides
@@ -154,5 +147,12 @@ class Example1Module extends AbstractModule {
             .registerModule(new JavaTimeModule());
     return mapper;
   }
+
+//  Not being used yet. This can improve a lot serialization speed but so far i was not necessary.
+//  @Provides
+//  @Singleton
+//  FSTConfiguration conf() {
+//    return FSTConfiguration.createDefaultConfiguration();
+//  }
 
 }
