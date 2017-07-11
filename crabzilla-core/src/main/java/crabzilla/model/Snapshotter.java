@@ -29,7 +29,7 @@ public class Snapshotter<A extends AggregateRoot> {
 
   public Snapshot<A> applyNewEventsToSnapshot(Snapshot<A> originalSnapshot, Version newVersion, List<Event> newEvents) {
 
-    if (originalSnapshot.getVersion().getValueAsLong() >= newVersion.getValueAsLong()) {
+    if (originalSnapshot.getVersion().getValueAsLong() != newVersion.getValueAsLong() -1) {
       throw new RuntimeException(String.format("Cannot upgrade to version %s since my version is %s",
               newVersion, originalSnapshot.getVersion()));
     }
