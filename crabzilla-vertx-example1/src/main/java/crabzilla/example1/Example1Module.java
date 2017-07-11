@@ -50,12 +50,19 @@ class Example1Module extends AbstractModule {
   @Override
   protected void configure() {
 
+    // aggregates
     install(new CustomerModule());
+
+    // database
     install(new DatabaseModule());
 
+    // services
     bind(SampleService.class).to(SampleServiceImpl.class).asEagerSingleton();
+
+    // bounded context
     bind(Example1ComponentsFactory.class).asEagerSingleton();
 
+    // exposes properties to guice
     setCfgProps();
 
   }
@@ -148,7 +155,7 @@ class Example1Module extends AbstractModule {
     return mapper;
   }
 
-//  Not being used yet. This can improve a lot serialization speed but so far i was not necessary.
+//  Not being used yet. This can improve a lot serialization speed (it's binary) but so far it was not necessary.
 //  @Provides
 //  @Singleton
 //  FSTConfiguration conf() {
