@@ -21,7 +21,7 @@ The approach is to use functions [everywhere](crabzilla-core/src/main/java/crabz
 
 
 
-Ideally your domain model code will be built of immutable data or plain functions so in the end it will be very testable, side effect free and with minimal dependencies. Then you need to add some [configuration](crabzilla-vertx-example1/src/main/java/crabzilla/example1/Example1Module.java) to be able to deploy your domain model into a reactive engine built with [Vertx](http://vertx.io/). This engine provides verticles and components for the full CQRS / Events Sourcing lifecycle. 
+Ideally your domain model code will be built of immutable data and plain functions so in the end it will be very testable, side effect free and with minimal dependencies. Then you need to add some configuration for both aggregate root [level](crabzilla-vertx-example1/src/main/java/crabzilla/example1/aggregates/CustomerModule.java) and bounded context  [level](crabzilla-vertx-example1/src/main/java/crabzilla/example1/Example1Module.java) to be able to deploy your domain model into a reactive engine built with [Vertx](http://vertx.io/). This engine provides verticles and components for the full CQRS / Events Sourcing lifecycle. 
 
 ## How to run the example
 
