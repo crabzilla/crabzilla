@@ -13,7 +13,7 @@ import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
 import crabzilla.vertx.util.DbConcurrencyException;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.ext.unit.Async;
@@ -105,15 +105,15 @@ public class CommandHandlerVerticleTest {
     when(cache.getIfPresent(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Version, Handler<SnapshotData>>) (s, version, handler) ->
-            handler.handle(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
+    doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
+            future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
                                                       eq(initialSnapshot.getVersion()),
-                                                      any(Handler.class));
+                                                      any(Future.class));
 
-    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Handler<Either<Throwable, Long>>>) (uow, handler) ->
-            handler.handle(Eithers.right(1L))))
-            .when(eventRepository).append(eq(expectedUow), any(Handler.class));
+    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Future<Either<Throwable, Long>>>) (uow, future) ->
+            future.complete(Eithers.right(1L))))
+            .when(eventRepository).append(eq(expectedUow), any(Future.class));
 
     when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
     when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(initialSnapshot)))
@@ -171,15 +171,15 @@ public class CommandHandlerVerticleTest {
     when(cache.getIfPresent(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Version, Handler<SnapshotData>>) (s, version, handler) ->
-            handler.handle(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
+    doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
+            future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
             eq(initialSnapshot.getVersion()),
-            any(Handler.class));
+            any(Future.class));
 
-    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Handler<Either<Throwable, Long>>>) (uow, handler) ->
-            handler.handle(Eithers.left(new DbConcurrencyException(FORCED_CONCURRENCY_EXCEPTION)))))
-            .when(eventRepository).append(eq(expectedUow), any(Handler.class));
+    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Future<Either<Throwable, Long>>>) (uow, future) ->
+            future.complete(Eithers.left(new DbConcurrencyException(FORCED_CONCURRENCY_EXCEPTION)))))
+            .when(eventRepository).append(eq(expectedUow), any(Future.class));
 
     when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
     when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(initialSnapshot)))
@@ -231,15 +231,15 @@ public class CommandHandlerVerticleTest {
     when(cache.getIfPresent(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Version, Handler<SnapshotData>>) (s, version, handler) ->
-            handler.handle(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
+    doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
+            future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
             eq(initialSnapshot.getVersion()),
-            any(Handler.class));
+            any(Future.class));
 
-    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Handler<Either<Throwable, Long>>>) (uow, handler) ->
-            handler.handle(Eithers.right(1L))))
-            .when(eventRepository).append(eq(expectedUow), any(Handler.class));
+    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Future<Either<Throwable, Long>>>) (uow, future) ->
+            future.complete(Eithers.right(1L))))
+            .when(eventRepository).append(eq(expectedUow), any(Future.class));
 
     when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
 
@@ -326,11 +326,11 @@ public class CommandHandlerVerticleTest {
     when(cache.getIfPresent(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Version, Handler<SnapshotData>>) (s, version, handler) ->
-            handler.handle(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
+    doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
+            future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
             eq(initialSnapshot.getVersion()),
-            any(Handler.class));
+            any(Future.class));
 
     when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
 

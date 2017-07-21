@@ -108,8 +108,17 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
       log.debug("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
               targetId, cachedSnapshot.getVersion());
 
-      eventRepository.selectAfterVersion(targetId, cachedSnapshot.getVersion(), nonCached -> {
+      Future<SnapshotData> selectAfterVersionFuture = Future.future();
 
+      eventRepository.selectAfterVersion(targetId, cachedSnapshot.getVersion(), selectAfterVersionFuture);
+
+      selectAfterVersionFuture.setHandler(snapshotDataAsyncResult -> {
+        if (snapshotDataAsyncResult.failed()) {
+          future1.fail(snapshotDataAsyncResult.cause());
+          return;
+        }
+
+        SnapshotData nonCached = snapshotDataAsyncResult.result();
         val totalOfNonCachedEvents = nonCached.getEvents().size();
 
         log.debug("id {} found {} pending events. Last version is now {}", targetId, totalOfNonCachedEvents,
@@ -155,18 +164,30 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         if (unitOfWork.isPresent()) {
 
-          eventRepository.append(unitOfWork.get(), appendResult -> appendResult.match(cmdAppendError -> {
+          Future<Either<Throwable, Long>> appendFuture = Future.future();
 
-            log.error("Exception for command {} message {}", command.getCommandId(), cmdAppendError.getMessage());
-            future2.complete(CONCURRENCY_ERROR(command.getCommandId(), cmdAppendError.getMessage()));
-            return null;
+          eventRepository.append(unitOfWork.get(), appendFuture);
+
+          appendFuture.setHandler(appendAsyncResult -> {
+            if (appendAsyncResult.failed()) {
+              future2.fail(appendAsyncResult.cause());
+              return;
+            }
+
+            Either<Throwable, Long> appendResult = appendAsyncResult.result();
+            appendResult.match(cmdAppendError -> {
+
+              log.error("Exception for command {} message {}", command.getCommandId(), cmdAppendError.getMessage());
+              future2.complete(CONCURRENCY_ERROR(command.getCommandId(), cmdAppendError.getMessage()));
+              return null;
 
             }, uowSequence -> {
 
-            future2.complete(SUCCESS(unitOfWork.get(), uowSequence));
-            return null;
+              future2.complete(SUCCESS(unitOfWork.get(), uowSequence));
+              return null;
 
-          }));
+            });
+          });
 
         } else {
 
@@ -174,9 +195,9 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         }
 
-      return null;
+        return null;
 
-    });
+      });
   }
 
   Handler<AsyncResult<CommandExecution>> resultHandler(final Message<Command> msg) {
