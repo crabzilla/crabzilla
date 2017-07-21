@@ -3,13 +3,23 @@ package crabzilla.vertx.repositories;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import crabzilla.model.*;
+import crabzilla.model.AggregateRoot;
+import crabzilla.model.Command;
+import crabzilla.model.Either;
+import crabzilla.model.Eithers;
+import crabzilla.model.Event;
+import crabzilla.model.SnapshotData;
+import crabzilla.model.UnitOfWork;
+import crabzilla.model.Version;
 import crabzilla.vertx.util.DbConcurrencyException;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.ext.sql.ResultSet;
+import io.vertx.ext.sql.SQLRowStream;
+import io.vertx.ext.sql.UpdateResult;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -41,7 +51,7 @@ public class VertxUnitOfWorkRepository {
     this.client = client;
   }
 
-  public void get(@NonNull final UUID uowId, @NonNull final Handler<Optional<UnitOfWork>> handler) {
+  public void get(@NonNull final UUID uowId, @NonNull final Future<Optional<UnitOfWork>> getFuture) {
 
     val SELECT_UOW_BY_ID = "select * from units_of_work where uow_id =? ";
     val params = new JsonArray().add(uowId.toString());
@@ -49,24 +59,35 @@ public class VertxUnitOfWorkRepository {
     client.getConnection(getConn -> {
 
       if (getConn.failed()) {
-        throw new RuntimeException(getConn.cause());
+        getFuture.fail(getConn.cause());
+        return;
       }
 
       val sqlConn = getConn.result();
 
-      queryWithParams(sqlConn, SELECT_UOW_BY_ID, params, rs -> {
+      Future<ResultSet> resultSetFuture = Future.future();
+
+      queryWithParams(sqlConn, SELECT_UOW_BY_ID, params, resultSetFuture);
+
+      resultSetFuture.setHandler(resultSetAsyncResult -> {
+        if (resultSetAsyncResult.failed()) {
+          getFuture.fail(resultSetAsyncResult.cause());
+          return;
+        }
+
+        ResultSet rs = resultSetAsyncResult.result();
 
         val rows = rs.getRows();
 
         if (rows.size() == 0 ) {
-          handler.handle(Optional.empty());
+          getFuture.complete(Optional.empty());
         } else {
           for (JsonObject row : rows) {
             val command = Json.decodeValue(row.getString(CMD_DATA), Command.class);
             final List<Event> events = readEvents(row.getString(UOW_EVENTS));
             val uow = new UnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
                     new Version(row.getLong(VERSION)), events);
-            handler.handle(Optional.of(uow));
+            getFuture.complete(Optional.of(uow));
           }
         }
 
@@ -83,7 +104,7 @@ public class VertxUnitOfWorkRepository {
   }
 
   public void selectAfterVersion(@NonNull final String id, @NonNull final Version version,
-                                 @NonNull final Handler<SnapshotData> handler) {
+                                 @NonNull final Future<SnapshotData> selectAfterVersionFuture) {
 
     log.info("will load id [{}] after version [{}]", id, version.getValueAsLong());
 
@@ -98,12 +119,23 @@ public class VertxUnitOfWorkRepository {
     client.getConnection(getConn -> {
 
       if (getConn.failed()) {
-        throw new RuntimeException(getConn.cause());
+        selectAfterVersionFuture.fail(getConn.cause());
+        return;
       }
 
       val sqlConn = getConn.result();
 
-      queryStreamWithParams(sqlConn, SELECT_AFTER_VERSION, params, stream -> {
+      Future<SQLRowStream> streamFuture = Future.future();
+
+      queryStreamWithParams(sqlConn, SELECT_AFTER_VERSION, params, streamFuture);
+
+      streamFuture.setHandler(ar -> {
+        if (ar.failed()) {
+          selectAfterVersionFuture.fail(ar.cause());
+          return;
+        }
+
+        SQLRowStream stream = ar.result();
 
         val list = new ArrayList<SnapshotData>() ;
 
@@ -130,7 +162,7 @@ public class VertxUnitOfWorkRepository {
             final List<Event> flatMappedToEvents = list.stream()
                     .flatMap(sd -> sd.getEvents().stream()).collect(Collectors.toList());
 
-            handler.handle(new SnapshotData(finalVersion, flatMappedToEvents));
+            selectAfterVersionFuture.complete(new SnapshotData(finalVersion, flatMappedToEvents));
 
             sqlConn.close(done -> {
 
@@ -142,12 +174,12 @@ public class VertxUnitOfWorkRepository {
 
           });
 
-        });
-
       });
+
+    });
   }
 
-  public void append(@NonNull final UnitOfWork unitOfWork, Handler<Either<Throwable, Long>> handler) {
+  public void append(@NonNull final UnitOfWork unitOfWork, Future<Either<Throwable, Long>> appendFuture) {
 
     val SELECT_CURRENT_VERSION =
             "select max(version) as last_version from units_of_work where ar_id = ? and ar_name = ? ";
@@ -160,13 +192,21 @@ public class VertxUnitOfWorkRepository {
     client.getConnection(conn -> {
 
       if (conn.failed()) {
-        throw new RuntimeException(conn.cause());
+        appendFuture.fail(conn.cause());
       }
 
       val sqlConn = conn.result();
 
-      // start a transaction 
-      startTx(sqlConn, startTx -> {
+      Future<Void> startTxFuture = Future.future();
+
+      // start a transaction
+      startTx(sqlConn, startTxFuture);
+
+      startTxFuture.setHandler(startTxAsyncResult -> {
+        if (startTxAsyncResult.failed()) {
+          appendFuture.fail(startTxAsyncResult.cause());
+          return;
+        }
 
         // check current version  // TODO also check if command was not already processed given the commandId
 
@@ -174,8 +214,17 @@ public class VertxUnitOfWorkRepository {
                 .add(unitOfWork.targetId().getStringValue())
                 .add(aggregateRootName);
 
-        queryWithParams(sqlConn, SELECT_CURRENT_VERSION, params1, rs -> {
+        Future<ResultSet> resultSetFuture = Future.future();
 
+        queryWithParams(sqlConn, SELECT_CURRENT_VERSION, params1, resultSetFuture);
+
+        resultSetFuture.setHandler(asyncResultResultSet -> {
+          if (asyncResultResultSet.failed()) {
+            appendFuture.fail(asyncResultResultSet.cause());
+            return;
+          }
+
+          ResultSet rs = asyncResultResultSet.result();
           Long currentVersion = rs.getRows().get(0).getLong("last_version");
 
           currentVersion = currentVersion == null ? 0L : currentVersion;
@@ -189,7 +238,7 @@ public class VertxUnitOfWorkRepository {
                             unitOfWork.targetId().getStringValue(),
                             currentVersion, unitOfWork.getVersion().getValueAsLong())) ;
 
-            handler.handle(Eithers.left(error));
+            appendFuture.complete(Eithers.left(error));
 
             // and close the connection
             sqlConn.close(done -> {
@@ -215,12 +264,30 @@ public class VertxUnitOfWorkRepository {
                   .add(aggregateRootName)
                   .add(unitOfWork.getVersion().getValueAsLong());
 
-          updateWithParams(sqlConn, INSERT_UOW, params2, updateResult -> {
+          Future<UpdateResult> updateResultFuture = Future.future();
 
-            handler.handle(Eithers.right(updateResult.getKeys().getLong(0)));
+          updateWithParams(sqlConn, INSERT_UOW, params2, updateResultFuture);
+
+          updateResultFuture.setHandler(asyncResultUpdateResult -> {
+            if (asyncResultUpdateResult.failed()) {
+              appendFuture.fail(asyncResultUpdateResult.cause());
+              return;
+            }
+
+            UpdateResult updateResult = asyncResultUpdateResult.result();
+
+            Future<Void> commitFuture = Future.future();
 
             // commit data
-            commitTx(sqlConn, commitTrans -> {
+            commitTx(sqlConn, commitFuture);
+
+            commitFuture.setHandler(commitAsyncResult -> {
+              if (commitAsyncResult.failed()) {
+                appendFuture.fail(commitAsyncResult.cause());
+                return;
+              }
+
+              appendFuture.complete(Eithers.right(updateResult.getKeys().getLong(0)));
 
               // and close the connection
               sqlConn.close(done -> {

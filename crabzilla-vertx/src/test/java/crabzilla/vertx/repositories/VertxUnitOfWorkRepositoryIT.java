@@ -12,9 +12,12 @@ import crabzilla.example1.aggregates.customer.commands.ActivateCustomerCmd;
 import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
 import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
+import crabzilla.model.Either;
+import crabzilla.model.SnapshotData;
 import crabzilla.model.UnitOfWork;
 import crabzilla.model.Version;
 import crabzilla.vertx.util.DbConcurrencyException;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.ext.jdbc.JDBCClient;
@@ -114,8 +117,17 @@ public class VertxUnitOfWorkRepositoryIT {
 
     Async async = tc.async();
 
-    repo.append(expectedUow1, appendResult -> {
+    Future<Either<Throwable, Long>> appendFuture = Future.future();
 
+    repo.append(expectedUow1, appendFuture);
+
+    appendFuture.setHandler(appendAsyncResult -> {
+      if (appendAsyncResult.failed()) {
+        fail("error repo.append", appendAsyncResult.cause());
+        return;
+      }
+
+      Either<Throwable,Long> appendResult = appendAsyncResult.result();
       appendResult.match(throwable -> {
         fail("error", throwable);
         return null;
@@ -124,8 +136,17 @@ public class VertxUnitOfWorkRepositoryIT {
         return null;
       });
 
-      repo.get(expectedUow1.getUnitOfWorkId(), (Optional<UnitOfWork> uow) -> {
+      Future<Optional<UnitOfWork>> uowFuture = Future.future();
 
+      repo.get(expectedUow1.getUnitOfWorkId(), uowFuture);
+
+      uowFuture.setHandler(uowAsyncResult -> {
+        if (uowAsyncResult.failed()) {
+          fail("error repo.get", uowAsyncResult.cause());
+          return;
+        }
+
+        Optional<UnitOfWork> uow = uowAsyncResult.result();
         log.debug("uow {}", uow);
 
         if (uow.isPresent()) {
@@ -134,8 +155,17 @@ public class VertxUnitOfWorkRepositoryIT {
           fail("not found");
         }
 
-        repo.selectAfterVersion(expectedUow1.targetId().getStringValue(), Version.VERSION_ZERO, data -> {
+        Future<SnapshotData> snapshotDataFuture = Future.future();
 
+        repo.selectAfterVersion(expectedUow1.targetId().getStringValue(), Version.VERSION_ZERO, snapshotDataFuture);
+
+        snapshotDataFuture.setHandler(snapshotDataAsyncResult -> {
+          if (snapshotDataAsyncResult.failed()) {
+            fail("error repo.selectAfterVersion", snapshotDataAsyncResult.cause());
+            return;
+          }
+
+          SnapshotData data = snapshotDataAsyncResult.result();
           log.debug("data {}", data);
           assertThat(data.getVersion()).isEqualTo(expectedUow1.getVersion());
           assertThat(data.getEvents()).isEqualTo(expectedUow1.getEvents());
@@ -143,11 +173,8 @@ public class VertxUnitOfWorkRepositoryIT {
           async.complete();
 
         });
-
       });
-
     });
-
   }
 
   @Test
@@ -155,8 +182,17 @@ public class VertxUnitOfWorkRepositoryIT {
 
     Async async = tc.async();
 
-    repo.append(expectedUow2, appendResult -> {
+    Future<Either<Throwable, Long>> appendFuture = Future.future();
 
+    repo.append(expectedUow2, appendFuture);
+
+    appendFuture.setHandler(appendAsyncResult -> {
+      if (appendAsyncResult.failed()) {
+        fail("error repo.append", appendAsyncResult.cause());
+        return;
+      }
+
+      Either<Throwable, Long> appendResult = appendAsyncResult.result();
       appendResult.match(throwable -> {
         fail("error", throwable);
         return null;
@@ -165,18 +201,37 @@ public class VertxUnitOfWorkRepositoryIT {
         return null;
       });
 
-      repo.get(expectedUow2.getUnitOfWorkId(), (Optional<UnitOfWork> uow) -> {
+      Future<Optional<UnitOfWork>> uowFuture = Future.future();
 
+      repo.get(expectedUow2.getUnitOfWorkId(), uowFuture);
+
+      uowFuture.setHandler(uowAsyncResult -> {
+        if (uowAsyncResult.failed()) {
+          fail("error repo.get", uowAsyncResult.cause());
+          return;
+        }
+
+        Optional<UnitOfWork> uow = uowAsyncResult.result();
         log.debug("uow {}", uow);
 
         if (uow.isPresent()) {
           assertThat(uow.get()).isEqualTo(expectedUow2);
         } else {
-          throw new RuntimeException("not found");
+          fail("not found");
+          return;
         }
 
-        repo.selectAfterVersion(expectedUow2.targetId().getStringValue(), new Version(1), data -> {
+        Future<SnapshotData> snapshotDataFuture = Future.future();
 
+        repo.selectAfterVersion(expectedUow2.targetId().getStringValue(), new Version(1), snapshotDataFuture);
+
+        snapshotDataFuture.setHandler(snapshotDataAsyncResult -> {
+          if (snapshotDataAsyncResult.failed()) {
+            fail("error repo.selectAfterVersion", snapshotDataAsyncResult.cause());
+            return;
+          }
+
+          SnapshotData data = snapshotDataAsyncResult.result();
           log.debug("data {}", data);
           assertThat(data.getVersion()).isEqualTo(expectedUow2.getVersion());
           assertThat(data.getEvents()).isEqualTo(expectedUow2.getEvents());
@@ -184,11 +239,9 @@ public class VertxUnitOfWorkRepositoryIT {
           async.complete();
 
         });
-
       });
 
     });
-
   }
 
   @Test
@@ -196,20 +249,28 @@ public class VertxUnitOfWorkRepositoryIT {
 
     Async async = tc.async();
 
-      repo.append(expectedUow2, appendResult -> {
+    Future<Either<Throwable, Long>> appendFuture = Future.future();
 
-        appendResult.match(throwable -> {
-          assertThat(throwable).isInstanceOf(DbConcurrencyException.class);
-          return null;
-        }, (Function<Long, Void>) uowSequence -> {
-          fail("should get DbConcurrencyException");
-          return null;
-        });
+    repo.append(expectedUow2, appendFuture);
 
-        async.complete();
+    appendFuture.setHandler(appendAsyncResult -> {
+      if (appendAsyncResult.failed()) {
+        fail("should get DbConcurrencyException");
+        return;
+      }
 
+      Either<Throwable, Long> appendResult = appendAsyncResult.result();
+      appendResult.match(throwable -> {
+        assertThat(throwable).isInstanceOf(DbConcurrencyException.class);
+        return null;
+      }, (Function<Long, Void>) uowSequence -> {
+        fail("should get DbConcurrencyException");
+        return null;
       });
 
+      async.complete();
+
+    });
   }
 
 }
