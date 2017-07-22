@@ -16,6 +16,7 @@ import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.eventbus.ReplyException;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -156,6 +157,111 @@ public class CommandHandlerVerticleTest {
 
   }
 
+  @Test
+  public void UNEXPECTED_ERROR_selectAfterVersion_scenario(TestContext tc) {
+
+    Async async = tc.async();
+
+    val customerId = new CustomerId("customer#1");
+    val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
+    val initialSnapshot = new Snapshot<Customer>(new CustomerSupplierFn().get(), new Version(0));
+    val expectedException = new Throwable("Expected");
+
+    when(cache.getIfPresent(eq(customerId.getStringValue()))).thenReturn(null);
+    when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
+
+    doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
+            future.fail(expectedException)))
+            .when(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+                                                      eq(initialSnapshot.getVersion()),
+                                                      any(Future.class));
+
+    when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
+
+    val options = new DeliveryOptions().setCodecName("Command");
+
+    vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+
+      InOrder inOrder = inOrder(validatorFn, eventRepository);
+
+      inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
+
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+                                                         eq(initialSnapshot.getVersion()),
+                                                         any());
+
+      verifyNoMoreInteractions(validatorFn, eventRepository);
+
+      tc.assertTrue(asyncResult.failed());
+
+      val replyException = (ReplyException) asyncResult.cause();
+      tc.assertEquals(replyException.failureCode(), 400);
+      tc.assertEquals(replyException.getMessage(), expectedException.getMessage());
+
+      async.complete();
+
+    });
+
+  }
+
+  @Test
+  public void UNEXPECTED_ERROR_append_scenario(TestContext tc) {
+
+    Async async = tc.async();
+
+    val customerId = new CustomerId("customer#1");
+    val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
+    val initialSnapshot = new Snapshot<Customer>(new CustomerSupplierFn().get(), new Version(0));
+    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
+    val expectedUow = UnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    val expectedException = new Throwable("Expected");
+
+    when(cache.getIfPresent(eq(customerId.getStringValue()))).thenReturn(null);
+    when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
+
+    doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
+            future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
+            .when(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+                                                      eq(initialSnapshot.getVersion()),
+                                                      any(Future.class));
+
+    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Future<Either<Throwable, Long>>>) (uow, future) ->
+            future.fail(expectedException)))
+            .when(eventRepository).append(eq(expectedUow), any(Future.class));
+
+    when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
+    when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(initialSnapshot)))
+            .thenReturn(Eithers.right(Optional.of(expectedUow)));
+
+    val options = new DeliveryOptions().setCodecName("Command");
+
+    vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+
+      InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
+
+      inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
+
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+                                                         eq(initialSnapshot.getVersion()),
+                                                         any());
+
+      inOrder.verify(cmdHandlerFn).apply(eq(createCustomerCmd), eq(initialSnapshot));
+
+      inOrder.verify(eventRepository).append(eq(expectedUow), any());
+
+      verifyNoMoreInteractions(validatorFn, eventRepository, cmdHandlerFn);
+
+      tc.assertTrue(asyncResult.failed());
+
+      val replyException = (ReplyException) asyncResult.cause();
+      tc.assertEquals(replyException.failureCode(), 400);
+      tc.assertEquals(replyException.getMessage(), expectedException.getMessage());
+
+      async.complete();
+
+    });
+
+  }
 
   @Test
   public void CONCURRENCY_ERROR_scenario(TestContext tc) {
