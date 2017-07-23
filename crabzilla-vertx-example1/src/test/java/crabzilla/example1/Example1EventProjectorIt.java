@@ -51,7 +51,7 @@ public class Example1EventProjectorIt {
     val id = new CustomerId("customer#1");
     val event1 = new CustomerCreated(id,  "customer1");
     val event2 = new CustomerActivated("a good reason", Instant.now());
-    val projectionData = new ProjectionData(UUID.randomUUID().toString(), 1L, id.getStringValue(), asList(event1, event2));
+    val projectionData = new ProjectionData(UUID.randomUUID(), 1L, id.getStringValue(), asList(event1, event2));
 
     eventProjector.handle(singletonList(projectionData));
 

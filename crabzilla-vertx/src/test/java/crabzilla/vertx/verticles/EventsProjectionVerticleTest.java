@@ -80,7 +80,7 @@ public class EventsProjectionVerticleTest {
                                        .addHeader("uowSequence", uowSequence + "");
 
     val projectionData =
-            new ProjectionData(expectedUow.getUnitOfWorkId().toString(), uowSequence,
+            new ProjectionData(expectedUow.getUnitOfWorkId(), uowSequence,
                     expectedUow.targetId().getStringValue(), expectedUow.getEvents());
 
     vertx.eventBus().send(eventsHandlerId("example1"), expectedUow, options, asyncResult -> {

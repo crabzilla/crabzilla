@@ -13,6 +13,8 @@ import lombok.val;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import java.util.UUID;
+
 import static crabzilla.vertx.util.StringHelper.eventsHandlerId;
 import static java.util.Collections.singletonList;
 
@@ -51,7 +53,7 @@ public class EventsProjectionVerticle extends AbstractVerticle {
         val uow = msg.body();
         val uowSequence = new Long(msg.headers().get("uowSequence"));
         val projectionData =
-                new ProjectionData(uow.getUnitOfWorkId().toString(), uowSequence,
+                new ProjectionData(uow.getUnitOfWorkId(), uowSequence,
                         uow.targetId().getStringValue(), uow.getEvents());
 
         circuitBreaker.fallback(throwable -> {

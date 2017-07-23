@@ -231,6 +231,8 @@ public class VertxUnitOfWorkRepository {
 
           log.info("Found version  {}", currentVersion);
 
+          // apply optimistic locking
+
           if (currentVersion != unitOfWork.getVersion().getValueAsLong() - 1) {
 
             val error = new DbConcurrencyException (

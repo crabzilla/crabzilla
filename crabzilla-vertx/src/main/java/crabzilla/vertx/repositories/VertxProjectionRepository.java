@@ -13,6 +13,7 @@ import lombok.val;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.BiFunction;
 
 @Slf4j
@@ -48,7 +49,7 @@ public class VertxProjectionRepository implements BiFunction<Long, Integer, List
             stream.result().handler(row -> {
               // uow_id, uow_seq_number, ar_id, uow_events
               val events = readEvents(row.getString(3));
-              val projectionData = new ProjectionData(row.getString(0), row.getLong(1),
+              val projectionData = new ProjectionData(UUID.fromString(row.getString(0)), row.getLong(1),
                       row.getString(2), events);
               result.add(projectionData);
             });
