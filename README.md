@@ -2,6 +2,10 @@
 
 Yet another Event Sourcing experiment
 
+# krabzilla
+
+https://github.com/crabzilla/krabzilla is based on this work but with some parts rewriten in Kotlin and inspired on http://eventstorming.com/
+
 ## Status
 
 Currently it's just some code with poor test coverage but the "~~dirty~~ explorations phase" is probably done. I think the future is more predictable: to write tests, documents, refactor, etc 
