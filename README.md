@@ -4,7 +4,7 @@ Yet another Event Sourcing experiment
 
 # krabzilla
 
-https://github.com/crabzilla/krabzilla is based on this work but with some parts rewriten in Kotlin and inspired on http://eventstorming.com/
+https://github.com/crabzilla/krabzilla is based on this work but with some parts rewriten in Kotlin and inspired by http://eventstorming.com/
 
 ## Status
 
