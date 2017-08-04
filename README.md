@@ -2,6 +2,10 @@
 
 Yet another Event Sourcing experiment
 
+# krabzilla
+
+https://github.com/crabzilla/krabzilla is a Kotlin version of Crabzilla. Both projects will coexist and leverage enhancements from each other.  
+
 ## Status
 
 Currently it's just some code with poor test coverage but the "~~dirty~~ explorations phase" is probably done. I think the future is more predictable: to write tests, documents, refactor, etc 
