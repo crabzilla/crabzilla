@@ -29,15 +29,7 @@ Ideally your domain model code will be built of immutable data and plain functio
 
 ## How to run the example
 
-1. Clone [crabzilla-dependencies](https://github.com/crabzilla/crabzilla-dependencies) and build it:
-
-```bash
-git clone https://github.com/crabzilla/crabzilla-dependencies
-cd crabzilla-dependencies
-mvn clean install 
-```
-
-2. Clone Crabzilla and build it running unit tests but skipping integration tests:
+1. Clone Crabzilla and build it running unit tests but skipping integration tests:
 
 ```bash
 git clone https://github.com/crabzilla/crabzilla
@@ -72,10 +64,10 @@ cd ../..
 mvn verify -DskipUTs=true 
 ```
 
-6. Now you finally can run the current [example](crabzilla-vertx-example1/src/main/java/crabzilla/example1/Example1Launcher.java):
+6. Now you finally can run the current [example](crabzilla-example1/crabzilla-example1-service/src/main/java/crabzilla/example1/Example1Launcher.java):
 
 ```bash
-java -jar crabzilla-vertx-example1/target/crabzilla-vertx-example1-1.0-SNAPSHOT-fat.jar 
+java -jar crabzilla-example1-service/target/crabzilla-example1-service-1.0-SNAPSHOT-fat.jar
 ```
 
 ## Wiki 
