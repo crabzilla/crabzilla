@@ -1,6 +1,5 @@
 package crabzilla.vertx.verticles;
 
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.CustomerSupplierFn;
@@ -22,6 +21,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import lombok.Value;
 import lombok.val;
+import net.jodah.expiringmap.ExpiringMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,7 +56,7 @@ public class CommandHandlerVerticleTest {
   CircuitBreaker circuitBreaker;
 
   @Mock
-  LoadingCache<String, Snapshot<Customer>> cache;
+  ExpiringMap<String, Snapshot<Customer>> cache;
   @Mock
   Function<Command, List<String>> validatorFn;
   @Mock
@@ -103,7 +103,7 @@ public class CommandHandlerVerticleTest {
     val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
     val expectedUow = UnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
-    when(cache.getIfPresent(eq(customerId.getStringValue()))).thenReturn(null);
+    when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
@@ -167,7 +167,7 @@ public class CommandHandlerVerticleTest {
     val initialSnapshot = new Snapshot<Customer>(new CustomerSupplierFn().get(), new Version(0));
     val expectedException = new Throwable("Expected");
 
-    when(cache.getIfPresent(eq(customerId.getStringValue()))).thenReturn(null);
+    when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
@@ -216,7 +216,7 @@ public class CommandHandlerVerticleTest {
     val expectedUow = UnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
     val expectedException = new Throwable("Expected");
 
-    when(cache.getIfPresent(eq(customerId.getStringValue()))).thenReturn(null);
+    when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
@@ -274,7 +274,7 @@ public class CommandHandlerVerticleTest {
     val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
     val expectedUow = UnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
-    when(cache.getIfPresent(eq(customerId.getStringValue()))).thenReturn(null);
+    when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
@@ -334,7 +334,7 @@ public class CommandHandlerVerticleTest {
     val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
     val expectedUow = UnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
-    when(cache.getIfPresent(eq(customerId.getStringValue()))).thenReturn(null);
+    when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
@@ -429,7 +429,7 @@ public class CommandHandlerVerticleTest {
     val createCustomerCmd = new UnknownCommand(UUID.randomUUID(), customerId);
     val initialSnapshot = new Snapshot<Customer>(new CustomerSupplierFn().get(), new Version(0));
 
-    when(cache.getIfPresent(eq(customerId.getStringValue()))).thenReturn(null);
+    when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->

@@ -1,7 +1,6 @@
 package crabzilla.example1.aggregates;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
+
 import crabzilla.example1.aggregates.customer.*;
 import crabzilla.example1.services.SampleService;
 import crabzilla.model.*;
@@ -14,6 +13,7 @@ import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
 import io.vertx.ext.jdbc.JDBCClient;
 import lombok.val;
+import net.jodah.expiringmap.ExpiringMap;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -72,11 +72,10 @@ public class CustomerFactory implements VertxAggregateRootComponentsFactory<Cust
   @Override
   public CommandHandlerVerticle<Customer> cmdHandlerVerticle() {
 
-    final LoadingCache<String, Snapshot<Customer>> cache = Caffeine.newBuilder()
-            .maximumSize(10_000)
-            .expireAfterWrite(5, TimeUnit.MINUTES)
-            .build(key -> null); // TODO you can plug your snapshot here!
-
+    final ExpiringMap<String, Snapshot<Customer>> cache = ExpiringMap.builder()
+                                                    .expiration(5, TimeUnit.MINUTES)
+                                                    .maxSize(10_000)
+                                                    .build();
     val circuitBreaker = CircuitBreaker.create(circuitBreakerId(Customer.class), vertx,
             new CircuitBreakerOptions()
                     .setMaxFailures(5) // number SUCCESS failure before opening the circuit

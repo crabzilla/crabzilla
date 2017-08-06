@@ -1,6 +1,5 @@
 package crabzilla.vertx.verticles;
 
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import crabzilla.model.*;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
@@ -10,6 +9,7 @@ import io.vertx.core.eventbus.Message;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import net.jodah.expiringmap.ExpiringMap;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +26,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   final Class<A> aggregateRootClass;
   final BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandler;
   final Function<Command, List<String>> validatorFn;
-  final LoadingCache<String, Snapshot<A>> cache;
+  final ExpiringMap<String, Snapshot<A>> cache;
   final Snapshotter<A> snapshotter;
 
   final VertxUnitOfWorkRepository eventRepository;
@@ -38,7 +38,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
                                 @NonNull final Function<Command, List<String>> validatorFn,
                                 @NonNull final Snapshotter<A> snapshotter,
                                 @NonNull final VertxUnitOfWorkRepository eventRepository,
-                                @NonNull final LoadingCache<String, Snapshot<A>> cache,
+                                @NonNull final ExpiringMap<String, Snapshot<A>> cache,
                                 @NonNull final Vertx vertx,
                                 @NonNull final CircuitBreaker circuitBreaker) {
     this.aggregateRootClass = aggregateRootClass;
@@ -101,7 +101,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
       log.debug("cache.get(id)", targetId);
 
-      val snapshotFromCache = cache.getIfPresent(targetId);
+      val snapshotFromCache = cache.get(targetId);
 
       val cachedSnapshot = snapshotFromCache == null ? snapshotter.getEmptySnapshot() : snapshotFromCache;
 
