@@ -4,7 +4,7 @@ Yet another Event Sourcing experiment
 
 # krabzilla
 
-https://github.com/crabzilla/krabzilla is a Kotlin version of Crabzilla. Both projects will coexist and leverage enhancements from each other.  
+[Krabzilla](https://github.com/crabzilla/krabzilla) is a Kotlin version of Crabzilla. Both projects should coexist and leverage enhancements from each other.
 
 ## Status
 
