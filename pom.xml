@@ -36,7 +36,6 @@
         <module>crabzilla-core</module>
         <module>crabzilla-example1</module>
         <module>crabzilla-vertx</module>
-        <module>crabzilla-vertx-example1</module>
 
     </modules>
 

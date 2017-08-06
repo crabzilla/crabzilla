@@ -15,6 +15,7 @@
     <modules>
         <module>crabzilla-example1-core</module>
         <module>crabzilla-example1-database</module>
+        <module>crabzilla-example1-service</module>
     </modules>
 
     <properties>
