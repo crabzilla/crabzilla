@@ -67,7 +67,7 @@ mvn verify -DskipUTs=true
 6. Now you finally can run the current [example](crabzilla-example1/crabzilla-example1-service/src/main/java/crabzilla/example1/Example1Launcher.java):
 
 ```bash
-java -jar crabzilla-example1-service/target/crabzilla-example1-service-1.0-SNAPSHOT-fat.jar
+java -jar crabzilla-example1/crabzilla-example1-service/target/crabzilla-example1-service-1.0-SNAPSHOT-fat.jar
 ```
 
 ## Wiki 
