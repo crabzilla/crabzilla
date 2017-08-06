@@ -1,4 +1,6 @@
-# crabzilla 
+[![Build Status](https://travis-ci.org/crabzilla/crabzilla.svg?branch=master)](https://travis-ci.org/crabzilla/crabzilla)
+
+# crabzilla
 
 Yet another Event Sourcing experiment
 
