@@ -2,7 +2,7 @@ package crabzilla.example1.aggregates;
 
 
 import crabzilla.example1.aggregates.customer.*;
-import crabzilla.example1.services.SampleService;
+import crabzilla.example1.services.SampleInternalService;
 import crabzilla.model.*;
 import crabzilla.vertx.VertxAggregateRootComponentsFactory;
 import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
@@ -27,12 +27,12 @@ import static crabzilla.vertx.util.StringHelper.circuitBreakerId;
 
 public class CustomerFactory implements VertxAggregateRootComponentsFactory<Customer> {
 
-  private final SampleService service;
+  private final SampleInternalService service;
   private final Vertx vertx;
   private final JDBCClient jdbcClient;
 
   @Inject
-  public CustomerFactory(SampleService service, Vertx vertx, JDBCClient jdbcClient) {
+  public CustomerFactory(SampleInternalService service, Vertx vertx, JDBCClient jdbcClient) {
     this.service = service;
     this.vertx = vertx;
     this.jdbcClient = jdbcClient;
@@ -66,7 +66,7 @@ public class CustomerFactory implements VertxAggregateRootComponentsFactory<Cust
 
   @Override
   public CommandRestVerticle<Customer> restVerticle() {
-    return new CommandRestVerticle<>(vertx, Customer.class);
+    return new CommandRestVerticle<>(Customer.class);
   }
 
   @Override
@@ -85,7 +85,7 @@ public class CustomerFactory implements VertxAggregateRootComponentsFactory<Cust
     );
 
     return new CommandHandlerVerticle<>(Customer.class, cmdHandlerFn(),
-            cmdValidatorFn(), snapshotter(), uowRepository(), cache, vertx, circuitBreaker);
+            cmdValidatorFn(), snapshotter(), uowRepository(), cache, circuitBreaker);
   }
 
   @Override

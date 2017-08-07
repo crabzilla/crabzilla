@@ -81,7 +81,7 @@ public class CommandHandlerVerticleTest {
     );
 
     val verticle = new CommandHandlerVerticle<Customer>(Customer.class, cmdHandlerFn,
-                              validatorFn, snapshotter, eventRepository, cache, vertx, circuitBreaker);
+                              validatorFn, snapshotter, eventRepository, cache, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
 

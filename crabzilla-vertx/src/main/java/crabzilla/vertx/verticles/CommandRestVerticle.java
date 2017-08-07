@@ -5,7 +5,6 @@ import crabzilla.model.Command;
 import crabzilla.vertx.CommandExecution;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpMethod;
@@ -25,11 +24,9 @@ import static crabzilla.vertx.util.StringHelper.*;
 @Slf4j
 public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVerticle {
 
-  final Vertx vertx;
   final Class<A> aggregateRootClass;
 
-  public CommandRestVerticle(Vertx vertx, @NonNull Class<A> aggregateRootClass) {
-    this.vertx = vertx;
+  public CommandRestVerticle(@NonNull Class<A> aggregateRootClass) {
     this.aggregateRootClass = aggregateRootClass;
   }
 

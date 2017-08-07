@@ -4,7 +4,10 @@ import crabzilla.model.*;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
 import io.vertx.circuitbreaker.CircuitBreaker;
-import io.vertx.core.*;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +33,6 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   final Snapshotter<A> snapshotter;
 
   final VertxUnitOfWorkRepository eventRepository;
-  final Vertx vertx;
   final CircuitBreaker circuitBreaker;
 
   public CommandHandlerVerticle(@NonNull final Class<A> aggregateRootClass,
@@ -39,7 +41,6 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
                                 @NonNull final Snapshotter<A> snapshotter,
                                 @NonNull final VertxUnitOfWorkRepository eventRepository,
                                 @NonNull final ExpiringMap<String, Snapshot<A>> cache,
-                                @NonNull final Vertx vertx,
                                 @NonNull final CircuitBreaker circuitBreaker) {
     this.aggregateRootClass = aggregateRootClass;
     this.cmdHandler = cmdHandler;
@@ -47,7 +48,6 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
     this.snapshotter = snapshotter;
     this.eventRepository = eventRepository;
     this.cache = cache;
-    this.vertx = vertx;
     this.circuitBreaker = circuitBreaker;
   }
 

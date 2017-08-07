@@ -55,7 +55,7 @@ public class EventsProjectionVerticleTest {
                     .setResetTimeout(10000) // time spent in open state before attempting to re-try
     );
 
-    val verticle = new EventsProjectionVerticle(vertx, eventProjector, circuitBreaker);
+    val verticle = new EventsProjectionVerticle(eventProjector, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
 

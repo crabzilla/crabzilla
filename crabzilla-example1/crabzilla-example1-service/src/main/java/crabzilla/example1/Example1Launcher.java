@@ -1,6 +1,7 @@
 package crabzilla.example1;
 
 import com.google.inject.Guice;
+
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.ActivateCustomerCmd;
@@ -36,8 +37,7 @@ public class Example1Launcher {
   @Inject
   EventsProjectionVerticle projectionVerticle;
 
-  @Inject
-  Vertx vertx;
+  static Vertx vertx;
 
   public static void main(String args[]) throws InterruptedException {
 
@@ -49,7 +49,8 @@ public class Example1Launcher {
 
       if (res.succeeded()) {
 
-        Vertx vertx = res.result();
+        vertx = res.result();
+
         EventBus eventBus = vertx.eventBus();
         log.info("We now have a clustered event bus: " + eventBus);
 
@@ -59,10 +60,10 @@ public class Example1Launcher {
         Guice.createInjector(new Example1Module(vertx)).injectMembers(launcher);
 
         for (Map.Entry<String,Verticle> v: launcher.aggregateRootVerticles.entrySet()) {
-          launcher.vertx.deployVerticle(v.getValue(), event -> log.info("Deployed {} ? {}", v.getKey(), event.succeeded()));
+          vertx.deployVerticle(v.getValue(), event -> log.info("Deployed {} ? {}", v.getKey(), event.succeeded()));
         }
 
-        launcher.vertx.deployVerticle(launcher.projectionVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
+        vertx.deployVerticle(launcher.projectionVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
 
         // a test
         launcher.justForTest();

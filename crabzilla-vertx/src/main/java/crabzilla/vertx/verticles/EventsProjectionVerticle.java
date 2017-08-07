@@ -4,7 +4,10 @@ import crabzilla.model.UnitOfWork;
 import crabzilla.vertx.EventProjector;
 import crabzilla.vertx.ProjectionData;
 import io.vertx.circuitbreaker.CircuitBreaker;
-import io.vertx.core.*;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -13,23 +16,18 @@ import lombok.val;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import java.util.UUID;
-
 import static crabzilla.vertx.util.StringHelper.eventsHandlerId;
 import static java.util.Collections.singletonList;
 
 @Slf4j
 public class EventsProjectionVerticle extends AbstractVerticle {
 
-  final Vertx vertx;
   final EventProjector eventProjector;
   final CircuitBreaker circuitBreaker;
 
   @Inject
-  public EventsProjectionVerticle(@NonNull Vertx vertx,
-                                  @NonNull EventProjector eventProjector,
+  public EventsProjectionVerticle(@NonNull EventProjector eventProjector,
                                   @NonNull @Named("events-projection") CircuitBreaker circuitBreaker) {
-    this.vertx = vertx;
     this.eventProjector = eventProjector;
     this.circuitBreaker = circuitBreaker;
   }

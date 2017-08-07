@@ -3,7 +3,7 @@ package crabzilla.example1.aggregates.customer;
 import crabzilla.example1.aggregates.customer.events.CustomerActivated;
 import crabzilla.example1.aggregates.customer.events.CustomerCreated;
 import crabzilla.example1.aggregates.customer.events.CustomerDeactivated;
-import crabzilla.example1.services.SampleService;
+import crabzilla.example1.services.SampleInternalService;
 import crabzilla.model.AggregateRoot;
 import crabzilla.model.Event;
 import lombok.Value;
@@ -18,7 +18,7 @@ import static org.apache.commons.lang3.Validate.validState;
 @Wither
 public class Customer implements AggregateRoot {
 
-  transient SampleService service;
+  transient SampleInternalService service;
 
   CustomerId id;
   String name;
