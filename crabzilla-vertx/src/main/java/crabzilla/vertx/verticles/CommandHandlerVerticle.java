@@ -30,7 +30,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   final BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandler;
   final Function<Command, List<String>> validatorFn;
   final ExpiringMap<String, Snapshot<A>> cache;
-  final Snapshotter<A> snapshotter;
+  final SnapshotPromoter<A> snapshotter;
 
   final VertxUnitOfWorkRepository eventRepository;
   final CircuitBreaker circuitBreaker;
@@ -38,7 +38,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   public CommandHandlerVerticle(@NonNull final Class<A> aggregateRootClass,
                                 @NonNull final BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandler,
                                 @NonNull final Function<Command, List<String>> validatorFn,
-                                @NonNull final Snapshotter<A> snapshotter,
+                                @NonNull final SnapshotPromoter<A> snapshotter,
                                 @NonNull final VertxUnitOfWorkRepository eventRepository,
                                 @NonNull final ExpiringMap<String, Snapshot<A>> cache,
                                 @NonNull final CircuitBreaker circuitBreaker) {

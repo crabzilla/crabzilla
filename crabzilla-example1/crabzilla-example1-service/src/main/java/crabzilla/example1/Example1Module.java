@@ -60,9 +60,6 @@ class Example1Module extends AbstractModule {
     // services
     bind(SampleInternalService.class).to(SampleInternalServiceImpl.class).asEagerSingleton();
 
-    // bounded context
-    bind(Example1ComponentsFactory.class).asEagerSingleton();
-
     // exposes properties to guice
     setCfgProps();
 
@@ -90,8 +87,8 @@ class Example1Module extends AbstractModule {
 
   @Provides
   @Singleton
-  EventProjector eventsProjector(Example1ComponentsFactory f) {
-    return f.eventsProjector() ;
+  public EventProjector eventsProjector(Configuration jooq) {
+    return new Example1EventProjector("example1", jooq) ;
   }
 
   @Provides

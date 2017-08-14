@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 @Slf4j
-public class Snapshotter<A extends AggregateRoot> {
+public class SnapshotPromoter<A extends AggregateRoot> {
 
   final Supplier<A> supplier ;
   final StateTransitionsTrackerFactory<A> trackerFactory;
@@ -16,7 +16,7 @@ public class Snapshotter<A extends AggregateRoot> {
 
 
   @Inject
-  public Snapshotter(Supplier<A> supplier, StateTransitionsTrackerFactory<A> trackerFactory) {
+  public SnapshotPromoter(Supplier<A> supplier, StateTransitionsTrackerFactory<A> trackerFactory) {
     this.supplier = supplier;
     this.trackerFactory = trackerFactory;
     this.EMPTY_SNAPSHOT = new Snapshot<>(supplier.get(), new Version(0));

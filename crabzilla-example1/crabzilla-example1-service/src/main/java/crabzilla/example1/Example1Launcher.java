@@ -1,7 +1,6 @@
 package crabzilla.example1;
 
 import com.google.inject.Guice;
-
 import crabzilla.example1.aggregates.customer.Customer;
 import crabzilla.example1.aggregates.customer.CustomerId;
 import crabzilla.example1.aggregates.customer.commands.ActivateCustomerCmd;

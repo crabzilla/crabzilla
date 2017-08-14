@@ -20,5 +20,4 @@ public interface AggregateRootFunctionsFactory<A extends AggregateRoot> {
 
   BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandlerFn() ;
 
-  Snapshotter<A> snapshotter() ;
 }

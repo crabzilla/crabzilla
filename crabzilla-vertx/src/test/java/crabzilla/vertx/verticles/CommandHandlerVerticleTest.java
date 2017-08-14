@@ -64,7 +64,7 @@ public class CommandHandlerVerticleTest {
   @Mock
   VertxUnitOfWorkRepository eventRepository;
   @Mock
-  Snapshotter<Customer> snapshotter;
+  SnapshotPromoter<Customer> snapshotter;
 
   @Before
   public void setUp(TestContext context) {
