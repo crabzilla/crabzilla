@@ -9,10 +9,7 @@ public class CustomerSummary {
   String name;
   Boolean isActive;
 
-  public CustomerSummary() {
-    this.id = id;
-    this.name = name;
-    this.isActive = isActive;
+  public CustomerSummary() { // TODO @Data should create this, right?
   }
 
   public CustomerSummary(String id, String name, boolean isActive) {
@@ -20,5 +17,6 @@ public class CustomerSummary {
     this.name = name;
     this.isActive = isActive;
   }
+
 }
 
