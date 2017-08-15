@@ -22,7 +22,7 @@ import static javaslang.Predicates.instanceOf;
 
 public class CustomerFunctionsVavr {
   
-  public static class CustomerSupplierFn implements Supplier<Customer> {
+  public static class SupplierFn implements Supplier<Customer> {
     final Customer customer = new Customer(null, null,  null, false, null);
     @Override
     public Customer get() {
@@ -30,7 +30,7 @@ public class CustomerFunctionsVavr {
     }
   }
 
-  public static class CustomerStateTransitionFn implements BiFunction<DomainEvent, Customer, Customer> {
+  public static class StateTransitionFn implements BiFunction<DomainEvent, Customer, Customer> {
 
     public Customer apply(final DomainEvent event, final Customer instance) {
 
@@ -51,20 +51,20 @@ public class CustomerFunctionsVavr {
 
   // TODO consider an example with some real business logic (a CreditService, for example)
   @Slf4j
-  public static class CustomerCmdHandlerFnJavaslang
+  public static class CommandHandlerFn
           implements BiFunction<EntityCommand, Snapshot<Customer>, Either<Throwable, Optional<EntityUnitOfWork>>> {
 
     final StateTransitionsTrackerFactory<Customer> trackerFactory;
 
     @Inject
-    public CustomerCmdHandlerFnJavaslang(StateTransitionsTrackerFactory<Customer> trackerFactory) {
+    public CommandHandlerFn(StateTransitionsTrackerFactory<Customer> trackerFactory) {
       this.trackerFactory = trackerFactory;
     }
 
     @Override
     public Either<Throwable, Optional<EntityUnitOfWork>> apply(final EntityCommand cmd, final Snapshot<Customer> snapshot) {
 
-      CustomerCmdHandlerFnJavaslang.log.info("Will apply command {}", cmd);
+      CommandHandlerFn.log.info("Will apply command {}", cmd);
 
       try {
         val uow = handle(cmd, snapshot);
@@ -82,37 +82,33 @@ public class CustomerFunctionsVavr {
 
       final EntityUnitOfWork uow = Match(cmd).of(
 
-              Case(instanceOf(CustomerData.CreateCustomerCmd.class), (command) ->
+        Case(instanceOf(CustomerData.CreateCustomerCmd.class), (command) ->
+          unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.create(command.getTargetId(), command.getName()))
+        ),
 
-                      unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.create(command.getTargetId(), command.getName()))
-              ),
+        Case(instanceOf(CustomerData.ActivateCustomerCmd.class), (command) ->
+          unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.activate(command.getReason()))),
 
-              Case(instanceOf(CustomerData.ActivateCustomerCmd.class), (command) ->
+        Case(instanceOf(CustomerData.DeactivateCustomerCmd.class), (command) ->
+          unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.deactivate(command.getReason()))),
 
-                      unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.activate(command.getReason()))),
+        Case(instanceOf(CustomerData.CreateActivateCustomerCmd.class), (command) -> {
+          val tracker = trackerFactory.create(targetInstance);
+          val events = tracker
+                  .applyEvents(customer -> customer.create(command.getTargetId(), command.getName()))
+                  .applyEvents(customer -> customer.activate(command.getReason()))
+                  .collectEvents();
 
-              Case(instanceOf(CustomerData.DeactivateCustomerCmd.class), (command) ->
+          return unitOfWork(cmd, targetVersion.nextVersion(), events);
 
-                      unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.deactivate(command.getReason()))),
+        }),
 
-              Case(instanceOf(CustomerData.CreateActivateCustomerCmd.class), (command) -> {
+        Case($(), o -> {
 
-                val tracker = trackerFactory.create(targetInstance);
-                val events = tracker
-                        .applyEvents(customer -> customer.create(command.getTargetId(), command.getName()))
-                        .applyEvents(customer -> customer.activate(command.getReason()))
-                        .collectEvents();
+          CommandHandlerFn.log.warn("Can't apply command {}", cmd);
+          return null;
 
-                return unitOfWork(cmd, targetVersion.nextVersion(), events);
-
-              }),
-
-              Case($(), o -> {
-
-                CustomerCmdHandlerFnJavaslang.log.warn("Can't apply command {}", cmd);
-                return null;
-
-              })
+        })
 
       );
 
@@ -122,7 +118,7 @@ public class CustomerFunctionsVavr {
 
   }
 
-  public static class CreateCustomerCmdValidator {
+  public static class CreateCustomerValidator {
 
       private static final String VALID_NAME_CHARS = "[a-zA-Z ]";
 
@@ -154,11 +150,11 @@ public class CustomerFunctionsVavr {
 
     }
 
-  public static class CustomerCommandValidatorFn extends AbstractCommandValidatorFn {
+  public static class CommandValidatorFn extends AbstractCommandValidatorFn {
 
       public java.util.List<String> validate(CustomerData.CreateCustomerCmd cmd) {
 
-        val either = new CreateCustomerCmdValidator().validate(cmd).toEither();
+        val either = new CreateCustomerValidator().validate(cmd).toEither();
 
         return either.isRight() ? emptyList() : either.getLeft().toJavaList();
 

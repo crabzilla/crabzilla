@@ -97,7 +97,7 @@ public class CommandHandlerVerticleTest {
 
     val customerId = new CustomerData.CustomerId("customer#1");
     val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
-    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.CustomerSupplierFn().get(), new Version(0));
+    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
     val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
     val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
@@ -162,7 +162,7 @@ public class CommandHandlerVerticleTest {
 
     val customerId = new CustomerData.CustomerId("customer#1");
     val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
-    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.CustomerSupplierFn().get(), new Version(0));
+    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
     val expectedException = new Throwable("Expected");
 
     when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
@@ -209,7 +209,7 @@ public class CommandHandlerVerticleTest {
 
     val customerId = new CustomerData.CustomerId("customer#1");
     val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
-    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.CustomerSupplierFn().get(), new Version(0));
+    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
     val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
     val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
     val expectedException = new Throwable("Expected");
@@ -268,7 +268,7 @@ public class CommandHandlerVerticleTest {
 
     val customerId = new CustomerData.CustomerId("customer#1");
     val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
-    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.CustomerSupplierFn().get(), new Version(0));
+    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
     val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
     val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
@@ -328,7 +328,7 @@ public class CommandHandlerVerticleTest {
 
     val customerId = new CustomerData.CustomerId("customer#1");
     val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
-    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.CustomerSupplierFn().get(), new Version(0));
+    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
     val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
     val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
@@ -425,7 +425,7 @@ public class CommandHandlerVerticleTest {
 
     val customerId = new CustomerData.CustomerId("customer#1");
     val createCustomerCmd = new UnknownCommand(UUID.randomUUID(), customerId);
-    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.CustomerSupplierFn().get(), new Version(0));
+    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
 
     when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());

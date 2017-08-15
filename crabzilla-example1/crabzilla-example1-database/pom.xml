@@ -22,20 +22,22 @@
     <dependencies>
 
         <dependency>
+            <groupId>crabzilla</groupId>
+            <artifactId>crabzilla-example1-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3-sqlobject</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jooq</groupId>
-            <artifactId>jooq</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jooq</groupId>
-            <artifactId>jooq-meta</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jooq</groupId>
-            <artifactId>jooq-codegen</artifactId>
         </dependency>
 
     </dependencies>
@@ -63,99 +65,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>jooq</id>
-            <!--
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>-->
-            <!--<properties>-->
-            <!--<jdbc.user>${jdbc.user}</jdbc.user>-->
-            <!--<jdbc.password>${jdbc.password}</jdbc.password>-->
-            <!--<jdbc.url>${jdbc.url}</jdbc.url>-->
-            <!--<jdbc.driver>${jdbc.driver}</jdbc.driver>-->
-            <!--</properties>-->
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jooq</groupId>
-                        <artifactId>jooq-codegen-maven</artifactId>
-                        <version>3.9.2</version>
-                        <!-- The plugin should hook into the generate goal -->
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>generate</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <dependencies/>
-                        <configuration>
-                            <jdbc>
-                                <driver>${jdbc.driver}</driver>
-                                <url>${jdbc.url}</url>
-                                <user>${jdbc.user}</user>
-                                <password>${jdbc.password}</password>
-                            </jdbc>
-                            <generator>
-                                <database>
-                                    <name>org.jooq.util.mysql.MySQLDatabase</name>
-                                    <includes>.*</includes>
-                                    <excludes></excludes>
-                                    <inputSchema>example1db</inputSchema>
-                                    <unsignedTypes>false</unsignedTypes>
-                                    <forcedTypes>
-                                        <!--<forcedType>-->
-                                        <!--&lt;!&ndash; Specify any data type from org.jooq.impl.SQLDataType &ndash;&gt;-->
-                                        <!--<name>DECIMAL</name>-->
-                                        <!--&lt;!&ndash; Add a Java regular expression matching fully-qualified columns.-->
-                                        <!--Use the pipe to separate several expressions.-->
-                                        <!--If provided, both "expressions" and "types" must match. &ndash;&gt;-->
-                                        <!--<expressions></expressions>-->
-                                        <!--&lt;!&ndash; Add a Java regular expression matching data types to be forced to-->
-                                        <!--have this type. If provided, both "expressions" and "types" must match. &ndash;&gt;-->
-                                        <!--<types>.*</types>-->
-                                        <!--</forcedType>-->
-                                        <forcedType>
-                                            <!-- Specify any data type from org.jooq.impl.SQLDataType -->
-                                            <name>BOOLEAN</name>
-                                            <!-- Add a Java regular expression matching fully-qualified columns.
-                                            Use the pipe to separate several expressions.
-                                            If provided, both "expressions" and "types" must match. -->
-                                            <expressions>is_active</expressions>
-                                            <!-- Add a Java regular expression matching data types to be forced to
-                                            have this type. If provided, both "expressions" and "types" must match. -->
-                                            <types>.*</types>
-                                        </forcedType>
-                                        <!--<forcedType>-->
-                                        <!--&lt;!&ndash; Specify any data type from org.jooq.impl.SQLDataType &ndash;&gt;-->
-                                        <!--<name>INTEGER</name>-->
-                                        <!--&lt;!&ndash; Add a Java regular expression matching fully-qualified columns.-->
-                                        <!--Use the pipe to separate several expressions.-->
-                                        <!--If provided, both "expressions" and "types" must match. &ndash;&gt;-->
-                                        <!--<expressions>|</expressions>-->
-                                        <!--&lt;!&ndash; Add a Java regular expression matching data types to be forced to-->
-                                        <!--have this type. If provided, both "expressions" and "types" must match. &ndash;&gt;-->
-                                        <!--<types>.*</types>-->
-                                        <!--</forcedType>-->
-                                    </forcedTypes>
-                                </database>
-                                <target>
-                                    <packageName>example1.datamodel</packageName>
-                                    <directory>src/main/java</directory>
-                                </target>
-                                <generate>
-                                    <pojos>true</pojos>
-                                    <fluentSetters>true</fluentSetters>
-                                </generate>
-                            </generator>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
 </project>

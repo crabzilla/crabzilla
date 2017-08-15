@@ -22,7 +22,7 @@ public class StateTransitionsTrackerTest {
 
   StateTransitionsTracker<Customer> tracker;
 
-  Supplier<Customer> supplier = new CustomerFunctions.CustomerSupplierFn();
+  Supplier<Customer> supplier = new CustomerFunctions.SupplierFn();
 
   @BeforeEach
   void instantiate() {
@@ -31,7 +31,7 @@ public class StateTransitionsTrackerTest {
 
   @Test
   public void can_be_instantiated() {
-    new StateTransitionsTracker<>(supplier.get(), new CustomerFunctionsVavr.CustomerStateTransitionFn(), customer -> customer);
+    new StateTransitionsTracker<>(supplier.get(), new CustomerFunctionsVavr.StateTransitionFn(), customer -> customer);
   }
 
   @Nested
@@ -40,7 +40,7 @@ public class StateTransitionsTrackerTest {
 
     @BeforeEach
     void instantiate() {
-      tracker = new StateTransitionsTracker<>(supplier.get(), new CustomerFunctionsVavr.CustomerStateTransitionFn(), customer -> customer);
+      tracker = new StateTransitionsTracker<>(supplier.get(), new CustomerFunctionsVavr.StateTransitionFn(), customer -> customer);
     }
 
     @Test
@@ -122,7 +122,7 @@ public class StateTransitionsTrackerTest {
     @BeforeEach
     void instantiate() {
       // given
-      tracker = new StateTransitionsTracker<>(supplier.get(), new CustomerFunctionsVavr.CustomerStateTransitionFn(), customer -> customer);
+      tracker = new StateTransitionsTracker<>(supplier.get(), new CustomerFunctionsVavr.StateTransitionFn(), customer -> customer);
       // when
       tracker.applyEvents(c -> asList(customerCreated, customerActivated));
     }

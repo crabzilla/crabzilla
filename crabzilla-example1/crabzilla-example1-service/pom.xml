@@ -16,11 +16,6 @@
 
         <dependency>
             <groupId>crabzilla</groupId>
-            <artifactId>crabzilla-example1-core</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>crabzilla</groupId>
             <artifactId>crabzilla-example1-database</artifactId>
         </dependency>
 

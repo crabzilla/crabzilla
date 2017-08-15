@@ -14,25 +14,21 @@ import com.zaxxer.hikari.HikariDataSource;
 import crabzilla.example1.aggregates.CustomerModule;
 import crabzilla.example1.services.SampleInternalService;
 import crabzilla.example1.services.SampleInternalServiceImpl;
+import crabzilla.model.DomainEvent;
 import crabzilla.model.EntityCommand;
 import crabzilla.model.EntityId;
-import crabzilla.model.DomainEvent;
 import crabzilla.model.EntityUnitOfWork;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.EventProjector;
 import crabzilla.vertx.codecs.JacksonGenericCodec;
+import example1.dao.CustomerSummaryDao;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
 import io.vertx.ext.jdbc.JDBCClient;
-import org.jooq.Configuration;
-import org.jooq.ConnectionProvider;
-import org.jooq.SQLDialect;
-import org.jooq.TransactionProvider;
-import org.jooq.conf.Settings;
-import org.jooq.impl.DataSourceConnectionProvider;
-import org.jooq.impl.DefaultConfiguration;
-import org.jooq.impl.DefaultTransactionProvider;
+import lombok.val;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
 import java.util.Properties;
 
@@ -87,8 +83,16 @@ class Example1Module extends AbstractModule {
 
   @Provides
   @Singleton
-  public EventProjector eventsProjector(Configuration jooq) {
-    return new Example1EventProjector("example1", jooq) ;
+  public Jdbi jdbi(HikariDataSource dataSource) {
+    val jdbi = Jdbi.create(dataSource);
+    jdbi.installPlugin(new SqlObjectPlugin());
+    return jdbi;
+  }
+
+  @Provides
+  @Singleton
+  public EventProjector<CustomerSummaryDao> eventsProjector(Jdbi jdbi) {
+    return new Example1EventProjector("example1", CustomerSummaryDao.class, jdbi) ;
   }
 
   @Provides
@@ -109,22 +113,6 @@ class Example1Module extends AbstractModule {
                     .setResetTimeout(10000) // time spent in open state before attempting to re-try
     );
 
-  }
-
-  @Provides
-  @Singleton
-  Configuration cfg(HikariDataSource ds) {
-    DefaultConfiguration cfg = new DefaultConfiguration();
-//    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-//    cfg.set(() -> new QuerySniper(executor, dbQueryTimeoutMs));
-    cfg.set(ds);
-    cfg.set(SQLDialect.MYSQL);
-    Settings settings = new Settings();
-    cfg.setSettings(settings);
-    ConnectionProvider cp = new DataSourceConnectionProvider(ds);
-    TransactionProvider tp = new DefaultTransactionProvider(cp);
-    cfg.setTransactionProvider(tp);
-    return cfg;
   }
 
 //  Not being used yet. This can improve a lot serialization speed (it's binary). But so far it was not necessary.

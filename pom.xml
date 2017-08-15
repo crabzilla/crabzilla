@@ -16,7 +16,7 @@
         <guice.version>4.1.0</guice.version>
         <expiringmap.version>0.5.8</expiringmap.version>
         <sl4j.version>1.7.8</sl4j.version>
-        <jooq.version>3.9.2</jooq.version>
+        <jdbi.version>3.0.0-beta2</jdbi.version>
         <mysql.version>6.0.6</mysql.version>
         <commons.version>3.5</commons.version>
         <javaslang.version>2.0.5</javaslang.version>
@@ -223,21 +223,16 @@
                 <version>${hikari.version}</version>
             </dependency>
 
-            <!-- jooq for the example1 -->
+            <!-- jdbi3 -->
             <dependency>
-                <groupId>org.jooq</groupId>
-                <artifactId>jooq</artifactId>
-                <version>${jooq.version}</version>
+                <groupId>org.jdbi</groupId>
+                <artifactId>jdbi3</artifactId>
+                <version>${jdbi.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.jooq</groupId>
-                <artifactId>jooq-codegen</artifactId>
-                <version>${jooq.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jooq</groupId>
-                <artifactId>jooq-meta</artifactId>
-                <version>${jooq.version}</version>
+                <groupId>org.jdbi</groupId>
+                <artifactId>jdbi3-sqlobject</artifactId>
+                <version>${jdbi.version}</version>
             </dependency>
 
             <!--Vertx -->

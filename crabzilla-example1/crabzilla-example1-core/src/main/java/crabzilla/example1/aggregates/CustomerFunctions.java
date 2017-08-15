@@ -15,7 +15,7 @@ import static crabzilla.model.EntityUnitOfWork.unitOfWork;
 
 public class CustomerFunctions {
 
-  public static class CustomerSupplierFn implements Supplier<Customer> {
+  public static class SupplierFn implements Supplier<Customer> {
     final Customer customer = new Customer(null, null,  null, false, null);
     @Override
     public Customer get() {
@@ -23,7 +23,7 @@ public class CustomerFunctions {
     }
   }
 
-  public static class CustomerStateTransitionFn extends AbstractStateTransitionFn<Customer> {
+  public static class StateTransitionFn extends AbstractStateTransitionFn<Customer> {
 
     public Customer on(final CustomerData.CustomerCreated event, final Customer instance) {
       return instance.withId(event.getId()).withName(event.getName());
@@ -39,12 +39,12 @@ public class CustomerFunctions {
 
   }
 
-  public static class CustomerCmdHandlerFn extends AbstractCommandsHandlerFn<Customer> {
+  public static class CommandHandlerFn extends AbstractCommandsHandlerFn<Customer> {
 
     final StateTransitionsTrackerFactory<Customer> trackerFactory;
 
     @Inject
-    public CustomerCmdHandlerFn(StateTransitionsTrackerFactory<Customer> trackerFactory) {
+    public CommandHandlerFn(StateTransitionsTrackerFactory<Customer> trackerFactory) {
       this.trackerFactory = trackerFactory;
     }
 

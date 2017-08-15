@@ -20,13 +20,13 @@ import static crabzilla.vertx.util.StringHelper.eventsHandlerId;
 import static java.util.Collections.singletonList;
 
 @Slf4j
-public class EventsProjectionVerticle extends AbstractVerticle {
+public class EventsProjectionVerticle<DAO> extends AbstractVerticle {
 
-  final EventProjector eventProjector;
+  final EventProjector<DAO> eventProjector;
   final CircuitBreaker circuitBreaker;
 
   @Inject
-  public EventsProjectionVerticle(@NonNull EventProjector eventProjector,
+  public EventsProjectionVerticle(@NonNull EventProjector<DAO> eventProjector,
                                   @NonNull @Named("events-projection") CircuitBreaker circuitBreaker) {
     this.eventProjector = eventProjector;
     this.circuitBreaker = circuitBreaker;

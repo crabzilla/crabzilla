@@ -1,83 +1,22 @@
 package crabzilla.example1;
 
-import crabzilla.example1.aggregates.CustomerData;
 import crabzilla.model.DomainEvent;
 import crabzilla.vertx.EventProjector;
-import crabzilla.vertx.ProjectionData;
-import javaslang.Tuple;
-import lombok.Getter;
-import lombok.NonNull;
+import example1.dao.CustomerSummaryDao;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.Configuration;
-import org.jooq.impl.DSL;
-
-import java.util.List;
-
-import static example1.datamodel.Tables.CUSTOMER_SUMMARY;
-import static javaslang.API.*;
-import static javaslang.Predicates.instanceOf;
+import org.jdbi.v3.core.Jdbi;
 
 @Slf4j
-public class Example1EventProjector implements EventProjector {
+public class Example1EventProjector extends EventProjector<CustomerSummaryDao> {
 
-  @Getter
-  private final String eventsChannelId;
-  private final Configuration jooqCfg;
-
-  public Example1EventProjector(@NonNull final String eventsChannelId, @NonNull final Configuration jooqCfg) {
-    this.eventsChannelId = eventsChannelId;
-    this.jooqCfg = jooqCfg;
+  Example1EventProjector(String eventsChannelId, Class<CustomerSummaryDao> daoClass, Jdbi jdbi) {
+    super(eventsChannelId, daoClass, jdbi);
   }
 
   @Override
-  public Long getLastUowSeq() {
-    return null; // TODO
-  }
-
-  @Override
-  public void handle(final List<ProjectionData> uowList) {
-
-    log.info("writing {} units for eventsChannelId {}", uowList.size(), eventsChannelId);
-
-    DSL.using(jooqCfg)
-      .transaction(ctx -> uowList.stream()
-              .flatMap(uowdata -> uowdata.getEvents().stream()
-              .map(e -> Tuple.of(uowdata.getTargetId(), e)))
-              .forEach(tuple -> handle(ctx, tuple._1(), tuple._2())));
-
-    log.info("wrote {} units for eventsChannelId {}", uowList.size(), eventsChannelId);
-  }
-
-
-  void handle(final Configuration ctx, final String id, final DomainEvent event) {
+  public void write(CustomerSummaryDao customerSummaryDao, String targetId, DomainEvent event) {
 
     log.info("event {} from channel {}", event, eventsChannelId);
-
-    Match(event).of(
-
-      Case(instanceOf(CustomerData.CustomerCreated.class), (e) ->
-              run(() -> DSL.using(ctx).insertInto(CUSTOMER_SUMMARY)
-                        .values(id, e.getName(), false).execute())
-      ),
-
-      Case(instanceOf(CustomerData.CustomerActivated.class), (e) ->
-              run(() -> DSL.using(ctx).update(CUSTOMER_SUMMARY)
-                                      .set(CUSTOMER_SUMMARY.IS_ACTIVE, true)
-                                      .where(CUSTOMER_SUMMARY.ID.eq(id)).execute())
-
-      ),
-
-      Case(instanceOf(CustomerData.CustomerDeactivated.class), (e) ->
-              run(() -> DSL.using(ctx).update(CUSTOMER_SUMMARY)
-                      .set(CUSTOMER_SUMMARY.IS_ACTIVE, false)
-                      .where(CUSTOMER_SUMMARY.ID.eq(id)).execute())
-      ),
-
-      Case($(), e -> run(() -> log.warn("{} does not have any event projection handler", e)))
-
-    );
-
-    // TODO update uow_last_seq for this event channel
 
   }
 

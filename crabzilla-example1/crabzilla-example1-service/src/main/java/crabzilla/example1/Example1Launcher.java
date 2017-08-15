@@ -5,6 +5,7 @@ import crabzilla.example1.aggregates.Customer;
 import crabzilla.example1.aggregates.CustomerData;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.verticles.EventsProjectionVerticle;
+import example1.dao.CustomerSummaryDao;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -32,7 +33,7 @@ public class Example1Launcher {
   Map<String, Verticle> aggregateRootVerticles;
 
   @Inject
-  EventsProjectionVerticle projectionVerticle;
+  EventsProjectionVerticle<CustomerSummaryDao> projectionVerticle;
 
   static Vertx vertx;
 

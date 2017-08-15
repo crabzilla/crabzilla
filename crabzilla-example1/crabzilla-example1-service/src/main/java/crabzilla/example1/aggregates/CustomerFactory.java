@@ -35,20 +35,20 @@ public class CustomerFactory implements AggregateRootComponentsFactory<Customer>
 
   @Override
   public Supplier<Customer> supplierFn() {
-    return new CustomerFunctions.CustomerSupplierFn();
+    return new CustomerFunctions.SupplierFn();
   }
 
   @Override
-  public BiFunction<DomainEvent, Customer, Customer> stateTransitionFn() {return new CustomerFunctions.CustomerStateTransitionFn(); }
+  public BiFunction<DomainEvent, Customer, Customer> stateTransitionFn() {return new CustomerFunctions.StateTransitionFn(); }
 
   @Override
   public Function<EntityCommand, List<String>> cmdValidatorFn() {
-    return new CustomerFunctionsVavr.CustomerCommandValidatorFn();
+    return new CustomerFunctionsVavr.CommandValidatorFn();
   }
 
   @Override
   public BiFunction<EntityCommand, Snapshot<Customer>, Either<Throwable, Optional<EntityUnitOfWork>>> cmdHandlerFn() {
-    return new CustomerFunctions.CustomerCmdHandlerFn(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn(), depInjectionFn()));
+    return new CustomerFunctions.CommandHandlerFn(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn(), depInjectionFn()));
   }
 
   @Override
