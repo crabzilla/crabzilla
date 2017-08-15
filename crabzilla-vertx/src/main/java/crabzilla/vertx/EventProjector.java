@@ -1,8 +1,8 @@
 package crabzilla.vertx;
 
 import crabzilla.model.DomainEvent;
-import javaslang.Tuple;
 import lombok.AllArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.jdbi.v3.core.Jdbi;
@@ -28,9 +28,9 @@ public abstract class EventProjector<DAO> {
 
       val streamOfTuple2 = uowList.stream()
               .flatMap(uowdata -> uowdata.getEvents().stream()
-                      .map(e -> Tuple.of(uowdata.getTargetId(), e)));
+                      .map(e -> new Tuple2(uowdata.getTargetId(), e)));
 
-      streamOfTuple2.forEach(tuple2 -> write(dao, tuple2._1(), tuple2._2()));
+      streamOfTuple2.forEach(tuple2 -> write(dao, tuple2.getId(), tuple2.getEvent()));
 
       handle.commit();
 
@@ -47,5 +47,11 @@ public abstract class EventProjector<DAO> {
   }
 
   public abstract void write(DAO dao, String targetId, DomainEvent event);
+
+  @Value
+  private class Tuple2 {
+    String id;
+    DomainEvent event;
+  }
 
 }

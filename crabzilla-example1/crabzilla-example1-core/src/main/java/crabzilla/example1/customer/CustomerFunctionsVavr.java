@@ -2,10 +2,10 @@ package crabzilla.example1.customer;
 
 import crabzilla.model.*;
 import crabzilla.stack.AbstractCommandValidatorFn;
-import javaslang.Function3;
-import javaslang.collection.CharSeq;
-import javaslang.collection.List;
-import javaslang.control.Validation;
+import io.vavr.Function3;
+import io.vavr.collection.CharSeq;
+import io.vavr.collection.Seq;
+import io.vavr.control.Validation;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
@@ -15,10 +15,11 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
+import static crabzilla.example1.customer.CustomerData.*;
 import static crabzilla.model.EntityUnitOfWork.unitOfWork;
+import static io.vavr.API.*;
+import static io.vavr.Predicates.instanceOf;
 import static java.util.Collections.emptyList;
-import static javaslang.API.*;
-import static javaslang.Predicates.instanceOf;
 
 public class CustomerFunctionsVavr {
   
@@ -35,17 +36,14 @@ public class CustomerFunctionsVavr {
     public Customer apply(final DomainEvent event, final Customer instance) {
 
       return Match(event).of(
+        Case($(instanceOf(CustomerCreated.class)),
+                (e) -> instance.withId(e.getId()).withName(e.getName())),
+        Case($(instanceOf(CustomerActivated.class)),
+                (e) -> instance.withReason(e.getReason()).withActive(true)),
+        Case($(instanceOf(CustomerDeactivated.class)),
+                (e) -> instance.withReason(e.getReason()).withActive(false)),
+        Case($(), o -> instance));
 
-              Case(instanceOf(CustomerData.CustomerCreated.class),
-                      (e) -> instance.withId(e.getId()).withName(e.getName())),
-
-              Case(instanceOf(CustomerData.CustomerActivated.class),
-                      (e) -> instance.withReason(e.getReason()).withActive(true)),
-
-              Case(instanceOf(CustomerData.CustomerDeactivated.class),
-                      (e) -> instance.withReason(e.getReason()).withActive(false))
-
-      );
     }
   }
 
@@ -82,17 +80,17 @@ public class CustomerFunctionsVavr {
 
       final EntityUnitOfWork uow = Match(cmd).of(
 
-        Case(instanceOf(CustomerData.CreateCustomer.class), (command) ->
+        Case($(instanceOf(CreateCustomer.class)), (command) ->
           unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.create(command.getTargetId(), command.getName()))
         ),
 
-        Case(instanceOf(CustomerData.ActivateCustomer.class), (command) ->
+        Case($(instanceOf(ActivateCustomer.class)), (command) ->
           unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.activate(command.getReason()))),
 
-        Case(instanceOf(CustomerData.DeactivateCustomer.class), (command) ->
+        Case($(instanceOf(DeactivateCustomer.class)), (command) ->
           unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.deactivate(command.getReason()))),
 
-        Case(instanceOf(CustomerData.CreateActivateCustomer.class), (command) -> {
+        Case($(instanceOf(CreateActivateCustomer.class)), (command) -> {
           val tracker = trackerFactory.create(targetInstance);
           val events = tracker
                   .applyEvents(customer -> customer.create(command.getTargetId(), command.getName()))
@@ -104,7 +102,6 @@ public class CustomerFunctionsVavr {
         }),
 
         Case($(), o -> {
-
           CommandHandlerFn.log.warn("Can't apply command {}", cmd);
           return null;
 
@@ -122,11 +119,11 @@ public class CustomerFunctionsVavr {
 
       private static final String VALID_NAME_CHARS = "[a-zA-Z ]";
 
-      public Validation<List<String>, CustomerData.CreateCustomer> validate(CustomerData.CreateCustomer cmd) {
+      public Validation<Seq<String>, CustomerData.CreateCustomer> validate(CreateCustomer cmd) {
         return Validation.combine(validateCmdId(cmd.getCommandId()),
                                   validateId(cmd.getTargetId()),
                                   validateName(cmd.getName())
-        ).ap((Function3<UUID, CustomerData.CustomerId, String, CustomerData.CreateCustomer>) CustomerData.CreateCustomer::new);
+        ).ap((Function3<UUID, CustomerId, String, CreateCustomer>) CreateCustomer::new);
       }
 
     private Validation<String, UUID>  validateCmdId(UUID commandId) {
@@ -135,7 +132,7 @@ public class CustomerFunctionsVavr {
               : Validation.valid(commandId);
     }
 
-    private Validation<String, CustomerData.CustomerId> validateId(CustomerData.CustomerId id) {
+    private Validation<String, CustomerData.CustomerId> validateId(CustomerId id) {
       return id == null
               ? Validation.invalid("CustomerId cannot be null ")
               : Validation.valid(id);
@@ -152,15 +149,15 @@ public class CustomerFunctionsVavr {
 
   public static class CommandValidatorFn extends AbstractCommandValidatorFn {
 
-      public java.util.List<String> validate(CustomerData.CreateCustomer cmd) {
+      public java.util.List<String> validate(CreateCustomer cmd) {
 
         val either = new CreateCustomerValidator().validate(cmd).toEither();
 
-        return either.isRight() ? emptyList() : either.getLeft().toJavaList();
+        return either.isRight() ? emptyList() : either.getLeft().asJava();
 
       }
 
-    public java.util.List<String> validate(CustomerData.ActivateCustomer cmd) {
+    public java.util.List<String> validate(ActivateCustomer cmd) {
 
       return emptyList(); // it's always valid
 

@@ -1,13 +1,24 @@
 package crabzilla.example1.readmodel;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor
 public class CustomerSummary {
+
   String id;
   String name;
-  Boolean idActive;
+  Boolean isActive;
+
+  public CustomerSummary() {
+    this.id = id;
+    this.name = name;
+    this.isActive = isActive;
+  }
+
+  public CustomerSummary(String id, String name, boolean isActive) {
+    this.id = id;
+    this.name = name;
+    this.isActive = isActive;
+  }
 }
 

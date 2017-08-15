@@ -8,7 +8,6 @@ import crabzilla.stack.AbstractStateTransitionFn;
 import lombok.val;
 
 import javax.inject.Inject;
-
 import java.util.function.Supplier;
 
 import static crabzilla.model.EntityUnitOfWork.unitOfWork;

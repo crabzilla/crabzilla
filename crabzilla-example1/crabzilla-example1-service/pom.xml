@@ -24,6 +24,11 @@
             <artifactId>crabzilla-vertx</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.vavr</groupId>
+            <artifactId>vavr</artifactId>
+        </dependency>
+
         <!-- guice -->
         <dependency>
             <groupId>com.google.inject</groupId>

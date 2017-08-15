@@ -38,6 +38,7 @@ public class Example1EventProjectorIT {
     Guice.createInjector(new Example1Module(Vertx.vertx())).injectMembers(this);
 
     val h = jdbi.open();
+//    h.registerRowMapper(ConstructorMapper.factory(CustomerSummary.class)); // TODO how to avoid this ?
     h.createScript("DELETE FROM units_of_work").execute();
     h.createScript("DELETE FROM customer_summary").execute();
     h.commit();

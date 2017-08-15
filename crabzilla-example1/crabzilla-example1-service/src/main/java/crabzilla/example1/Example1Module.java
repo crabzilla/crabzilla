@@ -86,6 +86,7 @@ class Example1Module extends AbstractModule {
   public Jdbi jdbi(HikariDataSource dataSource) {
     val jdbi = Jdbi.create(dataSource);
     jdbi.installPlugin(new SqlObjectPlugin());
+//    jdbi.registerRowMapper(ConstructorMapper.factory(CustomerSummary.class)); // TODO how to avoid this ?
     return jdbi;
   }
 

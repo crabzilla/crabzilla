@@ -149,9 +149,11 @@
             <groupId>org.jdbi</groupId>
             <artifactId>jdbi3</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>io.javaslang</groupId>
-            <artifactId>javaslang</artifactId>
+            <groupId>io.vavr</groupId>
+            <artifactId>vavr</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

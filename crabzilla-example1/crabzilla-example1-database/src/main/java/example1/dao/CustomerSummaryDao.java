@@ -1,6 +1,8 @@
 package example1.dao;
 
 import crabzilla.example1.readmodel.CustomerSummary;
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -13,11 +15,12 @@ public interface CustomerSummaryDao {
           "(:id, :name, false)")
   void insert(@BindBean CustomerSummary customerSummary);
 
-  @SqlUpdate("update customer_summary set customer_summary.is_active = ? " +
-          "where customer_summary.id = ?")
-  void updateStatus(String id, Boolean isActive);
+  @SqlUpdate("update customer_summary set customer_summary.is_active = :isActive " +
+          "where customer_summary.id = :id")
+  void updateStatus(@Bind("id") String id, @Bind("isActive") Boolean isActive);
 
   @SqlQuery("select id, name, is_active from customer_summary")
-  List<CustomerSummary> getAll() ;
+  @RegisterBeanMapper(CustomerSummary.class)
+  List<CustomerSummary> getAll();
 
 }

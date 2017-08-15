@@ -9,15 +9,11 @@ import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
-import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-
-import java.lang.reflect.Field;
-import java.util.Set;
 
 import static crabzilla.vertx.util.StringHelper.*;
 
