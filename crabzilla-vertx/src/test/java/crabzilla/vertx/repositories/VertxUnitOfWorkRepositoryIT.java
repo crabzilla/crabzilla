@@ -6,15 +6,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import crabzilla.example1.aggregates.customer.Customer;
-import crabzilla.example1.aggregates.customer.CustomerId;
-import crabzilla.example1.aggregates.customer.commands.ActivateCustomerCmd;
-import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
-import crabzilla.example1.aggregates.customer.events.CustomerActivated;
-import crabzilla.example1.aggregates.customer.events.CustomerCreated;
+import crabzilla.example1.aggregates.Customer;
+import crabzilla.example1.aggregates.CustomerData;
 import crabzilla.model.Either;
 import crabzilla.model.SnapshotData;
-import crabzilla.model.UnitOfWork;
+import crabzilla.model.EntityUnitOfWork;
 import crabzilla.model.Version;
 import crabzilla.vertx.util.DbConcurrencyException;
 import io.vertx.core.Future;
@@ -56,14 +52,14 @@ public class VertxUnitOfWorkRepositoryIT {
 
   VertxUnitOfWorkRepository repo;
 
-  final CustomerId customerId = new CustomerId("customer#1");
-  final CreateCustomerCmd createCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
-  final CustomerCreated created = new CustomerCreated(createCmd.getTargetId(), "customer");
-  final UnitOfWork expectedUow1 = UnitOfWork.unitOfWork(createCmd, new Version(1), singletonList(created));
+  final CustomerData.CustomerId customerId = new CustomerData.CustomerId("customer#1");
+  final CustomerData.CreateCustomerCmd createCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
+  final CustomerData.CustomerCreated created = new CustomerData.CustomerCreated(createCmd.getTargetId(), "customer");
+  final EntityUnitOfWork expectedUow1 = EntityUnitOfWork.unitOfWork(createCmd, new Version(1), singletonList(created));
 
-  final ActivateCustomerCmd activateCmd = new ActivateCustomerCmd(UUID.randomUUID(), customerId, "I want it");
-  final CustomerActivated activated = new CustomerActivated(createCmd.getTargetId().getStringValue(), Instant.now());
-  final UnitOfWork expectedUow2 = UnitOfWork.unitOfWork(activateCmd, new Version(2), singletonList(activated));
+  final CustomerData.ActivateCustomerCmd activateCmd = new CustomerData.ActivateCustomerCmd(UUID.randomUUID(), customerId, "I want it");
+  final CustomerData.CustomerActivated activated = new CustomerData.CustomerActivated(createCmd.getTargetId().getStringValue(), Instant.now());
+  final EntityUnitOfWork expectedUow2 = EntityUnitOfWork.unitOfWork(activateCmd, new Version(2), singletonList(activated));
 
   @BeforeClass
   static public void setupClass(TestContext context) throws IOException, URISyntaxException {
@@ -136,7 +132,7 @@ public class VertxUnitOfWorkRepositoryIT {
         return null;
       });
 
-      Future<Optional<UnitOfWork>> uowFuture = Future.future();
+      Future<Optional<EntityUnitOfWork>> uowFuture = Future.future();
 
       repo.get(expectedUow1.getUnitOfWorkId(), uowFuture);
 
@@ -146,7 +142,7 @@ public class VertxUnitOfWorkRepositoryIT {
           return;
         }
 
-        Optional<UnitOfWork> uow = uowAsyncResult.result();
+        Optional<EntityUnitOfWork> uow = uowAsyncResult.result();
         log.debug("uow {}", uow);
 
         if (uow.isPresent()) {
@@ -201,7 +197,7 @@ public class VertxUnitOfWorkRepositoryIT {
         return null;
       });
 
-      Future<Optional<UnitOfWork>> uowFuture = Future.future();
+      Future<Optional<EntityUnitOfWork>> uowFuture = Future.future();
 
       repo.get(expectedUow2.getUnitOfWorkId(), uowFuture);
 
@@ -211,7 +207,7 @@ public class VertxUnitOfWorkRepositoryIT {
           return;
         }
 
-        Optional<UnitOfWork> uow = uowAsyncResult.result();
+        Optional<EntityUnitOfWork> uow = uowAsyncResult.result();
         log.debug("uow {}", uow);
 
         if (uow.isPresent()) {

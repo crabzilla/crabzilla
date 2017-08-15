@@ -1,9 +1,7 @@
 package crabzilla.example1;
 
-import crabzilla.example1.aggregates.customer.events.CustomerActivated;
-import crabzilla.example1.aggregates.customer.events.CustomerCreated;
-import crabzilla.example1.aggregates.customer.events.CustomerDeactivated;
-import crabzilla.model.Event;
+import crabzilla.example1.aggregates.CustomerData;
+import crabzilla.model.DomainEvent;
 import crabzilla.vertx.EventProjector;
 import crabzilla.vertx.ProjectionData;
 import javaslang.Tuple;
@@ -51,25 +49,25 @@ public class Example1EventProjector implements EventProjector {
   }
 
 
-  void handle(final Configuration ctx, final String id, final Event event) {
+  void handle(final Configuration ctx, final String id, final DomainEvent event) {
 
     log.info("event {} from channel {}", event, eventsChannelId);
 
     Match(event).of(
 
-      Case(instanceOf(CustomerCreated.class), (e) ->
+      Case(instanceOf(CustomerData.CustomerCreated.class), (e) ->
               run(() -> DSL.using(ctx).insertInto(CUSTOMER_SUMMARY)
                         .values(id, e.getName(), false).execute())
       ),
 
-      Case(instanceOf(CustomerActivated.class), (e) ->
+      Case(instanceOf(CustomerData.CustomerActivated.class), (e) ->
               run(() -> DSL.using(ctx).update(CUSTOMER_SUMMARY)
                                       .set(CUSTOMER_SUMMARY.IS_ACTIVE, true)
                                       .where(CUSTOMER_SUMMARY.ID.eq(id)).execute())
 
       ),
 
-      Case(instanceOf(CustomerDeactivated.class), (e) ->
+      Case(instanceOf(CustomerData.CustomerDeactivated.class), (e) ->
               run(() -> DSL.using(ctx).update(CUSTOMER_SUMMARY)
                       .set(CUSTOMER_SUMMARY.IS_ACTIVE, false)
                       .where(CUSTOMER_SUMMARY.ID.eq(id)).execute())

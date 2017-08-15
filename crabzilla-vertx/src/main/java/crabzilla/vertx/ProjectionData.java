@@ -1,6 +1,6 @@
 package crabzilla.vertx;
 
-import crabzilla.model.Event;
+import crabzilla.model.DomainEvent;
 import lombok.Value;
 
 import java.io.Serializable;
@@ -13,6 +13,6 @@ public class ProjectionData implements Serializable {
   UUID uowId;
   Long uowSequence;
   String targetId;
-  List<Event> events;
+  List<DomainEvent> events;
 
 }

@@ -8,21 +8,20 @@ import java.util.List;
 import java.util.UUID;
 
 @Value
-public class UnitOfWork implements Serializable {
+public class EntityUnitOfWork implements Serializable {
 
   @NonNull
   final UUID unitOfWorkId;
   @NonNull
-  final Command command;
+  final EntityCommand command;
   @NonNull
   final Version version;
   @NonNull
-  final List<Event> events;
+  final List<DomainEvent> events;
 
-  public static UnitOfWork unitOfWork(Command command, Version version, List<Event> events) {
-    return new UnitOfWork(UUID.randomUUID(), command, version, events);
+  public static EntityUnitOfWork unitOfWork(EntityCommand command, Version version, List<DomainEvent> events) {
+    return new EntityUnitOfWork(UUID.randomUUID(), command, version, events);
   }
-
 
   public EntityId targetId() {
     return command.getTargetId();

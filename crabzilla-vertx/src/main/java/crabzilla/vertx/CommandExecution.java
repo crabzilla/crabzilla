@@ -1,6 +1,6 @@
 package crabzilla.vertx;
 
-import crabzilla.model.UnitOfWork;
+import crabzilla.model.EntityUnitOfWork;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -39,7 +39,7 @@ public class CommandExecution implements Serializable {
   @Getter(AccessLevel.NONE)
   Long uowSequence;
   @Getter(AccessLevel.NONE)
-  UnitOfWork unitOfWork;
+  EntityUnitOfWork unitOfWork;
 
   public Optional<UUID> getCommandId() {
     return Optional.ofNullable(commandId);
@@ -54,7 +54,7 @@ public class CommandExecution implements Serializable {
     return SUCCESS.equals(result) ? Optional.of(uowSequence) : Optional.empty();
   }
 
-  public Optional<UnitOfWork> getUnitOfWork() {
+  public Optional<EntityUnitOfWork> getUnitOfWork() {
     return SUCCESS.equals(result) ? Optional.of(unitOfWork) : Optional.empty();
   }
 
@@ -83,7 +83,7 @@ public class CommandExecution implements Serializable {
     return new CommandExecution(UNKNOWN_COMMAND, commandId, emptyList(), 0L, null);
   }
 
-  public static CommandExecution SUCCESS(@NonNull UnitOfWork uow, @NonNull Long uowSequence) {
+  public static CommandExecution SUCCESS(@NonNull EntityUnitOfWork uow, @NonNull Long uowSequence) {
     return new CommandExecution(SUCCESS, uow.getCommand().getCommandId(), emptyList(), uowSequence, uow);
   }
 }

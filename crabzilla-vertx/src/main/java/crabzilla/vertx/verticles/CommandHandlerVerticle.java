@@ -27,8 +27,8 @@ import static java.util.Collections.singletonList;
 public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVerticle {
 
   final Class<A> aggregateRootClass;
-  final BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandler;
-  final Function<Command, List<String>> validatorFn;
+  final BiFunction<EntityCommand, Snapshot<A>, Either<Throwable, Optional<EntityUnitOfWork>>> cmdHandler;
+  final Function<EntityCommand, List<String>> validatorFn;
   final ExpiringMap<String, Snapshot<A>> cache;
   final SnapshotPromoter<A> snapshotter;
 
@@ -36,8 +36,8 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   final CircuitBreaker circuitBreaker;
 
   public CommandHandlerVerticle(@NonNull final Class<A> aggregateRootClass,
-                                @NonNull final BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandler,
-                                @NonNull final Function<Command, List<String>> validatorFn,
+                                @NonNull final BiFunction<EntityCommand, Snapshot<A>, Either<Throwable, Optional<EntityUnitOfWork>>> cmdHandler,
+                                @NonNull final Function<EntityCommand, List<String>> validatorFn,
                                 @NonNull final SnapshotPromoter<A> snapshotter,
                                 @NonNull final VertxUnitOfWorkRepository eventRepository,
                                 @NonNull final ExpiringMap<String, Snapshot<A>> cache,
@@ -58,9 +58,9 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
   }
 
-  Handler<Message<Command>> msgHandler() {
+  Handler<Message<EntityCommand>> msgHandler() {
 
-    return (Message<Command> msg) -> {
+    return (Message<EntityCommand> msg) -> {
 
       val command = msg.body();
 
@@ -93,7 +93,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
     };
   }
 
-  Handler<Future<CommandExecution>> cmdHandler(final Command command) {
+  Handler<Future<CommandExecution>> cmdHandler(final EntityCommand command) {
 
     return future1 -> {
 
@@ -125,7 +125,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
                 nonCached.getVersion());
 
         val resultingSnapshot = totalOfNonCachedEvents > 0 ?
-                snapshotter.applyNewEventsToSnapshot(cachedSnapshot, nonCached.getVersion(), nonCached.getEvents())
+                snapshotter.promote(cachedSnapshot, nonCached.getVersion(), nonCached.getEvents())
                 : cachedSnapshot;
 
         if (totalOfNonCachedEvents > 0) {
@@ -150,7 +150,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
   }
 
-  Handler<Future<CommandExecution>> blockingCmdHandler(Command command, Snapshot<A> resultingSnapshot) {
+  Handler<Future<CommandExecution>> blockingCmdHandler(EntityCommand command, Snapshot<A> resultingSnapshot) {
 
     return future2 ->
 
@@ -160,7 +160,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
         future2.complete(HANDLING_ERROR(command.getCommandId()));
         return null;
 
-      }, (Function<Optional<UnitOfWork>, Void>) unitOfWork -> {
+      }, (Function<Optional<EntityUnitOfWork>, Void>) unitOfWork -> {
 
         if (unitOfWork.isPresent()) {
 
@@ -200,7 +200,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
       });
   }
 
-  Handler<AsyncResult<CommandExecution>> resultHandler(final Message<Command> msg) {
+  Handler<AsyncResult<CommandExecution>> resultHandler(final Message<EntityCommand> msg) {
 
     return (AsyncResult<CommandExecution> resultHandler) -> {
 

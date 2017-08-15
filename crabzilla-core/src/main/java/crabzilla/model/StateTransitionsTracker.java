@@ -12,19 +12,19 @@ import java.util.stream.Collectors;
 public class StateTransitionsTracker<A extends AggregateRoot>  {
 
   final A originalInstance;
-  final BiFunction<Event, A, A> applyEventsFn;
+  final BiFunction<DomainEvent, A, A> applyEventsFn;
   final Function<A, A> dependencyInjectionFn;
   final List<StateTransition<A>> stateTransitions = new ArrayList<>();
 
   public StateTransitionsTracker(@NonNull A originalInstance,
-                                 @NonNull BiFunction<Event, A, A> applyEventsFn,
+                                 @NonNull BiFunction<DomainEvent, A, A> applyEventsFn,
                                  @NonNull Function<A, A> dependencyInjectionFn) {
     this.originalInstance = originalInstance;
     this.applyEventsFn = applyEventsFn;
     this.dependencyInjectionFn = dependencyInjectionFn;
   }
 
-  private StateTransitionsTracker<A> applyEvents(@NonNull List<Event> events) {
+  private StateTransitionsTracker<A> applyEvents(@NonNull List<DomainEvent> events) {
     events.forEach(e -> {
       val newInstance = applyEventsFn.apply(e, currentState());
       stateTransitions.add(new StateTransition<>(newInstance, e));
@@ -32,12 +32,12 @@ public class StateTransitionsTracker<A extends AggregateRoot>  {
     return this;
   }
 
-  public StateTransitionsTracker<A> applyEvents(@NonNull Function<A, List<Event>> function) {
+  public StateTransitionsTracker<A> applyEvents(@NonNull Function<A, List<DomainEvent>> function) {
     val newEvents = function.apply(currentState());
     return applyEvents(newEvents);
   }
 
-  public List<Event> collectEvents() {
+  public List<DomainEvent> collectEvents() {
     return stateTransitions.stream().map(t -> t.afterThisEvent).collect(Collectors.toList());
   }
 
@@ -52,9 +52,9 @@ public class StateTransitionsTracker<A extends AggregateRoot>  {
 
   class StateTransition<T extends AggregateRoot> {
     private final T newInstance;
-    private final Event afterThisEvent;
+    private final DomainEvent afterThisEvent;
 
-    StateTransition(@NonNull T newInstance, @NonNull Event afterThisEvent) {
+    StateTransition(@NonNull T newInstance, @NonNull DomainEvent afterThisEvent) {
       this.newInstance = newInstance;
       this.afterThisEvent = afterThisEvent;
     }

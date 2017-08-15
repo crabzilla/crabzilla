@@ -37,14 +37,14 @@ public class VertxUnitOfWorkRepository {
   private final String aggregateRootName;
   private final JDBCClient client;
 
-  private final TypeReference<List<Event>> eventsListTpe =  new TypeReference<List<Event>>() {};
+  private final TypeReference<List<DomainEvent>> eventsListTpe =  new TypeReference<List<DomainEvent>>() {};
 
   public VertxUnitOfWorkRepository(@NonNull Class<? extends AggregateRoot> aggregateRootName, @NonNull JDBCClient client) {
     this.aggregateRootName = aggregateRootName.getSimpleName();
     this.client = client;
   }
 
-  public void get(@NonNull final UUID uowId, @NonNull final Future<Optional<UnitOfWork>> getFuture) {
+  public void get(@NonNull final UUID uowId, @NonNull final Future<Optional<EntityUnitOfWork>> getFuture) {
 
     val SELECT_UOW_BY_ID = "select * from units_of_work where uow_id =? ";
     val params = new JsonArray().add(uowId.toString());
@@ -76,9 +76,9 @@ public class VertxUnitOfWorkRepository {
           getFuture.complete(Optional.empty());
         } else {
           for (JsonObject row : rows) {
-            val command = Json.decodeValue(row.getString(CMD_DATA), Command.class);
-            final List<Event> events = readEvents(row.getString(UOW_EVENTS));
-            val uow = new UnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
+            val command = Json.decodeValue(row.getString(CMD_DATA), EntityCommand.class);
+            final List<DomainEvent> events = readEvents(row.getString(UOW_EVENTS));
+            val uow = new EntityUnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
                     new Version(row.getLong(VERSION)), events);
             getFuture.complete(Optional.of(uow));
           }
@@ -152,7 +152,7 @@ public class VertxUnitOfWorkRepository {
             val finalVersion = list.size() == 0 ? new Version(0) :
                                                   list.get(list.size() - 1).getVersion();
 
-            final List<Event> flatMappedToEvents = list.stream()
+            final List<DomainEvent> flatMappedToEvents = list.stream()
                     .flatMap(sd -> sd.getEvents().stream()).collect(Collectors.toList());
 
             selectAfterVersionFuture.complete(new SnapshotData(finalVersion, flatMappedToEvents));
@@ -172,7 +172,7 @@ public class VertxUnitOfWorkRepository {
     });
   }
 
-  public void append(@NonNull final UnitOfWork unitOfWork, Future<Either<Throwable, Long>> appendFuture) {
+  public void append(@NonNull final EntityUnitOfWork unitOfWork, Future<Either<Throwable, Long>> appendFuture) {
 
     val SELECT_CURRENT_VERSION =
             "select max(version) as last_version from units_of_work where ar_id = ? and ar_name = ? ";
@@ -247,7 +247,7 @@ public class VertxUnitOfWorkRepository {
 
           // if version is OK, then insert
 
-          val cmdAsJson = writeValueAsString(Json.mapper.writerFor(Command.class), unitOfWork.getCommand());
+          val cmdAsJson = writeValueAsString(Json.mapper.writerFor(EntityCommand.class), unitOfWork.getCommand());
           val eventsAsJson = writeValueAsString(Json.mapper.writerFor(eventsListTpe), unitOfWork.getEvents());
 
           val params2 = new JsonArray()
@@ -316,7 +316,7 @@ public class VertxUnitOfWorkRepository {
     }
   }
 
-  List<Event> readEvents(String eventsAsJson) {
+  List<DomainEvent> readEvents(String eventsAsJson) {
     try {
       return Json.mapper.readerFor(eventsListTpe).readValue(eventsAsJson);
     } catch (IOException e) {

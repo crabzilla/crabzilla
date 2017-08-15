@@ -1,7 +1,7 @@
 package crabzilla.vertx.repositories;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import crabzilla.model.Event;
+import crabzilla.model.DomainEvent;
 import crabzilla.vertx.ProjectionData;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -21,7 +21,7 @@ public class VertxProjectionRepository implements BiFunction<Long, Integer, List
 
   private final JDBCClient client;
 
-  private final TypeReference<List<Event>> eventsListTpe =  new TypeReference<List<Event>>() {};
+  private final TypeReference<List<DomainEvent>> eventsListTpe =  new TypeReference<List<DomainEvent>>() {};
 
   public VertxProjectionRepository(@NonNull JDBCClient client) {
     this.client = client;
@@ -72,7 +72,7 @@ public class VertxProjectionRepository implements BiFunction<Long, Integer, List
 
   }
 
-  private List<Event> readEvents(String eventsAsJson) {
+  private List<DomainEvent> readEvents(String eventsAsJson) {
     try {
       return Json.mapper.readerFor(eventsListTpe).readValue(eventsAsJson);
     } catch (IOException e) {

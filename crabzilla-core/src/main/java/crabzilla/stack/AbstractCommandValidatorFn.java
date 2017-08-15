@@ -1,6 +1,6 @@
 package crabzilla.stack;
 
-import crabzilla.model.Command;
+import crabzilla.model.EntityCommand;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -10,13 +10,13 @@ import java.util.function.Function;
 
 import static java.util.Collections.singletonList;
 
-public abstract class AbstractCommandValidatorFn implements Function<Command, List<String>> {
+public abstract class AbstractCommandValidatorFn implements Function<EntityCommand, List<String>> {
 
   static final String METHOD_NAME = "validate";
   final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
   @SuppressWarnings(value = "unchecked")
-  public List<String> apply(Command command) {
+  public List<String> apply(EntityCommand command) {
 
     if (command == null) {
       return singletonList("Command cannot be null.");

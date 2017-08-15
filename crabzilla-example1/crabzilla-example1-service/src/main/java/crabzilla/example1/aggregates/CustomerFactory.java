@@ -1,7 +1,6 @@
 package crabzilla.example1.aggregates;
 
 
-import crabzilla.example1.aggregates.customer.*;
 import crabzilla.example1.services.SampleInternalService;
 import crabzilla.model.*;
 import crabzilla.vertx.AggregateRootComponentsFactory;
@@ -36,20 +35,20 @@ public class CustomerFactory implements AggregateRootComponentsFactory<Customer>
 
   @Override
   public Supplier<Customer> supplierFn() {
-    return new CustomerSupplierFn();
+    return new CustomerFunctions.CustomerSupplierFn();
   }
 
   @Override
-  public BiFunction<Event, Customer, Customer> stateTransitionFn() {return new CustomerStateTransitionFn(); }
+  public BiFunction<DomainEvent, Customer, Customer> stateTransitionFn() {return new CustomerFunctions.CustomerStateTransitionFn(); }
 
   @Override
-  public Function<Command, List<String>> cmdValidatorFn() {
-    return new CustomerCommandValidatorFn();
+  public Function<EntityCommand, List<String>> cmdValidatorFn() {
+    return new CustomerFunctionsVavr.CustomerCommandValidatorFn();
   }
 
   @Override
-  public BiFunction<Command, Snapshot<Customer>, Either<Throwable, Optional<UnitOfWork>>> cmdHandlerFn() {
-    return new CustomerCmdHandlerFn(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn(), depInjectionFn()));
+  public BiFunction<EntityCommand, Snapshot<Customer>, Either<Throwable, Optional<EntityUnitOfWork>>> cmdHandlerFn() {
+    return new CustomerFunctions.CustomerCmdHandlerFn(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn(), depInjectionFn()));
   }
 
   @Override

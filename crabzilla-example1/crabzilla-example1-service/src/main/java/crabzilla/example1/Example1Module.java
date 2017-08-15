@@ -14,10 +14,10 @@ import com.zaxxer.hikari.HikariDataSource;
 import crabzilla.example1.aggregates.CustomerModule;
 import crabzilla.example1.services.SampleInternalService;
 import crabzilla.example1.services.SampleInternalServiceImpl;
-import crabzilla.model.Command;
+import crabzilla.model.EntityCommand;
 import crabzilla.model.EntityId;
-import crabzilla.model.Event;
-import crabzilla.model.UnitOfWork;
+import crabzilla.model.DomainEvent;
+import crabzilla.model.EntityUnitOfWork;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.EventProjector;
 import crabzilla.vertx.codecs.JacksonGenericCodec;
@@ -146,14 +146,14 @@ class Example1Module extends AbstractModule {
     vertx.eventBus().registerDefaultCodec(EntityId.class,
             new JacksonGenericCodec<>(mapper, EntityId.class));
 
-    vertx.eventBus().registerDefaultCodec(Command.class,
-            new JacksonGenericCodec<>(mapper, Command.class));
+    vertx.eventBus().registerDefaultCodec(EntityCommand.class,
+            new JacksonGenericCodec<>(mapper, EntityCommand.class));
 
-    vertx.eventBus().registerDefaultCodec(Event.class,
-            new JacksonGenericCodec<>(mapper, Event.class));
+    vertx.eventBus().registerDefaultCodec(DomainEvent.class,
+            new JacksonGenericCodec<>(mapper, DomainEvent.class));
 
-    vertx.eventBus().registerDefaultCodec(UnitOfWork.class,
-            new JacksonGenericCodec<>(mapper, UnitOfWork.class));
+    vertx.eventBus().registerDefaultCodec(EntityUnitOfWork.class,
+            new JacksonGenericCodec<>(mapper, EntityUnitOfWork.class));
 
   }
 

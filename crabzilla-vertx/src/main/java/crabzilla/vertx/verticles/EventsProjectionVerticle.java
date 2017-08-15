@@ -1,6 +1,6 @@
 package crabzilla.vertx.verticles;
 
-import crabzilla.model.UnitOfWork;
+import crabzilla.model.EntityUnitOfWork;
 import crabzilla.vertx.EventProjector;
 import crabzilla.vertx.ProjectionData;
 import io.vertx.circuitbreaker.CircuitBreaker;
@@ -40,9 +40,9 @@ public class EventsProjectionVerticle extends AbstractVerticle {
   }
 
 
-  Handler<Message<UnitOfWork>> msgHandler() {
+  Handler<Message<EntityUnitOfWork>> msgHandler() {
 
-    return (Message<UnitOfWork> msg) -> {
+    return (Message<EntityUnitOfWork> msg) -> {
 
       vertx.executeBlocking((Future<String> future) -> {
 
@@ -81,7 +81,7 @@ public class EventsProjectionVerticle extends AbstractVerticle {
 
   }
 
-  Handler<AsyncResult<String>> resultHandler(final Message<UnitOfWork> msg) {
+  Handler<AsyncResult<String>> resultHandler(final Message<EntityUnitOfWork> msg) {
 
     return (AsyncResult<String> resultHandler) -> {
 

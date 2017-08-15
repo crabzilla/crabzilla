@@ -2,9 +2,7 @@ package crabzilla.example1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
-import crabzilla.example1.aggregates.customer.CustomerId;
-import crabzilla.example1.aggregates.customer.events.CustomerActivated;
-import crabzilla.example1.aggregates.customer.events.CustomerCreated;
+import crabzilla.example1.aggregates.CustomerData;
 import crabzilla.vertx.EventProjector;
 import crabzilla.vertx.ProjectionData;
 import crabzilla.vertx.util.DbConcurrencyException;
@@ -48,9 +46,9 @@ public class Example1EventProjectorIt {
   @Test
   public void can_project_two_events() throws DbConcurrencyException {
 
-    val id = new CustomerId("customer#1");
-    val event1 = new CustomerCreated(id,  "customer1");
-    val event2 = new CustomerActivated("a good reason", Instant.now());
+    val id = new CustomerData.CustomerId("customer#1");
+    val event1 = new CustomerData.CustomerCreated(id,  "customer1");
+    val event2 = new CustomerData.CustomerActivated("a good reason", Instant.now());
     val projectionData = new ProjectionData(UUID.randomUUID(), 1L, id.getStringValue(), asList(event1, event2));
 
     eventProjector.handle(singletonList(projectionData));

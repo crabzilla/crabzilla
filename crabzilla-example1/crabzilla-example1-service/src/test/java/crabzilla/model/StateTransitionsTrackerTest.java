@@ -1,11 +1,9 @@
 package crabzilla.model;
 
-import crabzilla.example1.aggregates.customer.Customer;
-import crabzilla.example1.aggregates.customer.CustomerId;
-import crabzilla.example1.aggregates.customer.CustomerStateTransitionFnJavaslang;
-import crabzilla.example1.aggregates.customer.CustomerSupplierFn;
-import crabzilla.example1.aggregates.customer.events.CustomerActivated;
-import crabzilla.example1.aggregates.customer.events.CustomerCreated;
+import crabzilla.example1.aggregates.Customer;
+import crabzilla.example1.aggregates.CustomerData;
+import crabzilla.example1.aggregates.CustomerFunctions;
+import crabzilla.example1.aggregates.CustomerFunctionsVavr;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,7 +22,7 @@ public class StateTransitionsTrackerTest {
 
   StateTransitionsTracker<Customer> tracker;
 
-  Supplier<Customer> supplier = new CustomerSupplierFn();
+  Supplier<Customer> supplier = new CustomerFunctions.CustomerSupplierFn();
 
   @BeforeEach
   void instantiate() {
@@ -33,7 +31,7 @@ public class StateTransitionsTrackerTest {
 
   @Test
   public void can_be_instantiated() {
-    new StateTransitionsTracker<>(supplier.get(), new CustomerStateTransitionFnJavaslang(), customer -> customer);
+    new StateTransitionsTracker<>(supplier.get(), new CustomerFunctionsVavr.CustomerStateTransitionFn(), customer -> customer);
   }
 
   @Nested
@@ -42,7 +40,7 @@ public class StateTransitionsTrackerTest {
 
     @BeforeEach
     void instantiate() {
-      tracker = new StateTransitionsTracker<>(supplier.get(), new CustomerStateTransitionFnJavaslang(), customer -> customer);
+      tracker = new StateTransitionsTracker<>(supplier.get(), new CustomerFunctionsVavr.CustomerStateTransitionFn(), customer -> customer);
     }
 
     @Test
@@ -59,8 +57,8 @@ public class StateTransitionsTrackerTest {
     @DisplayName("when adding a create customer event")
     public class WhenAddingNewEvent {
 
-      final CustomerId id = new CustomerId("c1");
-      private CustomerCreated customerCreated = new CustomerCreated(id, "customer-1");
+      final CustomerData.CustomerId id = new CustomerData.CustomerId("c1");
+      private CustomerData.CustomerCreated customerCreated = new CustomerData.CustomerCreated(id, "customer-1");
       private Customer expectedCustomer = Customer.of(id, "customer-1", false, null);
 
       @BeforeEach
@@ -83,7 +81,7 @@ public class StateTransitionsTrackerTest {
       @DisplayName("when adding an activate customer event")
       public class WhenAddingActivateEvent {
 
-        private CustomerActivated customerActivated = new CustomerActivated("is ok", Instant.now());
+        private CustomerData.CustomerActivated customerActivated = new CustomerData.CustomerActivated("is ok", Instant.now());
         private Customer expectedCustomer = Customer.of(id, "customer-1", true,
                 customerActivated.getReason());
 
@@ -116,15 +114,15 @@ public class StateTransitionsTrackerTest {
 
     final String IS_OK = "is ok";
 
-    final CustomerId id = new CustomerId("c1");
-    private CustomerCreated customerCreated = new CustomerCreated(id, "customer-1");
-    private CustomerActivated customerActivated = new CustomerActivated(IS_OK, Instant.now());
+    final CustomerData.CustomerId id = new CustomerData.CustomerId("c1");
+    private CustomerData.CustomerCreated customerCreated = new CustomerData.CustomerCreated(id, "customer-1");
+    private CustomerData.CustomerActivated customerActivated = new CustomerData.CustomerActivated(IS_OK, Instant.now());
     private Customer expectedCustomer = Customer.of(id, "customer-1", true, IS_OK);
 
     @BeforeEach
     void instantiate() {
       // given
-      tracker = new StateTransitionsTracker<>(supplier.get(), new CustomerStateTransitionFnJavaslang(), customer -> customer);
+      tracker = new StateTransitionsTracker<>(supplier.get(), new CustomerFunctionsVavr.CustomerStateTransitionFn(), customer -> customer);
       // when
       tracker.applyEvents(c -> asList(customerCreated, customerActivated));
     }

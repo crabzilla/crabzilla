@@ -10,20 +10,20 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 
 public abstract class AbstractCommandsHandlerFn<A extends AggregateRoot>
-        implements BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> {
+        implements BiFunction<EntityCommand, Snapshot<A>, Either<Throwable, Optional<EntityUnitOfWork>>> {
 
   static final String METHOD_NAME = "handle";
   final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
-  public Either<Throwable, Optional<UnitOfWork>> apply(final Command command, final Snapshot<A> snapshot) {
+  public Either<Throwable, Optional<EntityUnitOfWork>> apply(final EntityCommand command, final Snapshot<A> snapshot) {
 
     final MethodType methodType =
-            MethodType.methodType(UnitOfWork.class, new Class<?>[] {command.getClass(), Snapshot.class});
+            MethodType.methodType(EntityUnitOfWork.class, new Class<?>[] {command.getClass(), Snapshot.class});
 
 
     try {
       final MethodHandle methodHandle = lookup.bind(this, METHOD_NAME, methodType);
-      val uow = (UnitOfWork) methodHandle.invokeWithArguments(command, snapshot);
+      val uow = (EntityUnitOfWork) methodHandle.invokeWithArguments(command, snapshot);
       return Eithers.right(Optional.ofNullable(uow)) ;
     } catch (IllegalAccessException | NoSuchMethodException e) {
       return Eithers.right(Optional.empty());

@@ -1,7 +1,7 @@
 package crabzilla.vertx.verticles;
 
 import crabzilla.model.AggregateRoot;
-import crabzilla.model.Command;
+import crabzilla.model.EntityCommand;
 import crabzilla.vertx.CommandExecution;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
@@ -38,15 +38,6 @@ public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVertic
     router.route(HttpMethod.PUT, "/" + aggregateRootId(aggregateRootClass) + "/commands")
           .handler(contextHandler());
 
-    // Getting the routes
-    for (Route r : router.getRoutes()) {
-      // Path is public, but methods are not. We change that
-      Field f = r.getClass().getDeclaredField("methods");
-      f.setAccessible(true);
-      Set<HttpMethod> methods = (Set<HttpMethod>) f.get(r);
-      System.out.println(methods.toString() + r.getPath());
-    }
-
     val server = vertx.createHttpServer();
 
     server.requestHandler(router::accept).listen(8080);
@@ -55,16 +46,16 @@ public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVertic
   Handler<RoutingContext> contextHandler() {
     return routingContext -> {
       routingContext.request().bodyHandler(buff -> {
-        val command = Json.decodeValue(new String(buff.getBytes()), Command.class);
+        val command = Json.decodeValue(new String(buff.getBytes()), EntityCommand.class);
         val httpResp = routingContext.request().response();
-        val options = new DeliveryOptions().setCodecName("Command");
+        val options = new DeliveryOptions().setCodecName("EntityCommand");
         vertx.<CommandExecution>eventBus().send(commandHandlerId(aggregateRootClass), command, options, response -> {
           if (response.succeeded()) {
             log.info("success commands handler: {}", response);
             val result = (CommandExecution) response.result().body();
             if (CommandExecution.RESULT.SUCCESS.equals(result.getResult())) {
               val headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence().get().toString());
-              val optionsUow = new DeliveryOptions().setCodecName("UnitOfWork").setHeaders(headers);
+              val optionsUow = new DeliveryOptions().setCodecName("EntityUnitOfWork").setHeaders(headers);
               vertx.<String>eventBus().publish(eventsHandlerId("example1"), result.getUnitOfWork().get(), optionsUow);
               httpResp.end(response.result().body().toString());
             } else {

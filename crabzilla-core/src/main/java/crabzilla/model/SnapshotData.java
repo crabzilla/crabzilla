@@ -9,6 +9,6 @@ import java.util.List;
 public class SnapshotData implements Serializable {
 
   Version version;
-  List<Event> events;
+  List<DomainEvent> events;
 
 }

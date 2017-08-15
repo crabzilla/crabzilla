@@ -10,6 +10,4 @@ public interface Command extends Serializable {
 
   UUID getCommandId();
 
-  EntityId getTargetId();
-
 }

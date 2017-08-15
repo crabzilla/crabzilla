@@ -1,10 +1,8 @@
 package crabzilla.example1;
 
 import com.google.inject.Guice;
-import crabzilla.example1.aggregates.customer.Customer;
-import crabzilla.example1.aggregates.customer.CustomerId;
-import crabzilla.example1.aggregates.customer.commands.ActivateCustomerCmd;
-import crabzilla.example1.aggregates.customer.commands.CreateCustomerCmd;
+import crabzilla.example1.aggregates.Customer;
+import crabzilla.example1.aggregates.CustomerData;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.core.AsyncResult;
@@ -76,10 +74,10 @@ public class Example1Launcher {
 
   private void justForTest() {
 
-    val customerId = new CustomerId(UUID.randomUUID().toString());
+    val customerId = new CustomerData.CustomerId(UUID.randomUUID().toString());
 //    val customerId = new CustomerId("customer123");
-    val createCustomerCmd = new CreateCustomerCmd(UUID.randomUUID(), customerId, "a good customer");
-    val options = new DeliveryOptions().setCodecName("Command");
+    val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "a good customer");
+    val options = new DeliveryOptions().setCodecName("EntityCommand");
 
     // create customer command
     vertx.eventBus().<CommandExecution>send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
@@ -90,7 +88,7 @@ public class Example1Launcher {
 
         log.info("Result: {}", asyncResult.result().body());
 
-        val activateCustomerCmd = new ActivateCustomerCmd(UUID.randomUUID(), createCustomerCmd.getTargetId(), "because I want it");
+        val activateCustomerCmd = new CustomerData.ActivateCustomerCmd(UUID.randomUUID(), createCustomerCmd.getTargetId(), "because I want it");
 
         // activate customer command
         vertx.eventBus().<CommandExecution>send(commandHandlerId(Customer.class), activateCustomerCmd, options, asyncResult2 -> {

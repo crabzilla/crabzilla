@@ -14,10 +14,10 @@ public interface AggregateRootFunctionsFactory<A extends AggregateRoot> {
 
   Function<A, A> depInjectionFn() ;
 
-  BiFunction<Event, A, A> stateTransitionFn() ;
+  BiFunction<DomainEvent, A, A> stateTransitionFn() ;
 
-  Function<Command, List<String>> cmdValidatorFn() ;
+  Function<EntityCommand, List<String>> cmdValidatorFn() ;
 
-  BiFunction<Command, Snapshot<A>, Either<Throwable, Optional<UnitOfWork>>> cmdHandlerFn() ;
+  BiFunction<EntityCommand, Snapshot<A>, Either<Throwable, Optional<EntityUnitOfWork>>> cmdHandlerFn() ;
 
 }

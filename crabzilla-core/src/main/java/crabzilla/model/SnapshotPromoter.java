@@ -27,10 +27,10 @@ public class SnapshotPromoter<A extends AggregateRoot> {
     return EMPTY_SNAPSHOT;
   }
 
-  public Snapshot<A> applyNewEventsToSnapshot(Snapshot<A> originalSnapshot, Version newVersion, List<Event> newEvents) {
+  public Snapshot<A> promote(Snapshot<A> originalSnapshot, Version newVersion, List<DomainEvent> newEvents) {
 
     if (originalSnapshot.getVersion().getValueAsLong() != newVersion.getValueAsLong() -1) {
-      throw new RuntimeException(String.format("Cannot upgrade to version %s since my version is %s",
+      throw new RuntimeException(String.format("Cannot upgrade to version %s since current version is %s",
               newVersion, originalSnapshot.getVersion()));
     }
 
