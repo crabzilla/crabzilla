@@ -11,7 +11,7 @@ import com.google.inject.name.Names;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.zaxxer.hikari.HikariDataSource;
-import crabzilla.example1.aggregates.CustomerModule;
+import crabzilla.example1.customer.CustomerModule;
 import crabzilla.example1.services.SampleInternalService;
 import crabzilla.example1.services.SampleInternalServiceImpl;
 import crabzilla.model.DomainEvent;

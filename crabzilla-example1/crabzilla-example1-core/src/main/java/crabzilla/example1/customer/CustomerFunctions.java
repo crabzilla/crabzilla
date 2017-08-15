@@ -1,4 +1,4 @@
-package crabzilla.example1.aggregates;
+package crabzilla.example1.customer;
 
 import crabzilla.model.EntityUnitOfWork;
 import crabzilla.model.Snapshot;
@@ -48,19 +48,19 @@ public class CustomerFunctions {
       this.trackerFactory = trackerFactory;
     }
 
-    public EntityUnitOfWork handle(CustomerData.CreateCustomerCmd cmd, Snapshot<Customer> snapshot) {
+    public EntityUnitOfWork handle(CustomerData.CreateCustomer cmd, Snapshot<Customer> snapshot) {
         return unitOfWork(cmd, snapshot.nextVersion(), snapshot.getInstance().create(cmd.getTargetId(), cmd.getName()));
     }
 
-    public EntityUnitOfWork handle(CustomerData.ActivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
+    public EntityUnitOfWork handle(CustomerData.ActivateCustomer cmd, Snapshot<Customer> snapshot) {
       return unitOfWork(cmd, snapshot.nextVersion(), snapshot.getInstance().activate(cmd.getReason()));
     }
 
-    public EntityUnitOfWork handle(CustomerData.DeactivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
+    public EntityUnitOfWork handle(CustomerData.DeactivateCustomer cmd, Snapshot<Customer> snapshot) {
       return unitOfWork(cmd, snapshot.nextVersion(), snapshot.getInstance().deactivate(cmd.getReason()));
     }
 
-    public EntityUnitOfWork handle(CustomerData.CreateActivateCustomerCmd cmd, Snapshot<Customer> snapshot) {
+    public EntityUnitOfWork handle(CustomerData.CreateActivateCustomer cmd, Snapshot<Customer> snapshot) {
       val tracker = trackerFactory.create(snapshot.getInstance());
       val events = tracker
               .applyEvents(customer -> customer.create(cmd.getTargetId(), cmd.getName()))

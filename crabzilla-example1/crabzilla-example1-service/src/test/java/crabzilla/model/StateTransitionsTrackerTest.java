@@ -1,9 +1,9 @@
 package crabzilla.model;
 
-import crabzilla.example1.aggregates.Customer;
-import crabzilla.example1.aggregates.CustomerData;
-import crabzilla.example1.aggregates.CustomerFunctions;
-import crabzilla.example1.aggregates.CustomerFunctionsVavr;
+import crabzilla.example1.customer.Customer;
+import crabzilla.example1.customer.CustomerData;
+import crabzilla.example1.customer.CustomerFunctions;
+import crabzilla.example1.customer.CustomerFunctionsVavr;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

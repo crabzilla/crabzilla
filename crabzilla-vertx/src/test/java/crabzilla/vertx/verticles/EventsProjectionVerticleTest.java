@@ -1,6 +1,6 @@
 package crabzilla.vertx.verticles;
 
-import crabzilla.example1.aggregates.CustomerData;
+import crabzilla.example1.customer.CustomerData;
 import crabzilla.model.EntityUnitOfWork;
 import crabzilla.model.Version;
 import crabzilla.vertx.EventProjector;
@@ -70,7 +70,7 @@ public class EventsProjectionVerticleTest {
     Async async = tc.async();
 
     val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
+    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer");
     val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
     val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
     val uowSequence = 1L;

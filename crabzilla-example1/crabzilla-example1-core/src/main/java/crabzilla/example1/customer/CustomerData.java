@@ -1,4 +1,4 @@
-package crabzilla.example1.aggregates;
+package crabzilla.example1.customer;
 
 import crabzilla.model.DomainEvent;
 import crabzilla.model.EntityCommand;
@@ -18,29 +18,30 @@ public class CustomerData {
   // commands
 
   @Value
-  public static class ActivateCustomerCmd implements EntityCommand {
-    UUID commandId;
-    CustomerId targetId;
-    String reason;
-  }
-
-  @Value
-  public static class CreateActivateCustomerCmd implements EntityCommand {
-    UUID commandId;
-    CustomerId targetId;
-    String name;
-    String reason;
-  }
-
-  @Value
-  public static class CreateCustomerCmd implements EntityCommand {
+  public static class CreateCustomer implements EntityCommand {
     UUID commandId;
     CustomerId targetId;
     String name;
   }
 
   @Value
-  public static class DeactivateCustomerCmd implements EntityCommand {
+  public static class ActivateCustomer implements EntityCommand {
+    UUID commandId;
+    CustomerId targetId;
+    String reason;
+  }
+
+  @Value
+  public static class CreateActivateCustomer implements EntityCommand {
+    UUID commandId;
+    CustomerId targetId;
+    String name;
+    String reason;
+  }
+
+
+  @Value
+  public static class DeactivateCustomer implements EntityCommand {
     UUID commandId;
     CustomerId targetId;
     String reason;

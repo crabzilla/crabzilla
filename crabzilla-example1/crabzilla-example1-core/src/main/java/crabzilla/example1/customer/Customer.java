@@ -1,4 +1,4 @@
-package crabzilla.example1.aggregates;
+package crabzilla.example1.customer;
 
 import crabzilla.example1.services.SampleInternalService;
 import crabzilla.model.AggregateRoot;

@@ -1,8 +1,10 @@
 package crabzilla.example1.readmodel;
 
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-@Value
+@Data
+@AllArgsConstructor
 public class CustomerSummary {
   String id;
   String name;

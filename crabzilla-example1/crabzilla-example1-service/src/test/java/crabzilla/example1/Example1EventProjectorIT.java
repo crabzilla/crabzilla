@@ -17,7 +17,7 @@ import javax.inject.Inject;
 import java.time.Instant;
 import java.util.UUID;
 
-import static crabzilla.example1.aggregates.CustomerData.*;
+import static crabzilla.example1.customer.CustomerData.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;

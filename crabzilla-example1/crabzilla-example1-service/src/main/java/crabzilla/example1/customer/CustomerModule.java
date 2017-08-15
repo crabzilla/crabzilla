@@ -1,4 +1,4 @@
-package crabzilla.example1.aggregates;
+package crabzilla.example1.customer;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;

@@ -60,7 +60,7 @@ public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVertic
               httpResp.end(response.result().body().toString());
             } else {
               //  TODO inform more details
-              httpResp.setStatusCode(500).end(result.getConstraints().get().get(0));
+              httpResp.setStatusCode(400).end(result.getConstraints().get().get(0));
             }
           } else {
             httpResp.setStatusCode(500).end(response.cause().getMessage());

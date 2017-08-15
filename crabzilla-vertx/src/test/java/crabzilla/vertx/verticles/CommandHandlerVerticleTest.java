@@ -1,8 +1,8 @@
 package crabzilla.vertx.verticles;
 
-import crabzilla.example1.aggregates.Customer;
-import crabzilla.example1.aggregates.CustomerData;
-import crabzilla.example1.aggregates.CustomerFunctions;
+import crabzilla.example1.customer.Customer;
+import crabzilla.example1.customer.CustomerData;
+import crabzilla.example1.customer.CustomerFunctions;
 import crabzilla.model.*;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.VertxFactory;
@@ -96,7 +96,7 @@ public class CommandHandlerVerticleTest {
     Async async = tc.async();
 
     val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
+    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer");
     val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
     val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
     val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
@@ -161,7 +161,7 @@ public class CommandHandlerVerticleTest {
     Async async = tc.async();
 
     val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
+    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer");
     val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
     val expectedException = new Throwable("Expected");
 
@@ -208,7 +208,7 @@ public class CommandHandlerVerticleTest {
     Async async = tc.async();
 
     val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
+    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer");
     val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
     val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
     val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
@@ -267,7 +267,7 @@ public class CommandHandlerVerticleTest {
     Async async = tc.async();
 
     val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
+    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer");
     val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
     val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
     val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
@@ -327,7 +327,7 @@ public class CommandHandlerVerticleTest {
     Async async = tc.async();
 
     val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "customer");
+    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer");
     val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
     val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
     val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
@@ -386,7 +386,7 @@ public class CommandHandlerVerticleTest {
     Async async = tc.async();
 
     val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "customer1");
+    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer1");
 
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(singletonList("An error"));
 

@@ -1,4 +1,4 @@
-package crabzilla.example1.aggregates;
+package crabzilla.example1.customer;
 
 import crabzilla.model.*;
 import crabzilla.stack.AbstractCommandValidatorFn;
@@ -82,17 +82,17 @@ public class CustomerFunctionsVavr {
 
       final EntityUnitOfWork uow = Match(cmd).of(
 
-        Case(instanceOf(CustomerData.CreateCustomerCmd.class), (command) ->
+        Case(instanceOf(CustomerData.CreateCustomer.class), (command) ->
           unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.create(command.getTargetId(), command.getName()))
         ),
 
-        Case(instanceOf(CustomerData.ActivateCustomerCmd.class), (command) ->
+        Case(instanceOf(CustomerData.ActivateCustomer.class), (command) ->
           unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.activate(command.getReason()))),
 
-        Case(instanceOf(CustomerData.DeactivateCustomerCmd.class), (command) ->
+        Case(instanceOf(CustomerData.DeactivateCustomer.class), (command) ->
           unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.deactivate(command.getReason()))),
 
-        Case(instanceOf(CustomerData.CreateActivateCustomerCmd.class), (command) -> {
+        Case(instanceOf(CustomerData.CreateActivateCustomer.class), (command) -> {
           val tracker = trackerFactory.create(targetInstance);
           val events = tracker
                   .applyEvents(customer -> customer.create(command.getTargetId(), command.getName()))
@@ -122,11 +122,11 @@ public class CustomerFunctionsVavr {
 
       private static final String VALID_NAME_CHARS = "[a-zA-Z ]";
 
-      public Validation<List<String>, CustomerData.CreateCustomerCmd> validate(CustomerData.CreateCustomerCmd cmd) {
+      public Validation<List<String>, CustomerData.CreateCustomer> validate(CustomerData.CreateCustomer cmd) {
         return Validation.combine(validateCmdId(cmd.getCommandId()),
                                   validateId(cmd.getTargetId()),
                                   validateName(cmd.getName())
-        ).ap((Function3<UUID, CustomerData.CustomerId, String, CustomerData.CreateCustomerCmd>) CustomerData.CreateCustomerCmd::new);
+        ).ap((Function3<UUID, CustomerData.CustomerId, String, CustomerData.CreateCustomer>) CustomerData.CreateCustomer::new);
       }
 
     private Validation<String, UUID>  validateCmdId(UUID commandId) {
@@ -152,7 +152,7 @@ public class CustomerFunctionsVavr {
 
   public static class CommandValidatorFn extends AbstractCommandValidatorFn {
 
-      public java.util.List<String> validate(CustomerData.CreateCustomerCmd cmd) {
+      public java.util.List<String> validate(CustomerData.CreateCustomer cmd) {
 
         val either = new CreateCustomerValidator().validate(cmd).toEither();
 
@@ -160,7 +160,7 @@ public class CustomerFunctionsVavr {
 
       }
 
-    public java.util.List<String> validate(CustomerData.ActivateCustomerCmd cmd) {
+    public java.util.List<String> validate(CustomerData.ActivateCustomer cmd) {
 
       return emptyList(); // it's always valid
 

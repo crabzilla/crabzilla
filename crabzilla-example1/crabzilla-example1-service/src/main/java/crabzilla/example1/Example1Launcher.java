@@ -1,8 +1,8 @@
 package crabzilla.example1;
 
 import com.google.inject.Guice;
-import crabzilla.example1.aggregates.Customer;
-import crabzilla.example1.aggregates.CustomerData;
+import crabzilla.example1.customer.Customer;
+import crabzilla.example1.customer.CustomerData;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.verticles.EventsProjectionVerticle;
 import example1.dao.CustomerSummaryDao;
@@ -11,7 +11,6 @@ import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.logging.SLF4JLogDelegateFactory;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
@@ -34,7 +33,6 @@ public class Example1Launcher {
 
   @Inject
   EventsProjectionVerticle<CustomerSummaryDao> projectionVerticle;
-
   static Vertx vertx;
 
   public static void main(String args[]) throws InterruptedException {
@@ -48,9 +46,6 @@ public class Example1Launcher {
       if (res.succeeded()) {
 
         vertx = res.result();
-
-        EventBus eventBus = vertx.eventBus();
-        log.info("We now have a clustered event bus: " + eventBus);
 
         setProperty (LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory.class.getName ());
         LoggerFactory.getLogger (LoggerFactory.class); // Required for Logback to work in Vertx
@@ -77,7 +72,7 @@ public class Example1Launcher {
 
     val customerId = new CustomerData.CustomerId(UUID.randomUUID().toString());
 //    val customerId = new CustomerId("customer123");
-    val createCustomerCmd = new CustomerData.CreateCustomerCmd(UUID.randomUUID(), customerId, "a good customer");
+    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "a good customer");
     val options = new DeliveryOptions().setCodecName("EntityCommand");
 
     // create customer command
@@ -89,7 +84,7 @@ public class Example1Launcher {
 
         log.info("Result: {}", asyncResult.result().body());
 
-        val activateCustomerCmd = new CustomerData.ActivateCustomerCmd(UUID.randomUUID(), createCustomerCmd.getTargetId(), "because I want it");
+        val activateCustomerCmd = new CustomerData.ActivateCustomer(UUID.randomUUID(), createCustomerCmd.getTargetId(), "because I want it");
 
         // activate customer command
         vertx.eventBus().<CommandExecution>send(commandHandlerId(Customer.class), activateCustomerCmd, options, asyncResult2 -> {
