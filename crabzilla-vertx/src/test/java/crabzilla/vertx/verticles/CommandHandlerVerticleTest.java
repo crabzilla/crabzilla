@@ -1,23 +1,22 @@
 package crabzilla.vertx.verticles;
 
 import crabzilla.example1.customer.Customer;
-import crabzilla.example1.customer.CustomerData;
-import crabzilla.example1.customer.CustomerFunctions;
 import crabzilla.model.*;
+import crabzilla.stack.DbConcurrencyException;
+import crabzilla.stack.UnknownCommandException;
 import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.VertxFactory;
-import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
-import crabzilla.vertx.util.DbConcurrencyException;
+import crabzilla.vertx.repositories.EntityUnitOfWorkRepository;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import lombok.Value;
 import lombok.val;
 import net.jodah.expiringmap.ExpiringMap;
 import org.junit.After;
@@ -36,6 +35,7 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static crabzilla.example1.customer.CustomerData.*;
 import static crabzilla.vertx.CommandExecution.RESULT;
 import static crabzilla.vertx.util.StringHelper.commandHandlerId;
 import static java.util.Arrays.asList;
@@ -52,17 +52,18 @@ public class CommandHandlerVerticleTest {
   public static final String FORCED_CONCURRENCY_EXCEPTION = "FORCED CONCURRENCY EXCEPTION";
   Vertx vertx;
   CircuitBreaker circuitBreaker;
-
-  @Mock
   ExpiringMap<String, Snapshot<Customer>> cache;
+
+  final Customer seedValue =  new Customer(null, null, null, false,null);
+
   @Mock
   Function<EntityCommand, List<String>> validatorFn;
   @Mock
-  BiFunction<EntityCommand, Snapshot<Customer>, Either<Throwable, Optional<EntityUnitOfWork>>> cmdHandlerFn;
+  BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> cmdHandlerFn;
   @Mock
-  VertxUnitOfWorkRepository eventRepository;
+  EntityUnitOfWorkRepository eventRepository;
   @Mock
-  SnapshotPromoter<Customer> snapshotter;
+  SnapshotPromoter<Customer> snapshotPromoterFn;
 
   @Before
   public void setUp(TestContext context) {
@@ -78,8 +79,10 @@ public class CommandHandlerVerticleTest {
                     .setResetTimeout(10000) // time spent in open state before attempting to re-try
     );
 
-    val verticle = new CommandHandlerVerticle<Customer>(Customer.class, cmdHandlerFn,
-                              validatorFn, snapshotter, eventRepository, cache, circuitBreaker);
+    cache = ExpiringMap.create();
+
+    Verticle verticle = new CommandHandlerVerticle<>(Customer.class, seedValue, cmdHandlerFn, validatorFn,
+            snapshotPromoterFn, eventRepository, cache, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
 
@@ -95,13 +98,12 @@ public class CommandHandlerVerticleTest {
 
     Async async = tc.async();
 
-    val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer");
-    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
-    val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
-    val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    val customerId = new CustomerId("customer#1");
+    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
+    val initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
+    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
+    val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
-    when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
@@ -110,13 +112,12 @@ public class CommandHandlerVerticleTest {
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class));
 
-    doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Either<Throwable, Long>>>) (uow, future) ->
-            future.complete(Eithers.right(1L))))
+    doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Long>>) (uow, future) ->
+            future.complete(1L)))
             .when(eventRepository).append(eq(expectedUow), any(Future.class));
 
-    when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
     when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(initialSnapshot)))
-            .thenReturn(Eithers.right(Optional.of(expectedUow)));
+            .thenReturn(CommandHandlerResult.success(expectedUow));
 
     val options = new DeliveryOptions().setCodecName("EntityCommand");
 
@@ -141,13 +142,19 @@ public class CommandHandlerVerticleTest {
       val response = (CommandExecution) asyncResult.result().body();
 
       tc.assertEquals(RESULT.SUCCESS, response.getResult());
-      tc.assertEquals(1L, response.getUowSequence().get());
+      tc.assertEquals(Optional.of(1L), response.getUowSequence());
 
-      val resultUnitOfWork = response.getUnitOfWork().get();
+      val resultUnitOfWork = response.getUnitOfWork();
 
-      tc.assertEquals(expectedUow.getCommand(), resultUnitOfWork.getCommand());
-      tc.assertEquals(expectedUow.getEvents(), resultUnitOfWork.getEvents());
-      tc.assertEquals(expectedUow.getVersion(), resultUnitOfWork.getVersion());
+      if (resultUnitOfWork.isPresent()) {
+
+        val uow = resultUnitOfWork.get();
+
+        tc.assertEquals(expectedUow.getCommand(), uow.getCommand());
+        tc.assertEquals(expectedUow.getEvents(), uow.getEvents());
+        tc.assertEquals(expectedUow.getVersion(), uow.getVersion());
+
+      }
 
       async.complete();
 
@@ -160,12 +167,11 @@ public class CommandHandlerVerticleTest {
 
     Async async = tc.async();
 
-    val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer");
-    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
+    val customerId = new CustomerId("customer#1");
+    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
+    val initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
     val expectedException = new Throwable("Expected");
 
-    when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
@@ -173,8 +179,6 @@ public class CommandHandlerVerticleTest {
             .when(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class));
-
-    when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
 
     val options = new DeliveryOptions().setCodecName("EntityCommand");
 
@@ -207,14 +211,13 @@ public class CommandHandlerVerticleTest {
 
     Async async = tc.async();
 
-    val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer");
-    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
-    val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
-    val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    val customerId = new CustomerId("customer#1");
+    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
+    val initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
+    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
+    val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
     val expectedException = new Throwable("Expected");
 
-    when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
@@ -223,13 +226,12 @@ public class CommandHandlerVerticleTest {
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class));
 
-    doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Either<Throwable, Long>>>) (uow, future) ->
+    doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Long>>) (uow, future) ->
             future.fail(expectedException)))
             .when(eventRepository).append(eq(expectedUow), any(Future.class));
 
-    when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
     when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(initialSnapshot)))
-            .thenReturn(Eithers.right(Optional.of(expectedUow)));
+            .thenReturn(CommandHandlerResult.success(expectedUow));
 
     val options = new DeliveryOptions().setCodecName("EntityCommand");
 
@@ -266,13 +268,12 @@ public class CommandHandlerVerticleTest {
 
     Async async = tc.async();
 
-    val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer");
-    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
-    val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
-    val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    val customerId = new CustomerId("customer#1");
+    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
+    val initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
+    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
+    val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
-    when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
@@ -281,13 +282,12 @@ public class CommandHandlerVerticleTest {
             eq(initialSnapshot.getVersion()),
             any(Future.class));
 
-    doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Either<Throwable, Long>>>) (uow, future) ->
-            future.complete(Eithers.left(new DbConcurrencyException(FORCED_CONCURRENCY_EXCEPTION)))))
+    doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Long>>) (uow, future) ->
+            future.fail(new DbConcurrencyException(FORCED_CONCURRENCY_EXCEPTION))))
             .when(eventRepository).append(eq(expectedUow), any(Future.class));
 
-    when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
     when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(initialSnapshot)))
-            .thenReturn(Eithers.right(Optional.of(expectedUow)));
+            .thenReturn(CommandHandlerResult.success(expectedUow));
 
     val options = new DeliveryOptions().setCodecName("EntityCommand");
 
@@ -312,7 +312,7 @@ public class CommandHandlerVerticleTest {
       val response = (CommandExecution) asyncResult.result().body();
 
       tc.assertEquals(RESULT.CONCURRENCY_ERROR, response.getResult());
-      tc.assertEquals(singletonList(FORCED_CONCURRENCY_EXCEPTION), response.getConstraints().get());
+      tc.assertEquals(Optional.of(singletonList(FORCED_CONCURRENCY_EXCEPTION)), response.getConstraints());
 
       async.complete();
 
@@ -326,13 +326,12 @@ public class CommandHandlerVerticleTest {
 
     Async async = tc.async();
 
-    val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer");
-    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
-    val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
-    val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    val customerId = new CustomerId("customer#1");
+    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
+    val initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
+    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
+    val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
-    when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
@@ -341,14 +340,12 @@ public class CommandHandlerVerticleTest {
             eq(initialSnapshot.getVersion()),
             any(Future.class));
 
-    doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Either<Throwable, Long>>>) (uow, future) ->
-            future.complete(Eithers.right(1L))))
+    doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Long>>) (uow, future) ->
+            future.complete(1L)))
             .when(eventRepository).append(eq(expectedUow), any(Future.class));
 
-    when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
-
     when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(initialSnapshot)))
-            .thenReturn(Eithers.left(new RuntimeException("SOME ERROR WITHIN COMMAND HANDLER")));
+            .thenReturn(CommandHandlerResult.error(new RuntimeException("SOME ERROR WITHIN COMMAND HANDLER")));
 
     val options = new DeliveryOptions().setCodecName("EntityCommand");
 
@@ -385,10 +382,11 @@ public class CommandHandlerVerticleTest {
 
     Async async = tc.async();
 
-    val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer1");
+    val customerId = new CustomerId("customer#1");
+    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "a bad name");
 
-    when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(singletonList("An error"));
+    List<String> errorList = singletonList("Invalid name: a bad name");
+    when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(errorList);
 
     val options = new DeliveryOptions().setCodecName("EntityCommand");
 
@@ -404,7 +402,7 @@ public class CommandHandlerVerticleTest {
 
       tc.assertEquals(RESULT.VALIDATION_ERROR, response.getResult());
 
-      tc.assertEquals(asList("An error"), response.getConstraints().get());
+      tc.assertEquals(Optional.of(asList("Invalid name: a bad name")), response.getConstraints());
 
       async.complete();
 
@@ -412,22 +410,16 @@ public class CommandHandlerVerticleTest {
 
   }
 
-  @Value
-  class UnknownCommand implements EntityCommand {
-    UUID commandId;
-    CustomerData.CustomerId targetId;
-  }
 
   @Test
   public void UNKNOWN_COMMAND_scenario(TestContext tc) {
 
     Async async = tc.async();
 
-    val customerId = new CustomerData.CustomerId("customer#1");
+    val customerId = new CustomerId("customer#1");
     val createCustomerCmd = new UnknownCommand(UUID.randomUUID(), customerId);
-    val initialSnapshot = new Snapshot<Customer>(new CustomerFunctions.SupplierFn().get(), new Version(0));
+    val initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
 
-    when(cache.get(eq(customerId.getStringValue()))).thenReturn(null);
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
@@ -436,10 +428,8 @@ public class CommandHandlerVerticleTest {
             eq(initialSnapshot.getVersion()),
             any(Future.class));
 
-    when(snapshotter.getEmptySnapshot()).thenReturn(initialSnapshot);
-
     when(cmdHandlerFn.apply(eq(createCustomerCmd), eq(initialSnapshot)))
-            .thenReturn(Eithers.right(Optional.empty()));
+            .thenReturn(CommandHandlerResult.error(new UnknownCommandException("for command UnknownCommand")));
 
     val options = new DeliveryOptions().setCodecName("EntityCommand");
 

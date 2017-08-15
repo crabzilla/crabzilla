@@ -40,28 +40,73 @@ public class CommandRestVerticle<A extends AggregateRoot> extends AbstractVertic
   }
 
   Handler<RoutingContext> contextHandler() {
+
     return routingContext -> {
+
       routingContext.request().bodyHandler(buff -> {
-        val command = Json.decodeValue(new String(buff.getBytes()), EntityCommand.class);
+
+        EntityCommand command = Json.decodeValue(new String(buff.getBytes()), EntityCommand.class);
         val httpResp = routingContext.request().response();
         val options = new DeliveryOptions().setCodecName("EntityCommand");
-        vertx.<CommandExecution>eventBus().send(commandHandlerId(aggregateRootClass), command, options, response -> {
-          if (response.succeeded()) {
-            log.info("success commands handler: {}", response);
-            val result = (CommandExecution) response.result().body();
+
+        // create customer command
+        vertx.eventBus().<CommandExecution>send(commandHandlerId(aggregateRootClass), command, options, asyncResult -> {
+
+          log.info("Successful create customer test? {}", asyncResult.succeeded());
+
+          if (asyncResult.succeeded()) {
+
+            CommandExecution result = asyncResult.result().body();
+            val resultAsJson = Json.encodePrettily(result);
+            log.info("commandExecution: {}", result);
+
             if (CommandExecution.RESULT.SUCCESS.equals(result.getResult())) {
               val headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence().get().toString());
               val optionsUow = new DeliveryOptions().setCodecName("EntityUnitOfWork").setHeaders(headers);
               vertx.<String>eventBus().publish(eventsHandlerId("example1"), result.getUnitOfWork().get(), optionsUow);
-              httpResp.end(response.result().body().toString());
+              httpResp.setStatusCode(201);
             } else {
               //  TODO inform more details
-              httpResp.setStatusCode(400).end(result.getConstraints().get().get(0));
+              httpResp.setStatusCode(400);
             }
+
+            httpResp.headers().add("content-type", "application/json");
+            httpResp.headers().add("content-length", Integer.toString(resultAsJson.length()));
+            httpResp.end(resultAsJson);
+
           } else {
-            httpResp.setStatusCode(500).end(response.cause().getMessage());
+            log.info("Cause: {}", asyncResult.cause());
+            log.info("Message: {}", asyncResult.cause().getMessage());
           }
+
         });
+
+
+
+
+//        vertx.<CommandExecution>eventBus().send(commandHandlerId(aggregateRootClass), command, options, (Handler<AsyncResult<Message<CommandExecution>>>) response -> {
+//          if (response.succeeded()) {
+//            CommandExecution result = response.result().body();
+//            val resultAsJson = Json.encodePrettily(result);
+//            log.info("commandExecution: {}", response);
+//            if (CommandExecution.RESULT.SUCCESS.equals(result.getResult())) {
+//              val headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence().get().toString());
+//              val optionsUow = new DeliveryOptions().setCodecName("EntityUnitOfWork").setHeaders(headers);
+//              //vertx.<String>eventBus().publish(eventsHandlerId("example1"), result.getUnitOfWork().get(), optionsUow);
+//              httpResp.setStatusCode(201);
+//            } else {
+//              //  TODO inform more details
+//              httpResp.setStatusCode(400);
+//            }
+//            httpResp.headers().add("content-type", "application/json");
+//            httpResp.headers().add("content-length", Integer.toString(resultAsJson.length()));
+//            httpResp.end(resultAsJson);
+//          } else {
+//            httpResp.setStatusCode(500).end(response.cause().getMessage());
+//          }
+//        });
+
+
       });
 
     };

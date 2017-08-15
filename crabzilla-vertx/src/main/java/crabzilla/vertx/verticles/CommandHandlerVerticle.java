@@ -1,8 +1,10 @@
 package crabzilla.vertx.verticles;
 
 import crabzilla.model.*;
+import crabzilla.stack.DbConcurrencyException;
+import crabzilla.stack.UnknownCommandException;
 import crabzilla.vertx.CommandExecution;
-import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
+import crabzilla.vertx.repositories.EntityUnitOfWorkRepository;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
@@ -15,7 +17,6 @@ import lombok.val;
 import net.jodah.expiringmap.ExpiringMap;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -27,22 +28,25 @@ import static java.util.Collections.singletonList;
 public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVerticle {
 
   final Class<A> aggregateRootClass;
-  final BiFunction<EntityCommand, Snapshot<A>, Either<Throwable, Optional<EntityUnitOfWork>>> cmdHandler;
+  final A seedValue;
+  final BiFunction<EntityCommand, Snapshot<A>, CommandHandlerResult> cmdHandler;
   final Function<EntityCommand, List<String>> validatorFn;
   final ExpiringMap<String, Snapshot<A>> cache;
   final SnapshotPromoter<A> snapshotter;
 
-  final VertxUnitOfWorkRepository eventRepository;
+  final EntityUnitOfWorkRepository eventRepository;
   final CircuitBreaker circuitBreaker;
 
   public CommandHandlerVerticle(@NonNull final Class<A> aggregateRootClass,
-                                @NonNull final BiFunction<EntityCommand, Snapshot<A>, Either<Throwable, Optional<EntityUnitOfWork>>> cmdHandler,
+                                @NonNull final A seedValue,
+                                @NonNull final BiFunction<EntityCommand, Snapshot<A>, CommandHandlerResult> cmdHandler,
                                 @NonNull final Function<EntityCommand, List<String>> validatorFn,
                                 @NonNull final SnapshotPromoter<A> snapshotter,
-                                @NonNull final VertxUnitOfWorkRepository eventRepository,
+                                @NonNull final EntityUnitOfWorkRepository eventRepository,
                                 @NonNull final ExpiringMap<String, Snapshot<A>> cache,
                                 @NonNull final CircuitBreaker circuitBreaker) {
     this.aggregateRootClass = aggregateRootClass;
+    this.seedValue = seedValue;
     this.cmdHandler = cmdHandler;
     this.validatorFn = validatorFn;
     this.snapshotter = snapshotter;
@@ -86,7 +90,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
       })
 
-      .execute(cmdHandler(command))
+      .<CommandExecution>execute(cmdHandler(command))
 
       .setHandler(resultHandler(msg));
 
@@ -103,16 +107,17 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
       val snapshotFromCache = cache.get(targetId);
 
-      val cachedSnapshot = snapshotFromCache == null ? snapshotter.getEmptySnapshot() : snapshotFromCache;
+      val cachedSnapshot = snapshotFromCache == null ? new Snapshot<A>(seedValue, new Version(0)) : snapshotFromCache;
 
-      log.debug("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
-              targetId, cachedSnapshot.getVersion());
+      log.info("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
+              targetId, cachedSnapshot);
 
       Future<SnapshotData> selectAfterVersionFuture = Future.future();
 
       eventRepository.selectAfterVersion(targetId, cachedSnapshot.getVersion(), selectAfterVersionFuture);
 
       selectAfterVersionFuture.setHandler(snapshotDataAsyncResult -> {
+
         if (snapshotDataAsyncResult.failed()) {
           future1.fail(snapshotDataAsyncResult.cause());
           return;
@@ -134,14 +139,72 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         // cmd handler _may_ be blocking. Otherwise, aggregate root would need to use reactive API to call
         // external services
-        vertx.executeBlocking(blockingCmdHandler(command, resultingSnapshot), false, event -> {
+        vertx.<CommandExecution>executeBlocking(future2 -> {
 
-          if (event.succeeded()) {
-            future1.complete(event.result());
+          val result = cmdHandler.apply(command, resultingSnapshot);
+
+          result.inCaseOfSuccess(uow -> {
+
+            log.error("CommandExecution: {}", uow);
+
+            Future<Long> appendFuture = Future.future();
+
+            eventRepository.append(uow, appendFuture);
+
+            appendFuture.setHandler(appendAsyncResult -> {
+
+              if (appendAsyncResult.failed()) {
+
+                val error =  appendAsyncResult.cause();
+
+                log.error("When appending uow of command {} -> {}", command.getCommandId(), error.getMessage());
+
+                if (error instanceof DbConcurrencyException) {
+                  future2.complete(CONCURRENCY_ERROR(command.getCommandId(), error.getMessage()));
+                } else {
+                  future2.fail(appendAsyncResult.cause());
+                }
+
+                return ;
+
+              }
+
+              val finalSnapshot = snapshotter.promote(resultingSnapshot, uow.getVersion(), uow.getEvents());
+
+              cache.put(targetId, finalSnapshot);
+
+              final Long uowSequence = appendAsyncResult.result();
+
+              log.error("uowSequence: {}", uowSequence);
+
+              future2.complete(SUCCESS(uow, uowSequence));
+
+            });
+
+          });
+
+          result.inCaseOfError(error -> {
+
+            log.error("CommandExecution: {}", error);
+
+            if (error instanceof UnknownCommandException) {
+              future2.complete(UNKNOWN_COMMAND(command.getCommandId()));
+            } else {
+              future2.complete(HANDLING_ERROR(command.getCommandId()));
+            }
+
+          });
+
+        }, res -> {
+
+          if (res.succeeded()) {
+            future1.complete(res.result());
+
           } else {
-            future1.fail(event.cause());
-          }
 
+            res.cause().printStackTrace();
+            future1.fail(res.cause());
+          }
         });
 
       });
@@ -150,55 +213,6 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
   }
 
-  Handler<Future<CommandExecution>> blockingCmdHandler(EntityCommand command, Snapshot<A> resultingSnapshot) {
-
-    return future2 ->
-
-      cmdHandler.apply(command, resultingSnapshot).match(cmdHandlerError -> {
-
-        log.error("Command handling error for command {} message {}", command.getCommandId(), cmdHandlerError.getMessage());
-        future2.complete(HANDLING_ERROR(command.getCommandId()));
-        return null;
-
-      }, (Function<Optional<EntityUnitOfWork>, Void>) unitOfWork -> {
-
-        if (unitOfWork.isPresent()) {
-
-          Future<Either<Throwable, Long>> appendFuture = Future.future();
-
-          eventRepository.append(unitOfWork.get(), appendFuture);
-
-          appendFuture.setHandler(appendAsyncResult -> {
-            if (appendAsyncResult.failed()) {
-              future2.fail(appendAsyncResult.cause());
-              return;
-            }
-
-            Either<Throwable, Long> appendResult = appendAsyncResult.result();
-            appendResult.match(cmdAppendError -> {
-
-              log.error("Exception for command {} message {}", command.getCommandId(), cmdAppendError.getMessage());
-              future2.complete(CONCURRENCY_ERROR(command.getCommandId(), cmdAppendError.getMessage()));
-              return null;
-
-            }, uowSequence -> {
-
-              future2.complete(SUCCESS(unitOfWork.get(), uowSequence));
-              return null;
-
-            });
-          });
-
-        } else {
-
-            future2.complete(UNKNOWN_COMMAND(command.getCommandId()));
-
-        }
-
-        return null;
-
-      });
-  }
 
   Handler<AsyncResult<CommandExecution>> resultHandler(final Message<EntityCommand> msg) {
 
@@ -207,7 +221,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
       if (resultHandler.succeeded()) {
 
         val resp = resultHandler.result();
-        log.info("success: {}", resp);
+        log.info("** success: {}", resp);
         msg.reply(resp);
 
       } else {

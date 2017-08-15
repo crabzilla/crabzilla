@@ -98,15 +98,15 @@ public class Example1AcceptanceIT {
 
   // tag::create_customer_test[]
 
-  @Test @Ignore // TODO
+  @Test @Ignore
   public void create_customer(TestContext context) {
 
     // This test is asynchronous, so get an async handler to inform the test when we are done.
     final Async async = context.async();
 
     val customerId = new CustomerId(UUID.randomUUID().toString());
-    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer-test");
-    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer-test");
+    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer test");
+    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer test");
     val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
     val json = Json.encodePrettily(createCustomerCmd);

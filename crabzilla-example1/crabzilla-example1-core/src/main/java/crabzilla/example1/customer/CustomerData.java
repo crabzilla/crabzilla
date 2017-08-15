@@ -47,6 +47,12 @@ public class CustomerData {
     String reason;
   }
 
+  @Value
+  public static class UnknownCommand implements EntityCommand {
+    UUID commandId;
+    CustomerData.CustomerId targetId;
+  }
+
   // events
 
   @Value

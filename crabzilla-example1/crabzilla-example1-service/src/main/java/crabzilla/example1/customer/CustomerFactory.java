@@ -9,7 +9,6 @@ import io.vertx.ext.jdbc.JDBCClient;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -47,8 +46,8 @@ public class CustomerFactory implements AggregateRootComponentsFactory<Customer>
   }
 
   @Override
-  public BiFunction<EntityCommand, Snapshot<Customer>, Either<Throwable, Optional<EntityUnitOfWork>>> cmdHandlerFn() {
-    return new CustomerFunctions.CommandHandlerFn(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn(), depInjectionFn()));
+  public BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> cmdHandlerFn() {
+    return new CustomerFunctionsVavr.CommandHandlerFn(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn(), depInjectionFn()));
   }
 
   @Override

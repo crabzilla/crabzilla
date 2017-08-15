@@ -1,4 +1,4 @@
-package crabzilla.vertx.util;
+package crabzilla.stack;
 
 public class DbConcurrencyException extends RuntimeException {
 

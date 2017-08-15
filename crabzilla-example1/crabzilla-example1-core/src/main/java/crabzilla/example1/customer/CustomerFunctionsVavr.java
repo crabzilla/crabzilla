@@ -2,6 +2,7 @@ package crabzilla.example1.customer;
 
 import crabzilla.model.*;
 import crabzilla.stack.AbstractCommandValidatorFn;
+import crabzilla.stack.UnknownCommandException;
 import io.vavr.Function3;
 import io.vavr.collection.CharSeq;
 import io.vavr.collection.Seq;
@@ -10,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import javax.inject.Inject;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -50,7 +50,7 @@ public class CustomerFunctionsVavr {
   // TODO consider an example with some real business logic (a CreditService, for example)
   @Slf4j
   public static class CommandHandlerFn
-          implements BiFunction<EntityCommand, Snapshot<Customer>, Either<Throwable, Optional<EntityUnitOfWork>>> {
+          implements BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> {
 
     final StateTransitionsTrackerFactory<Customer> trackerFactory;
 
@@ -60,15 +60,14 @@ public class CustomerFunctionsVavr {
     }
 
     @Override
-    public Either<Throwable, Optional<EntityUnitOfWork>> apply(final EntityCommand cmd, final Snapshot<Customer> snapshot) {
+    public CommandHandlerResult apply(final EntityCommand cmd, final Snapshot<Customer> snapshot) {
 
       CommandHandlerFn.log.info("Will apply command {}", cmd);
 
       try {
-        val uow = handle(cmd, snapshot);
-        return Eithers.right(Optional.ofNullable(uow));
+        return CommandHandlerResult.success(handle(cmd, snapshot));
       } catch (Exception e) {
-        return Eithers.left(e);
+        return CommandHandlerResult.error(e);
       }
 
     }
@@ -102,8 +101,7 @@ public class CustomerFunctionsVavr {
         }),
 
         Case($(), o -> {
-          CommandHandlerFn.log.warn("Can't apply command {}", cmd);
-          return null;
+          throw new UnknownCommandException("for command " + cmd.getClass().getSimpleName());
 
         })
 
@@ -114,38 +112,6 @@ public class CustomerFunctionsVavr {
     }
 
   }
-
-  public static class CreateCustomerValidator {
-
-      private static final String VALID_NAME_CHARS = "[a-zA-Z ]";
-
-      public Validation<Seq<String>, CustomerData.CreateCustomer> validate(CreateCustomer cmd) {
-        return Validation.combine(validateCmdId(cmd.getCommandId()),
-                                  validateId(cmd.getTargetId()),
-                                  validateName(cmd.getName())
-        ).ap((Function3<UUID, CustomerId, String, CreateCustomer>) CreateCustomer::new);
-      }
-
-    private Validation<String, UUID>  validateCmdId(UUID commandId) {
-      return commandId == null
-              ? Validation.invalid("CommandId cannot be null ")
-              : Validation.valid(commandId);
-    }
-
-    private Validation<String, CustomerData.CustomerId> validateId(CustomerId id) {
-      return id == null
-              ? Validation.invalid("CustomerId cannot be null ")
-              : Validation.valid(id);
-    }
-
-    private Validation<String, String> validateName(String name) {
-        return CharSeq.of(name).replaceAll(VALID_NAME_CHARS, "").transform(seq -> seq.isEmpty()
-                ? Validation.valid(name)
-                : Validation.invalid("Name contains invalid characters: '"
-                + seq.distinct().sorted() + "'"));
-      }
-
-    }
 
   public static class CommandValidatorFn extends AbstractCommandValidatorFn {
 
@@ -162,6 +128,38 @@ public class CustomerFunctionsVavr {
       return emptyList(); // it's always valid
 
     }
+  }
+
+  public static class CreateCustomerValidator {
+
+    private static final String VALID_NAME_CHARS = "[a-zA-Z ]";
+
+    public Validation<Seq<String>, CustomerData.CreateCustomer> validate(CreateCustomer cmd) {
+      return Validation.combine(validateCmdId(cmd.getCommandId()),
+              validateId(cmd.getTargetId()),
+              validateName(cmd.getName())
+      ).ap((Function3<UUID, CustomerId, String, CreateCustomer>) CreateCustomer::new);
+    }
+
+    private Validation<String, UUID>  validateCmdId(UUID commandId) {
+      return commandId == null
+              ? Validation.invalid("CommandId cannot be null ")
+              : Validation.valid(commandId);
+    }
+
+    private Validation<String, CustomerData.CustomerId> validateId(CustomerId id) {
+      return id == null
+              ? Validation.invalid("CustomerId cannot be null ")
+              : Validation.valid(id);
+    }
+
+    private Validation<String, String> validateName(String name) {
+      return CharSeq.of(name).replaceAll(VALID_NAME_CHARS, "").transform(seq -> seq.isEmpty()
+              ? Validation.valid(name)
+              : Validation.invalid("Name contains invalid characters: '"
+              + seq.distinct().sorted() + "'"));
+    }
+
   }
 
 }

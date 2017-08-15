@@ -5,7 +5,7 @@ import crabzilla.model.Snapshot;
 import crabzilla.model.SnapshotPromoter;
 import crabzilla.model.StateTransitionsTracker;
 import crabzilla.stack.AggregateRootFunctionsFactory;
-import crabzilla.vertx.repositories.VertxUnitOfWorkRepository;
+import crabzilla.vertx.repositories.EntityUnitOfWorkRepository;
 import crabzilla.vertx.verticles.CommandHandlerVerticle;
 import crabzilla.vertx.verticles.CommandRestVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
@@ -58,12 +58,12 @@ public interface AggregateRootComponentsFactory<A extends AggregateRoot>
                     .setResetTimeout(10000) // time spent in open state before attempting to re-try
     );
 
-    return new CommandHandlerVerticle<>(clazz(), cmdHandlerFn(),
+    return new CommandHandlerVerticle<A>(clazz(), supplierFn().get(), cmdHandlerFn(),
             cmdValidatorFn(), snapshotPromoter(), uowRepository(), cache, circuitBreaker);
   }
 
-  default VertxUnitOfWorkRepository uowRepository() {
-    return new VertxUnitOfWorkRepository(clazz(), jdbcClient());
+  default EntityUnitOfWorkRepository uowRepository() {
+    return new EntityUnitOfWorkRepository(clazz(), jdbcClient());
   }
 
 }
