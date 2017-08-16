@@ -31,23 +31,6 @@ public class CommandExecution implements Serializable {
   Long uowSequence;
   EntityUnitOfWork unitOfWork;
 
-//  public Optional<UUID> getCommandId() {
-//    return Optional.ofNullable(commandId);
-//  }
-//
-//  public Optional<List<String>> getConstraints() {
-//    return VALIDATION_ERROR.equals(result) || CONCURRENCY_ERROR.equals(result) ?
-//            Optional.of(constraints) : Optional.empty();
-//  }
-//
-//  public Optional<Long> getUowSequence() {
-//    return SUCCESS.equals(result) ? Optional.of(uowSequence) : Optional.empty();
-//  }
-//
-//  public Optional<EntityUnitOfWork> getUnitOfWork() {
-//    return SUCCESS.equals(result) ? Optional.of(unitOfWork) : Optional.empty();
-//  }
-
   public static CommandExecution VALIDATION_ERROR(@NonNull List<String> constraints) {
     return new CommandExecution(VALIDATION_ERROR, null, constraints, 0L, null);
   }

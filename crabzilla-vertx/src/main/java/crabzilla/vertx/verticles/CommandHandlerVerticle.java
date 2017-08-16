@@ -148,7 +148,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
           result.inCaseOfSuccess(uow -> {
 
-            log.error("CommandExecution: {}", uow);
+            log.info("CommandExecution: {}", uow);
 
             Future<Long> appendFuture = Future.future();
 
@@ -178,7 +178,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
               final Long uowSequence = appendAsyncResult.result();
 
-              log.error("uowSequence: {}", uowSequence);
+              log.info("uowSequence: {}", uowSequence);
 
               future2.complete(SUCCESS(uow, uowSequence));
 
@@ -231,7 +231,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
         msg.reply(resp, options, new Handler<AsyncResult<Message<CommandExecution>>>() {
           @Override
           public void handle(AsyncResult<Message<CommandExecution>> event) {
-            System.out.println("SUCCEEDED: "+ event.succeeded());
+            log.info("succeeded ?: "+ event.succeeded());
           }
         });
 
