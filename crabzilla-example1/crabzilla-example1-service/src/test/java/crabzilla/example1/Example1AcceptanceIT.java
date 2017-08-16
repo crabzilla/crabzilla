@@ -22,7 +22,6 @@ import lombok.val;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -98,7 +97,7 @@ public class Example1AcceptanceIT {
 
   // tag::create_customer_test[]
 
-  @Test @Ignore
+  @Test
   public void create_customer(TestContext context) {
 
     // This test is asynchronous, so get an async handler to inform the test when we are done.
@@ -115,12 +114,12 @@ public class Example1AcceptanceIT {
       .putHeader("content-type", "application/json")
       .putHeader("content-length", Integer.toString(json.length()))
       .handler(response -> {
-//        context.assertEquals(response.statusCode(), 201);
+        context.assertEquals(response.statusCode(), 201);
 //        context.assertTrue(response.headers().get("content-type").contains("application/json"));
         response.bodyHandler(body -> {
           val cmdExec = Json.decodeValue(body.toString(), CommandExecution.class);
-          if (cmdExec.getUnitOfWork().isPresent()) {
-            val uow = cmdExec.getUnitOfWork().get();
+          val uow = cmdExec.getUnitOfWork();
+          if (cmdExec.getUnitOfWork() != null) {
             context.assertEquals(uow.targetId(), expectedUow.targetId());
             context.assertEquals(uow.getCommand(), expectedUow.getCommand());
             context.assertEquals(uow.getEvents(), expectedUow.getEvents());

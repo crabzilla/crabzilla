@@ -1,6 +1,7 @@
 package crabzilla.vertx.verticles;
 
 import crabzilla.example1.customer.Customer;
+import crabzilla.example1.services.SampleInternalService;
 import crabzilla.model.*;
 import crabzilla.stack.DbConcurrencyException;
 import crabzilla.stack.UnknownCommandException;
@@ -28,9 +29,9 @@ import org.mockito.Mock;
 import org.mockito.stubbing.VoidAnswer2;
 import org.mockito.stubbing.VoidAnswer3;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -54,7 +55,18 @@ public class CommandHandlerVerticleTest {
   CircuitBreaker circuitBreaker;
   ExpiringMap<String, Snapshot<Customer>> cache;
 
-  final Customer seedValue =  new Customer(null, null, null, false,null);
+  final Customer seedValue =  new Customer(null, null, null, false,null)
+          .withService(new SampleInternalService() {
+    @Override
+    public UUID uuid() {
+      return UUID.randomUUID();
+    }
+
+    @Override
+    public Instant now() {
+      return Instant.now();
+    }
+  });
 
   @Mock
   Function<EntityCommand, List<String>> validatorFn;
@@ -142,13 +154,11 @@ public class CommandHandlerVerticleTest {
       val response = (CommandExecution) asyncResult.result().body();
 
       tc.assertEquals(RESULT.SUCCESS, response.getResult());
-      tc.assertEquals(Optional.of(1L), response.getUowSequence());
+      tc.assertEquals(1L, response.getUowSequence());
 
-      val resultUnitOfWork = response.getUnitOfWork();
+      val uow = response.getUnitOfWork();
 
-      if (resultUnitOfWork.isPresent()) {
-
-        val uow = resultUnitOfWork.get();
+      if (uow != null) {
 
         tc.assertEquals(expectedUow.getCommand(), uow.getCommand());
         tc.assertEquals(expectedUow.getEvents(), uow.getEvents());
@@ -312,7 +322,7 @@ public class CommandHandlerVerticleTest {
       val response = (CommandExecution) asyncResult.result().body();
 
       tc.assertEquals(RESULT.CONCURRENCY_ERROR, response.getResult());
-      tc.assertEquals(Optional.of(singletonList(FORCED_CONCURRENCY_EXCEPTION)), response.getConstraints());
+      tc.assertEquals(singletonList(FORCED_CONCURRENCY_EXCEPTION), response.getConstraints());
 
       async.complete();
 
@@ -402,7 +412,7 @@ public class CommandHandlerVerticleTest {
 
       tc.assertEquals(RESULT.VALIDATION_ERROR, response.getResult());
 
-      tc.assertEquals(Optional.of(asList("Invalid name: a bad name")), response.getConstraints());
+      tc.assertEquals(asList("Invalid name: a bad name"), response.getConstraints());
 
       async.complete();
 

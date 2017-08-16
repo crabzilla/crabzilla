@@ -13,6 +13,9 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static crabzilla.example1.customer.CustomerFunctionsVavr.CommandHandlerFn;
+import static crabzilla.example1.customer.CustomerFunctionsVavr.CommandValidatorFn;
+
 public class CustomerFactory implements AggregateRootComponentsFactory<Customer> {
 
   private final SampleInternalService service;
@@ -34,7 +37,7 @@ public class CustomerFactory implements AggregateRootComponentsFactory<Customer>
 
   @Override
   public Supplier<Customer> supplierFn() {
-    return new CustomerFunctions.SupplierFn();
+    return () -> depInjectionFn().apply(new Customer(null, null, null, false, null));
   }
 
   @Override
@@ -42,16 +45,17 @@ public class CustomerFactory implements AggregateRootComponentsFactory<Customer>
 
   @Override
   public Function<EntityCommand, List<String>> cmdValidatorFn() {
-    return new CustomerFunctionsVavr.CommandValidatorFn();
+    return new CommandValidatorFn();
   }
 
   @Override
   public BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> cmdHandlerFn() {
-    return new CustomerFunctionsVavr.CommandHandlerFn(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn(), depInjectionFn()));
+    return new CommandHandlerFn(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn(), depInjectionFn()));
   }
 
   @Override
-  public Function<Customer, Customer> depInjectionFn() {return (c) -> c.withService(service); }
+  public Function<Customer, Customer> depInjectionFn() {
+    return (c) -> c.withService(service); }
 
   @Override
   public JDBCClient jdbcClient() {

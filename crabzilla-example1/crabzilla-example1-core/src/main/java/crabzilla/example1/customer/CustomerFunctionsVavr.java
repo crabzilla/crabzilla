@@ -10,7 +10,6 @@ import io.vavr.control.Validation;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
-import javax.inject.Inject;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -54,7 +53,6 @@ public class CustomerFunctionsVavr {
 
     final StateTransitionsTrackerFactory<Customer> trackerFactory;
 
-    @Inject
     public CommandHandlerFn(StateTransitionsTrackerFactory<Customer> trackerFactory) {
       this.trackerFactory = trackerFactory;
     }

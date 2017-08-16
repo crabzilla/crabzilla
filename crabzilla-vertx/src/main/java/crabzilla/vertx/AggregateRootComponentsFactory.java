@@ -58,7 +58,7 @@ public interface AggregateRootComponentsFactory<A extends AggregateRoot>
                     .setResetTimeout(10000) // time spent in open state before attempting to re-try
     );
 
-    return new CommandHandlerVerticle<A>(clazz(), supplierFn().get(), cmdHandlerFn(),
+    return new CommandHandlerVerticle<>(clazz(), supplierFn().get(), cmdHandlerFn(),
             cmdValidatorFn(), snapshotPromoter(), uowRepository(), cache, circuitBreaker);
   }
 

@@ -10,6 +10,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
   final BiFunction<EntityCommand, Snapshot<A>, CommandHandlerResult> cmdHandler;
   final Function<EntityCommand, List<String>> validatorFn;
   final ExpiringMap<String, Snapshot<A>> cache;
-  final SnapshotPromoter<A> snapshotter;
+  final SnapshotPromoter<A> snapshotPromoter;
 
   final EntityUnitOfWorkRepository eventRepository;
   final CircuitBreaker circuitBreaker;
@@ -41,7 +42,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
                                 @NonNull final A seedValue,
                                 @NonNull final BiFunction<EntityCommand, Snapshot<A>, CommandHandlerResult> cmdHandler,
                                 @NonNull final Function<EntityCommand, List<String>> validatorFn,
-                                @NonNull final SnapshotPromoter<A> snapshotter,
+                                @NonNull final SnapshotPromoter<A> snapshotPromoter,
                                 @NonNull final EntityUnitOfWorkRepository eventRepository,
                                 @NonNull final ExpiringMap<String, Snapshot<A>> cache,
                                 @NonNull final CircuitBreaker circuitBreaker) {
@@ -49,7 +50,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
     this.seedValue = seedValue;
     this.cmdHandler = cmdHandler;
     this.validatorFn = validatorFn;
-    this.snapshotter = snapshotter;
+    this.snapshotPromoter = snapshotPromoter;
     this.eventRepository = eventRepository;
     this.cache = cache;
     this.circuitBreaker = circuitBreaker;
@@ -107,7 +108,9 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
       val snapshotFromCache = cache.get(targetId);
 
-      val cachedSnapshot = snapshotFromCache == null ? new Snapshot<A>(seedValue, new Version(0)) : snapshotFromCache;
+      val emptySnapshot = new Snapshot<A>(seedValue, new Version(0));
+
+      val cachedSnapshot = snapshotFromCache == null ? emptySnapshot : snapshotFromCache;
 
       log.info("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
               targetId, cachedSnapshot);
@@ -130,7 +133,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
                 nonCached.getVersion());
 
         val resultingSnapshot = totalOfNonCachedEvents > 0 ?
-                snapshotter.promote(cachedSnapshot, nonCached.getVersion(), nonCached.getEvents())
+                snapshotPromoter.promote(cachedSnapshot, nonCached.getVersion(), nonCached.getEvents())
                 : cachedSnapshot;
 
         if (totalOfNonCachedEvents > 0) {
@@ -169,7 +172,7 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
               }
 
-              val finalSnapshot = snapshotter.promote(resultingSnapshot, uow.getVersion(), uow.getEvents());
+              val finalSnapshot = snapshotPromoter.promote(resultingSnapshot, uow.getVersion(), uow.getEvents());
 
               cache.put(targetId, finalSnapshot);
 
@@ -222,7 +225,15 @@ public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVer
 
         val resp = resultHandler.result();
         log.info("** success: {}", resp);
-        msg.reply(resp);
+
+        val options = new DeliveryOptions().setCodecName("CommandExecution");
+
+        msg.reply(resp, options, new Handler<AsyncResult<Message<CommandExecution>>>() {
+          @Override
+          public void handle(AsyncResult<Message<CommandExecution>> event) {
+            System.out.println("SUCCEEDED: "+ event.succeeded());
+          }
+        });
 
       } else {
 
