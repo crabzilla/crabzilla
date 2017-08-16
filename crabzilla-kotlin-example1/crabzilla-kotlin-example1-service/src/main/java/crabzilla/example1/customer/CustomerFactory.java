@@ -3,6 +3,7 @@ package crabzilla.example1.customer;
 
 import crabzilla.example1.SampleInternalService;
 import crabzilla.example1.services.SampleInternalServiceImpl;
+import crabzilla.model.*;
 import crabzilla.vertx.AggregateRootComponentsFactory;
 import io.vertx.core.Vertx;
 import io.vertx.ext.jdbc.JDBCClient;

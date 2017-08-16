@@ -6,14 +6,14 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.kotlin.KotlinModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import crabzilla.Command;
-import crabzilla.DomainEvent;
-import crabzilla.EntityUnitOfWork;
-import crabzilla.Version;
 import crabzilla.example1.customer.CreateCustomer;
 import crabzilla.example1.customer.CustomerActivated;
 import crabzilla.example1.customer.CustomerCreated;
 import crabzilla.example1.customer.CustomerId;
+import crabzilla.model.Command;
+import crabzilla.model.DomainEvent;
+import crabzilla.model.EntityUnitOfWork;
+import crabzilla.model.Version;
 import io.vertx.core.json.Json;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +27,7 @@ import java.util.UUID;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+
 
 public class JacksonJsonTest {
 
@@ -48,7 +49,7 @@ public class JacksonJsonTest {
     val id = new CustomerId(UUID.randomUUID().toString());
     val command = new CreateCustomer(UUID.randomUUID(), id, "customer1");
     val event = new CustomerCreated(id, command.getName());
-    val uow1 = new EntityUnitOfWork(command, Collections.singletonList(event), new Version(1));
+    val uow1 = new EntityUnitOfWork(UUID.randomUUID(), command, new Version(1), Collections.singletonList(event));
 
     val uowAsJson = mapper.writeValueAsString(uow1);
 
@@ -69,7 +70,7 @@ public class JacksonJsonTest {
     val event1 = new CustomerCreated(id, command.getName());
     val event2 = new CustomerActivated("a rgood reason", Instant.now());
 
-    val uow1 = new EntityUnitOfWork(command, asList(event1,  event2), new Version(1));
+    val uow1 = new EntityUnitOfWork(UUID.randomUUID(), command, new Version(1), asList(event1,  event2));
 
     val uowAsJson = mapper.writeValueAsString(uow1);
 

@@ -19,8 +19,9 @@ import crabzilla.model.EntityCommand;
 import crabzilla.model.EntityId;
 import crabzilla.model.EntityUnitOfWork;
 import crabzilla.stack.CommandExecution;
-import crabzilla.vertx.EventProjector;
+import crabzilla.stack.EventProjector;
 import crabzilla.vertx.codecs.JacksonGenericCodec;
+import crabzilla.vertx.verticles.EventsProjectionVerticle;
 import example1.dao.CustomerSummaryDao;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
@@ -94,6 +95,19 @@ class Example1Module extends AbstractModule {
   @Singleton
   public EventProjector<CustomerSummaryDao> eventsProjector(Jdbi jdbi) {
     return new Example1EventProjector("example1", CustomerSummaryDao.class, jdbi) ;
+  }
+
+  @Provides
+  @Singleton
+  public EventsProjectionVerticle<CustomerSummaryDao> eventsProjectorVerticle(EventProjector<CustomerSummaryDao> eventsProjector) {
+    val circuitBreaker = CircuitBreaker.create("events-projection-circuit-breaker", vertx,
+            new CircuitBreakerOptions()
+                    .setMaxFailures(5) // number SUCCESS failure before opening the circuit
+                    .setTimeout(2000) // consider a failure if the operation does not succeed in time
+                    .setFallbackOnFailure(true) // do we call the fallback on failure
+                    .setResetTimeout(10000) // time spent in open state before attempting to re-try
+    );
+    return new EventsProjectionVerticle<>(eventsProjector, circuitBreaker) ;
   }
 
   @Provides

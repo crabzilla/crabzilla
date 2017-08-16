@@ -12,8 +12,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
         <kotlin.version>1.1.4</kotlin.version>
-        <lombok.version>1.16.14</lombok.version>
-        <vertx.version>3.4.2</vertx.version>
+        <lombok.version>1.16.18</lombok.version>
+        <vertx.version>3.5.0.Beta1</vertx.version>
+        <vavr.version>0.9.0</vavr.version>
         <guice.version>4.1.0</guice.version>
         <expiringmap.version>0.5.8</expiringmap.version>
         <sl4j.version>1.7.8</sl4j.version>
@@ -21,7 +22,7 @@
         <mysql.version>6.0.6</mysql.version>
         <commons.version>3.5</commons.version>
         <javaslang.version>2.0.5</javaslang.version>
-        <jackson.version>2.9.0.pr3</jackson.version>
+        <jackson.version>2.9.0.pr4</jackson.version>
         <hikari.version>2.6.1</hikari.version>
         <junit.jupiter.version>5.0.0-M4</junit.jupiter.version>
         <junit.vintage.version>4.12.0-M4</junit.vintage.version>
@@ -168,7 +169,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-kotlin</artifactId>
-                <version>2.9.0.pr4</version>
+                <version>${jackson.version}</version>
             </dependency>
 
             <dependency>
@@ -211,14 +212,7 @@
             <dependency>
                 <groupId>io.vavr</groupId>
                 <artifactId>vavr</artifactId>
-                <version>0.9.0</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.derive4j</groupId>
-                <artifactId>derive4j</artifactId>
-                <version>${derive4j.version}</version>
-                <scope>provided</scope>
+                <version>${vavr.version}</version>
             </dependency>
 
             <dependency>
@@ -270,7 +264,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>2.8.6</version>
+                <version>${jackson.version}</version>
             </dependency>
 
             <!-- sql stack -->
@@ -372,6 +366,7 @@
 
     <build>
         <plugins>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -406,7 +401,6 @@
                     </execution>
                 </executions>
             </plugin>
-
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -446,6 +440,37 @@
                     <skipTests>${skipTests}</skipTests>
                     <skipITs>${skipITs}</skipITs>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-maven-plugin</artifactId>
+                <version>${lombok.version}.1</version>
+                <executions>
+                    <execution>
+                        <id>delombok</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>delombok</goal>
+                        </goals>
+                        <configuration>
+                            <formatPreferences>
+                                <javaLangAsFQN>skip</javaLangAsFQN>
+                            </formatPreferences>
+                            <verbose>true</verbose>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-delombok</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>testDelombok</goal>
+                        </goals>
+                        <configuration>
+                            <verbose>true</verbose>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>

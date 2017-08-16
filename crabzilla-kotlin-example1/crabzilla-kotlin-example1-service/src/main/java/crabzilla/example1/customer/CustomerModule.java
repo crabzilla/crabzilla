@@ -23,7 +23,7 @@ public class CustomerModule extends AbstractModule {
     TypeLiteral<CommandHandlerVerticle<Customer>> handlerType =
             new TypeLiteral<CommandHandlerVerticle<Customer>>() {};
 
-    MapBinder<String, Verticle> mapbinder =
+    MapBinder<String,Verticle> mapbinder =
             MapBinder.newMapBinder(binder(), String.class, Verticle.class);
 
     mapbinder.addBinding("customer.rest").to(restType);

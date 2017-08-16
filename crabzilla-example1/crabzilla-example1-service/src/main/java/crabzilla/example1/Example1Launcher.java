@@ -33,6 +33,7 @@ public class Example1Launcher {
 
   @Inject
   EventsProjectionVerticle<CustomerSummaryDao> projectionVerticle;
+
   static Vertx vertx;
 
   public static void main(String args[]) throws InterruptedException {

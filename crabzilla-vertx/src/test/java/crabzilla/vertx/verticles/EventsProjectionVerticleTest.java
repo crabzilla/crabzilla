@@ -3,8 +3,8 @@ package crabzilla.vertx.verticles;
 import crabzilla.example1.customer.CustomerData;
 import crabzilla.model.EntityUnitOfWork;
 import crabzilla.model.Version;
+import crabzilla.stack.EventProjector;
 import crabzilla.stack.ProjectionData;
-import crabzilla.vertx.EventProjector;
 import crabzilla.vertx.VertxFactory;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
@@ -37,7 +37,7 @@ public class EventsProjectionVerticleTest {
   CircuitBreaker circuitBreaker;
 
   @Mock
-  EventProjector eventProjector;
+  EventProjector<CustomerSummaryDao> eventProjector;
 
   @Before
   public void setUp(TestContext context) {
@@ -53,7 +53,7 @@ public class EventsProjectionVerticleTest {
                     .setResetTimeout(10000) // time spent in open state before attempting to re-try
     );
 
-    val verticle = new EventsProjectionVerticle(eventProjector, circuitBreaker);
+    val verticle = new EventsProjectionVerticle<CustomerSummaryDao>(eventProjector, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
 
@@ -79,7 +79,7 @@ public class EventsProjectionVerticleTest {
 
     val projectionData =
             new ProjectionData(expectedUow.getUnitOfWorkId(), uowSequence,
-                    expectedUow.targetId().getStringValue(), expectedUow.getEvents());
+                    expectedUow.targetId().stringValue(), expectedUow.getEvents());
 
     vertx.eventBus().send(eventsHandlerId("example1"), expectedUow, options, asyncResult -> {
 
@@ -95,3 +95,4 @@ public class EventsProjectionVerticleTest {
 
   }
 }
+

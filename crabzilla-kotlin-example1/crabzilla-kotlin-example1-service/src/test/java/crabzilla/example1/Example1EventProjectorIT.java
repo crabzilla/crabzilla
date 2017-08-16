@@ -2,12 +2,12 @@ package crabzilla.example1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
-import crabzilla.ConcurrencyConflictException;
 import crabzilla.example1.customer.CustomerActivated;
 import crabzilla.example1.customer.CustomerCreated;
 import crabzilla.example1.customer.CustomerId;
-import crabzilla.vertx.entity.projection.EventProjector;
-import crabzilla.vertx.entity.projection.ProjectionData;
+import crabzilla.stack.DbConcurrencyException;
+import crabzilla.stack.EventProjector;
+import crabzilla.stack.ProjectionData;
 import io.vertx.core.Vertx;
 import lombok.val;
 import org.jdbi.v3.core.Jdbi;
@@ -31,7 +31,7 @@ public class Example1EventProjectorIT {
   @Inject
   Jdbi jdbi;
   @Inject
-  EventProjector eventProjector;
+  EventProjector<CustomerSummaryDao> eventProjector;
 
   @BeforeEach
   public void setup() {
@@ -47,12 +47,12 @@ public class Example1EventProjectorIT {
 
 
   @Test
-  public void can_project_two_events() throws ConcurrencyConflictException {
+  public void can_project_two_events() throws DbConcurrencyException {
 
     val id = new CustomerId("customer#1");
     val event1 = new CustomerCreated(id,  "customer1");
     val event2 = new CustomerActivated("a good reason", Instant.now());
-    val projectionData = new ProjectionData(UUID.randomUUID(), 1L, id.getStringValue(), asList(event1, event2));
+    val projectionData = new ProjectionData(UUID.randomUUID(), 1L, id.stringValue(), asList(event1, event2));
 
     eventProjector.handle(singletonList(projectionData));
 
@@ -61,7 +61,7 @@ public class Example1EventProjectorIT {
     val fromDb = dao.getAll().get(0);
     h.commit();
 //    System.out.printf("from  db: " + fromDb);
-    assertThat(fromDb).isEqualToComparingFieldByField(new CustomerSummary(id.getStringValue(), event1.getName(), true));
+    assertThat(fromDb).isEqualToComparingFieldByField(new CustomerSummary(id.stringValue(), event1.getName(), true));
 
   }
 

@@ -25,13 +25,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.derive4j</groupId>
-            <artifactId>derive4j</artifactId>
-            <version>0.12.2</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- to inform Jackson on how to serialize polymorphic objects: Command, Event, EntityId, .. -->
 
         <dependency>

@@ -1,15 +1,13 @@
 package crabzilla.example1;
 
-import crabzilla.example1.customer.CustomerData.CustomerCreated;
-import crabzilla.example1.readmodel.CustomerSummary;
+import crabzilla.example1.customer.CustomerActivated;
+import crabzilla.example1.customer.CustomerCreated;
+import crabzilla.example1.customer.CustomerDeactivated;
 import crabzilla.model.DomainEvent;
 import crabzilla.stack.EventProjector;
-import example1.dao.CustomerSummaryDao;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 
-import static crabzilla.example1.customer.CustomerData.CustomerActivated;
-import static crabzilla.example1.customer.CustomerData.CustomerDeactivated;
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
 

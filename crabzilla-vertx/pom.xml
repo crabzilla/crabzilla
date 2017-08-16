@@ -76,6 +76,15 @@
             <artifactId>HikariCP</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3-sqlobject</artifactId>
+        </dependency>
+
         <!-- cache -->
         <dependency>
             <groupId>net.jodah</groupId>
@@ -85,11 +94,11 @@
 
         <!-- serialization -->
 
-        <dependency>
-            <groupId>de.ruedigermoeller</groupId>
-            <artifactId>fst</artifactId>
-            <version>2.50</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>de.ruedigermoeller</groupId>-->
+            <!--<artifactId>fst</artifactId>-->
+            <!--<version>2.50</version>-->
+        <!--</dependency>-->
 
         <!--Vertx -->
         <dependency>
@@ -131,11 +140,6 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jdbi</groupId>
-            <artifactId>jdbi3</artifactId>
         </dependency>
 
         <dependency>

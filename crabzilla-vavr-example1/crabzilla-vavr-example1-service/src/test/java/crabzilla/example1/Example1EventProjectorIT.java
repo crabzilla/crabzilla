@@ -3,8 +3,8 @@ package crabzilla.example1;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
 import crabzilla.example1.readmodel.CustomerSummary;
+import crabzilla.stack.EventProjector;
 import crabzilla.stack.ProjectionData;
-import crabzilla.vertx.EventProjector;
 import example1.dao.CustomerSummaryDao;
 import io.vertx.core.Vertx;
 import lombok.val;
@@ -52,7 +52,7 @@ public class Example1EventProjectorIT {
     val id = new CustomerId("customer#1");
     val event1 = new CustomerCreated(id,  "customer1");
     val event2 = new CustomerActivated("a good reason", Instant.now());
-    val projectionData = new ProjectionData(UUID.randomUUID(), 1L, id.getStringValue(), asList(event1, event2));
+    val projectionData = new ProjectionData(UUID.randomUUID(), 1L, id.stringValue(), asList(event1, event2));
 
     eventProjector.handle(singletonList(projectionData));
 
@@ -61,7 +61,7 @@ public class Example1EventProjectorIT {
     val fromDb = dao.getAll().get(0);
     h.commit();
 //    System.out.printf("from  db: " + fromDb);
-    assertThat(fromDb).isEqualToComparingFieldByField(new CustomerSummary(id.getStringValue(), event1.getName(), true));
+    assertThat(fromDb).isEqualToComparingFieldByField(new CustomerSummary(id.stringValue(), event1.getName(), true));
 
   }
 

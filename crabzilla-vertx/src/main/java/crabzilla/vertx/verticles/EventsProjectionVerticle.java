@@ -1,8 +1,8 @@
 package crabzilla.vertx.verticles;
 
 import crabzilla.model.EntityUnitOfWork;
+import crabzilla.stack.EventProjector;
 import crabzilla.stack.ProjectionData;
-import crabzilla.vertx.EventProjector;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
@@ -13,9 +13,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-
 import static crabzilla.stack.StringHelper.eventsHandlerId;
 import static java.util.Collections.singletonList;
 
@@ -25,9 +22,8 @@ public class EventsProjectionVerticle<DAO> extends AbstractVerticle {
   final EventProjector<DAO> eventProjector;
   final CircuitBreaker circuitBreaker;
 
-  @Inject
   public EventsProjectionVerticle(@NonNull EventProjector<DAO> eventProjector,
-                                  @NonNull @Named("events-projection") CircuitBreaker circuitBreaker) {
+                                  @NonNull CircuitBreaker circuitBreaker) {
     this.eventProjector = eventProjector;
     this.circuitBreaker = circuitBreaker;
   }
@@ -52,7 +48,7 @@ public class EventsProjectionVerticle<DAO> extends AbstractVerticle {
         val uowSequence = new Long(msg.headers().get("uowSequence"));
         val projectionData =
                 new ProjectionData(uow.getUnitOfWorkId(), uowSequence,
-                        uow.targetId().getStringValue(), uow.getEvents());
+                        uow.targetId().stringValue(), uow.getEvents());
 
         circuitBreaker.fallback(throwable -> {
           log.warn("Fallback for uowHandler ");
