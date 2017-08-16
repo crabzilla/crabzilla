@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 @Slf4j
-public class SnapshotPromoter<A extends AggregateRoot> {
+public class SnapshotPromoter<A extends Aggregate> {
 
   final Supplier<A> supplier ;
   final StateTransitionsTrackerFactory<A> trackerFactory;
@@ -24,7 +24,7 @@ public class SnapshotPromoter<A extends AggregateRoot> {
               newVersion, originalSnapshot.getVersion()));
     }
 
-    val tracker = trackerFactory.create(originalSnapshot.getInstance());
+    val tracker = trackerFactory.apply(originalSnapshot.getInstance());
 
     return new Snapshot<>(tracker.applyEvents(c -> newEvents).currentState(), newVersion);
   }

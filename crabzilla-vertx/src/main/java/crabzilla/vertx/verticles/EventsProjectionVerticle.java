@@ -1,8 +1,8 @@
 package crabzilla.vertx.verticles;
 
 import crabzilla.model.EntityUnitOfWork;
+import crabzilla.stack.ProjectionData;
 import crabzilla.vertx.EventProjector;
-import crabzilla.vertx.ProjectionData;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
@@ -16,7 +16,7 @@ import lombok.val;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import static crabzilla.vertx.util.StringHelper.eventsHandlerId;
+import static crabzilla.stack.StringHelper.eventsHandlerId;
 import static java.util.Collections.singletonList;
 
 @Slf4j

@@ -3,7 +3,7 @@ package crabzilla.model;
 import lombok.Value;
 
 @Value
-public class Snapshot<A extends AggregateRoot> {
+public class Snapshot<A extends Aggregate> {
 
   private final A instance;
   private final Version version;

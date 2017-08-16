@@ -3,8 +3,8 @@ package crabzilla.vertx.verticles;
 import crabzilla.example1.customer.CustomerData;
 import crabzilla.model.EntityUnitOfWork;
 import crabzilla.model.Version;
+import crabzilla.stack.ProjectionData;
 import crabzilla.vertx.EventProjector;
-import crabzilla.vertx.ProjectionData;
 import crabzilla.vertx.VertxFactory;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
@@ -22,7 +22,7 @@ import org.mockito.Mock;
 
 import java.util.UUID;
 
-import static crabzilla.vertx.util.StringHelper.eventsHandlerId;
+import static crabzilla.stack.StringHelper.eventsHandlerId;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.eq;

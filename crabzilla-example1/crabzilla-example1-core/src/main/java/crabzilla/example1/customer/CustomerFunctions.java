@@ -1,13 +1,17 @@
 package crabzilla.example1.customer;
 
+import crabzilla.example1.util.AbstractCommandsHandlerFn;
+import crabzilla.example1.util.AbstractStateTransitionFn;
+import crabzilla.model.EntityCommand;
 import crabzilla.model.EntityUnitOfWork;
 import crabzilla.model.Snapshot;
 import crabzilla.model.StateTransitionsTrackerFactory;
-import crabzilla.stack.AbstractCommandsHandlerFn;
-import crabzilla.stack.AbstractStateTransitionFn;
 import lombok.val;
 
 import javax.inject.Inject;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static crabzilla.model.EntityUnitOfWork.unitOfWork;
@@ -38,6 +42,15 @@ public class CustomerFunctions {
 
   }
 
+  public static class CommandValidatorFn implements Function<EntityCommand, List<String>> {
+
+    @Override
+    public List<String> apply(EntityCommand entityCommand) {
+      return Collections.emptyList(); // all commands are valid
+    }
+
+  }
+
   public static class CommandHandlerFn extends AbstractCommandsHandlerFn<Customer> {
 
     final StateTransitionsTrackerFactory<Customer> trackerFactory;
@@ -60,7 +73,7 @@ public class CustomerFunctions {
     }
 
     public EntityUnitOfWork handle(CustomerData.CreateActivateCustomer cmd, Snapshot<Customer> snapshot) {
-      val tracker = trackerFactory.create(snapshot.getInstance());
+      val tracker = trackerFactory.apply(snapshot.getInstance());
       val events = tracker
               .applyEvents(customer -> customer.create(cmd.getTargetId(), cmd.getName()))
               .applyEvents(customer -> customer.activate(cmd.getReason()))

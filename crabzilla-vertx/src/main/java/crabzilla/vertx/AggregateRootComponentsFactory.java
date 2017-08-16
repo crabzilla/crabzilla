@@ -1,6 +1,6 @@
 package crabzilla.vertx;
 
-import crabzilla.model.AggregateRoot;
+import crabzilla.model.Aggregate;
 import crabzilla.model.Snapshot;
 import crabzilla.model.SnapshotPromoter;
 import crabzilla.model.StateTransitionsTracker;
@@ -18,9 +18,9 @@ import net.jodah.expiringmap.ExpiringMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import static crabzilla.vertx.util.StringHelper.circuitBreakerId;
+import static crabzilla.stack.StringHelper.circuitBreakerId;
 
-public interface AggregateRootComponentsFactory<A extends AggregateRoot>
+public interface AggregateRootComponentsFactory<A extends Aggregate>
 
         extends AggregateRootFunctionsFactory<A> {
 

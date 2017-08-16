@@ -1,7 +1,7 @@
 package crabzilla.model;
 
-public interface StateTransitionsTrackerFactory<A extends AggregateRoot> {
+import java.util.function.Function;
 
-  StateTransitionsTracker<A> create(A instance) ;
+public interface StateTransitionsTrackerFactory<A extends Aggregate> extends Function<A, StateTransitionsTracker<A>> {
 
 }

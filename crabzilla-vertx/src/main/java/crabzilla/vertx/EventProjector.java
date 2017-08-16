@@ -1,25 +1,28 @@
 package crabzilla.vertx;
 
 import crabzilla.model.DomainEvent;
-import lombok.AllArgsConstructor;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
+import crabzilla.stack.ProjectionData;
 import lombok.val;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.List;
 
-@Slf4j
-@AllArgsConstructor
+//@Slf4j
 public abstract class EventProjector<DAO> {
 
-  protected String eventsChannelId;
-  protected Class<DAO> daoClass;
-  Jdbi jdbi;
+  protected final String eventsChannelId;
+  protected final Class<DAO> daoClass;
+  protected final Jdbi jdbi;
+
+  protected EventProjector(String eventsChannelId, Class<DAO> daoClass, Jdbi jdbi) {
+    this.eventsChannelId = eventsChannelId;
+    this.daoClass = daoClass;
+    this.jdbi = jdbi;
+  }
 
   public void handle(final List<ProjectionData> uowList) {
 
-    log.info("Writing {} units for eventChannel {}", uowList.size(), eventsChannelId);
+//    log.info("Writing {} units for eventChannel {}", uowList.size(), eventsChannelId);
 
     val handle = jdbi.open();
     val dao = handle.attach(daoClass);
@@ -30,28 +33,31 @@ public abstract class EventProjector<DAO> {
               .flatMap(uowdata -> uowdata.getEvents().stream()
                       .map(e -> new Tuple2(uowdata.getTargetId(), e)));
 
-      streamOfTuple2.forEach(tuple2 -> write(dao, tuple2.getId(), tuple2.getEvent()));
+      streamOfTuple2.forEach(tuple2 -> write(dao, tuple2.id, tuple2.event));
 
       handle.commit();
 
     } catch (Exception e) {
 
-      log.error("Error with eventChannel " + eventsChannelId, e);
+//      log.error("Error with eventChannel " + eventsChannelId, e);
 
       handle.rollback();
 
     }
 
-    log.info("Wrote {} units for eventChannel {}", uowList.size(), eventsChannelId);
+//    log.info("Wrote {} units for eventChannel {}", uowList.size(), eventsChannelId);
 
   }
 
   public abstract void write(DAO dao, String targetId, DomainEvent event);
 
-  @Value
   private class Tuple2 {
-    String id;
-    DomainEvent event;
+    final String id;
+    final DomainEvent event;
+    private Tuple2(String id, DomainEvent event) {
+      this.id = id;
+      this.event = event;
+    }
   }
 
 }

@@ -11,6 +11,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
+        <kotlin.version>1.1.4</kotlin.version>
         <lombok.version>1.16.14</lombok.version>
         <vertx.version>3.4.2</vertx.version>
         <guice.version>4.1.0</guice.version>
@@ -20,7 +21,6 @@
         <mysql.version>6.0.6</mysql.version>
         <commons.version>3.5</commons.version>
         <javaslang.version>2.0.5</javaslang.version>
-        <derive4j.version>0.12.2</derive4j.version>
         <jackson.version>2.9.0.pr3</jackson.version>
         <hikari.version>2.6.1</hikari.version>
         <junit.jupiter.version>5.0.0-M4</junit.jupiter.version>
@@ -35,6 +35,8 @@
 
         <module>crabzilla-core</module>
         <module>crabzilla-example1</module>
+        <module>crabzilla-vavr-example1</module>
+        <module>crabzilla-kotlin-example1</module>
         <module>crabzilla-vertx</module>
 
     </modules>
@@ -115,6 +117,30 @@
 
             <dependency>
                 <groupId>crabzilla</groupId>
+                <artifactId>crabzilla-vertx-example1-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>crabzilla</groupId>
+                <artifactId>crabzilla-vertx-example1-database</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>crabzilla</groupId>
+                <artifactId>crabzilla-kotlin-example1-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>crabzilla</groupId>
+                <artifactId>crabzilla-kotlin-example1-database</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>crabzilla</groupId>
                 <artifactId>crabzilla-vertx-stack</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -123,6 +149,42 @@
                 <groupId>crabzilla</groupId>
                 <artifactId>crabzilla-vertx</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+
+            <!-- kotlin -->
+
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-stdlib</artifactId>
+                <version>${kotlin.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-reflect</artifactId>
+                <version>${kotlin.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.module</groupId>
+                <artifactId>jackson-module-kotlin</artifactId>
+                <version>2.9.0.pr4</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.microutils</groupId>
+                <artifactId>kotlin-logging</artifactId>
+                <version>1.4.6</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jdbi</groupId>
+                <artifactId>jdbi3-kotlin</artifactId>
+                <version>${jdbi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jdbi</groupId>
+                <artifactId>jdbi3-kotlin-sqlobject</artifactId>
+                <version>${jdbi.version}</version>
             </dependency>
 
             <!-- util -->

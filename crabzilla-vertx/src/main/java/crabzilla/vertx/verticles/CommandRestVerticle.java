@@ -1,7 +1,7 @@
 package crabzilla.vertx.verticles;
 
 import crabzilla.model.EntityCommand;
-import crabzilla.vertx.CommandExecution;
+import crabzilla.stack.CommandExecution;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -14,7 +14,8 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
-import static crabzilla.vertx.util.StringHelper.*;
+import static crabzilla.stack.StringHelper.*;
+
 
 @Slf4j
 public class CommandRestVerticle<E> extends AbstractVerticle {

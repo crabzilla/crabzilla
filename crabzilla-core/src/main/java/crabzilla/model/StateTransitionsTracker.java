@@ -9,7 +9,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class StateTransitionsTracker<A extends AggregateRoot>  {
+public class StateTransitionsTracker<A extends Aggregate>  {
 
   final A originalInstance;
   final BiFunction<DomainEvent, A, A> applyEventsFn;
@@ -50,7 +50,7 @@ public class StateTransitionsTracker<A extends AggregateRoot>  {
     return stateTransitions.isEmpty();
   }
 
-  class StateTransition<T extends AggregateRoot> {
+  class StateTransition<T extends Aggregate> {
     private final T newInstance;
     private final DomainEvent afterThisEvent;
 

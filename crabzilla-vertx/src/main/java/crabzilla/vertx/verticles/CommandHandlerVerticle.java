@@ -1,9 +1,9 @@
 package crabzilla.vertx.verticles;
 
 import crabzilla.model.*;
+import crabzilla.stack.CommandExecution;
 import crabzilla.stack.DbConcurrencyException;
 import crabzilla.stack.UnknownCommandException;
-import crabzilla.vertx.CommandExecution;
 import crabzilla.vertx.repositories.EntityUnitOfWorkRepository;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.AbstractVerticle;
@@ -21,12 +21,12 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static crabzilla.vertx.CommandExecution.*;
-import static crabzilla.vertx.util.StringHelper.commandHandlerId;
+import static crabzilla.stack.CommandExecution.*;
+import static crabzilla.stack.StringHelper.commandHandlerId;
 import static java.util.Collections.singletonList;
 
 @Slf4j
-public class CommandHandlerVerticle<A extends AggregateRoot> extends AbstractVerticle {
+public class CommandHandlerVerticle<A extends Aggregate> extends AbstractVerticle {
 
   final Class<A> aggregateRootClass;
   final A seedValue;

@@ -5,6 +5,7 @@ import crabzilla.model.DomainEvent;
 import crabzilla.model.EntityCommand;
 import crabzilla.model.EntityId;
 import crabzilla.model.EntityUnitOfWork;
+import crabzilla.stack.CommandExecution;
 import crabzilla.vertx.codecs.JacksonGenericCodec;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;

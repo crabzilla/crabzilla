@@ -8,9 +8,9 @@ import java.util.function.Consumer;
 public class CommandHandlerResult {
 
   private final EntityUnitOfWork unitOfWork;
-  private final Exception exception;
+  private final Throwable exception;
 
-  private CommandHandlerResult(EntityUnitOfWork unitOfWork, Exception exception) {
+  private CommandHandlerResult(EntityUnitOfWork unitOfWork, Throwable exception) {
     this.unitOfWork = unitOfWork;
     this.exception = exception;
   }
@@ -21,7 +21,7 @@ public class CommandHandlerResult {
     }
   }
 
-  public void inCaseOfError(Consumer<Exception> consumer) {
+  public void inCaseOfError(Consumer<Throwable> consumer) {
     if (exception != null) {
       consumer.accept(exception);
     }
@@ -31,7 +31,7 @@ public class CommandHandlerResult {
     return new CommandHandlerResult(uow, null);
   }
 
-  static public CommandHandlerResult error(Exception e) {
+  static public CommandHandlerResult error(Throwable e) {
     return new CommandHandlerResult(null, e);
   }
 
