@@ -13,15 +13,12 @@ public class StateTransitionsTracker<A extends Aggregate>  {
 
   final Snapshot<A> originalSnapshot;
   final BiFunction<DomainEvent, A, A> applyEventsFn;
-  final Function<A, A> dependencyInjectionFn;
   final List<StateTransition<A>> stateTransitions = new ArrayList<>();
 
   public StateTransitionsTracker(@NonNull Snapshot<A> originalSnapshot,
-                                 @NonNull BiFunction<DomainEvent, A, A> applyEventsFn,
-                                 @NonNull Function<A, A> dependencyInjectionFn) {
+                                 @NonNull BiFunction<DomainEvent, A, A> applyEventsFn) {
     this.originalSnapshot = originalSnapshot;
     this.applyEventsFn = applyEventsFn;
-    this.dependencyInjectionFn = dependencyInjectionFn;
   }
 
   private StateTransitionsTracker<A> applyEvents(@NonNull List<DomainEvent> events) {
@@ -44,7 +41,7 @@ public class StateTransitionsTracker<A extends Aggregate>  {
   public A currentState() {
     val current = isEmpty() ? originalSnapshot.getInstance() :
                               stateTransitions.get(stateTransitions.size() - 1).newInstance;
-    return dependencyInjectionFn.apply(current);
+    return current;
   }
 
   public boolean isEmpty() {

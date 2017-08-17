@@ -25,8 +25,6 @@ public interface AggregateRootComponentsFactory<A extends Aggregate> {
 
   Supplier<A> supplierFn() ;
 
-  Function<A, A> depInjectionFn() ;
-
   BiFunction<DomainEvent, A, A> stateTransitionFn() ;
 
   Function<EntityCommand, List<String>> cmdValidatorFn() ;
@@ -41,7 +39,7 @@ public interface AggregateRootComponentsFactory<A extends Aggregate> {
 
   default SnapshotPromoter<A> snapshotPromoter() {
     return new SnapshotPromoter<>(supplierFn(),
-            instance -> new StateTransitionsTracker<>(instance, stateTransitionFn(), depInjectionFn()));
+            instance -> new StateTransitionsTracker<>(instance, stateTransitionFn()));
   }
 
   default CommandRestVerticle<A> restVerticle() {

@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static crabzilla.example1.customer.CustomerData.*;
 import static io.vavr.API.*;
@@ -21,14 +20,6 @@ import static io.vavr.Predicates.instanceOf;
 import static java.util.Collections.emptyList;
 
 public class CustomerFunctionsVavr {
-  
-  public static class SupplierFn implements Supplier<Customer> {
-    final Customer customer = new Customer(null, null,  null, false, null);
-    @Override
-    public Customer get() {
-      return customer;
-    }
-  }
 
   public static class StateTransitionFn implements BiFunction<DomainEvent, Customer, Customer> {
 
@@ -59,17 +50,13 @@ public class CustomerFunctionsVavr {
 
     @Override
     public CommandHandlerResult apply(final EntityCommand cmd, final Snapshot<Customer> snapshot) {
-
       CommandHandlerFn.log.info("Will apply command {}", cmd);
-
       final StateTransitionsTracker<Customer> tracker = trackerFactory.apply(snapshot);
-
       try {
         return CommandHandlerResult.success(handle(cmd, tracker));
       } catch (Exception e) {
         return CommandHandlerResult.error(e);
       }
-
     }
 
     private EntityUnitOfWork handle(final EntityCommand command,

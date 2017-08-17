@@ -18,14 +18,6 @@ import static crabzilla.model.EntityUnitOfWork.unitOfWork;
 
 public class CustomerFunctions {
 
-  public static class SupplierFn implements Supplier<Customer> {
-    final Customer customer = new Customer(null, null,  null, false, null);
-    @Override
-    public Customer get() {
-      return customer;
-    }
-  }
-
   public static class StateTransitionFn extends AbstractStateTransitionFn<Customer> {
 
     public Customer on(final CustomerData.CustomerCreated event, final Customer instance) {
