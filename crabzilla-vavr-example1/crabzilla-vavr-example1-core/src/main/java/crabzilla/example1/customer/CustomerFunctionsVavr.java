@@ -16,7 +16,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static crabzilla.example1.customer.CustomerData.*;
-import static crabzilla.model.EntityUnitOfWork.unitOfWork;
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
 import static java.util.Collections.emptyList;
@@ -33,16 +32,16 @@ public class CustomerFunctionsVavr {
 
   public static class StateTransitionFn implements BiFunction<DomainEvent, Customer, Customer> {
 
-    public Customer apply(final DomainEvent event, final Customer instance) {
+    public Customer apply(final DomainEvent event, final Customer customer) {
 
       return Match(event).of(
         Case($(instanceOf(CustomerCreated.class)),
-                (e) -> instance.withId(e.getId()).withName(e.getName())),
+                (e) -> customer.withId(e.getId()).withName(e.getName())),
         Case($(instanceOf(CustomerActivated.class)),
-                (e) -> instance.withReason(e.getReason()).withActive(true)),
+                (e) -> customer.withReason(e.getReason()).withActive(true)),
         Case($(instanceOf(CustomerDeactivated.class)),
-                (e) -> instance.withReason(e.getReason()).withActive(false)),
-        Case($(), o -> instance));
+                (e) -> customer.withReason(e.getReason()).withActive(false)),
+        Case($(), o -> customer));
 
     }
   }
@@ -73,24 +72,28 @@ public class CustomerFunctionsVavr {
 
     }
 
-    private EntityUnitOfWork handle(final EntityCommand command, final StateTransitionsTracker<Customer> tracker) {
+    private EntityUnitOfWork handle(final EntityCommand command,
+                                    final StateTransitionsTracker<Customer> tracker) {
 
       final EntityUnitOfWork uow = Match(command).of(
 
         Case($(instanceOf(CreateCustomer.class)), (cmd) ->
-            tracker.applyEvents(customer -> customer.create(cmd.getTargetId(), cmd.getName())).unitOfWorkFor(cmd)
+          tracker.applyEvents(customer -> customer.create(cmd.getTargetId(), cmd.getName()))
+                  .unitOfWorkFor(cmd)
         ),
         Case($(instanceOf(ActivateCustomer.class)), (cmd) ->
-            tracker.applyEvents(customer -> customer.activate(cmd.getReason())).unitOfWorkFor(cmd)
+          tracker.applyEvents(customer -> customer.activate(cmd.getReason()))
+                  .unitOfWorkFor(cmd)
         ),
         Case($(instanceOf(DeactivateCustomer.class)), (cmd) ->
-            tracker.applyEvents(customer -> customer.deactivate(cmd.getReason())).unitOfWorkFor(cmd)
+          tracker.applyEvents(customer -> customer.deactivate(cmd.getReason()))
+                  .unitOfWorkFor(cmd)
         ),
-
-        Case($(instanceOf(CreateActivateCustomer.class)), (cmd) -> tracker
-              .applyEvents(customer -> customer.create(cmd.getTargetId(), cmd.getName()))
-              .applyEvents(customer -> customer.activate(cmd.getReason()))
-              .unitOfWorkFor(cmd)
+        Case($(instanceOf(CreateActivateCustomer.class)), (cmd) ->
+          tracker
+            .applyEvents(customer -> customer.create(cmd.getTargetId(), cmd.getName()))
+            .applyEvents(customer -> customer.activate(cmd.getReason()))
+            .unitOfWorkFor(cmd)
         ),
         Case($(), o -> {
           throw new UnknownCommandException("for command " + command.getClass().getSimpleName());
