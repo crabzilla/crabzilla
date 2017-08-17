@@ -1,13 +1,15 @@
 package crabzilla.stack;
 
 import crabzilla.model.DomainEvent;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.List;
 
-//@Slf4j
+@Slf4j
 public abstract class EventProjector<D> {
 
   protected final String eventsChannelId;
@@ -22,7 +24,7 @@ public abstract class EventProjector<D> {
 
   public void handle(final List<ProjectionData> uowList) {
 
-//    log.info("Writing {} units for eventChannel {}", uowList.size(), eventsChannelId);
+    log.info("Writing {} units for eventChannel {}", uowList.size(), eventsChannelId);
 
     final Handle handle = jdbi.open();
     final D dao = handle.attach(daoClass);
@@ -33,22 +35,28 @@ public abstract class EventProjector<D> {
               .flatMap(uowdata -> uowdata.getEvents().stream()
                       .map(e -> new EventProjectorTuple(uowdata.getTargetId(), e)));
 
-      stream.forEach(tuple2 -> write(dao, tuple2.id, tuple2.event));
+      stream.forEach(tuple2 -> write(dao, tuple2.getId(), tuple2.getEvent()));
 
       handle.commit();
 
     } catch (Exception e) {
 
-//      log.error("Error with eventChannel " + eventsChannelId, e);
+      log.error("Error with eventChannel " + eventsChannelId, e);
 
       handle.rollback();
 
     }
 
-//    log.info("Wrote {} units for eventChannel {}", uowList.size(), eventsChannelId);
+    log.info("Wrote {} units for eventChannel {}", uowList.size(), eventsChannelId);
 
   }
 
   public abstract void write(D dao, String targetId, DomainEvent event);
+
+  @Value
+  private static class EventProjectorTuple {
+    public final String id;
+    public final DomainEvent event;
+  }
 
 }

@@ -63,47 +63,38 @@ public class CustomerFunctionsVavr {
 
       CommandHandlerFn.log.info("Will apply command {}", cmd);
 
+      final StateTransitionsTracker<Customer> tracker = trackerFactory.apply(snapshot);
+
       try {
-        return CommandHandlerResult.success(handle(cmd, snapshot));
+        return CommandHandlerResult.success(handle(cmd, tracker));
       } catch (Exception e) {
         return CommandHandlerResult.error(e);
       }
 
     }
 
-    private EntityUnitOfWork handle(final EntityCommand cmd, final Snapshot<Customer> snapshot) {
+    private EntityUnitOfWork handle(final EntityCommand command, final StateTransitionsTracker<Customer> tracker) {
 
-      val targetInstance = snapshot.getInstance();
-      val targetVersion = snapshot.getVersion();
+      final EntityUnitOfWork uow = Match(command).of(
 
-      final EntityUnitOfWork uow = Match(cmd).of(
-
-        Case($(instanceOf(CreateCustomer.class)), (command) ->
-          unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.create(command.getTargetId(), command.getName()))
+        Case($(instanceOf(CreateCustomer.class)), (cmd) ->
+            tracker.applyEvents(customer -> customer.create(cmd.getTargetId(), cmd.getName())).unitOfWorkFor(cmd)
+        ),
+        Case($(instanceOf(ActivateCustomer.class)), (cmd) ->
+            tracker.applyEvents(customer -> customer.activate(cmd.getReason())).unitOfWorkFor(cmd)
+        ),
+        Case($(instanceOf(DeactivateCustomer.class)), (cmd) ->
+            tracker.applyEvents(customer -> customer.deactivate(cmd.getReason())).unitOfWorkFor(cmd)
         ),
 
-        Case($(instanceOf(ActivateCustomer.class)), (command) ->
-          unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.activate(command.getReason()))),
-
-        Case($(instanceOf(DeactivateCustomer.class)), (command) ->
-          unitOfWork(cmd, targetVersion.nextVersion(), targetInstance.deactivate(command.getReason()))),
-
-        Case($(instanceOf(CreateActivateCustomer.class)), (command) -> {
-          val tracker = trackerFactory.apply(targetInstance);
-          val events = tracker
-                  .applyEvents(customer -> customer.create(command.getTargetId(), command.getName()))
-                  .applyEvents(customer -> customer.activate(command.getReason()))
-                  .collectEvents();
-
-          return unitOfWork(cmd, targetVersion.nextVersion(), events);
-
-        }),
-
+        Case($(instanceOf(CreateActivateCustomer.class)), (cmd) -> tracker
+              .applyEvents(customer -> customer.create(cmd.getTargetId(), cmd.getName()))
+              .applyEvents(customer -> customer.activate(cmd.getReason()))
+              .unitOfWorkFor(cmd)
+        ),
         Case($(), o -> {
-          throw new UnknownCommandException("for command " + cmd.getClass().getSimpleName());
-
+          throw new UnknownCommandException("for command " + command.getClass().getSimpleName());
         })
-
       );
 
       return uow;

@@ -43,7 +43,7 @@ class CommandHandlerFn(private val trackerFactory: StateTransitionsTrackerFactor
         is ActivateCustomer -> uowOf(cmd, customer.activate(cmd.reason), newVersion)
         is DeactivateCustomer -> uowOf(cmd, customer.deactivate(cmd.reason), newVersion)
         is CreateActivateCustomer -> {
-          val tracker = trackerFactory.apply(customer)
+          val tracker = trackerFactory.apply(snapshot)
           val events = tracker
                   .applyEvents({ c -> c.create(cmd.targetId as CustomerId, cmd.name) })
                   .applyEvents({ c -> c.activate(cmd.reason) })

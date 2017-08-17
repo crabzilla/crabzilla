@@ -73,7 +73,7 @@ public class CustomerFunctions {
     }
 
     public EntityUnitOfWork handle(CustomerData.CreateActivateCustomer cmd, Snapshot<Customer> snapshot) {
-      val tracker = trackerFactory.apply(snapshot.getInstance());
+      val tracker = trackerFactory.apply(snapshot);
       val events = tracker
               .applyEvents(customer -> customer.create(cmd.getTargetId(), cmd.getName()))
               .applyEvents(customer -> customer.activate(cmd.getReason()))

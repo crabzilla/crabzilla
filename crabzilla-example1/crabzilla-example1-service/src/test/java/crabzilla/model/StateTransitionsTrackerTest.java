@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 
 import java.time.Instant;
-import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -21,7 +20,8 @@ public class StateTransitionsTrackerTest {
 
   StateTransitionsTracker<Customer> tracker;
 
-  Supplier<Customer> supplier = new CustomerFunctions.SupplierFn();
+  Snapshot<Customer> originalSnapshot
+          = new Snapshot<>(new CustomerFunctions.SupplierFn().get(), new Version(0));
 
   @BeforeEach
   void instantiate() {
@@ -30,7 +30,7 @@ public class StateTransitionsTrackerTest {
 
   @Test
   public void can_be_instantiated() {
-    new StateTransitionsTracker<>(supplier.get(), new CustomerFunctions.StateTransitionFn(), customer -> customer);
+    new StateTransitionsTracker<>(originalSnapshot, new CustomerFunctions.StateTransitionFn(), customer -> customer);
   }
 
   @Nested
@@ -39,7 +39,8 @@ public class StateTransitionsTrackerTest {
 
     @BeforeEach
     void instantiate() {
-      tracker = new StateTransitionsTracker<>(supplier.get(), new CustomerFunctions.StateTransitionFn(), customer -> customer);
+      tracker = new StateTransitionsTracker<>(originalSnapshot,
+              new CustomerFunctions.StateTransitionFn(), customer -> customer);
     }
 
     @Test
@@ -49,7 +50,7 @@ public class StateTransitionsTrackerTest {
 
     @Test
     void has_empty_state() {
-      assertThat(tracker.currentState()).isEqualTo(supplier.get());
+      assertThat(tracker.currentState()).isEqualTo(originalSnapshot.getInstance());
     }
 
     @Nested
@@ -121,7 +122,8 @@ public class StateTransitionsTrackerTest {
     @BeforeEach
     void instantiate() {
       // given
-      tracker = new StateTransitionsTracker<>(supplier.get(), new CustomerFunctions.StateTransitionFn(), customer -> customer);
+      tracker = new StateTransitionsTracker<>(originalSnapshot,
+              new CustomerFunctions.StateTransitionFn(), customer -> customer);
       // when
       tracker.applyEvents(c -> asList(customerCreated, customerActivated));
     }
