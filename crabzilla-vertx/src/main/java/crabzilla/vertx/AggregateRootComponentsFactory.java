@@ -1,10 +1,6 @@
 package crabzilla.vertx;
 
-import crabzilla.model.Aggregate;
-import crabzilla.model.Snapshot;
-import crabzilla.model.SnapshotPromoter;
-import crabzilla.model.StateTransitionsTracker;
-import crabzilla.stack.AggregateRootFunctionsFactory;
+import crabzilla.model.*;
 import crabzilla.vertx.repositories.EntityUnitOfWorkRepository;
 import crabzilla.vertx.verticles.CommandHandlerVerticle;
 import crabzilla.vertx.verticles.CommandRestVerticle;
@@ -15,18 +11,27 @@ import io.vertx.ext.jdbc.JDBCClient;
 import lombok.val;
 import net.jodah.expiringmap.ExpiringMap;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static crabzilla.stack.StringHelper.circuitBreakerId;
 
-public interface AggregateRootComponentsFactory<A extends Aggregate>
-
-        extends AggregateRootFunctionsFactory<A> {
+public interface AggregateRootComponentsFactory<A extends Aggregate> {
 
   Class<A> clazz();
 
-  Function<A, A> depInjectionFn();
+  Supplier<A> supplierFn() ;
+
+  Function<A, A> depInjectionFn() ;
+
+  BiFunction<DomainEvent, A, A> stateTransitionFn() ;
+
+  Function<EntityCommand, List<String>> cmdValidatorFn() ;
+
+  BiFunction<EntityCommand, Snapshot<A>, CommandHandlerResult> cmdHandlerFn() ;
 
   JDBCClient jdbcClient();
 
