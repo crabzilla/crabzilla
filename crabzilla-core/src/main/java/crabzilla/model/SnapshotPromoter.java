@@ -24,7 +24,7 @@ public class SnapshotPromoter<A extends Aggregate> {
               newVersion, originalSnapshot.getVersion()));
     }
 
-    val tracker = trackerFactory.apply(originalSnapshot.getInstance());
+    val tracker = trackerFactory.apply(originalSnapshot);
 
     return new Snapshot<>(tracker.applyEvents(c -> newEvents).currentState(), newVersion);
   }

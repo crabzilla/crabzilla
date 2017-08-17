@@ -24,9 +24,9 @@
         <javaslang.version>2.0.5</javaslang.version>
         <jackson.version>2.9.0.pr4</jackson.version>
         <hikari.version>2.6.1</hikari.version>
-        <junit.jupiter.version>5.0.0-M4</junit.jupiter.version>
-        <junit.vintage.version>4.12.0-M4</junit.vintage.version>
-        <junit.platform.version>1.0.0-M4</junit.platform.version>
+        <junit.jupiter.version>5.0.0-M5</junit.jupiter.version>
+        <junit.vintage.version>4.12.0-M5</junit.vintage.version>
+        <junit.platform.version>1.0.0-M5</junit.platform.version>
         <skipTests>false</skipTests>
         <skipITs>${skipTests}</skipITs>
         <skipUTs>${skipTests}</skipUTs>
@@ -442,36 +442,36 @@
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok-maven-plugin</artifactId>
-                <version>${lombok.version}.1</version>
-                <executions>
-                    <execution>
-                        <id>delombok</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>delombok</goal>
-                        </goals>
-                        <configuration>
-                            <formatPreferences>
-                                <javaLangAsFQN>skip</javaLangAsFQN>
-                            </formatPreferences>
-                            <verbose>true</verbose>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>test-delombok</id>
-                        <phase>generate-test-sources</phase>
-                        <goals>
-                            <goal>testDelombok</goal>
-                        </goals>
-                        <configuration>
-                            <verbose>true</verbose>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.projectlombok</groupId>-->
+                <!--<artifactId>lombok-maven-plugin</artifactId>-->
+                <!--<version>${lombok.version}.1</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<id>delombok</id>-->
+                        <!--<phase>generate-sources</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>delombok</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--<formatPreferences>-->
+                                <!--<javaLangAsFQN>skip</javaLangAsFQN>-->
+                            <!--</formatPreferences>-->
+                            <!--<verbose>true</verbose>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                    <!--<execution>-->
+                        <!--<id>test-delombok</id>-->
+                        <!--<phase>generate-test-sources</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>testDelombok</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--<verbose>true</verbose>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
 
         </plugins>
 

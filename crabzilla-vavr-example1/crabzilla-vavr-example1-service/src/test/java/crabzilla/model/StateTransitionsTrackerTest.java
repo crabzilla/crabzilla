@@ -21,7 +21,8 @@ public class StateTransitionsTrackerTest {
 
   StateTransitionsTracker<Customer> tracker;
 
-  Supplier<Customer> supplier = new CustomerFunctionsVavr.SupplierFn();
+  Snapshot<Customer> originalSnapshot
+          = new Snapshot<>(new CustomerFunctionsVavr.SupplierFn().get(), new Version(0));
 
   @BeforeEach
   void instantiate() {
@@ -30,7 +31,7 @@ public class StateTransitionsTrackerTest {
 
   @Test
   public void can_be_instantiated() {
-    new StateTransitionsTracker<>(supplier.get(), new CustomerFunctionsVavr.StateTransitionFn(), customer -> customer);
+    new StateTransitionsTracker<>(originalSnapshot, new CustomerFunctionsVavr.StateTransitionFn(), customer -> customer);
   }
 
   @Nested
@@ -39,7 +40,8 @@ public class StateTransitionsTrackerTest {
 
     @BeforeEach
     void instantiate() {
-      tracker = new StateTransitionsTracker<>(supplier.get(), new CustomerFunctionsVavr.StateTransitionFn(), customer -> customer);
+      tracker = new StateTransitionsTracker<>(originalSnapshot,
+              new CustomerFunctionsVavr.StateTransitionFn(), customer -> customer);
     }
 
     @Test
@@ -49,7 +51,7 @@ public class StateTransitionsTrackerTest {
 
     @Test
     void has_empty_state() {
-      assertThat(tracker.currentState()).isEqualTo(supplier.get());
+      assertThat(tracker.currentState()).isEqualTo(originalSnapshot.getInstance());
     }
 
     @Nested
@@ -121,7 +123,8 @@ public class StateTransitionsTrackerTest {
     @BeforeEach
     void instantiate() {
       // given
-      tracker = new StateTransitionsTracker<>(supplier.get(), new CustomerFunctionsVavr.StateTransitionFn(), customer -> customer);
+      tracker = new StateTransitionsTracker<>(originalSnapshot,
+              new CustomerFunctionsVavr.StateTransitionFn(), customer -> customer);
       // when
       tracker.applyEvents(c -> asList(customerCreated, customerActivated));
     }

@@ -11,15 +11,15 @@ import java.util.stream.Collectors;
 
 public class StateTransitionsTracker<A extends Aggregate>  {
 
-  final A originalInstance;
+  final Snapshot<A> originalSnapshot;
   final BiFunction<DomainEvent, A, A> applyEventsFn;
   final Function<A, A> dependencyInjectionFn;
   final List<StateTransition<A>> stateTransitions = new ArrayList<>();
 
-  public StateTransitionsTracker(@NonNull A originalInstance,
+  public StateTransitionsTracker(@NonNull Snapshot<A> originalSnapshot,
                                  @NonNull BiFunction<DomainEvent, A, A> applyEventsFn,
                                  @NonNull Function<A, A> dependencyInjectionFn) {
-    this.originalInstance = originalInstance;
+    this.originalSnapshot = originalSnapshot;
     this.applyEventsFn = applyEventsFn;
     this.dependencyInjectionFn = dependencyInjectionFn;
   }
@@ -42,12 +42,17 @@ public class StateTransitionsTracker<A extends Aggregate>  {
   }
 
   public A currentState() {
-    val current = isEmpty() ? originalInstance : stateTransitions.get(stateTransitions.size() - 1).newInstance;
-    return  dependencyInjectionFn.apply(current);
+    val current = isEmpty() ? originalSnapshot.getInstance() :
+                              stateTransitions.get(stateTransitions.size() - 1).newInstance;
+    return dependencyInjectionFn.apply(current);
   }
 
   public boolean isEmpty() {
     return stateTransitions.isEmpty();
+  }
+
+  public EntityUnitOfWork unitOfWorkFor(EntityCommand command) {
+    return EntityUnitOfWork.unitOfWork(command, originalSnapshot.nextVersion(), collectEvents());
   }
 
   class StateTransition<T extends Aggregate> {
