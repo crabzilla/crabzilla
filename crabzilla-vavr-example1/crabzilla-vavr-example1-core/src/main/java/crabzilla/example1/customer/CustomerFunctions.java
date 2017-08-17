@@ -19,7 +19,7 @@ import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
 import static java.util.Collections.emptyList;
 
-public class CustomerFunctionsVavr {
+public class CustomerFunctions {
 
   public static class StateTransitionFn implements BiFunction<DomainEvent, Customer, Customer> {
 
@@ -37,20 +37,19 @@ public class CustomerFunctionsVavr {
     }
   }
 
-  // TODO consider an example with some real business logic (a CreditService, for example)
   @Slf4j
   public static class CommandHandlerFn
           implements BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> {
 
     final StateTransitionsTrackerFactory<Customer> trackerFactory;
 
-    public CommandHandlerFn(StateTransitionsTrackerFactory<Customer> trackerFactory) {
+    CommandHandlerFn(StateTransitionsTrackerFactory<Customer> trackerFactory) {
       this.trackerFactory = trackerFactory;
     }
 
     @Override
     public CommandHandlerResult apply(final EntityCommand cmd, final Snapshot<Customer> snapshot) {
-      CommandHandlerFn.log.info("Will apply command {}", cmd);
+      log.info("Will apply command {}", cmd);
       final StateTransitionsTracker<Customer> tracker = trackerFactory.apply(snapshot);
       try {
         return CommandHandlerResult.success(handle(cmd, tracker));
@@ -86,9 +85,7 @@ public class CustomerFunctionsVavr {
           throw new UnknownCommandException("for command " + command.getClass().getSimpleName());
         })
       );
-
       return uow;
-
     }
 
   }
@@ -101,20 +98,16 @@ public class CustomerFunctionsVavr {
     }
 
     public java.util.List<String> validate(CreateCustomer cmd) {
-
         val either = new CreateCustomerValidator().validate(cmd).toEither();
-
         return either.isRight() ? emptyList() : either.getLeft().asJava();
-
       }
-
   }
 
-  public static class CreateCustomerValidator {
+  static class CreateCustomerValidator {
 
     private static final String VALID_NAME_CHARS = "[a-zA-Z ]";
 
-    public Validation<Seq<String>, CustomerData.CreateCustomer> validate(CreateCustomer cmd) {
+    Validation<Seq<String>, CustomerData.CreateCustomer> validate(CreateCustomer cmd) {
       return Validation.combine(validateCmdId(cmd.getCommandId()),
               validateId(cmd.getTargetId()),
               validateName(cmd.getName())

@@ -13,8 +13,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static crabzilla.example1.customer.CustomerFunctionsVavr.CommandHandlerFn;
-import static crabzilla.example1.customer.CustomerFunctionsVavr.CommandValidatorFn;
+import static crabzilla.example1.customer.CustomerFunctions.CommandHandlerFn;
+import static crabzilla.example1.customer.CustomerFunctions.CommandValidatorFn;
 
 public class CustomerFactory implements AggregateRootComponentsFactory<Customer> {
 
@@ -43,7 +43,7 @@ public class CustomerFactory implements AggregateRootComponentsFactory<Customer>
 
   @Override
   public BiFunction<DomainEvent, Customer, Customer> stateTransitionFn() {
-    return new CustomerFunctionsVavr.StateTransitionFn();
+    return new CustomerFunctions.StateTransitionFn();
   }
 
   @Override

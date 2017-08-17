@@ -2,7 +2,7 @@ package crabzilla.model;
 
 import crabzilla.example1.customer.Customer;
 import crabzilla.example1.customer.CustomerData;
-import crabzilla.example1.customer.CustomerFunctionsVavr;
+import crabzilla.example1.customer.CustomerFunctions;
 import crabzilla.example1.services.SampleInternalServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +33,7 @@ public class StateTransitionsTrackerTest {
 
   @Test
   public void can_be_instantiated() {
-    new StateTransitionsTracker<>(originalSnapshot, new CustomerFunctionsVavr.StateTransitionFn());
+    new StateTransitionsTracker<>(originalSnapshot, new CustomerFunctions.StateTransitionFn());
   }
 
   @Nested
@@ -43,7 +43,7 @@ public class StateTransitionsTrackerTest {
     @BeforeEach
     void instantiate() {
       tracker = new StateTransitionsTracker<>(originalSnapshot,
-              new CustomerFunctionsVavr.StateTransitionFn());
+              new CustomerFunctions.StateTransitionFn());
     }
 
     @Test
@@ -125,7 +125,7 @@ public class StateTransitionsTrackerTest {
     @BeforeEach
     void instantiate() {
       // given
-      tracker = new StateTransitionsTracker<>(originalSnapshot, new CustomerFunctionsVavr.StateTransitionFn());
+      tracker = new StateTransitionsTracker<>(originalSnapshot, new CustomerFunctions.StateTransitionFn());
       // when
       tracker.applyEvents(c -> asList(customerCreated, customerActivated));
     }
