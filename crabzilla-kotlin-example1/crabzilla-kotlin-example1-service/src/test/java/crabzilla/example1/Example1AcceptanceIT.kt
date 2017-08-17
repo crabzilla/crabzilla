@@ -37,8 +37,9 @@ import javax.inject.Inject
 @Slf4j
 class Example1AcceptanceIT {
 
-  private var vertx: Vertx? = null
   private val port = 8080
+
+  private lateinit var vertx: Vertx
 
   @Inject
   internal lateinit var projectionVerticle: EventsProjectionVerticle<CustomerSummaryDao>
@@ -73,9 +74,9 @@ class Example1AcceptanceIT {
             .setConfig(JsonObject().put("http.port", port)
             )
 
-    vertx!!.deployVerticle(projectionVerticle, options, context.asyncAssertSuccess())
-    vertx!!.deployVerticle(restVerticle, options, context.asyncAssertSuccess())
-    vertx!!.deployVerticle(cmdVerticle, options, context.asyncAssertSuccess())
+    vertx.deployVerticle(projectionVerticle, options, context.asyncAssertSuccess())
+    vertx.deployVerticle(restVerticle, options, context.asyncAssertSuccess())
+    vertx.deployVerticle(cmdVerticle, options, context.asyncAssertSuccess())
 
     val h = jdbi!!.open()
     h.createScript("DELETE FROM units_of_work").execute()
@@ -110,7 +111,7 @@ class Example1AcceptanceIT {
 
     println("---> " + json)
 
-    vertx!!.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer::class.java) + "/commands")
+    vertx.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer::class.java) + "/commands")
             .putHeader("content-type", "application/json")
             .putHeader("content-length", Integer.toString(json.length))
             .handler { response ->

@@ -13,18 +13,19 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static crabzilla.example1.customer.CustomerFunctionsVavr.CommandHandlerFn;
-import static crabzilla.example1.customer.CustomerFunctionsVavr.CommandValidatorFn;
+import static crabzilla.example1.customer.CustomerFunctions.CommandHandlerFn;
+import static crabzilla.example1.customer.CustomerFunctions.CommandValidatorFn;
 
 public class CustomerFactory implements AggregateRootComponentsFactory<Customer> {
 
-  private final SampleInternalService service;
   private final Vertx vertx;
   private final JDBCClient jdbcClient;
+  private final Customer seedValue;
 
   @Inject
   public CustomerFactory(SampleInternalService service, Vertx vertx, JDBCClient jdbcClient) {
-    this.service = service;
+    this.seedValue = new Customer(null, null, null, false, null)
+            .withService(service);
     this.vertx = vertx;
     this.jdbcClient = jdbcClient;
   }
@@ -37,11 +38,13 @@ public class CustomerFactory implements AggregateRootComponentsFactory<Customer>
 
   @Override
   public Supplier<Customer> supplierFn() {
-    return () -> depInjectionFn().apply(new Customer(null, null, null, false, null));
+    return () -> seedValue;
   }
 
   @Override
-  public BiFunction<DomainEvent, Customer, Customer> stateTransitionFn() {return new CustomerFunctionsVavr.StateTransitionFn(); }
+  public BiFunction<DomainEvent, Customer, Customer> stateTransitionFn() {
+    return new CustomerFunctions.StateTransitionFn();
+  }
 
   @Override
   public Function<EntityCommand, List<String>> cmdValidatorFn() {
@@ -50,12 +53,8 @@ public class CustomerFactory implements AggregateRootComponentsFactory<Customer>
 
   @Override
   public BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> cmdHandlerFn() {
-    return new CommandHandlerFn(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn(), depInjectionFn()));
+    return new CommandHandlerFn(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn()));
   }
-
-  @Override
-  public Function<Customer, Customer> depInjectionFn() {
-    return (c) -> c.withService(service); }
 
   @Override
   public JDBCClient jdbcClient() {

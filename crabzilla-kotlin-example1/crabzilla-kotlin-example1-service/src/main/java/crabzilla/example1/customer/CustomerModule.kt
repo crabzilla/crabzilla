@@ -9,12 +9,12 @@ import crabzilla.vertx.verticles.CommandHandlerVerticle
 import crabzilla.vertx.verticles.CommandRestVerticle
 import io.vertx.core.Verticle
 
-class KCustomerModule : AbstractModule() {
+class CustomerModule : AbstractModule() {
 
   override fun configure() {
 
     // to bind aggregate functions
-    bind(KCustomerFactory::class.java).asEagerSingleton()
+    bind(CustomerFactory::class.java).asEagerSingleton()
 
     // to bind verticles for this aggregate
     val restType = object : TypeLiteral<CommandRestVerticle<Customer>>() {
@@ -34,13 +34,13 @@ class KCustomerModule : AbstractModule() {
 
   @Provides
   @Singleton
-  internal fun restVerticle(componentsFactory: KCustomerFactory): CommandRestVerticle<Customer> {
+  internal fun restVerticle(componentsFactory: CustomerFactory): CommandRestVerticle<Customer> {
     return componentsFactory.restVerticle()
   }
 
   @Provides
   @Singleton
-  internal fun handler(componentsFactory: KCustomerFactory): CommandHandlerVerticle<Customer> {
+  internal fun handler(componentsFactory: CustomerFactory): CommandHandlerVerticle<Customer> {
     return componentsFactory.cmdHandlerVerticle()
   }
 

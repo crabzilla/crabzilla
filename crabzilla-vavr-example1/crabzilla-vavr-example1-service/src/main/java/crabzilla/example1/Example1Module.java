@@ -6,7 +6,6 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -19,7 +18,6 @@ import crabzilla.model.EntityCommand;
 import crabzilla.model.EntityId;
 import crabzilla.model.EntityUnitOfWork;
 import crabzilla.stack.CommandExecution;
-import crabzilla.stack.EventProjector;
 import crabzilla.vertx.codecs.JacksonGenericCodec;
 import crabzilla.vertx.verticles.EventsProjectionVerticle;
 import example1.dao.CustomerSummaryDao;
@@ -93,13 +91,8 @@ class Example1Module extends AbstractModule {
 
   @Provides
   @Singleton
-  public EventProjector<CustomerSummaryDao> eventsProjector(Jdbi jdbi) {
-    return new Example1EventProjector("example1", CustomerSummaryDao.class, jdbi) ;
-  }
-
-  @Provides
-  @Singleton
-  public EventsProjectionVerticle<CustomerSummaryDao> eventsProjectorVerticle(EventProjector<CustomerSummaryDao> eventsProjector) {
+  public EventsProjectionVerticle<CustomerSummaryDao> eventsProjector(Jdbi jdbi) {
+    val eventsProjector = new Example1EventProjector("example1", CustomerSummaryDao.class, jdbi) ;
     val circuitBreaker = CircuitBreaker.create("events-projection-circuit-breaker", vertx,
             new CircuitBreakerOptions()
                     .setMaxFailures(5) // number SUCCESS failure before opening the circuit
@@ -114,20 +107,6 @@ class Example1Module extends AbstractModule {
   @Singleton
   JDBCClient jdbcClient(Vertx vertx, HikariDataSource dataSource) {
     return JDBCClient.create(vertx, dataSource);
-  }
-
-  @Provides
-  @Singleton
-  @Named("events-projection")
-  CircuitBreaker circuitBreakerEvents() {
-    return CircuitBreaker.create("events-projection-circuit-breaker", vertx,
-            new CircuitBreakerOptions()
-                    .setMaxFailures(5) // number SUCCESS failure before opening the circuit
-                    .setTimeout(2000) // consider a failure if the operation does not succeed in time
-                    .setFallbackOnFailure(true) // do we call the fallback on failure
-                    .setResetTimeout(10000) // time spent in open state before attempting to re-try
-    );
-
   }
 
 //  Not being used yet. This can improve a lot serialization speed (it's binary). But so far it was not necessary.

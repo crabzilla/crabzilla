@@ -23,7 +23,7 @@ import java.lang.System.setProperty
 import java.util.*
 import javax.inject.Inject
 
-class KExample1Launcher {
+class Example1Launcher {
 
   val log = KotlinLogging.logger {}
 
@@ -93,7 +93,7 @@ class KExample1Launcher {
     @JvmStatic
     fun main(args: Array<String>) {
 
-      val launcher = KExample1Launcher()
+      val launcher = Example1Launcher()
       val clusterManager = HazelcastClusterManager()
       val options = VertxOptions().setClusterManager(clusterManager)
 
@@ -106,7 +106,7 @@ class KExample1Launcher {
           setProperty(LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory::class.java.name)
           LoggerFactory.getLogger(LoggerFactory::class.java) // Required for Logback to work in Vertx
 
-          Guice.createInjector(KExample1Module(vertx)).injectMembers(launcher)
+          Guice.createInjector(Example1Module(vertx)).injectMembers(launcher)
 
 //          for ((key, value) in launcher.aggregateRootVerticles!!) {
 //            vertx.deployVerticle(value) { event -> log.debug("Deployed {} ? {}", key, event.succeeded()) }

@@ -10,16 +10,14 @@ import java.util.UUID;
 @Value
 public class EntityUnitOfWork implements Serializable {
 
-  @NonNull
-  final UUID unitOfWorkId;
-  @NonNull
-  final EntityCommand command;
-  @NonNull
-  final Version version;
-  @NonNull
-  final List<DomainEvent> events;
+  UUID unitOfWorkId;
+  EntityCommand command;
+  Version version;
+  List<DomainEvent> events;
 
-  public static EntityUnitOfWork unitOfWork(EntityCommand command, Version version, List<DomainEvent> events) {
+  public static EntityUnitOfWork unitOfWork(@NonNull EntityCommand command,
+                                            @NonNull Version version,
+                                            @NonNull List<DomainEvent> events) {
     return new EntityUnitOfWork(UUID.randomUUID(), command, version, events);
   }
 

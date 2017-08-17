@@ -8,7 +8,7 @@ import crabzilla.model.DomainEvent
 import crabzilla.stack.EventProjector
 import org.jdbi.v3.core.Jdbi
 
-class KExample1EventProjector(channelId: String, daoClazz: Class<CustomerSummaryDao>, jdbi: Jdbi)
+class Example1EventProjector(channelId: String, daoClazz: Class<CustomerSummaryDao>, jdbi: Jdbi)
 
   : EventProjector<CustomerSummaryDao>(channelId, daoClazz, jdbi) {
 

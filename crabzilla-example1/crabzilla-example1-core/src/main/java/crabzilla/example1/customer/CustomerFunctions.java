@@ -12,19 +12,10 @@ import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static crabzilla.model.EntityUnitOfWork.unitOfWork;
 
 public class CustomerFunctions {
-
-  public static class SupplierFn implements Supplier<Customer> {
-    final Customer customer = new Customer(null, null,  null, false, null);
-    @Override
-    public Customer get() {
-      return customer;
-    }
-  }
 
   public static class StateTransitionFn extends AbstractStateTransitionFn<Customer> {
 
