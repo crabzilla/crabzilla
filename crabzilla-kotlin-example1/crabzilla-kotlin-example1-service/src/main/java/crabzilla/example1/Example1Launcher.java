@@ -33,7 +33,7 @@ public class Example1Launcher {
   Map<String, Verticle> aggregateRootVerticles;
 
   @Inject
-  EventsProjectionVerticle projectionVerticle;
+  EventsProjectionVerticle<CustomerSummaryDao> projectionVerticle;
 
   static Vertx vertx;
 
@@ -54,11 +54,9 @@ public class Example1Launcher {
 
         Guice.createInjector(new Example1Module(vertx)).injectMembers(launcher);
 
-        for (Map.Entry<String,Verticle> v: launcher.aggregateRootVerticles.entrySet()) {
+        for (Map.Entry<String, ? extends Verticle> v: launcher.aggregateRootVerticles.entrySet()) {
           vertx.deployVerticle(v.getValue(), event -> log.debug("Deployed {} ? {}", v.getKey(), event.succeeded()));
         }
-
-        vertx.deployVerticle(launcher.projectionVerticle, event -> log.debug("Deployed ? {}", event.succeeded()));
 
         // a test
         launcher.justForTest();
@@ -70,7 +68,7 @@ public class Example1Launcher {
 
   }
 
-  private void justForTest() {
+  public void justForTest() {
 
   val customerId = new CustomerId(UUID.randomUUID().toString());
   // val customerId = new CustomerId("customer-000");

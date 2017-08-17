@@ -120,7 +120,7 @@ public class CommandHandlerVerticleTest {
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class));
 
@@ -139,7 +139,7 @@ public class CommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
                                                          any());
 
@@ -186,7 +186,7 @@ public class CommandHandlerVerticleTest {
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
             future.fail(expectedException)))
-            .when(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class));
 
@@ -198,7 +198,7 @@ public class CommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
                                                          any());
 
@@ -232,7 +232,7 @@ public class CommandHandlerVerticleTest {
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class));
 
@@ -251,7 +251,7 @@ public class CommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
                                                          any());
 
@@ -288,7 +288,7 @@ public class CommandHandlerVerticleTest {
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
             eq(initialSnapshot.getVersion()),
             any(Future.class));
 
@@ -307,7 +307,7 @@ public class CommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),
               any());
 
@@ -346,7 +346,7 @@ public class CommandHandlerVerticleTest {
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
             eq(initialSnapshot.getVersion()),
             any(Future.class));
 
@@ -365,7 +365,7 @@ public class CommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),
               any());
 
@@ -434,7 +434,7 @@ public class CommandHandlerVerticleTest {
 
     doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
             eq(initialSnapshot.getVersion()),
             any(Future.class));
 
@@ -449,7 +449,7 @@ public class CommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.getStringValue()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),
               any());
 

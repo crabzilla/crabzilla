@@ -7,16 +7,17 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.zaxxer.hikari.HikariDataSource;
 import crabzilla.example1.customer.CustomerModule;
 import crabzilla.example1.services.SampleInternalServiceImpl;
+import crabzilla.model.*;
 import crabzilla.stack.CommandExecution;
-import crabzilla.vertx.EventProjector;
+import crabzilla.stack.EventProjector;
 import crabzilla.vertx.codecs.JacksonGenericCodec;
+import crabzilla.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
@@ -56,6 +57,14 @@ class Example1Module extends AbstractModule {
     // exposes properties to guice
     setCfgProps();
 
+//    TypeLiteral<EventProjector<CustomerSummaryDao>> eventsProjectorType =
+//            new TypeLiteral<EventProjector<CustomerSummaryDao>>() {};
+//
+//    MapBinder<String, Verticle> mapbinder =
+//            MapBinder.newMapBinder(binder(), String.class, Verticle.class);
+//
+//    mapbinder.addBinding("customer.rest").to(eventsProjectorType);
+
   }
 
   private void setCfgProps() {
@@ -86,6 +95,19 @@ class Example1Module extends AbstractModule {
 
   @Provides
   @Singleton
+  public EventsProjectionVerticle<CustomerSummaryDao> eventsProjectorVerticle(EventProjector<CustomerSummaryDao> eventsProjector) {
+    val circuitBreaker = CircuitBreaker.create("events-projection-circuit-breaker", vertx,
+            new CircuitBreakerOptions()
+                    .setMaxFailures(5) // number SUCCESS failure before opening the circuit
+                    .setTimeout(2000) // consider a failure if the operation does not succeed in time
+                    .setFallbackOnFailure(true) // do we call the fallback on failure
+                    .setResetTimeout(10000) // time spent in open state before attempting to re-try
+    );
+    return new EventsProjectionVerticle<>(eventsProjector, circuitBreaker) ;
+  }
+
+  @Provides
+  @Singleton
   Jdbi jdbi(HikariDataSource ds) {
     val jdbi = Jdbi.create(ds);
     jdbi.installPlugin(new SqlObjectPlugin());
@@ -100,18 +122,6 @@ class Example1Module extends AbstractModule {
     return JDBCClient.create(vertx, dataSource);
   }
 
-  @Provides
-  @Singleton
-  @Named("events-projection")
-  CircuitBreaker circuitBreakerEvents() {
-    return CircuitBreaker.create("events-projection-circuit-breaker", vertx,
-      new CircuitBreakerOptions()
-              .setMaxFailures(5) // number SUCCESS failure before opening the circuit
-              .setTimeout(2000) // consider a failure if the operation does not succeed in time
-              .setFallbackOnFailure(true) // do we call the fallback on failure
-              .setResetTimeout(10000) // time spent in open state before attempting to re-try
-    );
-  }
 
 //  Not being used yet. This can improve a lot serialization speed (it's binary).
 //  But so far it was not necessary.

@@ -1,41 +1,30 @@
 package crabzilla.example1;
 
-import crabzilla.example1.customer.CustomerData.CustomerCreated;
 import crabzilla.example1.readmodel.CustomerSummary;
-import crabzilla.model.DomainEvent;
-import crabzilla.vertx.EventProjector;
+import crabzilla.example1.util.AbstractExample1EventProjector;
 import example1.dao.CustomerSummaryDao;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 
-import static crabzilla.example1.customer.CustomerData.CustomerActivated;
-import static crabzilla.example1.customer.CustomerData.CustomerDeactivated;
-import static io.vavr.API.*;
-import static io.vavr.Predicates.instanceOf;
+import static crabzilla.example1.customer.CustomerData.*;
 
 @Slf4j
-public class Example1EventProjector extends EventProjector<CustomerSummaryDao> {
+public class Example1EventProjector extends AbstractExample1EventProjector<CustomerSummaryDao> {
 
-  Example1EventProjector(String eventsChannelId, Class<CustomerSummaryDao> daoClass, Jdbi jdbi) {
-    super(eventsChannelId, daoClass, jdbi);
+  protected Example1EventProjector(String eventsChannelId,
+                                   Class<CustomerSummaryDao> customerSummaryDaoClass, Jdbi jdbi) {
+    super(eventsChannelId, customerSummaryDaoClass, jdbi);
   }
 
-  @Override
-  public void write(CustomerSummaryDao dao, String targetId, DomainEvent event) {
-
-    log.info("writing event {} from channel {}", event, eventsChannelId);
-
-    Match(event).of(
-      Case($(instanceOf(CustomerCreated.class)), e ->
-              run(() -> dao.insert(new CustomerSummary(e.getId().getStringValue(), e.getName(), false)))),
-      Case($(instanceOf(CustomerActivated.class)), e ->
-              run(() -> dao.updateStatus(targetId, true))),
-      Case($(instanceOf(CustomerDeactivated.class)), e ->
-              run(() -> dao.updateStatus(targetId, true))),
-      Case($(), o -> run(() -> {
-        log.warn("{} does not have any event projection handler", event);
-      })));
-
+  public void handle(CustomerSummaryDao dao, String targetId, CustomerCreated event) {
+    dao.insert(new CustomerSummary(targetId, event.getName(), false));
   }
 
+  public void handle(CustomerSummaryDao dao, String targetId, CustomerActivated event) {
+    dao.updateStatus(targetId, true);
+  }
+
+  public void handle(CustomerSummaryDao dao, String targetId, CustomerDeactivated event) {
+    dao.updateStatus(targetId, false);
+  }
 }

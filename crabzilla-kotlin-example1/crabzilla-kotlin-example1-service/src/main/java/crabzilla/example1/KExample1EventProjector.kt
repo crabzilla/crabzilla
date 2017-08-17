@@ -5,10 +5,10 @@ import crabzilla.example1.customer.CustomerActivated
 import crabzilla.example1.customer.CustomerCreated
 import crabzilla.example1.customer.CustomerDeactivated
 import crabzilla.model.DomainEvent
-import crabzilla.vertx.EventProjector
+import crabzilla.stack.EventProjector
 import org.jdbi.v3.core.Jdbi
 
-open class Example1EventProjector(channelId: String, daoClazz: Class<CustomerSummaryDao>, jdbi: Jdbi)
+class KExample1EventProjector(channelId: String, daoClazz: Class<CustomerSummaryDao>, jdbi: Jdbi)
 
   : EventProjector<CustomerSummaryDao>(channelId, daoClazz, jdbi) {
 

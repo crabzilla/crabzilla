@@ -8,9 +8,9 @@ import java.util.*
 
 // <1>
 
-data class CustomerId(val _stringValue: String) : EntityId {
-  override fun getStringValue(): String {
-    return _stringValue
+data class CustomerId(val id: String) : EntityId {
+  override fun stringValue(): String {
+    return id
   }
 }
 

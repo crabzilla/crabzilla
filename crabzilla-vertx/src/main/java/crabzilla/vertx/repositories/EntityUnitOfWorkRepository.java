@@ -204,7 +204,7 @@ public class EntityUnitOfWorkRepository {
 
           // check current version  // TODO also check if command was not already processed given the commandId
           val params1 = new JsonArray()
-                  .add(unitOfWork.targetId().getStringValue())
+                  .add(unitOfWork.targetId().stringValue())
                   .add(aggregateRootName);
 
           Future<ResultSet> resultSetFuture = Future.future();
@@ -230,7 +230,7 @@ public class EntityUnitOfWorkRepository {
 
               val error = new DbConcurrencyException (
                       String.format("ar_id = [%s], current_version = %d, new_version = %d",
-                              unitOfWork.targetId().getStringValue(),
+                              unitOfWork.targetId().stringValue(),
                               currentVersion, unitOfWork.getVersion().getValueAsLong())) ;
 
               appendFuture.fail(error);
@@ -254,7 +254,7 @@ public class EntityUnitOfWorkRepository {
                     .add(eventsListAsJson)
                     .add(unitOfWork.getCommand().getCommandId().toString())
                     .add(cmdAsJson)
-                    .add(unitOfWork.targetId().getStringValue())
+                    .add(unitOfWork.targetId().stringValue())
                     .add(aggregateRootName)
                     .add(unitOfWork.getVersion().getValueAsLong());
 

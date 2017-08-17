@@ -13,6 +13,11 @@ public class CustomerData {
   @Value
   public static class CustomerId implements EntityId {
     String stringValue;
+
+    @Override
+    public String stringValue() {
+      return stringValue;
+    }
   }
 
   // commands

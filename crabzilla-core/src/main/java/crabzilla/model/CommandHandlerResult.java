@@ -1,6 +1,7 @@
 package crabzilla.model;
 
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 
 import java.util.function.Consumer;
 
@@ -15,13 +16,13 @@ public class CommandHandlerResult {
     this.exception = exception;
   }
 
-  public void inCaseOfSuccess(Consumer<EntityUnitOfWork> consumer) {
+  public void inCaseOfSuccess(@NonNull Consumer<EntityUnitOfWork> consumer) {
     if (unitOfWork != null) {
       consumer.accept(unitOfWork);
     }
   }
 
-  public void inCaseOfError(Consumer<Throwable> consumer) {
+  public void inCaseOfError(@NonNull Consumer<Throwable> consumer) {
     if (exception != null) {
       consumer.accept(exception);
     }
@@ -31,7 +32,7 @@ public class CommandHandlerResult {
     return new CommandHandlerResult(uow, null);
   }
 
-  static public CommandHandlerResult error(Throwable e) {
+  static public CommandHandlerResult error(@NonNull Throwable e) {
     return new CommandHandlerResult(null, e);
   }
 

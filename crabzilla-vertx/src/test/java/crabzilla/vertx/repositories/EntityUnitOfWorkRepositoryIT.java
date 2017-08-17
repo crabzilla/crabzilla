@@ -53,7 +53,7 @@ public class EntityUnitOfWorkRepositoryIT {
   final EntityUnitOfWork expectedUow1 = EntityUnitOfWork.unitOfWork(createCmd, new Version(1), singletonList(created));
 
   final CustomerData.ActivateCustomer activateCmd = new CustomerData.ActivateCustomer(UUID.randomUUID(), customerId, "I want it");
-  final CustomerData.CustomerActivated activated = new CustomerData.CustomerActivated(createCmd.getTargetId().getStringValue(), Instant.now());
+  final CustomerData.CustomerActivated activated = new CustomerData.CustomerActivated(createCmd.getTargetId().stringValue(), Instant.now());
   final EntityUnitOfWork expectedUow2 = EntityUnitOfWork.unitOfWork(activateCmd, new Version(2), singletonList(activated));
 
   @BeforeClass
@@ -140,7 +140,7 @@ public class EntityUnitOfWorkRepositoryIT {
 
         Future<SnapshotData> snapshotDataFuture = Future.future();
 
-        repo.selectAfterVersion(expectedUow1.targetId().getStringValue(), Version.VERSION_ZERO, snapshotDataFuture);
+        repo.selectAfterVersion(expectedUow1.targetId().stringValue(), Version.VERSION_ZERO, snapshotDataFuture);
 
         snapshotDataFuture.setHandler(snapshotDataAsyncResult -> {
           if (snapshotDataAsyncResult.failed()) {
@@ -201,7 +201,7 @@ public class EntityUnitOfWorkRepositoryIT {
 
         Future<SnapshotData> snapshotDataFuture = Future.future();
 
-        repo.selectAfterVersion(expectedUow2.targetId().getStringValue(), new Version(1), snapshotDataFuture);
+        repo.selectAfterVersion(expectedUow2.targetId().stringValue(), new Version(1), snapshotDataFuture);
 
         snapshotDataFuture.setHandler(snapshotDataAsyncResult -> {
           if (snapshotDataAsyncResult.failed()) {
@@ -248,7 +248,7 @@ public class EntityUnitOfWorkRepositoryIT {
 
     Future<SnapshotData> selectFuture = Future.future();
 
-    repo.selectAfterVersion(customerId.getStringValue(), new Version(0), selectFuture);
+    repo.selectAfterVersion(customerId.stringValue(), new Version(0), selectFuture);
 
     selectFuture.setHandler(selectAsyncResult -> {
 

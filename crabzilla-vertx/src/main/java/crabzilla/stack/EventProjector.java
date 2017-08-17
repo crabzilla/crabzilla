@@ -1,20 +1,20 @@
-package crabzilla.vertx;
+package crabzilla.stack;
 
 import crabzilla.model.DomainEvent;
-import crabzilla.stack.ProjectionData;
 import lombok.val;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.List;
 
 //@Slf4j
-public abstract class EventProjector<DAO> {
+public abstract class EventProjector<D> {
 
   protected final String eventsChannelId;
-  protected final Class<DAO> daoClass;
+  protected final Class<D> daoClass;
   protected final Jdbi jdbi;
 
-  protected EventProjector(String eventsChannelId, Class<DAO> daoClass, Jdbi jdbi) {
+  protected EventProjector(String eventsChannelId, Class<D> daoClass, Jdbi jdbi) {
     this.eventsChannelId = eventsChannelId;
     this.daoClass = daoClass;
     this.jdbi = jdbi;
@@ -24,16 +24,16 @@ public abstract class EventProjector<DAO> {
 
 //    log.info("Writing {} units for eventChannel {}", uowList.size(), eventsChannelId);
 
-    val handle = jdbi.open();
-    val dao = handle.attach(daoClass);
+    final Handle handle = jdbi.open();
+    final D dao = handle.attach(daoClass);
 
     try {
 
-      val streamOfTuple2 = uowList.stream()
+      val stream = uowList.stream()
               .flatMap(uowdata -> uowdata.getEvents().stream()
-                      .map(e -> new Tuple2(uowdata.getTargetId(), e)));
+                      .map(e -> new EventProjectorTuple(uowdata.getTargetId(), e)));
 
-      streamOfTuple2.forEach(tuple2 -> write(dao, tuple2.id, tuple2.event));
+      stream.forEach(tuple2 -> write(dao, tuple2.id, tuple2.event));
 
       handle.commit();
 
@@ -49,15 +49,6 @@ public abstract class EventProjector<DAO> {
 
   }
 
-  public abstract void write(DAO dao, String targetId, DomainEvent event);
-
-  private class Tuple2 {
-    final String id;
-    final DomainEvent event;
-    private Tuple2(String id, DomainEvent event) {
-      this.id = id;
-      this.event = event;
-    }
-  }
+  public abstract void write(D dao, String targetId, DomainEvent event);
 
 }

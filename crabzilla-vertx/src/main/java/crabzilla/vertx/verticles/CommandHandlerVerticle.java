@@ -102,7 +102,7 @@ public class CommandHandlerVerticle<A extends Aggregate> extends AbstractVerticl
 
     return future1 -> {
 
-      val targetId = command.getTargetId().getStringValue();
+      val targetId = command.getTargetId().stringValue();
 
       log.debug("cache.get(id)", targetId);
 
