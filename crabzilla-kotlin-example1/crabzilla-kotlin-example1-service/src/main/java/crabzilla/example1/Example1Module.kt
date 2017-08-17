@@ -10,8 +10,8 @@ import com.google.inject.Singleton
 import com.google.inject.name.Names
 import com.typesafe.config.ConfigFactory
 import com.zaxxer.hikari.HikariDataSource
-import crabzilla.example1.customer.KCustomerModule
-import crabzilla.example1.services.KSampleInternalServiceImpl
+import crabzilla.example1.customer.CustomerModule
+import crabzilla.example1.services.SampleInternalServiceImpl
 import crabzilla.model.*
 import crabzilla.stack.CommandExecution
 import crabzilla.stack.EventProjector
@@ -28,20 +28,20 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin
 import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import java.util.*
 
-internal class KExample1Module(val vertx: Vertx) : AbstractModule() {
+internal class Example1Module(val vertx: Vertx) : AbstractModule() {
 
   override fun configure() {
 
     configureVertx()
 
     // aggregates
-    install(KCustomerModule())
+    install(CustomerModule())
 
     // database
-    install(KDatabaseModule())
+    install(DatabaseModule())
 
     // services
-    bind(SampleInternalService::class.java).to(KSampleInternalServiceImpl::class.java).asEagerSingleton()
+    bind(SampleInternalService::class.java).to(SampleInternalServiceImpl::class.java).asEagerSingleton()
 
     // exposes properties to guice
     setCfgProps()
@@ -71,7 +71,7 @@ internal class KExample1Module(val vertx: Vertx) : AbstractModule() {
   @Provides
   @Singleton
   fun eventsProjector(jdbi: Jdbi): EventProjector<CustomerSummaryDao> {
-    return KExample1EventProjector("example1", CustomerSummaryDao::class.java, jdbi)
+    return Example1EventProjector("example1", CustomerSummaryDao::class.java, jdbi)
   }
 
   @Provides

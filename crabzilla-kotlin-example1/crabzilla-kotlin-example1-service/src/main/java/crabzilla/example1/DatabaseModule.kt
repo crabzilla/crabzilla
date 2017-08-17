@@ -9,7 +9,7 @@ import com.zaxxer.hikari.HikariDataSource
 import javax.inject.Named
 import javax.inject.Singleton
 
-internal class KDatabaseModule : PrivateModule() {
+internal class DatabaseModule : PrivateModule() {
 
   override fun configure() {
 

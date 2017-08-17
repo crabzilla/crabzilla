@@ -64,11 +64,6 @@
             <artifactId>jdbi3-kotlin-sqlobject</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>io.vavr</groupId>
-            <artifactId>vavr</artifactId>
-        </dependency>
-
         <!-- log -->
 
         <dependency>
@@ -160,7 +155,7 @@
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
-                                        <Main-Class>crabzilla.crabzilla.example1.KExample1Launcher</Main-Class>
+                                        <Main-Class>crabzilla.crabzilla.example1.Example1Launcher</Main-Class>
                                         <!--<Main-Verticle>io.vertx.blog.first.MyFirstVerticle</Main-Verticle>-->
                                     </manifestEntries>
                                 </transformer>
