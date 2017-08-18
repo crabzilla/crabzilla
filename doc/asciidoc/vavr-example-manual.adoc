@@ -11,7 +11,7 @@ ifndef::sourcedir[:sourcedir: ../../main/java]
 
 Status: *WORK IN PROGRESS*
 
-Let's examine the crabzilla-vavr-example1 example. It show how to write an aggregate: Customer.
+Let's examine the crabzilla-vavr-example1 example with just one aggregate: Customer.
 
 * An user can create a new customer
 * An user can activate an existing customer

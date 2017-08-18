@@ -126,7 +126,7 @@ public class CommandHandlerVerticle<A extends Aggregate> extends AbstractVerticl
           return;
         }
 
-        SnapshotData nonCached = snapshotDataAsyncResult.result();
+        val nonCached = snapshotDataAsyncResult.result();
         val totalOfNonCachedEvents = nonCached.getEvents().size();
 
         log.debug("id {} found {} pending events. Last version is now {}", targetId, totalOfNonCachedEvents,
