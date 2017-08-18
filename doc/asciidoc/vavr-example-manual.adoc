@@ -114,7 +114,7 @@ can be easily tested with mocks and stubs.
 Here we will setup the Flyway to init our database and implements our DAOs.
 
 === 2.1.0 Write model
-This script crates a table to store events resulting from commands and also a table to control events projection data.
+This script creates a table to store events resulting from commands and also a table to control events projection data.
 
 [source,sql]
 .V1__write_model.sql
