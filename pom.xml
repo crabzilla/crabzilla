@@ -3,9 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>crabzilla</groupId>
+    <groupId>org.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -135,55 +135,55 @@
             <!-- own -->
 
             <dependency>
-                <groupId>crabzilla</groupId>
+                <groupId>org.crabzilla</groupId>
                 <artifactId>crabzilla-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>crabzilla</groupId>
+                <groupId>org.crabzilla</groupId>
                 <artifactId>crabzilla-example1-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>crabzilla</groupId>
+                <groupId>org.crabzilla</groupId>
                 <artifactId>crabzilla-example1-database</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>crabzilla</groupId>
+                <groupId>org.crabzilla</groupId>
                 <artifactId>crabzilla-vertx-example1-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>crabzilla</groupId>
+                <groupId>org.crabzilla</groupId>
                 <artifactId>crabzilla-vertx-example1-database</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>crabzilla</groupId>
+                <groupId>org.crabzilla</groupId>
                 <artifactId>crabzilla-kotlin-example1-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>crabzilla</groupId>
+                <groupId>org.crabzilla</groupId>
                 <artifactId>crabzilla-kotlin-example1-database</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>crabzilla</groupId>
+                <groupId>org.crabzilla</groupId>
                 <artifactId>crabzilla-vertx-stack</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>crabzilla</groupId>
+                <groupId>org.crabzilla</groupId>
                 <artifactId>crabzilla-vertx</artifactId>
                 <version>${project.version}</version>
             </dependency>

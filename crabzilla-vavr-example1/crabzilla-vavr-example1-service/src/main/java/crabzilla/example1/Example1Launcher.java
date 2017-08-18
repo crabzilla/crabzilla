@@ -5,14 +5,12 @@ import crabzilla.example1.customer.Customer;
 import crabzilla.example1.customer.CustomerData;
 import crabzilla.stack.CommandExecution;
 import crabzilla.vertx.verticles.EventsProjectionVerticle;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.logging.SLF4JLogDelegateFactory;
-import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
@@ -27,43 +25,33 @@ import static java.lang.System.setProperty;
 @Slf4j
 public class Example1Launcher {
 
+  static Vertx vertx;
+
   @Inject
   Map<String, Verticle> aggregateRootVerticles;
 
   @Inject
   EventsProjectionVerticle<CustomerSummaryDao> projectionVerticle;
-  static Vertx vertx;
 
   public static void main(String args[]) throws InterruptedException {
 
     val launcher = new Example1Launcher();
-    val clusterManager = new HazelcastClusterManager();
-    val options = new VertxOptions().setClusterManager(clusterManager);
 
-    Vertx.clusteredVertx(options, (AsyncResult<Vertx> res) -> {
+    vertx = Vertx.vertx();
 
-      if (res.succeeded()) {
+    setProperty (LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory.class.getName ());
+    LoggerFactory.getLogger (LoggerFactory.class); // Required for Logback to work in Vertx
 
-        vertx = res.result();
+    Guice.createInjector(new Example1Module(vertx)).injectMembers(launcher);
 
-        setProperty (LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory.class.getName ());
-        LoggerFactory.getLogger (LoggerFactory.class); // Required for Logback to work in Vertx
+    for (Map.Entry<String,Verticle> v: launcher.aggregateRootVerticles.entrySet()) {
+      vertx.deployVerticle(v.getValue(), event -> log.info("Deployed {} ? {}", v.getKey(), event.succeeded()));
+    }
 
-        Guice.createInjector(new Example1Module(vertx)).injectMembers(launcher);
+    vertx.deployVerticle(launcher.projectionVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
 
-        for (Map.Entry<String,Verticle> v: launcher.aggregateRootVerticles.entrySet()) {
-          vertx.deployVerticle(v.getValue(), event -> log.info("Deployed {} ? {}", v.getKey(), event.succeeded()));
-        }
-
-        vertx.deployVerticle(launcher.projectionVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
-
-        // a test
-        launcher.justForTest();
-
-      } else {
-        log.error("Failed: ", res.cause());
-      }
-    });
+    // a test
+    launcher.justForTest();
 
   }
 

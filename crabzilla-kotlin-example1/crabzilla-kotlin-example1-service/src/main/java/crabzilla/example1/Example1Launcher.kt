@@ -10,14 +10,11 @@ import crabzilla.stack.StringHelper.commandHandlerId
 import crabzilla.vertx.verticles.CommandHandlerVerticle
 import crabzilla.vertx.verticles.CommandRestVerticle
 import crabzilla.vertx.verticles.EventsProjectionVerticle
-import io.vertx.core.AsyncResult
 import io.vertx.core.Vertx
-import io.vertx.core.VertxOptions
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME
 import io.vertx.core.logging.SLF4JLogDelegateFactory
-import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import mu.KotlinLogging
 import java.lang.System.setProperty
 import java.util.*
@@ -94,37 +91,26 @@ class Example1Launcher {
     fun main(args: Array<String>) {
 
       val launcher = Example1Launcher()
-      val clusterManager = HazelcastClusterManager()
-      val options = VertxOptions().setClusterManager(clusterManager)
 
-      Vertx.clusteredVertx(options) { res: AsyncResult<Vertx> ->
+      vertx = Vertx.vertx()
 
-        if (res.succeeded()) {
+      setProperty(LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory::class.java.name)
+      LoggerFactory.getLogger(LoggerFactory::class.java) // Required for Logback to work in Vertx
 
-          vertx = res.result()
-
-          setProperty(LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory::class.java.name)
-          LoggerFactory.getLogger(LoggerFactory::class.java) // Required for Logback to work in Vertx
-
-          Guice.createInjector(Example1Module(vertx)).injectMembers(launcher)
+      Guice.createInjector(Example1Module(vertx)).injectMembers(launcher)
 
 //          for ((key, value) in launcher.aggregateRootVerticles!!) {
 //            vertx.deployVerticle(value) { event -> log.debug("Deployed {} ? {}", key, event.succeeded()) }
 //          }
 
-          vertx.deployVerticle(launcher.projectionVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
+      vertx.deployVerticle(launcher.projectionVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
 
-          vertx.deployVerticle(launcher.restVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
+      vertx.deployVerticle(launcher.restVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
 
-          vertx.deployVerticle(launcher.cmdVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
+      vertx.deployVerticle(launcher.cmdVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
 
-          // a test
-          launcher.justForTest()
-
-        } else {
-          log.error("Failed: ", res.cause())
-        }
-      }
+      // a test
+      launcher.justForTest()
 
     }
   }

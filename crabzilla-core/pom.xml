@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>crabzilla</groupId>
+        <groupId>org.crabzilla</groupId>
         <artifactId>crabzilla</artifactId>
-        <version>0.0.3</version>
+        <version>0.0.4</version>
     </parent>
 
     <artifactId>crabzilla-core</artifactId>

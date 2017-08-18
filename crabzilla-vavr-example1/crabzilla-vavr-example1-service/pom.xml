@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>crabzilla</groupId>
+        <groupId>org.crabzilla</groupId>
         <artifactId>crabzilla-vavr-example1</artifactId>
-        <version>0.0.3</version>
+        <version>0.0.4</version>
     </parent>
 
     <artifactId>crabzilla-vavr-example1-service</artifactId>
@@ -15,13 +15,13 @@
     <dependencies>
 
         <dependency>
-            <groupId>crabzilla</groupId>
+            <groupId>org.crabzilla</groupId>
             <artifactId>crabzilla-vavr-example1-database</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>crabzilla</groupId>
+            <groupId>org.crabzilla</groupId>
             <artifactId>crabzilla-vertx</artifactId>
         </dependency>
 
