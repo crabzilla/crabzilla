@@ -8,6 +8,7 @@ import lombok.experimental.Wither;
 
 import java.util.List;
 
+import static crabzilla.example1.customer.CustomerData.*;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.Validate.validState;
 
@@ -17,25 +18,26 @@ public class Customer implements Aggregate {
 
   transient SampleInternalService service;
 
-  CustomerData.CustomerId id;
+  CustomerId id;
   String name;
   boolean isActive;
   String reason;
 
-  List<DomainEvent> create(CustomerData.CustomerId id, String name) {
+  List<DomainEvent> create(CustomerId id, String name) {
     validState(this.id == null, "customer already created");
-    return singletonList(new CustomerData.CustomerCreated(id, name));
+    return singletonList(new CustomerCreated(id, name));
   }
 
   List<DomainEvent> activate(String reason) {
-    return singletonList(new CustomerData.CustomerActivated(reason, service.now()));
+    return singletonList(new CustomerActivated(reason, service.now()));
   }
 
   List<DomainEvent> deactivate(String reason) {
-    return singletonList(new CustomerData.CustomerDeactivated(reason, service.now()));
+    return singletonList(new CustomerDeactivated(reason, service.now()));
   }
 
-  public static Customer of(CustomerData.CustomerId id, String name, boolean isActive, String reason) {
+  public static Customer of(CustomerId id, String name, boolean isActive,
+                            String reason) {
     return new Customer(null, id, name, isActive, reason);
   }
 

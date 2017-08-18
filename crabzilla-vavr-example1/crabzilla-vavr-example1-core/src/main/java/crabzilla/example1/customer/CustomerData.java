@@ -20,7 +20,7 @@ public class CustomerData {
     }
   }
 
-  // commands
+  // tag::commands[]
 
   @Value
   public static class CreateCustomer implements EntityCommand {
@@ -44,7 +44,6 @@ public class CustomerData {
     String reason;
   }
 
-
   @Value
   public static class DeactivateCustomer implements EntityCommand {
     UUID commandId;
@@ -52,13 +51,18 @@ public class CustomerData {
     String reason;
   }
 
+  // end::commands[]
+
+  /**
+   * This command is just for testing purposes
+   */
   @Value
   public static class UnknownCommand implements EntityCommand {
     UUID commandId;
-    CustomerData.CustomerId targetId;
+    CustomerId targetId;
   }
 
-  // events
+  // tag::events[]
 
   @Value
   public static class CustomerActivated implements DomainEvent {
@@ -77,5 +81,7 @@ public class CustomerData {
     String reason;
     Instant when;
   }
+
+  // end::events[]
 
 }

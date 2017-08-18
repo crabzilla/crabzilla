@@ -1,4 +1,4 @@
-package example1.dao;
+package crabzilla.example1;
 
 import crabzilla.example1.readmodel.CustomerSummary;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;

@@ -21,6 +21,8 @@ import static java.util.Collections.emptyList;
 
 public class CustomerFunctions {
 
+  // tag::StateTransitionFn[]
+
   public static class StateTransitionFn implements BiFunction<DomainEvent, Customer, Customer> {
 
     public Customer apply(final DomainEvent event, final Customer customer) {
@@ -37,6 +39,10 @@ public class CustomerFunctions {
     }
   }
 
+  // end::StateTransitionFn[]
+
+  // tag::CommandHandlerFn[]
+
   @Slf4j
   public static class CommandHandlerFn
           implements BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> {
@@ -48,9 +54,10 @@ public class CustomerFunctions {
     }
 
     @Override
-    public CommandHandlerResult apply(final EntityCommand cmd, final Snapshot<Customer> snapshot) {
+    public CommandHandlerResult apply(final EntityCommand cmd,
+                                      final Snapshot<Customer> snapshot) {
       log.info("Will apply command {}", cmd);
-      final StateTransitionsTracker<Customer> tracker = trackerFactory.apply(snapshot);
+      val tracker = trackerFactory.apply(snapshot);
       try {
         return CommandHandlerResult.success(handle(cmd, tracker));
       } catch (Exception e) {
@@ -90,18 +97,29 @@ public class CustomerFunctions {
 
   }
 
+  // end::CommandHandlerFn[]
+
+  // tag::CommandValidatorFn[]
+
   public static class CommandValidatorFn implements Function<EntityCommand, List<String>> {
 
     @Override
-    public List<String> apply(EntityCommand entityCommand) {
-      return emptyList(); // it's always valid TODO
+    public List<String> apply(EntityCommand command) {
+
+      return Match(command).of(
+        Case($(instanceOf(CreateCustomer.class)), (cmd) -> {
+            val either = new CreateCustomerValidator().validate(cmd).toEither();
+            return either.isRight() ? emptyList() : either.getLeft().asJava();
+          }
+        ),
+        Case($(), o -> {
+          return emptyList(); // it's always valid TODO
+        }));
     }
 
-    public java.util.List<String> validate(CreateCustomer cmd) {
-        val either = new CreateCustomerValidator().validate(cmd).toEither();
-        return either.isRight() ? emptyList() : either.getLeft().asJava();
-      }
   }
+
+  // end::CommandValidatorFn[]
 
   static class CreateCustomerValidator {
 

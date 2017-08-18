@@ -53,7 +53,8 @@ public class CustomerFactory implements AggregateRootComponentsFactory<Customer>
 
   @Override
   public BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> cmdHandlerFn() {
-    return new CommandHandlerFn(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn()));
+    return new CommandHandlerFn(instance ->
+            new StateTransitionsTracker<>(instance, stateTransitionFn()));
   }
 
   @Override
