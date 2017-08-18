@@ -5,7 +5,7 @@
 
     <groupId>crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -63,8 +63,8 @@
 
     <distributionManagement>
         <repository>
-            <id>bintray-crabzilla-crabzilla-repo</id>
-            <url>https://api.bintray.com/maven/rodolfodpk/crabzilla/crabzilla-repo/;publish=1</url>
+            <id>bintray-crabzilla-crabzilla</id>
+            <url>https://api.bintray.com/maven/rodolfodpk/crabzilla/crabzilla/;publish=1</url>
         </repository>
     </distributionManagement>
 
