@@ -117,9 +117,9 @@ Here we will setup the Flyway to init our database and implements our DAOs.
 This script crates a table to store events resulting from commands and also a table to control events projection data.
 
 [source,sql]
-.V1__crabzilla.sql
+.V1__write_model.sql
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-database/src/main/resources/db/migration/migration/V1__crabzilla.sql[ ]
+include::./crabzilla-vavr-example1/crabzilla-vavr-example1-database/src/main/resources/db/migration/migration/V1__write_model.sql[ ]
 ----
 
 === 2.1.1 Read model
