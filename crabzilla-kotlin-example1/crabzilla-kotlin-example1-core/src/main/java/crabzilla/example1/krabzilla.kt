@@ -35,7 +35,7 @@ interface KotlinEntityId : EntityId {
 
 // helpers functions
 
-fun resultOf(f: () -> EntityUnitOfWork?): CommandHandlerResult {
+fun resultOf(f: () -> EntityUnitOfWork): CommandHandlerResult {
   return try {
     CommandHandlerResult.success(f.invoke()) }
   catch (e: Throwable) {

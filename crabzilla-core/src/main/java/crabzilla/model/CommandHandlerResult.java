@@ -28,7 +28,7 @@ public class CommandHandlerResult {
     }
   }
 
-  static public CommandHandlerResult success(EntityUnitOfWork uow) {
+  static public CommandHandlerResult success(@NonNull EntityUnitOfWork uow) {
     return new CommandHandlerResult(uow, null);
   }
 
