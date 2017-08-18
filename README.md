@@ -4,7 +4,7 @@
 
 Yet another Event Sourcing experiment
 
-[Introduction](https://crabzilla.github.io/crabzilla/docs/introduction.html)
+[Overview](https://crabzilla.github.io/crabzilla/docs/overview.html)
 
 [Example-manual](https://crabzilla.github.io/crabzilla/docs/vavr-example-manual.html)
 
@@ -34,13 +34,7 @@ cd crabzilla-example1/crabzilla-example1-database
 mvn compile flyway:migrate
 ```
 
-4. Optionally, you may want to regenerate classes reflecting the database using [JOOQ](https://www.jooq.org/)
-
-```bash
-mvn clean compile -P jooq
-```
-
-5. Now you can run integration tests against database, skipping the unit tests:
+4. Now you can run integration tests against database, skipping the unit tests:
 
 ```bash
 # go back to crabzilla root
@@ -48,7 +42,7 @@ cd ../..
 mvn verify -DskipUTs=true 
 ```
 
-6. Now you finally can run the current [example](crabzilla-example1/crabzilla-example1-service/src/main/java/crabzilla/example1/Example1Launcher.java):
+5. Now you finally can run the current [example](crabzilla-example1/crabzilla-example1-service/src/main/java/crabzilla/example1/Example1Launcher.java):
 
 ```bash
 java -jar crabzilla-example1/crabzilla-example1-service/target/crabzilla-example1-service-1.0-SNAPSHOT-fat.jar
