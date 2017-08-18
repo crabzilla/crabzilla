@@ -5,17 +5,17 @@
 
     <parent>
         <groupId>crabzilla</groupId>
-        <artifactId>crabzilla-vavr-example1</artifactId>
-        <version>0.0.1</version>
+        <artifactId>crabzilla-kotlin-example1</artifactId>
+        <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>crabzilla-vavr-example1-database</artifactId>
+    <artifactId>crabzilla-kotlin-example1-database</artifactId>
     <packaging>jar</packaging>
 
     <properties>
         <jdbc.user>root</jdbc.user>
         <jdbc.password>my-secret-pwd</jdbc.password>
-        <jdbc.url>jdbc:mysql://127.0.0.1:3306/example1db?serverTimezone=UTC</jdbc.url>
+        <jdbc.url>jdbc:mysql://127.0.0.1:3306/example1?serverTimezone=UTC</jdbc.url>
         <jdbc.driver>com.mysql.jdbc.Driver</jdbc.driver>
     </properties>
 
@@ -23,8 +23,7 @@
 
         <dependency>
             <groupId>crabzilla</groupId>
-            <artifactId>crabzilla-vavr-example1-core</artifactId>
-            <version>${project.parent.version}</version>
+            <artifactId>crabzilla-kotlin-example1-core</artifactId>
         </dependency>
 
         <dependency>
@@ -35,10 +34,30 @@
             <groupId>org.jdbi</groupId>
             <artifactId>jdbi3-sqlobject</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3-kotlin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3-kotlin-sqlobject</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+
+        <!-- kotlin -->
+
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-kotlin</artifactId>
         </dependency>
 
     </dependencies>

@@ -5,19 +5,18 @@
 
     <parent>
         <groupId>crabzilla</groupId>
-        <artifactId>crabzilla-vavr-example1</artifactId>
-        <version>0.0.1</version>
+        <artifactId>crabzilla-example1</artifactId>
+        <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>crabzilla-vavr-example1-service</artifactId>
+    <artifactId>crabzilla-example1-service</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
 
         <dependency>
             <groupId>crabzilla</groupId>
-            <artifactId>crabzilla-vavr-example1-database</artifactId>
-            <version>${project.parent.version}</version>
+            <artifactId>crabzilla-example1-database</artifactId>
         </dependency>
 
         <dependency>
@@ -25,10 +24,7 @@
             <artifactId>crabzilla-vertx</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>io.vavr</groupId>
-            <artifactId>vavr</artifactId>
-        </dependency>
+
 
         <!-- guice -->
         <dependency>
