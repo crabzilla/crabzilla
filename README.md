@@ -6,7 +6,7 @@ Yet another Event Sourcing experiment
 
 [Introduction](https://crabzilla.github.io/crabzilla/docs/introduction.html)
 
-[Example-manual](https://crabzilla.github.io/crabzilla/docs/example-manual.html)
+[Example-manual](https://crabzilla.github.io/crabzilla/docs/vavr-example-manual.html)
 
 [Architecture decision records](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
 
