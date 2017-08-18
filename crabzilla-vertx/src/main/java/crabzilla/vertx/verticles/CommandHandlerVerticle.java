@@ -107,9 +107,7 @@ public class CommandHandlerVerticle<A extends Aggregate> extends AbstractVerticl
       log.debug("cache.get(id)", targetId);
 
       val snapshotFromCache = cache.get(targetId);
-
       val emptySnapshot = new Snapshot<A>(seedValue, new Version(0));
-
       val cachedSnapshot = snapshotFromCache == null ? emptySnapshot : snapshotFromCache;
 
       log.info("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
@@ -149,9 +147,7 @@ public class CommandHandlerVerticle<A extends Aggregate> extends AbstractVerticl
           result.inCaseOfSuccess(uow -> {
 
             log.info("CommandExecution: {}", uow);
-
             Future<Long> appendFuture = Future.future();
-
             eventRepository.append(uow, appendFuture);
 
             appendFuture.setHandler(appendAsyncResult -> {
@@ -173,10 +169,8 @@ public class CommandHandlerVerticle<A extends Aggregate> extends AbstractVerticl
               }
 
               val finalSnapshot = snapshotPromoter.promote(resultingSnapshot, uow.getVersion(), uow.getEvents());
-
               cache.put(targetId, finalSnapshot);
-
-              final Long uowSequence = appendAsyncResult.result();
+              val uowSequence = appendAsyncResult.result();
 
               log.info("uowSequence: {}", uowSequence);
 

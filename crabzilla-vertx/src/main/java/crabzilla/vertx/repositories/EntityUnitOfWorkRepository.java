@@ -57,9 +57,7 @@ public class EntityUnitOfWorkRepository {
         }
 
         val sqlConn = getConn.result();
-
         Future<ResultSet> resultSetFuture = Future.future();
-
         queryWithParams(sqlConn, SELECT_UOW_BY_ID, params, resultSetFuture);
 
         resultSetFuture.setHandler(resultSetAsyncResult -> {
@@ -110,16 +108,13 @@ public class EntityUnitOfWorkRepository {
       val params = new JsonArray().add(id).add(aggregateRootName).add(version.getValueAsLong());
 
       client.getConnection(getConn -> {
-
         if (getConn.failed()) {
           selectAfterVersionFuture.fail(getConn.cause());
           return;
         }
 
         val sqlConn = getConn.result();
-
         Future<SQLRowStream> streamFuture = Future.future();
-
         queryStreamWithParams(sqlConn, SELECT_AFTER_VERSION, params, streamFuture);
 
         streamFuture.setHandler(ar -> {
@@ -130,21 +125,17 @@ public class EntityUnitOfWorkRepository {
           }
 
           SQLRowStream stream = ar.result();
-
           val list = new ArrayList<SnapshotData>() ;
-
           stream
                   .resultSetClosedHandler(v -> {
                     // will ask to restart the stream with the new result set if any
                     stream.moreResults();
-
                   })
                   .handler(row -> {
 
                     val events = readEvents(row.getString(0));
                     val snapshotData = new SnapshotData(new Version(row.getLong(1)), events);
                     list.add(snapshotData);
-
                   }).endHandler(event -> {
 
             log.info("found {} units of work for id {} and version > {}",
@@ -190,7 +181,6 @@ public class EntityUnitOfWorkRepository {
         }
 
         val sqlConn = conn.result();
-
         Future<Void> startTxFuture = Future.future();
 
         // start a transaction
@@ -208,9 +198,7 @@ public class EntityUnitOfWorkRepository {
                   .add(aggregateRootName);
 
           Future<ResultSet> resultSetFuture = Future.future();
-
           queryWithParams(sqlConn, SELECT_CURRENT_VERSION, params1, resultSetFuture);
-
           resultSetFuture.setHandler(asyncResultResultSet -> {
 
             if (asyncResultResultSet.failed()) {
@@ -220,7 +208,6 @@ public class EntityUnitOfWorkRepository {
 
             ResultSet rs = asyncResultResultSet.result();
             Long currentVersion = rs.getRows().get(0).getLong("last_version");
-
             currentVersion = currentVersion == null ? 0L : currentVersion;
 
             log.info("Found version  {}", currentVersion);
@@ -259,18 +246,15 @@ public class EntityUnitOfWorkRepository {
                     .add(unitOfWork.getVersion().getValueAsLong());
 
             Future<UpdateResult> updateResultFuture = Future.future();
-
             updateWithParams(sqlConn, INSERT_UOW, params2, updateResultFuture);
 
             updateResultFuture.setHandler(asyncResultUpdateResult -> {
-
               if (asyncResultUpdateResult.failed()) {
                 appendFuture.fail(asyncResultUpdateResult.cause());
                 return;
               }
 
               UpdateResult updateResult = asyncResultUpdateResult.result();
-
               Future<Void> commitFuture = Future.future();
 
               // commit data
