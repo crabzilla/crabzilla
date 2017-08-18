@@ -5,7 +5,6 @@ import com.google.inject.Guice;
 import crabzilla.example1.readmodel.CustomerSummary;
 import crabzilla.stack.EventProjector;
 import crabzilla.stack.ProjectionData;
-import example1.dao.CustomerSummaryDao;
 import io.vertx.core.Vertx;
 import lombok.val;
 import org.jdbi.v3.core.Jdbi;

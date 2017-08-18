@@ -4,7 +4,6 @@ import crabzilla.example1.customer.CustomerData.CustomerCreated;
 import crabzilla.example1.readmodel.CustomerSummary;
 import crabzilla.model.DomainEvent;
 import crabzilla.stack.EventProjector;
-import example1.dao.CustomerSummaryDao;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 
@@ -27,7 +26,8 @@ public class Example1EventProjector extends EventProjector<CustomerSummaryDao> {
 
     Match(event).of(
       Case($(instanceOf(CustomerCreated.class)), e ->
-              run(() -> dao.insert(new CustomerSummary(e.getId().stringValue(), e.getName(), false)))),
+              run(() -> dao.insert(
+                      new CustomerSummary(e.getId().stringValue(), e.getName(), false)))),
       Case($(instanceOf(CustomerActivated.class)), e ->
               run(() -> dao.updateStatus(targetId, true))),
       Case($(instanceOf(CustomerDeactivated.class)), e ->

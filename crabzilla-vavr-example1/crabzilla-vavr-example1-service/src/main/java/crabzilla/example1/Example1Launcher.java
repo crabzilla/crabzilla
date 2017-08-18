@@ -5,7 +5,6 @@ import crabzilla.example1.customer.Customer;
 import crabzilla.example1.customer.CustomerData;
 import crabzilla.stack.CommandExecution;
 import crabzilla.vertx.verticles.EventsProjectionVerticle;
-import example1.dao.CustomerSummaryDao;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;

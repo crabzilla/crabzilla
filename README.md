@@ -4,30 +4,12 @@
 
 Yet another Event Sourcing experiment
 
-# krabzilla
+[Introduction](https://crabzilla.github.io/crabzilla/docs/introduction.html)
 
-[Krabzilla](https://github.com/crabzilla/krabzilla) is a Kotlin version of Crabzilla. Both projects should coexist and leverage enhancements from each other.
+[Example-manual](https://crabzilla.github.io/crabzilla/docs/example-manual.html)
 
-## Status
+[Architecture decision records](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
 
-Currently it's just some code with poor test coverage but the "~~dirty~~ explorations phase" is probably done. I think the future is more predictable: to write tests, documents, refactor, etc 
-
-## Goal for version 1.0.0
-
-To help you write your domain model with very little framework overhead and smoothly deploy it on a state of art Java 8 reactive applications platform backed by a rock solid relational database of your choice.
-
-## How
-
-The approach is to use functions [everywhere](crabzilla-core/src/main/java/crabzilla/stack/AggregateRootFunctionsFactory.java) within your domain. For example:
-
-| Function      | Crabzilla     | [Vavr version](http://www.vavr.io/)  |
-| :------------- | :------------- | :----- |
-| State transition | [CustomerStateTransitionFn](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerStateTransitionFn.java)| [CustomerStateTransitionFnJavaslang](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerStateTransitionFnJavaslang.java)  |
-| Command handling | [CustomerCmdHandlerFn](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerCmdHandlerFn.java)  | [CustomerCmdHandlerFnJavaslang](crabzilla-example1/crabzilla-example1-core/src/main/java/crabzilla/example1/aggregates/customer/CustomerCmdHandlerFnJavaslang.java)|
-
-
-
-Ideally your domain model code will be built of immutable data and plain functions so in the end it will be very testable, side effect free and with minimal dependencies. Then you need to add some configuration for both aggregate root [level](crabzilla-vertx-example1/src/main/java/crabzilla/example1/aggregates/CustomerModule.java) and bounded context  [level](crabzilla-vertx-example1/src/main/java/crabzilla/example1/Example1Module.java) to be able to deploy your domain model into a reactive engine built with [Vertx](http://vertx.io/). This engine provides verticles and components for the full CQRS / Events Sourcing lifecycle. 
 
 ## How to run the example
 

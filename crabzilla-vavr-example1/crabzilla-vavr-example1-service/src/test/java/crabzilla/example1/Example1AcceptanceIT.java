@@ -6,7 +6,6 @@ import crabzilla.model.EntityUnitOfWork;
 import crabzilla.model.Version;
 import crabzilla.stack.CommandExecution;
 import crabzilla.vertx.verticles.EventsProjectionVerticle;
-import example1.dao.CustomerSummaryDao;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -106,16 +105,18 @@ public class Example1AcceptanceIT {
     val customerId = new CustomerId(UUID.randomUUID().toString());
     val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer test");
     val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer test");
-    val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
+            new Version(1), singletonList(expectedEvent));
 
     val json = Json.encodePrettily(createCustomerCmd);
 
-    vertx.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer.class) + "/commands")
+    vertx.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer.class)
+            + "/commands")
       .putHeader("content-type", "application/json")
       .putHeader("content-length", Integer.toString(json.length()))
       .handler(response -> {
         context.assertEquals(response.statusCode(), 201);
-//        context.assertTrue(response.headers().get("content-type").contains("application/json"));
+        context.assertTrue(response.headers().get("content-type").contains("application/json"));
         response.bodyHandler(body -> {
           val cmdExec = Json.decodeValue(body.toString(), CommandExecution.class);
           val uow = cmdExec.getUnitOfWork();
