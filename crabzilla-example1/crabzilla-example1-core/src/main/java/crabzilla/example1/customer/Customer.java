@@ -23,25 +23,18 @@ public class Customer implements Aggregate {
   String reason;
 
   List<DomainEvent> create(CustomerData.CustomerId id, String name) {
-
     validState(this.id == null, "customer already created");
-
     return singletonList(new CustomerData.CustomerCreated(id, name));
   }
 
   List<DomainEvent> activate(String reason) {
-
+    validState(this.id != null, "unknown customer");
     return singletonList(new CustomerData.CustomerActivated(reason, service.now()));
   }
 
   List<DomainEvent> deactivate(String reason) {
-
+    validState(this.id != null, "unknown customer");
     return singletonList(new CustomerData.CustomerDeactivated(reason, service.now()));
-  }
-
-  public static Customer of(CustomerData.CustomerId id, String name, boolean isActive, String reason) {
-
-    return new Customer(null, id, name, isActive, reason);
   }
 
 }

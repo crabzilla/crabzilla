@@ -22,17 +22,11 @@ import static crabzilla.stack.StringHelper.circuitBreakerId;
 public interface AggregateRootComponentsFactory<A extends Aggregate> {
 
   Class<A> clazz();
-
   Supplier<A> supplierFn() ;
-
   BiFunction<DomainEvent, A, A> stateTransitionFn() ;
-
   Function<EntityCommand, List<String>> cmdValidatorFn() ;
-
   BiFunction<EntityCommand, Snapshot<A>, CommandHandlerResult> cmdHandlerFn() ;
-
   JDBCClient jdbcClient();
-
   Vertx vertx();
 
   // default impl

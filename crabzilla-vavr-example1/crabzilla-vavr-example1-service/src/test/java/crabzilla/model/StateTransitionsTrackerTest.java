@@ -62,7 +62,7 @@ public class StateTransitionsTrackerTest {
 
       final CustomerData.CustomerId id = new CustomerData.CustomerId("c1");
       private CustomerData.CustomerCreated customerCreated = new CustomerData.CustomerCreated(id, "customer-1");
-      private Customer expectedCustomer = Customer.of(id, "customer-1", false, null);
+      private Customer expectedCustomer = new Customer(null, id, "customer-1", false, null);
 
       @BeforeEach
       void apply_create_event() {
@@ -85,7 +85,7 @@ public class StateTransitionsTrackerTest {
       public class WhenAddingActivateEvent {
 
         private CustomerData.CustomerActivated customerActivated = new CustomerData.CustomerActivated("is ok", Instant.now());
-        private Customer expectedCustomer = Customer.of(id, "customer-1", true,
+        private Customer expectedCustomer = new Customer(null, id, "customer-1", true,
                 customerActivated.getReason());
 
         @BeforeEach
@@ -120,7 +120,7 @@ public class StateTransitionsTrackerTest {
     final CustomerData.CustomerId id = new CustomerData.CustomerId("c1");
     private CustomerData.CustomerCreated customerCreated = new CustomerData.CustomerCreated(id, "customer-1");
     private CustomerData.CustomerActivated customerActivated = new CustomerData.CustomerActivated(IS_OK, Instant.now());
-    private Customer expectedCustomer = Customer.of(id, "customer-1", true, IS_OK);
+    private Customer expectedCustomer = new Customer(null, id, "customer-1", true, IS_OK);
 
     @BeforeEach
     void instantiate() {

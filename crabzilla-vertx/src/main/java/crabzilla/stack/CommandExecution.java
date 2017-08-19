@@ -47,8 +47,8 @@ public class CommandExecution implements Serializable {
     return new CommandExecution(FALLBACK, commandId, emptyList(), 0L, null);
   }
 
-  public static CommandExecution HANDLING_ERROR(@NonNull UUID commandId) {
-    return new CommandExecution(HANDLING_ERROR, commandId, emptyList(), 0L, null);
+  public static CommandExecution HANDLING_ERROR(@NonNull UUID commandId, String message) {
+    return new CommandExecution(HANDLING_ERROR, commandId, singletonList(message), 0L, null);
 
   }
 

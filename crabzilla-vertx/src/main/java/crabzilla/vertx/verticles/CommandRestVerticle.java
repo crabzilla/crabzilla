@@ -1,6 +1,7 @@
 package crabzilla.vertx.verticles;
 
 import crabzilla.model.EntityCommand;
+import crabzilla.model.EntityUnitOfWork;
 import crabzilla.stack.CommandExecution;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
@@ -28,39 +29,30 @@ public class CommandRestVerticle<E> extends AbstractVerticle {
 
   @Override
   public void start() throws Exception {
-
     val router = Router.router(vertx);
-
     router.route(HttpMethod.PUT, "/" + aggregateRootId(aggregateRootClass) + "/commands")
           .handler(contextHandler());
-
     val server = vertx.createHttpServer();
-
     server.requestHandler(router::accept).listen(config().getInteger("http.port", 8080));
-
   }
 
   Handler<RoutingContext> contextHandler() {
-
     return routingContext -> {
 
       routingContext.request().bodyHandler(buff -> {
-
         val command = Json.decodeValue(new String(buff.getBytes()), EntityCommand.class);
         val httpResp = routingContext.request().response();
         val options = new DeliveryOptions().setCodecName("EntityCommand");
 
         vertx.<CommandExecution>eventBus().send(commandHandlerId(aggregateRootClass), command, options, response -> {
-
           if (response.succeeded()) {
-
             val result = (CommandExecution) response.result().body();
             val resultAsJson = Json.encodePrettily(result);
             log.info("result = {}", resultAsJson);
-
             if (result.getUnitOfWork() != null && result.getUowSequence() != null) {
               val headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence()+"");
-              val optionsUow = new DeliveryOptions().setCodecName("EntityUnitOfWork").setHeaders(headers);
+              val optionsUow = new DeliveryOptions().setCodecName(EntityUnitOfWork.class.getSimpleName())
+                      .setHeaders(headers);
               vertx.<String>eventBus().publish(eventsHandlerId("example1"), result.getUnitOfWork(), optionsUow);
               httpResp.setStatusCode(201);
             } else {
@@ -68,19 +60,14 @@ public class CommandRestVerticle<E> extends AbstractVerticle {
             }
             httpResp.headers().add("content-type", "application/json");
             httpResp.headers().add("content-length", Integer.toString(resultAsJson.length()));
-
             httpResp.end(resultAsJson);
-
           } else {
-
             response.cause().printStackTrace();
             httpResp.setStatusCode(500);
             httpResp.end(response.cause().getMessage());
           }
         });
-
       });
-
     };
   }
 

@@ -26,12 +26,12 @@ public class Example1EventProjector extends EventProjector<CustomerSummaryDao> {
 
     Match(event).of(
       Case($(instanceOf(CustomerCreated.class)), e ->
-              run(() -> dao.insert(
-                      new CustomerSummary(e.getId().stringValue(), e.getName(), false)))),
+        run(() -> dao.insert(
+                new CustomerSummary(e.getId().stringValue(), e.getName(), false)))),
       Case($(instanceOf(CustomerActivated.class)), e ->
-              run(() -> dao.updateStatus(targetId, true))),
+        run(() -> dao.updateStatus(targetId, true))),
       Case($(instanceOf(CustomerDeactivated.class)), e ->
-              run(() -> dao.updateStatus(targetId, false))),
+        run(() -> dao.updateStatus(targetId, false))),
       Case($(), o -> run(() -> {
         log.warn("{} does not have any event projection handler", event);
       })));

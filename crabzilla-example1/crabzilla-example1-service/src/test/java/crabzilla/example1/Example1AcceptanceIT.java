@@ -137,4 +137,36 @@ public class Example1AcceptanceIT {
 
   // tag::create_customer_test[]
 
+
+  @Test
+  public void activate_unknown_customer(TestContext context) {
+
+    // This test is asynchronous, so get an async handler to inform the test when we are done.
+    final Async async = context.async();
+
+    val customerId = new CustomerId(UUID.randomUUID().toString());
+    val activateCustomer = new ActivateCustomer(UUID.randomUUID(), customerId, "customer test");
+
+    val json = Json.encodePrettily(activateCustomer);
+
+    vertx.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer.class) + "/commands")
+            .putHeader("content-type", "application/json")
+            .putHeader("content-length", Integer.toString(json.length()))
+            .handler(response -> {
+              context.assertEquals(response.statusCode(), 400);
+              context.assertTrue(response.headers().get("content-type").contains("application/json"));
+              response.bodyHandler(body -> {
+                val cmdExec = Json.decodeValue(body.toString(), CommandExecution.class);
+                log.info(cmdExec.toString());
+                context.assertEquals(cmdExec.getCommandId(),  activateCustomer.getCommandId());
+                context.assertTrue(cmdExec.getConstraints().contains("unknown customer"));
+                async.complete();
+              });
+            })
+            .write(json)
+            .end();
+
+  }
+
+
 }

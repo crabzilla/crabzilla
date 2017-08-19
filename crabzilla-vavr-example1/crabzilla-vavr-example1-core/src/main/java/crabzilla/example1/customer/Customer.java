@@ -29,16 +29,13 @@ public class Customer implements Aggregate {
   }
 
   List<DomainEvent> activate(String reason) {
+    validState(this.id != null, "unknown customer");
     return singletonList(new CustomerActivated(reason, service.now()));
   }
 
   List<DomainEvent> deactivate(String reason) {
+    validState(this.id != null, "unknown customer");
     return singletonList(new CustomerDeactivated(reason, service.now()));
-  }
-
-  public static Customer of(CustomerId id, String name, boolean isActive,
-                            String reason) {
-    return new Customer(null, id, name, isActive, reason);
   }
 
 }
