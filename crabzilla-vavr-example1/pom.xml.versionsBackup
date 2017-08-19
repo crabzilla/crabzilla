@@ -6,13 +6,21 @@
     <parent>
         <groupId>org.crabzilla</groupId>
         <artifactId>crabzilla</artifactId>
-        <version>0.0.5</version>
+        <version>0.0.4</version>
     </parent>
 
-    <artifactId>crabzilla-core</artifactId>
-    <packaging>jar</packaging>
+    <artifactId>crabzilla-vavr-example1</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>crabzilla-vavr-example1-core</module>
+        <module>crabzilla-vavr-example1-database</module>
+        <module>crabzilla-vavr-example1-service</module>
+    </modules>
 
     <dependencies>
+
+        <!-- util -->
 
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -20,13 +28,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- to inform Jackson on how to serialize polymorphic objects: Command, Event, EntityId, .. -->
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-        </dependency>
-
     </dependencies>
+
 
 </project>
