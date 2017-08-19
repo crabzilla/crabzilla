@@ -423,7 +423,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="header">
 <h1>crabzilla-vavr-example1</h1>
 <div class="details">
-<span id="revnumber">version 0.0.3</span>
+<span id="revnumber">version 0.0.4</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -483,7 +483,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>Status: <strong>WORK IN PROGRESS</strong></p>
 </div>
 <div class="paragraph">
-<p>Let&#8217;s examine the crabzilla-vavr-example1 example. It show how to write an aggregate: Customer.</p>
+<p>Let&#8217;s examine the crabzilla-vavr-example1 example with just one aggregate: Customer.</p>
 </div>
 <div class="ulist">
 <ul>
@@ -730,16 +730,13 @@ public class Customer implements Aggregate {
   }
 
   List&lt;DomainEvent&gt; activate(String reason) {
+    validState(this.id != null, "unknown customer");
     return singletonList(new CustomerActivated(reason, service.now()));
   }
 
   List&lt;DomainEvent&gt; deactivate(String reason) {
+    validState(this.id != null, "unknown customer");
     return singletonList(new CustomerDeactivated(reason, service.now()));
-  }
-
-  public static Customer of(CustomerId id, String name, boolean isActive,
-                            String reason) {
-    return new Customer(null, id, name, isActive, reason);
   }
 
 }</code></pre>
@@ -1108,12 +1105,12 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 
     Match(event).of(
       Case($(instanceOf(CustomerCreated.class)), e -&gt;
-              run(() -&gt; dao.insert(
-                      new CustomerSummary(e.getId().stringValue(), e.getName(), false)))),
+        run(() -&gt; dao.insert(
+                new CustomerSummary(e.getId().stringValue(), e.getName(), false)))),
       Case($(instanceOf(CustomerActivated.class)), e -&gt;
-              run(() -&gt; dao.updateStatus(targetId, true))),
+        run(() -&gt; dao.updateStatus(targetId, true))),
       Case($(instanceOf(CustomerDeactivated.class)), e -&gt;
-              run(() -&gt; dao.updateStatus(targetId, false))),
+        run(() -&gt; dao.updateStatus(targetId, false))),
       Case($(), o -&gt; run(() -&gt; {
         log.warn("{} does not have any event projection handler", event);
       })));
@@ -1226,8 +1223,8 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.0.3<br>
-Last updated 2017-08-18 00:45:54 BRT
+Version 0.0.4<br>
+Last updated 2017-08-18 18:42:30 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
