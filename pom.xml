@@ -3,9 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.crabzilla</groupId>
+    <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.0.5</version>
+    <version>0.0.5-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -21,7 +21,6 @@
         <jdbi.version>3.0.0-beta2</jdbi.version>
         <mysql.version>6.0.6</mysql.version>
         <commons.version>3.5</commons.version>
-        <javaslang.version>2.0.5</javaslang.version>
         <jackson.version>2.9.0.pr4</jackson.version>
         <hikari.version>2.6.1</hikari.version>
         <junit.jupiter.version>5.0.0-RC2</junit.jupiter.version>
@@ -62,9 +61,13 @@
     </scm>
 
     <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
         <repository>
-            <id>bintray-crabzilla-crabzilla</id>
-            <url>https://api.bintray.com/maven/rodolfodpk/crabzilla/crabzilla/;publish=1</url>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
 
@@ -135,55 +138,55 @@
             <!-- own -->
 
             <dependency>
-                <groupId>org.crabzilla</groupId>
+                <groupId>io.github.crabzilla</groupId>
                 <artifactId>crabzilla-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.crabzilla</groupId>
+                <groupId>io.github.crabzilla</groupId>
                 <artifactId>crabzilla-example1-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.crabzilla</groupId>
+                <groupId>io.github.crabzilla</groupId>
                 <artifactId>crabzilla-example1-database</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.crabzilla</groupId>
+                <groupId>io.github.crabzilla</groupId>
                 <artifactId>crabzilla-vertx-example1-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.crabzilla</groupId>
+                <groupId>io.github.crabzilla</groupId>
                 <artifactId>crabzilla-vertx-example1-database</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.crabzilla</groupId>
+                <groupId>io.github.crabzilla</groupId>
                 <artifactId>crabzilla-kotlin-example1-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.crabzilla</groupId>
+                <groupId>io.github.crabzilla</groupId>
                 <artifactId>crabzilla-kotlin-example1-database</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.crabzilla</groupId>
+                <groupId>io.github.crabzilla</groupId>
                 <artifactId>crabzilla-vertx-stack</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.crabzilla</groupId>
+                <groupId>io.github.crabzilla</groupId>
                 <artifactId>crabzilla-vertx</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -405,6 +408,21 @@
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.5.1</version>
                 <configuration>
@@ -477,7 +495,6 @@
                     <skipITs>${skipITs}</skipITs>
                 </configuration>
             </plugin>
-
 
             <plugin>
                 <groupId>org.asciidoctor</groupId>

@@ -702,8 +702,8 @@ services and repositories are just plain domain abstractions: interfaces or abst
 <pre class="highlightjs highlight"><code class="language-java" data-lang="java">package crabzilla.example1.customer;
 
 import crabzilla.example1.services.SampleInternalService;
-import crabzilla.model.Aggregate;
-import crabzilla.model.DomainEvent;
+import crabzilla.org.model.Aggregate;
+import crabzilla.org.model.DomainEvent;
 import lombok.Value;
 import lombok.experimental.Wither;
 
@@ -943,7 +943,7 @@ also a factory and a module for each aggregate we have.</p>
 
 
 import crabzilla.example1.services.SampleInternalService;
-import crabzilla.model.*;
+import crabzilla.org.model.*;
 import crabzilla.vertx.AggregateRootComponentsFactory;
 import io.vertx.core.Vertx;
 import io.vertx.ext.jdbc.JDBCClient;
@@ -1081,8 +1081,8 @@ public class CustomerModule extends AbstractModule {
 
 import crabzilla.example1.customer.CustomerData.CustomerCreated;
 import crabzilla.example1.readmodel.CustomerSummary;
-import crabzilla.model.DomainEvent;
-import crabzilla.stack.EventProjector;
+import crabzilla.org.model.DomainEvent;
+import crabzilla.org.stack.EventProjector;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 

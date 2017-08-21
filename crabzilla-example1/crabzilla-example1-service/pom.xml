@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.crabzilla</groupId>
+        <groupId>io.github.crabzilla</groupId>
         <artifactId>crabzilla-example1</artifactId>
-        <version>0.0.5</version>
+        <version>0.0.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>crabzilla-example1-service</artifactId>
@@ -15,12 +15,12 @@
     <dependencies>
 
         <dependency>
-            <groupId>org.crabzilla</groupId>
+            <groupId>io.github.crabzilla</groupId>
             <artifactId>crabzilla-example1-database</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.crabzilla</groupId>
+            <groupId>io.github.crabzilla</groupId>
             <artifactId>crabzilla-vertx</artifactId>
         </dependency>
 
@@ -83,7 +83,7 @@
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
-                                        <Main-Class>crabzilla.example1.Example1Launcher</Main-Class>
+                                        <Main-Class>io.github.crabzilla.example1.Example1Launcher</Main-Class>
                                         <!--<Main-Verticle>io.vertx.blog.first.MyFirstVerticle</Main-Verticle>-->
                                     </manifestEntries>
                                 </transformer>

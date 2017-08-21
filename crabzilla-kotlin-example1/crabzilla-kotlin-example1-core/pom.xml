@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.crabzilla</groupId>
+        <groupId>io.github.crabzilla</groupId>
         <artifactId>crabzilla-kotlin-example1</artifactId>
-        <version>0.0.5</version>
+        <version>0.0.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>crabzilla-kotlin-example1-core</artifactId>
@@ -17,7 +17,7 @@
         <!-- own -->
 
         <dependency>
-            <groupId>org.crabzilla</groupId>
+            <groupId>io.github.crabzilla</groupId>
             <artifactId>crabzilla-core</artifactId>
         </dependency>
 
