@@ -91,7 +91,7 @@ class Example1AcceptanceIT {
    */
   @After
   fun tearDown(context: TestContext) {
-    vertx!!.close(context.asyncAssertSuccess())
+    vertx.close(context.asyncAssertSuccess())
   }
 
   // tag::create_customer_test[]
@@ -111,24 +111,24 @@ class Example1AcceptanceIT {
     val json = Json.encodePrettily(createCustomerCmd)
 
     vertx.createHttpClient().put(port, "localhost",
-            "/" + aggregateRootId(Customer::class.java) + "/commands")
-            .putHeader("content-type", "application/json")
-            .putHeader("content-length", Integer.toString(json.length))
-            .handler { response ->
-              context.assertEquals(response.statusCode(), 201);
-              context.assertTrue(response.headers().get("content-type").contains("application/json"));
-              response.bodyHandler { body ->
-                println("---> body " + body)
-                val cmdExec = Json.decodeValue(body.toString(), CommandExecution::class.java)
-                context.assertEquals(cmdExec.unitOfWork.targetId(), expectedUow.targetId())
-                context.assertEquals(cmdExec.unitOfWork.command, expectedUow.command)
-                context.assertEquals(cmdExec.unitOfWork.events, expectedUow.events)
-                context.assertEquals(cmdExec.unitOfWork.version, expectedUow.version)
-                async.complete()
-              }
-            }
-            .write(json)
-            .end()
+      "/" + aggregateRootId(Customer::class.java) + "/commands")
+      .putHeader("content-type", "application/json")
+      .putHeader("content-length", Integer.toString(json.length))
+      .handler { response ->
+        context.assertEquals(response.statusCode(), 201);
+        context.assertTrue(response.headers().get("content-type").contains("application/json"));
+        response.bodyHandler { body ->
+          println("---> body " + body)
+          val cmdExec = Json.decodeValue(body.toString(), CommandExecution::class.java)
+          context.assertEquals(cmdExec.unitOfWork.targetId(), expectedUow.targetId())
+          context.assertEquals(cmdExec.unitOfWork.command, expectedUow.command)
+          context.assertEquals(cmdExec.unitOfWork.events, expectedUow.events)
+          context.assertEquals(cmdExec.unitOfWork.version, expectedUow.version)
+          async.complete()
+        }
+      }
+      .write(json)
+      .end()
   }
   // tag::create_customer_test[]
 
