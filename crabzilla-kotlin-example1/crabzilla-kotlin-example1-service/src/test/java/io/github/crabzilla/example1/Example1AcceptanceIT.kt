@@ -115,8 +115,8 @@ class Example1AcceptanceIT {
       .putHeader("content-type", "application/json")
       .putHeader("content-length", Integer.toString(json.length))
       .handler { response ->
-        context.assertEquals(response.statusCode(), 201);
-        context.assertTrue(response.headers().get("content-type").contains("application/json"));
+        context.assertEquals(response.statusCode(), 201)
+        context.assertTrue(response.headers().get("content-type").equals("application/json"))
         response.bodyHandler { body ->
           println("---> body " + body)
           val cmdExec = Json.decodeValue(body.toString(), CommandExecution::class.java)

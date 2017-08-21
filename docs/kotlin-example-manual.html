@@ -755,7 +755,17 @@ CREATE TABLE units_of_work (
     PARTITION BY KEY(ar_name)
     ;
 
-CREATE INDEX idx_ar_id ON units_of_work (ar_id);</code></pre>
+CREATE INDEX idx_ar_id ON units_of_work (ar_id);
+
+
+DROP TABLE if exists events_channels ;
+
+CREATE TABLE events_channels (
+    channel_name VARCHAR(36) NOT NULL,
+    uow_last_seq BIGINT ,
+    PRIMARY KEY (channel_name)
+    )
+    ;</code></pre>
 </div>
 </div>
 </div>
@@ -767,27 +777,14 @@ CREATE INDEX idx_ar_id ON units_of_work (ar_id);</code></pre>
 <div class="listingblock">
 <div class="title">V2__read_model.sql</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-sql" data-lang="sql">DROP TABLE if exists events_channels ;
-
-CREATE TABLE events_channels (
-    channel_name VARCHAR(36) NOT NULL,
-    uow_last_seq BIGINT ,
-    PRIMARY KEY (channel_name)
-    )
-    ;
-
-# tag::readmodel[]
-
-DROP TABLE if exists customer_summary ;
+<pre class="highlightjs highlight"><code class="language-sql" data-lang="sql">DROP TABLE if exists customer_summary ;
 
 CREATE TABLE customer_summary (
     id VARCHAR(36) NOT NULL,
     name VARCHAR(36) NOT NULL,
     is_active BOOLEAN NOT NULL,
     PRIMARY KEY (id)
-    )
-
-# tag::readmodel[]</code></pre>
+    )</code></pre>
 </div>
 </div>
 </div>
@@ -1012,24 +1009,24 @@ class Example1EventProjector(channelId: String, daoClazz: Class&lt;CustomerSumma
     val json = Json.encodePrettily(createCustomerCmd)
 
     vertx.createHttpClient().put(port, "localhost",
-            "/" + aggregateRootId(Customer::class.java) + "/commands")
-            .putHeader("content-type", "application/json")
-            .putHeader("content-length", Integer.toString(json.length))
-            .handler { response -&gt;
-              context.assertEquals(response.statusCode(), 201);
-              context.assertTrue(response.headers().get("content-type").contains("application/json"));
-              response.bodyHandler { body -&gt;
-                println("---&gt; body " + body)
-                val cmdExec = Json.decodeValue(body.toString(), CommandExecution::class.java)
-                context.assertEquals(cmdExec.unitOfWork.targetId(), expectedUow.targetId())
-                context.assertEquals(cmdExec.unitOfWork.command, expectedUow.command)
-                context.assertEquals(cmdExec.unitOfWork.events, expectedUow.events)
-                context.assertEquals(cmdExec.unitOfWork.version, expectedUow.version)
-                async.complete()
-              }
-            }
-            .write(json)
-            .end()
+      "/" + aggregateRootId(Customer::class.java) + "/commands")
+      .putHeader("content-type", "application/json")
+      .putHeader("content-length", Integer.toString(json.length))
+      .handler { response -&gt;
+        context.assertEquals(response.statusCode(), 201)
+        context.assertTrue(response.headers().get("content-type").equals("application/json"))
+        response.bodyHandler { body -&gt;
+          println("---&gt; body " + body)
+          val cmdExec = Json.decodeValue(body.toString(), CommandExecution::class.java)
+          context.assertEquals(cmdExec.unitOfWork.targetId(), expectedUow.targetId())
+          context.assertEquals(cmdExec.unitOfWork.command, expectedUow.command)
+          context.assertEquals(cmdExec.unitOfWork.events, expectedUow.events)
+          context.assertEquals(cmdExec.unitOfWork.version, expectedUow.version)
+          async.complete()
+        }
+      }
+      .write(json)
+      .end()
   }
 
 }</code></pre>
