@@ -10,6 +10,27 @@ Yet another Event Sourcing experiment
 
 [Architecture decision records](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
 
+## Getting started
+
+Your core domain module must import:
+
+```xml
+<dependency>
+  <groupId>io.github.crabzilla</groupId>
+  <artifactId>crabzilla-core</artifactId>
+  <version>0.0.5</version>
+</dependency>
+```
+
+and your service module must import:
+
+```xml
+<dependency>
+  <groupId>io.github.crabzilla</groupId>
+  <artifactId>crabzilla-vertx</artifactId>
+  <version>0.0.5</version>
+</dependency>
+```
 
 ## How to run the example
 
