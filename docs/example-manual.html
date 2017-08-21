@@ -5,7 +5,7 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.5">
-<title>crabzilla-vavr-example1</title>
+<title>crabzilla-example1</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -421,14 +421,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>crabzilla-vavr-example1</h1>
+<h1>crabzilla-example1</h1>
 <div class="details">
 <span id="revnumber">version 0.0.5</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#1-0-crabzilla-vavr-example1-core">1.0 crabzilla-vavr-example1-core</a>
+<li><a href="#1-0-crabzilla-example1-core">1.0 crabzilla-example1-core</a>
 <ul class="sectlevel2">
 <li><a href="#1-1-data">1.1 Data</a>
 <ul class="sectlevel3">
@@ -448,14 +448,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#1-5-read-model">1.5 Read Model</a></li>
 </ul>
 </li>
-<li><a href="#2-0-crabzilla-vavr-example1-database">2.0 crabzilla-vavr-example1-database</a>
+<li><a href="#2-0-crabzilla-example1-database">2.0 crabzilla-example1-database</a>
 <ul class="sectlevel2">
 <li><a href="#2-1-0-write-model">2.1.0 Write model</a></li>
 <li><a href="#2-1-1-read-model">2.1.1 Read model</a></li>
 <li><a href="#2-2-0-dao-implementations">2.2.0 DAO implementations</a></li>
 </ul>
 </li>
-<li><a href="#3-0-crabzilla-vavr-example1-service">3.0 crabzilla-vavr-example1-service</a>
+<li><a href="#3-0-crabzilla-example1-service">3.0 crabzilla-example1-service</a>
 <ul class="sectlevel2">
 <li><a href="#3-1-0-customer-components">3.1.0 Customer components</a>
 <ul class="sectlevel3">
@@ -483,7 +483,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>Status: <strong>WORK IN PROGRESS</strong></p>
 </div>
 <div class="paragraph">
-<p>Let&#8217;s examine the crabzilla-vavr-example1 example with just one aggregate: Customer.</p>
+<p>Let&#8217;s examine the crabzilla-example1 example with just one aggregate: Customer.</p>
 </div>
 <div class="ulist">
 <ul>
@@ -509,7 +509,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="1-0-crabzilla-vavr-example1-core"><a class="anchor" href="#1-0-crabzilla-vavr-example1-core"></a>1.0 crabzilla-vavr-example1-core</h2>
+<h2 id="1-0-crabzilla-example1-core"><a class="anchor" href="#1-0-crabzilla-example1-core"></a>1.0 crabzilla-example1-core</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>This module contains only domain code: value objects, aggregates, commands, events, etc. Within this module, internal
@@ -567,13 +567,6 @@ services and repositories are just plain domain abstractions: interfaces or abst
     CustomerId targetId;
     String name;
     String reason;
-  }
-
-  @Value
-  public static class DeactivateCustomer implements EntityCommand {
-    UUID commandId;
-    CustomerId targetId;
-    String reason;
   }</code></pre>
 </div>
 </div>
@@ -589,17 +582,8 @@ services and repositories are just plain domain abstractions: interfaces or abst
 <pre class="highlightjs highlight"><code class="language-java" data-lang="java">  public static class CommandValidatorFn implements Function&lt;EntityCommand, List&lt;String&gt;&gt; {
 
     @Override
-    public List&lt;String&gt; apply(EntityCommand command) {
-
-      return Match(command).of(
-        Case($(instanceOf(CreateCustomer.class)), (cmd) -&gt; {
-            val either = new CreateCustomerValidator().validate(cmd).toEither();
-            return either.isRight() ? emptyList() : either.getLeft().asJava();
-          }
-        ),
-        Case($(), o -&gt; {
-          return emptyList(); // it's always valid TODO
-        }));
+    public List&lt;String&gt; apply(EntityCommand entityCommand) {
+      return Collections.emptyList(); // all commands are valid
     }
 
   }</code></pre>
@@ -611,56 +595,37 @@ services and repositories are just plain domain abstractions: interfaces or abst
 <div class="listingblock">
 <div class="title">CustomerFunctions.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">  @Slf4j
-  public static class CommandHandlerFn
-          implements BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, CommandHandlerResult&gt; {
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">  public static class CommandHandlerFn extends AbstractCommandsHandlerFn&lt;Customer&gt; {
 
     final StateTransitionsTrackerFactory&lt;Customer&gt; trackerFactory;
 
-    CommandHandlerFn(StateTransitionsTrackerFactory&lt;Customer&gt; trackerFactory) {
+    @Inject
+    public CommandHandlerFn(StateTransitionsTrackerFactory&lt;Customer&gt; trackerFactory) {
       this.trackerFactory = trackerFactory;
     }
 
-    @Override
-    public CommandHandlerResult apply(final EntityCommand cmd,
-                                      final Snapshot&lt;Customer&gt; snapshot) {
-      log.info("Will apply command {}", cmd);
-      val tracker = trackerFactory.apply(snapshot);
-      try {
-        return CommandHandlerResult.success(handle(cmd, tracker));
-      } catch (Exception e) {
-        return CommandHandlerResult.error(e);
-      }
+    public EntityUnitOfWork handle(CreateCustomer cmd, Snapshot&lt;Customer&gt; snapshot) {
+        return unitOfWork(cmd, snapshot.nextVersion(), snapshot.getInstance()
+                .create(cmd.getTargetId(), cmd.getName()));
     }
 
-    private EntityUnitOfWork handle(final EntityCommand command,
-                                    final StateTransitionsTracker&lt;Customer&gt; tracker) {
+    public EntityUnitOfWork handle(ActivateCustomer cmd, Snapshot&lt;Customer&gt; snapshot) {
+      return unitOfWork(cmd, snapshot.nextVersion(),
+              snapshot.getInstance().activate(cmd.getReason()));
+    }
 
-      final EntityUnitOfWork uow = Match(command).of(
+    public EntityUnitOfWork handle(DeactivateCustomer cmd, Snapshot&lt;Customer&gt; snapshot) {
+      return unitOfWork(cmd, snapshot.nextVersion(),
+              snapshot.getInstance().deactivate(cmd.getReason()));
+    }
 
-        Case($(instanceOf(CreateCustomer.class)), (cmd) -&gt;
-          tracker.applyEvents(customer -&gt; customer.create(cmd.getTargetId(), cmd.getName()))
-                  .unitOfWorkFor(cmd)
-        ),
-        Case($(instanceOf(ActivateCustomer.class)), (cmd) -&gt;
-          tracker.applyEvents(customer -&gt; customer.activate(cmd.getReason()))
-                  .unitOfWorkFor(cmd)
-        ),
-        Case($(instanceOf(DeactivateCustomer.class)), (cmd) -&gt;
-          tracker.applyEvents(customer -&gt; customer.deactivate(cmd.getReason()))
-                  .unitOfWorkFor(cmd)
-        ),
-        Case($(instanceOf(CreateActivateCustomer.class)), (cmd) -&gt;
-          tracker
-            .applyEvents(customer -&gt; customer.create(cmd.getTargetId(), cmd.getName()))
-            .applyEvents(customer -&gt; customer.activate(cmd.getReason()))
-            .unitOfWorkFor(cmd)
-        ),
-        Case($(), o -&gt; {
-          throw new UnknownCommandException("for command " + command.getClass().getSimpleName());
-        })
-      );
-      return uow;
+    public EntityUnitOfWork handle(CreateActivateCustomer cmd, Snapshot&lt;Customer&gt; snapshot) {
+      val tracker = trackerFactory.apply(snapshot);
+      val events = tracker
+              .applyEvents(customer -&gt; customer.create(cmd.getTargetId(), cmd.getName()))
+              .applyEvents(customer -&gt; customer.activate(cmd.getReason()))
+              .collectEvents();
+      return unitOfWork(cmd, snapshot.nextVersion(), events);
     }
 
   }</code></pre>
@@ -672,20 +637,20 @@ services and repositories are just plain domain abstractions: interfaces or abst
 <div class="listingblock">
 <div class="title">CustomerFunctions.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">  public static class StateTransitionFn implements BiFunction&lt;DomainEvent, Customer, Customer&gt; {
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">  public static class StateTransitionFn extends AbstractStateTransitionFn&lt;Customer&gt; {
 
-    public Customer apply(final DomainEvent event, final Customer customer) {
-
-      return Match(event).of(
-        Case($(instanceOf(CustomerCreated.class)),
-                (e) -&gt; customer.withId(e.getId()).withName(e.getName())),
-        Case($(instanceOf(CustomerActivated.class)),
-                (e) -&gt; customer.withReason(e.getReason()).withActive(true)),
-        Case($(instanceOf(CustomerDeactivated.class)),
-                (e) -&gt; customer.withReason(e.getReason()).withActive(false)),
-        Case($(), o -&gt; customer));
-
+    public Customer on(final CustomerCreated event, final Customer instance) {
+      return instance.withId(event.getId()).withName(event.getName());
     }
+
+    public Customer on(final CustomerActivated event, final Customer instance) {
+      return instance.withActive(true).withReason(event.getReason());
+    }
+
+    public Customer on(final CustomerDeactivated event, final Customer instance) {
+      return instance.withActive(false).withReason(event.getReason());
+    }
+
   }</code></pre>
 </div>
 </div>
@@ -710,7 +675,6 @@ import lombok.experimental.Wither;
 
 import java.util.List;
 
-import static io.github.crabzilla.example1.customer.CustomerData.*;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.Validate.validState;
 
@@ -718,26 +682,27 @@ import static org.apache.commons.lang3.Validate.validState;
 @Wither
 public class Customer implements Aggregate {
 
-  @NonNull transient SampleInternalService service;
+  @NonNull
+  transient SampleInternalService service;
 
-  CustomerId id;
+  CustomerData.CustomerId id;
   String name;
   boolean isActive;
   String reason;
 
-  List&lt;DomainEvent&gt; create(CustomerId id, String name) {
+  List&lt;DomainEvent&gt; create(CustomerData.CustomerId id, String name) {
     validState(this.id == null, "customer already created");
-    return singletonList(new CustomerCreated(id, name));
+    return singletonList(new CustomerData.CustomerCreated(id, name));
   }
 
   List&lt;DomainEvent&gt; activate(String reason) {
     validState(this.id != null, "unknown customer");
-    return singletonList(new CustomerActivated(reason, service.now()));
+    return singletonList(new CustomerData.CustomerActivated(reason, service.now()));
   }
 
   List&lt;DomainEvent&gt; deactivate(String reason) {
     validState(this.id != null, "unknown customer");
-    return singletonList(new CustomerDeactivated(reason, service.now()));
+    return singletonList(new CustomerData.CustomerDeactivated(reason, service.now()));
   }
 
 }</code></pre>
@@ -819,7 +784,7 @@ can be easily tested with mocks and stubs.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="2-0-crabzilla-vavr-example1-database"><a class="anchor" href="#2-0-crabzilla-vavr-example1-database"></a>2.0 crabzilla-vavr-example1-database</h2>
+<h2 id="2-0-crabzilla-example1-database"><a class="anchor" href="#2-0-crabzilla-example1-database"></a>2.0 crabzilla-example1-database</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Here we will setup the Flyway to init our database and implements our DAOs.</p>
@@ -852,7 +817,6 @@ CREATE TABLE units_of_work (
     ;
 
 CREATE INDEX idx_ar_id ON units_of_work (ar_id);
-
 
 DROP TABLE if exists events_channels ;
 
@@ -927,7 +891,7 @@ public interface CustomerSummaryDao {
 </div>
 </div>
 <div class="sect1">
-<h2 id="3-0-crabzilla-vavr-example1-service"><a class="anchor" href="#3-0-crabzilla-vavr-example1-service"></a>3.0 crabzilla-vavr-example1-service</h2>
+<h2 id="3-0-crabzilla-example1-service"><a class="anchor" href="#3-0-crabzilla-example1-service"></a>3.0 crabzilla-example1-service</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Here is the module where we will run our domain model. We have to provide / wire components for our Example1 context and
@@ -955,11 +919,13 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static io.github.crabzilla.example1.customer.CustomerFunctions.*;
+
 public class CustomerFactory implements AggregateRootComponentsFactory&lt;Customer&gt; {
 
+  private final Customer seedValue;
   private final Vertx vertx;
   private final JDBCClient jdbcClient;
-  private final Customer seedValue;
 
   @Inject
   public CustomerFactory(SampleInternalService service, Vertx vertx, JDBCClient jdbcClient) {
@@ -980,18 +946,16 @@ public class CustomerFactory implements AggregateRootComponentsFactory&lt;Custom
   }
 
   @Override
-  public BiFunction&lt;DomainEvent, Customer, Customer&gt; stateTransitionFn() {
-    return new CustomerFunctions.StateTransitionFn();
-  }
+  public BiFunction&lt;DomainEvent, Customer, Customer&gt; stateTransitionFn() {return new StateTransitionFn(); }
 
   @Override
   public Function&lt;EntityCommand, List&lt;String&gt;&gt; cmdValidatorFn() {
-    return new CustomerFunctions.CommandValidatorFn();
+    return new CommandValidatorFn();
   }
 
   @Override
   public BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, CommandHandlerResult&gt; cmdHandlerFn() {
-    return new CustomerFunctions.CommandHandlerFn(instance -&gt;
+    return new CommandHandlerFn(instance -&gt;
             new StateTransitionsTracker&lt;&gt;(instance, stateTransitionFn()));
   }
 
@@ -1077,41 +1041,32 @@ public class CustomerModule extends AbstractModule {
 <pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1;
 
 import io.github.crabzilla.example1.readmodel.CustomerSummary;
-import io.github.crabzilla.model.DomainEvent;
-import io.github.crabzilla.stack.EventProjector;
+import io.github.crabzilla.example1.util.AbstractExample1EventProjector;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 
 import static io.github.crabzilla.example1.customer.CustomerData.*;
-import static io.vavr.API.*;
-import static io.vavr.Predicates.instanceOf;
 
 @Slf4j
-public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao&gt; {
+public class Example1EventProjector extends AbstractExample1EventProjector&lt;CustomerSummaryDao&gt; {
 
-  Example1EventProjector(String eventsChannelId, Class&lt;CustomerSummaryDao&gt; daoClass, Jdbi jdbi) {
-    super(eventsChannelId, daoClass, jdbi);
+  protected Example1EventProjector(String eventsChannelId,
+                                   Class&lt;CustomerSummaryDao&gt; customerSummaryDaoClass,
+                                   Jdbi jdbi) {
+    super(eventsChannelId, customerSummaryDaoClass, jdbi);
   }
 
-  @Override
-  public void write(CustomerSummaryDao dao, String targetId, DomainEvent event) {
-
-    log.info("writing event {} from channel {}", event, eventsChannelId);
-
-    Match(event).of(
-      Case($(instanceOf(CustomerCreated.class)), e -&gt;
-        run(() -&gt; dao.insert(
-                new CustomerSummary(e.getId().stringValue(), e.getName(), false)))),
-      Case($(instanceOf(CustomerActivated.class)), e -&gt;
-        run(() -&gt; dao.updateStatus(targetId, true))),
-      Case($(instanceOf(CustomerDeactivated.class)), e -&gt;
-        run(() -&gt; dao.updateStatus(targetId, false))),
-      Case($(), o -&gt; run(() -&gt; {
-        log.warn("{} does not have any event projection handler", event);
-      })));
-
+  public void handle(CustomerSummaryDao dao, String targetId, CustomerCreated event) {
+    dao.insert(new CustomerSummary(targetId, event.getName(), false));
   }
 
+  public void handle(CustomerSummaryDao dao, String targetId, CustomerActivated event) {
+    dao.updateStatus(targetId, true);
+  }
+
+  public void handle(CustomerSummaryDao dao, String targetId, CustomerDeactivated event) {
+    dao.updateStatus(targetId, false);
+  }
 }</code></pre>
 </div>
 </div>
@@ -1119,7 +1074,7 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <div class="sect3">
 <h4 id="3-2-2-example1module"><a class="anchor" href="#3-2-2-example1module"></a>3.2.2 Example1Module</h4>
 <div class="paragraph">
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.java">Example1Module</a></p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.java">Example1Module</a></p>
 </div>
 </div>
 <div class="sect3">
@@ -1144,8 +1099,8 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 
     val json = Json.encodePrettily(createCustomerCmd);
 
-    vertx.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer.class)
-            + "/commands")
+    vertx.createHttpClient().put(port, "localhost",
+            "/" + aggregateRootId(Customer.class) + "/commands")
       .putHeader("content-type", "application/json")
       .putHeader("content-length", Integer.toString(json.length()))
       .handler(response -&gt; {
@@ -1168,10 +1123,7 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
       .write(json)
       .end();
 
-  }
-
-
-}</code></pre>
+  }</code></pre>
 </div>
 </div>
 </div>
@@ -1219,7 +1171,7 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <div id="footer">
 <div id="footer-text">
 Version 0.0.5<br>
-Last updated 2017-08-21 19:17:58 BRT
+Last updated 2017-08-21 19:24:21 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

@@ -5,7 +5,7 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.5">
-<title>crabzilla-vavr-example1</title>
+<title>crabzilla-kotlin-example1</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -421,14 +421,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>crabzilla-vavr-example1</h1>
+<h1>crabzilla-kotlin-example1</h1>
 <div class="details">
 <span id="revnumber">version 0.0.5</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#1-0-crabzilla-vavr-example1-core">1.0 crabzilla-vavr-example1-core</a>
+<li><a href="#1-0-crabzilla-kotlin-example1-core">1.0 crabzilla-kotlin-example1-core</a>
 <ul class="sectlevel2">
 <li><a href="#1-1-data">1.1 Data</a>
 <ul class="sectlevel3">
@@ -448,14 +448,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#1-5-read-model">1.5 Read Model</a></li>
 </ul>
 </li>
-<li><a href="#2-0-crabzilla-vavr-example1-database">2.0 crabzilla-vavr-example1-database</a>
+<li><a href="#2-0-crabzilla-kotlin-example1-database">2.0 crabzilla-kotlin-example1-database</a>
 <ul class="sectlevel2">
 <li><a href="#2-1-0-write-model">2.1.0 Write model</a></li>
 <li><a href="#2-1-1-read-model">2.1.1 Read model</a></li>
 <li><a href="#2-2-0-dao-implementations">2.2.0 DAO implementations</a></li>
 </ul>
 </li>
-<li><a href="#3-0-crabzilla-vavr-example1-service">3.0 crabzilla-vavr-example1-service</a>
+<li><a href="#3-0-crabzilla-kotlin-example1-service">3.0 crabzilla-kotlin-example1-service</a>
 <ul class="sectlevel2">
 <li><a href="#3-1-0-customer-components">3.1.0 Customer components</a>
 <ul class="sectlevel3">
@@ -483,7 +483,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>Status: <strong>WORK IN PROGRESS</strong></p>
 </div>
 <div class="paragraph">
-<p>Let&#8217;s examine the crabzilla-vavr-example1 example with just one aggregate: Customer.</p>
+<p>Let&#8217;s examine the crabzilla-kotlin-example1 example with just one aggregate: Customer.</p>
 </div>
 <div class="ulist">
 <ul>
@@ -509,7 +509,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="1-0-crabzilla-vavr-example1-core"><a class="anchor" href="#1-0-crabzilla-vavr-example1-core"></a>1.0 crabzilla-vavr-example1-core</h2>
+<h2 id="1-0-crabzilla-kotlin-example1-core"><a class="anchor" href="#1-0-crabzilla-kotlin-example1-core"></a>1.0 crabzilla-kotlin-example1-core</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>This module contains only domain code: value objects, aggregates, commands, events, etc. Within this module, internal
@@ -520,61 +520,33 @@ services and repositories are just plain domain abstractions: interfaces or abst
 <div class="sect3">
 <h4 id="1-1-1-events"><a class="anchor" href="#1-1-1-events"></a>1.1.1 Events</h4>
 <div class="listingblock">
-<div class="title">CustomerData.java</div>
+<div class="title">CustomerData.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">  @Value
-  public static class CustomerActivated implements DomainEvent {
-    String reason;
-    Instant when;
-  }
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">data class CustomerCreated(val id: CustomerId, val name: String) : DomainEvent
 
-  @Value
-  public static class CustomerCreated implements DomainEvent {
-    CustomerId id;
-    String name;
-  }
+data class CustomerActivated(val reason: String, val _when: Instant) : DomainEvent
 
-  @Value
-  public static class CustomerDeactivated implements DomainEvent {
-    String reason;
-    Instant when;
-  }</code></pre>
+data class CustomerDeactivated(val reason: String, val _when: Instant) : DomainEvent</code></pre>
 </div>
 </div>
 </div>
 <div class="sect3">
 <h4 id="1-1-2-commands"><a class="anchor" href="#1-1-2-commands"></a>1.1.2 Commands</h4>
 <div class="listingblock">
-<div class="title">CustomerData.java</div>
+<div class="title">CustomerData.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">  @Value
-  public static class CreateCustomer implements EntityCommand {
-    UUID commandId;
-    CustomerId targetId;
-    String name;
-  }
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">data class CreateCustomer(override val _commandId: UUID, override val _targetId: CustomerId,
+                          val name: String) : KotlinEntityCommand
 
-  @Value
-  public static class ActivateCustomer implements EntityCommand {
-    UUID commandId;
-    CustomerId targetId;
-    String reason;
-  }
+data class ActivateCustomer(override val _commandId: UUID, override val _targetId: CustomerId,
+                            val reason: String) : KotlinEntityCommand
 
-  @Value
-  public static class CreateActivateCustomer implements EntityCommand {
-    UUID commandId;
-    CustomerId targetId;
-    String name;
-    String reason;
-  }
+data class DeactivateCustomer(override val _commandId: UUID, override val _targetId: CustomerId,
+                              val reason: String) : KotlinEntityCommand
 
-  @Value
-  public static class DeactivateCustomer implements EntityCommand {
-    UUID commandId;
-    CustomerId targetId;
-    String reason;
-  }</code></pre>
+data class CreateActivateCustomer(override val _commandId: UUID,
+                                  override val _targetId: CustomerId,
+                                  val name: String, val reason: String) : KotlinEntityCommand</code></pre>
 </div>
 </div>
 </div>
@@ -584,109 +556,71 @@ services and repositories are just plain domain abstractions: interfaces or abst
 <div class="sect3">
 <h4 id="1-2-1-commandvalidatorfn"><a class="anchor" href="#1-2-1-commandvalidatorfn"></a>1.2.1 CommandValidatorFn</h4>
 <div class="listingblock">
-<div class="title">CustomerFunctions.java</div>
+<div class="title">CustomerFunctions.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">  public static class CommandValidatorFn implements Function&lt;EntityCommand, List&lt;String&gt;&gt; {
-
-    @Override
-    public List&lt;String&gt; apply(EntityCommand command) {
-
-      return Match(command).of(
-        Case($(instanceOf(CreateCustomer.class)), (cmd) -&gt; {
-            val either = new CreateCustomerValidator().validate(cmd).toEither();
-            return either.isRight() ? emptyList() : either.getLeft().asJava();
-          }
-        ),
-        Case($(), o -&gt; {
-          return emptyList(); // it's always valid TODO
-        }));
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandValidatorFn : Function&lt;EntityCommand, List&lt;String&gt;&gt; { <i class="conum" data-value="3"></i><b>(3)</b>
+  override fun apply(command: EntityCommand): List&lt;String&gt; {
+    return when(command) {
+      is CreateCustomer -&gt;
+        if (command.name.equals("a bad name"))
+          listOf("Invalid name: ${command.name}") else listOf()
+      else -&gt; listOf() // all other commands are valid
     }
-
-  }</code></pre>
+  }
+}</code></pre>
 </div>
 </div>
 </div>
 <div class="sect3">
 <h4 id="1-2-2-commandhandlerfn"><a class="anchor" href="#1-2-2-commandhandlerfn"></a>1.2.2 CommandHandlerFn</h4>
 <div class="listingblock">
-<div class="title">CustomerFunctions.java</div>
+<div class="title">CustomerFunctions.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">  @Slf4j
-  public static class CommandHandlerFn
-          implements BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, CommandHandlerResult&gt; {
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandHandlerFn(private val trackerFactory: StateTransitionsTrackerFactory&lt;Customer&gt;) :
+        BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, CommandHandlerResult&gt; {
 
-    final StateTransitionsTrackerFactory&lt;Customer&gt; trackerFactory;
+  override fun apply(cmd: EntityCommand, snapshot: Snapshot&lt;Customer&gt;): CommandHandlerResult {
 
-    CommandHandlerFn(StateTransitionsTrackerFactory&lt;Customer&gt; trackerFactory) {
-      this.trackerFactory = trackerFactory;
-    }
+    val customer = snapshot.instance
+    val newVersion = snapshot.version.nextVersion()
 
-    @Override
-    public CommandHandlerResult apply(final EntityCommand cmd,
-                                      final Snapshot&lt;Customer&gt; snapshot) {
-      log.info("Will apply command {}", cmd);
-      val tracker = trackerFactory.apply(snapshot);
-      try {
-        return CommandHandlerResult.success(handle(cmd, tracker));
-      } catch (Exception e) {
-        return CommandHandlerResult.error(e);
+    return resultOf {
+      when (cmd) {
+        is CreateCustomer -&gt;
+          uowOf(cmd, customer.create(cmd.targetId as CustomerId, cmd.name), newVersion)
+        is ActivateCustomer -&gt; uowOf(cmd, customer.activate(cmd.reason), newVersion)
+        is DeactivateCustomer -&gt; uowOf(cmd, customer.deactivate(cmd.reason), newVersion)
+        is CreateActivateCustomer -&gt; {
+          val tracker = trackerFactory.apply(snapshot)
+          val events = tracker
+                  .applyEvents({ c -&gt; c.create(cmd.targetId as CustomerId, cmd.name) })
+                  .applyEvents({ c -&gt; c.activate(cmd.reason) })
+                  .collectEvents()
+          uowOf(cmd, events, newVersion)
+        }
+        else -&gt; throw UnknownCommandException("for command ${cmd.javaClass.simpleName}")
       }
     }
-
-    private EntityUnitOfWork handle(final EntityCommand command,
-                                    final StateTransitionsTracker&lt;Customer&gt; tracker) {
-
-      final EntityUnitOfWork uow = Match(command).of(
-
-        Case($(instanceOf(CreateCustomer.class)), (cmd) -&gt;
-          tracker.applyEvents(customer -&gt; customer.create(cmd.getTargetId(), cmd.getName()))
-                  .unitOfWorkFor(cmd)
-        ),
-        Case($(instanceOf(ActivateCustomer.class)), (cmd) -&gt;
-          tracker.applyEvents(customer -&gt; customer.activate(cmd.getReason()))
-                  .unitOfWorkFor(cmd)
-        ),
-        Case($(instanceOf(DeactivateCustomer.class)), (cmd) -&gt;
-          tracker.applyEvents(customer -&gt; customer.deactivate(cmd.getReason()))
-                  .unitOfWorkFor(cmd)
-        ),
-        Case($(instanceOf(CreateActivateCustomer.class)), (cmd) -&gt;
-          tracker
-            .applyEvents(customer -&gt; customer.create(cmd.getTargetId(), cmd.getName()))
-            .applyEvents(customer -&gt; customer.activate(cmd.getReason()))
-            .unitOfWorkFor(cmd)
-        ),
-        Case($(), o -&gt; {
-          throw new UnknownCommandException("for command " + command.getClass().getSimpleName());
-        })
-      );
-      return uow;
-    }
-
-  }</code></pre>
+  }
+}</code></pre>
 </div>
 </div>
 </div>
 <div class="sect3">
 <h4 id="1-2-3-statetransitionfn"><a class="anchor" href="#1-2-3-statetransitionfn"></a>1.2.3 StateTransitionFn</h4>
 <div class="listingblock">
-<div class="title">CustomerFunctions.java</div>
+<div class="title">CustomerFunctions.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">  public static class StateTransitionFn implements BiFunction&lt;DomainEvent, Customer, Customer&gt; {
-
-    public Customer apply(final DomainEvent event, final Customer customer) {
-
-      return Match(event).of(
-        Case($(instanceOf(CustomerCreated.class)),
-                (e) -&gt; customer.withId(e.getId()).withName(e.getName())),
-        Case($(instanceOf(CustomerActivated.class)),
-                (e) -&gt; customer.withReason(e.getReason()).withActive(true)),
-        Case($(instanceOf(CustomerDeactivated.class)),
-                (e) -&gt; customer.withReason(e.getReason()).withActive(false)),
-        Case($(), o -&gt; customer));
-
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class StateTransitionFn : BiFunction&lt;DomainEvent, Customer, Customer&gt; {
+  override fun apply(event: DomainEvent, customer: Customer): Customer {
+    return when(event) {
+      is CustomerCreated -&gt; customer.copy(_id = event.id, name =  event.name)
+      is CustomerActivated -&gt; customer.copy(isActive = true, reason = event.reason)
+      is CustomerDeactivated -&gt; customer.copy(isActive = false, reason = event.reason)
+      else -&gt; customer
     }
-  }</code></pre>
+  }
+}</code></pre>
 </div>
 </div>
 </div>
@@ -697,47 +631,39 @@ services and repositories are just plain domain abstractions: interfaces or abst
 <p>An aggregate proceeds with business logic and emit events.</p>
 </div>
 <div class="listingblock">
-<div class="title">Customer.java</div>
+<div class="title">Customer.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.customer;
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.example1.services.SampleInternalService;
-import io.github.crabzilla.model.Aggregate;
-import io.github.crabzilla.model.DomainEvent;
-import lombok.NonNull;
-import lombok.Value;
-import lombok.experimental.Wither;
+import io.github.crabzilla.example1.SampleInternalService
+import io.github.crabzilla.example1.eventsOf
+import io.github.crabzilla.model.Aggregate
+import io.github.crabzilla.model.DomainEvent
+import io.github.crabzilla.model.EntityId
 
-import java.util.List;
+data class Customer(val _id: CustomerId? = null,
+                    val name: String? = null,
+                    val isActive: Boolean? = false,
+                    val reason: String? = null,
+                    val sampleInternalService: SampleInternalService) : Aggregate {
 
-import static io.github.crabzilla.example1.customer.CustomerData.*;
-import static java.util.Collections.singletonList;
-import static org.apache.commons.lang3.Validate.validState;
-
-@Value
-@Wither
-public class Customer implements Aggregate {
-
-  @NonNull transient SampleInternalService service;
-
-  CustomerId id;
-  String name;
-  boolean isActive;
-  String reason;
-
-  List&lt;DomainEvent&gt; create(CustomerId id, String name) {
-    validState(this.id == null, "customer already created");
-    return singletonList(new CustomerCreated(id, name));
+  override fun getId(): EntityId {
+    return _id!!
   }
 
-  List&lt;DomainEvent&gt; activate(String reason) {
-    validState(this.id != null, "unknown customer");
-    return singletonList(new CustomerActivated(reason, service.now()));
+  internal fun create(id: CustomerId, name: String): List&lt;DomainEvent&gt; {
+    require(this._id == null, { "customer already created" })
+    return eventsOf(CustomerCreated(id, name))
   }
 
-  List&lt;DomainEvent&gt; deactivate(String reason) {
-    validState(this.id != null, "unknown customer");
-    return singletonList(new CustomerDeactivated(reason, service.now()));
+  internal fun activate(reason: String): List&lt;DomainEvent&gt; {
+    require(this._id != null, { "customer must exists" })
+    return eventsOf(CustomerActivated(reason, sampleInternalService!!.now()))
+  }
+
+  internal fun deactivate(reason: String): List&lt;DomainEvent&gt; {
+    require(this._id != null, { "customer must exists" })
+    return eventsOf(CustomerDeactivated(reason, sampleInternalService!!.now()))
   }
 
 }</code></pre>
@@ -750,18 +676,18 @@ public class Customer implements Aggregate {
 <p>Any internal service is expressed as an abstraction. No implementations within core module.</p>
 </div>
 <div class="listingblock">
-<div class="title">SampleInternalService.java</div>
+<div class="title">services.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.services;
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1
 
-import java.time.Instant;
-import java.util.UUID;
+import java.time.Instant
+import java.util.*
 
-public interface SampleInternalService {
+interface SampleInternalService {
 
-  UUID uuid();
+  fun uuid(): UUID
 
-  Instant now();
+  fun now(): Instant
 
 }</code></pre>
 </div>
@@ -769,44 +695,19 @@ public interface SampleInternalService {
 </div>
 <div class="sect2">
 <h3 id="1-5-read-model"><a class="anchor" href="#1-5-read-model"></a>1.5 Read Model</h3>
-<div class="listingblock">
-<div class="title">CustomerSummary.java</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.readmodel;
-
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
-public class CustomerSummary {
-
-  String id;
-  String name;
-  Boolean isActive;
-
-  public CustomerSummary(String id, String name, boolean isActive) {
-    this.id = id;
-    this.name = name;
-    this.isActive = isActive;
-  }
-
-}</code></pre>
-</div>
-</div>
 <div class="paragraph">
 <p>Any repository is expressed as an abstraction. No implementations within core module.</p>
 </div>
 <div class="listingblock">
-<div class="title">CustomerRepository.java</div>
+<div class="title">readmodel.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.readmodel;
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1
 
-import java.util.List;
+data class CustomerSummary(val id: String, val name: String, val isActive: Boolean)
 
-public interface CustomerRepository {
+interface CustomerRepository {
 
-  List&lt;CustomerSummary&gt; getAll();
+  fun getAll(): List&lt;CustomerSummary&gt;
 
 }</code></pre>
 </div>
@@ -819,7 +720,7 @@ can be easily tested with mocks and stubs.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="2-0-crabzilla-vavr-example1-database"><a class="anchor" href="#2-0-crabzilla-vavr-example1-database"></a>2.0 crabzilla-vavr-example1-database</h2>
+<h2 id="2-0-crabzilla-kotlin-example1-database"><a class="anchor" href="#2-0-crabzilla-kotlin-example1-database"></a>2.0 crabzilla-kotlin-example1-database</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Here we will setup the Flyway to init our database and implements our DAOs.</p>
@@ -851,17 +752,7 @@ CREATE TABLE units_of_work (
     PARTITION BY KEY(ar_name)
     ;
 
-CREATE INDEX idx_ar_id ON units_of_work (ar_id);
-
-
-DROP TABLE if exists events_channels ;
-
-CREATE TABLE events_channels (
-    channel_name VARCHAR(36) NOT NULL,
-    uow_last_seq BIGINT ,
-    PRIMARY KEY (channel_name)
-    )
-    ;</code></pre>
+CREATE INDEX idx_ar_id ON units_of_work (ar_id);</code></pre>
 </div>
 </div>
 </div>
@@ -873,14 +764,27 @@ CREATE TABLE events_channels (
 <div class="listingblock">
 <div class="title">V2__read_model.sql</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-sql" data-lang="sql">DROP TABLE if exists customer_summary ;
+<pre class="highlightjs highlight"><code class="language-sql" data-lang="sql">DROP TABLE if exists events_channels ;
+
+CREATE TABLE events_channels (
+    channel_name VARCHAR(36) NOT NULL,
+    uow_last_seq BIGINT ,
+    PRIMARY KEY (channel_name)
+    )
+    ;
+
+# tag::readmodel[]
+
+DROP TABLE if exists customer_summary ;
 
 CREATE TABLE customer_summary (
     id VARCHAR(36) NOT NULL,
     name VARCHAR(36) NOT NULL,
     is_active BOOLEAN NOT NULL,
     PRIMARY KEY (id)
-    )</code></pre>
+    )
+
+# tag::readmodel[]</code></pre>
 </div>
 </div>
 </div>
@@ -890,32 +794,25 @@ CREATE TABLE customer_summary (
 <p>We also need to implement our DAOs for storing and retrieving read models. For this example:</p>
 </div>
 <div class="listingblock">
-<div class="title">CustomerSummaryDao.java</div>
+<div class="title">CustomerSummaryDao.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1;
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1
 
-import io.github.crabzilla.example1.readmodel.CustomerSummary;
-import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
-import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.customizer.BindBean;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.SqlQuery
+import org.jdbi.v3.sqlobject.statement.SqlUpdate
 
-import java.util.List;
-
-public interface CustomerSummaryDao {
+interface CustomerSummaryDao {
 
   @SqlUpdate("insert into customer_summary (id, name, is_active) values " +
-          "(:id, :name, false)")
-  void insert(@BindBean CustomerSummary customerSummary);
+          "(:customerSummary.id, :customerSummary.name, false)")
+  fun insert(customerSummary: CustomerSummary)
 
   @SqlUpdate("update customer_summary set customer_summary.is_active = :isActive " +
           "where customer_summary.id = :id")
-  void updateStatus(@Bind("id") String id, @Bind("isActive") Boolean isActive);
+  fun updateStatus(id: String, isActive: Boolean)
 
   @SqlQuery("select id, name, is_active from customer_summary")
-  @RegisterBeanMapper(CustomerSummary.class)
-  List&lt;CustomerSummary&gt; getAll();
+  fun getAll(): List&lt;CustomerSummary&gt;
 
 }</code></pre>
 </div>
@@ -927,7 +824,7 @@ public interface CustomerSummaryDao {
 </div>
 </div>
 <div class="sect1">
-<h2 id="3-0-crabzilla-vavr-example1-service"><a class="anchor" href="#3-0-crabzilla-vavr-example1-service"></a>3.0 crabzilla-vavr-example1-service</h2>
+<h2 id="3-0-crabzilla-kotlin-example1-service"><a class="anchor" href="#3-0-crabzilla-kotlin-example1-service"></a>3.0 crabzilla-kotlin-example1-service</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Here is the module where we will run our domain model. We have to provide / wire components for our Example1 context and
@@ -940,69 +837,55 @@ also a factory and a module for each aggregate we have.</p>
 <div class="listingblock">
 <div class="title">CustomerFactory</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.customer;
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1.customer
 
 
-import io.github.crabzilla.example1.services.SampleInternalService;
-import io.github.crabzilla.model.*;
-import io.github.crabzilla.vertx.AggregateRootComponentsFactory;
-import io.vertx.core.Vertx;
-import io.vertx.ext.jdbc.JDBCClient;
+import io.github.crabzilla.example1.SampleInternalService
+import io.github.crabzilla.model.*
+import io.github.crabzilla.vertx.AggregateRootComponentsFactory
+import io.vertx.core.Vertx
+import io.vertx.ext.jdbc.JDBCClient
+import java.util.function.BiFunction
+import java.util.function.Function
+import java.util.function.Supplier
+import javax.inject.Inject
 
-import javax.inject.Inject;
-import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
+class CustomerFactory @Inject
+constructor(service: SampleInternalService, private val vertx: Vertx,
+            private val jdbcClient: JDBCClient) : AggregateRootComponentsFactory&lt;Customer&gt; {
 
-public class CustomerFactory implements AggregateRootComponentsFactory&lt;Customer&gt; {
+  private val seedValue by lazy { Customer(sampleInternalService = service) }
 
-  private final Vertx vertx;
-  private final JDBCClient jdbcClient;
-  private final Customer seedValue;
-
-  @Inject
-  public CustomerFactory(SampleInternalService service, Vertx vertx, JDBCClient jdbcClient) {
-    this.seedValue = new Customer(service, null, null, false, null);
-    this.vertx = vertx;
-    this.jdbcClient = jdbcClient;
+  override fun clazz(): Class&lt;Customer&gt; {
+    return Customer::class.java
   }
 
-
-  @Override
-  public Class&lt;Customer&gt; clazz() {
-    return Customer.class;
+  override fun supplierFn(): Supplier&lt;Customer&gt; {
+    return Supplier { seedValue }
   }
 
-  @Override
-  public Supplier&lt;Customer&gt; supplierFn() {
-    return () -&gt; seedValue;
+  override fun stateTransitionFn(): BiFunction&lt;DomainEvent, Customer, Customer&gt; {
+    return StateTransitionFn()
   }
 
-  @Override
-  public BiFunction&lt;DomainEvent, Customer, Customer&gt; stateTransitionFn() {
-    return new CustomerFunctions.StateTransitionFn();
+  override fun cmdValidatorFn(): Function&lt;EntityCommand, List&lt;String&gt;&gt; {
+    return CommandValidatorFn()
   }
 
-  @Override
-  public Function&lt;EntityCommand, List&lt;String&gt;&gt; cmdValidatorFn() {
-    return new CustomerFunctions.CommandValidatorFn();
+  override fun cmdHandlerFn():
+          BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, CommandHandlerResult&gt; {
+    val trackerFactory = StateTransitionsTrackerFactory&lt;Customer&gt; { instance -&gt;
+      StateTransitionsTracker(instance, stateTransitionFn())
+    }
+    return CommandHandlerFn(trackerFactory)
   }
 
-  @Override
-  public BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, CommandHandlerResult&gt; cmdHandlerFn() {
-    return new CustomerFunctions.CommandHandlerFn(instance -&gt;
-            new StateTransitionsTracker&lt;&gt;(instance, stateTransitionFn()));
+  override fun jdbcClient(): JDBCClient {
+    return jdbcClient
   }
 
-  @Override
-  public JDBCClient jdbcClient() {
-    return jdbcClient;
-  }
-
-  @Override
-  public Vertx vertx() {
-    return vertx;
+  override fun vertx(): Vertx {
+    return vertx
   }
 
 }</code></pre>
@@ -1014,49 +897,40 @@ public class CustomerFactory implements AggregateRootComponentsFactory&lt;Custom
 <div class="listingblock">
 <div class="title">CustomerModule</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.customer;
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1.customer
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import com.google.inject.TypeLiteral;
-import com.google.inject.multibindings.MapBinder;
-import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle;
-import io.github.crabzilla.vertx.verticles.CommandRestVerticle;
-import io.vertx.core.Verticle;
+import com.google.inject.AbstractModule
+import com.google.inject.Provides
+import com.google.inject.Singleton
+import com.google.inject.TypeLiteral
+import com.google.inject.multibindings.MapBinder
+import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle
+import io.github.crabzilla.vertx.verticles.CommandRestVerticle
+import io.vertx.core.Verticle
 
-public class CustomerModule extends AbstractModule {
+class CustomerModule : AbstractModule() {
 
-  @Override
-  protected void configure() {
-
+  override fun configure() {
     // to bind aggregate functions
-    bind(CustomerFactory.class).asEagerSingleton();
-
+    bind(CustomerFactory::class.java).asEagerSingleton()
     // to bind verticles for this aggregate
-    TypeLiteral&lt;CommandRestVerticle&lt;Customer&gt;&gt; restType =
-            new TypeLiteral&lt;CommandRestVerticle&lt;Customer&gt;&gt;() {};
-    TypeLiteral&lt;CommandHandlerVerticle&lt;Customer&gt;&gt; handlerType =
-            new TypeLiteral&lt;CommandHandlerVerticle&lt;Customer&gt;&gt;() {};
-
-    MapBinder&lt;String, Verticle&gt; mapbinder =
-            MapBinder.newMapBinder(binder(), String.class, Verticle.class);
-
-    mapbinder.addBinding("customer.rest").to(restType);
-    mapbinder.addBinding("customer.handler").to(handlerType);
-
+    val restType = object : TypeLiteral&lt;CommandRestVerticle&lt;Customer&gt;&gt;() {}
+    val handlerType = object : TypeLiteral&lt;CommandHandlerVerticle&lt;Customer&gt;&gt;() {}
+    val mapbinder = MapBinder.newMapBinder(binder(), String::class.java, Verticle::class.java)
+    mapbinder.addBinding("customer.rest").to(restType)
+    mapbinder.addBinding("customer.handler").to(handlerType)
   }
 
   @Provides
   @Singleton
-  CommandRestVerticle&lt;Customer&gt; restVerticle(CustomerFactory componentsFactory) {
-    return componentsFactory.restVerticle();
+  internal fun restVerticle(componentsFactory: CustomerFactory): CommandRestVerticle&lt;Customer&gt; {
+    return componentsFactory.restVerticle()
   }
 
   @Provides
   @Singleton
-  CommandHandlerVerticle&lt;Customer&gt; handler(CustomerFactory componentsFactory) {
-    return componentsFactory.cmdHandlerVerticle();
+  internal fun handler(componentsFactory: CustomerFactory): CommandHandlerVerticle&lt;Customer&gt; {
+    return componentsFactory.cmdHandlerVerticle()
   }
 
 }</code></pre>
@@ -1074,44 +948,34 @@ public class CustomerModule extends AbstractModule {
 <div class="listingblock">
 <div class="title">Example1EventProjector</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1;
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1
 
-import io.github.crabzilla.example1.readmodel.CustomerSummary;
-import io.github.crabzilla.model.DomainEvent;
-import io.github.crabzilla.stack.EventProjector;
-import lombok.extern.slf4j.Slf4j;
-import org.jdbi.v3.core.Jdbi;
 
-import static io.github.crabzilla.example1.customer.CustomerData.*;
-import static io.vavr.API.*;
-import static io.vavr.Predicates.instanceOf;
+import io.github.crabzilla.example1.customer.CustomerActivated
+import io.github.crabzilla.example1.customer.CustomerCreated
+import io.github.crabzilla.example1.customer.CustomerDeactivated
+import io.github.crabzilla.model.DomainEvent
+import io.github.crabzilla.stack.EventProjector
+import mu.KotlinLogging
+import org.jdbi.v3.core.Jdbi
 
-@Slf4j
-public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao&gt; {
+class Example1EventProjector(channelId: String, daoClazz: Class&lt;CustomerSummaryDao&gt;, jdbi: Jdbi)
 
-  Example1EventProjector(String eventsChannelId, Class&lt;CustomerSummaryDao&gt; daoClass, Jdbi jdbi) {
-    super(eventsChannelId, daoClass, jdbi);
+  : EventProjector&lt;CustomerSummaryDao&gt;(channelId, daoClazz, jdbi) {
+
+  val log = KotlinLogging.logger {}
+
+  override fun write(dao: CustomerSummaryDao, targetId: String, event: DomainEvent) {
+
+    log.info("event {} from channel {}", event, eventsChannelId)
+
+    when (event) {
+      is CustomerCreated -&gt; dao.insert(CustomerSummary(targetId, event.name, false))
+      is CustomerActivated -&gt; dao.updateStatus(targetId, true)
+      is CustomerDeactivated -&gt; dao.updateStatus(targetId, false)
+      else -&gt; println("${event.javaClass.simpleName} does not have any event projection handler")
+    }
   }
-
-  @Override
-  public void write(CustomerSummaryDao dao, String targetId, DomainEvent event) {
-
-    log.info("writing event {} from channel {}", event, eventsChannelId);
-
-    Match(event).of(
-      Case($(instanceOf(CustomerCreated.class)), e -&gt;
-        run(() -&gt; dao.insert(
-                new CustomerSummary(e.getId().stringValue(), e.getName(), false)))),
-      Case($(instanceOf(CustomerActivated.class)), e -&gt;
-        run(() -&gt; dao.updateStatus(targetId, true))),
-      Case($(instanceOf(CustomerDeactivated.class)), e -&gt;
-        run(() -&gt; dao.updateStatus(targetId, false))),
-      Case($(), o -&gt; run(() -&gt; {
-        log.warn("{} does not have any event projection handler", event);
-      })));
-
-  }
-
 }</code></pre>
 </div>
 </div>
@@ -1119,7 +983,7 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <div class="sect3">
 <h4 id="3-2-2-example1module"><a class="anchor" href="#3-2-2-example1module"></a>3.2.2 Example1Module</h4>
 <div class="paragraph">
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.java">Example1Module</a></p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.kt">Example1Module</a></p>
 </div>
 </div>
 <div class="sect3">
@@ -1128,48 +992,42 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <p>Now finally you will see this test passing:</p>
 </div>
 <div class="listingblock">
-<div class="title">Example1AcceptanceIt.java</div>
+<div class="title">Example1AcceptanceIt.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">  @Test
-  public void create_customer(TestContext context) {
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">  @Test
+  fun create_customer(context: TestContext) {
 
     // This test is asynchronous, so get an async handler to inform the test when we are done.
-    final Async async = context.async();
+    val async = context.async()
 
-    val customerId = new CustomerId(UUID.randomUUID().toString());
-    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer test");
-    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer test");
-    val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
-            new Version(1), singletonList(expectedEvent));
+    val customerId = CustomerId(UUID.randomUUID().toString())
+    val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer-test")
+    val expectedEvent = CustomerCreated(customerId, "customer-test")
+    val expectedUow = EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, Version(1),
+            listOf&lt;DomainEvent&gt;(expectedEvent))
 
-    val json = Json.encodePrettily(createCustomerCmd);
+    val json = Json.encodePrettily(createCustomerCmd)
 
-    vertx.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer.class)
-            + "/commands")
-      .putHeader("content-type", "application/json")
-      .putHeader("content-length", Integer.toString(json.length()))
-      .handler(response -&gt; {
-        context.assertEquals(response.statusCode(), 201);
-        context.assertTrue(response.headers().get("content-type").contains("application/json"));
-        response.bodyHandler(body -&gt; {
-          val cmdExec = Json.decodeValue(body.toString(), CommandExecution.class);
-          val uow = cmdExec.getUnitOfWork();
-          if (cmdExec.getUnitOfWork() != null) {
-            context.assertEquals(uow.targetId(), expectedUow.targetId());
-            context.assertEquals(uow.getCommand(), expectedUow.getCommand());
-            context.assertEquals(uow.getEvents(), expectedUow.getEvents());
-            context.assertEquals(uow.getVersion(), expectedUow.getVersion());
-          } else {
-            fail("should be success");
-          }
-          async.complete();
-        });
-      })
-      .write(json)
-      .end();
-
+    vertx.createHttpClient().put(port, "localhost",
+            "/" + aggregateRootId(Customer::class.java) + "/commands")
+            .putHeader("content-type", "application/json")
+            .putHeader("content-length", Integer.toString(json.length))
+            .handler { response -&gt;
+              context.assertEquals(response.statusCode(), 201);
+              context.assertTrue(response.headers().get("content-type").contains("application/json"));
+              response.bodyHandler { body -&gt;
+                println("---&gt; body " + body)
+                val cmdExec = Json.decodeValue(body.toString(), CommandExecution::class.java)
+                context.assertEquals(cmdExec.unitOfWork.targetId(), expectedUow.targetId())
+                context.assertEquals(cmdExec.unitOfWork.command, expectedUow.command)
+                context.assertEquals(cmdExec.unitOfWork.events, expectedUow.events)
+                context.assertEquals(cmdExec.unitOfWork.version, expectedUow.version)
+                async.complete()
+              }
+            }
+            .write(json)
+            .end()
   }
-
 
 }</code></pre>
 </div>
@@ -1200,16 +1058,16 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/CommandRestVerticle.java">CommandRestVerticle</a> to receive commands as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/CommandRestVerticle.kt">CommandRestVerticle</a> to receive commands as JSON</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/CommandHandlerVerticle.java">CommandHandlerVerticle</a> to validate and process commands against the aggregate</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/CommandHandlerVerticle.kt">CommandHandlerVerticle</a> to validate and process commands against the aggregate</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/repositories/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting unit of work /events into a single table</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/repositories/EntityUnitOfWorkRepository.kt">EntityUnitOfWorkRepository</a> to store resulting unit of work /events into a single table</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EventsProjectionVerticle.java">EventsProjectionVerticle</a> to propagate and project events to read model database</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EventsProjectionVerticle.kt">EventsProjectionVerticle</a> to propagate and project events to read model database</p>
 </li>
 </ul>
 </div>
@@ -1219,7 +1077,7 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <div id="footer">
 <div id="footer-text">
 Version 0.0.5<br>
-Last updated 2017-08-21 19:17:58 BRT
+Last updated 2017-08-21 19:17:15 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
