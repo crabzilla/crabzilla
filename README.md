@@ -5,7 +5,9 @@
 [Overview](https://crabzilla.github.io/crabzilla/docs/overview.html)
 
 [example-manual](https://crabzilla.github.io/crabzilla/docs/example-manual.html)
+
 [vavr-example-manual](https://crabzilla.github.io/crabzilla/docs/vavr-example-manual.html)
+
 [kotlin-example-manual](https://crabzilla.github.io/crabzilla/docs/kotlin-example-manual.html)
 
 [Architecture decision records](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
