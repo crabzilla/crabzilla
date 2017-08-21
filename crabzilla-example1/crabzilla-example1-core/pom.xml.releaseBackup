@@ -1,29 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla</artifactId>
+        <artifactId>crabzilla-example1</artifactId>
         <version>0.0.5-SNAPSHOT</version>
     </parent>
 
-    <artifactId>crabzilla-core</artifactId>
+    <artifactId>crabzilla-example1-core</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
 
+        <!-- own -->
+
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
+            <groupId>io.github.crabzilla</groupId>
+            <artifactId>crabzilla-core</artifactId>
         </dependency>
 
-        <!-- to inform Jackson on how to serialize polymorphic objects: Command, Event, EntityId, .. -->
+        <!-- util -->
 
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
         </dependency>
 
         <!-- test -->
