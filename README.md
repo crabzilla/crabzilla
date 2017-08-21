@@ -2,8 +2,6 @@
 
 # crabzilla
 
-Yet another Event Sourcing experiment
-
 [Overview](https://crabzilla.github.io/crabzilla/docs/overview.html)
 
 [Example-manual](https://crabzilla.github.io/crabzilla/docs/vavr-example-manual.html)
