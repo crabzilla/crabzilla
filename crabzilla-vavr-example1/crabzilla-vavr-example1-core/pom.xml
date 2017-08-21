@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.github.crabzilla</groupId>
         <artifactId>crabzilla-vavr-example1</artifactId>
-        <version>0.0.5</version>
+        <version>0.0.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>crabzilla-vavr-example1-core</artifactId>
