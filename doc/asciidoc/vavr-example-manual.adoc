@@ -11,6 +11,8 @@ ifndef::sourcedir[:sourcedir: ../../main/java]
 
 Status: *WORK IN PROGRESS*
 
+This example is based on http://www.vavr.io[Vavr]
+
 Let's examine the crabzilla-vavr-example1 example with just one aggregate: Customer.
 
 * An user can create a new customer

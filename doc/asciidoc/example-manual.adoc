@@ -11,6 +11,8 @@ ifndef::sourcedir[:sourcedir: ../../main/java]
 
 Status: *WORK IN PROGRESS*
 
+This example does not import any library except for Crabzilla core and vertx modules.
+
 Let's examine the crabzilla-example1 example with just one aggregate: Customer.
 
 * An user can create a new customer
