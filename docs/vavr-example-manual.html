@@ -423,7 +423,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="header">
 <h1>crabzilla-vavr-example1</h1>
 <div class="details">
-<span id="revnumber">version 0.0.4</span>
+<span id="revnumber">version 0.0.5</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -699,25 +699,26 @@ services and repositories are just plain domain abstractions: interfaces or abst
 <div class="listingblock">
 <div class="title">Customer.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package crabzilla.example1.customer;
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.customer;
 
-import crabzilla.example1.services.SampleInternalService;
-import crabzilla.org.model.Aggregate;
-import crabzilla.org.model.DomainEvent;
+import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.Wither;
+import io.github.crabzilla.example1.services.SampleInternalService;
+import io.github.crabzilla.model.Aggregate;
+import io.github.crabzilla.model.DomainEvent;
 
 import java.util.List;
 
-import static crabzilla.example1.customer.CustomerData.*;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.Validate.validState;
+import static io.github.crabzilla.example1.customer.CustomerData.*;
 
 @Value
 @Wither
 public class Customer implements Aggregate {
 
-  transient SampleInternalService service;
+  @NonNull transient SampleInternalService service;
 
   CustomerId id;
   String name;
@@ -751,7 +752,7 @@ public class Customer implements Aggregate {
 <div class="listingblock">
 <div class="title">SampleInternalService.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package crabzilla.example1.services;
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.services;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -771,7 +772,7 @@ public interface SampleInternalService {
 <div class="listingblock">
 <div class="title">CustomerSummary.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package crabzilla.example1.readmodel;
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.readmodel;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -799,7 +800,7 @@ public class CustomerSummary {
 <div class="listingblock">
 <div class="title">CustomerRepository.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package crabzilla.example1.readmodel;
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.readmodel;
 
 import java.util.List;
 
@@ -891,9 +892,9 @@ CREATE TABLE customer_summary (
 <div class="listingblock">
 <div class="title">CustomerSummaryDao.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package crabzilla.example1;
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1;
 
-import crabzilla.example1.readmodel.CustomerSummary;
+import io.github.crabzilla.example1.readmodel.CustomerSummary;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -939,23 +940,20 @@ also a factory and a module for each aggregate we have.</p>
 <div class="listingblock">
 <div class="title">CustomerFactory</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package crabzilla.example1.customer;
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.customer;
 
 
-import crabzilla.example1.services.SampleInternalService;
-import crabzilla.org.model.*;
-import crabzilla.vertx.AggregateRootComponentsFactory;
 import io.vertx.core.Vertx;
 import io.vertx.ext.jdbc.JDBCClient;
+import io.github.crabzilla.example1.services.SampleInternalService;
+import io.github.crabzilla.model.*;
+import io.github.crabzilla.vertx.AggregateRootComponentsFactory;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import static crabzilla.example1.customer.CustomerFunctions.CommandHandlerFn;
-import static crabzilla.example1.customer.CustomerFunctions.CommandValidatorFn;
 
 public class CustomerFactory implements AggregateRootComponentsFactory&lt;Customer&gt; {
 
@@ -965,8 +963,7 @@ public class CustomerFactory implements AggregateRootComponentsFactory&lt;Custom
 
   @Inject
   public CustomerFactory(SampleInternalService service, Vertx vertx, JDBCClient jdbcClient) {
-    this.seedValue = new Customer(null, null, null, false, null)
-            .withService(service);
+    this.seedValue = new Customer(service, null, null, false, null);
     this.vertx = vertx;
     this.jdbcClient = jdbcClient;
   }
@@ -989,12 +986,12 @@ public class CustomerFactory implements AggregateRootComponentsFactory&lt;Custom
 
   @Override
   public Function&lt;EntityCommand, List&lt;String&gt;&gt; cmdValidatorFn() {
-    return new CommandValidatorFn();
+    return new CustomerFunctions.CommandValidatorFn();
   }
 
   @Override
   public BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, CommandHandlerResult&gt; cmdHandlerFn() {
-    return new CommandHandlerFn(instance -&gt;
+    return new CustomerFunctions.CommandHandlerFn(instance -&gt;
             new StateTransitionsTracker&lt;&gt;(instance, stateTransitionFn()));
   }
 
@@ -1017,16 +1014,16 @@ public class CustomerFactory implements AggregateRootComponentsFactory&lt;Custom
 <div class="listingblock">
 <div class="title">CustomerModule</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package crabzilla.example1.customer;
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.customer;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
-import crabzilla.vertx.verticles.CommandHandlerVerticle;
-import crabzilla.vertx.verticles.CommandRestVerticle;
 import io.vertx.core.Verticle;
+import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle;
+import io.github.crabzilla.vertx.verticles.CommandRestVerticle;
 
 public class CustomerModule extends AbstractModule {
 
@@ -1077,17 +1074,15 @@ public class CustomerModule extends AbstractModule {
 <div class="listingblock">
 <div class="title">Example1EventProjector</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package crabzilla.example1;
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1;
 
-import crabzilla.example1.customer.CustomerData.CustomerCreated;
-import crabzilla.example1.readmodel.CustomerSummary;
-import crabzilla.org.model.DomainEvent;
-import crabzilla.org.stack.EventProjector;
+import io.github.crabzilla.example1.customer.CustomerData;
+import io.github.crabzilla.example1.readmodel.CustomerSummary;
+import io.github.crabzilla.model.DomainEvent;
+import io.github.crabzilla.stack.EventProjector;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 
-import static crabzilla.example1.customer.CustomerData.CustomerActivated;
-import static crabzilla.example1.customer.CustomerData.CustomerDeactivated;
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
 
@@ -1104,12 +1099,12 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
     log.info("writing event {} from channel {}", event, eventsChannelId);
 
     Match(event).of(
-      Case($(instanceOf(CustomerCreated.class)), e -&gt;
+      Case($(instanceOf(CustomerData.CustomerCreated.class)), e -&gt;
         run(() -&gt; dao.insert(
                 new CustomerSummary(e.getId().stringValue(), e.getName(), false)))),
-      Case($(instanceOf(CustomerActivated.class)), e -&gt;
+      Case($(instanceOf(CustomerData.CustomerActivated.class)), e -&gt;
         run(() -&gt; dao.updateStatus(targetId, true))),
-      Case($(instanceOf(CustomerDeactivated.class)), e -&gt;
+      Case($(instanceOf(CustomerData.CustomerDeactivated.class)), e -&gt;
         run(() -&gt; dao.updateStatus(targetId, false))),
       Case($(), o -&gt; run(() -&gt; {
         log.warn("{} does not have any event projection handler", event);
@@ -1124,7 +1119,7 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <div class="sect3">
 <h4 id="3-2-2-example1module"><a class="anchor" href="#3-2-2-example1module"></a>3.2.2 Example1Module</h4>
 <div class="paragraph">
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/crabzilla/example1/Example1Module.java">Example1Module</a></p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.java">Example1Module</a></p>
 </div>
 </div>
 <div class="sect3">
@@ -1149,7 +1144,7 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 
     val json = Json.encodePrettily(createCustomerCmd);
 
-    vertx.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer.class)
+    vertx.createHttpClient().put(port, "localhost", "/" + StringHelper.aggregateRootId(Customer.class)
             + "/commands")
       .putHeader("content-type", "application/json")
       .putHeader("content-length", Integer.toString(json.length()))
@@ -1205,16 +1200,16 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/crabzilla/vertx/verticles/CommandRestVerticle.java">CommandRestVerticle</a> to receive commands as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/CommandRestVerticle.java">CommandRestVerticle</a> to receive commands as JSON</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/crabzilla/vertx/verticles/CommandHandlerVerticle.java">CommandHandlerVerticle</a> to validate and process commands against the aggregate</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/CommandHandlerVerticle.java">CommandHandlerVerticle</a> to validate and process commands against the aggregate</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/crabzilla/vertx/repositories/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting unit of work /events into a single table</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/repositories/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting unit of work /events into a single table</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/crabzilla/vertx/verticles/EventsProjectionVerticle.java">EventsProjectionVerticle</a> to propagate and project events to read model database</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EventsProjectionVerticle.java">EventsProjectionVerticle</a> to propagate and project events to read model database</p>
 </li>
 </ul>
 </div>
@@ -1223,8 +1218,8 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.0.4<br>
-Last updated 2017-08-18 18:42:30 BRT
+Version 0.0.5<br>
+Last updated 2017-08-21 03:01:46 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

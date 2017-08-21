@@ -1,6 +1,12 @@
 package io.github.crabzilla.example1;
 
 import com.google.inject.Guice;
+import io.github.crabzilla.example1.customer.Customer;
+import io.github.crabzilla.model.EntityUnitOfWork;
+import io.github.crabzilla.model.Version;
+import io.github.crabzilla.stack.CommandExecution;
+import io.github.crabzilla.stack.StringHelper;
+import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -13,13 +19,6 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import io.github.crabzilla.example1.customer.Customer;
-import io.github.crabzilla.example1.customer.CustomerData;
-import io.github.crabzilla.model.EntityUnitOfWork;
-import io.github.crabzilla.model.Version;
-import io.github.crabzilla.stack.CommandExecution;
-import io.github.crabzilla.stack.StringHelper;
-import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.After;
 import org.junit.Before;
@@ -31,6 +30,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+import static io.github.crabzilla.example1.customer.CustomerData.*;
 import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.lang.System.setProperty;
 import static java.util.Collections.singletonList;
@@ -102,9 +102,9 @@ public class Example1AcceptanceIT {
     // This test is asynchronous, so get an async handler to inform the test when we are done.
     final Async async = context.async();
 
-    val customerId = new CustomerData.CustomerId(UUID.randomUUID().toString());
-    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer test");
-    val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer test");
+    val customerId = new CustomerId(UUID.randomUUID().toString());
+    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer test");
+    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer test");
     val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
             new Version(1), singletonList(expectedEvent));
 

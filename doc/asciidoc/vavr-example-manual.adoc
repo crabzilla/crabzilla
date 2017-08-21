@@ -189,7 +189,7 @@ Now finally you will see this test passing:
 [source,java]
 .Example1AcceptanceIt.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/test/java/crabzilla/example1/Example1AcceptanceIT.java[tags=create_customer_test]
+include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/test/java/io/github/crabzilla/example1/Example1AcceptanceIT.java[tags=create_customer_test]
 ----
 
 == Conclusion
