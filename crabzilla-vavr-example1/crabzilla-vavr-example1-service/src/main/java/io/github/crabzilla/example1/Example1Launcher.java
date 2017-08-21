@@ -1,6 +1,11 @@
 package io.github.crabzilla.example1;
 
 import com.google.inject.Guice;
+import io.github.crabzilla.example1.customer.Customer;
+import io.github.crabzilla.example1.customer.CustomerData;
+import io.github.crabzilla.stack.CommandExecution;
+import io.github.crabzilla.stack.StringHelper;
+import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -8,11 +13,6 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.logging.SLF4JLogDelegateFactory;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import io.github.crabzilla.example1.customer.Customer;
-import io.github.crabzilla.example1.customer.CustomerData;
-import io.github.crabzilla.stack.CommandExecution;
-import io.github.crabzilla.stack.StringHelper;
-import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
 
 import javax.inject.Inject;
 import java.util.Map;

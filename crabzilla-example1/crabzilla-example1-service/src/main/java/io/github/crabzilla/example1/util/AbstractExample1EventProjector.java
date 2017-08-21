@@ -1,9 +1,9 @@
 package io.github.crabzilla.example1.util;
 
-import lombok.extern.slf4j.Slf4j;
-import io.github.crabzilla.example1.dao.CustomerSummaryDao;
+import io.github.crabzilla.example1.CustomerSummaryDao;
 import io.github.crabzilla.model.DomainEvent;
 import io.github.crabzilla.stack.EventProjector;
+import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 
 import java.lang.invoke.MethodHandle;

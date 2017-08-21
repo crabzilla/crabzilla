@@ -2,12 +2,11 @@ package io.github.crabzilla.example1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
-import io.vertx.core.Vertx;
-import lombok.val;
-import io.github.crabzilla.example1.dao.CustomerSummaryDao;
 import io.github.crabzilla.example1.readmodel.CustomerSummary;
 import io.github.crabzilla.stack.EventProjector;
 import io.github.crabzilla.stack.ProjectionData;
+import io.vertx.core.Vertx;
+import lombok.val;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,10 +16,10 @@ import javax.inject.Inject;
 import java.time.Instant;
 import java.util.UUID;
 
+import static io.github.crabzilla.example1.customer.CustomerData.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static io.github.crabzilla.example1.customer.CustomerData.*;
 
 @DisplayName("An Example1EventProjector")
 public class Example1EventProjectorIT {

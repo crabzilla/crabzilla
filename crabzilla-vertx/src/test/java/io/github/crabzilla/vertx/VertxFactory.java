@@ -1,15 +1,15 @@
 package io.github.crabzilla.vertx;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
-import lombok.val;
 import io.github.crabzilla.model.DomainEvent;
 import io.github.crabzilla.model.EntityCommand;
 import io.github.crabzilla.model.EntityId;
 import io.github.crabzilla.model.EntityUnitOfWork;
 import io.github.crabzilla.stack.CommandExecution;
 import io.github.crabzilla.vertx.codecs.JacksonGenericCodec;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.Json;
+import lombok.val;
 
 public class VertxFactory {
 

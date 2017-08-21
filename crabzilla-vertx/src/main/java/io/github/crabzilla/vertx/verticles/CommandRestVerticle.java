@@ -1,5 +1,9 @@
 package io.github.crabzilla.vertx.verticles;
 
+import io.github.crabzilla.model.EntityCommand;
+import io.github.crabzilla.model.EntityUnitOfWork;
+import io.github.crabzilla.stack.CommandExecution;
+import io.github.crabzilla.stack.StringHelper;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -11,10 +15,6 @@ import io.vertx.ext.web.RoutingContext;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import io.github.crabzilla.model.EntityCommand;
-import io.github.crabzilla.model.EntityUnitOfWork;
-import io.github.crabzilla.stack.CommandExecution;
-import io.github.crabzilla.stack.StringHelper;
 
 
 @Slf4j

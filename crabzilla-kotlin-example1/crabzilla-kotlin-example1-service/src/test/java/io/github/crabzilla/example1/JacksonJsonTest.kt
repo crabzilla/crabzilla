@@ -5,8 +5,6 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
-import io.vertx.core.json.Json
-import org.assertj.core.api.Assertions.assertThat
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated
@@ -15,6 +13,8 @@ import io.github.crabzilla.model.Command
 import io.github.crabzilla.model.DomainEvent
 import io.github.crabzilla.model.EntityUnitOfWork
 import io.github.crabzilla.model.Version
+import io.vertx.core.json.Json
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Instant

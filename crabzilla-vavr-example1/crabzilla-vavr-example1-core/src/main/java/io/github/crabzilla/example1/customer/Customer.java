@@ -1,17 +1,17 @@
 package io.github.crabzilla.example1.customer;
 
-import lombok.NonNull;
-import lombok.Value;
-import lombok.experimental.Wither;
 import io.github.crabzilla.example1.services.SampleInternalService;
 import io.github.crabzilla.model.Aggregate;
 import io.github.crabzilla.model.DomainEvent;
+import lombok.NonNull;
+import lombok.Value;
+import lombok.experimental.Wither;
 
 import java.util.List;
 
+import static io.github.crabzilla.example1.customer.CustomerData.*;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.Validate.validState;
-import static io.github.crabzilla.example1.customer.CustomerData.*;
 
 @Value
 @Wither

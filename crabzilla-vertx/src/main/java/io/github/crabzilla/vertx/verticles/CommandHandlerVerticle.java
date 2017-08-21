@@ -1,5 +1,11 @@
 package io.github.crabzilla.vertx.verticles;
 
+import io.github.crabzilla.model.*;
+import io.github.crabzilla.stack.CommandExecution;
+import io.github.crabzilla.stack.DbConcurrencyException;
+import io.github.crabzilla.stack.StringHelper;
+import io.github.crabzilla.stack.UnknownCommandException;
+import io.github.crabzilla.vertx.repositories.EntityUnitOfWorkRepository;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
@@ -11,12 +17,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import net.jodah.expiringmap.ExpiringMap;
-import io.github.crabzilla.model.*;
-import io.github.crabzilla.stack.CommandExecution;
-import io.github.crabzilla.stack.DbConcurrencyException;
-import io.github.crabzilla.stack.StringHelper;
-import io.github.crabzilla.stack.UnknownCommandException;
-import io.github.crabzilla.vertx.repositories.EntityUnitOfWorkRepository;
 
 import java.util.List;
 import java.util.function.BiFunction;

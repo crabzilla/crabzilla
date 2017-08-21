@@ -1,4 +1,4 @@
-= crabzilla-vavr-example1
+= crabzilla-example1
 :sourcedir: src/main/java
 :source-highlighter: highlightjs
 :highlightjsdir: highlight
@@ -11,7 +11,7 @@ ifndef::sourcedir[:sourcedir: ../../main/java]
 
 Status: *WORK IN PROGRESS*
 
-Let's examine the crabzilla-vavr-example1 example with just one aggregate: Customer.
+Let's examine the crabzilla-example1 example with just one aggregate: Customer.
 
 * An user can create a new customer
 * An user can activate an existing customer
@@ -21,7 +21,7 @@ Let's examine the crabzilla-vavr-example1 example with just one aggregate: Custo
 [.thumb]
 image::example1.png[scaledwidth=100%]
 
-== 1.0 crabzilla-vavr-example1-core
+== 1.0 crabzilla-example1-core
 
 This module contains only domain code: value objects, aggregates, commands, events, etc. Within this module, internal
 services and repositories are just plain domain abstractions: interfaces or abstract classes.
@@ -33,7 +33,7 @@ services and repositories are just plain domain abstractions: interfaces or abst
 [source,java]
 .CustomerData.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerData.java[tags=events]
+include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerData.java[tags=events]
 ----
 
 ==== 1.1.2 Commands
@@ -41,7 +41,7 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io
 [source,java]
 .CustomerData.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerData.java[tags=commands]
+include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerData.java[tags=commands]
 ----
 
 === 1.2 Functions
@@ -51,7 +51,7 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io
 [source,java]
 .CustomerFunctions.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerFunctions.java[tags=CommandValidatorFn]
+include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerFunctions.java[tags=CommandValidatorFn]
 ----
 
 ==== 1.2.2 CommandHandlerFn
@@ -59,7 +59,7 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io
 [source,java]
 .CustomerFunctions.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerFunctions.java[tags=CommandHandlerFn]
+include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerFunctions.java[tags=CommandHandlerFn]
 ----
 
 ==== 1.2.3 StateTransitionFn
@@ -67,7 +67,7 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io
 [source,java]
 .CustomerFunctions.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerFunctions.java[tags=StateTransitionFn]
+include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerFunctions.java[tags=StateTransitionFn]
 ----
 
 === 1.3 Aggregate
@@ -77,7 +77,7 @@ An aggregate proceeds with business logic and emit events.
 [source,java]
 .Customer.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/customer/Customer.java[ ]
+include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/Customer.java[ ]
 ----
 
 === 1.4 Internal Services
@@ -87,7 +87,7 @@ Any internal service is expressed as an abstraction. No implementations within c
 [source,java]
 .SampleInternalService.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/services/SampleInternalService.java[ ]
+include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/services/SampleInternalService.java[ ]
 ----
 
 === 1.5 Read Model
@@ -95,7 +95,7 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io
 [source,java]
 .CustomerSummary.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/readmodel/CustomerSummary.java[ ]
+include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/readmodel/CustomerSummary.java[ ]
 ----
 
 Any repository is expressed as an abstraction. No implementations within core module.
@@ -103,13 +103,13 @@ Any repository is expressed as an abstraction. No implementations within core mo
 [source,java]
 .CustomerRepository.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/readmodel/CustomerRepository.java[ ]
+include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/readmodel/CustomerRepository.java[ ]
 ----
 
 Example1 domain is built of functions. So far we didn't had to worry about any implementation detail. Example1 domain
 can be easily tested with mocks and stubs.
 
-== 2.0 crabzilla-vavr-example1-database
+== 2.0 crabzilla-example1-database
 
 Here we will setup the Flyway to init our database and implements our DAOs.
 
@@ -119,7 +119,7 @@ This script creates a table to store events resulting from commands and also a t
 [source,sql]
 .V1__write_model.sql
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-database/src/main/resources/db/migration/V1__write_model.sql[ ]
+include::./crabzilla-example1/crabzilla-example1-database/src/main/resources/db/migration/V1__write_model.sql[ ]
 ----
 
 === 2.1.1 Read model
@@ -128,7 +128,7 @@ For this example, our read model is only:
 [source,sql]
 .V2__read_model.sql
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-database/src/main/resources/db/migration/V2__read_model.sql[ ]
+include::./crabzilla-example1/crabzilla-example1-database/src/main/resources/db/migration/V2__read_model.sql[ ]
 ----
 
 === 2.2.0 DAO implementations
@@ -138,12 +138,12 @@ We also need to implement our DAOs for storing and retrieving read models. For t
 [source,java]
 .CustomerSummaryDao.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-database/src/main/java/io/github/crabzilla/example1/CustomerSummaryDao.java[ ]
+include::./crabzilla-example1/crabzilla-example1-database/src/main/java/io/github/crabzilla/example1/CustomerSummaryDao.java[ ]
 ----
 
 Now we have a running database !
 
-== 3.0 crabzilla-vavr-example1-service
+== 3.0 crabzilla-example1-service
 
 Here is the module where we will run our domain model. We have to provide / wire components for our Example1 context and
 also a factory and a module for each aggregate we have.
@@ -155,7 +155,7 @@ also a factory and a module for each aggregate we have.
 [source,java]
 .CustomerFactory
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerFactory.java[ ]
+include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerFactory.java[ ]
 ----
 
 ==== 3.1.2 CustomerModule
@@ -163,7 +163,7 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java
 [source,java]
 .CustomerModule
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerModule.java[ ]
+include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerModule.java[ ]
 ----
 
 === 3.2.0 Example1
@@ -175,12 +175,12 @@ A Bounded context can have many EventProjectors. This example has just one event
 [source,java]
 .Example1EventProjector
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/io/github/crabzilla/example1/Example1EventProjector.java[ ]
+include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1EventProjector.java[ ]
 ----
 
 ==== 3.2.2 Example1Module
 
-https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.java[Example1Module]
+https://github.com/crabzilla/crabzilla/blob/master/crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.java[Example1Module]
 
 ==== 3.2.3 Example1AcceptanceIt
 
@@ -189,7 +189,7 @@ Now finally you will see this test passing:
 [source,java]
 .Example1AcceptanceIt.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/test/java/io/github/crabzilla/example1/Example1AcceptanceIT.java[tags=create_customer_test]
+include::./crabzilla-example1/crabzilla-example1-service/src/test/java/io/github/crabzilla/example1/Example1AcceptanceIT.java[tags=create_customer_test]
 ----
 
 == Conclusion

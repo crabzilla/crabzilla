@@ -1,16 +1,16 @@
 package io.github.crabzilla.vertx;
 
+import io.github.crabzilla.model.*;
+import io.github.crabzilla.stack.StringHelper;
+import io.github.crabzilla.vertx.repositories.EntityUnitOfWorkRepository;
+import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle;
+import io.github.crabzilla.vertx.verticles.CommandRestVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
 import io.vertx.ext.jdbc.JDBCClient;
 import lombok.val;
 import net.jodah.expiringmap.ExpiringMap;
-import io.github.crabzilla.model.*;
-import io.github.crabzilla.stack.StringHelper;
-import io.github.crabzilla.vertx.repositories.EntityUnitOfWorkRepository;
-import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle;
-import io.github.crabzilla.vertx.verticles.CommandRestVerticle;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

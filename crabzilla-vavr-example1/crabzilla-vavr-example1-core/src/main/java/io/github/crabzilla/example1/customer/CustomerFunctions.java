@@ -1,23 +1,23 @@
 package io.github.crabzilla.example1.customer;
 
+import io.github.crabzilla.model.*;
+import io.github.crabzilla.stack.UnknownCommandException;
 import io.vavr.Function3;
 import io.vavr.collection.CharSeq;
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import io.github.crabzilla.model.*;
-import io.github.crabzilla.stack.UnknownCommandException;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static io.github.crabzilla.example1.customer.CustomerData.*;
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
 import static java.util.Collections.emptyList;
-import static io.github.crabzilla.example1.customer.CustomerData.*;
 
 public class CustomerFunctions {
 

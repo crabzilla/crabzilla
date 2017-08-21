@@ -1,5 +1,12 @@
 package io.github.crabzilla.vertx.verticles;
 
+import io.github.crabzilla.example1.customer.CustomerData;
+import io.github.crabzilla.model.EntityUnitOfWork;
+import io.github.crabzilla.model.Version;
+import io.github.crabzilla.stack.EventProjector;
+import io.github.crabzilla.stack.ProjectionData;
+import io.github.crabzilla.stack.StringHelper;
+import io.github.crabzilla.vertx.VertxFactory;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
@@ -8,13 +15,6 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import lombok.val;
-import io.github.crabzilla.example1.customer.CustomerData;
-import io.github.crabzilla.model.EntityUnitOfWork;
-import io.github.crabzilla.model.Version;
-import io.github.crabzilla.stack.EventProjector;
-import io.github.crabzilla.stack.ProjectionData;
-import io.github.crabzilla.stack.StringHelper;
-import io.github.crabzilla.vertx.VertxFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -4,12 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import io.vertx.core.json.Json;
-import lombok.val;
 import io.github.crabzilla.example1.customer.CustomerData;
 import io.github.crabzilla.model.EntityCommand;
 import io.github.crabzilla.model.EntityUnitOfWork;
 import io.github.crabzilla.model.Version;
+import io.vertx.core.json.Json;
+import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

@@ -1,8 +1,8 @@
 package io.github.crabzilla.example1.util;
 
-import lombok.extern.slf4j.Slf4j;
 import io.github.crabzilla.model.Aggregate;
 import io.github.crabzilla.model.DomainEvent;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

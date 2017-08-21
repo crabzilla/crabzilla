@@ -5,9 +5,9 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
-import io.vertx.core.Verticle;
 import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle;
 import io.github.crabzilla.vertx.verticles.CommandRestVerticle;
+import io.vertx.core.Verticle;
 
 public class CustomerModule extends AbstractModule {
 
@@ -18,10 +18,13 @@ public class CustomerModule extends AbstractModule {
     bind(CustomerFactory.class).asEagerSingleton();
 
     // to bind verticles for this aggregate
-    TypeLiteral<CommandRestVerticle<Customer>> restType = new TypeLiteral<CommandRestVerticle<Customer>>() {};
-    TypeLiteral<CommandHandlerVerticle<Customer>> handlerType = new TypeLiteral<CommandHandlerVerticle<Customer>>() {};
+    TypeLiteral<CommandRestVerticle<Customer>> restType =
+            new TypeLiteral<CommandRestVerticle<Customer>>() {};
+    TypeLiteral<CommandHandlerVerticle<Customer>> handlerType =
+            new TypeLiteral<CommandHandlerVerticle<Customer>>() {};
 
-    MapBinder<String, Verticle> mapbinder = MapBinder.newMapBinder(binder(), String.class, Verticle.class);
+    MapBinder<String, Verticle> mapbinder =
+            MapBinder.newMapBinder(binder(), String.class, Verticle.class);
 
     mapbinder.addBinding("customer.rest").to(restType);
     mapbinder.addBinding("customer.handler").to(handlerType);

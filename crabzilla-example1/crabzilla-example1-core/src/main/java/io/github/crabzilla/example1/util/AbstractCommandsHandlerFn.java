@@ -1,7 +1,7 @@
 package io.github.crabzilla.example1.util;
 
-import lombok.val;
 import io.github.crabzilla.model.*;
+import lombok.val;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

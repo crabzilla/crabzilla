@@ -1,7 +1,7 @@
 package io.github.crabzilla.stack;
 
-import lombok.Value;
 import io.github.crabzilla.model.DomainEvent;
+import lombok.Value;
 
 import java.io.Serializable;
 import java.util.List;

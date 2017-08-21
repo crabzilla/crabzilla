@@ -1,11 +1,11 @@
 package io.github.crabzilla.example1.customer;
 
-import lombok.NonNull;
-import lombok.Value;
-import lombok.experimental.Wither;
 import io.github.crabzilla.example1.services.SampleInternalService;
 import io.github.crabzilla.model.Aggregate;
 import io.github.crabzilla.model.DomainEvent;
+import lombok.NonNull;
+import lombok.Value;
+import lombok.experimental.Wither;
 
 import java.util.List;
 

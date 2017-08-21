@@ -1,6 +1,11 @@
 package io.github.crabzilla.example1;
 
 import com.google.inject.Guice;
+import io.github.crabzilla.example1.customer.Customer;
+import io.github.crabzilla.model.EntityUnitOfWork;
+import io.github.crabzilla.model.Version;
+import io.github.crabzilla.stack.CommandExecution;
+import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -13,12 +18,6 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import io.github.crabzilla.example1.customer.Customer;
-import io.github.crabzilla.example1.dao.CustomerSummaryDao;
-import io.github.crabzilla.model.EntityUnitOfWork;
-import io.github.crabzilla.model.Version;
-import io.github.crabzilla.stack.CommandExecution;
-import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.After;
 import org.junit.Before;
@@ -30,11 +29,11 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+import static io.github.crabzilla.example1.customer.CustomerData.*;
+import static io.github.crabzilla.stack.StringHelper.aggregateRootId;
 import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.lang.System.setProperty;
 import static java.util.Collections.singletonList;
-import static io.github.crabzilla.example1.customer.CustomerData.*;
-import static io.github.crabzilla.stack.StringHelper.aggregateRootId;
 import static org.junit.Assert.fail;
 
 @RunWith(VertxUnitRunner.class)
@@ -106,16 +105,18 @@ public class Example1AcceptanceIT {
     val customerId = new CustomerId(UUID.randomUUID().toString());
     val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer test");
     val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer test");
-    val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
+            new Version(1), singletonList(expectedEvent));
 
     val json = Json.encodePrettily(createCustomerCmd);
 
-    vertx.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer.class) + "/commands")
+    vertx.createHttpClient().put(port, "localhost",
+            "/" + aggregateRootId(Customer.class) + "/commands")
       .putHeader("content-type", "application/json")
       .putHeader("content-length", Integer.toString(json.length()))
       .handler(response -> {
         context.assertEquals(response.statusCode(), 201);
-//        context.assertTrue(response.headers().get("content-type").contains("application/json"));
+        context.assertTrue(response.headers().get("content-type").contains("application/json"));
         response.bodyHandler(body -> {
           val cmdExec = Json.decodeValue(body.toString(), CommandExecution.class);
           val uow = cmdExec.getUnitOfWork();
@@ -135,8 +136,7 @@ public class Example1AcceptanceIT {
 
   }
 
-  // tag::create_customer_test[]
-
+  // end::create_customer_test[]
 
   @Test
   public void activate_unknown_customer(TestContext context) {
@@ -149,7 +149,8 @@ public class Example1AcceptanceIT {
 
     val json = Json.encodePrettily(activateCustomer);
 
-    vertx.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer.class) + "/commands")
+    vertx.createHttpClient().put(port, "localhost",
+            "/" + aggregateRootId(Customer.class) + "/commands")
             .putHeader("content-type", "application/json")
             .putHeader("content-length", Integer.toString(json.length()))
             .handler(response -> {

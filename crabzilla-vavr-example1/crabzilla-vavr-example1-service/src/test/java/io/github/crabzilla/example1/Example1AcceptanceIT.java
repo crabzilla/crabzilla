@@ -5,7 +5,6 @@ import io.github.crabzilla.example1.customer.Customer;
 import io.github.crabzilla.model.EntityUnitOfWork;
 import io.github.crabzilla.model.Version;
 import io.github.crabzilla.stack.CommandExecution;
-import io.github.crabzilla.stack.StringHelper;
 import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Verticle;
@@ -31,7 +30,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static io.github.crabzilla.example1.customer.CustomerData.*;
-import static io.github.crabzilla.stack.StringHelper.*;
+import static io.github.crabzilla.stack.StringHelper.aggregateRootId;
 import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.lang.System.setProperty;
 import static java.util.Collections.singletonList;

@@ -2,6 +2,8 @@ package io.github.crabzilla.vertx.repositories;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import io.github.crabzilla.model.*;
+import io.github.crabzilla.stack.DbConcurrencyException;
 import io.vertx.core.Future;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -13,8 +15,6 @@ import io.vertx.ext.sql.UpdateResult;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import io.github.crabzilla.model.*;
-import io.github.crabzilla.stack.DbConcurrencyException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,8 +23,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static io.vertx.core.json.Json.mapper;
 import static io.github.crabzilla.vertx.repositories.VertxSqlHelper.*;
+import static io.vertx.core.json.Json.mapper;
 
 @Slf4j
 public class EntityUnitOfWorkRepository {

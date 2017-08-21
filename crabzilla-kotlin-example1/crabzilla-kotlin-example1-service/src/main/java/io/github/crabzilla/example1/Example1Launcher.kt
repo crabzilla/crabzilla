@@ -1,12 +1,6 @@
 package io.github.crabzilla.example1
 
 import com.google.inject.Guice
-import io.vertx.core.Vertx
-import io.vertx.core.eventbus.DeliveryOptions
-import io.vertx.core.logging.LoggerFactory
-import io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME
-import io.vertx.core.logging.SLF4JLogDelegateFactory
-import mu.KotlinLogging
 import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.Customer
@@ -16,6 +10,12 @@ import io.github.crabzilla.stack.StringHelper.commandHandlerId
 import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle
 import io.github.crabzilla.vertx.verticles.CommandRestVerticle
 import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle
+import io.vertx.core.Vertx
+import io.vertx.core.eventbus.DeliveryOptions
+import io.vertx.core.logging.LoggerFactory
+import io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME
+import io.vertx.core.logging.SLF4JLogDelegateFactory
+import mu.KotlinLogging
 import java.lang.System.setProperty
 import java.util.*
 import javax.inject.Inject

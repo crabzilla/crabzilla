@@ -10,11 +10,6 @@ import com.google.inject.Singleton
 import com.google.inject.name.Names
 import com.typesafe.config.ConfigFactory
 import com.zaxxer.hikari.HikariDataSource
-import io.vertx.circuitbreaker.CircuitBreaker
-import io.vertx.circuitbreaker.CircuitBreakerOptions
-import io.vertx.core.Vertx
-import io.vertx.core.json.Json.mapper
-import io.vertx.ext.jdbc.JDBCClient
 import io.github.crabzilla.example1.customer.CustomerModule
 import io.github.crabzilla.example1.services.SampleInternalServiceImpl
 import io.github.crabzilla.model.*
@@ -22,6 +17,11 @@ import io.github.crabzilla.stack.CommandExecution
 import io.github.crabzilla.stack.EventProjector
 import io.github.crabzilla.vertx.codecs.JacksonGenericCodec
 import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle
+import io.vertx.circuitbreaker.CircuitBreaker
+import io.vertx.circuitbreaker.CircuitBreakerOptions
+import io.vertx.core.Vertx
+import io.vertx.core.json.Json.mapper
+import io.vertx.ext.jdbc.JDBCClient
 import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.core.kotlin.KotlinPlugin
 import org.jdbi.v3.sqlobject.SqlObjectPlugin
@@ -31,21 +31,15 @@ import java.util.*
 internal class Example1Module(val vertx: Vertx) : AbstractModule() {
 
   override fun configure() {
-
     configureVertx()
-
     // aggregates
     install(CustomerModule())
-
     // database
     install(DatabaseModule())
-
     // services
     bind(SampleInternalService::class.java).to(SampleInternalServiceImpl::class.java).asEagerSingleton()
-
     // exposes properties to guice
     setCfgProps()
-
   }
 
   private fun setCfgProps() {
@@ -76,7 +70,8 @@ internal class Example1Module(val vertx: Vertx) : AbstractModule() {
 
   @Provides
   @Singleton
-  fun eventsProjectorVerticle(eventProjector: EventProjector<CustomerSummaryDao>): EventsProjectionVerticle<CustomerSummaryDao> {
+  fun eventsProjectorVerticle(eventProjector: EventProjector<CustomerSummaryDao>):
+          EventsProjectionVerticle<CustomerSummaryDao> {
     val circuitBreaker = CircuitBreaker.create("events-projection-circuit-breaker", vertx,
             CircuitBreakerOptions()
                     .setMaxFailures(5) // number SUCCESS failure before opening the circuit
@@ -101,7 +96,6 @@ internal class Example1Module(val vertx: Vertx) : AbstractModule() {
   fun jdbcClient(vertx: Vertx, dataSource: HikariDataSource): JDBCClient {
     return JDBCClient.create(vertx, dataSource)
   }
-
 
   //  Not being used yet. This can improve a lot serialization speed (it's binary).
   //  But so far it was not necessary.

@@ -1,16 +1,6 @@
 package io.github.crabzilla.example1
 
 import com.google.inject.Guice
-import io.vertx.core.DeploymentOptions
-import io.vertx.core.Vertx
-import io.vertx.core.json.Json
-import io.vertx.core.json.JsonObject
-import io.vertx.core.logging.LoggerFactory
-import io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME
-import io.vertx.core.logging.SLF4JLogDelegateFactory
-import io.vertx.ext.unit.TestContext
-import io.vertx.ext.unit.junit.VertxUnitRunner
-import lombok.extern.slf4j.Slf4j
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCreated
@@ -23,6 +13,16 @@ import io.github.crabzilla.stack.StringHelper.aggregateRootId
 import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle
 import io.github.crabzilla.vertx.verticles.CommandRestVerticle
 import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle
+import io.vertx.core.DeploymentOptions
+import io.vertx.core.Vertx
+import io.vertx.core.json.Json
+import io.vertx.core.json.JsonObject
+import io.vertx.core.logging.LoggerFactory
+import io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME
+import io.vertx.core.logging.SLF4JLogDelegateFactory
+import io.vertx.ext.unit.TestContext
+import io.vertx.ext.unit.junit.VertxUnitRunner
+import lombok.extern.slf4j.Slf4j
 import org.jdbi.v3.core.Jdbi
 import org.junit.After
 import org.junit.Before
@@ -105,18 +105,18 @@ class Example1AcceptanceIT {
     val customerId = CustomerId(UUID.randomUUID().toString())
     val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer-test")
     val expectedEvent = CustomerCreated(customerId, "customer-test")
-    val expectedUow = EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, Version(1), listOf<DomainEvent>(expectedEvent))
+    val expectedUow = EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, Version(1),
+            listOf<DomainEvent>(expectedEvent))
 
     val json = Json.encodePrettily(createCustomerCmd)
 
-    println("---> " + json)
-
-    vertx.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer::class.java) + "/commands")
+    vertx.createHttpClient().put(port, "localhost",
+            "/" + aggregateRootId(Customer::class.java) + "/commands")
             .putHeader("content-type", "application/json")
             .putHeader("content-length", Integer.toString(json.length))
             .handler { response ->
-              //        context.assertEquals(response.statusCode(), 201);
-              //        context.assertTrue(response.headers().get("content-type").contains("application/json"));
+              context.assertEquals(response.statusCode(), 201);
+              context.assertTrue(response.headers().get("content-type").contains("application/json"));
               response.bodyHandler { body ->
                 println("---> body " + body)
                 val cmdExec = Json.decodeValue(body.toString(), CommandExecution::class.java)
@@ -129,9 +129,7 @@ class Example1AcceptanceIT {
             }
             .write(json)
             .end()
-
   }
-
   // tag::create_customer_test[]
 
 }

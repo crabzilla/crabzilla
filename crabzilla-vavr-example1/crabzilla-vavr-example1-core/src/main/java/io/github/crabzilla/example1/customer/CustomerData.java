@@ -1,9 +1,9 @@
 package io.github.crabzilla.example1.customer;
 
-import lombok.Value;
 import io.github.crabzilla.model.DomainEvent;
 import io.github.crabzilla.model.EntityCommand;
 import io.github.crabzilla.model.EntityId;
+import lombok.Value;
 
 import java.time.Instant;
 import java.util.UUID;

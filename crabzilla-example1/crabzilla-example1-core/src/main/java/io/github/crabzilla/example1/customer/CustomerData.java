@@ -1,9 +1,9 @@
 package io.github.crabzilla.example1.customer;
 
-import lombok.Value;
 import io.github.crabzilla.model.DomainEvent;
 import io.github.crabzilla.model.EntityCommand;
 import io.github.crabzilla.model.EntityId;
+import lombok.Value;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -20,7 +20,7 @@ public class CustomerData {
     }
   }
 
-  // commands
+  // tag::commands[]
 
   @Value
   public static class CreateCustomer implements EntityCommand {
@@ -44,6 +44,7 @@ public class CustomerData {
     String reason;
   }
 
+  // end::commands[]
 
   @Value
   public static class DeactivateCustomer implements EntityCommand {
@@ -58,7 +59,7 @@ public class CustomerData {
     CustomerData.CustomerId targetId;
   }
 
-  // events
+  // tag::events[]
 
   @Value
   public static class CustomerActivated implements DomainEvent {
@@ -77,5 +78,7 @@ public class CustomerData {
     String reason;
     Instant when;
   }
+
+  // end::events[]
 
 }

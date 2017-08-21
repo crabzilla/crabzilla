@@ -1,9 +1,8 @@
 package io.github.crabzilla.example1;
 
-import lombok.extern.slf4j.Slf4j;
-import io.github.crabzilla.example1.dao.CustomerSummaryDao;
 import io.github.crabzilla.example1.readmodel.CustomerSummary;
 import io.github.crabzilla.example1.util.AbstractExample1EventProjector;
+import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 
 import static io.github.crabzilla.example1.customer.CustomerData.*;
@@ -12,7 +11,8 @@ import static io.github.crabzilla.example1.customer.CustomerData.*;
 public class Example1EventProjector extends AbstractExample1EventProjector<CustomerSummaryDao> {
 
   protected Example1EventProjector(String eventsChannelId,
-                                   Class<CustomerSummaryDao> customerSummaryDaoClass, Jdbi jdbi) {
+                                   Class<CustomerSummaryDao> customerSummaryDaoClass,
+                                   Jdbi jdbi) {
     super(eventsChannelId, customerSummaryDaoClass, jdbi);
   }
 

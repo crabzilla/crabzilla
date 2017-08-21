@@ -1,16 +1,16 @@
 package io.github.crabzilla.stack;
 
+import io.github.crabzilla.model.EntityUnitOfWork;
 import lombok.NonNull;
 import lombok.Value;
-import io.github.crabzilla.model.EntityUnitOfWork;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
+import static io.github.crabzilla.stack.CommandExecution.RESULT.*;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static io.github.crabzilla.stack.CommandExecution.RESULT.*;
 
 @Value
 public class CommandExecution implements Serializable {

@@ -1,11 +1,11 @@
 package io.github.crabzilla.example1.customer
 
 
-import io.vertx.core.Vertx
-import io.vertx.ext.jdbc.JDBCClient
 import io.github.crabzilla.example1.SampleInternalService
 import io.github.crabzilla.model.*
 import io.github.crabzilla.vertx.AggregateRootComponentsFactory
+import io.vertx.core.Vertx
+import io.vertx.ext.jdbc.JDBCClient
 import java.util.function.BiFunction
 import java.util.function.Function
 import java.util.function.Supplier

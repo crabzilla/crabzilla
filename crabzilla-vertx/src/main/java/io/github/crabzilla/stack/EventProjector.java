@@ -1,9 +1,9 @@
 package io.github.crabzilla.stack;
 
+import io.github.crabzilla.model.DomainEvent;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import io.github.crabzilla.model.DomainEvent;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 

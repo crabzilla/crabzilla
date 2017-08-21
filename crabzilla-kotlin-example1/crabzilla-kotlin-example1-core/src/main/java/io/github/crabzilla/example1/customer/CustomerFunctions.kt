@@ -7,6 +7,8 @@ import io.github.crabzilla.stack.UnknownCommandException
 import java.util.function.BiFunction
 import java.util.function.Function
 
+// tag::StateTransitionFn[]
+
 class StateTransitionFn : BiFunction<DomainEvent, Customer, Customer> {
   override fun apply(event: DomainEvent, customer: Customer): Customer {
     return when(event) {
@@ -15,8 +17,12 @@ class StateTransitionFn : BiFunction<DomainEvent, Customer, Customer> {
       is CustomerDeactivated -> customer.copy(isActive = false, reason = event.reason)
       else -> customer
     }
-  } // <2>
+  }
 }
+
+// end::StateTransitionFn[]
+
+// tag::CommandValidatorFn[]
 
 class CommandValidatorFn : Function<EntityCommand, List<String>> { // <3>
   override fun apply(command: EntityCommand): List<String> {
@@ -29,6 +35,10 @@ class CommandValidatorFn : Function<EntityCommand, List<String>> { // <3>
   }
 }
 
+// end::CommandValidatorFn[]
+
+// tag::CommandHandlerFn[]
+
 class CommandHandlerFn(private val trackerFactory: StateTransitionsTrackerFactory<Customer>) :
         BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> {
 
@@ -39,7 +49,8 @@ class CommandHandlerFn(private val trackerFactory: StateTransitionsTrackerFactor
 
     return resultOf {
       when (cmd) {
-        is CreateCustomer -> uowOf(cmd, customer.create(cmd.targetId as CustomerId, cmd.name), newVersion)
+        is CreateCustomer ->
+          uowOf(cmd, customer.create(cmd.targetId as CustomerId, cmd.name), newVersion)
         is ActivateCustomer -> uowOf(cmd, customer.activate(cmd.reason), newVersion)
         is DeactivateCustomer -> uowOf(cmd, customer.deactivate(cmd.reason), newVersion)
         is CreateActivateCustomer -> {
@@ -55,3 +66,5 @@ class CommandHandlerFn(private val trackerFactory: StateTransitionsTrackerFactor
     }
   }
 }
+
+// end::CommandHandlerFn[]

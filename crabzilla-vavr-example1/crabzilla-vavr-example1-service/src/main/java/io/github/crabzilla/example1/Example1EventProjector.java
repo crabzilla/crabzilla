@@ -1,12 +1,12 @@
 package io.github.crabzilla.example1;
 
-import io.github.crabzilla.example1.customer.CustomerData;
 import io.github.crabzilla.example1.readmodel.CustomerSummary;
 import io.github.crabzilla.model.DomainEvent;
 import io.github.crabzilla.stack.EventProjector;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 
+import static io.github.crabzilla.example1.customer.CustomerData.*;
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
 
@@ -23,12 +23,12 @@ public class Example1EventProjector extends EventProjector<CustomerSummaryDao> {
     log.info("writing event {} from channel {}", event, eventsChannelId);
 
     Match(event).of(
-      Case($(instanceOf(CustomerData.CustomerCreated.class)), e ->
+      Case($(instanceOf(CustomerCreated.class)), e ->
         run(() -> dao.insert(
                 new CustomerSummary(e.getId().stringValue(), e.getName(), false)))),
-      Case($(instanceOf(CustomerData.CustomerActivated.class)), e ->
+      Case($(instanceOf(CustomerActivated.class)), e ->
         run(() -> dao.updateStatus(targetId, true))),
-      Case($(instanceOf(CustomerData.CustomerDeactivated.class)), e ->
+      Case($(instanceOf(CustomerDeactivated.class)), e ->
         run(() -> dao.updateStatus(targetId, false))),
       Case($(), o -> run(() -> {
         log.warn("{} does not have any event projection handler", event);

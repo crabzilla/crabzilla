@@ -6,17 +6,18 @@ import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerDeactivated
 import io.github.crabzilla.model.DomainEvent
 import io.github.crabzilla.stack.EventProjector
+import mu.KotlinLogging
 import org.jdbi.v3.core.Jdbi
 
 class Example1EventProjector(channelId: String, daoClazz: Class<CustomerSummaryDao>, jdbi: Jdbi)
 
   : EventProjector<CustomerSummaryDao>(channelId, daoClazz, jdbi) {
 
-  //val log = KotlinLogging.logger {}
+  val log = KotlinLogging.logger {}
 
   override fun write(dao: CustomerSummaryDao, targetId: String, event: DomainEvent) {
 
-    //log.info("event {} from channel {}", event, eventsChannelId)
+    log.info("event {} from channel {}", event, eventsChannelId)
 
     when (event) {
       is CustomerCreated -> dao.insert(CustomerSummary(targetId, event.name, false))
