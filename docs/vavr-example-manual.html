@@ -1144,7 +1144,7 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 
     val json = Json.encodePrettily(createCustomerCmd);
 
-    vertx.createHttpClient().put(port, "localhost", "/" + StringHelper.aggregateRootId(Customer.class)
+    vertx.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer.class)
             + "/commands")
       .putHeader("content-type", "application/json")
       .putHeader("content-length", Integer.toString(json.length()))

@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static io.github.crabzilla.example1.customer.CustomerData.*;
+import static io.github.crabzilla.stack.StringHelper.*;
 import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.lang.System.setProperty;
 import static java.util.Collections.singletonList;
@@ -110,7 +111,7 @@ public class Example1AcceptanceIT {
 
     val json = Json.encodePrettily(createCustomerCmd);
 
-    vertx.createHttpClient().put(port, "localhost", "/" + StringHelper.aggregateRootId(Customer.class)
+    vertx.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer.class)
             + "/commands")
       .putHeader("content-type", "application/json")
       .putHeader("content-length", Integer.toString(json.length()))
