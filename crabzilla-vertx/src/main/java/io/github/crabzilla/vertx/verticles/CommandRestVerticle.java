@@ -16,6 +16,8 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
+import static io.github.crabzilla.stack.StringHelper.*;
+
 
 @Slf4j
 public class CommandRestVerticle<E> extends AbstractVerticle {
@@ -29,7 +31,7 @@ public class CommandRestVerticle<E> extends AbstractVerticle {
   @Override
   public void start() throws Exception {
     val router = Router.router(vertx);
-    router.route(HttpMethod.PUT, "/" + StringHelper.aggregateRootId(aggregateRootClass) + "/commands")
+    router.route(HttpMethod.PUT, "/" + aggregateRootId(aggregateRootClass) + "/commands")
           .handler(contextHandler());
     val server = vertx.createHttpServer();
     server.requestHandler(router::accept).listen(config().getInteger("http.port", 8080));
@@ -43,7 +45,7 @@ public class CommandRestVerticle<E> extends AbstractVerticle {
         val httpResp = routingContext.request().response();
         val options = new DeliveryOptions().setCodecName("EntityCommand");
 
-        vertx.<CommandExecution>eventBus().send(StringHelper.commandHandlerId(aggregateRootClass), command, options, response -> {
+        vertx.<CommandExecution>eventBus().send(commandHandlerId(aggregateRootClass), command, options, response -> {
           if (response.succeeded()) {
             val result = (CommandExecution) response.result().body();
             val resultAsJson = Json.encodePrettily(result);
@@ -52,7 +54,7 @@ public class CommandRestVerticle<E> extends AbstractVerticle {
               val headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence()+"");
               val optionsUow = new DeliveryOptions().setCodecName(EntityUnitOfWork.class.getSimpleName())
                       .setHeaders(headers);
-              vertx.<String>eventBus().publish(StringHelper.eventsHandlerId("example1"), result.getUnitOfWork(), optionsUow);
+              vertx.<String>eventBus().publish(eventsHandlerId("example1"), result.getUnitOfWork(), optionsUow);
               httpResp.setStatusCode(201);
             } else {
               httpResp.setStatusCode(400); // TODO

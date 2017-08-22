@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static io.github.crabzilla.stack.CommandExecution.*;
 import static java.util.Collections.singletonList;
 
 @Slf4j
@@ -64,18 +65,18 @@ public class CommandHandlerVerticle<A extends Aggregate> extends AbstractVerticl
     return (Message<EntityCommand> msg) -> {
       val command = msg.body();
       if (command==null) {
-        msg.reply(CommandExecution.VALIDATION_ERROR(singletonList("Command cannot be null. Check if JSON payload is valid.")));
+        msg.reply(VALIDATION_ERROR(singletonList("Command cannot be null. Check if JSON payload is valid.")));
         return;
       }
       log.info("received a command {}", command);
       val constraints = validatorFn.apply(command);
       if (!constraints.isEmpty()) {
-        msg.reply(CommandExecution.VALIDATION_ERROR(command.getCommandId(), constraints));
+        msg.reply(VALIDATION_ERROR(command.getCommandId(), constraints));
         return;
       }
       circuitBreaker.fallback(throwable -> {
         log.error("Fallback for command " + command.getCommandId(), throwable);
-        return CommandExecution.FALLBACK(command.getCommandId());
+        return FALLBACK(command.getCommandId());
       })
       .<CommandExecution>execute(cmdHandler(command))
       .setHandler(resultHandler(msg));
@@ -127,7 +128,7 @@ public class CommandHandlerVerticle<A extends Aggregate> extends AbstractVerticl
                 val error =  appendAsyncResult.cause();
                 log.error("When appending uow of command {} -> {}", command.getCommandId(), error.getMessage());
                 if (error instanceof DbConcurrencyException) {
-                  future2.complete(CommandExecution.CONCURRENCY_ERROR(command.getCommandId(), error.getMessage()));
+                  future2.complete(CONCURRENCY_ERROR(command.getCommandId(), error.getMessage()));
                 } else {
                   future2.fail(appendAsyncResult.cause());
                 }
@@ -137,16 +138,16 @@ public class CommandHandlerVerticle<A extends Aggregate> extends AbstractVerticl
               cache.put(targetId, finalSnapshot);
               val uowSequence = appendAsyncResult.result();
               log.info("uowSequence: {}", uowSequence);
-              future2.complete(CommandExecution.SUCCESS(uow, uowSequence));
+              future2.complete(SUCCESS(uow, uowSequence));
             });
           });
 
           result.inCaseOfError(error -> {
             log.error("CommandExecution: {}", error.getMessage());
             if (error instanceof UnknownCommandException) {
-              future2.complete(CommandExecution.UNKNOWN_COMMAND(command.getCommandId()));
+              future2.complete(UNKNOWN_COMMAND(command.getCommandId()));
             } else {
-              future2.complete(CommandExecution.HANDLING_ERROR(command.getCommandId(), error.getMessage()));
+              future2.complete(HANDLING_ERROR(command.getCommandId(), error.getMessage()));
             }
           });
 
@@ -170,12 +171,8 @@ public class CommandHandlerVerticle<A extends Aggregate> extends AbstractVerticl
         val resp = resultHandler.result();
         log.info("** success: {}", resp);
         val options = new DeliveryOptions().setCodecName("CommandExecution");
-        msg.reply(resp, options, new Handler<AsyncResult<Message<CommandExecution>>>() {
-          @Override
-          public void handle(AsyncResult<Message<CommandExecution>> event) {
-            log.info("succeeded ?: "+ event.succeeded());
-          }
-        });
+        msg.reply(resp, options, (Handler<AsyncResult<Message<CommandExecution>>>)
+                event -> log.info("succeeded ?: "+ event.succeeded()));
       } else {
         log.error("error cause: {}", resultHandler.cause());
         log.error("error message: {}", resultHandler.cause().getMessage());

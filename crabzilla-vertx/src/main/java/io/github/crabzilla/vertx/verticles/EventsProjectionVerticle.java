@@ -14,6 +14,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
+import static io.github.crabzilla.stack.StringHelper.*;
 import static java.util.Collections.singletonList;
 
 @Slf4j
@@ -30,7 +31,7 @@ public class EventsProjectionVerticle<DAO> extends AbstractVerticle {
 
   @Override
   public void start() throws Exception {
-    vertx.eventBus().consumer(StringHelper.eventsHandlerId("example1"), msgHandler());
+    vertx.eventBus().consumer(eventsHandlerId("example1"), msgHandler());
   }
 
   Handler<Message<EntityUnitOfWork>> msgHandler() {
