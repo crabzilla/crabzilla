@@ -958,6 +958,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static io.github.crabzilla.example1.customer.CustomerFunctions.*;
+
 public class CustomerFactory implements AggregateRootComponentsFactory&lt;Customer&gt; {
 
   private final Vertx vertx;
@@ -984,17 +986,17 @@ public class CustomerFactory implements AggregateRootComponentsFactory&lt;Custom
 
   @Override
   public BiFunction&lt;DomainEvent, Customer, Customer&gt; stateTransitionFn() {
-    return new CustomerFunctions.StateTransitionFn();
+    return new StateTransitionFn();
   }
 
   @Override
   public Function&lt;EntityCommand, List&lt;String&gt;&gt; cmdValidatorFn() {
-    return new CustomerFunctions.CommandValidatorFn();
+    return new CommandValidatorFn();
   }
 
   @Override
   public BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, CommandHandlerResult&gt; cmdHandlerFn() {
-    return new CustomerFunctions.CommandHandlerFn(instance -&gt;
+    return new CommandHandlerFn(instance -&gt;
             new StateTransitionsTracker&lt;&gt;(instance, stateTransitionFn()));
   }
 
@@ -1222,7 +1224,7 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <div id="footer">
 <div id="footer-text">
 Version 0.0.5<br>
-Last updated 2017-08-21 19:50:15 BRT
+Last updated 2017-08-21 23:14:58 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
