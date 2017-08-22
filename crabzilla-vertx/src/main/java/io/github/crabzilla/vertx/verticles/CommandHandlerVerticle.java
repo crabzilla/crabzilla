@@ -23,6 +23,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static io.github.crabzilla.stack.CommandExecution.*;
+import static io.github.crabzilla.stack.StringHelper.*;
 import static java.util.Collections.singletonList;
 
 @Slf4j
@@ -58,7 +59,7 @@ public class CommandHandlerVerticle<A extends Aggregate> extends AbstractVerticl
 
   @Override
   public void start() throws Exception {
-    vertx.eventBus().consumer(StringHelper.commandHandlerId(aggregateRootClass), msgHandler());
+    vertx.eventBus().consumer(commandHandlerId(aggregateRootClass), msgHandler());
   }
 
   Handler<Message<EntityCommand>> msgHandler() {

@@ -22,17 +22,6 @@ interface KotlinEntityCommand : EntityCommand {
 
 }
 
-interface KotlinEntityId : EntityId {
-
-  val _id: String
-
-  @JsonIgnore
-  override fun stringValue(): String {
-    return _id
-  }
-
-}
-
 // helpers functions
 
 fun resultOf(f: () -> EntityUnitOfWork): CommandHandlerResult {

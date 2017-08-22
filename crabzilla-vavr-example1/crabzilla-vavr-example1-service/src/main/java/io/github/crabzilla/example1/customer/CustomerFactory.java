@@ -13,6 +13,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static io.github.crabzilla.example1.customer.CustomerFunctions.*;
+
 public class CustomerFactory implements AggregateRootComponentsFactory<Customer> {
 
   private final Vertx vertx;
@@ -39,17 +41,17 @@ public class CustomerFactory implements AggregateRootComponentsFactory<Customer>
 
   @Override
   public BiFunction<DomainEvent, Customer, Customer> stateTransitionFn() {
-    return new CustomerFunctions.StateTransitionFn();
+    return new StateTransitionFn();
   }
 
   @Override
   public Function<EntityCommand, List<String>> cmdValidatorFn() {
-    return new CustomerFunctions.CommandValidatorFn();
+    return new CommandValidatorFn();
   }
 
   @Override
   public BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> cmdHandlerFn() {
-    return new CustomerFunctions.CommandHandlerFn(instance ->
+    return new CommandHandlerFn(instance ->
             new StateTransitionsTracker<>(instance, stateTransitionFn()));
   }
 
