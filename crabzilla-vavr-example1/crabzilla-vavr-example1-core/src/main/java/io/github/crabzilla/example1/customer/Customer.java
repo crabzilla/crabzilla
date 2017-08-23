@@ -13,6 +13,7 @@ import static io.github.crabzilla.example1.customer.CustomerData.*;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.Validate.validState;
 
+// tag::aggregate[]
 @Value
 @Wither
 public class Customer implements Aggregate {
@@ -40,3 +41,4 @@ public class Customer implements Aggregate {
   }
 
 }
+// end::aggregate[]

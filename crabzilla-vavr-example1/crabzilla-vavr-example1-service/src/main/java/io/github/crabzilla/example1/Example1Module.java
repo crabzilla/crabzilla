@@ -32,6 +32,7 @@ import java.util.Properties;
 
 import static io.vertx.core.json.Json.mapper;
 
+// tag::module[]
 class Example1Module extends AbstractModule {
 
   final Vertx vertx;
@@ -44,19 +45,14 @@ class Example1Module extends AbstractModule {
   protected void configure() {
 
     configureVertx();
-
     // aggregates
     install(new CustomerModule());
-
     // database
     install(new DatabaseModule());
-
     // services
     bind(SampleInternalService.class).to(SampleInternalServiceImpl.class).asEagerSingleton();
-
     // exposes properties to guice
     setCfgProps();
-
   }
 
   private void setCfgProps() {
@@ -135,7 +131,7 @@ class Example1Module extends AbstractModule {
 
     vertx.eventBus().registerDefaultCodec(EntityUnitOfWork.class,
             new JacksonGenericCodec<>(mapper, EntityUnitOfWork.class));
-
   }
 
 }
+// end::module[]

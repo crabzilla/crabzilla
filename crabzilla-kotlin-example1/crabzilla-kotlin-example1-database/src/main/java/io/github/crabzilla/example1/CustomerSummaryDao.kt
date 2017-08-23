@@ -3,6 +3,7 @@ package io.github.crabzilla.example1
 import org.jdbi.v3.sqlobject.statement.SqlQuery
 import org.jdbi.v3.sqlobject.statement.SqlUpdate
 
+// tag::dao[]
 interface CustomerSummaryDao {
 
   @SqlUpdate("insert into customer_summary (id, name, is_active) values " +
@@ -17,3 +18,4 @@ interface CustomerSummaryDao {
   fun getAll(): List<CustomerSummary>
 
 }
+// end::dao[]

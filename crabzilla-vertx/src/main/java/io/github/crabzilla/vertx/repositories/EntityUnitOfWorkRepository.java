@@ -50,7 +50,6 @@ public class EntityUnitOfWorkRepository {
       val params = new JsonArray().add(uowId.toString());
 
       client.getConnection(getConn -> {
-
         if (getConn.failed()) {
           getFuture.fail(getConn.cause());
           return;
@@ -65,11 +64,8 @@ public class EntityUnitOfWorkRepository {
             getFuture.fail(resultSetAsyncResult.cause());
             return;
           }
-
           ResultSet rs = resultSetAsyncResult.result();
-
           val rows = rs.getRows();
-
           if (rows.size() == 0 ) {
             getFuture.complete(Optional.empty());
           } else {
@@ -81,17 +77,13 @@ public class EntityUnitOfWorkRepository {
               getFuture.complete(Optional.of(uow));
             }
           }
-
           sqlConn.close(done -> {
             if (done.failed()) {
               throw new RuntimeException(done.cause());
             }
           });
-
         });
-
       });
-
     }
 
     public void selectAfterVersion(@NonNull final String id, @NonNull final Version version,

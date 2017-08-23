@@ -10,6 +10,7 @@ import static io.github.crabzilla.example1.customer.CustomerData.*;
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
 
+// tag::projector[]
 @Slf4j
 public class Example1EventProjector extends EventProjector<CustomerSummaryDao> {
 
@@ -33,7 +34,7 @@ public class Example1EventProjector extends EventProjector<CustomerSummaryDao> {
       Case($(), o -> run(() -> {
         log.warn("{} does not have any event projection handler", event);
       })));
-
   }
 
 }
+// end::projector[]

@@ -9,6 +9,7 @@ import io.github.crabzilla.stack.EventProjector
 import mu.KotlinLogging
 import org.jdbi.v3.core.Jdbi
 
+// tag::projector[]
 class Example1EventProjector(channelId: String, daoClazz: Class<CustomerSummaryDao>, jdbi: Jdbi)
 
   : EventProjector<CustomerSummaryDao>(channelId, daoClazz, jdbi) {
@@ -27,3 +28,4 @@ class Example1EventProjector(channelId: String, daoClazz: Class<CustomerSummaryD
     }
   }
 }
+// end::projector[]

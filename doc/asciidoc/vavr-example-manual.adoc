@@ -50,6 +50,7 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io
 
 ==== 1.2.1 CommandValidatorFn
 
+A non blocking and side effect function:
 [source,java]
 .CustomerFunctions.java
 ----
@@ -58,6 +59,7 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io
 
 ==== 1.2.2 CommandHandlerFn
 
+An usually blocking side effect free function.
 [source,java]
 .CustomerFunctions.java
 ----
@@ -66,6 +68,7 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io
 
 ==== 1.2.3 StateTransitionFn
 
+A non blocking and side effect function:
 [source,java]
 .CustomerFunctions.java
 ----
@@ -74,12 +77,11 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io
 
 === 1.3 Aggregate
 
-An aggregate proceeds with business logic and emit events.
-
+An aggregate runs business logic and emit events. It can uses internal services .
 [source,java]
 .Customer.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/customer/Customer.java[ ]
+include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/customer/Customer.java[tags=aggregate]
 ----
 
 === 1.4 Internal Services
@@ -90,7 +92,7 @@ Any internal service is expressed as an abstraction. No implementations within c
 [source,java]
 .SampleInternalService.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/services/SampleInternalService.java[ ]
+include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/services/SampleInternalService.java[tags=service]
 ----
 
 === 1.5 Read Model
@@ -98,7 +100,7 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io
 [source,java]
 .CustomerSummary.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/readmodel/CustomerSummary.java[ ]
+include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/readmodel/CustomerSummary.java[tags=readmodel]
 ----
 
 Any repository is expressed as an abstraction. No implementations within core module.
@@ -106,7 +108,7 @@ Any repository is expressed as an abstraction. No implementations within core mo
 [source,java]
 .CustomerRepository.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/readmodel/CustomerRepository.java[ ]
+include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io/github/crabzilla/example1/readmodel/CustomerRepository.java[tags=readmodel]
 ----
 
 Example1 domain is built of functions. So far we didn't had to worry about any implementation detail. Example1 domain
@@ -141,7 +143,7 @@ We also need to implement our DAOs for storing and retrieving read models. For t
 [source,java]
 .CustomerSummaryDao.java
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-database/src/main/java/io/github/crabzilla/example1/CustomerSummaryDao.java[ ]
+include::./crabzilla-vavr-example1/crabzilla-vavr-example1-database/src/main/java/io/github/crabzilla/example1/CustomerSummaryDao.java[tags=dao]
 ----
 
 Now we have a running database !
@@ -158,7 +160,7 @@ also a factory and a module for each aggregate we have.
 [source,java]
 .CustomerFactory
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerFactory.java[ ]
+include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerFactory.java[tags=factory]
 ----
 
 ==== 3.1.2 CustomerModule
@@ -166,7 +168,7 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java
 [source,java]
 .CustomerModule
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerModule.java[ ]
+include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerModule.java[tags=module]
 ----
 
 === 3.2.0 Example1
@@ -178,7 +180,7 @@ A Bounded context can have many EventProjectors. This example has just one event
 [source,java]
 .Example1EventProjector
 ----
-include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/io/github/crabzilla/example1/Example1EventProjector.java[ ]
+include::./crabzilla-vavr-example1/crabzilla-vavr-example1-service/src/main/java/io/github/crabzilla/example1/Example1EventProjector.java[tags=projector]
 ----
 
 ==== 3.2.2 Example1Module

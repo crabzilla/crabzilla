@@ -11,6 +11,7 @@ import java.util.function.Function
 import java.util.function.Supplier
 import javax.inject.Inject
 
+// tag::factory[]
 class CustomerFactory @Inject
 constructor(service: SampleInternalService, private val vertx: Vertx,
             private val jdbcClient: JDBCClient) : AggregateRootComponentsFactory<Customer> {
@@ -50,3 +51,4 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
   }
 
 }
+// end::factory[]

@@ -9,6 +9,7 @@ import io.github.crabzilla.vertx.verticles.EntityCommandHandlerVerticle;
 import io.github.crabzilla.vertx.verticles.EntityCommandRestVerticle;
 import io.vertx.core.Verticle;
 
+// tag::module[]
 public class CustomerModule extends AbstractModule {
 
   @Override
@@ -44,3 +45,4 @@ public class CustomerModule extends AbstractModule {
   }
 
 }
+// end::module[]

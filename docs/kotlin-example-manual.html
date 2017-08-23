@@ -515,8 +515,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="1-0-crabzilla-kotlin-example1-core"><a class="anchor" href="#1-0-crabzilla-kotlin-example1-core"></a>1.0 crabzilla-kotlin-example1-core</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This module contains only domain code: value objects, aggregates, commands, events, etc. Within this module, internal
-services and repositories are just plain domain abstractions: interfaces or abstract classes.</p>
+<p>This module contains only domain code: value objects, aggregates, commands, events, functions, etc. Within this module,
+internal services and repositories are just plain domain abstractions: interfaces or abstract classes.</p>
 </div>
 <div class="sect2">
 <h3 id="1-1-data"><a class="anchor" href="#1-1-data"></a>1.1 Data</h3>
@@ -558,6 +558,9 @@ data class CreateActivateCustomer(override val _commandId: UUID,
 <h3 id="1-2-functions"><a class="anchor" href="#1-2-functions"></a>1.2 Functions</h3>
 <div class="sect3">
 <h4 id="1-2-1-commandvalidatorfn"><a class="anchor" href="#1-2-1-commandvalidatorfn"></a>1.2.1 CommandValidatorFn</h4>
+<div class="paragraph">
+<p>A non blocking and side effect function:</p>
+</div>
 <div class="listingblock">
 <div class="title">CustomerFunctions.kt</div>
 <div class="content">
@@ -576,6 +579,9 @@ data class CreateActivateCustomer(override val _commandId: UUID,
 </div>
 <div class="sect3">
 <h4 id="1-2-2-commandhandlerfn"><a class="anchor" href="#1-2-2-commandhandlerfn"></a>1.2.2 CommandHandlerFn</h4>
+<div class="paragraph">
+<p>An usually blocking side effect free function.</p>
+</div>
 <div class="listingblock">
 <div class="title">CustomerFunctions.kt</div>
 <div class="content">
@@ -611,6 +617,9 @@ data class CreateActivateCustomer(override val _commandId: UUID,
 </div>
 <div class="sect3">
 <h4 id="1-2-3-statetransitionfn"><a class="anchor" href="#1-2-3-statetransitionfn"></a>1.2.3 StateTransitionFn</h4>
+<div class="paragraph">
+<p>A non blocking and side effect function:</p>
+</div>
 <div class="listingblock">
 <div class="title">CustomerFunctions.kt</div>
 <div class="content">
@@ -631,20 +640,12 @@ data class CreateActivateCustomer(override val _commandId: UUID,
 <div class="sect2">
 <h3 id="1-3-aggregate"><a class="anchor" href="#1-3-aggregate"></a>1.3 Aggregate</h3>
 <div class="paragraph">
-<p>An aggregate proceeds with business logic and emit events.</p>
+<p>An aggregate runs business logic and emit events. It can uses internal services .</p>
 </div>
 <div class="listingblock">
 <div class="title">Customer.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1.customer
-
-import io.github.crabzilla.example1.SampleInternalService
-import io.github.crabzilla.example1.eventsOf
-import io.github.crabzilla.model.Aggregate
-import io.github.crabzilla.model.DomainEvent
-import io.github.crabzilla.model.EntityId
-
-data class Customer(val _id: CustomerId? = null,
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">data class Customer(val _id: CustomerId? = null,
                     val name: String? = null,
                     val isActive: Boolean? = false,
                     val reason: String? = null,
@@ -682,17 +683,10 @@ services can  be blocking but must be side effect free</strong>.</p>
 <div class="listingblock">
 <div class="title">services.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1
-
-import java.time.Instant
-import java.util.*
-
-interface SampleInternalService {
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">interface SampleInternalService {
 
   fun uuid(): UUID
-
   fun now(): Instant
-
 }</code></pre>
 </div>
 </div>
@@ -705,14 +699,11 @@ interface SampleInternalService {
 <div class="listingblock">
 <div class="title">readmodel.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1
-
-data class CustomerSummary(val id: String, val name: String, val isActive: Boolean)
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">data class CustomerSummary(val id: String, val name: String, val isActive: Boolean)
 
 interface CustomerRepository {
 
   fun getAll(): List&lt;CustomerSummary&gt;
-
 }</code></pre>
 </div>
 </div>
@@ -797,12 +788,7 @@ CREATE TABLE customer_summary (
 <div class="listingblock">
 <div class="title">CustomerSummaryDao.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1
-
-import org.jdbi.v3.sqlobject.statement.SqlQuery
-import org.jdbi.v3.sqlobject.statement.SqlUpdate
-
-interface CustomerSummaryDao {
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">interface CustomerSummaryDao {
 
   @SqlUpdate("insert into customer_summary (id, name, is_active) values " +
           "(:customerSummary.id, :customerSummary.name, false)")
@@ -838,20 +824,7 @@ also a factory and a module for each aggregate we have.</p>
 <div class="listingblock">
 <div class="title">CustomerFactory</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1.customer
-
-
-import io.github.crabzilla.example1.SampleInternalService
-import io.github.crabzilla.model.*
-import io.github.crabzilla.vertx.AggregateRootComponentsFactory
-import io.vertx.core.Vertx
-import io.vertx.ext.jdbc.JDBCClient
-import java.util.function.BiFunction
-import java.util.function.Function
-import java.util.function.Supplier
-import javax.inject.Inject
-
-class CustomerFactory @Inject
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CustomerFactory @Inject
 constructor(service: SampleInternalService, private val vertx: Vertx,
             private val jdbcClient: JDBCClient) : AggregateRootComponentsFactory&lt;Customer&gt; {
 
@@ -898,43 +871,7 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 <div class="listingblock">
 <div class="title">CustomerModule</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1.customer
-
-import com.google.inject.AbstractModule
-import com.google.inject.Provides
-import com.google.inject.Singleton
-import com.google.inject.TypeLiteral
-import com.google.inject.multibindings.MapBinder
-import io.github.crabzilla.vertx.verticles.EntityCommandHandlerVerticle
-import io.github.crabzilla.vertx.verticles.EntityCommandRestVerticle
-import io.vertx.core.Verticle
-
-class CustomerModule : AbstractModule() {
-
-  override fun configure() {
-    // to bind aggregate functions
-    bind(CustomerFactory::class.java).asEagerSingleton()
-    // to bind verticles for this aggregate
-    val restType = object : TypeLiteral&lt;EntityCommandRestVerticle&lt;Customer&gt;&gt;() {}
-    val handlerType = object : TypeLiteral&lt;EntityCommandHandlerVerticle&lt;Customer&gt;&gt;() {}
-    val mapbinder = MapBinder.newMapBinder(binder(), String::class.java, Verticle::class.java)
-    mapbinder.addBinding("customer.rest").to(restType)
-    mapbinder.addBinding("customer.handler").to(handlerType)
-  }
-
-  @Provides
-  @Singleton
-  internal fun restVerticle(componentsFactory: CustomerFactory): EntityCommandRestVerticle&lt;Customer&gt; {
-    return componentsFactory.restVerticle()
-  }
-
-  @Provides
-  @Singleton
-  internal fun handler(componentsFactory: CustomerFactory): EntityCommandHandlerVerticle&lt;Customer&gt; {
-    return componentsFactory.cmdHandlerVerticle()
-  }
-
-}</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin"></code></pre>
 </div>
 </div>
 </div>
@@ -949,18 +886,7 @@ class CustomerModule : AbstractModule() {
 <div class="listingblock">
 <div class="title">Example1EventProjector</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">package io.github.crabzilla.example1
-
-
-import io.github.crabzilla.example1.customer.CustomerActivated
-import io.github.crabzilla.example1.customer.CustomerCreated
-import io.github.crabzilla.example1.customer.CustomerDeactivated
-import io.github.crabzilla.model.DomainEvent
-import io.github.crabzilla.stack.EventProjector
-import mu.KotlinLogging
-import org.jdbi.v3.core.Jdbi
-
-class Example1EventProjector(channelId: String, daoClazz: Class&lt;CustomerSummaryDao&gt;, jdbi: Jdbi)
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class Example1EventProjector(channelId: String, daoClazz: Class&lt;CustomerSummaryDao&gt;, jdbi: Jdbi)
 
   : EventProjector&lt;CustomerSummaryDao&gt;(channelId, daoClazz, jdbi) {
 
@@ -1078,7 +1004,7 @@ class Example1EventProjector(channelId: String, daoClazz: Class&lt;CustomerSumma
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-08-23 00:09:00 BRT
+Last updated 2017-08-23 02:06:16 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

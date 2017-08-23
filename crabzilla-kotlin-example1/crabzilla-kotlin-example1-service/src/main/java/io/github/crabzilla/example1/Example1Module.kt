@@ -28,6 +28,7 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin
 import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import java.util.*
 
+// tag::module[]
 internal class Example1Module(val vertx: Vertx) : AbstractModule() {
 
   override fun configure() {
@@ -130,3 +131,4 @@ internal class Example1Module(val vertx: Vertx) : AbstractModule() {
   }
 
 }
+// end::module[]

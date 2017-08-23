@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 
 import static io.github.crabzilla.example1.customer.CustomerFunctions.*;
 
+// tag::factory[]
 public class CustomerFactory implements AggregateRootComponentsFactory<Customer> {
 
   private final Vertx vertx;
@@ -66,3 +67,4 @@ public class CustomerFactory implements AggregateRootComponentsFactory<Customer>
   }
 
 }
+// end::factory[]

@@ -6,6 +6,8 @@ import io.github.crabzilla.model.Aggregate
 import io.github.crabzilla.model.DomainEvent
 import io.github.crabzilla.model.EntityId
 
+// tag::aggregate[]
+
 data class Customer(val _id: CustomerId? = null,
                     val name: String? = null,
                     val isActive: Boolean? = false,
@@ -32,3 +34,6 @@ data class Customer(val _id: CustomerId? = null,
   }
 
 }
+
+
+// end::aggregate[]

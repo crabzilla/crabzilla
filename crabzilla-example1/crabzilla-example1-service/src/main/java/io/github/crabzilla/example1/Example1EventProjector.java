@@ -7,6 +7,7 @@ import org.jdbi.v3.core.Jdbi;
 
 import static io.github.crabzilla.example1.customer.CustomerData.*;
 
+// tag::projector[]
 @Slf4j
 public class Example1EventProjector extends AbstractExample1EventProjector<CustomerSummaryDao> {
 
@@ -28,3 +29,4 @@ public class Example1EventProjector extends AbstractExample1EventProjector<Custo
     dao.updateStatus(targetId, false);
   }
 }
+// end::projector[]

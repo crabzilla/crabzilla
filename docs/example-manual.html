@@ -579,6 +579,9 @@ services and repositories are just plain domain abstractions: interfaces or abst
 <h3 id="1-2-functions"><a class="anchor" href="#1-2-functions"></a>1.2 Functions</h3>
 <div class="sect3">
 <h4 id="1-2-1-commandvalidatorfn"><a class="anchor" href="#1-2-1-commandvalidatorfn"></a>1.2.1 CommandValidatorFn</h4>
+<div class="paragraph">
+<p>A non blocking and side effect function:</p>
+</div>
 <div class="listingblock">
 <div class="title">CustomerFunctions.java</div>
 <div class="content">
@@ -595,6 +598,9 @@ services and repositories are just plain domain abstractions: interfaces or abst
 </div>
 <div class="sect3">
 <h4 id="1-2-2-commandhandlerfn"><a class="anchor" href="#1-2-2-commandhandlerfn"></a>1.2.2 CommandHandlerFn</h4>
+<div class="paragraph">
+<p>An usually blocking side effect free function.</p>
+</div>
 <div class="listingblock">
 <div class="title">CustomerFunctions.java</div>
 <div class="content">
@@ -637,6 +643,9 @@ services and repositories are just plain domain abstractions: interfaces or abst
 </div>
 <div class="sect3">
 <h4 id="1-2-3-statetransitionfn"><a class="anchor" href="#1-2-3-statetransitionfn"></a>1.2.3 StateTransitionFn</h4>
+<div class="paragraph">
+<p>A non blocking and side effect function:</p>
+</div>
 <div class="listingblock">
 <div class="title">CustomerFunctions.java</div>
 <div class="content">
@@ -662,26 +671,12 @@ services and repositories are just plain domain abstractions: interfaces or abst
 <div class="sect2">
 <h3 id="1-3-aggregate"><a class="anchor" href="#1-3-aggregate"></a>1.3 Aggregate</h3>
 <div class="paragraph">
-<p>An aggregate proceeds with business logic and emit events.</p>
+<p>An aggregate runs business logic and emit events. It can uses internal services .</p>
 </div>
 <div class="listingblock">
 <div class="title">Customer.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.customer;
-
-import io.github.crabzilla.example1.services.SampleInternalService;
-import io.github.crabzilla.model.Aggregate;
-import io.github.crabzilla.model.DomainEvent;
-import lombok.NonNull;
-import lombok.Value;
-import lombok.experimental.Wither;
-
-import java.util.List;
-
-import static java.util.Collections.singletonList;
-import static org.apache.commons.lang3.Validate.validState;
-
-@Value
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">@Value
 @Wither
 public class Customer implements Aggregate {
 
@@ -721,17 +716,10 @@ public class Customer implements Aggregate {
 <div class="listingblock">
 <div class="title">SampleInternalService.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.services;
-
-import java.time.Instant;
-import java.util.UUID;
-
-public interface SampleInternalService {
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">public interface SampleInternalService {
 
   UUID uuid();
-
   Instant now();
-
 }</code></pre>
 </div>
 </div>
@@ -741,12 +729,7 @@ public interface SampleInternalService {
 <div class="listingblock">
 <div class="title">CustomerSummary.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.readmodel;
-
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">@Data
 @NoArgsConstructor
 public class CustomerSummary {
 
@@ -759,7 +742,6 @@ public class CustomerSummary {
     this.name = name;
     this.isActive = isActive;
   }
-
 }</code></pre>
 </div>
 </div>
@@ -769,14 +751,9 @@ public class CustomerSummary {
 <div class="listingblock">
 <div class="title">CustomerRepository.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.readmodel;
-
-import java.util.List;
-
-public interface CustomerRepository {
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">public interface CustomerRepository {
 
   List&lt;CustomerSummary&gt; getAll();
-
 }</code></pre>
 </div>
 </div>
@@ -860,18 +837,7 @@ CREATE TABLE customer_summary (
 <div class="listingblock">
 <div class="title">CustomerSummaryDao.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1;
-
-import io.github.crabzilla.example1.readmodel.CustomerSummary;
-import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
-import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.customizer.BindBean;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-
-import java.util.List;
-
-public interface CustomerSummaryDao {
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">public interface CustomerSummaryDao {
 
   @SqlUpdate("insert into customer_summary (id, name, is_active) values " +
           "(:id, :name, false)")
@@ -908,24 +874,7 @@ also a factory and a module for each aggregate we have.</p>
 <div class="listingblock">
 <div class="title">CustomerFactory</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.customer;
-
-
-import io.github.crabzilla.example1.services.SampleInternalService;
-import io.github.crabzilla.model.*;
-import io.github.crabzilla.vertx.AggregateRootComponentsFactory;
-import io.vertx.core.Vertx;
-import io.vertx.ext.jdbc.JDBCClient;
-
-import javax.inject.Inject;
-import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import static io.github.crabzilla.example1.customer.CustomerFunctions.*;
-
-public class CustomerFactory implements AggregateRootComponentsFactory&lt;Customer&gt; {
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">public class CustomerFactory implements AggregateRootComponentsFactory&lt;Customer&gt; {
 
   private final Customer seedValue;
   private final Vertx vertx;
@@ -982,18 +931,7 @@ public class CustomerFactory implements AggregateRootComponentsFactory&lt;Custom
 <div class="listingblock">
 <div class="title">CustomerModule</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1.customer;
-
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import com.google.inject.TypeLiteral;
-import com.google.inject.multibindings.MapBinder;
-import io.github.crabzilla.vertx.verticles.EntityCommandHandlerVerticle;
-import io.github.crabzilla.vertx.verticles.EntityCommandRestVerticle;
-import io.vertx.core.Verticle;
-
-public class CustomerModule extends AbstractModule {
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">public class CustomerModule extends AbstractModule {
 
   @Override
   protected void configure() {
@@ -1042,16 +980,7 @@ public class CustomerModule extends AbstractModule {
 <div class="listingblock">
 <div class="title">Example1EventProjector</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">package io.github.crabzilla.example1;
-
-import io.github.crabzilla.example1.readmodel.CustomerSummary;
-import io.github.crabzilla.example1.util.AbstractExample1EventProjector;
-import lombok.extern.slf4j.Slf4j;
-import org.jdbi.v3.core.Jdbi;
-
-import static io.github.crabzilla.example1.customer.CustomerData.*;
-
-@Slf4j
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">@Slf4j
 public class Example1EventProjector extends AbstractExample1EventProjector&lt;CustomerSummaryDao&gt; {
 
   protected Example1EventProjector(String eventsChannelId,
@@ -1175,7 +1104,7 @@ public class Example1EventProjector extends AbstractExample1EventProjector&lt;Cu
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-08-23 00:09:16 BRT
+Last updated 2017-08-23 02:06:22 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

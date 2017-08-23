@@ -9,6 +9,7 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 import java.util.List;
 
+// tag::dao[]
 public interface CustomerSummaryDao {
 
   @SqlUpdate("insert into customer_summary (id, name, is_active) values " +
@@ -24,3 +25,4 @@ public interface CustomerSummaryDao {
   List<CustomerSummary> getAll();
 
 }
+// end::dao[]
