@@ -47,7 +47,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(VertxUnitRunner.class)
-public class CommandHandlerVerticleTest {
+public class EntityCommandHandlerVerticleTest {
 
   public static final String FORCED_CONCURRENCY_EXCEPTION = "FORCED CONCURRENCY EXCEPTION";
   Vertx vertx;
@@ -93,7 +93,7 @@ public class CommandHandlerVerticleTest {
 
     cache = ExpiringMap.create();
 
-    Verticle verticle = new CommandHandlerVerticle<>(Customer.class, seedValue, cmdHandlerFn, validatorFn,
+    Verticle verticle = new EntityCommandHandlerVerticle<>(Customer.class, seedValue, cmdHandlerFn, validatorFn,
             snapshotPromoterFn, eventRepository, cache, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());

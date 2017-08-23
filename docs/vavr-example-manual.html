@@ -1027,8 +1027,8 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
-import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle;
-import io.github.crabzilla.vertx.verticles.CommandRestVerticle;
+import io.github.crabzilla.vertx.verticles.EntityCommandHandlerVerticle;
+import io.github.crabzilla.vertx.verticles.EntityCommandRestVerticle;
 import io.vertx.core.Verticle;
 
 public class CustomerModule extends AbstractModule {
@@ -1040,10 +1040,10 @@ public class CustomerModule extends AbstractModule {
     bind(CustomerFactory.class).asEagerSingleton();
 
     // to bind verticles for this aggregate
-    TypeLiteral&lt;CommandRestVerticle&lt;Customer&gt;&gt; restType =
-            new TypeLiteral&lt;CommandRestVerticle&lt;Customer&gt;&gt;() {};
-    TypeLiteral&lt;CommandHandlerVerticle&lt;Customer&gt;&gt; handlerType =
-            new TypeLiteral&lt;CommandHandlerVerticle&lt;Customer&gt;&gt;() {};
+    TypeLiteral&lt;EntityCommandRestVerticle&lt;Customer&gt;&gt; restType =
+            new TypeLiteral&lt;EntityCommandRestVerticle&lt;Customer&gt;&gt;() {};
+    TypeLiteral&lt;EntityCommandHandlerVerticle&lt;Customer&gt;&gt; handlerType =
+            new TypeLiteral&lt;EntityCommandHandlerVerticle&lt;Customer&gt;&gt;() {};
 
     MapBinder&lt;String, Verticle&gt; mapbinder =
             MapBinder.newMapBinder(binder(), String.class, Verticle.class);
@@ -1055,13 +1055,13 @@ public class CustomerModule extends AbstractModule {
 
   @Provides
   @Singleton
-  CommandRestVerticle&lt;Customer&gt; restVerticle(CustomerFactory componentsFactory) {
+  EntityCommandRestVerticle&lt;Customer&gt; restVerticle(CustomerFactory componentsFactory) {
     return componentsFactory.restVerticle();
   }
 
   @Provides
   @Singleton
-  CommandHandlerVerticle&lt;Customer&gt; handler(CustomerFactory componentsFactory) {
+  EntityCommandHandlerVerticle&lt;Customer&gt; handler(CustomerFactory componentsFactory) {
     return componentsFactory.cmdHandlerVerticle();
   }
 
@@ -1206,13 +1206,13 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/CommandRestVerticle.java">CommandRestVerticle</a> to receive commands as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EntityCommandRestVerticle.java">EntityCommandRestVerticle</a> to receive commands as JSON</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/CommandHandlerVerticle.java">CommandHandlerVerticle</a> to validate and process commands against the aggregate</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EntityCommandHandlerVerticle.java">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/repositories/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting unit of work /events into a single table</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/repositories/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting units of work into a single table, being events and command as JSON</p>
 </li>
 <li>
 <p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EventsProjectionVerticle.java">EventsProjectionVerticle</a> to propagate and project events to read model database</p>
@@ -1225,7 +1225,7 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-08-22 16:16:28 BRT
+Last updated 2017-08-23 00:12:53 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

@@ -7,8 +7,8 @@ import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.stack.CommandExecution
 import io.github.crabzilla.stack.StringHelper.commandHandlerId
-import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle
-import io.github.crabzilla.vertx.verticles.CommandRestVerticle
+import io.github.crabzilla.vertx.verticles.EntityCommandHandlerVerticle
+import io.github.crabzilla.vertx.verticles.EntityCommandRestVerticle
 import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
@@ -31,10 +31,10 @@ class Example1Launcher {
   internal lateinit var projectionVerticle: EventsProjectionVerticle<CustomerSummaryDao>
 
   @Inject
-  internal lateinit var restVerticle: CommandRestVerticle<Customer>
+  internal lateinit var restVerticle: EntityCommandRestVerticle<Customer>
 
   @Inject
-  internal lateinit var cmdVerticle: CommandHandlerVerticle<Customer>
+  internal lateinit var cmdVerticle: EntityCommandHandlerVerticle<Customer>
 
 
   private fun justForTest() {

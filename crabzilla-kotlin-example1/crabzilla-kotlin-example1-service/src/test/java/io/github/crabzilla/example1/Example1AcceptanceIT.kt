@@ -10,8 +10,8 @@ import io.github.crabzilla.model.EntityUnitOfWork
 import io.github.crabzilla.model.Version
 import io.github.crabzilla.stack.CommandExecution
 import io.github.crabzilla.stack.StringHelper.aggregateRootId
-import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle
-import io.github.crabzilla.vertx.verticles.CommandRestVerticle
+import io.github.crabzilla.vertx.verticles.EntityCommandHandlerVerticle
+import io.github.crabzilla.vertx.verticles.EntityCommandRestVerticle
 import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
@@ -45,10 +45,10 @@ class Example1AcceptanceIT {
   internal lateinit var projectionVerticle: EventsProjectionVerticle<CustomerSummaryDao>
 
   @Inject
-  internal lateinit var restVerticle: CommandRestVerticle<Customer>
+  internal lateinit var restVerticle: EntityCommandRestVerticle<Customer>
 
   @Inject
-  internal lateinit var cmdVerticle: CommandHandlerVerticle<Customer>
+  internal lateinit var cmdVerticle: EntityCommandHandlerVerticle<Customer>
 
   @Inject
   internal var jdbi: Jdbi? = null

@@ -27,7 +27,7 @@ import static io.github.crabzilla.stack.StringHelper.*;
 import static java.util.Collections.singletonList;
 
 @Slf4j
-public class CommandHandlerVerticle<A extends Aggregate> extends AbstractVerticle {
+public class EntityCommandHandlerVerticle<A extends Aggregate> extends AbstractVerticle {
 
   final Class<A> aggregateRootClass;
   final A seedValue;
@@ -39,14 +39,14 @@ public class CommandHandlerVerticle<A extends Aggregate> extends AbstractVerticl
   final EntityUnitOfWorkRepository eventRepository;
   final CircuitBreaker circuitBreaker;
 
-  public CommandHandlerVerticle(@NonNull final Class<A> aggregateRootClass,
-                                @NonNull final A seedValue,
-                                @NonNull final BiFunction<EntityCommand, Snapshot<A>, CommandHandlerResult> cmdHandler,
-                                @NonNull final Function<EntityCommand, List<String>> validatorFn,
-                                @NonNull final SnapshotPromoter<A> snapshotPromoter,
-                                @NonNull final EntityUnitOfWorkRepository eventRepository,
-                                @NonNull final ExpiringMap<String, Snapshot<A>> cache,
-                                @NonNull final CircuitBreaker circuitBreaker) {
+  public EntityCommandHandlerVerticle(@NonNull final Class<A> aggregateRootClass,
+                                      @NonNull final A seedValue,
+                                      @NonNull final BiFunction<EntityCommand, Snapshot<A>, CommandHandlerResult> cmdHandler,
+                                      @NonNull final Function<EntityCommand, List<String>> validatorFn,
+                                      @NonNull final SnapshotPromoter<A> snapshotPromoter,
+                                      @NonNull final EntityUnitOfWorkRepository eventRepository,
+                                      @NonNull final ExpiringMap<String, Snapshot<A>> cache,
+                                      @NonNull final CircuitBreaker circuitBreaker) {
     this.aggregateRootClass = aggregateRootClass;
     this.seedValue = seedValue;
     this.cmdHandler = cmdHandler;

@@ -905,8 +905,8 @@ import com.google.inject.Provides
 import com.google.inject.Singleton
 import com.google.inject.TypeLiteral
 import com.google.inject.multibindings.MapBinder
-import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle
-import io.github.crabzilla.vertx.verticles.CommandRestVerticle
+import io.github.crabzilla.vertx.verticles.EntityCommandHandlerVerticle
+import io.github.crabzilla.vertx.verticles.EntityCommandRestVerticle
 import io.vertx.core.Verticle
 
 class CustomerModule : AbstractModule() {
@@ -915,8 +915,8 @@ class CustomerModule : AbstractModule() {
     // to bind aggregate functions
     bind(CustomerFactory::class.java).asEagerSingleton()
     // to bind verticles for this aggregate
-    val restType = object : TypeLiteral&lt;CommandRestVerticle&lt;Customer&gt;&gt;() {}
-    val handlerType = object : TypeLiteral&lt;CommandHandlerVerticle&lt;Customer&gt;&gt;() {}
+    val restType = object : TypeLiteral&lt;EntityCommandRestVerticle&lt;Customer&gt;&gt;() {}
+    val handlerType = object : TypeLiteral&lt;EntityCommandHandlerVerticle&lt;Customer&gt;&gt;() {}
     val mapbinder = MapBinder.newMapBinder(binder(), String::class.java, Verticle::class.java)
     mapbinder.addBinding("customer.rest").to(restType)
     mapbinder.addBinding("customer.handler").to(handlerType)
@@ -924,13 +924,13 @@ class CustomerModule : AbstractModule() {
 
   @Provides
   @Singleton
-  internal fun restVerticle(componentsFactory: CustomerFactory): CommandRestVerticle&lt;Customer&gt; {
+  internal fun restVerticle(componentsFactory: CustomerFactory): EntityCommandRestVerticle&lt;Customer&gt; {
     return componentsFactory.restVerticle()
   }
 
   @Provides
   @Singleton
-  internal fun handler(componentsFactory: CustomerFactory): CommandHandlerVerticle&lt;Customer&gt; {
+  internal fun handler(componentsFactory: CustomerFactory): EntityCommandHandlerVerticle&lt;Customer&gt; {
     return componentsFactory.cmdHandlerVerticle()
   }
 
@@ -1059,13 +1059,13 @@ class Example1EventProjector(channelId: String, daoClazz: Class&lt;CustomerSumma
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/CommandRestVerticle.java">CommandRestVerticle</a> to receive commands as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EntityCommandRestVerticle.java">EntityCommandRestVerticle</a> to receive commands as JSON</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/CommandHandlerVerticle.java">CommandHandlerVerticle</a> to validate and process commands against the aggregate</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EntityCommandHandlerVerticle.java">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate instance</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/repositories/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting unit of work /events into a single table</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/repositories/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting units of work into a single table, being events and command as JSON fields</p>
 </li>
 <li>
 <p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EventsProjectionVerticle.java">EventsProjectionVerticle</a> to propagate and project events to read model database</p>
@@ -1078,7 +1078,7 @@ class Example1EventProjector(channelId: String, daoClazz: Class&lt;CustomerSumma
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-08-22 16:14:46 BRT
+Last updated 2017-08-23 00:09:00 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

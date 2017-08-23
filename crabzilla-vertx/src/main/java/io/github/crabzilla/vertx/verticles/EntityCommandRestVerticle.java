@@ -20,11 +20,11 @@ import static io.github.crabzilla.stack.StringHelper.*;
 
 
 @Slf4j
-public class CommandRestVerticle<E> extends AbstractVerticle {
+public class EntityCommandRestVerticle<E> extends AbstractVerticle {
 
   final Class<E> aggregateRootClass;
 
-  public CommandRestVerticle(@NonNull Class<E> aggregateRootClass) {
+  public EntityCommandRestVerticle(@NonNull Class<E> aggregateRootClass) {
     this.aggregateRootClass = aggregateRootClass;
   }
 

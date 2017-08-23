@@ -3,8 +3,8 @@ package io.github.crabzilla.vertx;
 import io.github.crabzilla.model.*;
 import io.github.crabzilla.stack.StringHelper;
 import io.github.crabzilla.vertx.repositories.EntityUnitOfWorkRepository;
-import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle;
-import io.github.crabzilla.vertx.verticles.CommandRestVerticle;
+import io.github.crabzilla.vertx.verticles.EntityCommandHandlerVerticle;
+import io.github.crabzilla.vertx.verticles.EntityCommandRestVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
@@ -35,11 +35,11 @@ public interface AggregateRootComponentsFactory<A extends Aggregate> {
             instance -> new StateTransitionsTracker<>(instance, stateTransitionFn()));
   }
 
-  default CommandRestVerticle<A> restVerticle() {
-    return new CommandRestVerticle<>(clazz());
+  default EntityCommandRestVerticle<A> restVerticle() {
+    return new EntityCommandRestVerticle<>(clazz());
   }
 
-  default CommandHandlerVerticle<A> cmdHandlerVerticle() {
+  default EntityCommandHandlerVerticle<A> cmdHandlerVerticle() {
 
     final ExpiringMap<String, Snapshot<A>> cache = ExpiringMap.builder()
             .expiration(5, TimeUnit.MINUTES)
@@ -54,7 +54,7 @@ public interface AggregateRootComponentsFactory<A extends Aggregate> {
                     .setResetTimeout(10000) // time spent in open state before attempting to re-try
     );
 
-    return new CommandHandlerVerticle<>(clazz(), supplierFn().get(), cmdHandlerFn(),
+    return new EntityCommandHandlerVerticle<>(clazz(), supplierFn().get(), cmdHandlerFn(),
             cmdValidatorFn(), snapshotPromoter(), uowRepository(), cache, circuitBreaker);
   }
 
