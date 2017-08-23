@@ -1,6 +1,7 @@
 package io.github.crabzilla.vertx.verticles;
 
 import io.github.crabzilla.example1.customer.CustomerData;
+import io.github.crabzilla.example1.readmodel.CustomerSummary;
 import io.github.crabzilla.model.EntityUnitOfWork;
 import io.github.crabzilla.model.Version;
 import io.github.crabzilla.stack.EventProjector;
@@ -15,12 +16,18 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import lombok.val;
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 
+import java.util.List;
 import java.util.UUID;
 
 import static java.util.Arrays.asList;
@@ -92,6 +99,22 @@ public class EventsProjectionVerticleTest {
       async.complete();
 
     });
+
+  }
+
+  public static interface CustomerSummaryDao {
+
+    @SqlUpdate("insert into customer_summary (id, name, is_active) values " +
+            "(:id, :name, false)")
+    void insert(@BindBean CustomerSummary customerSummary);
+
+    @SqlUpdate("update customer_summary set customer_summary.is_active = :isActive " +
+            "where customer_summary.id = :id")
+    void updateStatus(@Bind("id") String id, @Bind("isActive") Boolean isActive);
+
+    @SqlQuery("select id, name, is_active from customer_summary")
+    @RegisterBeanMapper(CustomerSummary.class)
+    List<CustomerSummary> getAll();
 
   }
 }

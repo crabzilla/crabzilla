@@ -43,7 +43,7 @@ public class CommandRestVerticle<E> extends AbstractVerticle {
       routingContext.request().bodyHandler(buff -> {
         val command = Json.decodeValue(new String(buff.getBytes()), EntityCommand.class);
         val httpResp = routingContext.request().response();
-        val options = new DeliveryOptions().setCodecName("EntityCommand");
+        val options = new DeliveryOptions().setCodecName(EntityCommand.class.getSimpleName());
 
         vertx.<CommandExecution>eventBus().send(commandHandlerId(aggregateRootClass), command, options, response -> {
           if (response.succeeded()) {

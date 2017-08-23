@@ -2,9 +2,8 @@ package io.github.crabzilla.example1;
 
 import com.google.inject.Guice;
 import io.github.crabzilla.example1.customer.Customer;
-import io.github.crabzilla.example1.customer.CustomerData;
+import io.github.crabzilla.model.EntityCommand;
 import io.github.crabzilla.stack.CommandExecution;
-import io.github.crabzilla.stack.StringHelper;
 import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -18,6 +17,8 @@ import javax.inject.Inject;
 import java.util.Map;
 import java.util.UUID;
 
+import static io.github.crabzilla.example1.customer.CustomerData.*;
+import static io.github.crabzilla.stack.StringHelper.commandHandlerId;
 import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.lang.System.setProperty;
 
@@ -56,13 +57,13 @@ public class Example1Launcher {
 
   private void justForTest() {
 
-    val customerId = new CustomerData.CustomerId(UUID.randomUUID().toString());
+    val customerId = new CustomerId(UUID.randomUUID().toString());
 //    val customerId = new CustomerId("customer123");
-    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "a good customer");
-    val options = new DeliveryOptions().setCodecName("EntityCommand");
+    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "a good customer");
+    val options = new DeliveryOptions().setCodecName(EntityCommand.class.getSimpleName());
 
     // create customer command
-    vertx.eventBus().<CommandExecution>send(StringHelper.commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().<CommandExecution>send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       log.info("Successful create customer test? {}", asyncResult.succeeded());
 
@@ -70,10 +71,12 @@ public class Example1Launcher {
 
         log.info("Result: {}", asyncResult.result().body());
 
-        val activateCustomerCmd = new CustomerData.ActivateCustomer(UUID.randomUUID(), createCustomerCmd.getTargetId(), "because I want it");
+        val activateCustomerCmd = new ActivateCustomer(UUID.randomUUID(), createCustomerCmd.getTargetId(),
+                "because I want it");
 
         // activate customer command
-        vertx.eventBus().<CommandExecution>send(StringHelper.commandHandlerId(Customer.class), activateCustomerCmd, options, asyncResult2 -> {
+        vertx.eventBus().<CommandExecution>send(commandHandlerId(Customer.class),
+                activateCustomerCmd, options, asyncResult2 -> {
 
           log.info("Successful activate customer test? {}", asyncResult2.succeeded());
 

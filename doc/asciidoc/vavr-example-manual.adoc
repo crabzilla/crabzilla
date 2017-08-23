@@ -84,7 +84,8 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io
 
 === 1.4 Internal Services
 
-Any internal service is expressed as an abstraction. No implementations within core module.
+Any internal service is expressed as an abstraction. No implementations within core module. And very important:
+*internal services can be blocking but must be side effect free*.
 
 [source,java]
 .SampleInternalService.java

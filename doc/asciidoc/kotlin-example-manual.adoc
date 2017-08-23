@@ -84,7 +84,8 @@ include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-core/src/main/jav
 
 === 1.4 Internal Services
 
-Any internal service is expressed as an abstraction. No implementations within core module.
+Any internal service is expressed as an abstraction. No implementations within core module. And very important: *internal
+services can  be blocking but must be side effect free*.
 
 [source,kotlin]
 .services.kt

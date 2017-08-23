@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import java.util.Map;
 import java.util.UUID;
 
+import static io.github.crabzilla.example1.customer.CustomerData.*;
 import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.lang.System.setProperty;
 
@@ -70,9 +71,9 @@ public class Example1Launcher {
 
   private void justForTest() {
 
-    val customerId = new CustomerData.CustomerId(UUID.randomUUID().toString());
+    val customerId = new CustomerId(UUID.randomUUID().toString());
 //    val customerId = new CustomerId("customer123");
-    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "a good customer");
+    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "a good customer");
     val options = new DeliveryOptions().setCodecName("EntityCommand");
 
     // create customer command
@@ -84,7 +85,7 @@ public class Example1Launcher {
 
         log.info("Result: {}", asyncResult.result().body());
 
-        val activateCustomerCmd = new CustomerData.ActivateCustomer(UUID.randomUUID(), createCustomerCmd.getTargetId(), "because I want it");
+        val activateCustomerCmd = new ActivateCustomer(UUID.randomUUID(), createCustomerCmd.getTargetId(), "because I want it");
 
         // activate customer command
         vertx.eventBus().<CommandExecution>send(StringHelper.commandHandlerId(Customer.class), activateCustomerCmd, options, asyncResult2 -> {
