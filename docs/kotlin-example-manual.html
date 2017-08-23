@@ -423,7 +423,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="header">
 <h1>crabzilla-kotlin-example1</h1>
 <div class="details">
-<span id="revnumber">version 0.0.5</span>
+<span id="revnumber">version 0.0.6-SNAPSHOT</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -661,12 +661,12 @@ data class Customer(val _id: CustomerId? = null,
 
   internal fun activate(reason: String): List&lt;DomainEvent&gt; {
     require(this._id != null, { "customer must exists" })
-    return eventsOf(CustomerActivated(reason, sampleInternalService!!.now()))
+    return eventsOf(CustomerActivated(reason, sampleInternalService.now()))
   }
 
   internal fun deactivate(reason: String): List&lt;DomainEvent&gt; {
     require(this._id != null, { "customer must exists" })
-    return eventsOf(CustomerDeactivated(reason, sampleInternalService!!.now()))
+    return eventsOf(CustomerDeactivated(reason, sampleInternalService.now()))
   }
 
 }</code></pre>
@@ -676,7 +676,8 @@ data class Customer(val _id: CustomerId? = null,
 <div class="sect2">
 <h3 id="1-4-internal-services"><a class="anchor" href="#1-4-internal-services"></a>1.4 Internal Services</h3>
 <div class="paragraph">
-<p>Any internal service is expressed as an abstraction. No implementations within core module.</p>
+<p>Any internal service is expressed as an abstraction. No implementations within core module. And very important: <strong>internal
+services can  be blocking but must be side effect free</strong>.</p>
 </div>
 <div class="listingblock">
 <div class="title">services.kt</div>
@@ -1076,8 +1077,8 @@ class Example1EventProjector(channelId: String, daoClazz: Class&lt;CustomerSumma
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.0.5<br>
-Last updated 2017-08-22 09:58:13 BRT
+Version 0.0.6-SNAPSHOT<br>
+Last updated 2017-08-22 16:14:46 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

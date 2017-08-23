@@ -20,6 +20,7 @@
 * Maven
 * Docker compose
 * Lombok plugin for your IDE
+* Kotlin plugin for your IDE
 
 ### Maven
 
