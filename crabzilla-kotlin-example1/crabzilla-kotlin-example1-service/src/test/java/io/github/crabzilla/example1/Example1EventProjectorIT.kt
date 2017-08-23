@@ -54,7 +54,7 @@ class Example1EventProjectorIT {
     val event2 = CustomerActivated("a good reason", Instant.now())
     val projectionData = ProjectionData(UUID.randomUUID(), 1L, id.stringValue(), asList<DomainEvent>(event1, event2))
 
-    eventProjector!!.handle(listOf(projectionData))
+    eventProjector.handle(listOf(projectionData))
 
     val h = jdbi.open()
     val dao = h.attach(CustomerSummaryDao::class.java)

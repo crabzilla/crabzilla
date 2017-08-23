@@ -14,6 +14,15 @@
 
 ## Getting started
 
+### Requirements
+
+* Java 8
+* Maven
+* Docker compose
+* Lombok plugin for your IDE
+
+### Maven
+
 Your core domain module must import:
 
 ```xml
@@ -33,6 +42,9 @@ and your service module must import:
   <version>0.0.5</version>
 </dependency>
 ```
+### Archetypes
+
+* TODO
 
 ## How to run the example
 
