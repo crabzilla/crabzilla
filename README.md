@@ -9,17 +9,7 @@
 * [kotlin-example-manual](https://crabzilla.github.io/crabzilla/docs/kotlin-example-manual.html)
 * [Architecture decision records](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
 
-## Getting started
-
-### Requirements
-
-* Java 8
-* Maven
-* Docker compose
-* Lombok plugin for your IDE
-* Kotlin plugin for your IDE
-
-### Maven
+## Maven
 
 Your core domain module must import:
 
@@ -40,13 +30,23 @@ and your service module must import:
   <version>0.0.5</version>
 </dependency>
 ```
-### Archetypes
+
+## Archetypes
 
 * TODO
 
 ## How to run the example
 
+### Requirements
+
+* Java 8
+* Maven
+* Docker compose
+* Lombok plugin for your IDE
+* Kotlin plugin for your IDE
 1. Clone Crabzilla and build it running unit tests but skipping integration tests:
+
+### Steps
 
 ```bash
 git clone https://github.com/crabzilla/crabzilla
