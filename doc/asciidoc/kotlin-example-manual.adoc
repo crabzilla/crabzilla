@@ -179,7 +179,7 @@ include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/
 
 ==== 3.2.2 Example1Module
 
-https://github.com/crabzilla/crabzilla/blob/master/crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.kt[Example1Module]
+https://github.com/crabzilla/crabzilla/blob/master/crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.kt[tags=module]
 
 ==== 3.2.3 Example1AcceptanceIt
 
@@ -201,7 +201,6 @@ This example presented:
 Crabzilla will run your aggregate root by providing these components:
 
 * https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EntityCommandRestVerticle.java[EntityCommandRestVerticle] to receive commands as JSON
-* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EntityCommandHandlerVerticle.java[EntityCommandHandlerVerticle] to validate and process commands against the latest snapshot found for the aggregate instance
-* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/repositories/EntityUnitOfWorkRepository.java[EntityUnitOfWorkRepository] to store resulting units of work into a single table, being events and command as JSON fields
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EntityCommandHandlerVerticle.java[EntityCommandHandlerVerticle] to validate and process commands against the latest snapshot found for the aggregate
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/repositories/EntityUnitOfWorkRepository.java[EntityUnitOfWorkRepository] to store resulting units of work into a single table, being events and command as JSON
 * https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EventsProjectionVerticle.java[EventsProjectionVerticle] to propagate and project events to read model database
-
