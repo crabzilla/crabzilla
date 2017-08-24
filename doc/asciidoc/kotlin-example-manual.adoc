@@ -160,9 +160,9 @@ include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/
 ==== 3.1.2 CustomerModule
 
 [source,kotlin]
-.CustomerModule
+.CustomerModule.kt
 ----
-include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerModule.kt[tags=module]
+include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerModule.kt
 ----
 
 === 3.2.0 Example1
@@ -179,7 +179,7 @@ include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/
 
 ==== 3.2.2 Example1Module
 
-https://github.com/crabzilla/crabzilla/blob/master/crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.kt[tags=module]
+https://github.com/crabzilla/crabzilla/blob/master/crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.kt[Example1Module]
 
 ==== 3.2.3 Example1AcceptanceIt
 
