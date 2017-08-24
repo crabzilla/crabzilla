@@ -580,7 +580,7 @@ services and repositories are just plain domain abstractions: interfaces or abst
 <div class="sect3">
 <h4 id="1-2-1-commandvalidatorfn"><a class="anchor" href="#1-2-1-commandvalidatorfn"></a>1.2.1 CommandValidatorFn</h4>
 <div class="paragraph">
-<p>A non blocking and side effect function:</p>
+<p>A non blocking and side effect free function:</p>
 </div>
 <div class="listingblock">
 <div class="title">CustomerFunctions.java</div>
@@ -599,7 +599,7 @@ services and repositories are just plain domain abstractions: interfaces or abst
 <div class="sect3">
 <h4 id="1-2-2-commandhandlerfn"><a class="anchor" href="#1-2-2-commandhandlerfn"></a>1.2.2 CommandHandlerFn</h4>
 <div class="paragraph">
-<p>An usually blocking side effect free function.</p>
+<p>An possibly blocking and side effect free function.</p>
 </div>
 <div class="listingblock">
 <div class="title">CustomerFunctions.java</div>
@@ -1104,7 +1104,7 @@ public class Example1EventProjector extends AbstractExample1EventProjector&lt;Cu
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-08-23 02:31:56 BRT
+Last updated 2017-08-23 21:26:56 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
