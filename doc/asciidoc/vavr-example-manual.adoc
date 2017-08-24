@@ -59,7 +59,7 @@ include::./crabzilla-vavr-example1/crabzilla-vavr-example1-core/src/main/java/io
 
 ==== 1.2.2 CommandHandlerFn
 
-An usually blocking side effect free function.
+An possibly blocking and side effect free function.
 [source,java]
 .CustomerFunctions.java
 ----

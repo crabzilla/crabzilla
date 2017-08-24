@@ -50,7 +50,7 @@ include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/cr
 
 ==== 1.2.1 CommandValidatorFn
 
-A non blocking and side effect function:
+A non blocking and side effect free function:
 [source,java]
 .CustomerFunctions.java
 ----
@@ -59,7 +59,7 @@ include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/cr
 
 ==== 1.2.2 CommandHandlerFn
 
-An usually blocking side effect free function.
+An possibly blocking and side effect free function.
 [source,java]
 .CustomerFunctions.java
 ----

@@ -44,9 +44,10 @@ and your service module must import:
 * Docker compose
 * Lombok plugin for your IDE
 * Kotlin plugin for your IDE
-1. Clone Crabzilla and build it running unit tests but skipping integration tests:
 
 ### Steps
+
+1. Clone Crabzilla and build it running unit tests but skipping integration tests:
 
 ```bash
 git clone https://github.com/crabzilla/crabzilla

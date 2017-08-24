@@ -50,7 +50,7 @@ include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-core/src/main/jav
 
 ==== 1.2.1 CommandValidatorFn
 
-A non blocking and side effect function:
+A non blocking and side effect free function:
 [source,kotlin]
 .CustomerFunctions.kt
 ----
@@ -59,7 +59,7 @@ include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-core/src/main/jav
 
 ==== 1.2.2 CommandHandlerFn
 
-An usually blocking side effect free function.
+An possibly blocking and side effect free function.
 [source,kotlin]
 .CustomerFunctions.kt
 ----
@@ -68,7 +68,7 @@ include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-core/src/main/jav
 
 ==== 1.2.3 StateTransitionFn
 
-A non blocking and side effect function:
+A non blocking and side effect free function:
 [source,kotlin]
 .CustomerFunctions.kt
 ----
