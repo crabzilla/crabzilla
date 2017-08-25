@@ -515,8 +515,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="1-0-crabzilla-vavr-example1-core"><a class="anchor" href="#1-0-crabzilla-vavr-example1-core"></a>1.0 crabzilla-vavr-example1-core</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This module contains only domain code: value objects, aggregates, commands, events, etc. Within this module, internal
-services and repositories are just plain domain abstractions: interfaces or abstract classes.</p>
+<p>This module contains only domain code: value objects, aggregates, commands, events, functions, etc. Within this module,
+internal services and repositories are just plain domain abstractions: interfaces or abstract classes.</p>
 </div>
 <div class="sect2">
 <h3 id="1-1-data"><a class="anchor" href="#1-1-data"></a>1.1 Data</h3>
@@ -587,7 +587,7 @@ services and repositories are just plain domain abstractions: interfaces or abst
 <div class="sect3">
 <h4 id="1-2-1-commandvalidatorfn"><a class="anchor" href="#1-2-1-commandvalidatorfn"></a>1.2.1 CommandValidatorFn</h4>
 <div class="paragraph">
-<p>A non blocking and side effect function:</p>
+<p>A non blocking and side effect free function:</p>
 </div>
 <div class="listingblock">
 <div class="title">CustomerFunctions.java</div>
@@ -1149,7 +1149,7 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-08-23 21:27:54 BRT
+Last updated 2017-08-24 10:58:48 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

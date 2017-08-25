@@ -871,7 +871,32 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 <div class="listingblock">
 <div class="title">CustomerModule.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerModule.kt</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CustomerModule : AbstractModule() {
+
+  override fun configure() {
+    // to bind aggregate functions
+    bind(CustomerFactory::class.java).asEagerSingleton()
+    // to bind verticles for this aggregate
+    val restType = object : TypeLiteral&lt;EntityCommandRestVerticle&lt;Customer&gt;&gt;() {}
+    val handlerType = object : TypeLiteral&lt;EntityCommandHandlerVerticle&lt;Customer&gt;&gt;() {}
+    val mapbinder = MapBinder.newMapBinder(binder(), String::class.java, Verticle::class.java)
+    mapbinder.addBinding("customer.rest").to(restType)
+    mapbinder.addBinding("customer.handler").to(handlerType)
+  }
+
+  @Provides
+  @Singleton
+  internal fun restVerticle(componentsFactory: CustomerFactory): EntityCommandRestVerticle&lt;Customer&gt; {
+    return componentsFactory.restVerticle()
+  }
+
+  @Provides
+  @Singleton
+  internal fun handler(componentsFactory: CustomerFactory): EntityCommandHandlerVerticle&lt;Customer&gt; {
+    return componentsFactory.cmdHandlerVerticle()
+  }
+
+}</code></pre>
 </div>
 </div>
 </div>
@@ -1004,7 +1029,7 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-08-23 22:14:51 BRT
+Last updated 2017-08-24 10:41:06 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
