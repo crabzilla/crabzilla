@@ -25,8 +25,8 @@ image::example1.png[scaledwidth=100%]
 
 == 1.0 crabzilla-example1-core
 
-This module contains only domain code: value objects, aggregates, commands, events, etc. Within this module, internal
-services and repositories are just plain domain abstractions: interfaces or abstract classes.
+This module contains only domain code: value objects, aggregates, commands, events, functions, etc. Within this module,
+internal services and repositories are just plain domain abstractions: interfaces or abstract classes.
 
 === 1.1 Data
 

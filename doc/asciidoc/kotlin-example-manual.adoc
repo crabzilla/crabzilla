@@ -162,7 +162,7 @@ include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/
 [source,kotlin]
 .CustomerModule.kt
 ----
-include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerModule.kt
+include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerModule.kt[tags=module]
 ----
 
 === 3.2.0 Example1
