@@ -29,7 +29,8 @@ install:
 #  - cd ./krabzilla-example1/krabzilla-example1-database
 #  - mvn compile flyway:migrate
 #  - cd ../..
-  - mvn clean install
+  - mvn clean install -DskipITs=true
+#  - mvn clean install -DskipUTs=true
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
