@@ -30,7 +30,7 @@ install:
 #  - mvn compile flyway:migrate
 #  - cd ../..
   - mvn clean install -DskipITs=true
-#  - mvn clean install -DskipUTs=true
+  - mvn clean install
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
