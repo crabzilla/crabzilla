@@ -1,19 +1,35 @@
 language: java
+
 jdk:
   - oraclejdk8
+
+sudo: required
+
+services:
+  - docker
+
+env:
+  - DOCKER_COMPOSE_VERSION=1.11.2
+
 before_install:
-  # - sudo apt-get update
-  # - sudo apt-get install --only-upgrade -y oracle-java8-installer
-  # - pip install --user codecov
-after_success:
-  # - codecov
-  # - bash <(curl -s https://codecov.io/bash)
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  - docker-compose rm -f
+#  - docker-compose start
+  - docker-compose up -d
 
 cache:
   directories:
   - "$HOME/.m2"
-install:
-- mvn clean install -DskipITs=true
-script:
-  # - mvn clean install site
 
+install:
+#  - mvn clean install -DskipTests
+#  - cd ./krabzilla-example1/krabzilla-example1-database
+#  - mvn compile flyway:migrate
+#  - cd ../..
+mvn clean verify
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

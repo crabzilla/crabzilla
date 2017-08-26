@@ -9,4 +9,5 @@ services:
         environment:
             MYSQL_ROOT_PASSWORD: my-secret-pwd 
             MYSQL_DATABASE: example1db  
-
+        volumes:
+            - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
