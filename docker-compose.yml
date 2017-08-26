@@ -5,7 +5,7 @@ services:
     db:
         image: mysql:8.0.1
         ports:
-               - 3306:3306
+               - 3307:3307
         environment:
             MYSQL_ROOT_PASSWORD: my-secret-pwd 
             MYSQL_DATABASE: example1db  

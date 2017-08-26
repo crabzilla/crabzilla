@@ -14,7 +14,7 @@
     <properties>
         <jdbc.user>root</jdbc.user>
         <jdbc.password>my-secret-pwd</jdbc.password>
-        <jdbc.url>jdbc:mysql://127.0.0.1:3306/example1db?serverTimezone=UTC</jdbc.url>
+        <jdbc.url>jdbc:mysql://127.0.0.1:3307/example1db?serverTimezone=UTC</jdbc.url>
         <jdbc.driver>com.mysql.jdbc.Driver</jdbc.driver>
     </properties>
 
