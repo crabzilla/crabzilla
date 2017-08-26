@@ -29,6 +29,7 @@ install:
 #  - cd ./krabzilla-example1/krabzilla-example1-database
 #  - mvn compile flyway:migrate
 #  - cd ../..
+  - docker ps
   - mvn clean install -DskipITs=true
 #  - mvn clean install
 
