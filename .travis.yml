@@ -11,14 +11,9 @@ services:
 env:
   - DOCKER_COMPOSE_VERSION=1.11.2
 
-before_script:
-
-  # Disable services enabled by default
-  # http://docs.travis-ci.com/user/database-setup/#MySQL
+before_install:
   - sudo /etc/init.d/mysql stop
   - sudo /etc/init.d/postgresql stop
-
-before_install:
   - sudo rm /usr/local/bin/docker-compose
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
