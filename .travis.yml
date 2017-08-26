@@ -18,7 +18,7 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
   - docker-compose rm -f
 #  - docker-compose start
-  - docker-compose up -d
+  - docker-compose up
 
 cache:
   directories:
