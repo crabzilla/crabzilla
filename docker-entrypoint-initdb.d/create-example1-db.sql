@@ -2,7 +2,7 @@ SELECT '*** DATABASES:' as '' ;
 
 SHOW databases ;
 
-use example1db
+# use example1db
 
 --GRANT ALL PRIVILEGES ON example1.* TO 'root' IDENTIFIED BY 'my-secret-pwd';
 --GRANT ALL PRIVILEGES ON example1.* TO 'root'@'localhost' IDENTIFIED BY 'my-secret-pwd';
