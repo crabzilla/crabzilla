@@ -87,80 +87,101 @@ public class EntityCommandHandlerVerticle<A extends Aggregate> extends AbstractV
   Handler<Future<CommandExecution>> cmdHandler(final EntityCommand command) {
 
     return future1 -> {
+
       val targetId = command.getTargetId().stringValue();
 
-      log.debug("cache.get(id)", targetId);
-      val snapshotFromCache = cache.get(targetId);
-      val emptySnapshot = new Snapshot<A>(seedValue, new Version(0));
-      val cachedSnapshot = snapshotFromCache == null ? emptySnapshot : snapshotFromCache;
+      // get from cache _may_ be blocking if you plug an EntryLoader (from ExpiringMap)
+      vertx.<Snapshot<A>>executeBlocking(fromCacheFuture -> {
 
-      log.info("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
-              targetId, cachedSnapshot);
-      Future<SnapshotData> selectAfterVersionFuture = Future.future();
-      eventRepository.selectAfterVersion(targetId, cachedSnapshot.getVersion(), selectAfterVersionFuture);
+        fromCacheFuture.complete(cache.get(targetId));
 
-      selectAfterVersionFuture.setHandler(snapshotDataAsyncResult -> {
-        if (snapshotDataAsyncResult.failed()) {
-          future1.fail(snapshotDataAsyncResult.cause());
+        }, false, fromCacheResult -> {
+
+        if (fromCacheResult.failed()) {
+          future1.fail(fromCacheResult.cause());
           return;
         }
-        val nonCached = snapshotDataAsyncResult.result();
-        val totalOfNonCachedEvents = nonCached.getEvents().size();
-        log.debug("id {} found {} pending events. Last version is now {}", targetId, totalOfNonCachedEvents,
-                nonCached.getVersion());
-        val resultingSnapshot = totalOfNonCachedEvents > 0 ?
-                snapshotPromoter.promote(cachedSnapshot, nonCached.getVersion(), nonCached.getEvents())
-                : cachedSnapshot;
-        if (totalOfNonCachedEvents > 0) {
-          cache.put(targetId, resultingSnapshot);
-        }
-        // cmd handler _may_ be blocking. Otherwise, aggregate root would need to use reactive API to call
-        // external services
-        vertx.<CommandExecution>executeBlocking(future2 -> {
 
-          val result = cmdHandler.apply(command, resultingSnapshot);
+        val snapshotFromCache = fromCacheResult.result();
+        val emptySnapshot = new Snapshot<A>(seedValue, new Version(0));
+        val cachedSnapshot = snapshotFromCache == null ? emptySnapshot : snapshotFromCache;
 
-          result.inCaseOfSuccess(uow -> {
-            log.info("CommandExecution: {}", uow);
-            Future<Long> appendFuture = Future.future();
-            eventRepository.append(uow, appendFuture);
-            appendFuture.setHandler(appendAsyncResult -> {
-              if (appendAsyncResult.failed()) {
-                val error =  appendAsyncResult.cause();
-                log.error("When appending uow of command {} -> {}", command.getCommandId(), error.getMessage());
-                if (error instanceof DbConcurrencyException) {
-                  future2.complete(CONCURRENCY_ERROR(command.getCommandId(), error.getMessage()));
-                } else {
-                  future2.fail(appendAsyncResult.cause());
+        log.info("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
+                targetId, cachedSnapshot);
+
+        Future<SnapshotData> selectAfterVersionFuture = Future.future();
+
+        // command handler function _may_ be blocking if your aggregate are using blocking internal services
+        eventRepository.selectAfterVersion(targetId, cachedSnapshot.getVersion(), selectAfterVersionFuture);
+
+        selectAfterVersionFuture.setHandler(snapshotDataAsyncResult -> {
+
+          if (snapshotDataAsyncResult.failed()) {
+            future1.fail(snapshotDataAsyncResult.cause());
+            return;
+          }
+
+          val nonCached = snapshotDataAsyncResult.result();
+          val totalOfNonCachedEvents = nonCached.getEvents().size();
+          log.debug("id {} found {} pending events. Last version is now {}", targetId, totalOfNonCachedEvents,
+                  nonCached.getVersion());
+          val resultingSnapshot = totalOfNonCachedEvents > 0 ?
+                  snapshotPromoter.promote(cachedSnapshot, nonCached.getVersion(), nonCached.getEvents())
+                  : cachedSnapshot;
+          if (totalOfNonCachedEvents > 0) {
+            cache.put(targetId, resultingSnapshot);
+          }
+
+          // cmd handler _may_ be blocking. Otherwise, aggregate root would need to use reactive API to call
+          // external services
+          vertx.<CommandExecution>executeBlocking(future2 -> {
+
+            val result = cmdHandler.apply(command, resultingSnapshot);
+
+            result.inCaseOfSuccess(uow -> {
+              log.info("CommandExecution: {}", uow);
+              Future<Long> appendFuture = Future.future();
+              eventRepository.append(uow, appendFuture);
+              appendFuture.setHandler(appendAsyncResult -> {
+                if (appendAsyncResult.failed()) {
+                  val error =  appendAsyncResult.cause();
+                  log.error("When appending uow of command {} -> {}", command.getCommandId(), error.getMessage());
+                  if (error instanceof DbConcurrencyException) {
+                    future2.complete(CONCURRENCY_ERROR(command.getCommandId(), error.getMessage()));
+                  } else {
+                    future2.fail(appendAsyncResult.cause());
+                  }
+                  return ;
                 }
-                return ;
-              }
-              val finalSnapshot = snapshotPromoter.promote(resultingSnapshot, uow.getVersion(), uow.getEvents());
-              cache.put(targetId, finalSnapshot);
-              val uowSequence = appendAsyncResult.result();
-              log.info("uowSequence: {}", uowSequence);
-              future2.complete(SUCCESS(uow, uowSequence));
+                val finalSnapshot = snapshotPromoter.promote(resultingSnapshot, uow.getVersion(), uow.getEvents());
+                cache.put(targetId, finalSnapshot);
+                val uowSequence = appendAsyncResult.result();
+                log.info("uowSequence: {}", uowSequence);
+                future2.complete(SUCCESS(uow, uowSequence));
+              });
             });
-          });
 
-          result.inCaseOfError(error -> {
-            log.error("CommandExecution: {}", error.getMessage());
-            if (error instanceof UnknownCommandException) {
-              future2.complete(UNKNOWN_COMMAND(command.getCommandId()));
+            result.inCaseOfError(error -> {
+              log.error("CommandExecution: {}", error.getMessage());
+              if (error instanceof UnknownCommandException) {
+                future2.complete(UNKNOWN_COMMAND(command.getCommandId()));
+              } else {
+                future2.complete(HANDLING_ERROR(command.getCommandId(), error.getMessage()));
+              }
+            });
+
+          }, res -> {
+            if (res.succeeded()) {
+              future1.complete(res.result());
             } else {
-              future2.complete(HANDLING_ERROR(command.getCommandId(), error.getMessage()));
+              res.cause().printStackTrace();
+              future1.fail(res.cause());
             }
           });
-
-        }, res -> {
-          if (res.succeeded()) {
-            future1.complete(res.result());
-          } else {
-            res.cause().printStackTrace();
-            future1.fail(res.cause());
-          }
         });
+
       });
+
     };
   }
 

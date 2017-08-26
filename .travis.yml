@@ -11,6 +11,13 @@ services:
 env:
   - DOCKER_COMPOSE_VERSION=1.11.2
 
+before_script:
+
+  # Disable services enabled by default
+  # http://docs.travis-ci.com/user/database-setup/#MySQL
+  - sudo /etc/init.d/mysql stop
+  - sudo /etc/init.d/postgresql stop
+
 before_install:
   - sudo rm /usr/local/bin/docker-compose
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
@@ -18,7 +25,7 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
   - docker-compose rm -f
 #  - docker-compose start
-  - docker-compose up
+  - docker-compose up -d
 
 cache:
   directories:
@@ -30,8 +37,11 @@ install:
 #  - mvn compile flyway:migrate
 #  - cd ../..
   - docker ps
+  - sleep 30
+  - docker ps
   - mvn clean install -DskipITs=true
-#  - mvn clean install
+  - docker ps
+  - mvn clean install
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
