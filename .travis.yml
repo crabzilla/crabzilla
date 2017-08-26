@@ -19,7 +19,6 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
   - docker-compose rm -f
-#  - docker-compose start
   - docker-compose up -d
 
 cache:
@@ -28,15 +27,13 @@ cache:
 
 install:
 #  - mvn clean install -DskipTests
-#  - cd ./krabzilla-example1/krabzilla-example1-database
+#  - cd ./crabzilla-example1/crabzilla-example1-database
 #  - mvn compile flyway:migrate
 #  - cd ../..
   - docker ps
   - sleep 30
   - docker ps
-  - mvn clean install -DskipITs=true
-  - docker ps
-  - mvn clean install
+  - mvn clean verify -P all-tests
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
