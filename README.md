@@ -48,12 +48,12 @@ and your service module must import:
 
 ### Steps
 
-1. Clone Crabzilla and build it running unit tests but skipping integration tests:
+1. Clone Crabzilla and build it running unit tests :
 
 ```bash
 git clone https://github.com/crabzilla/crabzilla
 cd crabzilla
-mvn clean install -DskipITs=true
+mvn clean install 
 ```
 
 2. Start a MySql instance. You can use docker-compose:
@@ -62,19 +62,19 @@ mvn clean install -DskipITs=true
 docker-compose up
 ```
 
-3. Create the database schema using [Flyway](https://flywaydb.org/):
+3. Optionally, recreate the database schema using [Flyway](https://flywaydb.org/):
 
 ```bash
 cd crabzilla-example1/crabzilla-example1-database
 mvn compile flyway:migrate
 ```
 
-4. Now you can run integration tests against database, skipping the unit tests:
+4. Now you can run both unit and integration tests against database:
 
 ```bash
 # go back to crabzilla root
 cd ../..
-mvn verify -DskipUTs=true 
+ mvn clean verify -P all-tests
 ```
 
 5. Now you finally can run the current [example](crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Launcher.java):
