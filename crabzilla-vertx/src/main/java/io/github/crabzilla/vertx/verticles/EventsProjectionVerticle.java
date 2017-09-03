@@ -3,7 +3,6 @@ package io.github.crabzilla.vertx.verticles;
 import io.github.crabzilla.model.EntityUnitOfWork;
 import io.github.crabzilla.stack.EventProjector;
 import io.github.crabzilla.stack.ProjectionData;
-import io.github.crabzilla.stack.StringHelper;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
@@ -14,7 +13,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
-import static io.github.crabzilla.stack.StringHelper.*;
+import static io.github.crabzilla.stack.StringHelper.eventsHandlerId;
 import static java.util.Collections.singletonList;
 
 @Slf4j

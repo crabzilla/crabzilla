@@ -3,7 +3,6 @@ package io.github.crabzilla.vertx.verticles;
 import io.github.crabzilla.model.*;
 import io.github.crabzilla.stack.CommandExecution;
 import io.github.crabzilla.stack.DbConcurrencyException;
-import io.github.crabzilla.stack.StringHelper;
 import io.github.crabzilla.stack.UnknownCommandException;
 import io.github.crabzilla.vertx.repositories.EntityUnitOfWorkRepository;
 import io.vertx.circuitbreaker.CircuitBreaker;
@@ -23,7 +22,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static io.github.crabzilla.stack.CommandExecution.*;
-import static io.github.crabzilla.stack.StringHelper.*;
+import static io.github.crabzilla.stack.StringHelper.commandHandlerId;
 import static java.util.Collections.singletonList;
 
 @Slf4j

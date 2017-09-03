@@ -2,7 +2,6 @@ package io.github.crabzilla.example1;
 
 import com.google.inject.Guice;
 import io.github.crabzilla.example1.customer.Customer;
-import io.github.crabzilla.example1.customer.CustomerData;
 import io.github.crabzilla.stack.CommandExecution;
 import io.github.crabzilla.stack.StringHelper;
 import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
