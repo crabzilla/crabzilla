@@ -97,10 +97,10 @@
             <version>1</version>
         </dependency>
 
-        <!-- logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+            <!--<version>${sl4j.version}</version>-->
         </dependency>
 
         <!-- test -->
@@ -335,6 +335,11 @@
             <dependency>
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-core</artifactId>
+                <version>${vertx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-config</artifactId>
                 <version>${vertx.version}</version>
             </dependency>
             <dependency>
@@ -596,143 +601,6 @@
                 <version>2.2</version>
             </plugin>
 
-            <plugin>
-                <groupId>org.asciidoctor</groupId>
-                <artifactId>asciidoctor-maven-plugin</artifactId>
-                <version>${asciidoctor.maven.plugin.version}</version>
-                <!--<dependencies>-->
-                <!--&lt;!&ndash; Comment this section to use the default jruby artifact provided by the plugin &ndash;&gt;-->
-                <!--<dependency>-->
-                <!--<groupId>org.jruby</groupId>-->
-                <!--<artifactId>jruby-complete</artifactId>-->
-                <!--<version>${jruby.version}</version>-->
-                <!--</dependency>-->
-                <!--&lt;!&ndash; Comment this section to use the default AsciidoctorJ artifact provided by the plugin &ndash;&gt;-->
-                <!--<dependency>-->
-                <!--<groupId>org.asciidoctor</groupId>-->
-                <!--<artifactId>asciidoctorj</artifactId>-->
-                <!--<version>${asciidoctorj.version}</version>-->
-                <!--</dependency>-->
-                <!--</dependencies>-->
-                <configuration>
-                    <sourceDirectory>doc/asciidoc</sourceDirectory>
-                    <baseDir>${project.basedir}</baseDir>
-                    <!-- If you set baseDir to ${project.basedir}, top-level includes are resolved relative to the project root -->
-                    <!--
-                    <baseDir>${project.basedir}</baseDir>
-                    -->
-                    <!-- Attributes common to all output formats -->
-                    <attributes>
-                        <endpoint-url>http://example.org</endpoint-url>
-                        <sourcedir>${project.build.sourceDirectory}</sourcedir>
-                        <project-version>${project.version}</project-version>
-                    </attributes>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>asciidoc-to-html</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>process-asciidoc</goal>
-                        </goals>
-                        <configuration>
-                            <backend>html5</backend>
-                            <sourceHighlighter>highlightjs</sourceHighlighter>
-                            <!--
-                            Scenarios for linking vs embedding assets:
-
-                            Link to both stylesheets and images::
-
-                               - don't set embedAssets option
-                               - set linkcss attribute to true
-                               - set imagesdir attribute to path relative to AsciiDoc source file
-
-                              <attributes>
-                                  <linkcss>true</linkcss>
-                                  <imagesdir>./images</imagesdir>
-                              </attributes>
-
-                            Embed stylesheets and images::
-
-                               - set embedAssets option to true
-                               - don't set linkcss attribute
-                               - set imagesdir attribute to path relative to project root
-
-                              <embedAssets>true</embedAssets>
-                              <attributes>
-                                  <imagesdir>src/docs/asciidoc/images</imagesdir>
-                              </attributes>
-
-                            Link to stylesheets but embed images::
-
-                               - set embedAssets option to true
-                               - set linkcss attribute to true
-                               - set imagesdir attribute to path relative to project root
-
-                              <embedAssets>true</embedAssets>
-                              <attributes>
-                                  <linkcss>true</linkcss>
-                                  <imagesdir>src/docs/asciidoc/images</imagesdir>
-                              </attributes>
-
-                            Embed stylesheets but link images (default)::
-
-                               - don't set embedAssets option
-                               - don't set linkcss attribute
-                               - set imagesdir attribute to path relative to AsciiDoc source file
-
-                              <attributes>
-                                  <imagesdir>./images</imagesdir>
-                              </attributes>
-
-                            IMPORTANT: When you enable image embedding, you must qualify the path the the imagesdir, as shown above.
-                            -->
-                            <attributes>
-                                <imagesdir>./images</imagesdir>
-                                <toc>left</toc>
-                                <icons>font</icons>
-                                <sectanchors>true</sectanchors>
-                                <!-- set the idprefix to blank -->
-                                <idprefix />
-                                <idseparator>-</idseparator>
-                                <docinfo1>true</docinfo1>
-                            </attributes>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!--<plugin>-->
-                <!--<groupId>org.projectlombok</groupId>-->
-                <!--<artifactId>lombok-maven-plugin</artifactId>-->
-                <!--<version>${lombok.version}.1</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>delombok</id>-->
-                        <!--<phase>generate-sources</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>delombok</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<formatPreferences>-->
-                                <!--<javaLangAsFQN>skip</javaLangAsFQN>-->
-                            <!--</formatPreferences>-->
-                            <!--<verbose>true</verbose>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                    <!--<execution>-->
-                        <!--<id>test-delombok</id>-->
-                        <!--<phase>generate-test-sources</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>testDelombok</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<verbose>true</verbose>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-            <!--</plugin>-->
-
         </plugins>
 
     </build>
@@ -742,6 +610,7 @@
         <profile>
             <id>dev</id>
         </profile>
+
         <profile>
             <id>integration-test</id>
             <properties>
@@ -752,6 +621,7 @@
                 <skip.unit.tests>true</skip.unit.tests>
             </properties>
         </profile>
+
         <profile>
             <id>all-tests</id>
             <properties>
@@ -843,6 +713,120 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>documents</id>
+            <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.asciidoctor</groupId>
+                    <artifactId>asciidoctor-maven-plugin</artifactId>
+                    <version>${asciidoctor.maven.plugin.version}</version>
+                    <!--<dependencies>-->
+                    <!--&lt;!&ndash; Comment this section to use the default jruby artifact provided by the plugin &ndash;&gt;-->
+                    <!--<dependency>-->
+                    <!--<groupId>org.jruby</groupId>-->
+                    <!--<artifactId>jruby-complete</artifactId>-->
+                    <!--<version>${jruby.version}</version>-->
+                    <!--</dependency>-->
+                    <!--&lt;!&ndash; Comment this section to use the default AsciidoctorJ artifact provided by the plugin &ndash;&gt;-->
+                    <!--<dependency>-->
+                    <!--<groupId>org.asciidoctor</groupId>-->
+                    <!--<artifactId>asciidoctorj</artifactId>-->
+                    <!--<version>${asciidoctorj.version}</version>-->
+                    <!--</dependency>-->
+                    <!--</dependencies>-->
+                    <configuration>
+                        <sourceDirectory>doc/asciidoc</sourceDirectory>
+                        <baseDir>${project.basedir}</baseDir>
+                        <!-- If you set baseDir to ${project.basedir}, top-level includes are resolved relative to the project root -->
+                        <!--
+                        <baseDir>${project.basedir}</baseDir>
+                        -->
+                        <!-- Attributes common to all output formats -->
+                        <attributes>
+                            <endpoint-url>http://example.org</endpoint-url>
+                            <sourcedir>${project.build.sourceDirectory}</sourcedir>
+                            <project-version>${project.version}</project-version>
+                        </attributes>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>asciidoc-to-html</id>
+                            <phase>generate-resources</phase>
+                            <goals>
+                                <goal>process-asciidoc</goal>
+                            </goals>
+                            <configuration>
+                                <backend>html5</backend>
+                                <sourceHighlighter>highlightjs</sourceHighlighter>
+                                <!--
+                                Scenarios for linking vs embedding assets:
+
+                                Link to both stylesheets and images::
+
+                                   - don't set embedAssets option
+                                   - set linkcss attribute to true
+                                   - set imagesdir attribute to path relative to AsciiDoc source file
+
+                                  <attributes>
+                                      <linkcss>true</linkcss>
+                                      <imagesdir>./images</imagesdir>
+                                  </attributes>
+
+                                Embed stylesheets and images::
+
+                                   - set embedAssets option to true
+                                   - don't set linkcss attribute
+                                   - set imagesdir attribute to path relative to project root
+
+                                  <embedAssets>true</embedAssets>
+                                  <attributes>
+                                      <imagesdir>src/docs/asciidoc/images</imagesdir>
+                                  </attributes>
+
+                                Link to stylesheets but embed images::
+
+                                   - set embedAssets option to true
+                                   - set linkcss attribute to true
+                                   - set imagesdir attribute to path relative to project root
+
+                                  <embedAssets>true</embedAssets>
+                                  <attributes>
+                                      <linkcss>true</linkcss>
+                                      <imagesdir>src/docs/asciidoc/images</imagesdir>
+                                  </attributes>
+
+                                Embed stylesheets but link images (default)::
+
+                                   - don't set embedAssets option
+                                   - don't set linkcss attribute
+                                   - set imagesdir attribute to path relative to AsciiDoc source file
+
+                                  <attributes>
+                                      <imagesdir>./images</imagesdir>
+                                  </attributes>
+
+                                IMPORTANT: When you enable image embedding, you must qualify the path the the imagesdir, as shown above.
+                                -->
+                                <attributes>
+                                    <imagesdir>./images</imagesdir>
+                                    <toc>left</toc>
+                                    <icons>font</icons>
+                                    <sectanchors>true</sectanchors>
+                                    <!-- set the idprefix to blank -->
+                                    <idprefix />
+                                    <idseparator>-</idseparator>
+                                    <docinfo1>true</docinfo1>
+                                </attributes>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+            </build>
+        </profile>
+
     </profiles>
 
 </project>

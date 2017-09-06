@@ -31,9 +31,7 @@ public class Example1EventProjector extends EventProjector<CustomerSummaryDao> {
         run(() -> dao.updateStatus(targetId, true))),
       Case($(instanceOf(CustomerDeactivated.class)), e ->
         run(() -> dao.updateStatus(targetId, false))),
-      Case($(), o -> run(() -> {
-        log.warn("{} does not have any event projection handler", event);
-      })));
+      Case($(), o -> run(() -> log.warn("{} does not have any event projection handler", event))));
   }
 
 }

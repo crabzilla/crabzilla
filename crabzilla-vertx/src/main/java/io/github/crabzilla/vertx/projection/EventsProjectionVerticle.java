@@ -32,24 +32,21 @@ public class EventsProjectionVerticle<DAO> extends AbstractVerticle {
   }
 
   Handler<Message<EntityUnitOfWork>> msgHandler() {
-    return (Message<EntityUnitOfWork> msg) -> {
+    return (Message<EntityUnitOfWork> msg) -> vertx.executeBlocking((Future<String> future) -> {
+      log.info("Received ProjectionData msg {} ", msg);
+      val uow = msg.body();
+      val uowSequence = new Long(msg.headers().get("uowSequence"));
+      val projectionData =
+              new ProjectionData(uow.getUnitOfWorkId(), uowSequence,
+                      uow.targetId().stringValue(), uow.getEvents());
 
-      vertx.executeBlocking((Future<String> future) -> {
-        log.info("Received ProjectionData msg {} ", msg);
-        val uow = msg.body();
-        val uowSequence = new Long(msg.headers().get("uowSequence"));
-        val projectionData =
-                new ProjectionData(uow.getUnitOfWorkId(), uowSequence,
-                        uow.targetId().stringValue(), uow.getEvents());
-
-        circuitBreaker.fallback(throwable -> {
-          log.warn("Fallback for uowHandler ");
-          return "fallback";
-        })
-        .execute(uowHandler(projectionData))
-        .setHandler(resultHandler(msg));
-      }, resultHandler(msg));
-    };
+      circuitBreaker.fallback(throwable -> {
+        log.warn("Fallback for uowHandler ");
+        return "fallback";
+      })
+      .execute(uowHandler(projectionData))
+      .setHandler(resultHandler(msg));
+    }, resultHandler(msg));
   }
 
   Handler<Future<String>> uowHandler(final ProjectionData projectionData) {
