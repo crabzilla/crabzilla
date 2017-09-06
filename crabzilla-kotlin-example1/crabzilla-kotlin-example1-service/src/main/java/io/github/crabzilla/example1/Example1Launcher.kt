@@ -5,11 +5,11 @@ import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerId
-import io.github.crabzilla.stack.CommandExecution
-import io.github.crabzilla.stack.StringHelper.commandHandlerId
-import io.github.crabzilla.vertx.verticles.EntityCommandHandlerVerticle
-import io.github.crabzilla.vertx.verticles.EntityCommandRestVerticle
-import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle
+import io.github.crabzilla.vertx.entity.EntityCommandExecution
+import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
+import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
+import io.github.crabzilla.vertx.helpers.StringHelper.commandHandlerId
+import io.github.crabzilla.vertx.projection.EventsProjectionVerticle
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.logging.LoggerFactory
@@ -45,7 +45,7 @@ class Example1Launcher {
     val options = DeliveryOptions().setCodecName("EntityCommand")
 
     // create customer command
-    vertx.eventBus().send<CommandExecution>(commandHandlerId(Customer::class.java), createCustomerCmd, options) { asyncResult ->
+    vertx.eventBus().send<EntityCommandExecution>(commandHandlerId(Customer::class.java), createCustomerCmd, options) { asyncResult ->
 
       log.info("Successful create customer test? {}", asyncResult.succeeded())
 
@@ -58,7 +58,7 @@ class Example1Launcher {
         log.info("-----> Will send : {}", activateCustomerCmd)
 
         // activate customer command
-        vertx.eventBus().send<CommandExecution>(commandHandlerId(Customer::class.java), activateCustomerCmd, options) { asyncResult2 ->
+        vertx.eventBus().send<EntityCommandExecution>(commandHandlerId(Customer::class.java), activateCustomerCmd, options) { asyncResult2 ->
 
           log.info("Successful activate customer test? {}", asyncResult2.succeeded())
 

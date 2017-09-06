@@ -1,7 +1,7 @@
 package io.github.crabzilla.example1.util;
 
-import io.github.crabzilla.model.Aggregate;
-import io.github.crabzilla.model.DomainEvent;
+import io.github.crabzilla.core.DomainEvent;
+import io.github.crabzilla.core.entity.Entity;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.invoke.MethodHandle;
@@ -10,7 +10,7 @@ import java.lang.invoke.MethodType;
 import java.util.function.BiFunction;
 
 @Slf4j
-public abstract class AbstractStateTransitionFn<A extends Aggregate> implements BiFunction<DomainEvent, A, A> {
+public abstract class AbstractStateTransitionFn<A extends Entity> implements BiFunction<DomainEvent, A, A> {
 
   static final String METHOD_NAME = "on";
   final MethodHandles.Lookup lookup = MethodHandles.lookup();

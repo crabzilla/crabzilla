@@ -1,9 +1,10 @@
 package io.github.crabzilla.example1.customer
 
 
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.entity.*
 import io.github.crabzilla.example1.SampleInternalService
-import io.github.crabzilla.model.*
-import io.github.crabzilla.vertx.AggregateRootComponentsFactory
+import io.github.crabzilla.vertx.entity.roles.AggregateComponentsFactory
 import io.vertx.core.Vertx
 import io.vertx.ext.jdbc.JDBCClient
 import java.util.function.BiFunction
@@ -14,7 +15,7 @@ import javax.inject.Inject
 // tag::factory[]
 class CustomerFactory @Inject
 constructor(service: SampleInternalService, private val vertx: Vertx,
-            private val jdbcClient: JDBCClient) : AggregateRootComponentsFactory<Customer> {
+            private val jdbcClient: JDBCClient) : AggregateComponentsFactory<Customer> {
 
   private val seedValue by lazy { Customer(sampleInternalService = service) }
 
@@ -35,7 +36,7 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
   }
 
   override fun cmdHandlerFn():
-          BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> {
+          BiFunction<EntityCommand, Snapshot<Customer>, EntityCommandResult> {
     val trackerFactory = StateTransitionsTrackerFactory<Customer> { instance ->
       StateTransitionsTracker(instance, stateTransitionFn())
     }

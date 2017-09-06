@@ -2,9 +2,9 @@ package io.github.crabzilla.example1;
 
 import com.google.inject.Guice;
 import io.github.crabzilla.example1.customer.Customer;
-import io.github.crabzilla.stack.CommandExecution;
-import io.github.crabzilla.stack.StringHelper;
-import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
+import io.github.crabzilla.vertx.entity.EntityCommandExecution;
+import io.github.crabzilla.vertx.helpers.StringHelper;
+import io.github.crabzilla.vertx.projection.EventsProjectionVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -76,7 +76,7 @@ public class Example1Launcher {
     val options = new DeliveryOptions().setCodecName("EntityCommand");
 
     // create customer command
-    vertx.eventBus().<CommandExecution>send(StringHelper.commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().<EntityCommandExecution>send(StringHelper.commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       log.info("Successful create customer test? {}", asyncResult.succeeded());
 
@@ -87,7 +87,7 @@ public class Example1Launcher {
         val activateCustomerCmd = new ActivateCustomer(UUID.randomUUID(), createCustomerCmd.getTargetId(), "because I want it");
 
         // activate customer command
-        vertx.eventBus().<CommandExecution>send(StringHelper.commandHandlerId(Customer.class), activateCustomerCmd, options, asyncResult2 -> {
+        vertx.eventBus().<EntityCommandExecution>send(StringHelper.commandHandlerId(Customer.class), activateCustomerCmd, options, asyncResult2 -> {
 
           log.info("Successful activate customer test? {}", asyncResult2.succeeded());
 

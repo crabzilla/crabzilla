@@ -9,17 +9,18 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import io.github.crabzilla.core.DomainEvent;
+import io.github.crabzilla.core.entity.EntityCommand;
+import io.github.crabzilla.core.entity.EntityId;
+import io.github.crabzilla.core.entity.EntityUnitOfWork;
 import io.github.crabzilla.example1.customer.CustomerModule;
 import io.github.crabzilla.example1.services.SampleInternalService;
 import io.github.crabzilla.example1.services.SampleInternalServiceImpl;
-import io.github.crabzilla.model.DomainEvent;
-import io.github.crabzilla.model.EntityCommand;
-import io.github.crabzilla.model.EntityId;
-import io.github.crabzilla.model.EntityUnitOfWork;
-import io.github.crabzilla.stack.CommandExecution;
 import io.github.crabzilla.vertx.codecs.JacksonGenericCodec;
-import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
+import io.github.crabzilla.vertx.entity.EntityCommandExecution;
+import io.github.crabzilla.vertx.projection.EventsProjectionVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
@@ -28,6 +29,7 @@ import lombok.val;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
+import javax.inject.Named;
 import java.util.Properties;
 
 import static io.vertx.core.json.Json.mapper;
@@ -47,8 +49,6 @@ class Example1Module extends AbstractModule {
     configureVertx();
     // aggregates
     install(new CustomerModule());
-    // database
-    install(new DatabaseModule());
     // services
     bind(SampleInternalService.class).to(SampleInternalServiceImpl.class).asEagerSingleton();
     // exposes properties to guice
@@ -104,6 +104,30 @@ class Example1Module extends AbstractModule {
     return JDBCClient.create(vertx, dataSource);
   }
 
+  @Provides
+  @Singleton
+  public HikariDataSource config(@Named("database.driver") String dbDriver,
+                                 @Named("database.url") String dbUrl,
+                                 @Named("database.user") String dbUser,
+                                 @Named("database.password") String dbPwd,
+                                 @Named("database.pool.max.size") Integer databaseMaxSize) {
+
+    HikariConfig config = new HikariConfig();
+    config.setDriverClassName(dbDriver);
+    config.setJdbcUrl(dbUrl);
+    config.setUsername(dbUser);
+    config.setPassword(dbPwd);
+    config.setConnectionTimeout(5000);
+    config.setMaximumPoolSize(databaseMaxSize);
+    config.addDataSourceProperty("cachePrepStmts", "true");
+    config.addDataSourceProperty("prepStmtCacheSize", "250");
+    config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+    config.setAutoCommit(false);
+    // config.setTransactionIsolation("TRANSACTION_REPEATABLE_READ");
+    config.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
+    return new HikariDataSource(config);
+  }
+
 //  Not being used yet. This can improve a lot serialization speed (it's binary). But so far it was not necessary.
 //  @Provides
 //  @Singleton
@@ -117,8 +141,8 @@ class Example1Module extends AbstractModule {
             .registerModule(new Jdk8Module())
             .registerModule(new JavaTimeModule());
 
-    vertx.eventBus().registerDefaultCodec(CommandExecution.class,
-            new JacksonGenericCodec<>(mapper, CommandExecution.class));
+    vertx.eventBus().registerDefaultCodec(EntityCommandExecution.class,
+            new JacksonGenericCodec<>(mapper, EntityCommandExecution.class));
 
     vertx.eventBus().registerDefaultCodec(EntityId.class,
             new JacksonGenericCodec<>(mapper, EntityId.class));

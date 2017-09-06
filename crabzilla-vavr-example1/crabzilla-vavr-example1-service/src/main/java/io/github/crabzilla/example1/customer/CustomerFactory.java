@@ -1,9 +1,13 @@
 package io.github.crabzilla.example1.customer;
 
 
+import io.github.crabzilla.core.DomainEvent;
+import io.github.crabzilla.core.entity.EntityCommand;
+import io.github.crabzilla.core.entity.EntityCommandResult;
+import io.github.crabzilla.core.entity.Snapshot;
+import io.github.crabzilla.core.entity.StateTransitionsTracker;
 import io.github.crabzilla.example1.services.SampleInternalService;
-import io.github.crabzilla.model.*;
-import io.github.crabzilla.vertx.AggregateRootComponentsFactory;
+import io.github.crabzilla.vertx.entity.roles.AggregateComponentsFactory;
 import io.vertx.core.Vertx;
 import io.vertx.ext.jdbc.JDBCClient;
 
@@ -16,7 +20,7 @@ import java.util.function.Supplier;
 import static io.github.crabzilla.example1.customer.CustomerFunctions.*;
 
 // tag::factory[]
-public class CustomerFactory implements AggregateRootComponentsFactory<Customer> {
+public class CustomerFactory implements AggregateComponentsFactory<Customer> {
 
   private final Vertx vertx;
   private final JDBCClient jdbcClient;
@@ -51,7 +55,7 @@ public class CustomerFactory implements AggregateRootComponentsFactory<Customer>
   }
 
   @Override
-  public BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> cmdHandlerFn() {
+  public BiFunction<EntityCommand, Snapshot<Customer>, EntityCommandResult> cmdHandlerFn() {
     return new CommandHandlerFn(instance ->
             new StateTransitionsTracker<>(instance, stateTransitionFn()));
   }

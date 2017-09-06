@@ -1,8 +1,9 @@
 package io.github.crabzilla.example1
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.entity.*
 import io.github.crabzilla.example1.customer.CustomerId
-import io.github.crabzilla.model.*
 import java.util.*
 
 interface KotlinEntityCommand : EntityCommand {
@@ -24,11 +25,11 @@ interface KotlinEntityCommand : EntityCommand {
 
 // helpers functions
 
-fun resultOf(f: () -> EntityUnitOfWork): CommandHandlerResult {
+fun resultOf(f: () -> EntityUnitOfWork): EntityCommandResult {
   return try {
-    CommandHandlerResult.success(f.invoke()) }
+    EntityCommandResult.success(f.invoke()) }
   catch (e: Throwable) {
-    CommandHandlerResult.error(RuntimeException(e)) }
+    EntityCommandResult.error(RuntimeException(e)) }
 }
 
 fun uowOf(command: EntityCommand, events: List<DomainEvent>, version: Version): EntityUnitOfWork {

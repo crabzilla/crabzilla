@@ -1,10 +1,10 @@
 package io.github.crabzilla.example1;
 
 import com.google.inject.Guice;
+import io.github.crabzilla.core.entity.EntityCommand;
 import io.github.crabzilla.example1.customer.Customer;
-import io.github.crabzilla.model.EntityCommand;
-import io.github.crabzilla.stack.CommandExecution;
-import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
+import io.github.crabzilla.vertx.entity.EntityCommandExecution;
+import io.github.crabzilla.vertx.projection.EventsProjectionVerticle;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static io.github.crabzilla.example1.customer.CustomerData.*;
-import static io.github.crabzilla.stack.StringHelper.commandHandlerId;
+import static io.github.crabzilla.vertx.helpers.StringHelper.commandHandlerId;
 import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.lang.System.setProperty;
 
@@ -63,7 +63,7 @@ public class Example1Launcher {
     val options = new DeliveryOptions().setCodecName(EntityCommand.class.getSimpleName());
 
     // create customer command
-    vertx.eventBus().<CommandExecution>send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().<EntityCommandExecution>send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       log.info("Successful create customer test? {}", asyncResult.succeeded());
 
@@ -75,7 +75,7 @@ public class Example1Launcher {
                 "because I want it");
 
         // activate customer command
-        vertx.eventBus().<CommandExecution>send(commandHandlerId(Customer.class),
+        vertx.eventBus().<EntityCommandExecution>send(commandHandlerId(Customer.class),
                 activateCustomerCmd, options, asyncResult2 -> {
 
           log.info("Successful activate customer test? {}", asyncResult2.succeeded());

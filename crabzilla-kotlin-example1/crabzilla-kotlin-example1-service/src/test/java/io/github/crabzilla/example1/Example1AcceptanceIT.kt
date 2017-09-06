@@ -1,18 +1,18 @@
 package io.github.crabzilla.example1
 
 import com.google.inject.Guice
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.entity.EntityUnitOfWork
+import io.github.crabzilla.core.entity.Version
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerId
-import io.github.crabzilla.model.DomainEvent
-import io.github.crabzilla.model.EntityUnitOfWork
-import io.github.crabzilla.model.Version
-import io.github.crabzilla.stack.CommandExecution
-import io.github.crabzilla.stack.StringHelper.aggregateRootId
-import io.github.crabzilla.vertx.verticles.EntityCommandHandlerVerticle
-import io.github.crabzilla.vertx.verticles.EntityCommandRestVerticle
-import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle
+import io.github.crabzilla.vertx.entity.EntityCommandExecution
+import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
+import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
+import io.github.crabzilla.vertx.helpers.StringHelper.aggregateRootId
+import io.github.crabzilla.vertx.projection.EventsProjectionVerticle
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
@@ -119,7 +119,7 @@ class Example1AcceptanceIT {
         context.assertTrue(response.headers().get("content-type").equals("application/json"))
         response.bodyHandler { body ->
           println("---> body " + body)
-          val cmdExec = Json.decodeValue(body.toString(), CommandExecution::class.java)
+          val cmdExec = Json.decodeValue(body.toString(), EntityCommandExecution::class.java)
           context.assertEquals(cmdExec.unitOfWork.targetId(), expectedUow.targetId())
           context.assertEquals(cmdExec.unitOfWork.command, expectedUow.command)
           context.assertEquals(cmdExec.unitOfWork.events, expectedUow.events)

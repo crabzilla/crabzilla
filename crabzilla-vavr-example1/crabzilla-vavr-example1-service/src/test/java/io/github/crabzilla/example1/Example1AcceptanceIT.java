@@ -1,11 +1,11 @@
 package io.github.crabzilla.example1;
 
 import com.google.inject.Guice;
+import io.github.crabzilla.core.entity.EntityUnitOfWork;
+import io.github.crabzilla.core.entity.Version;
 import io.github.crabzilla.example1.customer.Customer;
-import io.github.crabzilla.model.EntityUnitOfWork;
-import io.github.crabzilla.model.Version;
-import io.github.crabzilla.stack.CommandExecution;
-import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
+import io.github.crabzilla.vertx.entity.EntityCommandExecution;
+import io.github.crabzilla.vertx.projection.EventsProjectionVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static io.github.crabzilla.example1.customer.CustomerData.*;
-import static io.github.crabzilla.stack.StringHelper.aggregateRootId;
+import static io.github.crabzilla.vertx.helpers.StringHelper.aggregateRootId;
 import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.lang.System.setProperty;
 import static java.util.Collections.singletonList;
@@ -118,7 +118,7 @@ public class Example1AcceptanceIT {
         context.assertEquals(response.statusCode(), 201);
         context.assertTrue(response.headers().get("content-type").contains("application/json"));
         response.bodyHandler(body -> {
-          val cmdExec = Json.decodeValue(body.toString(), CommandExecution.class);
+          val cmdExec = Json.decodeValue(body.toString(), EntityCommandExecution.class);
           val uow = cmdExec.getUnitOfWork();
           if (cmdExec.getUnitOfWork() != null) {
             context.assertEquals(uow.targetId(), expectedUow.targetId());

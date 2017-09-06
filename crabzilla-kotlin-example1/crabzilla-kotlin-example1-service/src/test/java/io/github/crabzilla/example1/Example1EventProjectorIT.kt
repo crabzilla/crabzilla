@@ -2,13 +2,13 @@ package io.github.crabzilla.example1
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.Guice
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.exceptions.DbConcurrencyException
 import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerId
-import io.github.crabzilla.model.DomainEvent
-import io.github.crabzilla.stack.DbConcurrencyException
-import io.github.crabzilla.stack.EventProjector
-import io.github.crabzilla.stack.ProjectionData
+import io.github.crabzilla.vertx.projection.EventProjector
+import io.github.crabzilla.vertx.projection.ProjectionData
 import io.vertx.core.Vertx
 import org.assertj.core.api.Assertions.assertThat
 import org.jdbi.v3.core.Jdbi

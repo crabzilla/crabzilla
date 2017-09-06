@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import io.github.crabzilla.core.entity.EntityCommand;
+import io.github.crabzilla.core.entity.EntityUnitOfWork;
+import io.github.crabzilla.core.entity.Version;
 import io.github.crabzilla.example1.customer.CustomerData;
-import io.github.crabzilla.model.EntityCommand;
-import io.github.crabzilla.model.EntityUnitOfWork;
-import io.github.crabzilla.model.Version;
 import io.vertx.core.json.Json;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,7 +57,7 @@ public class JacksonJsonTest {
     val id = new CustomerData.CustomerId("customer#1");
     val command = new CustomerData.CreateCustomer(UUID.randomUUID(), id, "customer1");
     val event1 = new CustomerData.CustomerCreated(id, command.getName());
-    val event2 = new CustomerData.CustomerActivated("a rgood reason", Instant.now());
+    val event2 = new CustomerData.CustomerActivated("a good reason", Instant.now());
 
     val uow1 = EntityUnitOfWork.unitOfWork(command, Version.create(1), asList(event1,  event2));
 

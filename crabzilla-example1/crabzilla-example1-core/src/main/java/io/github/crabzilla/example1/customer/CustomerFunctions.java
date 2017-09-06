@@ -1,11 +1,11 @@
 package io.github.crabzilla.example1.customer;
 
+import io.github.crabzilla.core.entity.EntityCommand;
+import io.github.crabzilla.core.entity.EntityUnitOfWork;
+import io.github.crabzilla.core.entity.Snapshot;
+import io.github.crabzilla.core.entity.StateTransitionsTrackerFactory;
 import io.github.crabzilla.example1.util.AbstractCommandsHandlerFn;
 import io.github.crabzilla.example1.util.AbstractStateTransitionFn;
-import io.github.crabzilla.model.EntityCommand;
-import io.github.crabzilla.model.EntityUnitOfWork;
-import io.github.crabzilla.model.Snapshot;
-import io.github.crabzilla.model.StateTransitionsTrackerFactory;
 import lombok.val;
 
 import javax.inject.Inject;
@@ -13,8 +13,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
+import static io.github.crabzilla.core.entity.EntityUnitOfWork.unitOfWork;
 import static io.github.crabzilla.example1.customer.CustomerData.*;
-import static io.github.crabzilla.model.EntityUnitOfWork.unitOfWork;
 
 public class CustomerFunctions {
 
