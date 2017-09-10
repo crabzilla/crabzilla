@@ -527,20 +527,20 @@ internal services and repositories are just plain domain abstractions: interface
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java" data-lang="java">  @Value
   public static class CustomerActivated implements DomainEvent {
-    String reason;
-    Instant when;
+    private String reason;
+    private Instant when;
   }
 
   @Value
   public static class CustomerCreated implements DomainEvent {
-    CustomerId id;
-    String name;
+    private CustomerId id;
+    private String name;
   }
 
   @Value
   public static class CustomerDeactivated implements DomainEvent {
-    String reason;
-    Instant when;
+    private String reason;
+    private Instant when;
   }</code></pre>
 </div>
 </div>
@@ -552,24 +552,24 @@ internal services and repositories are just plain domain abstractions: interface
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java" data-lang="java">  @Value
   public static class CreateCustomer implements EntityCommand {
-    UUID commandId;
-    CustomerId targetId;
-    String name;
+    private UUID commandId;
+    private CustomerId targetId;
+    private String name;
   }
 
   @Value
   public static class ActivateCustomer implements EntityCommand {
-    UUID commandId;
-    CustomerId targetId;
-    String reason;
+    private UUID commandId;
+    private CustomerId targetId;
+    private String reason;
   }
 
   @Value
   public static class CreateActivateCustomer implements EntityCommand {
-    UUID commandId;
-    CustomerId targetId;
-    String name;
-    String reason;
+    private UUID commandId;
+    private CustomerId targetId;
+    private String name;
+    private String reason;
   }</code></pre>
 </div>
 </div>
@@ -678,15 +678,15 @@ internal services and repositories are just plain domain abstractions: interface
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java" data-lang="java">@Value
 @Wither
-public class Customer implements Aggregate {
+public class Customer implements Entity {
 
   @NonNull
-  transient SampleInternalService service;
+  private transient SampleInternalService service;
 
-  CustomerData.CustomerId id;
-  String name;
-  boolean isActive;
-  String reason;
+  private CustomerData.CustomerId id;
+  private String name;
+  private boolean isActive;
+  private String reason;
 
   List&lt;DomainEvent&gt; create(CustomerData.CustomerId id, String name) {
     validState(this.id == null, "customer already created");
@@ -733,9 +733,9 @@ public class Customer implements Aggregate {
 @NoArgsConstructor
 public class CustomerSummary {
 
-  String id;
-  String name;
-  Boolean isActive;
+  private String id;
+  private String name;
+  private Boolean isActive;
 
   public CustomerSummary(String id, String name, boolean isActive) {
     this.id = id;
@@ -874,7 +874,7 @@ also a factory and a module for each aggregate we have.</p>
 <div class="listingblock">
 <div class="title">CustomerFactory</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">public class CustomerFactory implements AggregateRootComponentsFactory&lt;Customer&gt; {
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">public class CustomerFactory implements AggregateComponentsFactory&lt;Customer&gt; {
 
   private final Customer seedValue;
   private final Vertx vertx;
@@ -907,7 +907,7 @@ also a factory and a module for each aggregate we have.</p>
   }
 
   @Override
-  public BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, CommandHandlerResult&gt; cmdHandlerFn() {
+  public BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, EntityCommandResult&gt; cmdHandlerFn() {
     return new CommandHandlerFn(instance -&gt;
             new StateTransitionsTracker&lt;&gt;(instance, stateTransitionFn()));
   }
@@ -939,14 +939,14 @@ also a factory and a module for each aggregate we have.</p>
     // to bind aggregate functions
     bind(CustomerFactory.class).asEagerSingleton();
 
+    MapBinder&lt;String, Verticle&gt; mapbinder =
+            MapBinder.newMapBinder(binder(), String.class, Verticle.class);
+
     // to bind verticles for this aggregate
     TypeLiteral&lt;EntityCommandRestVerticle&lt;Customer&gt;&gt; restType =
             new TypeLiteral&lt;EntityCommandRestVerticle&lt;Customer&gt;&gt;() {};
     TypeLiteral&lt;EntityCommandHandlerVerticle&lt;Customer&gt;&gt; handlerType =
             new TypeLiteral&lt;EntityCommandHandlerVerticle&lt;Customer&gt;&gt;() {};
-
-    MapBinder&lt;String, Verticle&gt; mapbinder =
-            MapBinder.newMapBinder(binder(), String.class, Verticle.class);
 
     mapbinder.addBinding("customer.rest").to(restType);
     mapbinder.addBinding("customer.handler").to(handlerType);
@@ -955,8 +955,8 @@ also a factory and a module for each aggregate we have.</p>
 
   @Provides
   @Singleton
-  EntityCommandRestVerticle&lt;Customer&gt; restVerticle(CustomerFactory componentsFactory) {
-    return componentsFactory.restVerticle();
+  EntityCommandRestVerticle&lt;Customer&gt; restVerticle(CustomerFactory componentsFactory, JsonObject config) {
+    return componentsFactory.restVerticle(config);
   }
 
   @Provides
@@ -1018,45 +1018,7 @@ public class Example1EventProjector extends AbstractExample1EventProjector&lt;Cu
 <div class="listingblock">
 <div class="title">Example1AcceptanceIt.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java">  @Test
-  public void create_customer(TestContext context) {
-
-    // This test is asynchronous, so get an async handler to inform the test when we are done.
-    final Async async = context.async();
-
-    val customerId = new CustomerId(UUID.randomUUID().toString());
-    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer test");
-    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer test");
-    val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
-            new Version(1), singletonList(expectedEvent));
-
-    val json = Json.encodePrettily(createCustomerCmd);
-
-    vertx.createHttpClient().put(port, "localhost",
-            "/" + aggregateRootId(Customer.class) + "/commands")
-      .putHeader("content-type", "application/json")
-      .putHeader("content-length", Integer.toString(json.length()))
-      .handler(response -&gt; {
-        context.assertEquals(response.statusCode(), 201);
-        context.assertTrue(response.headers().get("content-type").contains("application/json"));
-        response.bodyHandler(body -&gt; {
-          val cmdExec = Json.decodeValue(body.toString(), CommandExecution.class);
-          val uow = cmdExec.getUnitOfWork();
-          if (cmdExec.getUnitOfWork() != null) {
-            context.assertEquals(uow.targetId(), expectedUow.targetId());
-            context.assertEquals(uow.getCommand(), expectedUow.getCommand());
-            context.assertEquals(uow.getEvents(), expectedUow.getEvents());
-            context.assertEquals(uow.getVersion(), expectedUow.getVersion());
-          } else {
-            fail("should be success");
-          }
-          async.complete();
-        });
-      })
-      .write(json)
-      .end();
-
-  }</code></pre>
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java"></code></pre>
 </div>
 </div>
 </div>
@@ -1085,16 +1047,16 @@ public class Example1EventProjector extends AbstractExample1EventProjector&lt;Cu
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EntityCommandRestVerticle.java">EntityCommandRestVerticle</a> to receive commands as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandRestVerticle.java">EntityCommandRestVerticle</a> to receive commands as JSON</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EntityCommandHandlerVerticle.java">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.java">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/repositories/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting units of work into a single table, being events and command as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting units of work into a single table, being events and command as JSON</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EventsProjectionVerticle.java">EventsProjectionVerticle</a> to propagate and project events to read model database</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/projection/EventsProjectionVerticle.java">EventsProjectionVerticle</a> to propagate and project events to read model database</p>
 </li>
 </ul>
 </div>
@@ -1104,7 +1066,7 @@ public class Example1EventProjector extends AbstractExample1EventProjector&lt;Cu
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-08-24 10:56:10 BRT
+Last updated 2017-09-05 20:03:10 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

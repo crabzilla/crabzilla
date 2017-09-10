@@ -39,6 +39,8 @@ public class Example1AcceptanceIT {
     RestAssured.reset();
   }
 
+  // tag::create_customer_test[]
+
   @Test
   public void successScenario() {
 
@@ -75,6 +77,7 @@ public class Example1AcceptanceIT {
 
   }
 
+  // end::create_customer_test[]
 
   @Test
   public void handlingErrorScenario() {
