@@ -8,6 +8,7 @@ import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
 import lombok.val;
 import net.jodah.expiringmap.ExpiringMap;
@@ -37,8 +38,8 @@ public interface AggregateComponentsFactory<A extends Entity> {
             instance -> new StateTransitionsTracker<>(instance, stateTransitionFn()));
   }
 
-  default EntityCommandRestVerticle<A> restVerticle() {
-    return new EntityCommandRestVerticle<>(clazz());
+  default EntityCommandRestVerticle<A> restVerticle(JsonObject config) {
+    return new EntityCommandRestVerticle<>(clazz(), config);
   }
 
   default EntityCommandHandlerVerticle<A> cmdHandlerVerticle() {

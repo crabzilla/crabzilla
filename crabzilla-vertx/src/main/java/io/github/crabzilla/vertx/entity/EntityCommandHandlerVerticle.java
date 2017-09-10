@@ -90,7 +90,7 @@ public class EntityCommandHandlerVerticle<A extends Entity> extends AbstractVert
       // get from cache _may_ be blocking if you plug an EntryLoader (from ExpiringMap)
       vertx.<Snapshot<A>>executeBlocking(fromCacheFuture -> {
 
-        log.info("loading {} from cache", targetId);
+        log.debug("loading {} from cache", targetId);
 
         fromCacheFuture.complete(cache.get(targetId));
 
@@ -105,7 +105,7 @@ public class EntityCommandHandlerVerticle<A extends Entity> extends AbstractVert
         val emptySnapshot = new Snapshot<A>(seedValue, new Version(0));
         val cachedSnapshot = snapshotFromCache == null ? emptySnapshot : snapshotFromCache;
 
-        log.info("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
+        log.debug("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
                 targetId, cachedSnapshot);
 
         Future<SnapshotData> selectAfterVersionFuture = Future.future();
@@ -140,13 +140,12 @@ public class EntityCommandHandlerVerticle<A extends Entity> extends AbstractVert
             val result = cmdHandler.apply(command, resultingSnapshot);
 
             result.inCaseOfSuccess(uow -> {
-              log.info("CommandExecution: {}", uow);
               Future<Long> appendFuture = Future.future();
               eventRepository.append(uow, appendFuture);
               appendFuture.setHandler(appendAsyncResult -> {
                 if (appendAsyncResult.failed()) {
                   val error =  appendAsyncResult.cause();
-                  log.error("When appending uow of command {} -> {}", command.getCommandId(), error.getMessage());
+                  log.error("appendUnitOfWork for command " + command.getCommandId(), error.getMessage());
                   if (error instanceof DbConcurrencyException) {
                     future2.complete(CONCURRENCY_ERROR(command.getCommandId(), error.getMessage()));
                   } else {
@@ -157,13 +156,13 @@ public class EntityCommandHandlerVerticle<A extends Entity> extends AbstractVert
                 val finalSnapshot = snapshotPromoter.promote(resultingSnapshot, uow.getVersion(), uow.getEvents());
                 cache.put(targetId, finalSnapshot);
                 val uowSequence = appendAsyncResult.result();
-                log.info("uowSequence: {}", uowSequence);
+                log.debug("uowSequence: {}", uowSequence);
                 future2.complete(SUCCESS(uow, uowSequence));
               });
             });
 
             result.inCaseOfError(error -> {
-              log.error("CommandExecution: {}", error.getMessage());
+              log.error("commandExecution", error.getMessage());
               if (error instanceof UnknownCommandException) {
                 future2.complete(UNKNOWN_COMMAND(command.getCommandId()));
               } else {
@@ -175,7 +174,7 @@ public class EntityCommandHandlerVerticle<A extends Entity> extends AbstractVert
             if (res.succeeded()) {
               future1.complete(res.result());
             } else {
-              res.cause().printStackTrace();
+              log.error("selectAfterVersion ", res.cause());
               future1.fail(res.cause());
             }
           });
@@ -186,23 +185,24 @@ public class EntityCommandHandlerVerticle<A extends Entity> extends AbstractVert
     };
   }
 
-
   Handler<AsyncResult<EntityCommandExecution>> resultHandler(final Message<EntityCommand> msg) {
 
     return (AsyncResult<EntityCommandExecution> resultHandler) -> {
       if (!resultHandler.succeeded()) {
-        log.error("error cause: {}", resultHandler.cause());
-        log.error("error message: {}", resultHandler.cause().getMessage());
-        resultHandler.cause().printStackTrace();
-        // TODO customize given commandResult
+        log.error("resultHandler", resultHandler.cause());
+        // TODO customize
         msg.fail(400, resultHandler.cause().getMessage());
         return;
       }
       val resp = resultHandler.result();
-      log.info("** success: {}", resp);
       val options = new DeliveryOptions().setCodecName("EntityCommandExecution");
-      msg.reply(resp, options, (Handler<AsyncResult<Message<EntityCommandExecution>>>)
-              event -> log.info("succeeded ?: "+ event.succeeded()));
+      msg.reply(resp, options);
+//      msg.reply(resp, options, (Handler<AsyncResult<Message<EntityCommandExecution>>>)
+//              event -> {
+//        if (!event.succeeded()) {
+//          log.error("msg.reply ", event.cause());
+//        }
+//      });
     };
   }
 

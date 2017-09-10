@@ -2,7 +2,6 @@ package io.github.crabzilla.vertx.projection;
 
 import io.github.crabzilla.core.DomainEvent;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 

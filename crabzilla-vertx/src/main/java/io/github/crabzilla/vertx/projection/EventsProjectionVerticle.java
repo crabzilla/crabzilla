@@ -15,12 +15,12 @@ import static io.github.crabzilla.vertx.helpers.StringHelper.eventsHandlerId;
 import static java.util.Collections.singletonList;
 
 @Slf4j
-public class EventsProjectionVerticle<DAO> extends AbstractVerticle {
+public class EventsProjectionVerticle<D> extends AbstractVerticle {
 
-  private final EventProjector<DAO> eventProjector;
+  private final EventProjector<D> eventProjector;
   private final CircuitBreaker circuitBreaker;
 
-  public EventsProjectionVerticle(@NonNull EventProjector<DAO> eventProjector,
+  public EventsProjectionVerticle(@NonNull EventProjector<D> eventProjector,
                                   @NonNull CircuitBreaker circuitBreaker) {
     this.eventProjector = eventProjector;
     this.circuitBreaker = circuitBreaker;

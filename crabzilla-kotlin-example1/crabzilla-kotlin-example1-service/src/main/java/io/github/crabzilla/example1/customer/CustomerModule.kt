@@ -8,6 +8,7 @@ import com.google.inject.multibindings.MapBinder
 import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
 import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
 import io.vertx.core.Verticle
+import io.vertx.core.json.JsonObject
 
 
 // tag::module[]
@@ -26,8 +27,8 @@ class CustomerModule : AbstractModule() {
 
   @Provides
   @Singleton
-  internal fun restVerticle(componentsFactory: CustomerFactory): EntityCommandRestVerticle<Customer> {
-    return componentsFactory.restVerticle()
+  internal fun restVerticle(componentsFactory: CustomerFactory, config: JsonObject): EntityCommandRestVerticle<Customer> {
+    return componentsFactory.restVerticle(config)
   }
 
   @Provides

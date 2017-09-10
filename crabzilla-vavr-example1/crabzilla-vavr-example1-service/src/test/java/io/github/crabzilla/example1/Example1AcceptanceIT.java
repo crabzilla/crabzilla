@@ -1,141 +1,109 @@
 package io.github.crabzilla.example1;
 
-import com.google.inject.Guice;
+import com.jayway.restassured.RestAssured;
+import com.jayway.restassured.http.ContentType;
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
 import io.github.crabzilla.core.entity.Version;
 import io.github.crabzilla.example1.customer.Customer;
+import io.github.crabzilla.example1.customer.CustomerData;
 import io.github.crabzilla.vertx.entity.EntityCommandExecution;
-import io.github.crabzilla.vertx.projection.EventsProjectionVerticle;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Verticle;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.LoggerFactory;
-import io.vertx.core.logging.SLF4JLogDelegateFactory;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.jdbi.v3.core.Jdbi;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
 
-import static io.github.crabzilla.example1.customer.CustomerData.*;
+import static com.jayway.restassured.RestAssured.given;
+import static com.jayway.restassured.http.ContentType.JSON;
+import static io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT.HANDLING_ERROR;
+import static io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT.SUCCESS;
 import static io.github.crabzilla.vertx.helpers.StringHelper.aggregateRootId;
-import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
-import static java.lang.System.setProperty;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(VertxUnitRunner.class)
 @Slf4j
 public class Example1AcceptanceIT {
 
-  private Vertx vertx;
-  private Integer port = 8080;
-
-  @Inject
-  Map<String, Verticle> aggregateRootVerticles;
-
-  @Inject
-  EventsProjectionVerticle<CustomerSummaryDao> projectionVerticle;
-
-  @Inject
-  Jdbi jdbi;
-
-  @Before
-  public void setUp(TestContext context) throws IOException {
-
-    vertx = Vertx.vertx();
-
-    // Let's configure the verticle to listen on the 'test' port (randomly picked).
-    // We create deployment options and set the _configuration_ json object:
-//    ServerSocket socket = new ServerSocket(0);
-//    port = socket.getLocalPort();
-//    socket.close();
-
-    setProperty (LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory.class.getName ());
-    LoggerFactory.getLogger (LoggerFactory.class); // Required for Logback to work in Vertx
-
-    Guice.createInjector(new Example1Module(vertx)).injectMembers(this);
-
-    DeploymentOptions options = new DeploymentOptions()
-            .setConfig(new JsonObject().put("http.port", port)
-            );
-
-    for (Map.Entry<String,Verticle> v: this.aggregateRootVerticles.entrySet()) {
-      vertx.deployVerticle(v.getValue(), options, context.asyncAssertSuccess());
-    }
-
-    vertx.deployVerticle(this.projectionVerticle, options, context.asyncAssertSuccess());
-
-    val h = jdbi.open();
-    h.createScript("DELETE FROM units_of_work").execute();
-    h.createScript("DELETE FROM customer_summary").execute();
-    h.commit();
+  @BeforeClass
+  public static void configureRestAssured() throws InterruptedException {
+    RestAssured.baseURI = "http://localhost";
+    RestAssured.port = Integer.getInteger("http.port", 8080);
+    log.info("----> RestAssured.port=" + RestAssured.port);
   }
 
-  /**
-   * This method, called after our test, just cleanup everything by closing the vert.x instance
-   *
-   * @param context the test context
-   */
-  @After
-  public void tearDown(TestContext context) {
-    vertx.close(context.asyncAssertSuccess());
+  @AfterClass
+  public static void unconfigureRestAssured() {
+    RestAssured.reset();
   }
-
-  // tag::create_customer_test[]
 
   @Test
-  public void create_customer(TestContext context) {
+  public void successScenario() {
 
-    // This test is asynchronous, so get an async handler to inform the test when we are done.
-    final Async async = context.async();
-
-    val customerId = new CustomerId(UUID.randomUUID().toString());
-    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer test");
-    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer test");
+    val customerId = new CustomerData.CustomerId(UUID.randomUUID().toString());
+    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer test");
+    val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer test");
     val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
             new Version(1), singletonList(expectedEvent));
 
     val json = Json.encodePrettily(createCustomerCmd);
 
-    vertx.createHttpClient().put(port, "localhost", "/" + aggregateRootId(Customer.class)
-            + "/commands")
-      .putHeader("content-type", "application/json")
-      .putHeader("content-length", Integer.toString(json.length()))
-      .handler(response -> {
-        context.assertEquals(response.statusCode(), 201);
-        context.assertTrue(response.headers().get("content-type").contains("application/json"));
-        response.bodyHandler(body -> {
-          val cmdExec = Json.decodeValue(body.toString(), EntityCommandExecution.class);
-          val uow = cmdExec.getUnitOfWork();
-          if (cmdExec.getUnitOfWork() != null) {
-            context.assertEquals(uow.targetId(), expectedUow.targetId());
-            context.assertEquals(uow.getCommand(), expectedUow.getCommand());
-            context.assertEquals(uow.getEvents(), expectedUow.getEvents());
-            context.assertEquals(uow.getVersion(), expectedUow.getVersion());
-          } else {
-            fail("should be success");
-          }
-          async.complete();
-        });
-      })
-      .write(json)
-      .end();
+    val response = given().
+            contentType(JSON).
+            body(json).
+            when().
+            put("/" + aggregateRootId(Customer.class) + "/commands").
+            then().
+            statusCode(201).
+            contentType(ContentType.JSON)
+            .extract().response().asString();
+
+    val result = Json.decodeValue(response, EntityCommandExecution.class);
+
+    assertThat(result.getResult()).isEqualTo(SUCCESS);
+    assertThat(result.getCommandId()).isEqualTo(createCustomerCmd.getCommandId());
+    assertThat(result.getConstraints().isEmpty());
+
+    val uow = result.getUnitOfWork();
+
+    assertThat(uow.targetId()).isEqualTo(expectedUow.targetId());
+    assertThat(uow.getCommand()).isEqualTo(expectedUow.getCommand());
+    assertThat(uow.getEvents()).isEqualTo(expectedUow.getEvents());
+    assertThat(uow.getVersion()).isEqualTo(expectedUow.getVersion());
 
   }
 
-  // tag::create_customer_test[]
+
+  @Test
+  public void handlingErrorScenario() {
+
+    val customerId = new CustomerData.CustomerId(UUID.randomUUID().toString());
+    val activateCustomer = new CustomerData.ActivateCustomer(UUID.randomUUID(), customerId, "customer test");
+    val json = Json.encodePrettily(activateCustomer);
+
+    val response = given().
+            contentType(JSON).
+            body(json).
+            when().
+            put("/" + aggregateRootId(Customer.class) + "/commands").
+            then().
+            statusCode(400).
+            contentType(ContentType.JSON)
+            .extract().response().asString();
+
+    val result = Json.decodeValue(response, EntityCommandExecution.class);
+
+    assertThat(result.getResult()).isEqualTo(HANDLING_ERROR);
+    assertThat(result.getCommandId()).isEqualTo(activateCustomer.getCommandId());
+    assertThat(result.getConstraints().isEmpty());
+
+    val uow = result.getUnitOfWork();
+
+    assertThat(uow).isNull();
+
+
+  }
 
 }

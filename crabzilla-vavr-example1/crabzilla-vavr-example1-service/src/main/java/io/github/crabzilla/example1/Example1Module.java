@@ -5,74 +5,73 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import com.google.inject.name.Names;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
+import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.MapBinder;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.crabzilla.core.DomainEvent;
 import io.github.crabzilla.core.entity.EntityCommand;
 import io.github.crabzilla.core.entity.EntityId;
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
-import io.github.crabzilla.example1.customer.CustomerModule;
 import io.github.crabzilla.example1.services.SampleInternalService;
 import io.github.crabzilla.example1.services.SampleInternalServiceImpl;
 import io.github.crabzilla.vertx.codecs.JacksonGenericCodec;
 import io.github.crabzilla.vertx.entity.EntityCommandExecution;
+import io.github.crabzilla.vertx.projection.EventProjector;
 import io.github.crabzilla.vertx.projection.EventsProjectionVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
+import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
 import lombok.val;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
-import javax.inject.Named;
-import java.util.Properties;
+import javax.inject.Singleton;
 
 import static io.vertx.core.json.Json.mapper;
 
-// tag::module[]
 class Example1Module extends AbstractModule {
 
-  final Vertx vertx;
+  private final Vertx vertx;
+  private final JsonObject config;
 
-  Example1Module(Vertx vertx) {
+  Example1Module(Vertx vertx, JsonObject config) {
     this.vertx = vertx;
+    this.config = config;
   }
 
   @Override
   protected void configure() {
 
     configureVertx();
-    // aggregates
-    install(new CustomerModule());
+
     // services
     bind(SampleInternalService.class).to(SampleInternalServiceImpl.class).asEagerSingleton();
-    // exposes properties to guice
-    setCfgProps();
-  }
 
-  private void setCfgProps() {
+    // event projection verticles
+    MapBinder<String, Verticle> mapbinder =
+            MapBinder.newMapBinder(binder(), String.class, Verticle.class);
 
-    final Config config = ConfigFactory.load();
-    final Properties props = new Properties();
+    TypeLiteral<EventsProjectionVerticle<CustomerSummaryDao>> type =
+            new TypeLiteral<EventsProjectionVerticle<CustomerSummaryDao>>() {};
 
-    config.entrySet().forEach(e -> {
-      final String key = e.getKey().replace("example1.", "");
-      final String value = e.getValue().render().replace("\"", "");
-      props.put(key, value);
-    });
+    mapbinder.addBinding("example1.events.projector").to(type);
 
-    Names.bindProperties(binder(), props);
   }
 
   @Provides
   @Singleton
   Vertx vertx() {
     return vertx;
+  }
+
+  @Provides
+  @Singleton
+  JsonObject config() {
+    return config;
   }
 
   @Provides
@@ -84,10 +83,17 @@ class Example1Module extends AbstractModule {
     return jdbi;
   }
 
+
   @Provides
   @Singleton
-  public EventsProjectionVerticle<CustomerSummaryDao> eventsProjector(Jdbi jdbi) {
-    val eventsProjector = new Example1EventProjector("example1", CustomerSummaryDao.class, jdbi) ;
+  public EventProjector<CustomerSummaryDao> eventsProjector(Jdbi jdbi) {
+    return new Example1EventProjector("example1", CustomerSummaryDao.class, jdbi) ;
+  }
+
+  @Provides
+  @Singleton
+  public EventsProjectionVerticle<CustomerSummaryDao> eventsProjectorVerticle(Jdbi jdbi,
+                                                                              EventProjector<CustomerSummaryDao> eventsProjector) {
     val circuitBreaker = CircuitBreaker.create("events-projection-circuit-breaker", vertx,
             new CircuitBreakerOptions()
                     .setMaxFailures(5) // number SUCCESS failure before opening the circuit
@@ -106,26 +112,22 @@ class Example1Module extends AbstractModule {
 
   @Provides
   @Singleton
-  public HikariDataSource config(@Named("database.driver") String dbDriver,
-                                 @Named("database.url") String dbUrl,
-                                 @Named("database.user") String dbUser,
-                                 @Named("database.password") String dbPwd,
-                                 @Named("database.pool.max.size") Integer databaseMaxSize) {
+  public HikariDataSource hikariDs() {
 
-    HikariConfig config = new HikariConfig();
-    config.setDriverClassName(dbDriver);
-    config.setJdbcUrl(dbUrl);
-    config.setUsername(dbUser);
-    config.setPassword(dbPwd);
-    config.setConnectionTimeout(5000);
-    config.setMaximumPoolSize(databaseMaxSize);
-    config.addDataSourceProperty("cachePrepStmts", "true");
-    config.addDataSourceProperty("prepStmtCacheSize", "250");
-    config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-    config.setAutoCommit(false);
+    HikariConfig hikariConfig = new HikariConfig();
+    hikariConfig.setDriverClassName(config.getString("database.driver"));
+    hikariConfig.setJdbcUrl(config.getString("database.url"));
+    hikariConfig.setUsername(config.getString("database.user"));
+    hikariConfig.setPassword(config.getString("database.password"));
+    hikariConfig.setConnectionTimeout(5000);
+    hikariConfig.setMaximumPoolSize(config.getInteger("database.pool.max.size"));
+    hikariConfig.addDataSourceProperty("cachePrepStmts", "true");
+    hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250");
+    hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+    hikariConfig.setAutoCommit(false);
     // config.setTransactionIsolation("TRANSACTION_REPEATABLE_READ");
-    config.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
-    return new HikariDataSource(config);
+    hikariConfig.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
+    return new HikariDataSource(hikariConfig);
   }
 
 //  Not being used yet. This can improve a lot serialization speed (it's binary). But so far it was not necessary.
@@ -155,7 +157,7 @@ class Example1Module extends AbstractModule {
 
     vertx.eventBus().registerDefaultCodec(EntityUnitOfWork.class,
             new JacksonGenericCodec<>(mapper, EntityUnitOfWork.class));
+
   }
 
 }
-// end::module[]

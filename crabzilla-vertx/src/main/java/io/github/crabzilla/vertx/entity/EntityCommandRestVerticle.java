@@ -8,6 +8,7 @@ import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import lombok.NonNull;
@@ -21,21 +22,26 @@ import static io.github.crabzilla.vertx.helpers.StringHelper.*;
 public class EntityCommandRestVerticle<E> extends AbstractVerticle {
 
   private final Class<E> aggregateRootClass;
+  private final JsonObject config;
 
-  public EntityCommandRestVerticle(@NonNull Class<E> aggregateRootClass) {
+  public EntityCommandRestVerticle(@NonNull Class<E> aggregateRootClass, JsonObject config) {
     this.aggregateRootClass = aggregateRootClass;
+    this.config = config;
   }
 
   @Override
   public void start() throws Exception {
+
     val router = Router.router(vertx);
     router.route(HttpMethod.PUT, "/" + aggregateRootId(aggregateRootClass) + "/commands")
-          .handler(contextHandler());
+          .handler(putCommandHandler());
+
     val server = vertx.createHttpServer();
-    server.requestHandler(router::accept).listen(config().getInteger("http.port", 8080));
+    server.requestHandler(router::accept).listen(config.getInteger("http.port"));
+
   }
 
-  Handler<RoutingContext> contextHandler() {
+  Handler<RoutingContext> putCommandHandler() {
     return routingContext -> {
 
       routingContext.request().bodyHandler(buff -> {
@@ -45,14 +51,16 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
 
         vertx.<EntityCommandExecution>eventBus().send(commandHandlerId(aggregateRootClass), command, options, response -> {
           if (!response.succeeded()) {
-            response.cause().printStackTrace();
+            log.error("eventbus.sendCommand", response.cause());
             httpResp.setStatusCode(500);
             httpResp.end(response.cause().getMessage());
             return;
           }
+
           val result = (EntityCommandExecution) response.result().body();
           val resultAsJson = Json.encodePrettily(result);
           log.info("result = {}", resultAsJson);
+
           if (result.getUnitOfWork() != null && result.getUowSequence() != null) {
             val headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence()+"");
             val optionsUow = new DeliveryOptions().setCodecName(EntityUnitOfWork.class.getSimpleName())
@@ -62,6 +70,7 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
           } else {
             httpResp.setStatusCode(400); // TODO
           }
+
           httpResp.headers().add("content-type", "application/json");
           httpResp.headers().add("content-length", Integer.toString(resultAsJson.length()));
           httpResp.end(resultAsJson);

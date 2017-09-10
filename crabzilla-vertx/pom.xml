@@ -18,6 +18,12 @@
             <artifactId>crabzilla-core</artifactId>
         </dependency>
 
+        <!-- cmd line arguments parser -->
+        <dependency>
+            <groupId>net.sf.jopt-simple</groupId>
+            <artifactId>jopt-simple</artifactId>
+        </dependency>
+
         <!-- json -->
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>

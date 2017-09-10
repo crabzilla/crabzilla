@@ -1,16 +1,16 @@
 package io.github.crabzilla.example1;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
 import io.github.crabzilla.example1.readmodel.CustomerSummary;
 import io.github.crabzilla.vertx.projection.EventProjector;
 import io.github.crabzilla.vertx.projection.ProjectionData;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import javax.inject.Inject;
 import java.time.Instant;
@@ -21,23 +21,34 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("An Example1EventProjector")
+@Slf4j
 public class Example1EventProjectorIT {
 
-  @Inject
-  ObjectMapper mapper;
   @Inject
   Jdbi jdbi;
   @Inject
   EventProjector<CustomerSummaryDao> eventProjector;
 
-  @BeforeEach
-  public void setup() {
+  @Before
+  public void setUp() {
 
-    Guice.createInjector(new Example1Module(Vertx.vertx())).injectMembers(this);
+    val vertx = Vertx.vertx();
+
+    JsonObject config = new JsonObject();
+
+    config.put("database.driver", "com.mysql.cj.jdbc.Driver");
+    config.put("database.url", "jdbc:mysql://127.0.0.1:3306/example1db?serverTimezone=UTC&useSSL=false");
+    config.put("database.user", "root");
+    config.put("database.password", "my-secret-pwd");
+    config.put("database.pool.max.size", 10);
+
+    log.info("config = {}", config.encodePrettily());
+
+    val injector = Guice.createInjector(new Example1Module(vertx, config));
+
+    injector.injectMembers(this);
 
     val h = jdbi.open();
-//    h.registerRowMapper(ConstructorMapper.factory(CustomerSummary.class)); // TODO how to avoid this ?
     h.createScript("DELETE FROM units_of_work").execute();
     h.createScript("DELETE FROM customer_summary").execute();
     h.commit();
@@ -46,7 +57,7 @@ public class Example1EventProjectorIT {
 
 
   @Test
-  public void can_project_two_events() throws Exception {
+  public void canProjectTwoEvents() throws Exception {
 
     val id = new CustomerId("customer#1");
     val event1 = new CustomerCreated(id,  "customer1");
@@ -59,7 +70,7 @@ public class Example1EventProjectorIT {
     val dao = h.attach(CustomerSummaryDao.class);
     val fromDb = dao.getAll().get(0);
     h.commit();
-//    System.out.printf("from  db: " + fromDb);
+
     assertThat(fromDb).isEqualToComparingFieldByField(new CustomerSummary(id.stringValue(), event1.getName(), true));
 
   }

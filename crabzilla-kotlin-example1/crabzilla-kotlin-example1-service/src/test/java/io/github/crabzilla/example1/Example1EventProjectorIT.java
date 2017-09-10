@@ -1,7 +1,9 @@
 package io.github.crabzilla.example1;
 
 import com.google.inject.Guice;
-import io.github.crabzilla.example1.readmodel.CustomerSummary;
+import io.github.crabzilla.example1.customer.CustomerActivated;
+import io.github.crabzilla.example1.customer.CustomerCreated;
+import io.github.crabzilla.example1.customer.CustomerId;
 import io.github.crabzilla.vertx.projection.EventProjector;
 import io.github.crabzilla.vertx.projection.ProjectionData;
 import io.vertx.core.Vertx;
@@ -16,7 +18,6 @@ import javax.inject.Inject;
 import java.time.Instant;
 import java.util.UUID;
 
-import static io.github.crabzilla.example1.customer.CustomerData.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
