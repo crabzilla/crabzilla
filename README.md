@@ -87,3 +87,10 @@ java -jar crabzilla-example1/crabzilla-example1-service/target/crabzilla-example
 ## Wiki 
 
 You can find more info on [wiki](https://github.com/crabzilla/crabzilla/wiki)
+
+ 
+## License
+
+Copyright © 2017 Rodolfo de Paula
+
+Distributed under Apache License 2.0.
