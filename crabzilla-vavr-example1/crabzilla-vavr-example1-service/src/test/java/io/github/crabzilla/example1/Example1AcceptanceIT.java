@@ -30,7 +30,7 @@ public class Example1AcceptanceIT {
   @BeforeClass
   public static void configureRestAssured() throws InterruptedException {
     RestAssured.baseURI = "http://localhost";
-    RestAssured.port = Integer.getInteger("http.port", 8080);
+    RestAssured.port = Integer.getInteger("http.port");
     log.info("----> RestAssured.port=" + RestAssured.port);
   }
 

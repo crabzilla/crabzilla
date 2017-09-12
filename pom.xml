@@ -506,34 +506,37 @@
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.19.1</version>
-                <executions>
-                    <!--
-                        Ensures that both integration-test and verify goals of the Failsafe Maven
-                        plugin are executed.
-                    -->
-                    <execution>
-                        <id>integration-tests</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                        <configuration>
-                            <!-- Sets the VM argument line used when integration tests are run. -->
-                            <!--<argLine>${failsafeArgLine}</argLine>-->
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-failsafe-plugin</artifactId>-->
+                <!--<version>2.19.1</version>-->
+                <!--<executions>-->
+                    <!--&lt;!&ndash;-->
+                        <!--Ensures that both integration-test and verify goals of the Failsafe Maven-->
+                        <!--plugin are executed.-->
+                    <!--&ndash;&gt;-->
+                    <!--<execution>-->
+                        <!--<id>integration-tests</id>-->
+                        <!--<goals>-->
+                            <!--<goal>integration-test</goal>-->
+                            <!--<goal>verify</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--&lt;!&ndash; Sets the VM argument line used when integration tests are run. &ndash;&gt;-->
+                            <!--&lt;!&ndash;<argLine>${failsafeArgLine}</argLine>&ndash;&gt;-->
 
-                            <!--
-                                Skips integration tests if the value of skip.integration.tests property
-                                is true
-                            -->
-                            <skipTests>${skip.integration.tests}</skipTests>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+                            <!--&lt;!&ndash;-->
+                                <!--Skips integration tests if the value of skip.integration.tests property-->
+                                <!--is true-->
+                            <!--&ndash;&gt;-->
+                            <!--<skipTests>${skip.integration.tests}</skipTests>-->
+                            <!--<systemProperties>-->
+                                <!--<http.port>${http.port}</http.port>-->
+                            <!--</systemProperties>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
 
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -628,30 +631,30 @@
 
     <profiles>
 
-        <profile>
-            <id>dev</id>
-        </profile>
+        <!--<profile>-->
+            <!--<id>dev</id>-->
+        <!--</profile>-->
 
-        <profile>
-            <id>integration-test</id>
-            <properties>
-                <!-- Used to locate the profile specific configuration file. -->
-                <build.profile.id>integration-test</build.profile.id>
-                <!-- Only integration tests are run. -->
-                <skip.integration.tests>false</skip.integration.tests>
-                <skip.unit.tests>true</skip.unit.tests>
-            </properties>
-        </profile>
+        <!--<profile>-->
+            <!--<id>integration-test</id>-->
+            <!--<properties>-->
+                <!--&lt;!&ndash; Used to locate the profile specific configuration file. &ndash;&gt;-->
+                <!--<build.profile.id>integration-test</build.profile.id>-->
+                <!--&lt;!&ndash; Only integration tests are run. &ndash;&gt;-->
+                <!--<skip.integration.tests>false</skip.integration.tests>-->
+                <!--<skip.unit.tests>true</skip.unit.tests>-->
+            <!--</properties>-->
+        <!--</profile>-->
 
-        <profile>
-            <id>all-tests</id>
-            <properties>
-                <build.profile.id>all-tests</build.profile.id>
-                <!-- All tests are run. -->
-                <skip.integration.tests>false</skip.integration.tests>
-                <skip.unit.tests>false</skip.unit.tests>
-            </properties>
-        </profile>
+        <!--<profile>-->
+            <!--<id>all-tests</id>-->
+            <!--<properties>-->
+                <!--<build.profile.id>all-tests</build.profile.id>-->
+                <!--&lt;!&ndash; All tests are run. &ndash;&gt;-->
+                <!--<skip.integration.tests>false</skip.integration.tests>-->
+                <!--<skip.unit.tests>false</skip.unit.tests>-->
+            <!--</properties>-->
+        <!--</profile>-->
 
 
         <profile>
