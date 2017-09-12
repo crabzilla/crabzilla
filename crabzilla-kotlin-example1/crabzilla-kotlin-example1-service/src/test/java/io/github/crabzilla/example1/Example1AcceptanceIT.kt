@@ -20,25 +20,32 @@ import io.github.crabzilla.vertx.helpers.StringHelper.aggregateRootId
 import io.vertx.core.json.Json
 import mu.KotlinLogging
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.AfterClass
-import org.junit.BeforeClass
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import java.io.IOException
 import java.util.*
-
 
 class Example1AcceptanceIT {
 
   internal var mapper: ObjectMapper = Json.prettyMapper
 
-  fun setUp() {
-
+  @Before
+  @Throws(InterruptedException::class)
+  fun configureRestAssured() {
+    RestAssured.baseURI = "http://localhost"
+    RestAssured.port = Integer.getInteger("http.port", 8080)!!
+    log.info("----> RestAssured.port=" + RestAssured.port)
     mapper.registerModule(ParameterNamesModule())
             .registerModule(Jdk8Module())
             .registerModule(JavaTimeModule())
             .registerModule(KotlinModule())
   }
 
+  @After
+  fun unconfigureRestAssured() {
+    RestAssured.reset()
+  }
 
   // tag::create_customer_test[]
 
@@ -103,18 +110,6 @@ class Example1AcceptanceIT {
 
     val log = KotlinLogging.logger {}
 
-    @BeforeClass
-    @Throws(InterruptedException::class)
-    fun configureRestAssured() {
-      RestAssured.baseURI = "http://localhost"
-      RestAssured.port = Integer.getInteger("http.port", 8080)!!
-      log.info("----> RestAssured.port=" + RestAssured.port)
-    }
-
-    @AfterClass
-    fun unconfigureRestAssured() {
-      RestAssured.reset()
-    }
   }
 
 }

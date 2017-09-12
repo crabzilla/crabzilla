@@ -43,7 +43,7 @@ public class Example1EventProjectorIT {
     config.put("database.password", "my-secret-pwd");
     config.put("database.pool.max.size", 10);
 
-    log.info("config = {}", config.encodePrettily());
+//    log.info("config = {}", config.encodePrettily());
 
     val injector = Guice.createInjector(new Example1Module(vertx, config));
 

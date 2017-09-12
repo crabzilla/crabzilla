@@ -20,6 +20,7 @@ import mu.KotlinLogging
 import java.lang.System.setProperty
 import java.util.*
 
+
 class Example1Launcher {
 
   @Inject
@@ -42,17 +43,13 @@ class Example1Launcher {
       setProperty(LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory::class.java.name)
       LoggerFactory.getLogger(LoggerFactory::class.java) // Required for Logback to work in Vertx
 
-      Arrays.asList(*args).forEach { s -> log.info("arg -> " + s) }
-
       val parser = OptionParser()
       parser.accepts("conf").withRequiredArg()
       parser.allowsUnrecognizedOptions()
 
       val options = parser.parse(*args)
-
       val configFile = options.valueOf("conf") as String?
       val vertx = Vertx.vertx()
-
       val retriever = ConfigRetriever.create(vertx, cfgOptions(configFile))
 
       retriever.getConfig { ar ->
