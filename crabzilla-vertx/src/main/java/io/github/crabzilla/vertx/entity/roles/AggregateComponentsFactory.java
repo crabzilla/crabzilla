@@ -34,8 +34,7 @@ public interface AggregateComponentsFactory<A extends Entity> {
   // default impl
 
   default SnapshotPromoter<A> snapshotPromoter() {
-    return new SnapshotPromoter<>(supplierFn(),
-            instance -> new StateTransitionsTracker<>(instance, stateTransitionFn()));
+    return new SnapshotPromoter<>(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn()));
   }
 
   default EntityCommandRestVerticle<A> restVerticle(JsonObject config) {

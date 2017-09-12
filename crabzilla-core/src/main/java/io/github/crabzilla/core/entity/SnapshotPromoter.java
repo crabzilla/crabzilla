@@ -5,16 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 @Slf4j
 public class SnapshotPromoter<A extends Entity> {
 
-  private final Supplier<A> supplier ;
   private final StateTransitionsTrackerFactory<A> trackerFactory;
 
-  public SnapshotPromoter(Supplier<A> supplier, StateTransitionsTrackerFactory<A> trackerFactory) {
-    this.supplier = supplier;
+  public SnapshotPromoter(StateTransitionsTrackerFactory<A> trackerFactory) {
     this.trackerFactory = trackerFactory;
   }
 

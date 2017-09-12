@@ -11,7 +11,9 @@ import java.util.UUID;
 
 import static io.github.crabzilla.core.example1.customer.CustomerData.*;
 import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @DisplayName("An EntityCommandResult")
 public class EntityCommandResultTest {
@@ -31,6 +33,7 @@ public class EntityCommandResultTest {
   @DisplayName("Success can be instantiated")
   public void successCanBeInstantiated() {
     val result = EntityCommandResult.success(uow);
+    assertThat(result).isNotNull();
   }
 
   @Test
@@ -45,6 +48,7 @@ public class EntityCommandResultTest {
   @DisplayName("Error can be instantiated")
   public void errorCanBeInstantiated() {
     val result = EntityCommandResult.error(new RuntimeException("test"));
+    assertThat(result).isNotNull();
   }
 
   @Test
@@ -67,13 +71,13 @@ public class EntityCommandResultTest {
     @Test
     @DisplayName("success must run success block")
     void successMustRunSuccessBlock() {
-      result.inCaseOfSuccess(uow -> { assertTrue(true); });
+      result.inCaseOfSuccess(uow -> assertThat(result).isNotNull());
     }
 
     @Test
     @DisplayName("success cannot run an error block")
     void successMustNotRunErrorBlock() {
-      result.inCaseOfError(uow -> { fail("success cannot run an error block"); });
+      result.inCaseOfError(uow -> fail("success cannot run an error block"));
     }
 
   }
@@ -90,13 +94,13 @@ public class EntityCommandResultTest {
     @Test
     @DisplayName("error must run error block")
     void errorMustRunErrorBlock() {
-      result.inCaseOfError(uow -> { assertTrue(true); });
+      result.inCaseOfError(uow -> assertThat(result).isNotNull());
     }
 
     @Test
     @DisplayName("error cannot run an success block")
     void errorMustNotRunSuccessBlock() {
-      result.inCaseOfSuccess(uow -> { fail("error cannot run an success block"); });
+      result.inCaseOfSuccess(uow -> fail("error cannot run an success block"));
     }
 
   }

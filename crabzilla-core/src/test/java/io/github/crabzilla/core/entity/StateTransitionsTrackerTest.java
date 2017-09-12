@@ -3,7 +3,6 @@ package io.github.crabzilla.core.entity;
 import io.github.crabzilla.core.example1.customer.Customer;
 import io.github.crabzilla.core.example1.services.SampleInternalService;
 import io.github.crabzilla.core.example1.services.SampleInternalServiceImpl;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -57,7 +56,7 @@ public class StateTransitionsTrackerTest {
 
     @Test
     void has_empty_state() {
-      Assertions.assertThat(tracker.currentState()).isEqualTo(originalSnapshot.getInstance());
+      assertThat(tracker.currentState()).isEqualTo(originalSnapshot.getInstance());
     }
 
     @Nested
@@ -75,7 +74,7 @@ public class StateTransitionsTrackerTest {
 
       @Test
       void has_new_state() {
-        Assertions.assertThat(tracker.currentState()).isEqualTo(expectedCustomer);
+        assertThat(tracker.currentState()).isEqualTo(expectedCustomer);
       }
 
       @Test
@@ -99,7 +98,7 @@ public class StateTransitionsTrackerTest {
 
         @Test
         void has_new_state() {
-          Assertions.assertThat(tracker.currentState()).isEqualTo(expectedCustomer);
+          assertThat(tracker.currentState()).isEqualTo(expectedCustomer);
         }
 
         @Test
@@ -138,7 +137,7 @@ public class StateTransitionsTrackerTest {
 
     @Test
     void has_new_state() {
-      Assertions.assertThat(tracker.currentState()).isEqualTo(expectedCustomer);
+      assertThat(tracker.currentState()).isEqualTo(expectedCustomer);
     }
 
     @Test
