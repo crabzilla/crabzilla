@@ -28,8 +28,9 @@ public class CustomerModule extends AbstractModule {
     TypeLiteral<EntityCommandHandlerVerticle<Customer>> handlerType =
             new TypeLiteral<EntityCommandHandlerVerticle<Customer>>() {};
 
-    mapbinder.addBinding("customer.rest").to(restType);
-    mapbinder.addBinding("customer.handler").to(handlerType);
+    mapbinder.addBinding("A-customer.handler").to(handlerType);
+    mapbinder.addBinding("Z-customer.rest").to(restType);
+
 
   }
 

@@ -58,7 +58,7 @@ class Example1Module extends AbstractModule {
     TypeLiteral<EventsProjectionVerticle<CustomerSummaryDao>> type =
             new TypeLiteral<EventsProjectionVerticle<CustomerSummaryDao>>() {};
 
-    mapbinder.addBinding("example1.events.projector").to(type);
+    mapbinder.addBinding("B-example1.events.projector").to(type);
 
   }
 

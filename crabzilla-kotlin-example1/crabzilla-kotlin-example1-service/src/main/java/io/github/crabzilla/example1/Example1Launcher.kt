@@ -69,9 +69,9 @@ class Example1Launcher {
 
         vertx.deployVerticle(launcher.projectionVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
 
-        vertx.deployVerticle(launcher.restVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
-
         vertx.deployVerticle(launcher.cmdVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
+
+        vertx.deployVerticle(launcher.restVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
 
         // a test
          launcher.justForTest(vertx);

@@ -28,8 +28,8 @@ public class CustomerModule extends AbstractModule {
     MapBinder<String, Verticle> mapbinder =
             MapBinder.newMapBinder(binder(), String.class, Verticle.class);
 
-    mapbinder.addBinding("customer.rest").to(restType);
-    mapbinder.addBinding("customer.handler").to(handlerType);
+    mapbinder.addBinding("A-customer.handler").to(handlerType);
+    mapbinder.addBinding("Z-customer.rest").to(restType);
 
   }
 

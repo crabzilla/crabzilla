@@ -24,6 +24,7 @@ import java.util.UUID;
 
 import static io.github.crabzilla.example1.customer.CustomerData.*;
 import static io.github.crabzilla.vertx.helpers.ConfigHelper.cfgOptions;
+import static io.github.crabzilla.vertx.helpers.StringHelper.inDeploymentOrder;
 import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.lang.System.setProperty;
 
@@ -66,7 +67,8 @@ public class Example1Launcher {
 
       injector.injectMembers(launcher);
 
-      for (Map.Entry<String,Verticle> v: launcher.aggregateRootVerticles.entrySet()) {
+      for (Map.Entry<String,Verticle> v: inDeploymentOrder(launcher.aggregateRootVerticles).entrySet()) {
+        log.info("deploying verticle: {}", v.getKey());
         vertx.deployVerticle(v.getValue(), event -> log.info("Deployed {} ? {}", v.getKey(), event.succeeded()));
       }
 
