@@ -200,7 +200,7 @@ This example presented:
 
 Crabzilla will run your aggregate root by providing these components:
 
-* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EntityCommandRestVerticle.java[EntityCommandRestVerticle] to receive commands as JSON
-* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EntityCommandHandlerVerticle.java[EntityCommandHandlerVerticle] to validate and process commands against the latest snapshot found for the aggregate
-* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/repositories/EntityUnitOfWorkRepository.java[EntityUnitOfWorkRepository] to store resulting units of work into a single table, being events and command as JSON
-* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EventsProjectionVerticle.java[EventsProjectionVerticle] to propagate and project events to read model database
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandRestVerticle.java[EntityCommandRestVerticle] to receive commands as JSON
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.java[EntityCommandHandlerVerticle] to validate and process commands against the latest snapshot found for the aggregate
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityUnitOfWorkRepository.java[EntityUnitOfWorkRepository] to store resulting units of work into a single table, being events and command as JSON
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/projection/EventsProjectionVerticle.java[EventsProjectionVerticle] to propagate and project events to read model database

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.crabzilla</groupId>
@@ -10,13 +11,14 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <kotlin.version>1.1.4</kotlin.version>
+        <kotlin.version>1.1.4-3</kotlin.version>
         <lombok.version>1.16.18</lombok.version>
         <vertx.version>3.5.0.Beta1</vertx.version>
         <vavr.version>0.9.0</vavr.version>
         <guice.version>4.1.0</guice.version>
         <expiringmap.version>0.5.8</expiringmap.version>
         <sl4j.version>1.7.8</sl4j.version>
+        <logback.version>1.2.3</logback.version>
         <jdbi.version>3.0.0-beta2</jdbi.version>
         <mysql.version>6.0.6</mysql.version>
         <commons.version>3.5</commons.version>
@@ -29,8 +31,12 @@
         <asciidoctorj.pdf.version>1.5.0-alpha.15</asciidoctorj.pdf.version>
         <asciidoctorj.version>1.5.5</asciidoctorj.version>
         <!-- Only unit tests are run by default. -->
-        <jacoco.it.execution.data.file>${project.build.directory}/coverage-reports/jacoco-it.exec</jacoco.it.execution.data.file>
-        <jacoco.ut.execution.data.file>${project.build.directory}/coverage-reports/jacoco-ut.exec</jacoco.ut.execution.data.file>
+        <jacoco.it.execution.data.file>${project.build.directory}/coverage-reports/jacoco-it.exec
+        </jacoco.it.execution.data.file>
+        <jacoco.ut.execution.data.file>${project.build.directory}/coverage-reports/jacoco-ut.exec
+        </jacoco.ut.execution.data.file>
+        <maven-compiler-plugin.version>3.6.2</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>2.18.1</maven-surefire-plugin.version>
         <skip.integration.tests>true</skip.integration.tests>
         <skip.unit.tests>false</skip.unit.tests>
     </properties>
@@ -59,8 +65,8 @@
         <connection>scm:git:git://github.com/crabzilla/crabzilla.git</connection>
         <developerConnection>scm:git:git://github.com/crabzilla/crabzilla.git</developerConnection>
         <url>https://github.com/crabzilla/crabzilla</url>
-      <tag>crabzilla-0.0.5</tag>
-  </scm>
+        <tag>crabzilla-0.0.5</tag>
+    </scm>
 
     <distributionManagement>
         <snapshotRepository>
@@ -97,7 +103,6 @@
             <version>1</version>
         </dependency>
 
-        <!-- logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -129,9 +134,13 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.jayway.restassured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
-
-
 
     <dependencyManagement>
 
@@ -251,9 +260,9 @@
             </dependency>
 
             <dependency>
-                <groupId>io.vavr</groupId>
-                <artifactId>vavr</artifactId>
-                <version>${vavr.version}</version>
+                <groupId>net.sf.jopt-simple</groupId>
+                <artifactId>jopt-simple</artifactId>
+                <version>5.0.4</version>
             </dependency>
 
             <dependency>
@@ -281,9 +290,14 @@
                 <version>${sl4j.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-simple</artifactId>
-                <version>${sl4j.version}</version>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>${logback.version}</version>
             </dependency>
 
             <!-- json -->
@@ -337,6 +351,11 @@
             <dependency>
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-core</artifactId>
+                <version>${vertx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-config</artifactId>
                 <version>${vertx.version}</version>
             </dependency>
             <dependency>
@@ -398,7 +417,14 @@
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
-                <version>3.5.0</version>
+                <version>3.8.0</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.jayway.restassured</groupId>
+                <artifactId>rest-assured</artifactId>
+                <version>2.9.0</version>
                 <scope>test</scope>
             </dependency>
 
@@ -407,7 +433,6 @@
 
     <build>
         <plugins>
-
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -457,21 +482,21 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19.1</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.junit.platform</groupId>
-                        <artifactId>junit-platform-surefire-provider</artifactId>
-                        <version>${junit.platform.version}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.junit.jupiter</groupId>
-                        <artifactId>junit-jupiter-engine</artifactId>
-                        <version>${junit.jupiter.version}</version>
-                    </dependency>
-                </dependencies>
+                <!--<dependencies>-->
+                    <!--<dependency>-->
+                        <!--<groupId>org.junit.platform</groupId>-->
+                        <!--<artifactId>junit-platform-surefire-provider</artifactId>-->
+                        <!--<version>${junit.platform.version}</version>-->
+                    <!--</dependency>-->
+                    <!--<dependency>-->
+                        <!--<groupId>org.junit.jupiter</groupId>-->
+                        <!--<artifactId>junit-jupiter-engine</artifactId>-->
+                        <!--<version>${junit.jupiter.version}</version>-->
+                    <!--</dependency>-->
+                <!--</dependencies>-->
                 <configuration>
                     <!-- Sets the VM argument line used when unit tests are run. -->
-                    <argLine>${surefireArgLine}</argLine>
+                    <!--<argLine>${surefireArgLine}</argLine>-->
                     <!-- Skips unit tests if the value of skip.unit.tests property is true -->
                     <skipTests>${skip.unit.tests}</skipTests>
                     <!-- Excludes integration tests when unit tests are run. -->
@@ -481,35 +506,37 @@
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.19.1</version>
-                <executions>
-                    <!--
-                        Ensures that both integration-test and verify goals of the Failsafe Maven
-                        plugin are executed.
-                    -->
-                    <execution>
-                        <id>integration-tests</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                        <configuration>
-                            <!-- Sets the VM argument line used when integration tests are run. -->
-                            <argLine>${failsafeArgLine}</argLine>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-failsafe-plugin</artifactId>-->
+                <!--<version>2.19.1</version>-->
+                <!--<executions>-->
+                    <!--&lt;!&ndash;-->
+                        <!--Ensures that both integration-test and verify goals of the Failsafe Maven-->
+                        <!--plugin are executed.-->
+                    <!--&ndash;&gt;-->
+                    <!--<execution>-->
+                        <!--<id>integration-tests</id>-->
+                        <!--<goals>-->
+                            <!--<goal>integration-test</goal>-->
+                            <!--<goal>verify</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--&lt;!&ndash; Sets the VM argument line used when integration tests are run. &ndash;&gt;-->
+                            <!--&lt;!&ndash;<argLine>${failsafeArgLine}</argLine>&ndash;&gt;-->
 
-                            <!--
-                                Skips integration tests if the value of skip.integration.tests property
-                                is true
-                            -->
-                            <skipTests>${skip.integration.tests}</skipTests>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
+                            <!--&lt;!&ndash;-->
+                                <!--Skips integration tests if the value of skip.integration.tests property-->
+                                <!--is true-->
+                            <!--&ndash;&gt;-->
+                            <!--<skipTests>${skip.integration.tests}</skipTests>-->
+                            <!--<systemProperties>-->
+                                <!--<http.port>${http.port}</http.port>-->
+                            <!--</systemProperties>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
 
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -598,171 +625,36 @@
                 <version>2.2</version>
             </plugin>
 
-            <plugin>
-                <groupId>org.asciidoctor</groupId>
-                <artifactId>asciidoctor-maven-plugin</artifactId>
-                <version>${asciidoctor.maven.plugin.version}</version>
-                <!--<dependencies>-->
-                <!--&lt;!&ndash; Comment this section to use the default jruby artifact provided by the plugin &ndash;&gt;-->
-                <!--<dependency>-->
-                <!--<groupId>org.jruby</groupId>-->
-                <!--<artifactId>jruby-complete</artifactId>-->
-                <!--<version>${jruby.version}</version>-->
-                <!--</dependency>-->
-                <!--&lt;!&ndash; Comment this section to use the default AsciidoctorJ artifact provided by the plugin &ndash;&gt;-->
-                <!--<dependency>-->
-                <!--<groupId>org.asciidoctor</groupId>-->
-                <!--<artifactId>asciidoctorj</artifactId>-->
-                <!--<version>${asciidoctorj.version}</version>-->
-                <!--</dependency>-->
-                <!--</dependencies>-->
-                <configuration>
-                    <sourceDirectory>doc/asciidoc</sourceDirectory>
-                    <baseDir>${project.basedir}</baseDir>
-                    <!-- If you set baseDir to ${project.basedir}, top-level includes are resolved relative to the project root -->
-                    <!--
-                    <baseDir>${project.basedir}</baseDir>
-                    -->
-                    <!-- Attributes common to all output formats -->
-                    <attributes>
-                        <endpoint-url>http://example.org</endpoint-url>
-                        <sourcedir>${project.build.sourceDirectory}</sourcedir>
-                        <project-version>${project.version}</project-version>
-                    </attributes>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>asciidoc-to-html</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>process-asciidoc</goal>
-                        </goals>
-                        <configuration>
-                            <backend>html5</backend>
-                            <sourceHighlighter>highlightjs</sourceHighlighter>
-                            <!--
-                            Scenarios for linking vs embedding assets:
-
-                            Link to both stylesheets and images::
-
-                               - don't set embedAssets option
-                               - set linkcss attribute to true
-                               - set imagesdir attribute to path relative to AsciiDoc source file
-
-                              <attributes>
-                                  <linkcss>true</linkcss>
-                                  <imagesdir>./images</imagesdir>
-                              </attributes>
-
-                            Embed stylesheets and images::
-
-                               - set embedAssets option to true
-                               - don't set linkcss attribute
-                               - set imagesdir attribute to path relative to project root
-
-                              <embedAssets>true</embedAssets>
-                              <attributes>
-                                  <imagesdir>src/docs/asciidoc/images</imagesdir>
-                              </attributes>
-
-                            Link to stylesheets but embed images::
-
-                               - set embedAssets option to true
-                               - set linkcss attribute to true
-                               - set imagesdir attribute to path relative to project root
-
-                              <embedAssets>true</embedAssets>
-                              <attributes>
-                                  <linkcss>true</linkcss>
-                                  <imagesdir>src/docs/asciidoc/images</imagesdir>
-                              </attributes>
-
-                            Embed stylesheets but link images (default)::
-
-                               - don't set embedAssets option
-                               - don't set linkcss attribute
-                               - set imagesdir attribute to path relative to AsciiDoc source file
-
-                              <attributes>
-                                  <imagesdir>./images</imagesdir>
-                              </attributes>
-
-                            IMPORTANT: When you enable image embedding, you must qualify the path the the imagesdir, as shown above.
-                            -->
-                            <attributes>
-                                <imagesdir>./images</imagesdir>
-                                <toc>left</toc>
-                                <icons>font</icons>
-                                <sectanchors>true</sectanchors>
-                                <!-- set the idprefix to blank -->
-                                <idprefix />
-                                <idseparator>-</idseparator>
-                                <docinfo1>true</docinfo1>
-                            </attributes>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!--<plugin>-->
-                <!--<groupId>org.projectlombok</groupId>-->
-                <!--<artifactId>lombok-maven-plugin</artifactId>-->
-                <!--<version>${lombok.version}.1</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>delombok</id>-->
-                        <!--<phase>generate-sources</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>delombok</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<formatPreferences>-->
-                                <!--<javaLangAsFQN>skip</javaLangAsFQN>-->
-                            <!--</formatPreferences>-->
-                            <!--<verbose>true</verbose>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                    <!--<execution>-->
-                        <!--<id>test-delombok</id>-->
-                        <!--<phase>generate-test-sources</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>testDelombok</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<verbose>true</verbose>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-            <!--</plugin>-->
-
         </plugins>
 
     </build>
 
     <profiles>
 
-        <profile>
-            <id>dev</id>
-        </profile>
-        <profile>
-            <id>integration-test</id>
-            <properties>
-                <!-- Used to locate the profile specific configuration file. -->
-                <build.profile.id>integration-test</build.profile.id>
-                <!-- Only integration tests are run. -->
-                <skip.integration.tests>false</skip.integration.tests>
-                <skip.unit.tests>true</skip.unit.tests>
-            </properties>
-        </profile>
-        <profile>
-            <id>all-tests</id>
-            <properties>
-                <build.profile.id>all-tests</build.profile.id>
-                <!-- All tests are run. -->
-                <skip.integration.tests>false</skip.integration.tests>
-                <skip.unit.tests>false</skip.unit.tests>
-            </properties>
-        </profile>
+        <!--<profile>-->
+            <!--<id>dev</id>-->
+        <!--</profile>-->
+
+        <!--<profile>-->
+            <!--<id>integration-test</id>-->
+            <!--<properties>-->
+                <!--&lt;!&ndash; Used to locate the profile specific configuration file. &ndash;&gt;-->
+                <!--<build.profile.id>integration-test</build.profile.id>-->
+                <!--&lt;!&ndash; Only integration tests are run. &ndash;&gt;-->
+                <!--<skip.integration.tests>false</skip.integration.tests>-->
+                <!--<skip.unit.tests>true</skip.unit.tests>-->
+            <!--</properties>-->
+        <!--</profile>-->
+
+        <!--<profile>-->
+            <!--<id>all-tests</id>-->
+            <!--<properties>-->
+                <!--<build.profile.id>all-tests</build.profile.id>-->
+                <!--&lt;!&ndash; All tests are run. &ndash;&gt;-->
+                <!--<skip.integration.tests>false</skip.integration.tests>-->
+                <!--<skip.unit.tests>false</skip.unit.tests>-->
+            <!--</properties>-->
+        <!--</profile>-->
 
 
         <profile>
@@ -845,6 +737,124 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>documents</id>
+            <properties>
+                <skip.integration.tests>true</skip.integration.tests>
+                <skip.unit.tests>true</skip.unit.tests>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.asciidoctor</groupId>
+                        <artifactId>asciidoctor-maven-plugin</artifactId>
+                        <version>${asciidoctor.maven.plugin.version}</version>
+                        <!--<dependencies>-->
+                        <!--&lt;!&ndash; Comment this section to use the default jruby artifact provided by the plugin &ndash;&gt;-->
+                        <!--<dependency>-->
+                        <!--<groupId>org.jruby</groupId>-->
+                        <!--<artifactId>jruby-complete</artifactId>-->
+                        <!--<version>${jruby.version}</version>-->
+                        <!--</dependency>-->
+                        <!--&lt;!&ndash; Comment this section to use the default AsciidoctorJ artifact provided by the plugin &ndash;&gt;-->
+                        <!--<dependency>-->
+                        <!--<groupId>org.asciidoctor</groupId>-->
+                        <!--<artifactId>asciidoctorj</artifactId>-->
+                        <!--<version>${asciidoctorj.version}</version>-->
+                        <!--</dependency>-->
+                        <!--</dependencies>-->
+                        <configuration>
+                            <sourceDirectory>doc/asciidoc</sourceDirectory>
+                            <baseDir>${project.basedir}</baseDir>
+                            <!-- If you set baseDir to ${project.basedir}, top-level includes are resolved relative to the project root -->
+                            <!--
+                            <baseDir>${project.basedir}</baseDir>
+                            -->
+                            <!-- Attributes common to all output formats -->
+                            <attributes>
+                                <endpoint-url>http://example.org</endpoint-url>
+                                <sourcedir>${project.build.sourceDirectory}</sourcedir>
+                                <project-version>${project.version}</project-version>
+                            </attributes>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>asciidoc-to-html</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>process-asciidoc</goal>
+                                </goals>
+                                <configuration>
+                                    <backend>html5</backend>
+                                    <sourceHighlighter>highlightjs</sourceHighlighter>
+                                    <!--
+                                    Scenarios for linking vs embedding assets:
+
+                                    Link to both stylesheets and images::
+
+                                       - don't set embedAssets option
+                                       - set linkcss attribute to true
+                                       - set imagesdir attribute to path relative to AsciiDoc source file
+
+                                      <attributes>
+                                          <linkcss>true</linkcss>
+                                          <imagesdir>./images</imagesdir>
+                                      </attributes>
+
+                                    Embed stylesheets and images::
+
+                                       - set embedAssets option to true
+                                       - don't set linkcss attribute
+                                       - set imagesdir attribute to path relative to project root
+
+                                      <embedAssets>true</embedAssets>
+                                      <attributes>
+                                          <imagesdir>src/docs/asciidoc/images</imagesdir>
+                                      </attributes>
+
+                                    Link to stylesheets but embed images::
+
+                                       - set embedAssets option to true
+                                       - set linkcss attribute to true
+                                       - set imagesdir attribute to path relative to project root
+
+                                      <embedAssets>true</embedAssets>
+                                      <attributes>
+                                          <linkcss>true</linkcss>
+                                          <imagesdir>src/docs/asciidoc/images</imagesdir>
+                                      </attributes>
+
+                                    Embed stylesheets but link images (default)::
+
+                                       - don't set embedAssets option
+                                       - don't set linkcss attribute
+                                       - set imagesdir attribute to path relative to AsciiDoc source file
+
+                                      <attributes>
+                                          <imagesdir>./images</imagesdir>
+                                      </attributes>
+
+                                    IMPORTANT: When you enable image embedding, you must qualify the path the the imagesdir, as shown above.
+                                    -->
+                                    <attributes>
+                                        <imagesdir>./images</imagesdir>
+                                        <toc>left</toc>
+                                        <icons>font</icons>
+                                        <sectanchors>true</sectanchors>
+                                        <!-- set the idprefix to blank -->
+                                        <idprefix />
+                                        <idseparator>-</idseparator>
+                                        <docinfo1>true</docinfo1>
+                                    </attributes>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
 
 </project>

@@ -6,54 +6,50 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import com.google.inject.AbstractModule
 import com.google.inject.Provides
-import com.google.inject.Singleton
-import com.google.inject.name.Names
-import com.typesafe.config.ConfigFactory
+import com.google.inject.TypeLiteral
+import com.google.inject.multibindings.MapBinder
+import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import io.github.crabzilla.example1.customer.CustomerModule
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.entity.EntityCommand
+import io.github.crabzilla.core.entity.EntityId
+import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.github.crabzilla.example1.services.SampleInternalServiceImpl
-import io.github.crabzilla.model.*
-import io.github.crabzilla.stack.CommandExecution
-import io.github.crabzilla.stack.EventProjector
 import io.github.crabzilla.vertx.codecs.JacksonGenericCodec
-import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle
+import io.github.crabzilla.vertx.entity.EntityCommandExecution
+import io.github.crabzilla.vertx.projection.EventProjector
+import io.github.crabzilla.vertx.projection.EventsProjectionVerticle
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.circuitbreaker.CircuitBreakerOptions
+import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json.mapper
+import io.vertx.core.json.JsonObject
 import io.vertx.ext.jdbc.JDBCClient
 import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.core.kotlin.KotlinPlugin
 import org.jdbi.v3.sqlobject.SqlObjectPlugin
 import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
-import java.util.*
+import javax.inject.Singleton
 
-internal class Example1Module(val vertx: Vertx) : AbstractModule() {
+class Example1Module(private val vertx: Vertx, private val config: JsonObject) : AbstractModule() {
 
   override fun configure() {
+
     configureVertx()
-    // aggregates
-    install(CustomerModule())
-    // database
-    install(DatabaseModule())
+
     // services
     bind(SampleInternalService::class.java).to(SampleInternalServiceImpl::class.java).asEagerSingleton()
-    // exposes properties to guice
-    setCfgProps()
-  }
 
-  private fun setCfgProps() {
+    // event projection verticles
+    val mapbinder = MapBinder.newMapBinder(binder(), String::class.java, Verticle::class.java)
 
-    val config = ConfigFactory.load()
-    val props = Properties()
+    val type = object : TypeLiteral<EventsProjectionVerticle<CustomerSummaryDao>>() {
 
-    config.entrySet().forEach { e ->
-      val key = e.key.replace("example1.", "")
-      val value = e.value.render().replace("\"", "")
-      props.put(key, value)
     }
 
-    Names.bindProperties(binder(), props)
+    mapbinder.addBinding("example1.events.projector").to(type)
+
   }
 
   @Provides
@@ -64,31 +60,39 @@ internal class Example1Module(val vertx: Vertx) : AbstractModule() {
 
   @Provides
   @Singleton
+  fun config(): JsonObject {
+    return config
+  }
+
+  @Provides
+  @Singleton
+  fun jdbi(dataSource: HikariDataSource): Jdbi {
+    val jdbi = Jdbi.create(dataSource)
+    jdbi.installPlugin(SqlObjectPlugin())
+    jdbi.installPlugin(KotlinPlugin())
+    jdbi.installPlugin(KotlinSqlObjectPlugin())
+    return jdbi
+  }
+
+
+  @Provides
+  @Singleton
   fun eventsProjector(jdbi: Jdbi): EventProjector<CustomerSummaryDao> {
     return Example1EventProjector("example1", CustomerSummaryDao::class.java, jdbi)
   }
 
   @Provides
   @Singleton
-  fun eventsProjectorVerticle(eventProjector: EventProjector<CustomerSummaryDao>):
-          EventsProjectionVerticle<CustomerSummaryDao> {
+  fun eventsProjectorVerticle(jdbi: Jdbi,
+                              eventsProjector: EventProjector<CustomerSummaryDao>): EventsProjectionVerticle<CustomerSummaryDao> {
     val circuitBreaker = CircuitBreaker.create("events-projection-circuit-breaker", vertx,
             CircuitBreakerOptions()
                     .setMaxFailures(5) // number SUCCESS failure before opening the circuit
                     .setTimeout(2000) // consider a failure if the operation does not succeed in time
                     .setFallbackOnFailure(true) // do we call the fallback on failure
-                    .setResetTimeout(10000))  // time spent in open state before attempting to re-try
-    return EventsProjectionVerticle(eventProjector, circuitBreaker)
-  }
-
-  @Provides
-  @Singleton
-  fun jdbi(ds: HikariDataSource): Jdbi {
-    val jdbi = Jdbi.create(ds)
-    jdbi.installPlugin(SqlObjectPlugin())
-    jdbi.installPlugin(KotlinPlugin())
-    jdbi.installPlugin(KotlinSqlObjectPlugin())
-    return jdbi
+                    .setResetTimeout(10000) // time spent in open state before attempting to re-try
+    )
+    return EventsProjectionVerticle(eventsProjector, circuitBreaker)
   }
 
   @Provides
@@ -97,13 +101,26 @@ internal class Example1Module(val vertx: Vertx) : AbstractModule() {
     return JDBCClient.create(vertx, dataSource)
   }
 
-  //  Not being used yet. This can improve a lot serialization speed (it's binary).
-  //  But so far it was not necessary.
-  //  @Provides
-  //  @Singleton
-  //  FSTConfiguration conf() {
-  //    return FSTConfiguration.createDefaultConfiguration();
-  //  }
+  @Provides
+  @Singleton
+  fun hikariDs(): HikariDataSource {
+
+    val hikariConfig = HikariConfig()
+    hikariConfig.driverClassName = config.getString("database.driver")
+    hikariConfig.jdbcUrl = config.getString("database.url")
+    hikariConfig.username = config.getString("database.user")
+    hikariConfig.password = config.getString("database.password")
+    hikariConfig.connectionTimeout = 5000
+    hikariConfig.maximumPoolSize = config.getInteger("database.pool.max.size")!!
+    hikariConfig.addDataSourceProperty("cachePrepStmts", "true")
+    hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250")
+    hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
+    hikariConfig.isAutoCommit = false
+    // config.setTransactionIsolation("TRANSACTION_REPEATABLE_READ");
+    hikariConfig.transactionIsolation = "TRANSACTION_SERIALIZABLE"
+    return HikariDataSource(hikariConfig)
+  }
+
 
   fun configureVertx() {
 
@@ -112,13 +129,13 @@ internal class Example1Module(val vertx: Vertx) : AbstractModule() {
             .registerModule(JavaTimeModule())
             .registerModule(KotlinModule())
 
-    vertx.eventBus().registerDefaultCodec(CommandExecution::class.java,
-            JacksonGenericCodec(mapper, CommandExecution::class.java))
+    vertx.eventBus().registerDefaultCodec(EntityCommandExecution::class.java,
+            JacksonGenericCodec(mapper, EntityCommandExecution::class.java))
 
     vertx.eventBus().registerDefaultCodec(EntityId::class.java,
             JacksonGenericCodec(mapper, EntityId::class.java))
 
-    vertx.eventBus().registerDefaultCodec(Command::class.java,
+    vertx.eventBus().registerDefaultCodec(EntityCommand::class.java,
             JacksonGenericCodec(mapper, EntityCommand::class.java))
 
     vertx.eventBus().registerDefaultCodec(DomainEvent::class.java,

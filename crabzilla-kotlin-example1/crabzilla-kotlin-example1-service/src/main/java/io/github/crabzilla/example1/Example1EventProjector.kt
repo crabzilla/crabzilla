@@ -1,11 +1,11 @@
 package io.github.crabzilla.example1
 
 
+import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerDeactivated
-import io.github.crabzilla.model.DomainEvent
-import io.github.crabzilla.stack.EventProjector
+import io.github.crabzilla.vertx.projection.EventProjector
 import mu.KotlinLogging
 import org.jdbi.v3.core.Jdbi
 

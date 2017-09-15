@@ -4,14 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import io.github.crabzilla.core.entity.EntityUnitOfWork;
+import io.github.crabzilla.core.entity.Version;
 import io.github.crabzilla.example1.customer.CustomerData;
-import io.github.crabzilla.model.EntityCommand;
-import io.github.crabzilla.model.EntityUnitOfWork;
-import io.github.crabzilla.model.Version;
 import io.vertx.core.json.Json;
 import lombok.val;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -24,16 +23,15 @@ public class JacksonJsonTest {
 
   ObjectMapper mapper = Json.mapper;
 
-  @BeforeEach
-  public void setup() {
+  @Before
+  public void setUp() {
     mapper.registerModule(new ParameterNamesModule())
             .registerModule(new Jdk8Module())
             .registerModule(new JavaTimeModule());
-   // mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
   }
 
   @Test
-  public void one_event() throws Exception {
+  public void oneEvent() throws Exception {
 
     val id = new CustomerData.CustomerId(UUID.randomUUID().toString());
     val command = new CustomerData.CreateCustomer(UUID.randomUUID(), id, "customer1");
@@ -42,9 +40,6 @@ public class JacksonJsonTest {
 
     val uowAsJson = mapper.writeValueAsString(uow1);
 
-    System.out.println(mapper.writerFor(EntityCommand.class).writeValueAsString(command));
-    System.out.println(uowAsJson);
-
     val uow2 = mapper.readValue(uowAsJson, EntityUnitOfWork.class);
 
     assertThat(uow2).isEqualTo(uow1);
@@ -52,7 +47,7 @@ public class JacksonJsonTest {
   }
 
   @Test
-  public void more_events() throws Exception {
+  public void moreEvents() throws Exception {
 
     val id = new CustomerData.CustomerId("customer#1");
     val command = new CustomerData.CreateCustomer(UUID.randomUUID(), id, "customer1");
@@ -63,7 +58,7 @@ public class JacksonJsonTest {
 
     val uowAsJson = mapper.writeValueAsString(uow1);
 
-    System.out.println(uowAsJson);
+//    System.out.println(uowAsJson);
 
     val uow2 = mapper.readValue(uowAsJson, EntityUnitOfWork.class);
 

@@ -1,8 +1,8 @@
 package io.github.crabzilla.example1;
 
+import io.github.crabzilla.core.DomainEvent;
 import io.github.crabzilla.example1.readmodel.CustomerSummary;
-import io.github.crabzilla.model.DomainEvent;
-import io.github.crabzilla.stack.EventProjector;
+import io.github.crabzilla.vertx.projection.EventProjector;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 
@@ -31,9 +31,7 @@ public class Example1EventProjector extends EventProjector<CustomerSummaryDao> {
         run(() -> dao.updateStatus(targetId, true))),
       Case($(instanceOf(CustomerDeactivated.class)), e ->
         run(() -> dao.updateStatus(targetId, false))),
-      Case($(), o -> run(() -> {
-        log.warn("{} does not have any event projection handler", event);
-      })));
+      Case($(), o -> run(() -> log.warn("{} does not have any event projection handler", event))));
   }
 
 }

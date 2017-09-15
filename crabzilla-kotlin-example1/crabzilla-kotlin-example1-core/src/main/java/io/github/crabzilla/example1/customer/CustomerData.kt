@@ -1,8 +1,8 @@
 package io.github.crabzilla.example1.customer
 
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.entity.EntityId
 import io.github.crabzilla.example1.KotlinEntityCommand
-import io.github.crabzilla.model.DomainEvent
-import io.github.crabzilla.model.EntityId
 import java.time.Instant
 import java.util.*
 

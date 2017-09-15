@@ -8,9 +8,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CustomerSummary {
 
-  String id;
-  String name;
-  Boolean isActive;
+  private String id;
+  private String name;
+  private Boolean isActive;
 
   public CustomerSummary(String id, String name, boolean isActive) {
     this.id = id;

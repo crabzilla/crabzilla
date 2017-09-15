@@ -1,9 +1,13 @@
 package io.github.crabzilla.example1.customer
 
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.entity.EntityCommand
+import io.github.crabzilla.core.entity.EntityCommandResult
+import io.github.crabzilla.core.entity.Snapshot
+import io.github.crabzilla.core.entity.StateTransitionsTrackerFactory
+import io.github.crabzilla.core.exceptions.UnknownCommandException
 import io.github.crabzilla.example1.resultOf
 import io.github.crabzilla.example1.uowOf
-import io.github.crabzilla.model.*
-import io.github.crabzilla.stack.UnknownCommandException
 import java.util.function.BiFunction
 import java.util.function.Function
 
@@ -40,9 +44,9 @@ class CommandValidatorFn : Function<EntityCommand, List<String>> { // <3>
 // tag::CommandHandlerFn[]
 
 class CommandHandlerFn(private val trackerFactory: StateTransitionsTrackerFactory<Customer>) :
-        BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> {
+        BiFunction<EntityCommand, Snapshot<Customer>, EntityCommandResult> {
 
-  override fun apply(cmd: EntityCommand, snapshot: Snapshot<Customer>): CommandHandlerResult {
+  override fun apply(cmd: EntityCommand, snapshot: Snapshot<Customer>): EntityCommandResult {
 
     val customer = snapshot.instance
     val newVersion = snapshot.version.nextVersion()

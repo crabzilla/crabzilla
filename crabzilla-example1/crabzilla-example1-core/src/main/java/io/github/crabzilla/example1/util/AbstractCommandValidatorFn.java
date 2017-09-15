@@ -1,6 +1,6 @@
 package io.github.crabzilla.example1.util;
 
-import io.github.crabzilla.model.EntityCommand;
+import io.github.crabzilla.core.entity.EntityCommand;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

@@ -586,9 +586,9 @@ data class CreateActivateCustomer(override val _commandId: UUID,
 <div class="title">CustomerFunctions.kt</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandHandlerFn(private val trackerFactory: StateTransitionsTrackerFactory&lt;Customer&gt;) :
-        BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, CommandHandlerResult&gt; {
+        BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, EntityCommandResult&gt; {
 
-  override fun apply(cmd: EntityCommand, snapshot: Snapshot&lt;Customer&gt;): CommandHandlerResult {
+  override fun apply(cmd: EntityCommand, snapshot: Snapshot&lt;Customer&gt;): EntityCommandResult {
 
     val customer = snapshot.instance
     val newVersion = snapshot.version.nextVersion()
@@ -649,7 +649,7 @@ data class CreateActivateCustomer(override val _commandId: UUID,
                     val name: String? = null,
                     val isActive: Boolean? = false,
                     val reason: String? = null,
-                    val sampleInternalService: SampleInternalService) : Aggregate {
+                    val sampleInternalService: SampleInternalService) : Entity {
 
   override fun getId(): EntityId {
     return _id!!
@@ -826,7 +826,7 @@ also a factory and a module for each aggregate we have.</p>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CustomerFactory @Inject
 constructor(service: SampleInternalService, private val vertx: Vertx,
-            private val jdbcClient: JDBCClient) : AggregateRootComponentsFactory&lt;Customer&gt; {
+            private val jdbcClient: JDBCClient) : AggregateComponentsFactory&lt;Customer&gt; {
 
   private val seedValue by lazy { Customer(sampleInternalService = service) }
 
@@ -847,7 +847,7 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
   }
 
   override fun cmdHandlerFn():
-          BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, CommandHandlerResult&gt; {
+          BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, EntityCommandResult&gt; {
     val trackerFactory = StateTransitionsTrackerFactory&lt;Customer&gt; { instance -&gt;
       StateTransitionsTracker(instance, stateTransitionFn())
     }
@@ -886,8 +886,8 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 
   @Provides
   @Singleton
-  internal fun restVerticle(componentsFactory: CustomerFactory): EntityCommandRestVerticle&lt;Customer&gt; {
-    return componentsFactory.restVerticle()
+  internal fun restVerticle(componentsFactory: CustomerFactory, config: JsonObject): EntityCommandRestVerticle&lt;Customer&gt; {
+    return componentsFactory.restVerticle(config)
   }
 
   @Provides
@@ -947,41 +947,35 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 <div class="title">Example1AcceptanceIt.kt</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">  @Test
-  fun create_customer(context: TestContext) {
-
-    // This test is asynchronous, so get an async handler to inform the test when we are done.
-    val async = context.async()
+  @Throws(IOException::class)
+  fun successScenario() {
 
     val customerId = CustomerId(UUID.randomUUID().toString())
-    val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer-test")
-    val expectedEvent = CustomerCreated(customerId, "customer-test")
-    val expectedUow = EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, Version(1),
-            listOf&lt;DomainEvent&gt;(expectedEvent))
+    val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer test")
+    val expectedEvent = CustomerCreated(createCustomerCmd._targetId, "customer test")
+    val expectedUow = EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
+            Version(1), listOf&lt;DomainEvent&gt;(expectedEvent))
 
-    val json = Json.encodePrettily(createCustomerCmd)
+    val json = mapper.writerFor(CreateCustomer::class.java).writeValueAsString(createCustomerCmd)
 
-    vertx.createHttpClient().put(port, "localhost",
-      "/" + aggregateRootId(Customer::class.java) + "/commands")
-      .putHeader("content-type", "application/json")
-      .putHeader("content-length", Integer.toString(json.length))
-      .handler { response -&gt;
-        context.assertEquals(response.statusCode(), 201)
-        context.assertTrue(response.headers().get("content-type").equals("application/json"))
-        response.bodyHandler { body -&gt;
-          println("---&gt; body " + body)
-          val cmdExec = Json.decodeValue(body.toString(), CommandExecution::class.java)
-          context.assertEquals(cmdExec.unitOfWork.targetId(), expectedUow.targetId())
-          context.assertEquals(cmdExec.unitOfWork.command, expectedUow.command)
-          context.assertEquals(cmdExec.unitOfWork.events, expectedUow.events)
-          context.assertEquals(cmdExec.unitOfWork.version, expectedUow.version)
-          async.complete()
-        }
-      }
-      .write(json)
-      .end()
-  }
+    val response = given().contentType(JSON).body(json)
+                  .`when`().put("/" + aggregateRootId(Customer::class.java) + "/commands")
+                  .then().statusCode(201).contentType(ContentType.JSON).extract().response().asString()
 
-}</code></pre>
+    val result = mapper.readValue(response, EntityCommandExecution::class.java)
+
+    assertThat(result.result).isEqualTo(SUCCESS)
+    assertThat(result.commandId).isEqualTo(createCustomerCmd.commandId)
+    assertThat(result.constraints.isEmpty())
+
+    val uow = result.unitOfWork
+
+    assertThat(uow.targetId()).isEqualTo(expectedUow.targetId())
+    assertThat(uow.command).isEqualTo(expectedUow.command)
+    assertThat(uow.events).isEqualTo(expectedUow.events)
+    assertThat(uow.version).isEqualTo(expectedUow.version)
+
+  }</code></pre>
 </div>
 </div>
 </div>
@@ -1010,16 +1004,16 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EntityCommandRestVerticle.java">EntityCommandRestVerticle</a> to receive commands as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandRestVerticle.java">EntityCommandRestVerticle</a> to receive commands as JSON</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EntityCommandHandlerVerticle.java">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.java">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/repositories/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting units of work into a single table, being events and command as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting units of work into a single table, being events and command as JSON</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/verticles/EventsProjectionVerticle.java">EventsProjectionVerticle</a> to propagate and project events to read model database</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/projection/EventsProjectionVerticle.java">EventsProjectionVerticle</a> to propagate and project events to read model database</p>
 </li>
 </ul>
 </div>
@@ -1029,7 +1023,7 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-08-24 10:41:06 BRT
+Last updated 2017-09-05 20:03:41 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

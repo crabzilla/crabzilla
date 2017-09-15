@@ -1,7 +1,9 @@
 package io.github.crabzilla.example1.customer;
 
-import io.github.crabzilla.model.*;
-import io.github.crabzilla.stack.UnknownCommandException;
+import io.github.crabzilla.core.Command;
+import io.github.crabzilla.core.DomainEvent;
+import io.github.crabzilla.core.entity.*;
+import io.github.crabzilla.core.exceptions.UnknownCommandException;
 import io.vavr.Function3;
 import io.vavr.collection.CharSeq;
 import io.vavr.collection.Seq;
@@ -45,7 +47,7 @@ public class CustomerFunctions {
 
   @Slf4j
   public static class CommandHandlerFn
-          implements BiFunction<EntityCommand, Snapshot<Customer>, CommandHandlerResult> {
+          implements BiFunction<EntityCommand, Snapshot<Customer>, EntityCommandResult> {
 
     final StateTransitionsTrackerFactory<Customer> trackerFactory;
 
@@ -54,14 +56,14 @@ public class CustomerFunctions {
     }
 
     @Override
-    public CommandHandlerResult apply(final EntityCommand cmd,
-                                      final Snapshot<Customer> snapshot) {
+    public EntityCommandResult apply(final EntityCommand cmd,
+                                     final Snapshot<Customer> snapshot) {
       log.info("Will apply command {}", cmd);
       val tracker = trackerFactory.apply(snapshot);
       try {
-        return CommandHandlerResult.success(handle(cmd, tracker));
+        return EntityCommandResult.success(handle(cmd, tracker));
       } catch (Exception e) {
-        return CommandHandlerResult.error(e);
+        return EntityCommandResult.error(e);
       }
     }
 
@@ -151,6 +153,14 @@ public class CustomerFunctions {
               + seq.distinct().sorted() + "'"));
     }
 
+  }
+
+  static class CustomerEventListener implements Function<DomainEvent, List<Command>> {
+
+    @Override
+    public List<Command> apply(DomainEvent domainEvent) {
+      return null;
+    }
   }
 
 }

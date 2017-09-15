@@ -49,12 +49,11 @@ and your service module must import:
 
 ### Steps
 
-1. Clone Crabzilla and build it running unit tests :
+1. Clone it:
 
 ```bash
 git clone https://github.com/crabzilla/crabzilla
 cd crabzilla
-mvn clean install 
 ```
 
 2. Start a MySql instance. You can use docker-compose:
@@ -75,7 +74,7 @@ mvn compile flyway:migrate
 ```bash
 # go back to crabzilla root
 cd ../..
- mvn clean verify -P all-tests
+ mvn clean install 
 ```
 
 5. Now you finally can run the current [example](crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Launcher.java):
@@ -87,3 +86,10 @@ java -jar crabzilla-example1/crabzilla-example1-service/target/crabzilla-example
 ## Wiki 
 
 You can find more info on [wiki](https://github.com/crabzilla/crabzilla/wiki)
+
+ 
+## License
+
+Copyright © 2017 Rodolfo de Paula
+
+Distributed under Apache License 2.0.

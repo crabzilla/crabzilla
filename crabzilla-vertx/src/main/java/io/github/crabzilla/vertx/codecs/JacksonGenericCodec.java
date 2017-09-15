@@ -40,7 +40,7 @@ public class JacksonGenericCodec<T> implements MessageCodec<T, T> {
 
     // Get JSON string by it`s length
     // Jump 4 because getInt() == 4 bytes
-    final byte[] content = buffer.getBytes(_pos += 4, _pos += length);
+    final byte[] content = buffer.getBytes(_pos += 4, _pos + length);
     Object readObj;
 
     try {

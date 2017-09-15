@@ -1,8 +1,8 @@
 package io.github.crabzilla.example1.customer;
 
+import io.github.crabzilla.core.DomainEvent;
+import io.github.crabzilla.core.entity.Entity;
 import io.github.crabzilla.example1.services.SampleInternalService;
-import io.github.crabzilla.model.Aggregate;
-import io.github.crabzilla.model.DomainEvent;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.Wither;
@@ -16,15 +16,15 @@ import static org.apache.commons.lang3.Validate.validState;
 
 @Value
 @Wither
-public class Customer implements Aggregate {
+public class Customer implements Entity {
 
   @NonNull
-  transient SampleInternalService service;
+  private transient SampleInternalService service;
 
-  CustomerData.CustomerId id;
-  String name;
-  boolean isActive;
-  String reason;
+  private CustomerData.CustomerId id;
+  private String name;
+  private boolean isActive;
+  private String reason;
 
   List<DomainEvent> create(CustomerData.CustomerId id, String name) {
     validState(this.id == null, "customer already created");

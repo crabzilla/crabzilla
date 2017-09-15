@@ -1,26 +1,30 @@
 package io.github.crabzilla.example1;
 
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import io.github.crabzilla.example1.customer.Customer;
-import io.github.crabzilla.stack.CommandExecution;
-import io.github.crabzilla.stack.StringHelper;
-import io.github.crabzilla.vertx.verticles.EventsProjectionVerticle;
-import io.vertx.core.AsyncResult;
+import io.github.crabzilla.example1.customer.CustomerModule;
+import io.github.crabzilla.vertx.entity.EntityCommandExecution;
+import io.github.crabzilla.vertx.helpers.StringHelper;
+import io.vertx.config.ConfigRetriever;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.logging.SLF4JLogDelegateFactory;
-import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
-import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 
 import static io.github.crabzilla.example1.customer.CustomerData.*;
+import static io.github.crabzilla.vertx.helpers.ConfigHelper.cfgOptions;
+import static io.github.crabzilla.vertx.helpers.StringHelper.inDeploymentOrder;
 import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.lang.System.setProperty;
 
@@ -30,45 +34,52 @@ public class Example1Launcher {
   @Inject
   Map<String, Verticle> aggregateRootVerticles;
 
-  @Inject
-  EventsProjectionVerticle<CustomerSummaryDao> projectionVerticle;
+  public static void main(String[] args) throws Exception {
 
-  static Vertx vertx;
+    setProperty(LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory.class.getName());
+    LoggerFactory.getLogger(LoggerFactory.class); // Required for Logback to work in Vertx
 
-  public static void main(String args[]) throws InterruptedException {
+    Arrays.asList(args).forEach(s -> log.info("arg -> " + s));
 
-    val launcher = new Example1Launcher();
-    val clusterManager = new HazelcastClusterManager();
-    val options = new VertxOptions().setClusterManager(clusterManager);
+    final OptionParser parser = new OptionParser();
+    parser.accepts( "conf" ).withRequiredArg();
+    parser.allowsUnrecognizedOptions();
 
-    Vertx.clusteredVertx(options, (AsyncResult<Vertx> res) -> {
+    final OptionSet options = parser.parse( args);
 
-      if (res.succeeded()) {
+    val configFile = (String) options.valueOf("conf");
+    val vertx = Vertx.vertx();
 
-        vertx = res.result();
+    ConfigRetriever retriever = ConfigRetriever.create(vertx, cfgOptions(configFile));
 
-        setProperty (LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory.class.getName ());
-        LoggerFactory.getLogger (LoggerFactory.class); // Required for Logback to work in Vertx
+    retriever.getConfig(ar -> {
 
-        Guice.createInjector(new Example1Module(vertx)).injectMembers(launcher);
-
-        for (Map.Entry<String,Verticle> v: launcher.aggregateRootVerticles.entrySet()) {
-          vertx.deployVerticle(v.getValue(), event -> log.info("Deployed {} ? {}", v.getKey(), event.succeeded()));
-        }
-
-        vertx.deployVerticle(launcher.projectionVerticle, event -> log.info("Deployed ? {}", event.succeeded()));
-
-        // a test
-        launcher.justForTest();
-
-      } else {
-        log.error("Failed: ", res.cause());
+      if (ar.failed()) {
+        log.error("failed to load config", ar.cause());
+        return;
       }
+
+      JsonObject config = ar.result();
+      log.info("config = {}", config.encodePrettily());
+
+      val launcher = new Example1Launcher();
+      val injector = Guice.createInjector(new Example1Module(vertx, config), new CustomerModule());
+
+      injector.injectMembers(launcher);
+
+      for (Map.Entry<String,Verticle> v: inDeploymentOrder(launcher.aggregateRootVerticles).entrySet()) {
+        log.info("deploying verticle: {}", v.getKey());
+        vertx.deployVerticle(v.getValue(), event -> log.info("Deployed {} ? {}", v.getKey(), event.succeeded()));
+      }
+
+      // a test
+      launcher.justForTest(vertx);
+
     });
 
   }
 
-  private void justForTest() {
+  private void justForTest(Vertx vertx) {
 
     val customerId = new CustomerId(UUID.randomUUID().toString());
 //    val customerId = new CustomerId("customer123");
@@ -76,7 +87,7 @@ public class Example1Launcher {
     val options = new DeliveryOptions().setCodecName("EntityCommand");
 
     // create customer command
-    vertx.eventBus().<CommandExecution>send(StringHelper.commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().<EntityCommandExecution>send(StringHelper.commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       log.info("Successful create customer test? {}", asyncResult.succeeded());
 
@@ -87,7 +98,7 @@ public class Example1Launcher {
         val activateCustomerCmd = new ActivateCustomer(UUID.randomUUID(), createCustomerCmd.getTargetId(), "because I want it");
 
         // activate customer command
-        vertx.eventBus().<CommandExecution>send(StringHelper.commandHandlerId(Customer.class), activateCustomerCmd, options, asyncResult2 -> {
+        vertx.eventBus().<EntityCommandExecution>send(StringHelper.commandHandlerId(Customer.class), activateCustomerCmd, options, asyncResult2 -> {
 
           log.info("Successful activate customer test? {}", asyncResult2.succeeded());
 
