@@ -946,7 +946,36 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 <div class="listingblock">
 <div class="title">Example1AcceptanceIt.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example-manual.adoc - include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/test/java/io/github/crabzilla/example1/Example1AcceptanceIT.kt[tags=create_customer_test]</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">  @Test
+  @Throws(IOException::class)
+  fun successScenario() {
+
+    val customerId = CustomerId(UUID.randomUUID().toString())
+    val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer test")
+    val expectedEvent = CustomerCreated(createCustomerCmd._targetId, "customer test")
+    val expectedUow = EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
+            Version(1), listOf&lt;DomainEvent&gt;(expectedEvent))
+
+    val json = mapper.writerFor(CreateCustomer::class.java).writeValueAsString(createCustomerCmd)
+
+    val response = given().contentType(JSON).body(json)
+                  .`when`().put("/" + aggregateRootId(Customer::class.java) + "/commands")
+                  .then().statusCode(201).contentType(ContentType.JSON).extract().response().asString()
+
+    val result = mapper.readValue(response, EntityCommandExecution::class.java)
+
+    assertThat(result.result).isEqualTo(SUCCESS)
+    assertThat(result.commandId).isEqualTo(createCustomerCmd.commandId)
+    assertThat(result.constraints.isEmpty())
+
+    val uow = result.unitOfWork
+
+    assertThat(uow.targetId()).isEqualTo(expectedUow.targetId())
+    assertThat(uow.command).isEqualTo(expectedUow.command)
+    assertThat(uow.events).isEqualTo(expectedUow.events)
+    assertThat(uow.version).isEqualTo(expectedUow.version)
+
+  }</code></pre>
 </div>
 </div>
 </div>

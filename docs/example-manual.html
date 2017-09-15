@@ -1018,7 +1018,41 @@ public class Example1EventProjector extends AbstractExample1EventProjector&lt;Cu
 <div class="listingblock">
 <div class="title">Example1AcceptanceIt.java</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java" data-lang="java"></code></pre>
+<pre class="highlightjs highlight"><code class="language-java" data-lang="java">  @Test
+  public void successScenario() {
+
+    val customerId = new CustomerData.CustomerId(UUID.randomUUID().toString());
+    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer test");
+    val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer test");
+    val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
+            new Version(1), singletonList(expectedEvent));
+
+    val json = Json.encodePrettily(createCustomerCmd);
+
+    val response = given().
+            contentType(JSON).
+            body(json).
+            when().
+            put("/" + aggregateRootId(Customer.class) + "/commands").
+            then().
+            statusCode(201).
+            contentType(ContentType.JSON)
+            .extract().response().asString();
+
+    val result = Json.decodeValue(response, EntityCommandExecution.class);
+
+    assertThat(result.getResult()).isEqualTo(SUCCESS);
+    assertThat(result.getCommandId()).isEqualTo(createCustomerCmd.getCommandId());
+    assertThat(result.getConstraints().isEmpty());
+
+    val uow = result.getUnitOfWork();
+
+    assertThat(uow.targetId()).isEqualTo(expectedUow.targetId());
+    assertThat(uow.getCommand()).isEqualTo(expectedUow.getCommand());
+    assertThat(uow.getEvents()).isEqualTo(expectedUow.getEvents());
+    assertThat(uow.getVersion()).isEqualTo(expectedUow.getVersion());
+
+  }</code></pre>
 </div>
 </div>
 </div>
