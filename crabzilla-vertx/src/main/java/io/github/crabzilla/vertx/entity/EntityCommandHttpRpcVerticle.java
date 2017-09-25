@@ -19,12 +19,12 @@ import static io.github.crabzilla.vertx.helpers.StringHelper.*;
 
 
 @Slf4j
-public class EntityCommandRestVerticle<E> extends AbstractVerticle {
+public class EntityCommandHttpRpcVerticle<E> extends AbstractVerticle {
 
   private final Class<E> aggregateRootClass;
   private final JsonObject config;
 
-  public EntityCommandRestVerticle(@NonNull Class<E> aggregateRootClass, JsonObject config) {
+  public EntityCommandHttpRpcVerticle(@NonNull Class<E> aggregateRootClass, JsonObject config) {
     this.aggregateRootClass = aggregateRootClass;
     this.config = config;
   }
@@ -33,6 +33,8 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
   public void start() throws Exception {
 
     val router = Router.router(vertx);
+
+    // TODO consider to implement redirect after post
     router.route(HttpMethod.PUT, "/" + aggregateRootId(aggregateRootClass) + "/commands")
           .handler(putCommandHandler());
 
@@ -51,7 +53,7 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
 
         vertx.<EntityCommandExecution>eventBus().send(commandHandlerId(aggregateRootClass), command, options, response -> {
           if (!response.succeeded()) {
-            log.error("eventbus.sendCommand", response.cause());
+            log.error("eventbus.handleCommand", response.cause());
             httpResp.setStatusCode(500);
             httpResp.end(response.cause().getMessage());
             return;
