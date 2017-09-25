@@ -877,7 +877,7 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
     // to bind aggregate functions
     bind(CustomerFactory::class.java).asEagerSingleton()
     // to bind verticles for this aggregate
-    val restType = object : TypeLiteral&lt;EntityCommandRestVerticle&lt;Customer&gt;&gt;() {}
+    val restType = object : TypeLiteral&lt;EntityCommandHttpRpcVerticle&lt;Customer&gt;&gt;() {}
     val handlerType = object : TypeLiteral&lt;EntityCommandHandlerVerticle&lt;Customer&gt;&gt;() {}
     val mapbinder = MapBinder.newMapBinder(binder(), String::class.java, Verticle::class.java)
     mapbinder.addBinding("customer.rest").to(restType)
@@ -886,7 +886,7 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 
   @Provides
   @Singleton
-  internal fun restVerticle(componentsFactory: CustomerFactory, config: JsonObject): EntityCommandRestVerticle&lt;Customer&gt; {
+  internal fun restVerticle(componentsFactory: CustomerFactory, config: JsonObject): EntityCommandHttpRpcVerticle&lt;Customer&gt; {
     return componentsFactory.restVerticle(config)
   }
 
@@ -1004,7 +1004,7 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandRestVerticle.java">EntityCommandRestVerticle</a> to receive commands as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHttpRpcVerticle.java">EntityCommandHttpRpcVerticle</a> to receive commands as JSON</p>
 </li>
 <li>
 <p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.java">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
@@ -1023,7 +1023,7 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-09-05 20:03:41 BRT
+Last updated 2017-09-25 20:03:56 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

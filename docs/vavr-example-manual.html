@@ -977,22 +977,22 @@ also a factory and a module for each aggregate we have.</p>
     bind(CustomerFactory.class).asEagerSingleton();
 
     // to bind verticles for this aggregate
-    TypeLiteral&lt;EntityCommandRestVerticle&lt;Customer&gt;&gt; restType =
-            new TypeLiteral&lt;EntityCommandRestVerticle&lt;Customer&gt;&gt;() {};
+    TypeLiteral&lt;EntityCommandHttpRpcVerticle&lt;Customer&gt;&gt; restType =
+            new TypeLiteral&lt;EntityCommandHttpRpcVerticle&lt;Customer&gt;&gt;() {};
     TypeLiteral&lt;EntityCommandHandlerVerticle&lt;Customer&gt;&gt; handlerType =
             new TypeLiteral&lt;EntityCommandHandlerVerticle&lt;Customer&gt;&gt;() {};
 
     MapBinder&lt;String, Verticle&gt; mapbinder =
             MapBinder.newMapBinder(binder(), String.class, Verticle.class);
 
-    mapbinder.addBinding("customer.rest").to(restType);
-    mapbinder.addBinding("customer.handler").to(handlerType);
+    mapbinder.addBinding("A-customer.handler").to(handlerType);
+    mapbinder.addBinding("Z-customer.rest").to(restType);
 
   }
 
   @Provides
   @Singleton
-  EntityCommandRestVerticle&lt;Customer&gt; restVerticle(CustomerFactory componentsFactory, JsonObject config) {
+  EntityCommandHttpRpcVerticle&lt;Customer&gt; restVerticle(CustomerFactory componentsFactory, JsonObject config) {
     return componentsFactory.restVerticle(config);
   }
 
@@ -1061,9 +1061,9 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <pre class="highlightjs highlight"><code class="language-java" data-lang="java">  @Test
   public void successScenario() {
 
-    val customerId = new CustomerData.CustomerId(UUID.randomUUID().toString());
-    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer test");
-    val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer test");
+    val customerId = new CustomerId(UUID.randomUUID().toString());
+    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer test");
+    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer test");
     val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
             new Version(1), singletonList(expectedEvent));
 
@@ -1121,7 +1121,7 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandRestVerticle.java">EntityCommandRestVerticle</a> to receive commands as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHttpRpcVerticle.java">EntityCommandHttpRpcVerticle</a> to receive commands as JSON</p>
 </li>
 <li>
 <p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.java">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
@@ -1140,7 +1140,7 @@ public class Example1EventProjector extends EventProjector&lt;CustomerSummaryDao
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-09-05 20:04:42 BRT
+Last updated 2017-09-25 20:03:56 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
