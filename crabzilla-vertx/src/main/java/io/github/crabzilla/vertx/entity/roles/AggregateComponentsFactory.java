@@ -3,7 +3,7 @@ package io.github.crabzilla.vertx.entity.roles;
 import io.github.crabzilla.core.DomainEvent;
 import io.github.crabzilla.core.entity.*;
 import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle;
-import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle;
+import io.github.crabzilla.vertx.entity.EntityCommandHttpRpcVerticle;
 import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
@@ -37,8 +37,8 @@ public interface AggregateComponentsFactory<A extends Entity> {
     return new SnapshotPromoter<>(instance -> new StateTransitionsTracker<>(instance, stateTransitionFn()));
   }
 
-  default EntityCommandRestVerticle<A> restVerticle(JsonObject config) {
-    return new EntityCommandRestVerticle<>(clazz(), config);
+  default EntityCommandHttpRpcVerticle<A> restVerticle(JsonObject config) {
+    return new EntityCommandHttpRpcVerticle<>(clazz(), config);
   }
 
   default EntityCommandHandlerVerticle<A> cmdHandlerVerticle() {

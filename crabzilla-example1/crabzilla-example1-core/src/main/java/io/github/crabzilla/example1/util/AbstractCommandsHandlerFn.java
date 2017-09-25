@@ -19,7 +19,6 @@ public abstract class AbstractCommandsHandlerFn<A extends Entity>
     final MethodType methodType =
             MethodType.methodType(EntityUnitOfWork.class, new Class<?>[] {command.getClass(), Snapshot.class});
 
-
     try {
       final MethodHandle methodHandle = lookup.bind(this, METHOD_NAME, methodType);
       val uow = (EntityUnitOfWork) methodHandle.invokeWithArguments(command, snapshot);

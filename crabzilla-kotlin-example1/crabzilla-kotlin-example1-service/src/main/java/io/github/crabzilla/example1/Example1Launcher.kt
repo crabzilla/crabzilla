@@ -5,7 +5,7 @@ import com.google.inject.Inject
 import io.github.crabzilla.example1.customer.*
 import io.github.crabzilla.vertx.entity.EntityCommandExecution
 import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
-import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
+import io.github.crabzilla.vertx.entity.EntityCommandHttpRpcVerticle
 import io.github.crabzilla.vertx.helpers.ConfigHelper.cfgOptions
 import io.github.crabzilla.vertx.helpers.StringHelper
 import io.github.crabzilla.vertx.projection.EventsProjectionVerticle
@@ -27,7 +27,7 @@ class Example1Launcher {
   internal lateinit var projectionVerticle: EventsProjectionVerticle<CustomerSummaryDao>
 
   @Inject
-  internal lateinit var restVerticle: EntityCommandRestVerticle<Customer>
+  internal lateinit var httpRpcVerticle: EntityCommandHttpRpcVerticle<Customer>
 
   @Inject
   internal lateinit var cmdVerticle: EntityCommandHandlerVerticle<Customer>
@@ -71,7 +71,7 @@ class Example1Launcher {
 
         vertx.deployVerticle(launcher.cmdVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
 
-        vertx.deployVerticle(launcher.restVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
+        vertx.deployVerticle(launcher.httpRpcVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
 
         // a test
          launcher.justForTest(vertx);

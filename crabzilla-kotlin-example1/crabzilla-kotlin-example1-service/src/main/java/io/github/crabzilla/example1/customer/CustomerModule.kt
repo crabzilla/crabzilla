@@ -6,7 +6,7 @@ import com.google.inject.Singleton
 import com.google.inject.TypeLiteral
 import com.google.inject.multibindings.MapBinder
 import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
-import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
+import io.github.crabzilla.vertx.entity.EntityCommandHttpRpcVerticle
 import io.vertx.core.Verticle
 import io.vertx.core.json.JsonObject
 
@@ -18,7 +18,7 @@ class CustomerModule : AbstractModule() {
     // to bind aggregate functions
     bind(CustomerFactory::class.java).asEagerSingleton()
     // to bind verticles for this aggregate
-    val restType = object : TypeLiteral<EntityCommandRestVerticle<Customer>>() {}
+    val restType = object : TypeLiteral<EntityCommandHttpRpcVerticle<Customer>>() {}
     val handlerType = object : TypeLiteral<EntityCommandHandlerVerticle<Customer>>() {}
     val mapbinder = MapBinder.newMapBinder(binder(), String::class.java, Verticle::class.java)
     mapbinder.addBinding("customer.rest").to(restType)
@@ -27,7 +27,7 @@ class CustomerModule : AbstractModule() {
 
   @Provides
   @Singleton
-  internal fun restVerticle(componentsFactory: CustomerFactory, config: JsonObject): EntityCommandRestVerticle<Customer> {
+  internal fun restVerticle(componentsFactory: CustomerFactory, config: JsonObject): EntityCommandHttpRpcVerticle<Customer> {
     return componentsFactory.restVerticle(config)
   }
 
