@@ -1,6 +1,5 @@
 package io.github.crabzilla.example1.customer
 
-import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.entity.EntityId

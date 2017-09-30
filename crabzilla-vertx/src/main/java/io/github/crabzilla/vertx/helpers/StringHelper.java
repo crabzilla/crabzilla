@@ -2,7 +2,6 @@ package io.github.crabzilla.vertx.helpers;
 
 import io.vertx.core.Verticle;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
