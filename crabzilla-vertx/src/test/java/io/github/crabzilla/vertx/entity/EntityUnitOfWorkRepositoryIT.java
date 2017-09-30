@@ -29,7 +29,6 @@ import org.junit.runners.MethodSorters;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Collections.singletonList;
@@ -119,9 +118,9 @@ public class EntityUnitOfWorkRepositoryIT {
 
       assertThat(uowSequence).isGreaterThan(0);
 
-      Future<Optional<EntityUnitOfWork>> uowFuture = Future.future();
+      Future<EntityUnitOfWork> uowFuture = Future.future();
 
-      repo.get(expectedUow1.getUnitOfWorkId(), uowFuture);
+      repo.getUowByUowId(expectedUow1.getUnitOfWorkId(), uowFuture);
 
       uowFuture.setHandler(uowAsyncResult -> {
         if (uowAsyncResult.failed()) {
@@ -129,11 +128,11 @@ public class EntityUnitOfWorkRepositoryIT {
           return;
         }
 
-        Optional<EntityUnitOfWork> uow = uowAsyncResult.result();
+        EntityUnitOfWork uow = uowAsyncResult.result();
         log.debug("uow {}", uow);
 
-        if (uow.isPresent()) {
-          assertThat(uow.get()).isEqualTo(expectedUow1);
+        if (uow != null) {
+          assertThat(uow).isEqualTo(expectedUow1);
         } else {
           fail("not found");
         }
@@ -179,9 +178,9 @@ public class EntityUnitOfWorkRepositoryIT {
 
       assertThat(uowSequence).isGreaterThan(0);
 
-      Future<Optional<EntityUnitOfWork>> uowFuture = Future.future();
+      Future<EntityUnitOfWork> uowFuture = Future.future();
 
-      repo.get(expectedUow2.getUnitOfWorkId(), uowFuture);
+      repo.getUowByUowId(expectedUow2.getUnitOfWorkId(), uowFuture);
 
       uowFuture.setHandler(uowAsyncResult -> {
         if (uowAsyncResult.failed()) {
@@ -189,11 +188,11 @@ public class EntityUnitOfWorkRepositoryIT {
           return;
         }
 
-        Optional<EntityUnitOfWork> uow = uowAsyncResult.result();
+        EntityUnitOfWork uow = uowAsyncResult.result();
         log.debug("uow {}", uow);
 
-        if (uow.isPresent()) {
-          assertThat(uow.get()).isEqualTo(expectedUow2);
+        if (uow != null) {
+          assertThat(uow).isEqualTo(expectedUow2);
         } else {
           fail("not found");
           return;

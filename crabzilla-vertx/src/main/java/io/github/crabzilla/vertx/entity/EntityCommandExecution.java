@@ -22,7 +22,7 @@ public class EntityCommandExecution implements Serializable {
     CONCURRENCY_ERROR,
     UNKNOWN_COMMAND,
     SUCCESS,
-    COMMAND_ALREADY_PROCESSED // TODO
+    ALREADY_PROCESSED // TODO
   }
 
   private RESULT result;
@@ -57,6 +57,10 @@ public class EntityCommandExecution implements Serializable {
   }
 
   public static EntityCommandExecution SUCCESS(@NonNull EntityUnitOfWork uow, @NonNull Long uowSequence) {
+    return new EntityCommandExecution(SUCCESS, uow.getCommand().getCommandId(), emptyList(), uowSequence, uow);
+  }
+
+  public static EntityCommandExecution ALREADY_PROCESSED(@NonNull EntityUnitOfWork uow, @NonNull Long uowSequence) {
     return new EntityCommandExecution(SUCCESS, uow.getCommand().getCommandId(), emptyList(), uowSequence, uow);
   }
 

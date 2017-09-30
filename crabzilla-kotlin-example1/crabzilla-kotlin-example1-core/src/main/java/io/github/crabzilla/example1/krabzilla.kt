@@ -32,7 +32,7 @@ fun resultOf(f: () -> EntityUnitOfWork): EntityCommandResult {
     EntityCommandResult.error(RuntimeException(e)) }
 }
 
-fun uowOf(command: EntityCommand, events: List<DomainEvent>, version: Version): EntityUnitOfWork {
+fun uowOf(command: KotlinEntityCommand, events: List<DomainEvent>, version: Version): EntityUnitOfWork {
   return EntityUnitOfWork(UUID.randomUUID(), command, version, events)
 }
 
