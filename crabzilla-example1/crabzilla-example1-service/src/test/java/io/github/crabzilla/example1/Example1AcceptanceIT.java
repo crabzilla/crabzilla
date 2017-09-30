@@ -5,7 +5,6 @@ import com.jayway.restassured.http.ContentType;
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
 import io.github.crabzilla.core.entity.Version;
 import io.github.crabzilla.example1.customer.Customer;
-import io.github.crabzilla.vertx.entity.EntityCommandExecution;
 import io.vertx.core.json.Json;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -18,14 +17,14 @@ import java.util.UUID;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static io.github.crabzilla.example1.customer.CustomerData.*;
-import static io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT.HANDLING_ERROR;
-import static io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT.SUCCESS;
-import static io.github.crabzilla.vertx.helpers.StringHelper.aggregateRootId;
+import static io.github.crabzilla.vertx.helpers.StringHelper.aggregateId;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 public class Example1AcceptanceIT {
+
+  static final String LOCATION_HEADER = "Location";
 
   @BeforeClass
   public static void configureRestAssured() throws InterruptedException {
@@ -42,7 +41,7 @@ public class Example1AcceptanceIT {
   // tag::create_customer_test[]
 
   @Test
-  public void successScenario() {
+  public void createCustomer() {
 
     val customerId = new CustomerId(UUID.randomUUID().toString());
     val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer test");
@@ -52,23 +51,30 @@ public class Example1AcceptanceIT {
 
     val json = Json.encodePrettily(createCustomerCmd);
 
-    val response = given().
+    val postCmdResponse = given().
             contentType(JSON).
             body(json).
             when().
-            put("/" + aggregateRootId(Customer.class) + "/commands").
+            post("/" + aggregateId(Customer.class) + "/commands").
             then().
-            statusCode(201).
+            extract().response();
+
+    assertThat(postCmdResponse.statusCode()).isEqualTo(201);
+    assertThat(postCmdResponse.header(LOCATION_HEADER))
+            .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
+                    + aggregateId(Customer.class) + "/commands/" + createCustomerCmd.getCommandId().toString());
+
+    val getUowResponse = given().
+            contentType(JSON).
+            body(json).
+            when().
+            get(postCmdResponse.header(LOCATION_HEADER)).
+            then().
+            statusCode(200).
             contentType(ContentType.JSON)
             .extract().response().asString();
 
-    val result = Json.decodeValue(response, EntityCommandExecution.class);
-
-    assertThat(result.getResult()).isEqualTo(SUCCESS);
-    assertThat(result.getCommandId()).isEqualTo(createCustomerCmd.getCommandId());
-    assertThat(result.getConstraints().isEmpty());
-
-    val uow = result.getUnitOfWork();
+    val uow = Json.decodeValue(getUowResponse, EntityUnitOfWork.class);
 
     assertThat(uow.targetId()).isEqualTo(expectedUow.targetId());
     assertThat(uow.getCommand()).isEqualTo(expectedUow.getCommand());
@@ -79,8 +85,67 @@ public class Example1AcceptanceIT {
 
   // end::create_customer_test[]
 
+
   @Test
-  public void handlingErrorScenario() {
+  public void createCustomerIdempotency() {
+
+    val customerId = new CustomerId(UUID.randomUUID().toString());
+    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer test");
+    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer test");
+    val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
+            new Version(1), singletonList(expectedEvent));
+
+    val json = Json.encodePrettily(createCustomerCmd);
+
+    val postCmdResponse = given().
+            contentType(JSON).
+            body(json).
+            when().
+            post("/" + aggregateId(Customer.class) + "/commands").
+            then().
+            extract().response();
+
+    assertThat(postCmdResponse.statusCode()).isEqualTo(201);
+    assertThat(postCmdResponse.header(LOCATION_HEADER))
+            .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
+                    + aggregateId(Customer.class) + "/commands/" + createCustomerCmd.getCommandId().toString());
+
+    val getUowResponse = given().
+            contentType(JSON).
+            body(json).
+            when().
+            get(postCmdResponse.header(LOCATION_HEADER)).
+            then().
+            statusCode(200).
+            contentType(ContentType.JSON)
+            .extract().response().asString();
+
+    val uow = Json.decodeValue(getUowResponse, EntityUnitOfWork.class);
+
+    assertThat(uow.targetId()).isEqualTo(expectedUow.targetId());
+    assertThat(uow.getCommand()).isEqualTo(expectedUow.getCommand());
+    assertThat(uow.getEvents()).isEqualTo(expectedUow.getEvents());
+    assertThat(uow.getVersion()).isEqualTo(expectedUow.getVersion());
+
+    // now lets post it again
+
+    val postCmdResponse2 = given().
+            contentType(JSON).
+            body(json).
+            when().
+            post("/" + aggregateId(Customer.class) + "/commands").
+            then().
+            extract().response();
+
+    assertThat(postCmdResponse2.statusCode()).isEqualTo(201);
+    assertThat(postCmdResponse2.header(LOCATION_HEADER))
+            .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
+                    + aggregateId(Customer.class) + "/commands/" + createCustomerCmd.getCommandId().toString());
+
+  }
+
+  @Test
+  public void unknownCustomer() {
 
     val customerId = new CustomerId(UUID.randomUUID().toString());
     val activateCustomer = new ActivateCustomer(UUID.randomUUID(), customerId, "customer test");
@@ -90,21 +155,13 @@ public class Example1AcceptanceIT {
             contentType(JSON).
             body(json).
             when().
-            put("/" + aggregateRootId(Customer.class) + "/commands").
+            post("/" + aggregateId(Customer.class) + "/commands").
             then().
             statusCode(400).
-            contentType(ContentType.JSON)
-            .extract().response().asString();
+            extract().response();
 
-    val result = Json.decodeValue(response, EntityCommandExecution.class);
-
-    assertThat(result.getResult()).isEqualTo(HANDLING_ERROR);
-    assertThat(result.getCommandId()).isEqualTo(activateCustomer.getCommandId());
-    assertThat(result.getConstraints().isEmpty());
-
-    val uow = result.getUnitOfWork();
-
-    assertThat(uow).isNull();
+    assertThat(response.statusCode()).isEqualTo(400);
+    assertThat(response.asString()).isEmpty();
 
   }
 

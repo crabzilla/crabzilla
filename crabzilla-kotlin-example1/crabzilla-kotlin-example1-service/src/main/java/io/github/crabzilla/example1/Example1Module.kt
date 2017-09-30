@@ -1,5 +1,6 @@
 package io.github.crabzilla.example1
 
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -128,6 +129,7 @@ class Example1Module(private val vertx: Vertx, private val config: JsonObject) :
             .registerModule(Jdk8Module())
             .registerModule(JavaTimeModule())
             .registerModule(KotlinModule())
+            .enable(SerializationFeature.INDENT_OUTPUT)
 
     vertx.eventBus().registerDefaultCodec(EntityCommandExecution::class.java,
             JacksonGenericCodec(mapper, EntityCommandExecution::class.java))

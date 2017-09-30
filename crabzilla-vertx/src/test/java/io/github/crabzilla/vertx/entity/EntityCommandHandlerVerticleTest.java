@@ -137,6 +137,9 @@ public class EntityCommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
 
+      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
+              any());
+
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
                                                          any());
@@ -196,6 +199,9 @@ public class EntityCommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
 
+      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
+              any());
+
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
                                                          any());
@@ -248,6 +254,9 @@ public class EntityCommandHandlerVerticleTest {
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
       inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
+
+      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
+              any());
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
@@ -304,6 +313,9 @@ public class EntityCommandHandlerVerticleTest {
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
       inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
+
+      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
+              any());
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),
@@ -362,6 +374,9 @@ public class EntityCommandHandlerVerticleTest {
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
       inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
+
+      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
+              any());
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),
@@ -446,6 +461,9 @@ public class EntityCommandHandlerVerticleTest {
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
       inOrder.verify(validatorFn).apply(eq(createCustomerCmd));
+
+      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
+              any());
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),

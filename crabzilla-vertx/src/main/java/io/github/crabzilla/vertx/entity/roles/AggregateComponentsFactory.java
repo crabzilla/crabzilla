@@ -38,7 +38,7 @@ public interface AggregateComponentsFactory<A extends Entity> {
   }
 
   default EntityCommandHttpRpcVerticle<A> restVerticle(JsonObject config) {
-    return new EntityCommandHttpRpcVerticle<>(clazz(), config);
+    return new EntityCommandHttpRpcVerticle<>(clazz(), config, uowRepository());
   }
 
   default EntityCommandHandlerVerticle<A> cmdHandlerVerticle() {

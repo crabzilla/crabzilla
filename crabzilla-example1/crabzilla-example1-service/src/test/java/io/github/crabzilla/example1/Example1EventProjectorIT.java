@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import javax.inject.Inject;
 import java.time.Instant;
+import java.util.Random;
 import java.util.UUID;
 
 import static io.github.crabzilla.example1.customer.CustomerData.*;
@@ -59,8 +60,9 @@ public class Example1EventProjectorIT {
   @Test
   public void canProjectTwoEvents() throws Exception {
 
-    val id = new CustomerId("customer#1");
-    val event1 = new CustomerCreated(id,  "customer1");
+    val random = new Random().nextInt();
+    val id = new CustomerId("customer#" + random);
+    val event1 = new CustomerCreated(id,  "customer" + random);
     val event2 = new CustomerActivated("a good reason", Instant.now());
     val projectionData = new ProjectionData(UUID.randomUUID(), 1L, id.stringValue(), asList(event1, event2));
 

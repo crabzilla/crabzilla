@@ -24,7 +24,6 @@ import lombok.val;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -34,191 +33,253 @@ import static io.vertx.core.json.Json.mapper;
 @Slf4j
 public class EntityUnitOfWorkRepository {
 
-    private static final String UOW_ID = "uow_id";
-    private static final String UOW_EVENTS = "uow_events";
-    private static final String CMD_DATA = "cmd_data";
-    private static final String VERSION = "version";
+  private static final String UOW_ID = "uow_id";
+  private static final String UOW_EVENTS = "uow_events";
+  private static final String CMD_DATA = "cmd_data";
+  private static final String VERSION = "version";
 
-    private final String aggregateRootName;
-    private final JDBCClient client;
+  private final String aggregateRootName;
+  private final JDBCClient client;
 
-    private final TypeReference<List<DomainEvent>> eventsListTpe =  new TypeReference<List<DomainEvent>>() {};
+  private final TypeReference<List<DomainEvent>> eventsListTpe = new TypeReference<List<DomainEvent>>() {
+  };
 
-    public EntityUnitOfWorkRepository(@NonNull Class<?> aggregateRootName, @NonNull JDBCClient client) {
-      this.aggregateRootName = aggregateRootName.getSimpleName();
-      this.client = client;
-    }
+  private final String SELECT_UOW_BY_CMD_ID = "select * from units_of_work where cmd_id =? ";
+  private final String SELECT_UOW_BY_UOW_ID = "select * from units_of_work where uow_id =? ";
 
-    public void get(@NonNull final UUID uowId, @NonNull final Future<Optional<EntityUnitOfWork>> getFuture) {
+  public EntityUnitOfWorkRepository(@NonNull Class<?> aggregateRootName, @NonNull JDBCClient client) {
+    this.aggregateRootName = aggregateRootName.getSimpleName();
+    this.client = client;
+  }
 
-      val SELECT_UOW_BY_ID = "select * from units_of_work where uow_id =? ";
-      val params = new JsonArray().add(uowId.toString());
+  void getUowByCmdId(@NonNull final UUID cmdId, @NonNull final Future<EntityUnitOfWork> uowFuture) {
 
-      client.getConnection(getConn -> {
-        if (getConn.failed()) {
-          getFuture.fail(getConn.cause());
+    get(SELECT_UOW_BY_CMD_ID, cmdId, uowFuture);
+
+  }
+
+  void getUowByUowId(@NonNull final UUID uowId, @NonNull final Future<EntityUnitOfWork> uowFuture) {
+
+    get(SELECT_UOW_BY_UOW_ID, uowId, uowFuture);
+
+  }
+
+  void get(String querie, @NonNull final UUID id, @NonNull final Future<EntityUnitOfWork> uowFuture) {
+
+    val params = new JsonArray().add(id.toString());
+
+    client.getConnection(getConn -> {
+      if (getConn.failed()) {
+        uowFuture.fail(getConn.cause());
+        return;
+      }
+
+      val sqlConn = getConn.result();
+      Future<ResultSet> resultSetFuture = Future.future();
+      queryWithParams(sqlConn, querie, params, resultSetFuture);
+
+      resultSetFuture.setHandler(resultSetAsyncResult -> {
+        if (resultSetAsyncResult.failed()) {
+          uowFuture.fail(resultSetAsyncResult.cause());
+          return;
+        }
+        ResultSet rs = resultSetAsyncResult.result();
+        val rows = rs.getRows();
+        if (rows.size() == 0) {
+          uowFuture.complete(null);
+        } else {
+          for (JsonObject row : rows) {
+            val command = Json.decodeValue(row.getString(CMD_DATA), EntityCommand.class);
+            final List<DomainEvent> events = readEvents(row.getString(UOW_EVENTS));
+            val uow = new EntityUnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
+                    new Version(row.getLong(VERSION)), events);
+            uowFuture.complete(uow);
+          }
+        }
+        sqlConn.close(done -> {
+          if (done.failed()) {
+            log.error("when closing sql connection", done.cause());
+          }
+        });
+      });
+    });
+  }
+
+  void selectAfterVersion(@NonNull final String id, @NonNull final Version version,
+                          @NonNull final Future<SnapshotData> selectAfterVersionFuture) {
+
+    log.info("will load id [{}] after version [{}]", id, version.getValueAsLong());
+
+    val SELECT_AFTER_VERSION = "select uow_events, version from units_of_work " +
+            " where ar_id = ? " +
+            "   and ar_name = ? " +
+            "   and version > ? " +
+            " order by version ";
+
+    val params = new JsonArray().add(id).add(aggregateRootName).add(version.getValueAsLong());
+
+    client.getConnection(getConn -> {
+      if (getConn.failed()) {
+        selectAfterVersionFuture.fail(getConn.cause());
+        return;
+      }
+
+      val sqlConn = getConn.result();
+      Future<SQLRowStream> streamFuture = Future.future();
+      queryStreamWithParams(sqlConn, SELECT_AFTER_VERSION, params, streamFuture);
+
+      streamFuture.setHandler(ar -> {
+
+        if (ar.failed()) {
+          selectAfterVersionFuture.fail(ar.cause());
           return;
         }
 
-        val sqlConn = getConn.result();
-        Future<ResultSet> resultSetFuture = Future.future();
-        queryWithParams(sqlConn, SELECT_UOW_BY_ID, params, resultSetFuture);
+        SQLRowStream stream = ar.result();
+        val list = new ArrayList<SnapshotData>();
+        stream
+                .resultSetClosedHandler(v -> {
+                  // will ask to restart the stream with the new result set if any
+                  stream.moreResults();
+                })
+                .handler(row -> {
 
-        resultSetFuture.setHandler(resultSetAsyncResult -> {
-          if (resultSetAsyncResult.failed()) {
-            getFuture.fail(resultSetAsyncResult.cause());
-            return;
-          }
-          ResultSet rs = resultSetAsyncResult.result();
-          val rows = rs.getRows();
-          if (rows.size() == 0 ) {
-            getFuture.complete(Optional.empty());
-          } else {
-            for (JsonObject row : rows) {
-              val command = Json.decodeValue(row.getString(CMD_DATA), EntityCommand.class);
-              final List<DomainEvent> events = readEvents(row.getString(UOW_EVENTS));
-              val uow = new EntityUnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
-                      new Version(row.getLong(VERSION)), events);
-              getFuture.complete(Optional.of(uow));
-            }
-          }
+                  val events = readEvents(row.getString(0));
+                  val snapshotData = new SnapshotData(new Version(row.getLong(1)), events);
+                  list.add(snapshotData);
+                }).endHandler(event -> {
+
+          log.info("found {} units of work for id {} and version > {}",
+                  list.size(), id, version.getValueAsLong());
+
+          val finalVersion = list.size() == 0 ? new Version(0) :
+                  list.get(list.size() - 1).getVersion();
+
+          final List<DomainEvent> flatMappedToEvents = list.stream()
+                  .flatMap(sd -> sd.getEvents().stream()).collect(Collectors.toList());
+
+          selectAfterVersionFuture.complete(new SnapshotData(finalVersion, flatMappedToEvents));
+
           sqlConn.close(done -> {
+
             if (done.failed()) {
               log.error("when closing sql connection", done.cause());
             }
+
           });
+
         });
+
       });
-    }
 
-    public void selectAfterVersion(@NonNull final String id, @NonNull final Version version,
-                                   @NonNull final Future<SnapshotData> selectAfterVersionFuture) {
+    });
+  }
 
-      log.info("will load id [{}] after version [{}]", id, version.getValueAsLong());
+  void append(@NonNull final EntityUnitOfWork unitOfWork, Future<Long> appendFuture) {
 
-      val SELECT_AFTER_VERSION = "select uow_events, version from units_of_work " +
-              " where ar_id = ? " +
-              "   and ar_name = ? " +
-              "   and version > ? " +
-              " order by version ";
+    val SELECT_CURRENT_VERSION =
+            "select max(version) as last_version from units_of_work where ar_id = ? and ar_name = ? ";
 
-      val params = new JsonArray().add(id).add(aggregateRootName).add(version.getValueAsLong());
+    val INSERT_UOW = "insert into units_of_work " +
+            "(uow_id, uow_events, cmd_id, cmd_data, ar_id, ar_name, version) " +
+            "values (?, ?, ?, ?, ?, ?, ?)";
 
-      client.getConnection(getConn -> {
-        if (getConn.failed()) {
-          selectAfterVersionFuture.fail(getConn.cause());
+
+    client.getConnection(conn -> {
+
+      if (conn.failed()) {
+        appendFuture.fail(conn.cause());
+        return;
+      }
+
+      val sqlConn = conn.result();
+      Future<Void> startTxFuture = Future.future();
+
+      // start a transaction
+      startTx(sqlConn, startTxFuture);
+
+      startTxFuture.setHandler(startTxAsyncResult -> {
+        if (startTxAsyncResult.failed()) {
+          appendFuture.fail(startTxAsyncResult.cause());
           return;
         }
 
-        val sqlConn = getConn.result();
-        Future<SQLRowStream> streamFuture = Future.future();
-        queryStreamWithParams(sqlConn, SELECT_AFTER_VERSION, params, streamFuture);
+        // check current version  // TODO also check if command was not already processed given the commandId
+        val params1 = new JsonArray()
+                .add(unitOfWork.targetId().stringValue())
+                .add(aggregateRootName);
 
-        streamFuture.setHandler(ar -> {
+        Future<ResultSet> resultSetFuture = Future.future();
+        queryWithParams(sqlConn, SELECT_CURRENT_VERSION, params1, resultSetFuture);
+        resultSetFuture.setHandler(asyncResultResultSet -> {
 
-          if (ar.failed()) {
-            selectAfterVersionFuture.fail(ar.cause());
+          if (asyncResultResultSet.failed()) {
+            appendFuture.fail(asyncResultResultSet.cause());
             return;
           }
 
-          SQLRowStream stream = ar.result();
-          val list = new ArrayList<SnapshotData>() ;
-          stream
-                  .resultSetClosedHandler(v -> {
-                    // will ask to restart the stream with the new result set if any
-                    stream.moreResults();
-                  })
-                  .handler(row -> {
+          ResultSet rs = asyncResultResultSet.result();
+          Long currentVersion = rs.getRows().get(0).getLong("last_version");
+          currentVersion = currentVersion == null ? 0L : currentVersion;
 
-                    val events = readEvents(row.getString(0));
-                    val snapshotData = new SnapshotData(new Version(row.getLong(1)), events);
-                    list.add(snapshotData);
-                  }).endHandler(event -> {
+          log.info("Found version  {}", currentVersion);
 
-            log.info("found {} units of work for id {} and version > {}",
-                    list.size(), id, version.getValueAsLong());
+          // apply optimistic locking
+          if (currentVersion != unitOfWork.getVersion().getValueAsLong() - 1) {
 
-            val finalVersion = list.size() == 0 ? new Version(0) :
-                    list.get(list.size() - 1).getVersion();
+            val error = new DbConcurrencyException(
+                    String.format("ar_id = [%s], current_version = %d, new_version = %d",
+                            unitOfWork.targetId().stringValue(),
+                            currentVersion, unitOfWork.getVersion().getValueAsLong()));
 
-            final List<DomainEvent> flatMappedToEvents = list.stream()
-                    .flatMap(sd -> sd.getEvents().stream()).collect(Collectors.toList());
+            appendFuture.fail(error);
 
-            selectAfterVersionFuture.complete(new SnapshotData(finalVersion, flatMappedToEvents));
-
+            // and close the connection
             sqlConn.close(done -> {
-
               if (done.failed()) {
                 log.error("when closing sql connection", done.cause());
               }
-
             });
 
-          });
-
-        });
-
-      });
-    }
-
-    public void append(@NonNull final EntityUnitOfWork unitOfWork, Future<Long> appendFuture) {
-
-      val SELECT_CURRENT_VERSION =
-              "select max(version) as last_version from units_of_work where ar_id = ? and ar_name = ? ";
-
-      val INSERT_UOW = "insert into units_of_work " +
-              "(uow_id, uow_events, cmd_id, cmd_data, ar_id, ar_name, version) " +
-              "values (?, ?, ?, ?, ?, ?, ?)";
-
-
-      client.getConnection(conn -> {
-
-        if (conn.failed()) {
-          appendFuture.fail(conn.cause());
-          return;
-        }
-
-        val sqlConn = conn.result();
-        Future<Void> startTxFuture = Future.future();
-
-        // start a transaction
-        startTx(sqlConn, startTxFuture);
-
-        startTxFuture.setHandler(startTxAsyncResult -> {
-          if (startTxAsyncResult.failed()) {
-            appendFuture.fail(startTxAsyncResult.cause());
             return;
           }
 
-          // check current version  // TODO also check if command was not already processed given the commandId
-          val params1 = new JsonArray()
+          // if version is OK, then insert
+          final String cmdAsJson = commandToJson(unitOfWork.getCommand());
+          final String eventsListAsJson = listOfEventsToJson(unitOfWork.getEvents());
+
+          val params2 = new JsonArray()
+                  .add(unitOfWork.getUnitOfWorkId().toString())
+                  .add(eventsListAsJson)
+                  .add(unitOfWork.getCommand().getCommandId().toString())
+                  .add(cmdAsJson)
                   .add(unitOfWork.targetId().stringValue())
-                  .add(aggregateRootName);
+                  .add(aggregateRootName)
+                  .add(unitOfWork.getVersion().getValueAsLong());
 
-          Future<ResultSet> resultSetFuture = Future.future();
-          queryWithParams(sqlConn, SELECT_CURRENT_VERSION, params1, resultSetFuture);
-          resultSetFuture.setHandler(asyncResultResultSet -> {
+          Future<UpdateResult> updateResultFuture = Future.future();
+          updateWithParams(sqlConn, INSERT_UOW, params2, updateResultFuture);
 
-            if (asyncResultResultSet.failed()) {
-              appendFuture.fail(asyncResultResultSet.cause());
+          updateResultFuture.setHandler(asyncResultUpdateResult -> {
+            if (asyncResultUpdateResult.failed()) {
+              appendFuture.fail(asyncResultUpdateResult.cause());
               return;
             }
 
-            ResultSet rs = asyncResultResultSet.result();
-            Long currentVersion = rs.getRows().get(0).getLong("last_version");
-            currentVersion = currentVersion == null ? 0L : currentVersion;
+            UpdateResult updateResult = asyncResultUpdateResult.result();
+            Future<Void> commitFuture = Future.future();
 
-            log.info("Found version  {}", currentVersion);
+            // commit data
+            commitTx(sqlConn, commitFuture);
 
-            // apply optimistic locking
-            if (currentVersion != unitOfWork.getVersion().getValueAsLong() - 1) {
+            commitFuture.setHandler(commitAsyncResult -> {
 
-              val error = new DbConcurrencyException (
-                      String.format("ar_id = [%s], current_version = %d, new_version = %d",
-                              unitOfWork.targetId().stringValue(),
-                              currentVersion, unitOfWork.getVersion().getValueAsLong())) ;
+              if (commitAsyncResult.failed()) {
+                appendFuture.fail(commitAsyncResult.cause());
+                return;
+              }
 
-              appendFuture.fail(error);
+              appendFuture.complete(updateResult.getKeys().getLong(0));
 
               // and close the connection
               sqlConn.close(done -> {
@@ -226,55 +287,6 @@ public class EntityUnitOfWorkRepository {
                   log.error("when closing sql connection", done.cause());
                 }
               });
-
-              return ;
-            }
-
-            // if version is OK, then insert
-            final String cmdAsJson = commandToJson(unitOfWork.getCommand());
-            final String eventsListAsJson = listOfEventsToJson(unitOfWork.getEvents());
-
-            val params2 = new JsonArray()
-                    .add(unitOfWork.getUnitOfWorkId().toString())
-                    .add(eventsListAsJson)
-                    .add(unitOfWork.getCommand().getCommandId().toString())
-                    .add(cmdAsJson)
-                    .add(unitOfWork.targetId().stringValue())
-                    .add(aggregateRootName)
-                    .add(unitOfWork.getVersion().getValueAsLong());
-
-            Future<UpdateResult> updateResultFuture = Future.future();
-            updateWithParams(sqlConn, INSERT_UOW, params2, updateResultFuture);
-
-            updateResultFuture.setHandler(asyncResultUpdateResult -> {
-              if (asyncResultUpdateResult.failed()) {
-                appendFuture.fail(asyncResultUpdateResult.cause());
-                return;
-              }
-
-              UpdateResult updateResult = asyncResultUpdateResult.result();
-              Future<Void> commitFuture = Future.future();
-
-              // commit data
-              commitTx(sqlConn, commitFuture);
-
-              commitFuture.setHandler(commitAsyncResult -> {
-
-                if (commitAsyncResult.failed()) {
-                  appendFuture.fail(commitAsyncResult.cause());
-                  return;
-                }
-
-                appendFuture.complete(updateResult.getKeys().getLong(0));
-
-                // and close the connection
-                sqlConn.close(done -> {
-                  if (done.failed()) {
-                    log.error("when closing sql connection", done.cause());
-                  }
-                });
-              });
-
             });
 
           });
@@ -283,35 +295,37 @@ public class EntityUnitOfWorkRepository {
 
       });
 
-    }
-
-    String commandToJson(Command command) {
-      try {
-        val cmdAsJson = mapper.writerFor(Command.class).writeValueAsString(command);
-        log.info("commandToJson {}", cmdAsJson);
-        return cmdAsJson;
-      } catch (JsonProcessingException e) {
-        throw new RuntimeException("When writing commandToJson", e);
-      }
-    }
-
-    String listOfEventsToJson(List<DomainEvent> events) {
-      try {
-        val cmdAsJson = mapper.writerFor(eventsListTpe).writeValueAsString(events);
-        log.info("listOfEventsToJson {}", cmdAsJson);
-        return cmdAsJson;
-      } catch (JsonProcessingException e) {
-        throw new RuntimeException("When writing listOfEventsToJson", e);
-      }
-    }
-
-    List<DomainEvent> readEvents(String eventsAsJson) {
-      try {
-        log.info("eventsAsJson {}", eventsAsJson);
-        return mapper.readerFor(eventsListTpe).readValue(eventsAsJson);
-      } catch (IOException e) {
-        throw new RuntimeException("When reading events list from JSON", e);
-      }
-    }
+    });
 
   }
+
+  private String commandToJson(Command command) {
+    try {
+      val cmdAsJson = mapper.writerFor(Command.class).writeValueAsString(command);
+      log.info("commandToJson {}", cmdAsJson);
+      return cmdAsJson;
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("When writing commandToJson", e);
+    }
+  }
+
+  private String listOfEventsToJson(List<DomainEvent> events) {
+    try {
+      val cmdAsJson = mapper.writerFor(eventsListTpe).writeValueAsString(events);
+      log.info("listOfEventsToJson {}", cmdAsJson);
+      return cmdAsJson;
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("When writing listOfEventsToJson", e);
+    }
+  }
+
+  private List<DomainEvent> readEvents(String eventsAsJson) {
+    try {
+      log.info("eventsAsJson {}", eventsAsJson);
+      return mapper.readerFor(eventsListTpe).readValue(eventsAsJson);
+    } catch (IOException e) {
+      throw new RuntimeException("When reading events list from JSON", e);
+    }
+  }
+
+}

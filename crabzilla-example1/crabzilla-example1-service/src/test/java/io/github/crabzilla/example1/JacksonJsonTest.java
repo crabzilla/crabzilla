@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import io.github.crabzilla.core.Command;
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
 import io.github.crabzilla.core.entity.Version;
 import io.github.crabzilla.example1.customer.CustomerData;
@@ -58,7 +59,9 @@ public class JacksonJsonTest {
 
     val uowAsJson = mapper.writeValueAsString(uow1);
 
-//    System.out.println(uowAsJson);
+    System.out.println(mapper.writerFor(Command.class).writeValueAsString(command));
+
+    System.out.println(uowAsJson);
 
     val uow2 = mapper.readValue(uowAsJson, EntityUnitOfWork.class);
 

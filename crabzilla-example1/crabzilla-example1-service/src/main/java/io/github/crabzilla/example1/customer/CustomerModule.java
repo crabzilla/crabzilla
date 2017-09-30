@@ -31,7 +31,6 @@ public class CustomerModule extends AbstractModule {
     mapbinder.addBinding("A-customer.handler").to(handlerType);
     mapbinder.addBinding("Z-customer.rest").to(restType);
 
-
   }
 
   @Provides

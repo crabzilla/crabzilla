@@ -87,6 +87,23 @@ public class EntityCommandHandlerVerticle<A extends Entity> extends AbstractVert
 
       val targetId = command.getTargetId().stringValue();
 
+      // now check if the command was already processed
+      Future<EntityUnitOfWork> uowFuture = Future.future();
+      eventRepository.getUowByCmdId(command.getCommandId(), uowFuture);
+
+      uowFuture.setHandler(fromEventRepoResult -> {
+        if (fromEventRepoResult.failed()) {
+          future1.fail(fromEventRepoResult.cause());
+          return;
+        }
+        EntityUnitOfWork uow = fromEventRepoResult.result();
+        // if it was already processed, just return it
+        if (uow != null) {
+          future1.complete(ALREADY_PROCESSED(fromEventRepoResult.result(), 0L));
+          return ;
+        }
+      });
+
       // get from cache _may_ be blocking if you plug an EntryLoader (from ExpiringMap)
       vertx.<Snapshot<A>>executeBlocking(fromCacheFuture -> {
 

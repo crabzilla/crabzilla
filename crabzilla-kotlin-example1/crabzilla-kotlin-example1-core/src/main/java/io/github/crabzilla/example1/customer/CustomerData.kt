@@ -1,5 +1,6 @@
 package io.github.crabzilla.example1.customer
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.entity.EntityId
 import io.github.crabzilla.example1.KotlinEntityCommand
@@ -24,21 +25,27 @@ data class CustomerDeactivated(val reason: String, val _when: Instant) : DomainE
 
 // tag::commands[]
 
-data class CreateCustomer(override val _commandId: UUID, override val _targetId: CustomerId,
-                          val name: String) : KotlinEntityCommand
 
-data class ActivateCustomer(override val _commandId: UUID, override val _targetId: CustomerId,
+data class CreateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
+                          @JsonProperty("targetId") override val _targetId: CustomerId,
+                          val name: String) : KotlinEntityCommand {
+}
+
+data class ActivateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
+                            @JsonProperty("targetId") override val _targetId: CustomerId,
                             val reason: String) : KotlinEntityCommand
 
-data class DeactivateCustomer(override val _commandId: UUID, override val _targetId: CustomerId,
+data class DeactivateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
+                              @JsonProperty("targetId") override val _targetId: CustomerId,
                               val reason: String) : KotlinEntityCommand
 
-data class CreateActivateCustomer(override val _commandId: UUID,
-                                  override val _targetId: CustomerId,
+data class CreateActivateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
+                                  @JsonProperty("targetId") override val _targetId: CustomerId,
                                   val name: String, val reason: String) : KotlinEntityCommand
 
 // end::commands[]
 
-data class UnknownCommand(override val _commandId: UUID, override val _targetId: CustomerId)
+data class UnknownCommand(@JsonProperty("commandId") override val _commandId: UUID,
+                          @JsonProperty("targetId") override val _targetId: CustomerId)
     : KotlinEntityCommand
 
