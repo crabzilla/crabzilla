@@ -19,4 +19,6 @@ CREATE TABLE units_of_work (
     PARTITION BY KEY(ar_name)
     ;
 
+CREATE INDEX idx_cmd_id ON units_of_work (cmd_id);
+CREATE INDEX idx_uow_id ON units_of_work (uow_id);
 CREATE INDEX idx_ar_id ON units_of_work (ar_id);
