@@ -1,6 +1,5 @@
 package io.github.crabzilla.vertx.entity;
 
-import io.github.crabzilla.core.Command;
 import io.github.crabzilla.core.entity.EntityCommand;
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
 import io.vertx.core.AbstractVerticle;
@@ -17,7 +16,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
-import java.io.IOException;
 import java.util.UUID;
 
 import static io.github.crabzilla.vertx.helpers.StringHelper.*;
