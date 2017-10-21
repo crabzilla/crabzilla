@@ -60,22 +60,40 @@ public class EntityCommandHttpRpcVerticle<E> extends AbstractVerticle {
 
   void postCommandHandler(RoutingContext routingContext) {
 
-    HttpServerResponse httpResp = routingContext.response();
-    String commandStr = routingContext.getBodyAsString();
+    final HttpServerResponse httpResp = routingContext.response();
+    final String commandStr = routingContext.getBodyAsString();
 
     log.info("command=:\n" + commandStr);
 
-    Command command = null;
-    try {
-      command = Json.mapper.readValue(commandStr, EntityCommand.class);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    final EntityCommand command = Json.decodeValue(commandStr, EntityCommand.class);
 
     if (command == null) {
       sendError(400, httpResp);
+      return ;
+    }
 
-    } else {
+    final String cmdID = command.getCommandId().toString();
+
+    final Future<EntityUnitOfWork> uowFuture = Future.future();
+    entityUowRepo.getUowByCmdId(UUID.fromString(cmdID), uowFuture);
+
+    uowFuture.setHandler(uowResult -> {
+      if (uowResult.failed()) {
+        sendError(500, httpResp);
+        return;
+      }
+
+      if (uowResult.result() != null) {
+        httpResp.setStatusCode(201);
+        val location = routingContext.request().absoluteURI() + "/"
+                + uowResult.result().getCommand().getCommandId().toString();
+        httpResp.headers().add("Location", location);
+        val resultAsJson = Json.encode(uowResult.result());
+        httpResp.headers().add("Content-Type", "application/json");
+        httpResp.end(resultAsJson);
+        return ;
+      }
+
       val options = new DeliveryOptions().setCodecName(EntityCommand.class.getSimpleName());
 
       vertx.<EntityCommandExecution>eventBus().send(commandHandlerId(aggregateRootClass), command, options, response -> {
@@ -104,37 +122,38 @@ public class EntityCommandHttpRpcVerticle<E> extends AbstractVerticle {
         httpResp.end();
       });
 
-    }
+    });
 
   }
 
   void getUowByCmdId(RoutingContext routingContext) {
 
-    String cmdID = routingContext.request().getParam("cmdID");
-    HttpServerResponse response = routingContext.response();
+    final HttpServerResponse httpResp = routingContext.response();
+    final String cmdID = routingContext.request().getParam("cmdID");
+
     if (cmdID == null) {
-      sendError(400, response);
-
-    } else {
-
-      Future<EntityUnitOfWork> uowFuture = Future.future();
-      entityUowRepo.getUowByCmdId(UUID.fromString(cmdID), uowFuture);
-
-      uowFuture.setHandler(uowResult -> {
-        if (uowResult.failed()) {
-          sendError(500, response);
-        }
-
-        if (uowResult.result() == null) {
-          sendError(404, response);
-        } else {
-          val resultAsJson = Json.encode(uowResult.result());
-          response.headers().add("Content-Type", "application/json");
-          response.end(resultAsJson);
-        }
-
-      });
+      sendError(400, httpResp);
+      return ;
     }
+
+    final Future<EntityUnitOfWork> uowFuture = Future.future();
+    entityUowRepo.getUowByCmdId(UUID.fromString(cmdID), uowFuture);
+
+    uowFuture.setHandler(uowResult -> {
+      if (uowResult.failed()) {
+        sendError(500, httpResp);
+      }
+
+      if (uowResult.result() == null) {
+        sendError(404, httpResp);
+      } else {
+        val resultAsJson = Json.encode(uowResult.result());
+        httpResp.headers().add("Content-Type", "application/json");
+        httpResp.end(resultAsJson);
+      }
+
+    });
+
   }
 
   private void sendError(int statusCode, HttpServerResponse response) {

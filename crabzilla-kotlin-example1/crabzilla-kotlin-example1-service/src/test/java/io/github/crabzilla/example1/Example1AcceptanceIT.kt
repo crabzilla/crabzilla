@@ -78,8 +78,8 @@ class Example1AcceptanceIT {
             .then().statusCode(200).contentType(ContentType.JSON)
             .extract().response()
 
-    println("response -------------------")
-    println(getUowResponse.asString())
+//    log.info("response -------------------")
+//    log.info(getUowResponse.asString())
 
     val uow = mapper.readValue(getUowResponse.asString(), EntityUnitOfWork::class.java)
 
@@ -120,8 +120,8 @@ class Example1AcceptanceIT {
             .then().statusCode(200).contentType(ContentType.JSON)
             .extract().response()
 
-    println("response -------------------")
-    println(getUowResponse.asString())
+//    log.info("response -------------------")
+//    log.info(getUowResponse.asString())
 
     val uow = mapper.readValue(getUowResponse.asString(), EntityUnitOfWork::class.java)
 
@@ -141,6 +141,17 @@ class Example1AcceptanceIT {
             .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
                     + aggregateId(Customer::class.java) + "/commands/" + createCustomerCmd.commandId.toString())
 
+    val getUowResponse2 = given().contentType(JSON).body(json)
+            .`when`().get(postCmdResponse2.header(LOCATION_HEADER))
+            .then().statusCode(200).contentType(ContentType.JSON)
+            .extract().response().asString()
+
+    val uow2 = mapper.readValue(getUowResponse2, EntityUnitOfWork::class.java)
+
+//    log.info("response 2-------------------")
+//    log.info(getUowResponse2.toString())
+
+    assertThat(uow).isEqualTo(uow2)
   }
 
   @Test
@@ -151,11 +162,9 @@ class Example1AcceptanceIT {
     val activateCustomer = ActivateCustomer(UUID.randomUUID(), customerId, "customer test")
     val json = mapper.writerFor(ActivateCustomer::class.java).writeValueAsString(activateCustomer)
 
-    val response = given().contentType(JSON).body(json)
+    given().contentType(JSON).body(json)
             .`when`().put("/" + aggregateId(Customer::class.java) + "/commands")
-            .then().statusCode(404).extract().response()
-
-//    assertThat(response.asString()).isEmpty()
+            .then().statusCode(404)
 
   }
 
