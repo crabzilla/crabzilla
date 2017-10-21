@@ -146,6 +146,19 @@ public class Example1AcceptanceIT {
             .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
                     + aggregateId(Customer.class) + "/commands/" + createCustomerCmd.getCommandId().toString());
 
+    val getUowResponse2 = given().
+            contentType(JSON).
+            body(json).
+            when().
+            get(postCmdResponse2.header(LOCATION_HEADER)).
+            then().
+            statusCode(200).
+            contentType(ContentType.JSON)
+            .extract().response().asString();
+
+    val uow2 = Json.decodeValue(getUowResponse2, EntityUnitOfWork.class);
+
+    assertThat(uow).isEqualTo(uow2);
   }
 
   @Test
