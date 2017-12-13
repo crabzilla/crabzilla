@@ -21,7 +21,7 @@
 
         <dependency>
             <groupId>io.github.crabzilla</groupId>
-            <artifactId>crabzilla-vertx</artifactId>
+            <artifactId>crabzilla-vertx-web</artifactId>
         </dependency>
 
         <dependency>
@@ -56,6 +56,10 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-unit</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.crabzilla</groupId>
+            <artifactId>crabzilla-vertx-web</artifactId>
         </dependency>
 
     </dependencies>

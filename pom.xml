@@ -86,6 +86,7 @@
         <module>crabzilla-vavr-example1</module>
         <module>crabzilla-kotlin-example1</module>
         <module>crabzilla-vertx</module>
+        <module>crabzilla-vertx-web</module>
 
     </modules>
 
@@ -199,6 +200,12 @@
             <dependency>
                 <groupId>io.github.crabzilla</groupId>
                 <artifactId>crabzilla-vertx</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.crabzilla</groupId>
+                <artifactId>crabzilla-vertx-web</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

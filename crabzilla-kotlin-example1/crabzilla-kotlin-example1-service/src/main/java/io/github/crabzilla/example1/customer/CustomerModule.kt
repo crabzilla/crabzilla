@@ -27,8 +27,8 @@ class CustomerModule : AbstractModule() {
 
   @Provides
   @Singleton
-  internal fun restVerticle(componentsFactory: CustomerFactory, config: JsonObject): EntityCommandHttpRpcVerticle<Customer> {
-    return componentsFactory.restVerticle(config)
+  internal fun restVerticle(config: JsonObject, componentsFactory: CustomerFactory): EntityCommandHttpRpcVerticle<Customer> {
+    return EntityCommandHttpRpcVerticle(Customer::class.java, config, componentsFactory.uowRepository())
   }
 
   @Provides

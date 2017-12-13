@@ -35,14 +35,14 @@ public class CustomerModule extends AbstractModule {
 
   @Provides
   @Singleton
-  EntityCommandHttpRpcVerticle<Customer> restVerticle(CustomerFactory componentsFactory, JsonObject config) {
-    return componentsFactory.restVerticle(config);
+  EntityCommandHandlerVerticle<Customer> handler(CustomerFactory componentsFactory) {
+    return componentsFactory.cmdHandlerVerticle();
   }
 
   @Provides
   @Singleton
-  EntityCommandHandlerVerticle<Customer> handler(CustomerFactory componentsFactory) {
-    return componentsFactory.cmdHandlerVerticle();
+  EntityCommandHttpRpcVerticle<Customer> restVerticle(JsonObject config, CustomerFactory componentsFactory) {
+    return new EntityCommandHttpRpcVerticle<>(Customer.class, config, componentsFactory.uowRepository());
   }
 
 }

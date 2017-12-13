@@ -32,7 +32,7 @@
 
         <dependency>
             <groupId>io.github.crabzilla</groupId>
-            <artifactId>crabzilla-vertx</artifactId>
+            <artifactId>crabzilla-vertx-web</artifactId>
         </dependency>
 
         <!-- kotlin -->
