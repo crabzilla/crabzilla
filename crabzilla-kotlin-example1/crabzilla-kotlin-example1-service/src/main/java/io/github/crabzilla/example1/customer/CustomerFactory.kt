@@ -11,8 +11,10 @@ import java.util.function.BiFunction
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.inject.Inject
+import javax.inject.Singleton
 
 // tag::factory[]
+@Singleton
 class CustomerFactory @Inject
 constructor(service: SampleInternalService, private val vertx: Vertx,
             private val jdbcClient: JDBCClient) : AggregateComponentsFactory<Customer> {

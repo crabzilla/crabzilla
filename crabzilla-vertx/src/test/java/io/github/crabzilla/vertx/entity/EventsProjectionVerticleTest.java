@@ -2,8 +2,10 @@ package io.github.crabzilla.vertx.entity;
 
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
 import io.github.crabzilla.core.entity.Version;
-import io.github.crabzilla.example1.customer.CustomerData;
-import io.github.crabzilla.example1.readmodel.CustomerSummary;
+import io.github.crabzilla.example1.CustomerSummary;
+import io.github.crabzilla.example1.customer.CreateCustomer;
+import io.github.crabzilla.example1.customer.CustomerCreated;
+import io.github.crabzilla.example1.customer.CustomerId;
 import io.github.crabzilla.vertx.helpers.StringHelper;
 import io.github.crabzilla.vertx.helpers.VertxFactory;
 import io.github.crabzilla.vertx.projection.EventProjector;
@@ -77,9 +79,9 @@ public class EventsProjectionVerticleTest {
 
     Async async = tc.async();
 
-    val customerId = new CustomerData.CustomerId("customer#1");
-    val createCustomerCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer");
-    val expectedEvent = new CustomerData.CustomerCreated(createCustomerCmd.getTargetId(), "customer");
+    val customerId = new CustomerId("customer#1");
+    val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
+    val expectedEvent = new CustomerCreated(customerId, "customer");
     val expectedUow = EntityUnitOfWork.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
     val uowSequence = 1L;
     val options = new DeliveryOptions().setCodecName(EntityUnitOfWork.class.getSimpleName())

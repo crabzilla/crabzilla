@@ -13,6 +13,13 @@
 
     <dependencies>
 
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>io.github.crabzilla</groupId>
             <artifactId>crabzilla-core</artifactId>
@@ -94,7 +101,7 @@
 
         <dependency>
             <groupId>io.github.crabzilla</groupId>
-            <artifactId>crabzilla-example1-core</artifactId>
+            <artifactId>crabzilla-kotlin-example1-core</artifactId>
             <scope>test</scope>
         </dependency>
 

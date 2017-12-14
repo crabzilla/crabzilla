@@ -15,7 +15,7 @@ public abstract class EventProjector<DAO> {
   protected final Class<DAO> daoClass;
   protected final Jdbi jdbi;
 
-  protected EventProjector(String eventsChannelId, Class<DAO> daoClass, Jdbi jdbi) {
+  public EventProjector(String eventsChannelId, Class<DAO> daoClass, Jdbi jdbi) {
     this.eventsChannelId = eventsChannelId;
     this.daoClass = daoClass;
     this.jdbi = jdbi;

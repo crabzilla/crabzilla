@@ -11,7 +11,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <kotlin.version>1.1.50</kotlin.version>
+        <kotlin.version>1.2.10</kotlin.version>
         <lombok.version>1.16.18</lombok.version>
         <vertx.version>3.5.0</vertx.version>
         <vavr.version>0.9.0</vavr.version>
@@ -82,8 +82,6 @@
     <modules>
 
         <module>crabzilla-core</module>
-        <module>crabzilla-example1</module>
-        <module>crabzilla-vavr-example1</module>
         <module>crabzilla-kotlin-example1</module>
         <module>crabzilla-vertx</module>
         <module>crabzilla-vertx-web</module>
@@ -91,12 +89,6 @@
     </modules>
 
     <dependencies>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-        </dependency>
 
         <dependency>
             <groupId>javax.inject</groupId>
@@ -157,48 +149,6 @@
 
             <dependency>
                 <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-example1-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-example1-database</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-vertx-example1-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-vertx-example1-database</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-kotlin-example1-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-kotlin-example1-database</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-vertx-stack</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
                 <artifactId>crabzilla-vertx</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -207,6 +157,13 @@
                 <groupId>io.github.crabzilla</groupId>
                 <artifactId>crabzilla-vertx-web</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.crabzilla</groupId>
+                <artifactId>crabzilla-kotlin-example1-core</artifactId>
+                <version>${project.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <!-- kotlin -->

@@ -10,8 +10,7 @@ import io.github.crabzilla.core.entity.EntityUnitOfWork;
 import io.github.crabzilla.core.entity.SnapshotData;
 import io.github.crabzilla.core.entity.Version;
 import io.github.crabzilla.core.exceptions.DbConcurrencyException;
-import io.github.crabzilla.example1.customer.Customer;
-import io.github.crabzilla.example1.customer.CustomerData;
+import io.github.crabzilla.example1.customer.*;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -46,13 +45,13 @@ public class EntityUnitOfWorkRepositoryIT {
 
   EntityUnitOfWorkRepository repo;
 
-  final CustomerData.CustomerId customerId = new CustomerData.CustomerId("customer#1");
-  final CustomerData.CreateCustomer createCmd = new CustomerData.CreateCustomer(UUID.randomUUID(), customerId, "customer");
-  final CustomerData.CustomerCreated created = new CustomerData.CustomerCreated(createCmd.getTargetId(), "customer");
+  final CustomerId customerId = new CustomerId("customer#1");
+  final CreateCustomer createCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
+  final CustomerCreated created = new CustomerCreated(customerId, "customer");
   final EntityUnitOfWork expectedUow1 = EntityUnitOfWork.unitOfWork(createCmd, new Version(1), singletonList(created));
 
-  final CustomerData.ActivateCustomer activateCmd = new CustomerData.ActivateCustomer(UUID.randomUUID(), customerId, "I want it");
-  final CustomerData.CustomerActivated activated = new CustomerData.CustomerActivated(createCmd.getTargetId().stringValue(), Instant.now());
+  final ActivateCustomer activateCmd = new ActivateCustomer(UUID.randomUUID(), customerId, "I want it");
+  final CustomerActivated activated = new CustomerActivated(customerId.stringValue(), Instant.now());
   final EntityUnitOfWork expectedUow2 = EntityUnitOfWork.unitOfWork(activateCmd, new Version(2), singletonList(activated));
 
   @BeforeClass
