@@ -28,8 +28,7 @@ data class CustomerDeactivated(val reason: String, val _when: Instant) : DomainE
 
 data class CreateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
                           @JsonProperty("targetId") override val _targetId: CustomerId,
-                          val name: String) : KotlinEntityCommand {
-}
+                          val name: String) : KotlinEntityCommand
 
 data class ActivateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
                             @JsonProperty("targetId") override val _targetId: CustomerId,

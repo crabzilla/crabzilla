@@ -22,15 +22,15 @@ import static io.github.crabzilla.vertx.helpers.StringHelper.*;
 
 
 @Slf4j
-public class EntityCommandHttpRpcVerticle<E> extends AbstractVerticle {
+public class EntityCommandRestVerticle<E> extends AbstractVerticle {
 
   private final Class<E> aggregateRootClass;
   private final JsonObject config;
   private final EntityUnitOfWorkRepository entityUowRepo;
 
-  public EntityCommandHttpRpcVerticle(@NonNull Class<E> aggregateRootClass,
-                                      @NonNull JsonObject config,
-                                      @NonNull EntityUnitOfWorkRepository entityUowRepo) {
+  public EntityCommandRestVerticle(@NonNull Class<E> aggregateRootClass,
+                                   @NonNull JsonObject config,
+                                   @NonNull EntityUnitOfWorkRepository entityUowRepo) {
     this.aggregateRootClass = aggregateRootClass;
     this.config = config;
     this.entityUowRepo = entityUowRepo;

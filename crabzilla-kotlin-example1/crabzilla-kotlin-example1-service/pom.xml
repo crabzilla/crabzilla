@@ -58,23 +58,24 @@
             <artifactId>jdbi3-kotlin-sqlobject</artifactId>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/com.google.dagger/dagger -->
-        <!--<dependency>-->
-            <!--<groupId>com.google.dagger</groupId>-->
-            <!--<artifactId>dagger</artifactId>-->
-            <!--<version>2.13</version>-->
-            <!--<scope>test</scope>-->
-        <!--</dependency>-->
-
         <!-- guice -->
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.google.inject.extensions</groupId>
-            <artifactId>guice-multibindings</artifactId>
-        </dependency>
+
+        <!--<dependency>-->
+            <!--<groupId>com.google.dagger</groupId>-->
+            <!--<artifactId>dagger</artifactId>-->
+            <!--<version>2.13</version>-->
+        <!--</dependency>-->
+
+        <!--<dependency>-->
+            <!--<groupId>com.google.dagger</groupId>-->
+            <!--<artifactId>dagger-compiler</artifactId>-->
+            <!--<version>2.13</version>-->
+            <!--<optional>true</optional>-->
+        <!--</dependency>-->
 
         <!-- json -->
         <dependency>
@@ -152,7 +153,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
