@@ -26,6 +26,12 @@ class Example1Module(private val vertx: Vertx, private val config: JsonObject) :
 
   @Provides
   @Singleton
+  fun customerSummaryDao(jdbi: Jdbi) : CustomerSummaryDao {
+    return jdbi.onDemand(CustomerSummaryDao::class.java)
+  }
+
+  @Provides
+  @Singleton
   fun eventsProjectorVerticle(jdbi: Jdbi,
                               eventsProjector: EventProjector<CustomerSummaryDao>): EventsProjectionVerticle<CustomerSummaryDao> {
     val circuitBreaker = CircuitBreaker.create("events-projection-circuit-breaker", vertx,
