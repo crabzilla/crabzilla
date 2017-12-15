@@ -17,6 +17,8 @@ class Example1Module(private val vertx: Vertx, private val config: JsonObject) :
 
     configureVertx()
 
+    bind(CustomerRepository::class.java).to(CustomerRepositoryImpl::class.java).asEagerSingleton()
+
     // services
     bind(SampleInternalService::class.java).to(SampleInternalServiceImpl::class.java).asEagerSingleton()
 
