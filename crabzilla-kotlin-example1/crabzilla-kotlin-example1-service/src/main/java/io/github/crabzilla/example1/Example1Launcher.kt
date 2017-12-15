@@ -1,15 +1,13 @@
 package io.github.crabzilla.example1
 
 import com.google.inject.Guice
-import com.google.inject.Inject
+import com.google.inject.Injector
 import io.github.crabzilla.example1.customer.*
 import io.github.crabzilla.vertx.entity.EntityCommandExecution
-import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
-import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
 import io.github.crabzilla.vertx.helpers.ConfigHelper.cfgOptions
 import io.github.crabzilla.vertx.helpers.StringHelper
-import io.github.crabzilla.vertx.projection.EventsProjectionVerticle
 import io.vertx.config.ConfigRetriever
+import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.logging.LoggerFactory
@@ -20,17 +18,7 @@ import mu.KotlinLogging
 import java.lang.System.setProperty
 import java.util.*
 
-
 class Example1Launcher {
-
-  @Inject
-  internal lateinit var projectionVerticle: EventsProjectionVerticle<CustomerSummaryDao>
-
-  @Inject
-  internal lateinit var restVerticle: EntityCommandRestVerticle<Customer>
-
-  @Inject
-  internal lateinit var cmdVerticle: EntityCommandHandlerVerticle<Customer>
 
   companion object {
 
@@ -65,22 +53,17 @@ class Example1Launcher {
         val launcher = Example1Launcher()
         val injector = Guice.createInjector(Example1Module(vertx, config), CustomerModule())
 
-        injector.injectMembers(launcher)
+        injector.deployVerticles(vertx)
 
-        val inDeploymentOrder = listOf(launcher.projectionVerticle, launcher.cmdVerticle, launcher.restVerticle)
-
-        for (v in inDeploymentOrder) {
-          vertx.deployVerticle(v) { event -> log.debug("Deployed ? {}", event.succeeded()) }
-        }
-
-        // a test
-         launcher.justForTest(vertx);
+        // just a test
+        launcher.justForTest(vertx)
 
       }
 
     }
-  }
 
+
+  }
 
   private fun justForTest(vertx: Vertx) {
 
@@ -124,4 +107,26 @@ class Example1Launcher {
   }
 
 
+}
+
+fun Injector.deployVerticles(vertx: Vertx) {
+
+  this.allBindings.filter { entry -> entry.key.typeLiteral.rawType.simpleName.endsWith("Verticle")}
+          .entries
+          .sortedWith(compareBy({ verticleDeploymentOrder(it.key.typeLiteral.rawType.simpleName) }))
+          .map { it.value.provider.get() as Verticle}
+          .forEach {
+            vertx.deployVerticle(it) { event ->
+              if (!event.succeeded()) Example1Launcher.log.error("Error deploying verticle", event.cause()) }
+          }
+
+}
+
+fun verticleDeploymentOrder(className: String?) : Int {
+  return when(className) {
+    "EventsProjectionVerticle"-> 0
+    "EntityCommandHandlerVerticle"-> 1
+    "EntityCommandRestVerticle" -> 2
+    else -> 10
+  }
 }
