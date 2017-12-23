@@ -55,13 +55,13 @@
                                 <sourceDir>src/main/java</sourceDir>
                                 <sourceDir>target/generated-sources/kapt/compile</sourceDir>
                             </sourceDirs>
-                            <!--<annotationProcessorPaths>-->
-                                <!--<annotationProcessorPath>-->
-                                    <!--<groupId>com.google.dagger</groupId>-->
-                                    <!--<artifactId>dagger-compiler</artifactId>-->
-                                    <!--<version>2.13</version>-->
-                                <!--</annotationProcessorPath>-->
-                            <!--</annotationProcessorPaths>-->
+                            <annotationProcessorPaths>
+                                <annotationProcessorPath>
+                                    <groupId>com.google.dagger</groupId>
+                                    <artifactId>dagger-compiler</artifactId>
+                                    <version>2.13</version>
+                                </annotationProcessorPath>
+                            </annotationProcessorPaths>
                         </configuration>
                     </execution>
                     <execution>
@@ -88,13 +88,13 @@
                                 <sourceDir>src/test/java</sourceDir>
                                 <sourceDir>target/generated-sources/kapt/test</sourceDir>
                             </sourceDirs>
-                            <!--<annotationProcessorPaths>-->
-                                <!--<annotationProcessorPath>-->
-                                    <!--<groupId>com.google.dagger</groupId>-->
-                                    <!--<artifactId>dagger-compiler</artifactId>-->
-                                    <!--<version>2.13</version>-->
-                                <!--</annotationProcessorPath>-->
-                            <!--</annotationProcessorPaths>-->
+                            <annotationProcessorPaths>
+                                <annotationProcessorPath>
+                                    <groupId>com.google.dagger</groupId>
+                                    <artifactId>dagger-compiler</artifactId>
+                                    <version>2.13</version>
+                                </annotationProcessorPath>
+                            </annotationProcessorPaths>
                         </configuration>
                     </execution>
                     <execution>

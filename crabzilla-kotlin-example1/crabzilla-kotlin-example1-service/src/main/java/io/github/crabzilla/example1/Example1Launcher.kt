@@ -1,11 +1,9 @@
 package io.github.crabzilla.example1
 
-import com.google.inject.Guice
-import com.google.inject.Injector
 import io.github.crabzilla.example1.customer.*
 import io.github.crabzilla.vertx.entity.EntityCommandExecution
 import io.github.crabzilla.vertx.helpers.ConfigHelper.cfgOptions
-import io.github.crabzilla.vertx.helpers.StringHelper
+import io.github.crabzilla.vertx.helpers.StringHelper.commandHandlerId
 import io.vertx.config.ConfigRetriever
 import io.vertx.core.Verticle
 import io.vertx.core.Vertx
@@ -51,12 +49,12 @@ class Example1Launcher {
         log.info("config = {}", config.encodePrettily())
 
         val launcher = Example1Launcher()
-        val injector = Guice.createInjector(Example1Module(vertx, config), CustomerModule())
-
-        injector.deployVerticles(vertx)
-
-        // just a test
-        launcher.justForTest(vertx)
+//        val injector = Guice.createInjector(Example1Module(vertx, config), CustomerModule())
+//
+//        injector.deployVerticles(vertx)
+//
+//        // just a test
+//        launcher.justForTest(vertx)
 
       }
 
@@ -73,7 +71,7 @@ class Example1Launcher {
     val options = DeliveryOptions().setCodecName("EntityCommand")
 
     // create customer command
-    vertx.eventBus().send<EntityCommandExecution>(StringHelper.commandHandlerId(Customer::class.java), createCustomerCmd, options) { asyncResult ->
+    vertx.eventBus().send<EntityCommandExecution>(commandHandlerId(Customer::class.java), createCustomerCmd, options) { asyncResult ->
 
       log.info("Successful create customer test? {}", asyncResult.succeeded())
 
@@ -84,7 +82,7 @@ class Example1Launcher {
         val activateCustomerCmd = ActivateCustomer(UUID.randomUUID(), createCustomerCmd._targetId, "because I want it")
 
         // activate customer command
-        vertx.eventBus().send<EntityCommandExecution>(StringHelper.commandHandlerId(Customer::class.java), activateCustomerCmd, options) { asyncResult2 ->
+        vertx.eventBus().send<EntityCommandExecution>(commandHandlerId(Customer::class.java), activateCustomerCmd, options) { asyncResult2 ->
 
           log.info("Successful activate customer test? {}", asyncResult2.succeeded())
 
@@ -108,19 +106,19 @@ class Example1Launcher {
 
 
 }
-
-fun Injector.deployVerticles(vertx: Vertx) {
-
-  this.allBindings.filter { entry -> entry.key.typeLiteral.rawType.simpleName.endsWith("Verticle")}
-          .entries
-          .sortedWith(compareBy({ verticleDeploymentOrder(it.key.typeLiteral.rawType.simpleName) }))
-          .map { it.value.provider.get() as Verticle}
-          .forEach {
-            vertx.deployVerticle(it) { event ->
-              if (!event.succeeded()) Example1Launcher.log.error("Error deploying verticle", event.cause()) }
-          }
-
-}
+//
+//fun Injector.deployVerticles(vertx: Vertx) {
+//
+//  this.allBindings.filter { entry -> entry.key.typeLiteral.rawType.simpleName.endsWith("Verticle")}
+//          .entries
+//          .sortedWith(compareBy({ verticleDeploymentOrder(it.key.typeLiteral.rawType.simpleName) }))
+//          .map { it.value.provider.get() as Verticle}
+//          .forEach {
+//            vertx.deployVerticle(it) { event ->
+//              if (!event.succeeded()) Example1Launcher.log.error("Error deploying verticle", event.cause()) }
+//          }
+//
+//}
 
 fun verticleDeploymentOrder(className: String?) : Int {
   return when(className) {

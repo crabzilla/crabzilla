@@ -1,6 +1,5 @@
 package io.github.crabzilla.example1.customer
 
-import com.google.inject.*
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.entity.*
 import io.github.crabzilla.example1.SampleInternalService
@@ -16,25 +15,21 @@ import net.jodah.expiringmap.ExpiringMap
 import java.util.function.BiFunction
 import java.util.function.Function
 import java.util.function.Supplier
+import javax.inject.Singleton
 
 
 // tag::module[]
-class CustomerModule : PrivateModule() {
+class CustomerModule {
 
-  override fun configure() {
-  }
-
-  @Provides
+  // @Provides
   @Singleton
-  @Exposed
   fun restVerticle(config: JsonObject, uowRepository: EntityUnitOfWorkRepository):
           EntityCommandRestVerticle<Customer> {
     return EntityCommandRestVerticle(Customer::class.java, config, uowRepository)
   }
 
-  @Provides
+  // @Provides
   @Singleton
-  @Exposed
   fun handlerVerticle(supplier: Supplier<Customer>,
                                cmdHandler: BiFunction<EntityCommand, Snapshot<Customer>, EntityCommandResult>,
                                validator: Function<EntityCommand, List<String>>,
@@ -52,25 +47,25 @@ class CustomerModule : PrivateModule() {
             eventRepository, mycache, circuitBreaker)
   }
 
-  @Provides
+  // @Provides
   @Singleton
   fun supplierFn(service: SampleInternalService): Supplier<Customer> {
     return Supplier { Customer(sampleInternalService = service) }
   }
 
-  @Provides
+  // @Provides
   @Singleton
   fun stateTransitionFn(): BiFunction<DomainEvent, Customer, Customer> {
     return StateTransitionFn()
   }
 
-  @Provides
+  // @Provides
   @Singleton
   fun cmdValidatorFn(): Function<EntityCommand, List<String>> {
     return CommandValidatorFn()
   }
 
-  @Provides
+  // @Provides
   @Singleton
   fun cmdHandlerFn(stateTransitionFn: BiFunction<DomainEvent, Customer, Customer>):
           BiFunction<EntityCommand, Snapshot<Customer>, EntityCommandResult> {
@@ -80,14 +75,14 @@ class CustomerModule : PrivateModule() {
     return CommandHandlerFn(trackerFactory)
   }
 
-  @Provides
+  // @Provides
   @Singleton
   fun snapshotPromoter(stateTransitionFn: BiFunction<DomainEvent, Customer, Customer>): SnapshotPromoter<Customer> {
     return SnapshotPromoter { instance -> StateTransitionsTracker<Customer>(instance, stateTransitionFn) }
   }
 
 
-  @Provides
+  // @Provides
   @Singleton
   fun customerRepo(jdbcClient: JDBCClient): EntityUnitOfWorkRepository {
     return EntityUnitOfWorkRepository(Customer::class.java, jdbcClient)

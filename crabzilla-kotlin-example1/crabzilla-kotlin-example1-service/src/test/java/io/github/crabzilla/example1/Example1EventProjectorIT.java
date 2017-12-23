@@ -1,7 +1,5 @@
 package io.github.crabzilla.example1;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import io.github.crabzilla.example1.customer.CustomerActivated;
 import io.github.crabzilla.example1.customer.CustomerCreated;
 import io.github.crabzilla.example1.customer.CustomerId;
@@ -44,10 +42,10 @@ public class Example1EventProjectorIT {
 
 //    log.info("config = {}", config.encodePrettily());
 
-    Injector injector = Guice.createInjector(new Example1Module(vertx, config));
-
-    injector.injectMembers(this);
-
+//    Injector injector = Guice.createInjector(new Example1Module(vertx, config));
+//
+//    injector.injectMembers(this);
+//
     Handle h = jdbi.open();
     h.createScript("DELETE FROM units_of_work").execute();
     h.createScript("DELETE FROM customer_summary").execute();

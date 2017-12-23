@@ -5,12 +5,9 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
-import com.google.inject.AbstractModule
-import com.google.inject.Exposed
-import com.google.inject.PrivateModule
-import com.google.inject.Provides
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+//import dagger.Provides
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.entity.EntityCommand
 import io.github.crabzilla.core.entity.EntityId
@@ -27,27 +24,27 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin
 import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import javax.inject.Singleton
 
-abstract class CrabzillaModule(private val vertx: Vertx, private val config: JsonObject) : AbstractModule() {
+abstract class CrabzillaModule(private val vertx: Vertx, private val config: JsonObject) {
 
-  @Provides
+  // // @Provides
   @Singleton
   fun vertx(): Vertx {
     return vertx
   }
 
-  @Provides
+  // @Provides
   @Singleton
   fun config(): JsonObject {
     return config
   }
 
-  @Provides
+  // @Provides
   @Singleton
   fun jdbcClient(vertx: Vertx, dataSource: HikariDataSource): JDBCClient {
     return JDBCClient.create(vertx, dataSource)
   }
 
-  @Provides
+  // @Provides
   @Singleton
   fun jdbi(dataSource: HikariDataSource): Jdbi {
     val jdbi = Jdbi.create(dataSource)
@@ -57,7 +54,7 @@ abstract class CrabzillaModule(private val vertx: Vertx, private val config: Jso
     return jdbi
   }
 
-  @Provides
+  // @Provides
   @Singleton
   fun hikariDs(): HikariDataSource {
 

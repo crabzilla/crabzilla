@@ -1,7 +1,5 @@
 package io.github.crabzilla.example1
 
-import com.google.inject.Provides
-import io.github.crabzilla.example1.services.SampleInternalServiceImpl
 import io.github.crabzilla.vertx.projection.EventProjector
 import io.github.crabzilla.vertx.projection.EventsProjectionVerticle
 import io.vertx.circuitbreaker.CircuitBreaker
@@ -13,24 +11,23 @@ import javax.inject.Singleton
 
 class Example1Module(private val vertx: Vertx, private val config: JsonObject) : CrabzillaModule(vertx, config) {
 
-  override fun configure() {
+//  override fun configure() {
+//
+//    configureVertx()
+//
+//    bind(CustomerRepository::class.java).to(CustomerRepositoryImpl::class.java).asEagerSingleton()
+//
+//    // services
+//    bind(SampleInternalService::class.java).to(SampleInternalServiceImpl::class.java).asEagerSingleton()
+//  }
 
-    configureVertx()
-
-    bind(CustomerRepository::class.java).to(CustomerRepositoryImpl::class.java).asEagerSingleton()
-
-    // services
-    bind(SampleInternalService::class.java).to(SampleInternalServiceImpl::class.java).asEagerSingleton()
-
-  }
-
-  @Provides
+  // @Provides
   @Singleton
   fun customerSummaryDao(jdbi: Jdbi) : CustomerSummaryDao {
     return jdbi.onDemand(CustomerSummaryDao::class.java)
   }
 
-  @Provides
+  // @Provides
   @Singleton
   fun eventsProjectorVerticle(jdbi: Jdbi,
                               eventsProjector: EventProjector<CustomerSummaryDao>): EventsProjectionVerticle<CustomerSummaryDao> {
@@ -44,7 +41,7 @@ class Example1Module(private val vertx: Vertx, private val config: JsonObject) :
     return EventsProjectionVerticle(eventsProjector, circuitBreaker)
   }
 
-  @Provides
+  // @Provides
   @Singleton
   fun eventsProjector(jdbi: Jdbi): EventProjector<CustomerSummaryDao> {
     return Example1EventProjector("example1", CustomerSummaryDao::class.java, jdbi)
