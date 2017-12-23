@@ -2,11 +2,14 @@ package io.github.crabzilla.example1
 
 import dagger.Module
 import dagger.Provides
+import dagger.multibindings.IntoMap
+import dagger.multibindings.StringKey
 import io.github.crabzilla.example1.services.SampleInternalServiceImpl
 import io.github.crabzilla.vertx.projection.EventProjector
 import io.github.crabzilla.vertx.projection.EventsProjectionVerticle
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.circuitbreaker.CircuitBreakerOptions
+import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import org.jdbi.v3.core.Jdbi
@@ -45,10 +48,9 @@ class Example1Module(val vertx: Vertx, val config: JsonObject) {
     return jdbi.onDemand(CustomerSummaryDao::class.java)
   }
 
-  @Provides
-  @Singleton
-  fun eventsProjectorVerticle(vertx: Vertx,
-                              eventsProjector: EventProjector<CustomerSummaryDao>): EventsProjectionVerticle<CustomerSummaryDao> {
+  @Provides @IntoMap
+  @StringKey("EventsProjectionVerticle")
+  fun eventsProjectorVerticle(vertx: Vertx, eventsProjector: EventProjector<CustomerSummaryDao>): Verticle {
     val circuitBreaker = CircuitBreaker.create("events-projection-circuit-breaker", vertx,
             CircuitBreakerOptions()
                     .setMaxFailures(5) // number SUCCESS failure before opening the circuit

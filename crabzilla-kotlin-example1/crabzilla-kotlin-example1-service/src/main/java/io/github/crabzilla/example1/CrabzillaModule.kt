@@ -26,7 +26,7 @@ import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import javax.inject.Singleton
 
 @Module
-class CrabzillaModule(val vertx: Vertx) {
+class CrabzillaModule(val vertx: Vertx, val config: JsonObject) {
 
   init {
     configureVertx()
@@ -50,7 +50,7 @@ class CrabzillaModule(val vertx: Vertx) {
 
   @Provides
   @Singleton
-  fun hikariDs(config: JsonObject): HikariDataSource {
+  fun hikariDs(): HikariDataSource {
 
     val hikariConfig = HikariConfig()
     hikariConfig.driverClassName = config.getString("database.driver")

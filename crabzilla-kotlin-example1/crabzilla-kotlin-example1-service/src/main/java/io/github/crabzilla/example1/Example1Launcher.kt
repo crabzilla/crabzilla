@@ -5,7 +5,6 @@ import io.github.crabzilla.vertx.entity.EntityCommandExecution
 import io.github.crabzilla.vertx.helpers.ConfigHelper.cfgOptions
 import io.github.crabzilla.vertx.helpers.StringHelper.commandHandlerId
 import io.vertx.config.ConfigRetriever
-import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.logging.LoggerFactory
@@ -48,10 +47,18 @@ class Example1Launcher {
         val config = ar.result()
         log.info("config = {}", config.encodePrettily())
 
-        val launcher = Example1Launcher()
-//        val injector = Guice.createInjector(Example1Module(vertx, config), CustomerModule())
-//
-//        injector.deployVerticles(vertx)
+        val app = DaggerExample1Component.builder()
+                .crabzillaModule(CrabzillaModule(vertx, config))
+                .example1Module(Example1Module(vertx, config))
+                .customerModule(CustomerModule(vertx, config))
+                .build()
+
+        app.verticles().entries.sortedWith(compareBy({ verticleDeploymentOrder(it.key) }))
+          .forEach {
+            vertx.deployVerticle(it.value) { event ->
+              if (!event.succeeded()) Example1Launcher.log.error("Error deploying verticle", event.cause()) }
+          }
+
 //
 //        // just a test
 //        launcher.justForTest(vertx)
@@ -106,19 +113,6 @@ class Example1Launcher {
 
 
 }
-//
-//fun Injector.deployVerticles(vertx: Vertx) {
-//
-//  this.allBindings.filter { entry -> entry.key.typeLiteral.rawType.simpleName.endsWith("Verticle")}
-//          .entries
-//          .sortedWith(compareBy({ verticleDeploymentOrder(it.key.typeLiteral.rawType.simpleName) }))
-//          .map { it.value.provider.get() as Verticle}
-//          .forEach {
-//            vertx.deployVerticle(it) { event ->
-//              if (!event.succeeded()) Example1Launcher.log.error("Error deploying verticle", event.cause()) }
-//          }
-//
-//}
 
 fun verticleDeploymentOrder(className: String?) : Int {
   return when(className) {

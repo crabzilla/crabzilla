@@ -10,9 +10,7 @@ import io.github.crabzilla.core.entity.EntityUnitOfWork;
 import io.github.crabzilla.core.entity.SnapshotData;
 import io.github.crabzilla.core.entity.Version;
 import io.github.crabzilla.core.example1.customer.Customer;
-import io.github.crabzilla.core.example1.customer.CustomerData;
-import io.github.crabzilla.core.example1.customer.CustomerData.CreateCustomer;
-import io.github.crabzilla.core.example1.customer.CustomerData.CustomerId;
+import io.github.crabzilla.core.example1.customer.CustomerData.*;
 import io.github.crabzilla.core.exceptions.DbConcurrencyException;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -33,7 +31,6 @@ import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.UUID;
 
-import static io.github.crabzilla.core.example1.customer.CustomerData.*;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;

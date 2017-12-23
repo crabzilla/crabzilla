@@ -35,6 +35,8 @@ class Example1AcceptanceIT {
   fun configureRestAssured() {
     RestAssured.baseURI = "http://localhost"
     RestAssured.port = Integer.getInteger("http.port", 8080)!!
+//    RestAssured.port = 8080
+
     log.info("----> RestAssured.port=" + RestAssured.port)
     mapper.registerModule(ParameterNamesModule())
             .registerModule(Jdk8Module())
