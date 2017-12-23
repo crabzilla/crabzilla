@@ -59,9 +59,8 @@ class Example1Launcher {
               if (!event.succeeded()) Example1Launcher.log.error("Error deploying verticle", event.cause()) }
           }
 
-//
-//        // just a test
-//        launcher.justForTest(vertx)
+        // just a test
+        justForTest(vertx)
 
       }
 
@@ -69,48 +68,6 @@ class Example1Launcher {
 
 
   }
-
-  private fun justForTest(vertx: Vertx) {
-
-    val customerId = CustomerId(UUID.randomUUID().toString())
-    //    val customerId = new CustomerId("customer123");
-    val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "a good customer")
-    val options = DeliveryOptions().setCodecName("EntityCommand")
-
-    // create customer command
-    vertx.eventBus().send<EntityCommandExecution>(commandHandlerId(Customer::class.java), createCustomerCmd, options) { asyncResult ->
-
-      log.info("Successful create customer test? {}", asyncResult.succeeded())
-
-      if (asyncResult.succeeded()) {
-
-        log.info("Result: {}", asyncResult.result().body())
-
-        val activateCustomerCmd = ActivateCustomer(UUID.randomUUID(), createCustomerCmd._targetId, "because I want it")
-
-        // activate customer command
-        vertx.eventBus().send<EntityCommandExecution>(commandHandlerId(Customer::class.java), activateCustomerCmd, options) { asyncResult2 ->
-
-          log.info("Successful activate customer test? {}", asyncResult2.succeeded())
-
-          if (asyncResult2.succeeded()) {
-            log.info("Result: {}", asyncResult2.result().body())
-          } else {
-            log.info("Cause: {}", asyncResult2.cause())
-            log.info("Message: {}", asyncResult2.cause().message)
-          }
-
-        }
-
-      } else {
-        log.info("Cause: {}", asyncResult.cause())
-        log.info("Message: {}", asyncResult.cause().message)
-      }
-
-    }
-
-  }
-
 
 }
 
@@ -121,4 +78,55 @@ fun verticleDeploymentOrder(className: String?) : Int {
     "EntityCommandRestVerticle" -> 2
     else -> 10
   }
+}
+
+fun Example1Component.deploy(vertx: Vertx) {
+  this.verticles()
+    .entries
+    .sortedWith(compareBy({ verticleDeploymentOrder(it.key) }))
+    .forEach {
+      vertx.deployVerticle(it.value) { event ->
+        if (!event.succeeded()) Example1Launcher.log.error("Error deploying verticle", event.cause()) }
+    }
+}
+
+private fun justForTest(vertx: Vertx) {
+
+  val customerId = CustomerId(UUID.randomUUID().toString())
+  //    val customerId = new CustomerId("customer123");
+  val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "a good customer")
+  val options = DeliveryOptions().setCodecName("EntityCommand")
+
+  // create customer command
+  vertx.eventBus().send<EntityCommandExecution>(commandHandlerId(Customer::class.java), createCustomerCmd, options) { asyncResult ->
+
+    Example1Launcher.log.info("Successful create customer test? {}", asyncResult.succeeded())
+
+    if (asyncResult.succeeded()) {
+
+      Example1Launcher.log.info("Result: {}", asyncResult.result().body())
+
+      val activateCustomerCmd = ActivateCustomer(UUID.randomUUID(), createCustomerCmd._targetId, "because I want it")
+
+      // activate customer command
+      vertx.eventBus().send<EntityCommandExecution>(commandHandlerId(Customer::class.java), activateCustomerCmd, options) { asyncResult2 ->
+
+        Example1Launcher.log.info("Successful activate customer test? {}", asyncResult2.succeeded())
+
+        if (asyncResult2.succeeded()) {
+          Example1Launcher.log.info("Result: {}", asyncResult2.result().body())
+        } else {
+          Example1Launcher.log.info("Cause: {}", asyncResult2.cause())
+          Example1Launcher.log.info("Message: {}", asyncResult2.cause().message)
+        }
+
+      }
+
+    } else {
+      Example1Launcher.log.info("Cause: {}", asyncResult.cause())
+      Example1Launcher.log.info("Message: {}", asyncResult.cause().message)
+    }
+
+  }
+
 }
