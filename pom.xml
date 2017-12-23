@@ -90,11 +90,6 @@
 
     <dependencies>
 
-        <!--<dependency>-->
-            <!--<groupId>javax.inject</groupId>-->
-            <!--<artifactId>javax.inject</artifactId>-->
-            <!--<version>1</version>-->
-        <!--</dependency>-->
 
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -159,12 +154,6 @@
                 <version>${project.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-kotlin-example1-core</artifactId>
-                <version>${project.version}</version>
-                <scope>test</scope>
-            </dependency>
 
             <!-- kotlin -->
 

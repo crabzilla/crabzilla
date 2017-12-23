@@ -2,10 +2,7 @@ package io.github.crabzilla.vertx.entity;
 
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
 import io.github.crabzilla.core.entity.Version;
-import io.github.crabzilla.example1.CustomerSummary;
-import io.github.crabzilla.example1.customer.CreateCustomer;
-import io.github.crabzilla.example1.customer.CustomerCreated;
-import io.github.crabzilla.example1.customer.CustomerId;
+import io.github.crabzilla.core.example1.readmodel.CustomerSummary;
 import io.github.crabzilla.vertx.helpers.StringHelper;
 import io.github.crabzilla.vertx.helpers.VertxFactory;
 import io.github.crabzilla.vertx.projection.EventProjector;
@@ -33,6 +30,7 @@ import org.mockito.Mock;
 import java.util.List;
 import java.util.UUID;
 
+import static io.github.crabzilla.core.example1.customer.CustomerData.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.eq;

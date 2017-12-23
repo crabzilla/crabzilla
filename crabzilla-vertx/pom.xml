@@ -13,7 +13,6 @@
 
     <dependencies>
 
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -24,6 +23,7 @@
             <groupId>io.github.crabzilla</groupId>
             <artifactId>crabzilla-core</artifactId>
         </dependency>
+
 
         <!-- cmd line arguments parser -->
         <dependency>
@@ -98,10 +98,11 @@
         </dependency>
 
         <!-- test -->
-
         <dependency>
             <groupId>io.github.crabzilla</groupId>
-            <artifactId>crabzilla-kotlin-example1-core</artifactId>
+            <artifactId>crabzilla-core</artifactId>
+            <version>0.0.6-SNAPSHOT</version>
+            <type>test-jar</type>
             <scope>test</scope>
         </dependency>
 

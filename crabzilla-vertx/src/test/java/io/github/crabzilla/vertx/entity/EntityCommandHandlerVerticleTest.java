@@ -1,10 +1,10 @@
 package io.github.crabzilla.vertx.entity;
 
 import io.github.crabzilla.core.entity.*;
+import io.github.crabzilla.core.example1.customer.Customer;
+import io.github.crabzilla.core.example1.services.SampleInternalService;
 import io.github.crabzilla.core.exceptions.DbConcurrencyException;
 import io.github.crabzilla.core.exceptions.UnknownCommandException;
-import io.github.crabzilla.example1.SampleInternalService;
-import io.github.crabzilla.example1.customer.*;
 import io.github.crabzilla.vertx.helpers.StringHelper;
 import io.github.crabzilla.vertx.helpers.VertxFactory;
 import io.vertx.circuitbreaker.CircuitBreaker;
@@ -35,6 +35,7 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static io.github.crabzilla.core.example1.customer.CustomerData.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -63,7 +64,7 @@ public class EntityCommandHandlerVerticleTest {
     }
   };
 
-  final Customer seedValue =  new Customer(null, null, false, null, service);
+  final Customer seedValue =  new Customer(service, null, null, false, null);
 
   @Mock
   Function<EntityCommand, List<String>> validatorFn;

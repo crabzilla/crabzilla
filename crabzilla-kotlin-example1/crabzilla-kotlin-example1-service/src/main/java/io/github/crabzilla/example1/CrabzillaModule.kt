@@ -7,7 +7,7 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-//import dagger.Provides
+import dagger.Provides
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.entity.EntityCommand
 import io.github.crabzilla.core.entity.EntityId
@@ -24,18 +24,13 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin
 import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import javax.inject.Singleton
 
-abstract class CrabzillaModule(private val vertx: Vertx, private val config: JsonObject) {
-
-  // // @Provides
-  @Singleton
-  fun vertx(): Vertx {
-    return vertx
-  }
+//@Module
+class CrabzillaModule {
 
   // @Provides
   @Singleton
-  fun config(): JsonObject {
-    return config
+  fun vertx(): Vertx {
+    return Vertx.vertx()
   }
 
   // @Provides
@@ -56,7 +51,7 @@ abstract class CrabzillaModule(private val vertx: Vertx, private val config: Jso
 
   // @Provides
   @Singleton
-  fun hikariDs(): HikariDataSource {
+  fun hikariDs(config: JsonObject): HikariDataSource {
 
     val hikariConfig = HikariConfig()
     hikariConfig.driverClassName = config.getString("database.driver")
@@ -75,7 +70,7 @@ abstract class CrabzillaModule(private val vertx: Vertx, private val config: Jso
   }
 
 
-  fun configureVertx() {
+  fun configureVertx(vertx: Vertx) {
 
     mapper.registerModule(ParameterNamesModule())
             .registerModule(Jdk8Module())

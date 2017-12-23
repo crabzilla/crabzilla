@@ -9,7 +9,7 @@ import io.vertx.core.json.JsonObject
 import org.jdbi.v3.core.Jdbi
 import javax.inject.Singleton
 
-class Example1Module(private val vertx: Vertx, private val config: JsonObject) : CrabzillaModule(vertx, config) {
+class Example1Module(private val vertx: Vertx, private val config: JsonObject) {
 
 //  override fun configure() {
 //

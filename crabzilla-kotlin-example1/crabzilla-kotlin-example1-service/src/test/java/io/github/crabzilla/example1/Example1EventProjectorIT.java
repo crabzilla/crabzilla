@@ -22,9 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class Example1EventProjectorIT {
 
-  @Inject
+//  @Inject
   Jdbi jdbi;
-  @Inject
+//  @Inject
   EventProjector<CustomerSummaryDao> eventProjector;
 
   @Before
