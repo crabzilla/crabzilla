@@ -33,6 +33,7 @@ install:
   - docker ps
   - sleep 30
   - docker ps
+  - echo '<!--test-->' >> pom.xml
   - echo '<!--test-->' >> crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/pom.xml
   - mvn clean verify -P all-tests
 
