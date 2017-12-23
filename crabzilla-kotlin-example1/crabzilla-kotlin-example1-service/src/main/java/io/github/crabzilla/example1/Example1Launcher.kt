@@ -11,7 +11,6 @@ import io.vertx.core.logging.LoggerFactory
 import io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME
 import io.vertx.core.logging.SLF4JLogDelegateFactory
 import joptsimple.OptionParser
-import mu.KotlinLogging
 import java.lang.System.setProperty
 import java.util.*
 
@@ -19,7 +18,7 @@ class Example1Launcher {
 
   companion object {
 
-    val log = KotlinLogging.logger {}
+    val log = org.slf4j.LoggerFactory.getLogger(Example1Launcher::class.java.simpleName)
 
     @Throws(Exception::class)
     @JvmStatic

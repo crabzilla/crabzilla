@@ -26,17 +26,11 @@ cache:
   - "$HOME/.m2"
 
 install: false
-#  - mvn clean install -DskipTests
-#  - cd ./crabzilla-example1/crabzilla-example1-database
-#  - mvn compile flyway:migrate
-#  - cd ../..
 
 script:
   - docker ps
   - sleep 30
   - docker ps
-  # - echo '<!--test-->' >> pom.xml
-  # - echo '<!--test-->' >> crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/pom.xml
   - mvn test -B
 
 after_success:
