@@ -1,5 +1,8 @@
 package io.github.crabzilla.example1
 
+import dagger.Module
+import dagger.Provides
+import io.github.crabzilla.example1.services.SampleInternalServiceImpl
 import io.github.crabzilla.vertx.projection.EventProjector
 import io.github.crabzilla.vertx.projection.EventsProjectionVerticle
 import io.vertx.circuitbreaker.CircuitBreaker
@@ -9,27 +12,42 @@ import io.vertx.core.json.JsonObject
 import org.jdbi.v3.core.Jdbi
 import javax.inject.Singleton
 
-class Example1Module(private val vertx: Vertx, private val config: JsonObject) {
+@Module
+class Example1Module(val vertx: Vertx, val config: JsonObject) {
 
-//  override fun configure() {
-//
-//    configureVertx()
-//
-//    bind(CustomerRepository::class.java).to(CustomerRepositoryImpl::class.java).asEagerSingleton()
-//
-//    // services
-//    bind(SampleInternalService::class.java).to(SampleInternalServiceImpl::class.java).asEagerSingleton()
-//  }
+  @Provides
+  @Singleton
+  fun vertx(): Vertx {
+    return vertx
+  }
 
-  // @Provides
+  @Provides
+  @Singleton
+  fun config(): JsonObject {
+    return config
+  }
+
+  @Provides
+  @Singleton
+  fun customerRepository(dao: CustomerSummaryDao): CustomerRepository {
+    return CustomerRepositoryImpl(dao)
+  }
+
+  @Provides
+  @Singleton
+  fun service(): SampleInternalService {
+    return SampleInternalServiceImpl()
+  }
+
+  @Provides
   @Singleton
   fun customerSummaryDao(jdbi: Jdbi) : CustomerSummaryDao {
     return jdbi.onDemand(CustomerSummaryDao::class.java)
   }
 
-  // @Provides
+  @Provides
   @Singleton
-  fun eventsProjectorVerticle(jdbi: Jdbi,
+  fun eventsProjectorVerticle(vertx: Vertx,
                               eventsProjector: EventProjector<CustomerSummaryDao>): EventsProjectionVerticle<CustomerSummaryDao> {
     val circuitBreaker = CircuitBreaker.create("events-projection-circuit-breaker", vertx,
             CircuitBreakerOptions()
@@ -41,7 +59,7 @@ class Example1Module(private val vertx: Vertx, private val config: JsonObject) {
     return EventsProjectionVerticle(eventsProjector, circuitBreaker)
   }
 
-  // @Provides
+  @Provides
   @Singleton
   fun eventsProjector(jdbi: Jdbi): EventProjector<CustomerSummaryDao> {
     return Example1EventProjector("example1", CustomerSummaryDao::class.java, jdbi)

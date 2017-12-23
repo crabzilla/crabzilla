@@ -1,0 +1,559 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] Crabzilla
+[INFO] crabzilla-core
+[INFO] crabzilla-kotlin-example1
+[INFO] crabzilla-kotlin-example1-core
+[INFO] crabzilla-kotlin-example1-database
+[INFO] crabzilla-vertx
+[INFO] crabzilla-vertx-web
+[INFO] crabzilla-kotlin-example1-service
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building Crabzilla 0.0.6-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.2:tree (default-cli) @ crabzilla ---
+[INFO] io.github.crabzilla:crabzilla:pom:0.0.6-SNAPSHOT
+[INFO] +- org.slf4j:slf4j-api:jar:1.7.8:compile
+[INFO] +- org.junit.vintage:junit-vintage-engine:jar:4.12.0-RC2:test
+[INFO] |  +- org.junit.platform:junit-platform-engine:jar:1.0.0-RC2:test
+[INFO] |  \- junit:junit:jar:4.12:test
+[INFO] +- org.junit.jupiter:junit-jupiter-api:jar:5.0.0-RC2:test
+[INFO] |  +- org.opentest4j:opentest4j:jar:1.0.0-RC1:test
+[INFO] |  \- org.junit.platform:junit-platform-commons:jar:1.0.0-RC2:test
+[INFO] +- org.mockito:mockito-core:jar:2.7.4:test
+[INFO] |  +- net.bytebuddy:byte-buddy:jar:1.6.5:test
+[INFO] |  +- net.bytebuddy:byte-buddy-agent:jar:1.6.5:test
+[INFO] |  \- org.objenesis:objenesis:jar:2.5:test
+[INFO] +- org.assertj:assertj-core:jar:3.8.0:test
+[INFO] \- com.jayway.restassured:rest-assured:jar:2.9.0:test
+[INFO]    +- org.codehaus.groovy:groovy:jar:2.4.4:test
+[INFO]    +- org.codehaus.groovy:groovy-xml:jar:2.4.4:test
+[INFO]    +- org.apache.httpcomponents:httpclient:jar:4.5.1:test
+[INFO]    |  +- org.apache.httpcomponents:httpcore:jar:4.4.3:test
+[INFO]    |  +- commons-logging:commons-logging:jar:1.2:test
+[INFO]    |  \- commons-codec:commons-codec:jar:1.9:test
+[INFO]    +- org.apache.httpcomponents:httpmime:jar:4.5.1:test
+[INFO]    +- org.hamcrest:hamcrest-core:jar:1.3:test
+[INFO]    +- org.hamcrest:hamcrest-library:jar:1.3:test
+[INFO]    +- org.ccil.cowan.tagsoup:tagsoup:jar:1.2.1:test
+[INFO]    +- com.jayway.restassured:json-path:jar:2.9.0:test
+[INFO]    |  +- org.codehaus.groovy:groovy-json:jar:2.4.4:test
+[INFO]    |  \- com.jayway.restassured:rest-assured-common:jar:2.9.0:test
+[INFO]    \- com.jayway.restassured:xml-path:jar:2.9.0:test
+[INFO]       \- org.apache.commons:commons-lang3:jar:3.5:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building crabzilla-core 0.0.6-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.2:tree (default-cli) @ crabzilla-core ---
+[INFO] io.github.crabzilla:crabzilla-core:jar:0.0.6-SNAPSHOT
+[INFO] +- org.projectlombok:lombok:jar:1.16.18:provided
+[INFO] +- com.fasterxml.jackson.core:jackson-annotations:jar:2.9.0.pr4:compile
+[INFO] +- org.apache.commons:commons-lang3:jar:3.5:test
+[INFO] +- org.slf4j:slf4j-api:jar:1.7.8:compile
+[INFO] +- org.junit.vintage:junit-vintage-engine:jar:4.12.0-RC2:test
+[INFO] |  +- org.junit.platform:junit-platform-engine:jar:1.0.0-RC2:test
+[INFO] |  \- junit:junit:jar:4.12:test
+[INFO] +- org.junit.jupiter:junit-jupiter-api:jar:5.0.0-RC2:test
+[INFO] |  +- org.opentest4j:opentest4j:jar:1.0.0-RC1:test
+[INFO] |  \- org.junit.platform:junit-platform-commons:jar:1.0.0-RC2:test
+[INFO] +- org.mockito:mockito-core:jar:2.7.4:test
+[INFO] |  +- net.bytebuddy:byte-buddy:jar:1.6.5:test
+[INFO] |  +- net.bytebuddy:byte-buddy-agent:jar:1.6.5:test
+[INFO] |  \- org.objenesis:objenesis:jar:2.5:test
+[INFO] +- org.assertj:assertj-core:jar:3.8.0:test
+[INFO] \- com.jayway.restassured:rest-assured:jar:2.9.0:test
+[INFO]    +- org.codehaus.groovy:groovy:jar:2.4.4:test
+[INFO]    +- org.codehaus.groovy:groovy-xml:jar:2.4.4:test
+[INFO]    +- org.apache.httpcomponents:httpclient:jar:4.5.1:test
+[INFO]    |  +- org.apache.httpcomponents:httpcore:jar:4.4.3:test
+[INFO]    |  +- commons-logging:commons-logging:jar:1.2:test
+[INFO]    |  \- commons-codec:commons-codec:jar:1.9:test
+[INFO]    +- org.apache.httpcomponents:httpmime:jar:4.5.1:test
+[INFO]    +- org.hamcrest:hamcrest-core:jar:1.3:test
+[INFO]    +- org.hamcrest:hamcrest-library:jar:1.3:test
+[INFO]    +- org.ccil.cowan.tagsoup:tagsoup:jar:1.2.1:test
+[INFO]    +- com.jayway.restassured:json-path:jar:2.9.0:test
+[INFO]    |  +- org.codehaus.groovy:groovy-json:jar:2.4.4:test
+[INFO]    |  \- com.jayway.restassured:rest-assured-common:jar:2.9.0:test
+[INFO]    \- com.jayway.restassured:xml-path:jar:2.9.0:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building crabzilla-kotlin-example1 0.0.6-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.2:tree (default-cli) @ crabzilla-kotlin-example1 ---
+[INFO] io.github.crabzilla:crabzilla-kotlin-example1:pom:0.0.6-SNAPSHOT
+[INFO] +- com.google.dagger:dagger:jar:2.14.1:compile
+[INFO] |  \- javax.inject:javax.inject:jar:1:compile
+[INFO] +- com.google.dagger:dagger-compiler:jar:2.14.1:compile
+[INFO] |  +- com.google.dagger:dagger-producers:jar:2.14.1:compile
+[INFO] |  |  \- org.checkerframework:checker-compat-qual:jar:2.3.0:compile
+[INFO] |  +- com.google.dagger:dagger-spi:jar:2.14.1:compile
+[INFO] |  +- com.google.googlejavaformat:google-java-format:jar:1.4:compile
+[INFO] |  |  \- com.google.errorprone:javac-shaded:jar:9-dev-r4023-3:compile
+[INFO] |  +- com.google.guava:guava:jar:23.3-jre:compile
+[INFO] |  |  +- com.google.code.findbugs:jsr305:jar:1.3.9:compile
+[INFO] |  |  +- com.google.errorprone:error_prone_annotations:jar:2.0.18:compile
+[INFO] |  |  +- com.google.j2objc:j2objc-annotations:jar:1.1:compile
+[INFO] |  |  \- org.codehaus.mojo:animal-sniffer-annotations:jar:1.14:compile
+[INFO] |  +- com.squareup:javapoet:jar:1.8.0:compile
+[INFO] |  \- javax.annotation:jsr250-api:jar:1.0:compile
+[INFO] +- org.jetbrains.kotlin:kotlin-stdlib-jdk8:jar:1.2.10:compile
+[INFO] |  +- org.jetbrains.kotlin:kotlin-stdlib:jar:1.2.10:compile
+[INFO] |  |  \- org.jetbrains:annotations:jar:13.0:compile
+[INFO] |  \- org.jetbrains.kotlin:kotlin-stdlib-jdk7:jar:1.2.10:compile
+[INFO] +- io.github.microutils:kotlin-logging:jar:1.4.6:compile
+[INFO] +- org.jetbrains.kotlin:kotlin-test:jar:1.2.10:test
+[INFO] +- org.slf4j:slf4j-api:jar:1.7.8:compile
+[INFO] +- org.junit.vintage:junit-vintage-engine:jar:4.12.0-RC2:test
+[INFO] |  +- org.junit.platform:junit-platform-engine:jar:1.0.0-RC2:test
+[INFO] |  \- junit:junit:jar:4.12:test
+[INFO] +- org.junit.jupiter:junit-jupiter-api:jar:5.0.0-RC2:test
+[INFO] |  +- org.opentest4j:opentest4j:jar:1.0.0-RC1:test
+[INFO] |  \- org.junit.platform:junit-platform-commons:jar:1.0.0-RC2:test
+[INFO] +- org.mockito:mockito-core:jar:2.7.4:test
+[INFO] |  +- net.bytebuddy:byte-buddy:jar:1.6.5:test
+[INFO] |  +- net.bytebuddy:byte-buddy-agent:jar:1.6.5:test
+[INFO] |  \- org.objenesis:objenesis:jar:2.5:test
+[INFO] +- org.assertj:assertj-core:jar:3.8.0:test
+[INFO] \- com.jayway.restassured:rest-assured:jar:2.9.0:test
+[INFO]    +- org.codehaus.groovy:groovy:jar:2.4.4:test
+[INFO]    +- org.codehaus.groovy:groovy-xml:jar:2.4.4:test
+[INFO]    +- org.apache.httpcomponents:httpclient:jar:4.5.1:test
+[INFO]    |  +- org.apache.httpcomponents:httpcore:jar:4.4.3:test
+[INFO]    |  +- commons-logging:commons-logging:jar:1.2:test
+[INFO]    |  \- commons-codec:commons-codec:jar:1.9:test
+[INFO]    +- org.apache.httpcomponents:httpmime:jar:4.5.1:test
+[INFO]    +- org.hamcrest:hamcrest-core:jar:1.3:test
+[INFO]    +- org.hamcrest:hamcrest-library:jar:1.3:test
+[INFO]    +- org.ccil.cowan.tagsoup:tagsoup:jar:1.2.1:test
+[INFO]    +- com.jayway.restassured:json-path:jar:2.9.0:test
+[INFO]    |  +- org.codehaus.groovy:groovy-json:jar:2.4.4:test
+[INFO]    |  \- com.jayway.restassured:rest-assured-common:jar:2.9.0:test
+[INFO]    \- com.jayway.restassured:xml-path:jar:2.9.0:test
+[INFO]       \- org.apache.commons:commons-lang3:jar:3.5:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building crabzilla-kotlin-example1-core 0.0.6-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.2:tree (default-cli) @ crabzilla-kotlin-example1-core ---
+[INFO] io.github.crabzilla:crabzilla-kotlin-example1-core:jar:0.0.6-SNAPSHOT
+[INFO] +- io.github.crabzilla:crabzilla-core:jar:0.0.6-SNAPSHOT:compile
+[INFO] |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.9.0.pr4:compile
+[INFO] +- com.fasterxml.jackson.module:jackson-module-kotlin:jar:2.9.0.pr4:compile
+[INFO] |  +- com.fasterxml.jackson.core:jackson-databind:jar:2.9.0.pr4:compile
+[INFO] |  |  \- com.fasterxml.jackson.core:jackson-core:jar:2.9.0.pr4:compile
+[INFO] |  \- org.jetbrains.kotlin:kotlin-reflect:jar:1.2.10:compile (version managed from 1.1.2)
+[INFO] +- com.google.dagger:dagger:jar:2.14.1:compile
+[INFO] |  \- javax.inject:javax.inject:jar:1:compile
+[INFO] +- com.google.dagger:dagger-compiler:jar:2.14.1:compile
+[INFO] |  +- com.google.dagger:dagger-producers:jar:2.14.1:compile
+[INFO] |  |  \- org.checkerframework:checker-compat-qual:jar:2.3.0:compile
+[INFO] |  +- com.google.dagger:dagger-spi:jar:2.14.1:compile
+[INFO] |  +- com.google.googlejavaformat:google-java-format:jar:1.4:compile
+[INFO] |  |  \- com.google.errorprone:javac-shaded:jar:9-dev-r4023-3:compile
+[INFO] |  +- com.google.guava:guava:jar:23.3-jre:compile
+[INFO] |  |  +- com.google.code.findbugs:jsr305:jar:1.3.9:compile
+[INFO] |  |  +- com.google.errorprone:error_prone_annotations:jar:2.0.18:compile
+[INFO] |  |  +- com.google.j2objc:j2objc-annotations:jar:1.1:compile
+[INFO] |  |  \- org.codehaus.mojo:animal-sniffer-annotations:jar:1.14:compile
+[INFO] |  +- com.squareup:javapoet:jar:1.8.0:compile
+[INFO] |  \- javax.annotation:jsr250-api:jar:1.0:compile
+[INFO] +- org.jetbrains.kotlin:kotlin-stdlib-jdk8:jar:1.2.10:compile
+[INFO] |  +- org.jetbrains.kotlin:kotlin-stdlib:jar:1.2.10:compile
+[INFO] |  |  \- org.jetbrains:annotations:jar:13.0:compile
+[INFO] |  \- org.jetbrains.kotlin:kotlin-stdlib-jdk7:jar:1.2.10:compile
+[INFO] +- io.github.microutils:kotlin-logging:jar:1.4.6:compile
+[INFO] +- org.jetbrains.kotlin:kotlin-test:jar:1.2.10:test
+[INFO] +- org.slf4j:slf4j-api:jar:1.7.8:compile
+[INFO] +- org.junit.vintage:junit-vintage-engine:jar:4.12.0-RC2:test
+[INFO] |  +- org.junit.platform:junit-platform-engine:jar:1.0.0-RC2:test
+[INFO] |  \- junit:junit:jar:4.12:test
+[INFO] +- org.junit.jupiter:junit-jupiter-api:jar:5.0.0-RC2:test
+[INFO] |  +- org.opentest4j:opentest4j:jar:1.0.0-RC1:test
+[INFO] |  \- org.junit.platform:junit-platform-commons:jar:1.0.0-RC2:test
+[INFO] +- org.mockito:mockito-core:jar:2.7.4:test
+[INFO] |  +- net.bytebuddy:byte-buddy:jar:1.6.5:test
+[INFO] |  +- net.bytebuddy:byte-buddy-agent:jar:1.6.5:test
+[INFO] |  \- org.objenesis:objenesis:jar:2.5:test
+[INFO] +- org.assertj:assertj-core:jar:3.8.0:test
+[INFO] \- com.jayway.restassured:rest-assured:jar:2.9.0:test
+[INFO]    +- org.codehaus.groovy:groovy:jar:2.4.4:test
+[INFO]    +- org.codehaus.groovy:groovy-xml:jar:2.4.4:test
+[INFO]    +- org.apache.httpcomponents:httpclient:jar:4.5.1:test
+[INFO]    |  +- org.apache.httpcomponents:httpcore:jar:4.4.3:test
+[INFO]    |  +- commons-logging:commons-logging:jar:1.2:test
+[INFO]    |  \- commons-codec:commons-codec:jar:1.9:test
+[INFO]    +- org.apache.httpcomponents:httpmime:jar:4.5.1:test
+[INFO]    +- org.hamcrest:hamcrest-core:jar:1.3:test
+[INFO]    +- org.hamcrest:hamcrest-library:jar:1.3:test
+[INFO]    +- org.ccil.cowan.tagsoup:tagsoup:jar:1.2.1:test
+[INFO]    +- com.jayway.restassured:json-path:jar:2.9.0:test
+[INFO]    |  +- org.codehaus.groovy:groovy-json:jar:2.4.4:test
+[INFO]    |  \- com.jayway.restassured:rest-assured-common:jar:2.9.0:test
+[INFO]    \- com.jayway.restassured:xml-path:jar:2.9.0:test
+[INFO]       \- org.apache.commons:commons-lang3:jar:3.5:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building crabzilla-kotlin-example1-database 0.0.6-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.2:tree (default-cli) @ crabzilla-kotlin-example1-database ---
+[INFO] io.github.crabzilla:crabzilla-kotlin-example1-database:jar:0.0.6-SNAPSHOT
+[INFO] +- io.github.crabzilla:crabzilla-kotlin-example1-core:jar:0.0.6-SNAPSHOT:compile
+[INFO] |  +- io.github.crabzilla:crabzilla-core:jar:0.0.6-SNAPSHOT:compile
+[INFO] |  |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.9.0.pr4:compile
+[INFO] |  \- com.fasterxml.jackson.module:jackson-module-kotlin:jar:2.9.0.pr4:compile
+[INFO] |     \- com.fasterxml.jackson.core:jackson-databind:jar:2.9.0.pr4:compile
+[INFO] |        \- com.fasterxml.jackson.core:jackson-core:jar:2.9.0.pr4:compile
+[INFO] +- org.jdbi:jdbi3:jar:3.0.0-beta2:compile
+[INFO] |  +- org.antlr:antlr-runtime:jar:3.4:compile
+[INFO] |  |  +- org.antlr:stringtemplate:jar:3.2.1:compile
+[INFO] |  |  \- antlr:antlr:jar:2.7.7:compile
+[INFO] |  +- com.google.code.findbugs:annotations:jar:3.0.1:compile
+[INFO] |  |  +- net.jcip:jcip-annotations:jar:1.0:compile
+[INFO] |  |  \- com.google.code.findbugs:jsr305:jar:3.0.1:compile
+[INFO] |  \- net.jodah:expiringmap:jar:0.5.8:compile (version managed from 0.5.6)
+[INFO] +- org.jdbi:jdbi3-sqlobject:jar:3.0.0-beta2:compile
+[INFO] +- mysql:mysql-connector-java:jar:6.0.6:compile
+[INFO] +- org.jdbi:jdbi3-kotlin:jar:3.0.0-beta2:compile
+[INFO] |  +- org.jetbrains:annotations:jar:13.0:compile
+[INFO] |  +- org.jetbrains.kotlin:kotlin-stdlib:jar:1.2.10:compile
+[INFO] |  \- org.jetbrains.kotlin:kotlin-reflect:jar:1.2.10:compile
+[INFO] +- org.jdbi:jdbi3-kotlin-sqlobject:jar:3.0.0-beta2:compile
+[INFO] +- com.google.dagger:dagger:jar:2.14.1:compile
+[INFO] |  \- javax.inject:javax.inject:jar:1:compile
+[INFO] +- com.google.dagger:dagger-compiler:jar:2.14.1:compile
+[INFO] |  +- com.google.dagger:dagger-producers:jar:2.14.1:compile
+[INFO] |  |  \- org.checkerframework:checker-compat-qual:jar:2.3.0:compile
+[INFO] |  +- com.google.dagger:dagger-spi:jar:2.14.1:compile
+[INFO] |  +- com.google.googlejavaformat:google-java-format:jar:1.4:compile
+[INFO] |  |  \- com.google.errorprone:javac-shaded:jar:9-dev-r4023-3:compile
+[INFO] |  +- com.google.guava:guava:jar:23.3-jre:compile
+[INFO] |  |  +- com.google.errorprone:error_prone_annotations:jar:2.0.18:compile
+[INFO] |  |  +- com.google.j2objc:j2objc-annotations:jar:1.1:compile
+[INFO] |  |  \- org.codehaus.mojo:animal-sniffer-annotations:jar:1.14:compile
+[INFO] |  +- com.squareup:javapoet:jar:1.8.0:compile
+[INFO] |  \- javax.annotation:jsr250-api:jar:1.0:compile
+[INFO] +- org.jetbrains.kotlin:kotlin-stdlib-jdk8:jar:1.2.10:compile
+[INFO] |  \- org.jetbrains.kotlin:kotlin-stdlib-jdk7:jar:1.2.10:compile
+[INFO] +- io.github.microutils:kotlin-logging:jar:1.4.6:compile
+[INFO] +- org.jetbrains.kotlin:kotlin-test:jar:1.2.10:test
+[INFO] +- org.slf4j:slf4j-api:jar:1.7.8:compile
+[INFO] +- org.junit.vintage:junit-vintage-engine:jar:4.12.0-RC2:test
+[INFO] |  +- org.junit.platform:junit-platform-engine:jar:1.0.0-RC2:test
+[INFO] |  \- junit:junit:jar:4.12:test
+[INFO] +- org.junit.jupiter:junit-jupiter-api:jar:5.0.0-RC2:test
+[INFO] |  +- org.opentest4j:opentest4j:jar:1.0.0-RC1:test
+[INFO] |  \- org.junit.platform:junit-platform-commons:jar:1.0.0-RC2:test
+[INFO] +- org.mockito:mockito-core:jar:2.7.4:test
+[INFO] |  +- net.bytebuddy:byte-buddy:jar:1.6.5:test
+[INFO] |  +- net.bytebuddy:byte-buddy-agent:jar:1.6.5:test
+[INFO] |  \- org.objenesis:objenesis:jar:2.5:test
+[INFO] +- org.assertj:assertj-core:jar:3.8.0:test
+[INFO] \- com.jayway.restassured:rest-assured:jar:2.9.0:test
+[INFO]    +- org.codehaus.groovy:groovy:jar:2.4.4:test
+[INFO]    +- org.codehaus.groovy:groovy-xml:jar:2.4.4:test
+[INFO]    +- org.apache.httpcomponents:httpclient:jar:4.5.1:test
+[INFO]    |  +- org.apache.httpcomponents:httpcore:jar:4.4.3:test
+[INFO]    |  +- commons-logging:commons-logging:jar:1.2:test
+[INFO]    |  \- commons-codec:commons-codec:jar:1.9:test
+[INFO]    +- org.apache.httpcomponents:httpmime:jar:4.5.1:test
+[INFO]    +- org.hamcrest:hamcrest-core:jar:1.3:test
+[INFO]    +- org.hamcrest:hamcrest-library:jar:1.3:test
+[INFO]    +- org.ccil.cowan.tagsoup:tagsoup:jar:1.2.1:test
+[INFO]    +- com.jayway.restassured:json-path:jar:2.9.0:test
+[INFO]    |  +- org.codehaus.groovy:groovy-json:jar:2.4.4:test
+[INFO]    |  \- com.jayway.restassured:rest-assured-common:jar:2.9.0:test
+[INFO]    \- com.jayway.restassured:xml-path:jar:2.9.0:test
+[INFO]       \- org.apache.commons:commons-lang3:jar:3.5:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building crabzilla-vertx 0.0.6-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.2:tree (default-cli) @ crabzilla-vertx ---
+[INFO] io.github.crabzilla:crabzilla-vertx:jar:0.0.6-SNAPSHOT
+[INFO] +- org.projectlombok:lombok:jar:1.16.18:provided
+[INFO] +- io.github.crabzilla:crabzilla-core:jar:0.0.6-SNAPSHOT:compile
+[INFO] +- net.sf.jopt-simple:jopt-simple:jar:5.0.4:compile
+[INFO] +- com.fasterxml.jackson.module:jackson-module-parameter-names:jar:2.9.0.pr4:compile
+[INFO] |  +- com.fasterxml.jackson.core:jackson-core:jar:2.9.0.pr4:compile
+[INFO] |  \- com.fasterxml.jackson.core:jackson-databind:jar:2.9.0.pr4:compile
+[INFO] +- com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.9.0.pr4:compile
+[INFO] +- com.fasterxml.jackson.core:jackson-annotations:jar:2.9.0.pr4:compile
+[INFO] +- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.9.0.pr4:compile
+[INFO] +- com.zaxxer:HikariCP:jar:2.6.1:compile
+[INFO] +- org.jdbi:jdbi3:jar:3.0.0-beta2:compile
+[INFO] |  +- org.antlr:antlr-runtime:jar:3.4:compile
+[INFO] |  |  +- org.antlr:stringtemplate:jar:3.2.1:compile
+[INFO] |  |  \- antlr:antlr:jar:2.7.7:compile
+[INFO] |  \- com.google.code.findbugs:annotations:jar:3.0.1:compile
+[INFO] |     +- net.jcip:jcip-annotations:jar:1.0:compile
+[INFO] |     \- com.google.code.findbugs:jsr305:jar:3.0.1:compile
+[INFO] +- org.jdbi:jdbi3-sqlobject:jar:3.0.0-beta2:compile
+[INFO] +- net.jodah:expiringmap:jar:0.5.8:compile
+[INFO] +- io.vertx:vertx-core:jar:3.5.0:compile
+[INFO] |  +- io.netty:netty-common:jar:4.1.15.Final:compile
+[INFO] |  +- io.netty:netty-buffer:jar:4.1.15.Final:compile
+[INFO] |  +- io.netty:netty-transport:jar:4.1.15.Final:compile
+[INFO] |  +- io.netty:netty-handler:jar:4.1.15.Final:compile
+[INFO] |  |  \- io.netty:netty-codec:jar:4.1.15.Final:compile
+[INFO] |  +- io.netty:netty-handler-proxy:jar:4.1.15.Final:compile
+[INFO] |  |  \- io.netty:netty-codec-socks:jar:4.1.15.Final:compile
+[INFO] |  +- io.netty:netty-codec-http:jar:4.1.15.Final:compile
+[INFO] |  +- io.netty:netty-codec-http2:jar:4.1.15.Final:compile
+[INFO] |  +- io.netty:netty-resolver:jar:4.1.15.Final:compile
+[INFO] |  \- io.netty:netty-resolver-dns:jar:4.1.15.Final:compile
+[INFO] |     \- io.netty:netty-codec-dns:jar:4.1.15.Final:compile
+[INFO] +- io.vertx:vertx-config:jar:3.5.0:compile
+[INFO] +- io.vertx:vertx-circuit-breaker:jar:3.5.0:compile
+[INFO] |  \- org.hdrhistogram:HdrHistogram:jar:2.1.9:compile
+[INFO] +- io.vertx:vertx-jdbc-client:jar:3.5.0:compile
+[INFO] |  +- io.vertx:vertx-sql-common:jar:3.5.0:compile
+[INFO] |  \- com.mchange:c3p0:jar:0.9.5.2:compile
+[INFO] |     \- com.mchange:mchange-commons-java:jar:0.2.11:compile
+[INFO] +- io.github.crabzilla:crabzilla-core:test-jar:tests:0.0.6-SNAPSHOT:test
+[INFO] +- io.vertx:vertx-unit:jar:3.5.0:test
+[INFO] +- mysql:mysql-connector-java:jar:6.0.6:test
+[INFO] +- org.slf4j:slf4j-api:jar:1.7.8:compile
+[INFO] +- org.junit.vintage:junit-vintage-engine:jar:4.12.0-RC2:test
+[INFO] |  +- org.junit.platform:junit-platform-engine:jar:1.0.0-RC2:test
+[INFO] |  \- junit:junit:jar:4.12:test
+[INFO] +- org.junit.jupiter:junit-jupiter-api:jar:5.0.0-RC2:test
+[INFO] |  +- org.opentest4j:opentest4j:jar:1.0.0-RC1:test
+[INFO] |  \- org.junit.platform:junit-platform-commons:jar:1.0.0-RC2:test
+[INFO] +- org.mockito:mockito-core:jar:2.7.4:test
+[INFO] |  +- net.bytebuddy:byte-buddy:jar:1.6.5:test
+[INFO] |  +- net.bytebuddy:byte-buddy-agent:jar:1.6.5:test
+[INFO] |  \- org.objenesis:objenesis:jar:2.5:test
+[INFO] +- org.assertj:assertj-core:jar:3.8.0:test
+[INFO] \- com.jayway.restassured:rest-assured:jar:2.9.0:test
+[INFO]    +- org.codehaus.groovy:groovy:jar:2.4.4:test
+[INFO]    +- org.codehaus.groovy:groovy-xml:jar:2.4.4:test
+[INFO]    +- org.apache.httpcomponents:httpclient:jar:4.5.1:test
+[INFO]    |  +- org.apache.httpcomponents:httpcore:jar:4.4.3:test
+[INFO]    |  +- commons-logging:commons-logging:jar:1.2:test
+[INFO]    |  \- commons-codec:commons-codec:jar:1.9:test
+[INFO]    +- org.apache.httpcomponents:httpmime:jar:4.5.1:test
+[INFO]    +- org.hamcrest:hamcrest-core:jar:1.3:test
+[INFO]    +- org.hamcrest:hamcrest-library:jar:1.3:test
+[INFO]    +- org.ccil.cowan.tagsoup:tagsoup:jar:1.2.1:test
+[INFO]    +- com.jayway.restassured:json-path:jar:2.9.0:test
+[INFO]    |  +- org.codehaus.groovy:groovy-json:jar:2.4.4:test
+[INFO]    |  \- com.jayway.restassured:rest-assured-common:jar:2.9.0:test
+[INFO]    \- com.jayway.restassured:xml-path:jar:2.9.0:test
+[INFO]       \- org.apache.commons:commons-lang3:jar:3.5:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building crabzilla-vertx-web 0.0.6-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.2:tree (default-cli) @ crabzilla-vertx-web ---
+[INFO] io.github.crabzilla:crabzilla-vertx-web:jar:0.0.6-SNAPSHOT
+[INFO] +- org.projectlombok:lombok:jar:1.16.18:provided
+[INFO] +- io.github.crabzilla:crabzilla-vertx:jar:0.0.6-SNAPSHOT:compile
+[INFO] |  +- io.github.crabzilla:crabzilla-core:jar:0.0.6-SNAPSHOT:compile
+[INFO] |  +- net.sf.jopt-simple:jopt-simple:jar:5.0.4:compile
+[INFO] |  +- com.fasterxml.jackson.module:jackson-module-parameter-names:jar:2.9.0.pr4:compile
+[INFO] |  |  +- com.fasterxml.jackson.core:jackson-core:jar:2.9.0.pr4:compile
+[INFO] |  |  \- com.fasterxml.jackson.core:jackson-databind:jar:2.9.0.pr4:compile
+[INFO] |  +- com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.9.0.pr4:compile
+[INFO] |  +- com.fasterxml.jackson.core:jackson-annotations:jar:2.9.0.pr4:compile
+[INFO] |  +- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.9.0.pr4:compile
+[INFO] |  +- com.zaxxer:HikariCP:jar:2.6.1:compile
+[INFO] |  +- org.jdbi:jdbi3:jar:3.0.0-beta2:compile
+[INFO] |  |  +- org.antlr:antlr-runtime:jar:3.4:compile
+[INFO] |  |  |  +- org.antlr:stringtemplate:jar:3.2.1:compile
+[INFO] |  |  |  \- antlr:antlr:jar:2.7.7:compile
+[INFO] |  |  \- com.google.code.findbugs:annotations:jar:3.0.1:compile
+[INFO] |  |     +- net.jcip:jcip-annotations:jar:1.0:compile
+[INFO] |  |     \- com.google.code.findbugs:jsr305:jar:3.0.1:compile
+[INFO] |  +- org.jdbi:jdbi3-sqlobject:jar:3.0.0-beta2:compile
+[INFO] |  +- net.jodah:expiringmap:jar:0.5.8:compile
+[INFO] |  +- io.vertx:vertx-core:jar:3.5.0:compile
+[INFO] |  |  +- io.netty:netty-common:jar:4.1.15.Final:compile
+[INFO] |  |  +- io.netty:netty-buffer:jar:4.1.15.Final:compile
+[INFO] |  |  +- io.netty:netty-transport:jar:4.1.15.Final:compile
+[INFO] |  |  +- io.netty:netty-handler:jar:4.1.15.Final:compile
+[INFO] |  |  |  \- io.netty:netty-codec:jar:4.1.15.Final:compile
+[INFO] |  |  +- io.netty:netty-handler-proxy:jar:4.1.15.Final:compile
+[INFO] |  |  |  \- io.netty:netty-codec-socks:jar:4.1.15.Final:compile
+[INFO] |  |  +- io.netty:netty-codec-http:jar:4.1.15.Final:compile
+[INFO] |  |  +- io.netty:netty-codec-http2:jar:4.1.15.Final:compile
+[INFO] |  |  +- io.netty:netty-resolver:jar:4.1.15.Final:compile
+[INFO] |  |  \- io.netty:netty-resolver-dns:jar:4.1.15.Final:compile
+[INFO] |  |     \- io.netty:netty-codec-dns:jar:4.1.15.Final:compile
+[INFO] |  +- io.vertx:vertx-config:jar:3.5.0:compile
+[INFO] |  +- io.vertx:vertx-circuit-breaker:jar:3.5.0:compile
+[INFO] |  |  \- org.hdrhistogram:HdrHistogram:jar:2.1.9:compile
+[INFO] |  \- io.vertx:vertx-jdbc-client:jar:3.5.0:compile
+[INFO] |     +- io.vertx:vertx-sql-common:jar:3.5.0:compile
+[INFO] |     \- com.mchange:c3p0:jar:0.9.5.2:compile
+[INFO] |        \- com.mchange:mchange-commons-java:jar:0.2.11:compile
+[INFO] +- io.vertx:vertx-web:jar:3.5.0:compile
+[INFO] |  +- io.vertx:vertx-auth-common:jar:3.5.0:compile
+[INFO] |  \- io.vertx:vertx-bridge-common:jar:3.5.0:compile
+[INFO] +- io.vertx:vertx-unit:jar:3.5.0:test
+[INFO] +- mysql:mysql-connector-java:jar:6.0.6:test
+[INFO] +- org.slf4j:slf4j-api:jar:1.7.8:compile
+[INFO] +- org.junit.vintage:junit-vintage-engine:jar:4.12.0-RC2:test
+[INFO] |  +- org.junit.platform:junit-platform-engine:jar:1.0.0-RC2:test
+[INFO] |  \- junit:junit:jar:4.12:test
+[INFO] +- org.junit.jupiter:junit-jupiter-api:jar:5.0.0-RC2:test
+[INFO] |  +- org.opentest4j:opentest4j:jar:1.0.0-RC1:test
+[INFO] |  \- org.junit.platform:junit-platform-commons:jar:1.0.0-RC2:test
+[INFO] +- org.mockito:mockito-core:jar:2.7.4:test
+[INFO] |  +- net.bytebuddy:byte-buddy:jar:1.6.5:test
+[INFO] |  +- net.bytebuddy:byte-buddy-agent:jar:1.6.5:test
+[INFO] |  \- org.objenesis:objenesis:jar:2.5:test
+[INFO] +- org.assertj:assertj-core:jar:3.8.0:test
+[INFO] \- com.jayway.restassured:rest-assured:jar:2.9.0:test
+[INFO]    +- org.codehaus.groovy:groovy:jar:2.4.4:test
+[INFO]    +- org.codehaus.groovy:groovy-xml:jar:2.4.4:test
+[INFO]    +- org.apache.httpcomponents:httpclient:jar:4.5.1:test
+[INFO]    |  +- org.apache.httpcomponents:httpcore:jar:4.4.3:test
+[INFO]    |  +- commons-logging:commons-logging:jar:1.2:test
+[INFO]    |  \- commons-codec:commons-codec:jar:1.9:test
+[INFO]    +- org.apache.httpcomponents:httpmime:jar:4.5.1:test
+[INFO]    +- org.hamcrest:hamcrest-core:jar:1.3:test
+[INFO]    +- org.hamcrest:hamcrest-library:jar:1.3:test
+[INFO]    +- org.ccil.cowan.tagsoup:tagsoup:jar:1.2.1:test
+[INFO]    +- com.jayway.restassured:json-path:jar:2.9.0:test
+[INFO]    |  +- org.codehaus.groovy:groovy-json:jar:2.4.4:test
+[INFO]    |  \- com.jayway.restassured:rest-assured-common:jar:2.9.0:test
+[INFO]    \- com.jayway.restassured:xml-path:jar:2.9.0:test
+[INFO]       \- org.apache.commons:commons-lang3:jar:3.5:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building crabzilla-kotlin-example1-service 0.0.6-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.2:tree (default-cli) @ crabzilla-kotlin-example1-service ---
+[INFO] io.github.crabzilla:crabzilla-kotlin-example1-service:jar:0.0.6-SNAPSHOT
+[INFO] +- io.github.crabzilla:crabzilla-kotlin-example1-database:jar:0.0.6-SNAPSHOT:compile
+[INFO] |  +- io.github.crabzilla:crabzilla-kotlin-example1-core:jar:0.0.6-SNAPSHOT:compile
+[INFO] |  |  \- io.github.crabzilla:crabzilla-core:jar:0.0.6-SNAPSHOT:compile
+[INFO] |  +- org.jdbi:jdbi3:jar:3.0.0-beta2:compile
+[INFO] |  |  +- org.antlr:antlr-runtime:jar:3.4:compile
+[INFO] |  |  |  +- org.antlr:stringtemplate:jar:3.2.1:compile
+[INFO] |  |  |  \- antlr:antlr:jar:2.7.7:compile
+[INFO] |  |  +- com.google.code.findbugs:annotations:jar:3.0.1:compile
+[INFO] |  |  |  \- net.jcip:jcip-annotations:jar:1.0:compile
+[INFO] |  |  \- net.jodah:expiringmap:jar:0.5.8:compile (version managed from 0.5.6)
+[INFO] |  +- org.jdbi:jdbi3-sqlobject:jar:3.0.0-beta2:compile
+[INFO] |  +- mysql:mysql-connector-java:jar:6.0.6:compile
+[INFO] |  +- org.jdbi:jdbi3-kotlin:jar:3.0.0-beta2:compile
+[INFO] |  |  \- org.jetbrains:annotations:jar:13.0:compile
+[INFO] |  \- org.jdbi:jdbi3-kotlin-sqlobject:jar:3.0.0-beta2:compile
+[INFO] +- io.github.crabzilla:crabzilla-vertx-web:jar:0.0.6-SNAPSHOT:compile
+[INFO] |  +- io.github.crabzilla:crabzilla-vertx:jar:0.0.6-SNAPSHOT:compile
+[INFO] |  |  +- net.sf.jopt-simple:jopt-simple:jar:5.0.4:compile
+[INFO] |  |  +- com.zaxxer:HikariCP:jar:2.6.1:compile
+[INFO] |  |  +- io.vertx:vertx-core:jar:3.5.0:compile
+[INFO] |  |  |  +- io.netty:netty-common:jar:4.1.15.Final:compile
+[INFO] |  |  |  +- io.netty:netty-buffer:jar:4.1.15.Final:compile
+[INFO] |  |  |  +- io.netty:netty-transport:jar:4.1.15.Final:compile
+[INFO] |  |  |  +- io.netty:netty-handler:jar:4.1.15.Final:compile
+[INFO] |  |  |  |  \- io.netty:netty-codec:jar:4.1.15.Final:compile
+[INFO] |  |  |  +- io.netty:netty-handler-proxy:jar:4.1.15.Final:compile
+[INFO] |  |  |  |  \- io.netty:netty-codec-socks:jar:4.1.15.Final:compile
+[INFO] |  |  |  +- io.netty:netty-codec-http:jar:4.1.15.Final:compile
+[INFO] |  |  |  +- io.netty:netty-codec-http2:jar:4.1.15.Final:compile
+[INFO] |  |  |  +- io.netty:netty-resolver:jar:4.1.15.Final:compile
+[INFO] |  |  |  \- io.netty:netty-resolver-dns:jar:4.1.15.Final:compile
+[INFO] |  |  |     \- io.netty:netty-codec-dns:jar:4.1.15.Final:compile
+[INFO] |  |  +- io.vertx:vertx-config:jar:3.5.0:compile
+[INFO] |  |  +- io.vertx:vertx-circuit-breaker:jar:3.5.0:compile
+[INFO] |  |  |  \- org.hdrhistogram:HdrHistogram:jar:2.1.9:compile
+[INFO] |  |  \- io.vertx:vertx-jdbc-client:jar:3.5.0:compile
+[INFO] |  |     +- io.vertx:vertx-sql-common:jar:3.5.0:compile
+[INFO] |  |     \- com.mchange:c3p0:jar:0.9.5.2:compile
+[INFO] |  |        \- com.mchange:mchange-commons-java:jar:0.2.11:compile
+[INFO] |  \- io.vertx:vertx-web:jar:3.5.0:compile
+[INFO] |     +- io.vertx:vertx-auth-common:jar:3.5.0:compile
+[INFO] |     \- io.vertx:vertx-bridge-common:jar:3.5.0:compile
+[INFO] +- com.fasterxml.jackson.module:jackson-module-parameter-names:jar:2.9.0.pr4:compile
+[INFO] |  +- com.fasterxml.jackson.core:jackson-core:jar:2.9.0.pr4:compile
+[INFO] |  \- com.fasterxml.jackson.core:jackson-databind:jar:2.9.0.pr4:compile
+[INFO] +- com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.9.0.pr4:compile
+[INFO] +- com.fasterxml.jackson.core:jackson-annotations:jar:2.9.0.pr4:compile
+[INFO] +- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.9.0.pr4:compile
+[INFO] +- com.fasterxml.jackson.module:jackson-module-kotlin:jar:2.9.0.pr4:compile
+[INFO] |  \- org.jetbrains.kotlin:kotlin-reflect:jar:1.2.10:compile
+[INFO] +- ch.qos.logback:logback-classic:jar:1.2.3:compile
+[INFO] +- ch.qos.logback:logback-core:jar:1.2.3:compile
+[INFO] +- io.vertx:vertx-unit:jar:3.5.0:test
+[INFO] +- com.google.dagger:dagger:jar:2.14.1:compile
+[INFO] |  \- javax.inject:javax.inject:jar:1:compile
+[INFO] +- com.google.dagger:dagger-compiler:jar:2.14.1:compile
+[INFO] |  +- com.google.dagger:dagger-producers:jar:2.14.1:compile
+[INFO] |  |  \- org.checkerframework:checker-compat-qual:jar:2.3.0:compile
+[INFO] |  +- com.google.dagger:dagger-spi:jar:2.14.1:compile
+[INFO] |  +- com.google.googlejavaformat:google-java-format:jar:1.4:compile
+[INFO] |  |  \- com.google.errorprone:javac-shaded:jar:9-dev-r4023-3:compile
+[INFO] |  +- com.google.guava:guava:jar:23.3-jre:compile
+[INFO] |  |  +- com.google.code.findbugs:jsr305:jar:1.3.9:compile
+[INFO] |  |  +- com.google.errorprone:error_prone_annotations:jar:2.0.18:compile
+[INFO] |  |  +- com.google.j2objc:j2objc-annotations:jar:1.1:compile
+[INFO] |  |  \- org.codehaus.mojo:animal-sniffer-annotations:jar:1.14:compile
+[INFO] |  +- com.squareup:javapoet:jar:1.8.0:compile
+[INFO] |  \- javax.annotation:jsr250-api:jar:1.0:compile
+[INFO] +- org.jetbrains.kotlin:kotlin-stdlib-jdk8:jar:1.2.10:compile
+[INFO] |  +- org.jetbrains.kotlin:kotlin-stdlib:jar:1.2.10:compile
+[INFO] |  \- org.jetbrains.kotlin:kotlin-stdlib-jdk7:jar:1.2.10:compile
+[INFO] +- io.github.microutils:kotlin-logging:jar:1.4.6:compile
+[INFO] +- org.jetbrains.kotlin:kotlin-test:jar:1.2.10:test
+[INFO] +- org.slf4j:slf4j-api:jar:1.7.8:compile
+[INFO] +- org.junit.vintage:junit-vintage-engine:jar:4.12.0-RC2:test
+[INFO] |  +- org.junit.platform:junit-platform-engine:jar:1.0.0-RC2:test
+[INFO] |  \- junit:junit:jar:4.12:test
+[INFO] +- org.junit.jupiter:junit-jupiter-api:jar:5.0.0-RC2:test
+[INFO] |  +- org.opentest4j:opentest4j:jar:1.0.0-RC1:test
+[INFO] |  \- org.junit.platform:junit-platform-commons:jar:1.0.0-RC2:test
+[INFO] +- org.mockito:mockito-core:jar:2.7.4:test
+[INFO] |  +- net.bytebuddy:byte-buddy:jar:1.6.5:test
+[INFO] |  +- net.bytebuddy:byte-buddy-agent:jar:1.6.5:test
+[INFO] |  \- org.objenesis:objenesis:jar:2.5:test
+[INFO] +- org.assertj:assertj-core:jar:3.8.0:test
+[INFO] \- com.jayway.restassured:rest-assured:jar:2.9.0:test
+[INFO]    +- org.codehaus.groovy:groovy:jar:2.4.4:test
+[INFO]    +- org.codehaus.groovy:groovy-xml:jar:2.4.4:test
+[INFO]    +- org.apache.httpcomponents:httpclient:jar:4.5.1:test
+[INFO]    |  +- org.apache.httpcomponents:httpcore:jar:4.4.3:test
+[INFO]    |  +- commons-logging:commons-logging:jar:1.2:test
+[INFO]    |  \- commons-codec:commons-codec:jar:1.9:test
+[INFO]    +- org.apache.httpcomponents:httpmime:jar:4.5.1:test
+[INFO]    +- org.hamcrest:hamcrest-core:jar:1.3:test
+[INFO]    +- org.hamcrest:hamcrest-library:jar:1.3:test
+[INFO]    +- org.ccil.cowan.tagsoup:tagsoup:jar:1.2.1:test
+[INFO]    +- com.jayway.restassured:json-path:jar:2.9.0:test
+[INFO]    |  +- org.codehaus.groovy:groovy-json:jar:2.4.4:test
+[INFO]    |  \- com.jayway.restassured:rest-assured-common:jar:2.9.0:test
+[INFO]    \- com.jayway.restassured:xml-path:jar:2.9.0:test
+[INFO]       \- org.apache.commons:commons-lang3:jar:3.5:test
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary:
+[INFO] 
+[INFO] Crabzilla .......................................... SUCCESS [  1.075 s]
+[INFO] crabzilla-core ..................................... SUCCESS [  0.052 s]
+[INFO] crabzilla-kotlin-example1 .......................... SUCCESS [  0.158 s]
+[INFO] crabzilla-kotlin-example1-core ..................... SUCCESS [  0.107 s]
+[INFO] crabzilla-kotlin-example1-database ................. SUCCESS [  0.213 s]
+[INFO] crabzilla-vertx .................................... SUCCESS [  0.476 s]
+[INFO] crabzilla-vertx-web ................................ SUCCESS [  0.076 s]
+[INFO] crabzilla-kotlin-example1-service .................. SUCCESS [  0.070 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 2.536 s
+[INFO] Finished at: 2017-12-23T01:32:47-02:00
+[INFO] Final Memory: 18M/428M
+[INFO] ------------------------------------------------------------------------
