@@ -14,8 +14,6 @@
         <kotlin.version>1.2.10</kotlin.version>
         <lombok.version>1.16.18</lombok.version>
         <vertx.version>3.5.0</vertx.version>
-        <vavr.version>0.9.0</vavr.version>
-        <guice.version>4.1.0</guice.version>
         <expiringmap.version>0.5.8</expiringmap.version>
         <sl4j.version>1.7.8</sl4j.version>
         <logback.version>1.2.3</logback.version>
