@@ -33,7 +33,8 @@ install:
   - docker ps
   - sleep 30
   - docker ps
-  - mvn clean verify -P all-tests
+#  - mvn clean verify -P all-tests
+  - mvn clean install
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
