@@ -80,17 +80,7 @@ fun verticleDeploymentOrder(className: String?) : Int {
   }
 }
 
-fun Example1Component.deploy(vertx: Vertx) {
-  this.verticles()
-    .entries
-    .sortedWith(compareBy({ verticleDeploymentOrder(it.key) }))
-    .forEach {
-      vertx.deployVerticle(it.value) { event ->
-        if (!event.succeeded()) Example1Launcher.log.error("Error deploying verticle", event.cause()) }
-    }
-}
-
-private fun justForTest(vertx: Vertx) {
+fun justForTest(vertx: Vertx) {
 
   val customerId = CustomerId(UUID.randomUUID().toString())
   //    val customerId = new CustomerId("customer123");
