@@ -1,10 +1,10 @@
 package io.github.crabzilla.vertx.entity;
 
 import io.github.crabzilla.core.entity.*;
+import io.github.crabzilla.core.example1.customer.Customer;
+import io.github.crabzilla.core.example1.services.SampleInternalService;
 import io.github.crabzilla.core.exceptions.DbConcurrencyException;
 import io.github.crabzilla.core.exceptions.UnknownCommandException;
-import io.github.crabzilla.example1.customer.Customer;
-import io.github.crabzilla.example1.services.SampleInternalService;
 import io.github.crabzilla.vertx.helpers.StringHelper;
 import io.github.crabzilla.vertx.helpers.VertxFactory;
 import io.vertx.circuitbreaker.CircuitBreaker;
@@ -35,7 +35,7 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static io.github.crabzilla.example1.customer.CustomerData.*;
+import static io.github.crabzilla.core.example1.customer.CustomerData.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -64,7 +64,7 @@ public class EntityCommandHandlerVerticleTest {
     }
   };
 
-  final Customer seedValue =  new Customer(service, null, null, false,null);
+  final Customer seedValue =  new Customer(service, null, null, false, null);
 
   @Mock
   Function<EntityCommand, List<String>> validatorFn;
@@ -111,7 +111,7 @@ public class EntityCommandHandlerVerticleTest {
     val customerId = new CustomerId("customer#1");
     val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     val initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
-    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
+    val expectedEvent = new CustomerCreated(customerId, "customer");
     val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
@@ -228,7 +228,7 @@ public class EntityCommandHandlerVerticleTest {
     val customerId = new CustomerId("customer#1");
     val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     val initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
-    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
+    val expectedEvent = new CustomerCreated(customerId, "customer");
     val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
     val expectedException = new Throwable("Expected");
 
@@ -288,7 +288,7 @@ public class EntityCommandHandlerVerticleTest {
     val customerId = new CustomerId("customer#1");
     val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     val initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
-    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
+    val expectedEvent = new CustomerCreated(customerId, "customer");
     val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());
@@ -349,7 +349,7 @@ public class EntityCommandHandlerVerticleTest {
     val customerId = new CustomerId("customer#1");
     val createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     val initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
-    val expectedEvent = new CustomerCreated(createCustomerCmd.getTargetId(), "customer");
+    val expectedEvent = new CustomerCreated(customerId, "customer");
     val expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
     when(validatorFn.apply(eq(createCustomerCmd))).thenReturn(emptyList());

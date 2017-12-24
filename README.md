@@ -6,8 +6,6 @@
 # crabzilla
 
 * [Overview](https://crabzilla.github.io/crabzilla/docs/overview.html)
-* [example-manual](https://crabzilla.github.io/crabzilla/docs/example-manual.html)
-* [vavr-example-manual](https://crabzilla.github.io/crabzilla/docs/vavr-example-manual.html)
 * [kotlin-example-manual](https://crabzilla.github.io/crabzilla/docs/kotlin-example-manual.html)
 * [Architecture decision records](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
 
@@ -19,7 +17,7 @@ Your core domain module must import:
 <dependency>
   <groupId>io.github.crabzilla</groupId>
   <artifactId>crabzilla-core</artifactId>
-  <version>0.0.5</version>
+  <version>0.0.6-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -29,7 +27,7 @@ and your service module must import:
 <dependency>
   <groupId>io.github.crabzilla</groupId>
   <artifactId>crabzilla-vertx</artifactId>
-  <version>0.0.5</version>
+  <version>0.0.6-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -62,10 +60,10 @@ cd crabzilla
 docker-compose up
 ```
 
-3. Optionally, recreate the database schema using [Flyway](https://flywaydb.org/):
+3. Optionally, apply a new migration to the database schema using [Flyway](https://flywaydb.org/):
 
 ```bash
-cd crabzilla-example1/crabzilla-example1-database
+cd crabzilla-kotlin-example1/crabzilla-kotlin-example1-database
 mvn compile flyway:migrate
 ```
 
@@ -74,14 +72,14 @@ mvn compile flyway:migrate
 ```bash
 # go back to crabzilla root
 cd ../..
- mvn clean install 
+mvn clean install
 ```
 
 5. Now you finally can run the current [example](crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Launcher.java):
 
 ```bash
-cd crabzilla-example1/crabzilla-example1-service
-java -jar target/crabzilla-example1-service-0.0.5-fat.jar -conf target/classes/conf/config.properties
+cd crabzilla-kotlin-example1/crabzilla-kotlin-example1-service
+java -jar target/crabzilla-kotlin-example1-service-0.0.6-SNAPSHOT-fat.jar -conf target/classes/conf/config.properties
 
 ```
 

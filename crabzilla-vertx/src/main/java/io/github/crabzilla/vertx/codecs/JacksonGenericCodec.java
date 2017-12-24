@@ -5,14 +5,11 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 import lombok.SneakyThrows;
 
-import javax.inject.Inject;
-
 public class JacksonGenericCodec<T> implements MessageCodec<T, T> {
 
   final ObjectMapper mapper;
   final Class<?> clazz;
 
-  @Inject
   public JacksonGenericCodec(ObjectMapper mapper, Class<?> clazz) {
     this.mapper = mapper;
     this.clazz = clazz;

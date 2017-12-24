@@ -16,11 +16,11 @@ import io.github.crabzilla.core.entity.Version
 import io.github.crabzilla.example1.customer.*
 import io.github.crabzilla.vertx.helpers.StringHelper.aggregateId
 import io.vertx.core.json.Json
-import mu.KotlinLogging
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.util.*
 
@@ -35,6 +35,8 @@ class Example1AcceptanceIT {
   fun configureRestAssured() {
     RestAssured.baseURI = "http://localhost"
     RestAssured.port = Integer.getInteger("http.port", 8080)!!
+//    RestAssured.port = 8080
+
     log.info("----> RestAssured.port=" + RestAssured.port)
     mapper.registerModule(ParameterNamesModule())
             .registerModule(Jdk8Module())
@@ -170,8 +172,7 @@ class Example1AcceptanceIT {
 
   companion object {
 
-    val log = KotlinLogging.logger {}
-
+    val log = LoggerFactory.getLogger(Example1AcceptanceIT::class.java.simpleName)
   }
 
 }

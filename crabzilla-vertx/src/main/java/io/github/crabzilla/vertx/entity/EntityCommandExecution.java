@@ -21,8 +21,7 @@ public class EntityCommandExecution implements Serializable {
     HANDLING_ERROR,
     CONCURRENCY_ERROR,
     UNKNOWN_COMMAND,
-    SUCCESS,
-    ALREADY_PROCESSED // TODO
+    SUCCESS
   }
 
   private RESULT result;

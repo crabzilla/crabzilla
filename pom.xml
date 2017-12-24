@@ -11,11 +11,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <kotlin.version>1.1.50</kotlin.version>
+        <kotlin.version>1.2.10</kotlin.version>
         <lombok.version>1.16.18</lombok.version>
         <vertx.version>3.5.0</vertx.version>
-        <vavr.version>0.9.0</vavr.version>
-        <guice.version>4.1.0</guice.version>
         <expiringmap.version>0.5.8</expiringmap.version>
         <sl4j.version>1.7.8</sl4j.version>
         <logback.version>1.2.3</logback.version>
@@ -82,25 +80,17 @@
     <modules>
 
         <module>crabzilla-core</module>
-        <module>crabzilla-example1</module>
-        <module>crabzilla-vavr-example1</module>
         <module>crabzilla-kotlin-example1</module>
         <module>crabzilla-vertx</module>
+        <module>crabzilla-vertx-web</module>
 
     </modules>
 
     <dependencies>
 
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
-            <version>1</version>
         </dependency>
 
         <dependency>
@@ -156,60 +146,24 @@
 
             <dependency>
                 <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-example1-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-example1-database</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-vertx-example1-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-vertx-example1-database</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-kotlin-example1-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-kotlin-example1-database</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-vertx-stack</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.crabzilla</groupId>
                 <artifactId>crabzilla-vertx</artifactId>
                 <version>${project.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>io.github.crabzilla</groupId>
+                <artifactId>crabzilla-vertx-web</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
 
             <!-- kotlin -->
 
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-stdlib</artifactId>
+                <artifactId>kotlin-stdlib-jdk8</artifactId>
                 <version>${kotlin.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-reflect</artifactId>
@@ -269,18 +223,6 @@
                 <groupId>net.jodah</groupId>
                 <artifactId>expiringmap</artifactId>
                 <version>${expiringmap.version}</version>
-            </dependency>
-
-            <!-- config/ guice -->
-            <dependency>
-                <groupId>com.google.inject</groupId>
-                <artifactId>guice</artifactId>
-                <version>${guice.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.inject.extensions</groupId>
-                <artifactId>guice-multibindings</artifactId>
-                <version>${guice.version}</version>
             </dependency>
 
             <!-- logging -->
@@ -437,8 +379,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.7.0</version>
                 <configuration>
+                    <useIncrementalCompilation>false</useIncrementalCompilation>
                     <compilerArgument>-Xlint:all</compilerArgument>
                     <showWarnings>true</showWarnings>
                     <showDeprecation>true</showDeprecation>
@@ -505,38 +448,6 @@
                     </excludes>
                 </configuration>
             </plugin>
-
-            <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-failsafe-plugin</artifactId>-->
-                <!--<version>2.19.1</version>-->
-                <!--<executions>-->
-                    <!--&lt;!&ndash;-->
-                        <!--Ensures that both integration-test and verify goals of the Failsafe Maven-->
-                        <!--plugin are executed.-->
-                    <!--&ndash;&gt;-->
-                    <!--<execution>-->
-                        <!--<id>integration-tests</id>-->
-                        <!--<goals>-->
-                            <!--<goal>integration-test</goal>-->
-                            <!--<goal>verify</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--&lt;!&ndash; Sets the VM argument line used when integration tests are run. &ndash;&gt;-->
-                            <!--&lt;!&ndash;<argLine>${failsafeArgLine}</argLine>&ndash;&gt;-->
-
-                            <!--&lt;!&ndash;-->
-                                <!--Skips integration tests if the value of skip.integration.tests property-->
-                                <!--is true-->
-                            <!--&ndash;&gt;-->
-                            <!--<skipTests>${skip.integration.tests}</skipTests>-->
-                            <!--<systemProperties>-->
-                                <!--<http.port>${http.port}</http.port>-->
-                            <!--</systemProperties>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-            <!--</plugin>-->
 
             <plugin>
                 <groupId>org.jacoco</groupId>

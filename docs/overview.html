@@ -468,9 +468,10 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>crabzilla             → Project root
- └ crabzilla-core     → The core abstractions: Command, DomainEvent, Aggregate, Snapshot, etc
- └ crabzilla-vertx    → The application engine: runs your domain model</pre>
+<pre>crabzilla               → Project root
+ └ crabzilla-core       → The core abstractions: Command, DomainEvent, Aggregate, Snapshot, etc
+ └ crabzilla-vertx      → Crabzilla engine using Vert.x EventBus and JDBC
+ └ crabzilla-vertx-web  → Crabzilla engine using Vert.x Web</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -478,10 +479,10 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>example1             → Project root
- └ example1-core     → Your domain code. Services as interfaces. Almost zero dependencies.
- └ example1-database → Flyway db setup w/ both read and write models. DAOs implementations.
- └ example1-service  → The application: wiring, configuration and services implementations.</pre>
+<pre>kotlin-example1             → Project root
+ └ example1-kotlin-core     → Your domain code. Services as interfaces. Almost zero dependencies.
+ └ example1-kotlin-database → Flyway db setup w/ both read and write models. DAOs implementations.
+ └ example1-kotlin-service  → The application: wiring, configuration and services implementations.</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -501,7 +502,7 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-08-21 01:30:56 BRT
+Last updated 2017-12-23 23:21:46 BRST
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

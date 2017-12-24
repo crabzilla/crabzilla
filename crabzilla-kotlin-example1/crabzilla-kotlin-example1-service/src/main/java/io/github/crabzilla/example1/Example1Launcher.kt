@@ -1,14 +1,9 @@
 package io.github.crabzilla.example1
 
-import com.google.inject.Guice
-import com.google.inject.Inject
 import io.github.crabzilla.example1.customer.*
 import io.github.crabzilla.vertx.entity.EntityCommandExecution
-import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
-import io.github.crabzilla.vertx.entity.EntityCommandHttpRpcVerticle
 import io.github.crabzilla.vertx.helpers.ConfigHelper.cfgOptions
-import io.github.crabzilla.vertx.helpers.StringHelper
-import io.github.crabzilla.vertx.projection.EventsProjectionVerticle
+import io.github.crabzilla.vertx.helpers.StringHelper.commandHandlerId
 import io.vertx.config.ConfigRetriever
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
@@ -16,25 +11,14 @@ import io.vertx.core.logging.LoggerFactory
 import io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME
 import io.vertx.core.logging.SLF4JLogDelegateFactory
 import joptsimple.OptionParser
-import mu.KotlinLogging
 import java.lang.System.setProperty
 import java.util.*
 
-
 class Example1Launcher {
-
-  @Inject
-  internal lateinit var projectionVerticle: EventsProjectionVerticle<CustomerSummaryDao>
-
-  @Inject
-  internal lateinit var httpRpcVerticle: EntityCommandHttpRpcVerticle<Customer>
-
-  @Inject
-  internal lateinit var cmdVerticle: EntityCommandHandlerVerticle<Customer>
 
   companion object {
 
-    val log = KotlinLogging.logger {}
+    val log = org.slf4j.LoggerFactory.getLogger(Example1Launcher::class.java.simpleName)
 
     @Throws(Exception::class)
     @JvmStatic
@@ -62,66 +46,76 @@ class Example1Launcher {
         val config = ar.result()
         log.info("config = {}", config.encodePrettily())
 
-        val launcher = Example1Launcher()
-        val injector = Guice.createInjector(Example1Module(vertx, config), CustomerModule())
+        val app = DaggerExample1Component.builder()
+                .crabzillaModule(CrabzillaModule(vertx, config))
+                .example1Module(Example1Module(vertx, config))
+                .customerModule(CustomerModule(vertx, config))
+                .build()
 
-        injector.injectMembers(launcher)
-
-        vertx.deployVerticle(launcher.projectionVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
-
-        vertx.deployVerticle(launcher.cmdVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
-
-        vertx.deployVerticle(launcher.httpRpcVerticle) { event -> log.debug("Deployed ? {}", event.succeeded()) }
-
-        // a test
-         launcher.justForTest(vertx);
-
-      }
-
-    }
-  }
-
-
-  private fun justForTest(vertx: Vertx) {
-
-    val customerId = CustomerId(UUID.randomUUID().toString())
-    //    val customerId = new CustomerId("customer123");
-    val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "a good customer")
-    val options = DeliveryOptions().setCodecName("EntityCommand")
-
-    // create customer command
-    vertx.eventBus().send<EntityCommandExecution>(StringHelper.commandHandlerId(Customer::class.java), createCustomerCmd, options) { asyncResult ->
-
-      log.info("Successful create customer test? {}", asyncResult.succeeded())
-
-      if (asyncResult.succeeded()) {
-
-        log.info("Result: {}", asyncResult.result().body())
-
-        val activateCustomerCmd = ActivateCustomer(UUID.randomUUID(), createCustomerCmd._targetId, "because I want it")
-
-        // activate customer command
-        vertx.eventBus().send<EntityCommandExecution>(StringHelper.commandHandlerId(Customer::class.java), activateCustomerCmd, options) { asyncResult2 ->
-
-          log.info("Successful activate customer test? {}", asyncResult2.succeeded())
-
-          if (asyncResult2.succeeded()) {
-            log.info("Result: {}", asyncResult2.result().body())
-          } else {
-            log.info("Cause: {}", asyncResult2.cause())
-            log.info("Message: {}", asyncResult2.cause().message)
+        app.verticles().entries.sortedWith(compareBy({ verticleDeploymentOrder(it.key) }))
+          .forEach {
+            vertx.deployVerticle(it.value) { event ->
+              if (!event.succeeded()) Example1Launcher.log.error("Error deploying verticle", event.cause()) }
           }
 
-        }
+        // just a test
+        justForTest(vertx)
 
-      } else {
-        log.info("Cause: {}", asyncResult.cause())
-        log.info("Message: {}", asyncResult.cause().message)
       }
 
     }
 
+
   }
 
+}
+
+fun verticleDeploymentOrder(className: String?) : Int {
+  return when(className) {
+    "EventsProjectionVerticle"-> 0
+    "EntityCommandHandlerVerticle"-> 1
+    "EntityCommandRestVerticle" -> 2
+    else -> 10
+  }
+}
+
+fun justForTest(vertx: Vertx) {
+
+  val customerId = CustomerId(UUID.randomUUID().toString())
+  //    val customerId = new CustomerId("customer123");
+  val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "a good customer")
+  val options = DeliveryOptions().setCodecName("EntityCommand")
+
+  // create customer command
+  vertx.eventBus().send<EntityCommandExecution>(commandHandlerId(Customer::class.java), createCustomerCmd, options) { asyncResult ->
+
+    Example1Launcher.log.info("Successful create customer test? {}", asyncResult.succeeded())
+
+    if (asyncResult.succeeded()) {
+
+      Example1Launcher.log.info("Result: {}", asyncResult.result().body())
+
+      val activateCustomerCmd = ActivateCustomer(UUID.randomUUID(), createCustomerCmd._targetId, "because I want it")
+
+      // activate customer command
+      vertx.eventBus().send<EntityCommandExecution>(commandHandlerId(Customer::class.java), activateCustomerCmd, options) { asyncResult2 ->
+
+        Example1Launcher.log.info("Successful activate customer test? {}", asyncResult2.succeeded())
+
+        if (asyncResult2.succeeded()) {
+          Example1Launcher.log.info("Result: {}", asyncResult2.result().body())
+        } else {
+          Example1Launcher.log.info("Cause: {}", asyncResult2.cause())
+          Example1Launcher.log.info("Message: {}", asyncResult2.cause().message)
+        }
+
+      }
+
+    } else {
+      Example1Launcher.log.info("Cause: {}", asyncResult.cause())
+      Example1Launcher.log.info("Message: {}", asyncResult.cause().message)
+    }
+
+  }
 
 }

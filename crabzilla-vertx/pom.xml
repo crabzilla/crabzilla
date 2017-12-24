@@ -14,9 +14,16 @@
     <dependencies>
 
         <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.github.crabzilla</groupId>
             <artifactId>crabzilla-core</artifactId>
         </dependency>
+
 
         <!-- cmd line arguments parser -->
         <dependency>
@@ -83,10 +90,6 @@
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
             <artifactId>vertx-circuit-breaker</artifactId>
         </dependency>
         <dependency>
@@ -95,10 +98,11 @@
         </dependency>
 
         <!-- test -->
-
         <dependency>
             <groupId>io.github.crabzilla</groupId>
-            <artifactId>crabzilla-example1-core</artifactId>
+            <artifactId>crabzilla-core</artifactId>
+            <version>0.0.6-SNAPSHOT</version>
+            <type>test-jar</type>
             <scope>test</scope>
         </dependency>
 

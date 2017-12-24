@@ -8,7 +8,6 @@ import io.github.crabzilla.core.example1.util.AbstractCommandsHandlerFn;
 import io.github.crabzilla.core.example1.util.AbstractStateTransitionFn;
 import lombok.val;
 
-import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -57,7 +56,6 @@ public class CustomerFunctions {
 
     final StateTransitionsTrackerFactory<Customer> trackerFactory;
 
-    @Inject
     public CommandHandlerFn(StateTransitionsTrackerFactory<Customer> trackerFactory) {
       this.trackerFactory = trackerFactory;
     }

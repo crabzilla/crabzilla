@@ -3,7 +3,7 @@ version: '3.1'
 services:
 
     db:
-        image: mysql:8.0.1
+        image: mysql:5.6.34
         ports:
                - 3306:3306
         environment:

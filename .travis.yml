@@ -25,15 +25,13 @@ cache:
   directories:
   - "$HOME/.m2"
 
-install:
-#  - mvn clean install -DskipTests
-#  - cd ./crabzilla-example1/crabzilla-example1-database
-#  - mvn compile flyway:migrate
-#  - cd ../..
+install: false
+
+script:
   - docker ps
   - sleep 30
   - docker ps
-  - mvn clean verify -P all-tests
+  - mvn clean install -DskipITs=false
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
