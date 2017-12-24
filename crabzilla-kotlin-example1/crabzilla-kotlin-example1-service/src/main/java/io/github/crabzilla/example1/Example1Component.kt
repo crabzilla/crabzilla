@@ -8,7 +8,7 @@ import org.jdbi.v3.core.Jdbi
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = arrayOf(CrabzillaModule::class, Example1Module::class, CustomerModule::class))
+@Component(modules = [(CrabzillaModule::class), (Example1Module::class), (CustomerModule::class)])
 interface Example1Component {
 
   fun verticles() : Map<String, Verticle>

@@ -32,7 +32,7 @@ and your typical *example1* bounded context project will have this structure:
 
  kotlin-example1             → Project root
   └ example1-kotlin-core     → Your domain code. Services as interfaces. Almost zero dependencies.
-  └ example1-kotlin-database → Flyway db setup w/ both read and write models. DAOs implementations.
+  └ example1-kotlin-database → DAOs implementations.
   └ example1-kotlin-service  → The application: wiring, configuration and services implementations.
 
 Load, integration and acceptance tests are against the service module.

@@ -11,7 +11,6 @@ import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
 import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
 import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
 import io.vertx.circuitbreaker.CircuitBreaker
-import io.vertx.circuitbreaker.CircuitBreakerOptions
 import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -41,12 +40,7 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
                                snapshotPromoter: SnapshotPromoter<Customer>,
                                eventRepository: EntityUnitOfWorkRepository): Verticle {
     val mycache: ExpiringMap<String, Snapshot<Customer>> = ExpiringMap.create()
-    val circuitBreaker = CircuitBreaker.create("command-handler-circuit-breaker", vertx,
-            CircuitBreakerOptions()
-                    .setMaxFailures(5) // number SUCCESS failure before opening the circuit
-                    .setTimeout(2000) // consider a failure if the operation does not succeed in time
-                    .setFallbackOnFailure(true) // do we call the fallback on failure
-                    .setResetTimeout(10000)) // time spent in open state before attempting to re-try
+    val circuitBreaker = CircuitBreaker.create("command-handler-circuit-breaker", vertx)
     return EntityCommandHandlerVerticle(Customer::class.java, supplier.get(), cmdHandler, validator, snapshotPromoter,
             eventRepository, mycache, circuitBreaker)
   }

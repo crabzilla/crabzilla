@@ -27,7 +27,7 @@ public class EventsProjectionVerticle<D> extends AbstractVerticle {
   }
 
   @Override
-  public void start() throws Exception {
+  public void start() {
     vertx.eventBus().consumer(eventsHandlerId("example1"), msgHandler());
   }
 
