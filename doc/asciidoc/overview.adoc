@@ -23,16 +23,17 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 
 Crabzilla has 2 modules:
 
- crabzilla             → Project root
-  └ crabzilla-core     → The core abstractions: Command, DomainEvent, Aggregate, Snapshot, etc
-  └ crabzilla-vertx    → The application engine: runs your domain model
+ crabzilla               → Project root
+  └ crabzilla-core       → Command, DomainEvent, Aggregate, Snapshot, etc
+  └ crabzilla-vertx      → Crabzilla engine using Vert.x EventBus and JDBC
+  └ crabzilla-vertx-web  → Crabzilla engine using Vert.x Web
 
 and your typical *example1* bounded context project will have this structure:
 
- example1             → Project root
-  └ example1-core     → Your domain code. Services as interfaces. Almost zero dependencies.
-  └ example1-database → Flyway db setup w/ both read and write models. DAOs implementations.
-  └ example1-service  → The application: wiring, configuration and services implementations.
+ kotlin-example1             → Project root
+  └ example1-kotlin-core     → Your domain code. Services as interfaces. Almost zero dependencies.
+  └ example1-kotlin-database → Flyway db setup w/ both read and write models. DAOs implementations.
+  └ example1-kotlin-service  → The application: wiring, configuration and services implementations.
 
 Load, integration and acceptance tests are against the service module.
 

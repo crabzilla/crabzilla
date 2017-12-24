@@ -538,17 +538,20 @@ data class CustomerDeactivated(val reason: String, val _when: Instant) : DomainE
 <div class="listingblock">
 <div class="title">CustomerData.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">data class CreateCustomer(override val _commandId: UUID, override val _targetId: CustomerId,
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">data class CreateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
+                          @JsonProperty("targetId") override val _targetId: CustomerId,
                           val name: String) : KotlinEntityCommand
 
-data class ActivateCustomer(override val _commandId: UUID, override val _targetId: CustomerId,
+data class ActivateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
+                            @JsonProperty("targetId") override val _targetId: CustomerId,
                             val reason: String) : KotlinEntityCommand
 
-data class DeactivateCustomer(override val _commandId: UUID, override val _targetId: CustomerId,
+data class DeactivateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
+                              @JsonProperty("targetId") override val _targetId: CustomerId,
                               val reason: String) : KotlinEntityCommand
 
-data class CreateActivateCustomer(override val _commandId: UUID,
-                                  override val _targetId: CustomerId,
+data class CreateActivateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
+                                  @JsonProperty("targetId") override val _targetId: CustomerId,
                                   val name: String, val reason: String) : KotlinEntityCommand</code></pre>
 </div>
 </div>
@@ -747,8 +750,9 @@ CREATE TABLE units_of_work (
     PARTITION BY KEY(ar_name)
     ;
 
+CREATE INDEX idx_cmd_id ON units_of_work (cmd_id);
+CREATE INDEX idx_uow_id ON units_of_work (uow_id);
 CREATE INDEX idx_ar_id ON units_of_work (ar_id);
-
 
 DROP TABLE if exists events_channels ;
 
@@ -824,45 +828,7 @@ also a factory and a module for each aggregate we have.</p>
 <div class="listingblock">
 <div class="title">CustomerFactory</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CustomerFactory @Inject
-constructor(service: SampleInternalService, private val vertx: Vertx,
-            private val jdbcClient: JDBCClient) : AggregateComponentsFactory&lt;Customer&gt; {
-
-  private val seedValue by lazy { Customer(sampleInternalService = service) }
-
-  override fun clazz(): Class&lt;Customer&gt; {
-    return Customer::class.java
-  }
-
-  override fun supplierFn(): Supplier&lt;Customer&gt; {
-    return Supplier { seedValue }
-  }
-
-  override fun stateTransitionFn(): BiFunction&lt;DomainEvent, Customer, Customer&gt; {
-    return StateTransitionFn()
-  }
-
-  override fun cmdValidatorFn(): Function&lt;EntityCommand, List&lt;String&gt;&gt; {
-    return CommandValidatorFn()
-  }
-
-  override fun cmdHandlerFn():
-          BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, EntityCommandResult&gt; {
-    val trackerFactory = StateTransitionsTrackerFactory&lt;Customer&gt; { instance -&gt;
-      StateTransitionsTracker(instance, stateTransitionFn())
-    }
-    return CommandHandlerFn(trackerFactory)
-  }
-
-  override fun jdbcClient(): JDBCClient {
-    return jdbcClient
-  }
-
-  override fun vertx(): Vertx {
-    return vertx
-  }
-
-}</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example-manual.adoc - include::./crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerFactory.kt[tags=factory]</code></pre>
 </div>
 </div>
 </div>
@@ -871,30 +837,74 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 <div class="listingblock">
 <div class="title">CustomerModule.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CustomerModule : AbstractModule() {
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">@Module
+class CustomerModule(val vertx: Vertx, val config: JsonObject) {
 
-  override fun configure() {
-    // to bind aggregate functions
-    bind(CustomerFactory::class.java).asEagerSingleton()
-    // to bind verticles for this aggregate
-    val restType = object : TypeLiteral&lt;EntityCommandHttpRpcVerticle&lt;Customer&gt;&gt;() {}
-    val handlerType = object : TypeLiteral&lt;EntityCommandHandlerVerticle&lt;Customer&gt;&gt;() {}
-    val mapbinder = MapBinder.newMapBinder(binder(), String::class.java, Verticle::class.java)
-    mapbinder.addBinding("customer.rest").to(restType)
-    mapbinder.addBinding("customer.handler").to(handlerType)
+  @Provides @IntoMap
+  @StringKey("EntityCommandRestVerticle")
+  fun restVerticle(uowRepository: EntityUnitOfWorkRepository): Verticle {
+    return EntityCommandRestVerticle(Customer::class.java, config, uowRepository)
+  }
+
+  @Provides @IntoMap
+  @StringKey("EntityCommandHandlerVerticle")
+  fun handlerVerticle(supplier: Supplier&lt;Customer&gt;,
+                               cmdHandler: BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, EntityCommandResult&gt;,
+                               validator: Function&lt;EntityCommand, List&lt;String&gt;&gt;,
+                               snapshotPromoter: SnapshotPromoter&lt;Customer&gt;,
+                               eventRepository: EntityUnitOfWorkRepository): Verticle {
+    val mycache: ExpiringMap&lt;String, Snapshot&lt;Customer&gt;&gt; = ExpiringMap.create()
+    val circuitBreaker = CircuitBreaker.create("command-handler-circuit-breaker", vertx,
+            CircuitBreakerOptions()
+                    .setMaxFailures(5) // number SUCCESS failure before opening the circuit
+                    .setTimeout(2000) // consider a failure if the operation does not succeed in time
+                    .setFallbackOnFailure(true) // do we call the fallback on failure
+                    .setResetTimeout(10000)) // time spent in open state before attempting to re-try
+    return EntityCommandHandlerVerticle(Customer::class.java, supplier.get(), cmdHandler, validator, snapshotPromoter,
+            eventRepository, mycache, circuitBreaker)
   }
 
   @Provides
   @Singleton
-  internal fun restVerticle(componentsFactory: CustomerFactory, config: JsonObject): EntityCommandHttpRpcVerticle&lt;Customer&gt; {
-    return componentsFactory.restVerticle(config)
+  fun supplierFn(service: SampleInternalService): Supplier&lt;Customer&gt; {
+    return Supplier { Customer(sampleInternalService = service) }
   }
 
-  @Provides
+   @Provides
   @Singleton
-  internal fun handler(componentsFactory: CustomerFactory): EntityCommandHandlerVerticle&lt;Customer&gt; {
-    return componentsFactory.cmdHandlerVerticle()
+  fun stateTransitionFn(): BiFunction&lt;DomainEvent, Customer, Customer&gt; {
+    return StateTransitionFn()
   }
+
+   @Provides
+  @Singleton
+  fun cmdValidatorFn(): Function&lt;EntityCommand, List&lt;String&gt;&gt; {
+    return CommandValidatorFn()
+  }
+
+   @Provides
+  @Singleton
+  fun cmdHandlerFn(stateTransitionFn: BiFunction&lt;DomainEvent, Customer, Customer&gt;):
+          BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, EntityCommandResult&gt; {
+    val trackerFactory = StateTransitionsTrackerFactory&lt;Customer&gt; { instance -&gt;
+      StateTransitionsTracker(instance, stateTransitionFn)
+    }
+    return CommandHandlerFn(trackerFactory)
+  }
+
+   @Provides
+  @Singleton
+  fun snapshotPromoter(stateTransitionFn: BiFunction&lt;DomainEvent, Customer, Customer&gt;): SnapshotPromoter&lt;Customer&gt; {
+    return SnapshotPromoter { instance -&gt; StateTransitionsTracker&lt;Customer&gt;(instance, stateTransitionFn) }
+  }
+
+
+   @Provides
+  @Singleton
+  fun customerRepo(jdbcClient: JDBCClient): EntityUnitOfWorkRepository {
+    return EntityUnitOfWorkRepository(Customer::class.java, jdbcClient)
+  }
+
 
 }</code></pre>
 </div>
@@ -915,7 +925,7 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 
   : EventProjector&lt;CustomerSummaryDao&gt;(channelId, daoClazz, jdbi) {
 
-  val log = KotlinLogging.logger {}
+  val log = LoggerFactory.getLogger(Example1EventProjector::class.java.simpleName)
 
   override fun write(dao: CustomerSummaryDao, targetId: String, event: DomainEvent) {
 
@@ -948,7 +958,7 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">  @Test
   @Throws(IOException::class)
-  fun successScenario() {
+  fun createCustomer() {
 
     val customerId = CustomerId(UUID.randomUUID().toString())
     val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer test")
@@ -958,17 +968,26 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 
     val json = mapper.writerFor(CreateCustomer::class.java).writeValueAsString(createCustomerCmd)
 
-    val response = given().contentType(JSON).body(json)
-                  .`when`().put("/" + aggregateRootId(Customer::class.java) + "/commands")
-                  .then().statusCode(201).contentType(ContentType.JSON).extract().response().asString()
+    log.info("command=\n" + json)
 
-    val result = mapper.readValue(response, EntityCommandExecution::class.java)
+    val postCmdResponse = given().contentType(JSON).body(json)
+            .`when`().post("/" + aggregateId(Customer::class.java) + "/commands")
+            .then().extract().response()
 
-    assertThat(result.result).isEqualTo(SUCCESS)
-    assertThat(result.commandId).isEqualTo(createCustomerCmd.commandId)
-    assertThat(result.constraints.isEmpty())
+    assertThat(postCmdResponse.statusCode()).isEqualTo(201)
+    assertThat(postCmdResponse.header(LOCATION_HEADER))
+            .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
+                    + aggregateId(Customer::class.java) + "/commands/" + createCustomerCmd.commandId.toString())
 
-    val uow = result.unitOfWork
+    val getUowResponse = given().contentType(JSON).body(json)
+            .`when`().get(postCmdResponse.header(LOCATION_HEADER))
+            .then().statusCode(200).contentType(ContentType.JSON)
+            .extract().response()
+
+//    log.info("response -------------------")
+//    log.info(getUowResponse.asString())
+
+    val uow = mapper.readValue(getUowResponse.asString(), EntityUnitOfWork::class.java)
 
     assertThat(uow.targetId()).isEqualTo(expectedUow.targetId())
     assertThat(uow.command).isEqualTo(expectedUow.command)
@@ -1023,7 +1042,7 @@ constructor(service: SampleInternalService, private val vertx: Vertx,
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-09-25 20:03:56 BRT
+Last updated 2017-10-21 02:49:47 BRST
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
