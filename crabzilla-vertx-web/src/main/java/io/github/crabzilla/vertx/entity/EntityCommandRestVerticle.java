@@ -112,10 +112,11 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
         log.info("result = {}", result);
 
         if (result.getUnitOfWork() != null && result.getUowSequence() != null) {
-          MultiMap headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence() + "");
-          DeliveryOptions optionsUow = new DeliveryOptions().setCodecName(EntityUnitOfWork.class.getSimpleName())
-                  .setHeaders(headers);
-          vertx.<String>eventBus().publish(eventsHandlerId("example1"), result.getUnitOfWork(), optionsUow);
+         // DON'T PUBLISH TO EVENT BUS
+         //  MultiMap headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence() + "");
+         // DeliveryOptions optionsUow = new DeliveryOptions().setCodecName(EntityUnitOfWork.class.getSimpleName())
+         //         .setHeaders(headers);
+         // vertx.<String>eventBus().publish(eventsHandlerId("example1"), result.getUnitOfWork(), optionsUow);
           httpResp.setStatusCode(201);
           String location = routingContext.request().absoluteURI() + "/" + result.getUnitOfWork()
                   .getCommand().getCommandId().toString();
