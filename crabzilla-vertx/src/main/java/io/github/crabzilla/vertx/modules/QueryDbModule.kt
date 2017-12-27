@@ -46,7 +46,7 @@ class QueryDbModule(val vertx: Vertx, val config: JsonObject) {
     hikariConfig.username = config.getString("query.database.user")
     hikariConfig.password = config.getString("query.database.password")
     hikariConfig.connectionTimeout = 5000
-    hikariConfig.maximumPoolSize = config.getInteger("database.pool.max.size")!!
+    hikariConfig.maximumPoolSize = config.getInteger("query.database.pool.max.size")!!
     hikariConfig.addDataSourceProperty("cachePrepStmts", "true")
     hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250")
     hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
