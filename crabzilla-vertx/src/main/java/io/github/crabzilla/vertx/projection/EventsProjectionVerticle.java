@@ -14,14 +14,14 @@ import static io.github.crabzilla.vertx.helpers.StringHelper.eventsHandlerId;
 import static java.util.Collections.singletonList;
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class EventsProjectionVerticle<D> extends AbstractVerticle {
+public class EventsProjectionVerticle<DAO> extends AbstractVerticle {
 
   private static Logger log = getLogger(EntityCommandHandlerVerticle.class);
 
-  private final EventsProjector<D> eventsProjector;
+  private final EventsProjector<DAO> eventsProjector;
   private final CircuitBreaker circuitBreaker;
 
-  public EventsProjectionVerticle(EventsProjector<D> eventsProjector,
+  public EventsProjectionVerticle(EventsProjector<DAO> eventsProjector,
                                   CircuitBreaker circuitBreaker) {
     this.eventsProjector = eventsProjector;
     this.circuitBreaker = circuitBreaker;

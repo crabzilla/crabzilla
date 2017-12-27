@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.modules
+package io.github.crabzilla.vertx.projection
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
