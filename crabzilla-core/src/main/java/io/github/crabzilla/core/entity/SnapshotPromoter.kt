@@ -2,7 +2,7 @@ package io.github.crabzilla.core.entity
 
 import io.github.crabzilla.core.DomainEvent
 
-class SnapshotPromoter<A : Entity>(private val trackerFactory: (Snapshot<A>) -> StateTransitionsTracker<A>) {
+open class SnapshotPromoter<A : Entity>(private val trackerFactory: (Snapshot<A>) -> StateTransitionsTracker<A>) {
 
   fun promote(originalSnapshot: Snapshot<A>, newVersion: Version, newEvents: List<DomainEvent>): Snapshot<A> {
 
