@@ -20,7 +20,6 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
   - docker-compose rm -f
   - docker-compose up -d
-  - build.sh
 
 cache:
   directories:

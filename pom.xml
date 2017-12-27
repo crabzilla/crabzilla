@@ -388,36 +388,31 @@
     <build>
 
         <plugins>
-            <!--<plugin>-->
-                <!--<artifactId>maven-antrun-plugin</artifactId>-->
-                <!--<version>1.8</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>copy-example1-to-test-jar</id>-->
-                        <!--<phase>install</phase>-->
-                        <!--<configuration>-->
-                            <!--<tasks>-->
-                                <!--<mkdir dir="${project.build.directory}/crabzilla-core/src/test/java/io/github/crabzilla/example1"/>-->
-                                <!--<copy todir="${project.build.directory}/crabzilla-core/src/test/java/io/github/crabzilla/example1">-->
-                                    <!--<fileset-->
-                                            <!--dir="${project.build.directory}/crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1"/>-->
-                                <!--</copy>-->
-                            <!--</tasks>-->
-                        <!--</configuration>-->
-                        <!--<goals>-->
-                            <!--<goal>run</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-            <!--</plugin>-->
 
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
                 <groupId>org.apache.maven.plugins</groupId>
                 <version>3.0.2</version>
-                <configuration>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                </configuration>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <!-- here the phase you need -->
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <encoding>${project.build.sourceEncoding}</encoding>
+                            <outputDirectory>${basedir}/crabzilla-core/src/test/java/io/github/crabzilla/example1</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1</directory>
+                                    <!--<filtering>true</filtering>-->
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -517,70 +512,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <!--<plugin>-->
-            <!--<groupId>org.apache.maven.plugins</groupId>-->
-            <!--<artifactId>maven-compiler-plugin</artifactId>-->
-            <!--<version>3.7.0</version>-->
-            <!--<configuration>-->
-            <!--<useIncrementalCompilation>false</useIncrementalCompilation>-->
-            <!--<compilerArgument>-Xlint:all</compilerArgument>-->
-            <!--<showWarnings>true</showWarnings>-->
-            <!--<showDeprecation>true</showDeprecation>-->
-            <!--<source>${java.version}</source>-->
-            <!--<target>${java.version}</target>-->
-            <!--</configuration>-->
-            <!--<executions>-->
-            <!--&lt;!&ndash; Replacing default-compile as it is treated specially by maven &ndash;&gt;-->
-            <!--<execution>-->
-            <!--<id>default-compile</id>-->
-            <!--<phase>none</phase>-->
-            <!--</execution>-->
-            <!--&lt;!&ndash; Replacing default-testCompile as it is treated specially by maven &ndash;&gt;-->
-            <!--<execution>-->
-            <!--<id>default-testCompile</id>-->
-            <!--<phase>none</phase>-->
-            <!--</execution>-->
-            <!--<execution>-->
-            <!--<id>java-compile</id>-->
-            <!--<phase>compile</phase>-->
-            <!--<goals> <goal>compile</goal> </goals>-->
-            <!--</execution>-->
-            <!--<execution>-->
-            <!--<id>java-test-compile</id>-->
-            <!--<phase>test-compile</phase>-->
-            <!--<goals> <goal>testCompile</goal> </goals>-->
-            <!--</execution>-->
-            <!--</executions>-->
-            <!--</plugin>-->
-
-            <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-surefire-plugin</artifactId>-->
-                <!--<version>2.19.1</version>-->
-                <!--&lt;!&ndash;<dependencies>&ndash;&gt;-->
-                <!--&lt;!&ndash;<dependency>&ndash;&gt;-->
-                <!--&lt;!&ndash;<groupId>org.junit.platform</groupId>&ndash;&gt;-->
-                <!--&lt;!&ndash;<artifactId>junit-platform-surefire-provider</artifactId>&ndash;&gt;-->
-                <!--&lt;!&ndash;<version>${junit.platform.version}</version>&ndash;&gt;-->
-                <!--&lt;!&ndash;</dependency>&ndash;&gt;-->
-                <!--&lt;!&ndash;<dependency>&ndash;&gt;-->
-                <!--&lt;!&ndash;<groupId>org.junit.jupiter</groupId>&ndash;&gt;-->
-                <!--&lt;!&ndash;<artifactId>junit-jupiter-engine</artifactId>&ndash;&gt;-->
-                <!--&lt;!&ndash;<version>${junit.jupiter.version}</version>&ndash;&gt;-->
-                <!--&lt;!&ndash;</dependency>&ndash;&gt;-->
-                <!--&lt;!&ndash;</dependencies>&ndash;&gt;-->
-                <!--<configuration>-->
-                    <!--&lt;!&ndash; Sets the VM argument line used when unit tests are run. &ndash;&gt;-->
-                    <!--&lt;!&ndash;<argLine>${surefireArgLine}</argLine>&ndash;&gt;-->
-                    <!--&lt;!&ndash; Skips unit tests if the value of skip.unit.tests property is true &ndash;&gt;-->
-                    <!--<skipTests>${skip.unit.tests}</skipTests>-->
-                    <!--&lt;!&ndash; Excludes integration tests when unit tests are run. &ndash;&gt;-->
-                    <!--<excludes>-->
-                        <!--<exclude>**/IT*.java</exclude>-->
-                    <!--</excludes>-->
-                <!--</configuration>-->
-            <!--</plugin>-->
 
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -713,32 +644,6 @@
     </build>
 
     <profiles>
-
-        <!--<profile>-->
-        <!--<id>dev</id>-->
-        <!--</profile>-->
-
-        <!--<profile>-->
-        <!--<id>integration-test</id>-->
-        <!--<properties>-->
-        <!--&lt;!&ndash; Used to locate the profile specific configuration file. &ndash;&gt;-->
-        <!--<build.profile.id>integration-test</build.profile.id>-->
-        <!--&lt;!&ndash; Only integration tests are run. &ndash;&gt;-->
-        <!--<skip.integration.tests>false</skip.integration.tests>-->
-        <!--<skip.unit.tests>true</skip.unit.tests>-->
-        <!--</properties>-->
-        <!--</profile>-->
-
-        <!--<profile>-->
-        <!--<id>all-tests</id>-->
-        <!--<properties>-->
-        <!--<build.profile.id>all-tests</build.profile.id>-->
-        <!--&lt;!&ndash; All tests are run. &ndash;&gt;-->
-        <!--<skip.integration.tests>false</skip.integration.tests>-->
-        <!--<skip.unit.tests>false</skip.unit.tests>-->
-        <!--</properties>-->
-        <!--</profile>-->
-
 
         <profile>
             <id>release</id>
