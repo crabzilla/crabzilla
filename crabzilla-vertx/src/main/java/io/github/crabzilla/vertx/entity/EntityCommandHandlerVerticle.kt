@@ -160,6 +160,7 @@ class EntityCommandHandlerVerticle<A : Entity>(private val aggregateRootClass: C
                   }
                   return@setHandler
                 }
+
                 val finalSnapshot = snapshotPromoter.promote(resultingSnapshot, uow!!.version, uow.events)
                 cache.put(targetId, finalSnapshot)
                 val uowSequence = appendAsyncResult.result()

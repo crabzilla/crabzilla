@@ -5,7 +5,6 @@ import io.github.crabzilla.core.exceptions.DbConcurrencyException;
 import io.github.crabzilla.core.exceptions.UnknownCommandException;
 import io.github.crabzilla.example1.SampleInternalService;
 import io.github.crabzilla.example1.customer.*;
-import io.github.crabzilla.vertx.helpers.StringHelper;
 import io.github.crabzilla.vertx.helpers.VertxFactory;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Future;
@@ -21,7 +20,6 @@ import kotlin.jvm.functions.Function2;
 import net.jodah.expiringmap.ExpiringMap;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
@@ -34,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static io.github.crabzilla.vertx.helpers.StringHelper.*;
+import static io.github.crabzilla.vertx.helpers.StringHelper.commandHandlerId;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -71,7 +69,7 @@ public class EntityCommandHandlerVerticleTest {
   Function2<EntityCommand, Snapshot<? extends Customer>, EntityCommandResult> cmdHandlerFn;
   @Mock
   EntityUnitOfWorkRepository eventRepository;
-  @Mock
+
   SnapshotPromoter<Customer> snapshotPromoterFn;
 
   @Before
@@ -83,6 +81,12 @@ public class EntityCommandHandlerVerticleTest {
     circuitBreaker = CircuitBreaker.create("cmd-handler-circuit-breaker", vertx);
 
     cache = ExpiringMap.create();
+
+    final Function1<? super Snapshot<? extends Customer>, StateTransitionsTracker<Customer>> trackerFactory =
+            (Function1<Snapshot<? extends Customer>, StateTransitionsTracker<Customer>>) snapshot
+                    -> new StateTransitionsTracker<>(snapshot, new StateTransitionFn());
+
+    snapshotPromoterFn = new SnapshotPromoter<Customer>(trackerFactory);
 
     Verticle verticle = new EntityCommandHandlerVerticle<Customer>(Customer.class, seedValue, cmdHandlerFn, validatorFn,
             snapshotPromoterFn, eventRepository, cache, circuitBreaker);
@@ -96,7 +100,7 @@ public class EntityCommandHandlerVerticleTest {
     vertx.close(context.asyncAssertSuccess());
   }
 
-  @Test  @Ignore // TODO
+  @Test
   public void SUCCESS_scenario(TestContext tc) {
 
     Async async = tc.async();
@@ -121,6 +125,9 @@ public class EntityCommandHandlerVerticleTest {
 
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(EntityCommandResult.Companion.success(expectedUow));
+
+//    when(snapshotPromoterFn.promote(any(Snapshot.class), eq(new Version(1)), eq(singletonList(expectedEvent))))
+//            .thenReturn(finalSnapshot);
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
@@ -156,13 +163,9 @@ public class EntityCommandHandlerVerticleTest {
 
       EntityUnitOfWork uow = response.getUnitOfWork();
 
-      if (uow != null) {
-
-        tc.assertEquals(expectedUow.getCommand(), uow.getCommand());
-        tc.assertEquals(expectedUow.getEvents(), uow.getEvents());
-        tc.assertEquals(expectedUow.getVersion(), uow.getVersion());
-
-      }
+      tc.assertEquals(expectedUow.getCommand(), uow.getCommand());
+      tc.assertEquals(expectedUow.getEvents(), uow.getEvents());
+      tc.assertEquals(expectedUow.getVersion(), uow.getVersion());
 
       async.complete();
 
