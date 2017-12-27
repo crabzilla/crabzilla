@@ -12,6 +12,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
         <kotlin.version>1.2.10</kotlin.version>
+        <dagger.version>2.14.1</dagger.version>
         <lombok.version>1.16.18</lombok.version>
         <vertx.version>3.5.0</vertx.version>
         <expiringmap.version>0.5.8</expiringmap.version>
@@ -21,7 +22,7 @@
         <mysql.version>6.0.6</mysql.version>
         <commons.version>3.5</commons.version>
         <jackson.version>2.9.0.pr4</jackson.version>
-        <hikari.version>2.6.1</hikari.version>
+        <hikari.version>2.7.4</hikari.version>
         <junit.jupiter.version>5.0.0-RC2</junit.jupiter.version>
         <junit.vintage.version>4.12.0-RC2</junit.vintage.version>
         <junit.platform.version>1.0.0-RC2</junit.platform.version>
@@ -80,7 +81,7 @@
     <modules>
 
         <module>crabzilla-core</module>
-        <module>crabzilla-kotlin-example1</module>
+        <module>crabzilla-example1</module>
         <module>crabzilla-vertx</module>
         <module>crabzilla-vertx-web</module>
 
@@ -99,6 +100,21 @@
         </dependency>
 
         <!-- test -->
+
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib-jdk8</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+
+        <!-- test -->
+
+        <!--<dependency>-->
+            <!--<groupId>org.jetbrains.kotlin</groupId>-->
+            <!--<artifactId>kotlin-test</artifactId>-->
+            <!--<version>${kotlin.version}</version>-->
+            <!--<scope>test</scope>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>org.junit.vintage</groupId>
@@ -177,15 +193,11 @@
             </dependency>
 
             <dependency>
-                <groupId>io.github.microutils</groupId>
-                <artifactId>kotlin-logging</artifactId>
-                <version>1.4.6</version>
-            </dependency>
-            <dependency>
                 <groupId>org.jdbi</groupId>
                 <artifactId>jdbi3-kotlin</artifactId>
                 <version>${jdbi.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.jdbi</groupId>
                 <artifactId>jdbi3-kotlin-sqlobject</artifactId>
@@ -377,16 +389,74 @@
         <plugins>
 
             <plugin>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <configuration>
+                    <jvmTarget>1.8</jvmTarget>
+                </configuration>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <version>${kotlin.version}</version>
+                <executions>
+                    <execution>
+                        <id>kapt</id>
+                        <goals>
+                            <goal>kapt</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>src/main/java</sourceDir>
+                            </sourceDirs>
+                            <annotationProcessorPaths>
+                                <annotationProcessorPath>
+                                    <groupId>com.google.dagger</groupId>
+                                    <artifactId>dagger-compiler</artifactId>
+                                    <version>${dagger.version}</version>
+                                </annotationProcessorPath>
+                            </annotationProcessorPaths>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>test-kapt</id>
+                        <goals>
+                            <goal>test-kapt</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>src/test/java</sourceDir>
+                            </sourceDirs>
+                            <annotationProcessorPaths>
+                                <annotationProcessorPath>
+                                    <groupId>com.google.dagger</groupId>
+                                    <artifactId>dagger-compiler</artifactId>
+                                    <version>${dagger.version}</version>
+                                </annotationProcessorPath>
+                            </annotationProcessorPaths>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.7.0</version>
                 <configuration>
-                    <useIncrementalCompilation>false</useIncrementalCompilation>
-                    <compilerArgument>-Xlint:all</compilerArgument>
-                    <showWarnings>true</showWarnings>
-                    <showDeprecation>true</showDeprecation>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <proc>none</proc>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
                 <executions>
                     <!-- Replacing default-compile as it is treated specially by maven -->
@@ -402,7 +472,9 @@
                     <execution>
                         <id>java-compile</id>
                         <phase>compile</phase>
-                        <goals> <goal>compile</goal> </goals>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
                     </execution>
                     <execution>
                         <id>java-test-compile</id>
@@ -411,6 +483,42 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-compiler-plugin</artifactId>-->
+                <!--<version>3.7.0</version>-->
+                <!--<configuration>-->
+                    <!--<useIncrementalCompilation>false</useIncrementalCompilation>-->
+                    <!--<compilerArgument>-Xlint:all</compilerArgument>-->
+                    <!--<showWarnings>true</showWarnings>-->
+                    <!--<showDeprecation>true</showDeprecation>-->
+                    <!--<source>${java.version}</source>-->
+                    <!--<target>${java.version}</target>-->
+                <!--</configuration>-->
+                <!--<executions>-->
+                    <!--&lt;!&ndash; Replacing default-compile as it is treated specially by maven &ndash;&gt;-->
+                    <!--<execution>-->
+                        <!--<id>default-compile</id>-->
+                        <!--<phase>none</phase>-->
+                    <!--</execution>-->
+                    <!--&lt;!&ndash; Replacing default-testCompile as it is treated specially by maven &ndash;&gt;-->
+                    <!--<execution>-->
+                        <!--<id>default-testCompile</id>-->
+                        <!--<phase>none</phase>-->
+                    <!--</execution>-->
+                    <!--<execution>-->
+                        <!--<id>java-compile</id>-->
+                        <!--<phase>compile</phase>-->
+                        <!--<goals> <goal>compile</goal> </goals>-->
+                    <!--</execution>-->
+                    <!--<execution>-->
+                        <!--<id>java-test-compile</id>-->
+                        <!--<phase>test-compile</phase>-->
+                        <!--<goals> <goal>testCompile</goal> </goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

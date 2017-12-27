@@ -42,7 +42,6 @@ and your service module must import:
 * Java 8
 * Maven
 * Docker compose
-* Lombok plugin for your IDE
 * Kotlin plugin for your IDE
 
 ### Steps
@@ -63,7 +62,7 @@ docker-compose up
 3. Optionally, apply a new migration to the database schema using [Flyway](https://flywaydb.org/):
 
 ```bash
-cd crabzilla-kotlin-example1/crabzilla-kotlin-example1-database
+cd crabzilla-example1/crabzilla-example1-database
 mvn compile flyway:migrate
 ```
 
@@ -75,11 +74,11 @@ cd ../..
 mvn clean install
 ```
 
-5. Now you finally can run the current [example1](crabzilla-kotlin-example1/crabzilla-kotlin-example1-service/src/main/java/io/github/crabzilla/example1/Example1Launcher.kt):
+5. Now you finally can run the current [example1](crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Launcher.kt):
 
 ```bash
-cd crabzilla-kotlin-example1/crabzilla-kotlin-example1-service
-java -jar target/crabzilla-kotlin-example1-service-0.0.6-SNAPSHOT-fat.jar -conf target/classes/conf/config.properties
+cd crabzilla-example1/crabzilla-example1-service
+java -jar target/crabzilla-example1-service-0.0.6-SNAPSHOT-fat.jar -conf target/classes/conf/config.properties
 
 ```
 

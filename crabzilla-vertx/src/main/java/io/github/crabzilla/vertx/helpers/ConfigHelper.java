@@ -3,13 +3,15 @@ package io.github.crabzilla.vertx.helpers;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
+import org.slf4j.Logger;
 
 import java.io.File;
 
-@Slf4j
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class ConfigHelper {
+
+  static Logger log = getLogger(ConfigHelper.class);
 
   public static ConfigRetrieverOptions cfgOptions(String configFile){
 
@@ -26,7 +28,7 @@ public class ConfigHelper {
       return new ConfigRetrieverOptions().addStore(file);
     }
 
-    val defaultConfigFile = ConfigHelper.class.getClassLoader()
+    String defaultConfigFile = ConfigHelper.class.getClassLoader()
             .getResource("conf/config.properties").getPath();
 
     ConfigStoreOptions file = new ConfigStoreOptions()

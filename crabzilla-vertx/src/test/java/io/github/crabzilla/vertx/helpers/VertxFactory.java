@@ -9,15 +9,14 @@ import io.github.crabzilla.vertx.codecs.JacksonGenericCodec;
 import io.github.crabzilla.vertx.entity.EntityCommandExecution;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
-import lombok.val;
 
 public class VertxFactory {
 
   public Vertx vertx() {
 
-    val vertx = Vertx.vertx();
+    Vertx vertx = Vertx.vertx();
 
-    val mapper = Json.mapper;
+    ObjectMapper mapper = Json.mapper;
     mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
     mapper.findAndRegisterModules();
 
