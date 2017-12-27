@@ -1,9 +1,9 @@
 package io.github.crabzilla.vertx.codecs;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
-import lombok.SneakyThrows;
 
 public class JacksonGenericCodec<T> implements MessageCodec<T, T> {
 
@@ -16,14 +16,20 @@ public class JacksonGenericCodec<T> implements MessageCodec<T, T> {
   }
 
   @Override
-  @SneakyThrows
   public void encodeToWire(Buffer buffer, T obj) {
 
-    final byte barray[] = mapper.writerFor(clazz).writeValueAsBytes(obj);
+    final byte barray[];
+    try {
+      barray = mapper.writerFor(clazz).writeValueAsBytes(obj);
+      // Write data into given buffer
+      buffer.appendInt(barray.length);
+      buffer.appendBytes(barray);
+    } catch (JsonProcessingException e) {
+      e.printStackTrace();
+      throw new RuntimeException("Json exception", e);
+    }
 
-    // Write data into given buffer
-    buffer.appendInt(barray.length);
-    buffer.appendBytes(barray);
+
   }
 
   @Override

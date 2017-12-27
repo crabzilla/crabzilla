@@ -1,28 +1,29 @@
 package io.github.crabzilla.vertx.projection;
 
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
+import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
+import org.slf4j.Logger;
 
 import static io.github.crabzilla.vertx.helpers.StringHelper.eventsHandlerId;
 import static java.util.Collections.singletonList;
+import static org.slf4j.LoggerFactory.getLogger;
 
-@Slf4j
-public class EventsProjectionVerticle<D> extends AbstractVerticle {
+public class EventsProjectionVerticle<DAO> extends AbstractVerticle {
 
-  private final EventProjector<D> eventProjector;
+  private static Logger log = getLogger(EntityCommandHandlerVerticle.class);
+
+  private final EventsProjector<DAO> eventsProjector;
   private final CircuitBreaker circuitBreaker;
 
-  public EventsProjectionVerticle(@NonNull EventProjector<D> eventProjector,
-                                  @NonNull CircuitBreaker circuitBreaker) {
-    this.eventProjector = eventProjector;
+  public EventsProjectionVerticle(EventsProjector<DAO> eventsProjector,
+                                  CircuitBreaker circuitBreaker) {
+    this.eventsProjector = eventsProjector;
     this.circuitBreaker = circuitBreaker;
   }
 
@@ -34,11 +35,10 @@ public class EventsProjectionVerticle<D> extends AbstractVerticle {
   Handler<Message<EntityUnitOfWork>> msgHandler() {
     return (Message<EntityUnitOfWork> msg) -> vertx.executeBlocking((Future<String> future) -> {
       log.info("Received ProjectionData msg {} ", msg);
-      val uow = msg.body();
-      val uowSequence = new Long(msg.headers().get("uowSequence"));
-      val projectionData =
-              new ProjectionData(uow.getUnitOfWorkId(), uowSequence,
-                      uow.targetId().stringValue(), uow.getEvents());
+      EntityUnitOfWork uow = msg.body();
+      Long uowSequence = new Long(msg.headers().get("uowSequence"));
+      ProjectionData projectionData = new ProjectionData(uow.getUnitOfWorkId(), uowSequence,
+              uow.targetId().stringValue(), uow.getEvents());
 
       circuitBreaker.fallback(throwable -> {
         log.warn("Fallback for uowHandler ");
@@ -51,7 +51,7 @@ public class EventsProjectionVerticle<D> extends AbstractVerticle {
 
   Handler<Future<String>> uowHandler(final ProjectionData projectionData) {
     return future -> {
-      eventProjector.handle(singletonList(projectionData));
+      eventsProjector.handle(singletonList(projectionData));
       future.complete("roger that");
     };
   }
@@ -65,7 +65,7 @@ public class EventsProjectionVerticle<D> extends AbstractVerticle {
         // TODO customize conform commandResult
         msg.fail(400, resultHandler.cause().getMessage());
       }
-      val resp = resultHandler.result();
+      String resp = resultHandler.result();
       log.info("success: {}", resp);
       msg.reply(resp);
     };

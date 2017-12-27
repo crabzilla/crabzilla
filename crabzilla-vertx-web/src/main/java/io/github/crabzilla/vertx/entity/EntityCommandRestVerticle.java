@@ -5,41 +5,42 @@ import io.github.crabzilla.core.entity.EntityUnitOfWork;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.http.CaseInsensitiveHeaders;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
+import org.slf4j.Logger;
 
 import java.util.UUID;
 
-import static io.github.crabzilla.vertx.helpers.StringHelper.*;
+import static io.github.crabzilla.vertx.helpers.StringHelper.aggregateId;
+import static io.github.crabzilla.vertx.helpers.StringHelper.commandHandlerId;
+import static org.slf4j.LoggerFactory.getLogger;
 
 
-@Slf4j
 public class EntityCommandRestVerticle<E> extends AbstractVerticle {
+
+  static Logger log = getLogger(EntityCommandHandlerVerticle.class);
 
   private final Class<E> aggregateRootClass;
   private final JsonObject config;
   private final EntityUnitOfWorkRepository entityUowRepo;
 
-  public EntityCommandRestVerticle(@NonNull Class<E> aggregateRootClass,
-                                   @NonNull JsonObject config,
-                                   @NonNull EntityUnitOfWorkRepository entityUowRepo) {
+  public EntityCommandRestVerticle(Class<E> aggregateRootClass,
+                                   JsonObject config,
+                                   EntityUnitOfWorkRepository entityUowRepo) {
     this.aggregateRootClass = aggregateRootClass;
     this.config = config;
     this.entityUowRepo = entityUowRepo;
   }
 
   @Override
-  public void start() throws Exception {
+  public void start() {
 
-    val router = Router.router(vertx);
+    Router router = Router.router(vertx);
 
     router.route().handler(BodyHandler.create());
 
@@ -49,7 +50,7 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
     router.get("/" + aggregateId(aggregateRootClass) + "/commands/:cmdID")
             .handler(this::getUowByCmdId);
 
-    val server = vertx.createHttpServer();
+    HttpServer server = vertx.createHttpServer();
 
     System.out.println("******************* " + config.getInteger("http.port"));
 
@@ -87,16 +88,16 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
 
       if (uowResult.result() != null) {
         httpResp.setStatusCode(201);
-        val location = routingContext.request().absoluteURI() + "/"
+        String location = routingContext.request().absoluteURI() + "/"
                 + uowResult.result().getCommand().getCommandId().toString();
         httpResp.headers().add("Location", location);
-        val resultAsJson = Json.encode(uowResult.result());
+        String resultAsJson = Json.encode(uowResult.result());
         httpResp.headers().add("Content-Type", "application/json");
         httpResp.end(resultAsJson);
         return ;
       }
 
-      val options = new DeliveryOptions().setCodecName(EntityCommand.class.getSimpleName());
+      DeliveryOptions options = new DeliveryOptions().setCodecName(EntityCommand.class.getSimpleName());
 
       vertx.<EntityCommandExecution>eventBus().send(commandHandlerId(aggregateRootClass), command, options, response -> {
         if (!response.succeeded()) {
@@ -106,16 +107,17 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
           return;
         }
 
-        val result = (EntityCommandExecution) response.result().body();
+        EntityCommandExecution result = (EntityCommandExecution) response.result().body();
         log.info("result = {}", result);
 
         if (result.getUnitOfWork() != null && result.getUowSequence() != null) {
-          val headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence()+"");
-          val optionsUow = new DeliveryOptions().setCodecName(EntityUnitOfWork.class.getSimpleName())
-                  .setHeaders(headers);
-          vertx.<String>eventBus().publish(eventsHandlerId("example1"), result.getUnitOfWork(), optionsUow);
+         // DON'T PUBLISH TO EVENT BUS
+         //  MultiMap headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence() + "");
+         // DeliveryOptions optionsUow = new DeliveryOptions().setCodecName(EntityUnitOfWork.class.getSimpleName())
+         //         .setHeaders(headers);
+         // vertx.<String>eventBus().publish(eventsHandlerId("example1"), result.getUnitOfWork(), optionsUow);
           httpResp.setStatusCode(201);
-          val location = routingContext.request().absoluteURI() + "/" + result.getUnitOfWork()
+          String location = routingContext.request().absoluteURI() + "/" + result.getUnitOfWork()
                   .getCommand().getCommandId().toString();
           httpResp.headers().add("Location", location);
         } else {
@@ -149,7 +151,7 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
       if (uowResult.result() == null) {
         sendError(404, httpResp);
       } else {
-        val resultAsJson = Json.encode(uowResult.result());
+        String resultAsJson = Json.encode(uowResult.result());
         httpResp.headers().add("Content-Type", "application/json");
         httpResp.end(resultAsJson);
       }
@@ -162,4 +164,5 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
     response.setStatusCode(statusCode).end();
   }
 
+  
 }

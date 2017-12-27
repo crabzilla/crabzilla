@@ -15,11 +15,10 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.ResultSet;
+import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.SQLRowStream;
 import io.vertx.ext.sql.UpdateResult;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,9 +28,11 @@ import java.util.stream.Collectors;
 
 import static io.github.crabzilla.vertx.helpers.VertxSqlHelper.*;
 import static io.vertx.core.json.Json.mapper;
+import static org.slf4j.LoggerFactory.getLogger;
 
-@Slf4j
 public class EntityUnitOfWorkRepository {
+
+  static Logger log = getLogger(EntityUnitOfWorkRepository.class);
 
   private static final String UOW_ID = "uow_id";
   private static final String UOW_EVENTS = "uow_events";
@@ -47,26 +48,26 @@ public class EntityUnitOfWorkRepository {
   private final String SELECT_UOW_BY_CMD_ID = "select * from units_of_work where cmd_id =? ";
   private final String SELECT_UOW_BY_UOW_ID = "select * from units_of_work where uow_id =? ";
 
-  public EntityUnitOfWorkRepository(@NonNull Class<?> aggregateRootName, @NonNull JDBCClient client) {
+  public EntityUnitOfWorkRepository(Class<?> aggregateRootName, JDBCClient client) {
     this.aggregateRootName = aggregateRootName.getSimpleName();
     this.client = client;
   }
 
-  void getUowByCmdId(@NonNull final UUID cmdId, @NonNull final Future<EntityUnitOfWork> uowFuture) {
+  void getUowByCmdId(final UUID cmdId, final Future<EntityUnitOfWork> uowFuture) {
 
     get(SELECT_UOW_BY_CMD_ID, cmdId, uowFuture);
 
   }
 
-  void getUowByUowId(@NonNull final UUID uowId, @NonNull final Future<EntityUnitOfWork> uowFuture) {
+  void getUowByUowId(final UUID uowId, final Future<EntityUnitOfWork> uowFuture) {
 
     get(SELECT_UOW_BY_UOW_ID, uowId, uowFuture);
 
   }
 
-  void get(String querie, @NonNull final UUID id, @NonNull final Future<EntityUnitOfWork> uowFuture) {
+  void get(String querie, final UUID id, final Future<EntityUnitOfWork> uowFuture) {
 
-    val params = new JsonArray().add(id.toString());
+    JsonArray params = new JsonArray().add(id.toString());
 
     client.getConnection(getConn -> {
       if (getConn.failed()) {
@@ -74,7 +75,7 @@ public class EntityUnitOfWorkRepository {
         return;
       }
 
-      val sqlConn = getConn.result();
+      SQLConnection sqlConn = getConn.result();
       Future<ResultSet> resultSetFuture = Future.future();
       queryWithParams(sqlConn, querie, params, resultSetFuture);
 
@@ -84,14 +85,14 @@ public class EntityUnitOfWorkRepository {
           return;
         }
         ResultSet rs = resultSetAsyncResult.result();
-        val rows = rs.getRows();
+        List<JsonObject> rows = rs.getRows();
         if (rows.size() == 0) {
           uowFuture.complete(null);
         } else {
           for (JsonObject row : rows) {
-            val command = Json.decodeValue(row.getString(CMD_DATA), EntityCommand.class);
+            EntityCommand command = Json.decodeValue(row.getString(CMD_DATA), EntityCommand.class);
             final List<DomainEvent> events = readEvents(row.getString(UOW_EVENTS));
-            val uow = new EntityUnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
+            EntityUnitOfWork uow = new EntityUnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
                     new Version(row.getLong(VERSION)), events);
             uowFuture.complete(uow);
           }
@@ -105,18 +106,18 @@ public class EntityUnitOfWorkRepository {
     });
   }
 
-  void selectAfterVersion(@NonNull final String id, @NonNull final Version version,
-                          @NonNull final Future<SnapshotData> selectAfterVersionFuture) {
+  void selectAfterVersion(final String id, final Version version,
+                          final Future<SnapshotData> selectAfterVersionFuture) {
 
     log.info("will load id [{}] after version [{}]", id, version.getValueAsLong());
 
-    val SELECT_AFTER_VERSION = "select uow_events, version from units_of_work " +
+    String SELECT_AFTER_VERSION = "select uow_events, version from units_of_work " +
             " where ar_id = ? " +
             "   and ar_name = ? " +
             "   and version > ? " +
             " order by version ";
 
-    val params = new JsonArray().add(id).add(aggregateRootName).add(version.getValueAsLong());
+    JsonArray params = new JsonArray().add(id).add(aggregateRootName).add(version.getValueAsLong());
 
     client.getConnection(getConn -> {
       if (getConn.failed()) {
@@ -124,7 +125,7 @@ public class EntityUnitOfWorkRepository {
         return;
       }
 
-      val sqlConn = getConn.result();
+      SQLConnection sqlConn = getConn.result();
       Future<SQLRowStream> streamFuture = Future.future();
       queryStreamWithParams(sqlConn, SELECT_AFTER_VERSION, params, streamFuture);
 
@@ -136,7 +137,7 @@ public class EntityUnitOfWorkRepository {
         }
 
         SQLRowStream stream = ar.result();
-        val list = new ArrayList<SnapshotData>();
+        ArrayList<SnapshotData> list = new ArrayList<SnapshotData>();
         stream
                 .resultSetClosedHandler(v -> {
                   // will ask to restart the stream with the new result set if any
@@ -144,15 +145,15 @@ public class EntityUnitOfWorkRepository {
                 })
                 .handler(row -> {
 
-                  val events = readEvents(row.getString(0));
-                  val snapshotData = new SnapshotData(new Version(row.getLong(1)), events);
+                  List<DomainEvent> events = readEvents(row.getString(0));
+                  SnapshotData snapshotData = new SnapshotData(new Version(row.getLong(1)), events);
                   list.add(snapshotData);
                 }).endHandler(event -> {
 
           log.info("found {} units of work for id {} and version > {}",
                   list.size(), id, version.getValueAsLong());
 
-          val finalVersion = list.size() == 0 ? new Version(0) :
+          Version finalVersion = list.size() == 0 ? new Version(0) :
                   list.get(list.size() - 1).getVersion();
 
           final List<DomainEvent> flatMappedToEvents = list.stream()
@@ -175,12 +176,12 @@ public class EntityUnitOfWorkRepository {
     });
   }
 
-  void append(@NonNull final EntityUnitOfWork unitOfWork, Future<Long> appendFuture) {
+  void append(final EntityUnitOfWork unitOfWork, Future<Long> appendFuture) {
 
-    val SELECT_CURRENT_VERSION =
+    String SELECT_CURRENT_VERSION =
             "select max(version) as last_version from units_of_work where ar_id = ? and ar_name = ? ";
 
-    val INSERT_UOW = "insert into units_of_work " +
+    String INSERT_UOW = "insert into units_of_work " +
             "(uow_id, uow_events, cmd_id, cmd_data, ar_id, ar_name, version) " +
             "values (?, ?, ?, ?, ?, ?, ?)";
 
@@ -192,7 +193,7 @@ public class EntityUnitOfWorkRepository {
         return;
       }
 
-      val sqlConn = conn.result();
+      SQLConnection sqlConn = conn.result();
       Future<Void> startTxFuture = Future.future();
 
       // start a transaction
@@ -205,7 +206,7 @@ public class EntityUnitOfWorkRepository {
         }
 
         // check current version  // TODO also check if command was not already processed given the commandId
-        val params1 = new JsonArray()
+        JsonArray params1 = new JsonArray()
                 .add(unitOfWork.targetId().stringValue())
                 .add(aggregateRootName);
 
@@ -227,7 +228,7 @@ public class EntityUnitOfWorkRepository {
           // apply optimistic locking
           if (currentVersion != unitOfWork.getVersion().getValueAsLong() - 1) {
 
-            val error = new DbConcurrencyException(
+            DbConcurrencyException error = new DbConcurrencyException(
                     String.format("ar_id = [%s], current_version = %d, new_version = %d",
                             unitOfWork.targetId().stringValue(),
                             currentVersion, unitOfWork.getVersion().getValueAsLong()));
@@ -248,7 +249,7 @@ public class EntityUnitOfWorkRepository {
           final String cmdAsJson = commandToJson(unitOfWork.getCommand());
           final String eventsListAsJson = listOfEventsToJson(unitOfWork.getEvents());
 
-          val params2 = new JsonArray()
+          JsonArray params2 = new JsonArray()
                   .add(unitOfWork.getUnitOfWorkId().toString())
                   .add(eventsListAsJson)
                   .add(unitOfWork.getCommand().getCommandId().toString())
@@ -301,7 +302,7 @@ public class EntityUnitOfWorkRepository {
 
   private String commandToJson(Command command) {
     try {
-      val cmdAsJson = mapper.writerFor(Command.class).writeValueAsString(command);
+      String cmdAsJson = mapper.writerFor(Command.class).writeValueAsString(command);
       log.info("commandToJson {}", cmdAsJson);
       return cmdAsJson;
     } catch (JsonProcessingException e) {
@@ -311,7 +312,7 @@ public class EntityUnitOfWorkRepository {
 
   private String listOfEventsToJson(List<DomainEvent> events) {
     try {
-      val cmdAsJson = mapper.writerFor(eventsListTpe).writeValueAsString(events);
+      String cmdAsJson = mapper.writerFor(eventsListTpe).writeValueAsString(events);
       log.info("listOfEventsToJson {}", cmdAsJson);
       return cmdAsJson;
     } catch (JsonProcessingException e) {

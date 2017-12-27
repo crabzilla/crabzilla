@@ -1,8 +1,8 @@
 package io.github.crabzilla.core.entity;
 
-import io.github.crabzilla.core.example1.customer.Customer;
-import io.github.crabzilla.core.example1.services.SampleInternalService;
-import io.github.crabzilla.core.example1.services.SampleInternalServiceImpl;
+import io.github.crabzilla.example1.SampleInternalService;
+import io.github.crabzilla.example1.customer.*;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -10,9 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 
 import java.time.Instant;
+import java.util.UUID;
 
-import static io.github.crabzilla.core.example1.customer.CustomerData.*;
-import static io.github.crabzilla.core.example1.customer.CustomerFunctions.StateTransitionFn;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,10 +21,22 @@ public class StateTransitionsTrackerTest {
 
   StateTransitionsTracker<Customer> tracker;
 
-  final SampleInternalService service = new SampleInternalServiceImpl();
+  final SampleInternalService service = new SampleInternalService() {
+    @NotNull
+    @Override
+    public UUID uuid() {
+      return UUID.randomUUID();
+    }
+
+    @NotNull
+    @Override
+    public Instant now() {
+      return Instant.now();
+    }
+  };
 
   final Customer customer =
-          new Customer(service, null, null, false, null);
+          new Customer(null, null, false, null, service);
 
   final Snapshot<Customer> originalSnapshot = new Snapshot<>(customer, new Version(0));
 
@@ -65,7 +76,7 @@ public class StateTransitionsTrackerTest {
 
       final CustomerId id = new CustomerId("c1");
       private CustomerCreated customerCreated = new CustomerCreated(id, "customer-1");
-      private Customer expectedCustomer = new Customer(service, id, "customer-1", false, null);
+      private Customer expectedCustomer = new Customer(id, "customer-1", false, null, service);
 
       @BeforeEach
       void apply_create_event() {
@@ -88,8 +99,8 @@ public class StateTransitionsTrackerTest {
       public class WhenAddingActivateEvent {
 
         private CustomerActivated customerActivated = new CustomerActivated("is ok", Instant.now());
-        private Customer expectedCustomer = new Customer(service, id, "customer-1", true,
-                customerActivated.getReason());
+        private Customer expectedCustomer = new Customer(id, "customer-1", true,
+                customerActivated.getReason(), service);
 
         @BeforeEach
         void apply_activate_event() {
@@ -123,7 +134,7 @@ public class StateTransitionsTrackerTest {
     final CustomerId id = new CustomerId("c1");
     private CustomerCreated customerCreated = new CustomerCreated(id, "customer-1");
     private CustomerActivated customerActivated = new CustomerActivated(IS_OK, Instant.now());
-    private Customer expectedCustomer = new Customer(service, id, "customer-1", true, IS_OK);
+    private Customer expectedCustomer = new Customer(id, "customer-1", true, IS_OK, service);
 
     @BeforeEach
     void instantiate() {
