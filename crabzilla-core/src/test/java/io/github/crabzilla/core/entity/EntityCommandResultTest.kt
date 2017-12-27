@@ -4,17 +4,15 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerId
+import org.assertj.core.api.AssertionsForInterfaceTypes.assertThat
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-
-import java.util.UUID
-
+import java.util.*
 import java.util.Arrays.asList
-import org.assertj.core.api.AssertionsForInterfaceTypes.assertThat
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.fail
 
 @DisplayName("An EntityCommandResult")
 class EntityCommandResultTest {

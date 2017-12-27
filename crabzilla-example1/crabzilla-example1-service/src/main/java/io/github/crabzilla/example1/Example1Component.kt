@@ -7,8 +7,6 @@ import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
 import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
 import io.github.crabzilla.vertx.modules.QueryDbModule
 import io.github.crabzilla.vertx.modules.WriteDbModule
-import io.vertx.core.Verticle
-
 import javax.inject.Singleton
 
 @Singleton

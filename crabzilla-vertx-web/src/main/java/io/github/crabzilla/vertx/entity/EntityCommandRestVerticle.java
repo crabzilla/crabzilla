@@ -4,9 +4,7 @@ import io.github.crabzilla.core.entity.EntityCommand;
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
 import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
@@ -18,7 +16,8 @@ import org.slf4j.Logger;
 
 import java.util.UUID;
 
-import static io.github.crabzilla.vertx.helpers.StringHelper.*;
+import static io.github.crabzilla.vertx.helpers.StringHelper.aggregateId;
+import static io.github.crabzilla.vertx.helpers.StringHelper.commandHandlerId;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
