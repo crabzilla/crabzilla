@@ -398,7 +398,7 @@
                             <outputDirectory>${basedir}/crabzilla-core/src/test/java/io/github/crabzilla/example1</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1</directory>
+                                    <directory>${basedir}/crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1</directory>
                                     <!--<filtering>true</filtering>-->
                                 </resource>
                             </resources>
