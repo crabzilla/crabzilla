@@ -1,21 +1,24 @@
 package io.github.crabzilla.vertx.projection;
 
 import io.github.crabzilla.core.DomainEvent;
-import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
+import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.stream.Stream;
 
-@Slf4j
-public abstract class EventProjector<DAO> {
+import static org.slf4j.LoggerFactory.getLogger;
+
+public abstract class EventsProjector<DAO> {
+
+  private static Logger log = getLogger(EventsProjector.class);
 
   protected final String eventsChannelId;
   protected final Class<DAO> daoClass;
   protected final Jdbi jdbi;
 
-  public EventProjector(String eventsChannelId, Class<DAO> daoClass, Jdbi jdbi) {
+  public EventsProjector(String eventsChannelId, Class<DAO> daoClass, Jdbi jdbi) {
     this.eventsChannelId = eventsChannelId;
     this.daoClass = daoClass;
     this.jdbi = jdbi;
