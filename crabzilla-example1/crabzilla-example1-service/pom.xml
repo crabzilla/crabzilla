@@ -136,6 +136,20 @@
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>1.8</version>
                 <executions>
+                    <!--<execution>-->
+                        <!--<id>copy-example1-to-test-jar</id>-->
+                        <!--<phase>install</phase>-->
+                        <!--<configuration>-->
+                            <!--<tasks>-->
+                                <!--<copy todir="../../crabzilla-core/src/test/java/io/github/crabzilla/example1">-->
+                                    <!--<fileset dir="../crabzilla-example1-core/src/main/java/io/github/crabzilla/example1" />-->
+                                <!--</copy>-->
+                            <!--</tasks>-->
+                        <!--</configuration>-->
+                        <!--<goals>-->
+                            <!--<goal>run</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
                     <execution>
                         <id>start-vertx-app</id>
                         <phase>pre-integration-test</phase>
