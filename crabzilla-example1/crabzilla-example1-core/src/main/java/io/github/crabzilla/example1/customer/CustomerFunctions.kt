@@ -42,7 +42,7 @@ class CommandValidatorFn : (EntityCommand) -> List<String> { // <3>
 // tag::CommandHandlerFn[]
 
 class CommandHandlerFn(private val trackerFactory: (Snapshot<Customer>) -> StateTransitionsTracker<Customer>) :
-        (EntityCommand, Snapshot<out Customer>) -> EntityCommandResult {
+        (EntityCommand, Snapshot<Customer>) -> EntityCommandResult {
 
   override fun invoke(cmd: EntityCommand, snapshot: Snapshot<Customer>): EntityCommandResult {
 
