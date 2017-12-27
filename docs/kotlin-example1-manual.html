@@ -453,6 +453,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel2">
 <li><a href="#3-1-customermodule">3.1 CustomerModule</a></li>
 <li><a href="#3-2-example1module">3.2 Example1Module</a></li>
+<li><a href="#3-4-example1component">3.4 Example1Component</a></li>
 <li><a href="#3-3-example1launcher">3.3 Example1Launcher</a></li>
 <li><a href="#3-4-example1acceptanceit">3.4 Example1AcceptanceIt</a></li>
 </ul>
@@ -764,7 +765,7 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
 <div class="sect2">
 <h3 id="3-2-example1module"><a class="anchor" href="#3-2-example1module"></a>3.2 Example1Module</h3>
 <div class="listingblock">
-<div class="title">CustomerModule.kt</div>
+<div class="title">Example1Module.kt</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">@Module
 class Example1Module(val vertx: Vertx, val config: JsonObject) {
@@ -833,6 +834,22 @@ class Example1Module(val vertx: Vertx, val config: JsonObject) {
 </div>
 </div>
 <div class="sect2">
+<h3 id="3-4-example1component"><a class="anchor" href="#3-4-example1component"></a>3.4 Example1Component</h3>
+<div class="listingblock">
+<div class="title">Example1Component.kt</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">@Singleton
+@Component(modules = [CustomerModule::class, Example1Module::class, WriteDbModule::class, QueryDbModule::class])
+interface Example1Component {
+
+  fun commandVerticles(): Set&lt;EntityCommandHandlerVerticle&lt;out Entity&gt;&gt;
+
+  fun restVerticles(): Set&lt;EntityCommandRestVerticle&lt;out Any&gt;&gt;
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="3-3-example1launcher"><a class="anchor" href="#3-3-example1launcher"></a>3.3 Example1Launcher</h3>
 <div class="listingblock">
 <div class="title">Example1Launcher.kt</div>
@@ -894,7 +911,6 @@ class Example1Module(val vertx: Vertx, val config: JsonObject) {
       }
 
     }
-
 
   }
 
@@ -977,7 +993,7 @@ class Example1Module(val vertx: Vertx, val config: JsonObject) {
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-web/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHttpRpcVerticle.kt">EntityCommandHttpRpcVerticle</a> to receive commands as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-web/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandRestVerticle.java">EntityCommandRestVerticle</a> to receive commands as JSON</p>
 </li>
 <li>
 <p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.kt">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
@@ -996,7 +1012,7 @@ class Example1Module(val vertx: Vertx, val config: JsonObject) {
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-12-27 17:49:23 BRST
+Last updated 2017-12-27 18:48:40 BRST
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

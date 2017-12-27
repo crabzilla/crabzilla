@@ -76,7 +76,6 @@ class Example1Launcher {
 
     }
 
-
   }
 
 }

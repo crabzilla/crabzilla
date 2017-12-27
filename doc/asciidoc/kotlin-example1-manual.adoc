@@ -129,9 +129,17 @@ include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github
 === 3.2 Example1Module
 
 [source,kotlin]
-.CustomerModule.kt
+.Example1Module.kt
 ----
 include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.kt[tags=module]
+----
+
+=== 3.4 Example1Component
+
+[source,kotlin]
+.Example1Component.kt
+----
+include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Component.kt[tags=component]
 ----
 
 === 3.3 Example1Launcher
@@ -161,7 +169,7 @@ This example presented:
 
 Crabzilla will run your aggregate root by providing these components:
 
-* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-web/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHttpRpcVerticle.java[EntityCommandHttpRpcVerticle] to receive commands as JSON
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-web/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandRestVerticle.java[EntityCommandRestVerticle] to receive commands as JSON
 * https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.kt[EntityCommandHandlerVerticle] to validate and process commands against the latest snapshot found for the aggregate
 * https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityUnitOfWorkRepository.java[EntityUnitOfWorkRepository] to store resulting units of work into a single table, being events and command as JSON
 * https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/projection/EventsProjectionVerticle.java[EventsProjectionVerticle] to propagate and project events to read model database

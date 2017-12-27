@@ -9,11 +9,14 @@ import io.github.crabzilla.vertx.modules.QueryDbModule
 import io.github.crabzilla.vertx.modules.WriteDbModule
 import javax.inject.Singleton
 
+// tag::component[]
 @Singleton
-@Component(modules = [(CustomerModule::class), (Example1Module::class), (WriteDbModule::class), (QueryDbModule::class)])
+@Component(modules = [CustomerModule::class, Example1Module::class, WriteDbModule::class, QueryDbModule::class])
 interface Example1Component {
 
   fun commandVerticles(): Set<EntityCommandHandlerVerticle<out Entity>>
 
   fun restVerticles(): Set<EntityCommandRestVerticle<out Any>>
 }
+
+// end::component[]
