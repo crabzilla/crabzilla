@@ -538,21 +538,17 @@ data class CustomerDeactivated(val reason: String, val _when: Instant) : DomainE
 <div class="listingblock">
 <div class="title">CustomerData.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">data class CreateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
-                          @JsonProperty("targetId") override val _targetId: CustomerId,
-                          val name: String) : KotlinEntityCommand
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">data class CreateCustomer(override val commandId: UUID, override val targetId: CustomerId,
+                          val name: String) : EntityCommand
 
-data class ActivateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
-                            @JsonProperty("targetId") override val _targetId: CustomerId,
-                            val reason: String) : KotlinEntityCommand
+data class ActivateCustomer(override val commandId: UUID, override val targetId: CustomerId,
+                            val reason: String) : EntityCommand
 
-data class DeactivateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
-                              @JsonProperty("targetId") override val _targetId: CustomerId,
-                              val reason: String) : KotlinEntityCommand
+data class DeactivateCustomer(override val commandId: UUID, override val targetId: CustomerId,
+                              val reason: String) : EntityCommand
 
-data class CreateActivateCustomer(@JsonProperty("commandId") override val _commandId: UUID,
-                                  @JsonProperty("targetId") override val _targetId: CustomerId,
-                                  val name: String, val reason: String) : KotlinEntityCommand</code></pre>
+data class CreateActivateCustomer(override val commandId: UUID, override val targetId: CustomerId,
+                                  val name: String, val reason: String) : EntityCommand</code></pre>
 </div>
 </div>
 </div>
@@ -567,8 +563,8 @@ data class CreateActivateCustomer(@JsonProperty("commandId") override val _comma
 <div class="listingblock">
 <div class="title">CustomerFunctions.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandValidatorFn : Function&lt;EntityCommand, List&lt;String&gt;&gt; { <i class="conum" data-value="3"></i><b>(3)</b>
-  override fun apply(command: EntityCommand): List&lt;String&gt; {
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandValidatorFn : (EntityCommand) -&gt; List&lt;String&gt; { <i class="conum" data-value="3"></i><b>(3)</b>
+  override fun invoke(command: EntityCommand): List&lt;String&gt; {
     return when(command) {
       is CreateCustomer -&gt;
         if (command.name.equals("a bad name"))
@@ -588,10 +584,10 @@ data class CreateActivateCustomer(@JsonProperty("commandId") override val _comma
 <div class="listingblock">
 <div class="title">CustomerFunctions.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandHandlerFn(private val trackerFactory: StateTransitionsTrackerFactory&lt;Customer&gt;) :
-        BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, EntityCommandResult&gt; {
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandHandlerFn(private val trackerFactory: (Snapshot&lt;Customer&gt;) -&gt; StateTransitionsTracker&lt;Customer&gt;) :
+        (EntityCommand, Snapshot&lt;Customer&gt;) -&gt; EntityCommandResult {
 
-  override fun apply(cmd: EntityCommand, snapshot: Snapshot&lt;Customer&gt;): EntityCommandResult {
+  override fun invoke(cmd: EntityCommand, snapshot: Snapshot&lt;Customer&gt;): EntityCommandResult {
 
     val customer = snapshot.instance
     val newVersion = snapshot.version.nextVersion()
@@ -599,13 +595,13 @@ data class CreateActivateCustomer(@JsonProperty("commandId") override val _comma
     return resultOf {
       when (cmd) {
         is CreateCustomer -&gt;
-          uowOf(cmd, customer.create(cmd.targetId as CustomerId, cmd.name), newVersion)
+          uowOf(cmd, customer.create(cmd.targetId, cmd.name), newVersion)
         is ActivateCustomer -&gt; uowOf(cmd, customer.activate(cmd.reason), newVersion)
         is DeactivateCustomer -&gt; uowOf(cmd, customer.deactivate(cmd.reason), newVersion)
         is CreateActivateCustomer -&gt; {
-          val tracker = trackerFactory.apply(snapshot)
+          val tracker = trackerFactory.invoke(snapshot)
           val events = tracker
-                  .applyEvents({ c -&gt; c.create(cmd.targetId as CustomerId, cmd.name) })
+                  .applyEvents({ c -&gt; c.create(cmd.targetId, cmd.name) })
                   .applyEvents({ c -&gt; c.activate(cmd.reason) })
                   .collectEvents()
           uowOf(cmd, events, newVersion)
@@ -626,10 +622,10 @@ data class CreateActivateCustomer(@JsonProperty("commandId") override val _comma
 <div class="listingblock">
 <div class="title">CustomerFunctions.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class StateTransitionFn : BiFunction&lt;DomainEvent, Customer, Customer&gt; {
-  override fun apply(event: DomainEvent, customer: Customer): Customer {
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class StateTransitionFn : (DomainEvent, Customer) -&gt; Customer {
+  override fun invoke(event: DomainEvent, customer: Customer): Customer {
     return when(event) {
-      is CustomerCreated -&gt; customer.copy(_id = event.id, name =  event.name)
+      is CustomerCreated -&gt; customer.copy(customerId = event.id, name =  event.name)
       is CustomerActivated -&gt; customer.copy(isActive = true, reason = event.reason)
       is CustomerDeactivated -&gt; customer.copy(isActive = false, reason = event.reason)
       else -&gt; customer
@@ -648,28 +644,27 @@ data class CreateActivateCustomer(@JsonProperty("commandId") override val _comma
 <div class="listingblock">
 <div class="title">Customer.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">data class Customer(val _id: CustomerId? = null,
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">data class Customer(val customerId: CustomerId? = null,
                     val name: String? = null,
                     val isActive: Boolean? = false,
                     val reason: String? = null,
                     val sampleInternalService: SampleInternalService) : Entity {
 
-  override fun getId(): EntityId {
-    return _id!!
-  }
+  override val id: EntityId
+    get() = customerId!!
 
   internal fun create(id: CustomerId, name: String): List&lt;DomainEvent&gt; {
-    require(this._id == null, { "customer already created" })
+    require(this.customerId == null, { "customer already created" })
     return eventsOf(CustomerCreated(id, name))
   }
 
   internal fun activate(reason: String): List&lt;DomainEvent&gt; {
-    require(this._id != null, { "customer must exists" })
+    require(this.customerId != null, { "customer must exists" })
     return eventsOf(CustomerActivated(reason, sampleInternalService.now()))
   }
 
   internal fun deactivate(reason: String): List&lt;DomainEvent&gt; {
-    require(this._id != null, { "customer must exists" })
+    require(this.customerId != null, { "customer must exists" })
     return eventsOf(CustomerDeactivated(reason, sampleInternalService.now()))
   }
 
@@ -731,37 +726,7 @@ can be easily tested with mocks and stubs.</p>
 <div class="listingblock">
 <div class="title">V1__write_model.sql</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-sql" data-lang="sql">DROP TABLE if exists units_of_work ;
-
-CREATE TABLE units_of_work (
-      uow_seq_number BIGINT AUTO_INCREMENT,
-	  uow_id VARCHAR(36) NOT NULL,
-      uow_events JSON NOT NULL,
-      cmd_id VARCHAR(36) NOT NULL,
-      cmd_data JSON NOT NULL,
-      ar_name VARCHAR(36) NOT NULL,
-      ar_id VARCHAR(36) NOT NULL,
-      version NUMERIC,
-      inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (uow_seq_number, ar_name),
-      UNIQUE (uow_id, ar_name),
-      UNIQUE (cmd_id, ar_name)
-    )
-    PARTITION BY KEY(ar_name)
-    ;
-
-CREATE INDEX idx_cmd_id ON units_of_work (cmd_id);
-CREATE INDEX idx_uow_id ON units_of_work (uow_id);
-CREATE INDEX idx_ar_id ON units_of_work (ar_id);
-
-DROP TABLE if exists events_channels ;
-
-CREATE TABLE events_channels (
-    channel_name VARCHAR(36) NOT NULL,
-    uow_last_seq BIGINT ,
-    PRIMARY KEY (channel_name)
-    )
-    ;</code></pre>
+<pre class="highlightjs highlight"><code class="language-sql" data-lang="sql">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-database/src/main/resources/db/migration/V1__write_model.sql[]</code></pre>
 </div>
 </div>
 </div>
@@ -773,14 +738,7 @@ CREATE TABLE events_channels (
 <div class="listingblock">
 <div class="title">V2__read_model.sql</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-sql" data-lang="sql">DROP TABLE if exists customer_summary ;
-
-CREATE TABLE customer_summary (
-    id VARCHAR(36) NOT NULL,
-    name VARCHAR(36) NOT NULL,
-    is_active BOOLEAN NOT NULL,
-    PRIMARY KEY (id)
-    )</code></pre>
+<pre class="highlightjs highlight"><code class="language-sql" data-lang="sql">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-database/src/main/resources/db/migration/V2__read_model.sql[]</code></pre>
 </div>
 </div>
 </div>
@@ -792,20 +750,7 @@ CREATE TABLE customer_summary (
 <div class="listingblock">
 <div class="title">CustomerSummaryDao.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">interface CustomerSummaryDao {
-
-  @SqlUpdate("insert into customer_summary (id, name, is_active) values " +
-          "(:customerSummary.id, :customerSummary.name, false)")
-  fun insert(customerSummary: CustomerSummary)
-
-  @SqlUpdate("update customer_summary set customer_summary.is_active = :isActive " +
-          "where customer_summary.id = :id")
-  fun updateStatus(id: String, isActive: Boolean)
-
-  @SqlQuery("select id, name, is_active from customer_summary")
-  fun getAll(): List&lt;CustomerSummary&gt;
-
-}</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-database/src/main/java/io/github/crabzilla/example1/CustomerSummaryDao.kt[tags=dao]</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -840,71 +785,36 @@ also a factory and a module for each aggregate we have.</p>
 <pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">@Module
 class CustomerModule(val vertx: Vertx, val config: JsonObject) {
 
-  @Provides @IntoMap
-  @StringKey("EntityCommandRestVerticle")
-  fun restVerticle(uowRepository: EntityUnitOfWorkRepository): Verticle {
+  @Provides @IntoSet
+  fun restVerticle(uowRepository: EntityUnitOfWorkRepository): EntityCommandRestVerticle&lt;out Any&gt; {
     return EntityCommandRestVerticle(Customer::class.java, config, uowRepository)
   }
 
-  @Provides @IntoMap
-  @StringKey("EntityCommandHandlerVerticle")
-  fun handlerVerticle(supplier: Supplier&lt;Customer&gt;,
-                               cmdHandler: BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, EntityCommandResult&gt;,
-                               validator: Function&lt;EntityCommand, List&lt;String&gt;&gt;,
-                               snapshotPromoter: SnapshotPromoter&lt;Customer&gt;,
-                               eventRepository: EntityUnitOfWorkRepository): Verticle {
-    val mycache: ExpiringMap&lt;String, Snapshot&lt;Customer&gt;&gt; = ExpiringMap.create()
-    val circuitBreaker = CircuitBreaker.create("command-handler-circuit-breaker", vertx,
-            CircuitBreakerOptions()
-                    .setMaxFailures(5) // number SUCCESS failure before opening the circuit
-                    .setTimeout(2000) // consider a failure if the operation does not succeed in time
-                    .setFallbackOnFailure(true) // do we call the fallback on failure
-                    .setResetTimeout(10000)) // time spent in open state before attempting to re-try
-    return EntityCommandHandlerVerticle(Customer::class.java, supplier.get(), cmdHandler, validator, snapshotPromoter,
-            eventRepository, mycache, circuitBreaker)
+  @Provides @IntoSet
+  fun handlerVerticle(service: SampleInternalService, eventRepository: EntityUnitOfWorkRepository):
+          EntityCommandHandlerVerticle&lt;out Entity&gt; {
+
+    val customer = Customer(sampleInternalService = service)
+    val stateTransitionFn = StateTransitionFn()
+    val validator =  CommandValidatorFn()
+
+    val cache: ExpiringMap&lt;String, Snapshot&lt;Customer&gt;&gt; = ExpiringMap.create()
+    val circuitBreaker = CircuitBreaker.create("command-handler-circuit-breaker", vertx)
+    val trackerFactory : (Snapshot&lt;Customer&gt;) -&gt; StateTransitionsTracker&lt;Customer&gt; =
+            { instance -&gt; StateTransitionsTracker(instance, stateTransitionFn)
+            }
+    val cmdHandler = CommandHandlerFn(trackerFactory)
+    val snapshotPromoter =
+            SnapshotPromoter&lt;Customer&gt; { instance -&gt; StateTransitionsTracker(instance, stateTransitionFn) }
+    return EntityCommandHandlerVerticle(Customer::class.java, customer, cmdHandler, validator, snapshotPromoter,
+            eventRepository, cache, circuitBreaker)
   }
 
   @Provides
   @Singleton
-  fun supplierFn(service: SampleInternalService): Supplier&lt;Customer&gt; {
-    return Supplier { Customer(sampleInternalService = service) }
-  }
-
-   @Provides
-  @Singleton
-  fun stateTransitionFn(): BiFunction&lt;DomainEvent, Customer, Customer&gt; {
-    return StateTransitionFn()
-  }
-
-   @Provides
-  @Singleton
-  fun cmdValidatorFn(): Function&lt;EntityCommand, List&lt;String&gt;&gt; {
-    return CommandValidatorFn()
-  }
-
-   @Provides
-  @Singleton
-  fun cmdHandlerFn(stateTransitionFn: BiFunction&lt;DomainEvent, Customer, Customer&gt;):
-          BiFunction&lt;EntityCommand, Snapshot&lt;Customer&gt;, EntityCommandResult&gt; {
-    val trackerFactory = StateTransitionsTrackerFactory&lt;Customer&gt; { instance -&gt;
-      StateTransitionsTracker(instance, stateTransitionFn)
-    }
-    return CommandHandlerFn(trackerFactory)
-  }
-
-   @Provides
-  @Singleton
-  fun snapshotPromoter(stateTransitionFn: BiFunction&lt;DomainEvent, Customer, Customer&gt;): SnapshotPromoter&lt;Customer&gt; {
-    return SnapshotPromoter { instance -&gt; StateTransitionsTracker&lt;Customer&gt;(instance, stateTransitionFn) }
-  }
-
-
-   @Provides
-  @Singleton
-  fun customerRepo(jdbcClient: JDBCClient): EntityUnitOfWorkRepository {
+  fun uowRepo(@WriteDatabase jdbcClient: JDBCClient): EntityUnitOfWorkRepository {
     return EntityUnitOfWorkRepository(Customer::class.java, jdbcClient)
   }
-
 
 }</code></pre>
 </div>
@@ -921,24 +831,7 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
 <div class="listingblock">
 <div class="title">Example1EventProjector</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class Example1EventProjector(channelId: String, daoClazz: Class&lt;CustomerSummaryDao&gt;, jdbi: Jdbi)
-
-  : EventProjector&lt;CustomerSummaryDao&gt;(channelId, daoClazz, jdbi) {
-
-  val log = LoggerFactory.getLogger(Example1EventProjector::class.java.simpleName)
-
-  override fun write(dao: CustomerSummaryDao, targetId: String, event: DomainEvent) {
-
-    log.info("event {} from channel {}", event, eventsChannelId)
-
-    when (event) {
-      is CustomerCreated -&gt; dao.insert(CustomerSummary(targetId, event.name, false))
-      is CustomerActivated -&gt; dao.updateStatus(targetId, true)
-      is CustomerDeactivated -&gt; dao.updateStatus(targetId, false)
-      else -&gt; println("${event.javaClass.simpleName} does not have any event projection handler")
-    }
-  }
-}</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1EventProjector.kt[tags=projector]</code></pre>
 </div>
 </div>
 </div>
@@ -962,7 +855,7 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
 
     val customerId = CustomerId(UUID.randomUUID().toString())
     val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer test")
-    val expectedEvent = CustomerCreated(createCustomerCmd._targetId, "customer test")
+    val expectedEvent = CustomerCreated(createCustomerCmd.targetId, "customer test")
     val expectedUow = EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
             Version(1), listOf&lt;DomainEvent&gt;(expectedEvent))
 
@@ -1042,7 +935,7 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-10-21 02:49:47 BRST
+Last updated 2017-12-27 13:11:40 BRST
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

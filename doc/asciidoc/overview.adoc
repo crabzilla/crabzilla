@@ -21,7 +21,7 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 
 == Modules
 
-Crabzilla has 2 modules:
+Crabzilla has these modules:
 
  crabzilla               → Project root
   └ crabzilla-core       → Command, DomainEvent, Aggregate, Snapshot, etc
@@ -30,10 +30,10 @@ Crabzilla has 2 modules:
 
 and your typical *example1* bounded context project will have this structure:
 
- kotlin-example1             → Project root
-  └ example1-kotlin-core     → Your domain code. Services as interfaces. Almost zero dependencies.
-  └ example1-kotlin-database → DAOs implementations.
-  └ example1-kotlin-service  → The application: wiring, configuration and services implementations.
+ kotlin-example1              → Project root
+  └ example1-kotlin-core      → Your domain code. Services as interfaces. Almost zero dependencies.
+  └ example1-kotlin-projector → Library to be used to project events into query model database.
+  └ example1-kotlin-service   → The application: wiring, configuration and services implementations.
 
 Load, integration and acceptance tests are against the service module.
 

@@ -6,7 +6,7 @@
 # crabzilla
 
 * [Overview](https://crabzilla.github.io/crabzilla/docs/overview.html)
-* [kotlin-example-manual](https://crabzilla.github.io/crabzilla/docs/kotlin-example-manual.html)
+* [kotlin-example1-manual](https://crabzilla.github.io/crabzilla/docs/kotlin-example1-manual.html)
 * [Architecture decision records](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
 
 ## Maven
