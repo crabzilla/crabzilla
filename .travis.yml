@@ -20,6 +20,7 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
   - docker-compose rm -f
   - docker-compose up -d
+  - build.sh
 
 cache:
   directories:
@@ -31,7 +32,6 @@ script:
   - docker ps
   - sleep 30
   - docker ps
-  - build.sh
   - mvn clean install -DskipITs=false
 
 after_success:
