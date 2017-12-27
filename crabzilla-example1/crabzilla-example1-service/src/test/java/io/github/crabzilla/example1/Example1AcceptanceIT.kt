@@ -73,7 +73,8 @@ class Example1AcceptanceIT {
     assertThat(postCmdResponse.statusCode()).isEqualTo(201)
     assertThat(postCmdResponse.header(LOCATION_HEADER))
             .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
-                    + aggregateId(Customer::class.java) + "/commands/" + createCustomerCmd.commandId.toString())
+                    + aggregateId(Customer::class.java) + "/commands/"
+                    + createCustomerCmd.commandId.toString())
 
     val getUowResponse = given().contentType(JSON).body(json)
             .`when`().get(postCmdResponse.header(LOCATION_HEADER))
@@ -115,7 +116,8 @@ class Example1AcceptanceIT {
     assertThat(postCmdResponse.statusCode()).isEqualTo(201)
     assertThat(postCmdResponse.header(LOCATION_HEADER))
             .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
-                    + aggregateId(Customer::class.java) + "/commands/" + createCustomerCmd.commandId.toString())
+                    + aggregateId(Customer::class.java)
+                    + "/commands/" + createCustomerCmd.commandId.toString())
 
     val getUowResponse = given().contentType(JSON).body(json)
             .`when`().get(postCmdResponse.header(LOCATION_HEADER))
@@ -141,7 +143,8 @@ class Example1AcceptanceIT {
     assertThat(postCmdResponse2.statusCode()).isEqualTo(201)
     assertThat(postCmdResponse2.header(LOCATION_HEADER))
             .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
-                    + aggregateId(Customer::class.java) + "/commands/" + createCustomerCmd.commandId.toString())
+            + aggregateId(Customer::class.java)
+                    + "/commands/" + createCustomerCmd.commandId.toString())
 
     val getUowResponse2 = given().contentType(JSON).body(json)
             .`when`().get(postCmdResponse2.header(LOCATION_HEADER))

@@ -448,28 +448,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#1-5-read-model">1.5 Read Model</a></li>
 </ul>
 </li>
-<li><a href="#2-0-crabzilla-example1-database">2.0 crabzilla-example1-database</a>
-<ul class="sectlevel2">
-<li><a href="#2-1-0-write-model">2.1.0 Write model</a></li>
-<li><a href="#2-1-1-read-model">2.1.1 Read model</a></li>
-<li><a href="#2-2-0-dao-implementations">2.2.0 DAO implementations</a></li>
-</ul>
-</li>
+<li><a href="#2-0-crabzilla-example1-projection">2.0 crabzilla-example1-projection</a></li>
 <li><a href="#3-0-crabzilla-example1-service">3.0 crabzilla-example1-service</a>
 <ul class="sectlevel2">
-<li><a href="#3-1-0-customer-components">3.1.0 Customer components</a>
-<ul class="sectlevel3">
-<li><a href="#3-1-1-customerfactory">3.1.1 CustomerFactory</a></li>
-<li><a href="#3-1-2-customermodule">3.1.2 CustomerModule</a></li>
-</ul>
-</li>
-<li><a href="#3-2-0-example1">3.2.0 Example1</a>
-<ul class="sectlevel3">
-<li><a href="#3-2-1-eventprojectors">3.2.1 EventProjectors</a></li>
-<li><a href="#3-2-2-example1module">3.2.2 Example1Module</a></li>
-<li><a href="#3-2-3-example1acceptanceit">3.2.3 Example1AcceptanceIt</a></li>
-</ul>
-</li>
+<li><a href="#3-1-customermodule">3.1 CustomerModule</a></li>
+<li><a href="#3-2-example1module">3.2 Example1Module</a></li>
+<li><a href="#3-3-example1launcher">3.3 Example1Launcher</a></li>
+<li><a href="#3-4-example1acceptanceit">3.4 Example1AcceptanceIt</a></li>
 </ul>
 </li>
 <li><a href="#conclusion">Conclusion</a></li>
@@ -515,8 +500,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="1-0-crabzilla-example1-core"><a class="anchor" href="#1-0-crabzilla-example1-core"></a>1.0 crabzilla-example1-core</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This module contains only domain code: value objects, aggregates, commands, events, functions, etc. Within this module,
-internal services and repositories are just plain domain abstractions: interfaces or abstract classes.</p>
+<p>A library containing value objects, aggregates, commands, events, functions, etc. Within this module, internal services
+and repositories are just plain domain abstractions: interfaces or abstract classes. This is <strong>persistence ignorance</strong>.</p>
 </div>
 <div class="sect2">
 <h3 id="1-1-data"><a class="anchor" href="#1-1-data"></a>1.1 Data</h3>
@@ -547,7 +532,8 @@ data class ActivateCustomer(override val commandId: UUID, override val targetId:
 data class DeactivateCustomer(override val commandId: UUID, override val targetId: CustomerId,
                               val reason: String) : EntityCommand
 
-data class CreateActivateCustomer(override val commandId: UUID, override val targetId: CustomerId,
+data class CreateActivateCustomer(override val commandId: UUID,
+                                  override val targetId: CustomerId,
                                   val name: String, val reason: String) : EntityCommand</code></pre>
 </div>
 </div>
@@ -563,7 +549,7 @@ data class CreateActivateCustomer(override val commandId: UUID, override val tar
 <div class="listingblock">
 <div class="title">CustomerFunctions.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandValidatorFn : (EntityCommand) -&gt; List&lt;String&gt; { <i class="conum" data-value="3"></i><b>(3)</b>
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandValidatorFn : (EntityCommand) -&gt; List&lt;String&gt; {
   override fun invoke(command: EntityCommand): List&lt;String&gt; {
     return when(command) {
       is CreateCustomer -&gt;
@@ -584,7 +570,8 @@ data class CreateActivateCustomer(override val commandId: UUID, override val tar
 <div class="listingblock">
 <div class="title">CustomerFunctions.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandHandlerFn(private val trackerFactory: (Snapshot&lt;Customer&gt;) -&gt; StateTransitionsTracker&lt;Customer&gt;) :
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandHandlerFn(
+        private val trackerFactory: (Snapshot&lt;Customer&gt;) -&gt; StateTransitionsTracker&lt;Customer&gt;) :
         (EntityCommand, Snapshot&lt;Customer&gt;) -&gt; EntityCommandResult {
 
   override fun invoke(cmd: EntityCommand, snapshot: Snapshot&lt;Customer&gt;): EntityCommandResult {
@@ -713,49 +700,13 @@ can be easily tested with mocks and stubs.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="2-0-crabzilla-example1-database"><a class="anchor" href="#2-0-crabzilla-example1-database"></a>2.0 crabzilla-example1-database</h2>
+<h2 id="2-0-crabzilla-example1-projection"><a class="anchor" href="#2-0-crabzilla-example1-projection"></a>2.0 crabzilla-example1-projection</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Here we will setup the Flyway to init our database and implements our DAOs.</p>
-</div>
-<div class="sect2">
-<h3 id="2-1-0-write-model"><a class="anchor" href="#2-1-0-write-model"></a>2.1.0 Write model</h3>
-<div class="paragraph">
-<p>This script creates a table to store events resulting from commands and also a table to control events projection data.</p>
-</div>
-<div class="listingblock">
-<div class="title">V1__write_model.sql</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-sql" data-lang="sql">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-database/src/main/resources/db/migration/V1__write_model.sql[]</code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="2-1-1-read-model"><a class="anchor" href="#2-1-1-read-model"></a>2.1.1 Read model</h3>
-<div class="paragraph">
-<p>For this example, our read model is only:</p>
-</div>
-<div class="listingblock">
-<div class="title">V2__read_model.sql</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-sql" data-lang="sql">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-database/src/main/resources/db/migration/V2__read_model.sql[]</code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="2-2-0-dao-implementations"><a class="anchor" href="#2-2-0-dao-implementations"></a>2.2.0 DAO implementations</h3>
-<div class="paragraph">
-<p>We also need to implement our DAOs for storing and retrieving read models. For this example:</p>
-</div>
-<div class="listingblock">
-<div class="title">CustomerSummaryDao.kt</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-database/src/main/java/io/github/crabzilla/example1/CustomerSummaryDao.kt[tags=dao]</code></pre>
-</div>
+<p>A service to read the event stream from db and project it to the query model database.</p>
 </div>
 <div class="paragraph">
-<p>Now we have a running database !</p>
-</div>
+<p>TODO</p>
 </div>
 </div>
 </div>
@@ -763,22 +714,10 @@ can be easily tested with mocks and stubs.</p>
 <h2 id="3-0-crabzilla-example1-service"><a class="anchor" href="#3-0-crabzilla-example1-service"></a>3.0 crabzilla-example1-service</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Here is the module where we will run our domain model. We have to provide / wire components for our Example1 context and
-also a factory and a module for each aggregate we have.</p>
+<p>A service to accept and process the commands.</p>
 </div>
 <div class="sect2">
-<h3 id="3-1-0-customer-components"><a class="anchor" href="#3-1-0-customer-components"></a>3.1.0 Customer components</h3>
-<div class="sect3">
-<h4 id="3-1-1-customerfactory"><a class="anchor" href="#3-1-1-customerfactory"></a>3.1.1 CustomerFactory</h4>
-<div class="listingblock">
-<div class="title">CustomerFactory</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerFactory.kt[tags=factory]</code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="3-1-2-customermodule"><a class="anchor" href="#3-1-2-customermodule"></a>3.1.2 CustomerModule</h4>
+<h3 id="3-1-customermodule"><a class="anchor" href="#3-1-customermodule"></a>3.1 CustomerModule</h3>
 <div class="listingblock">
 <div class="title">CustomerModule.kt</div>
 <div class="content">
@@ -786,12 +725,14 @@ also a factory and a module for each aggregate we have.</p>
 class CustomerModule(val vertx: Vertx, val config: JsonObject) {
 
   @Provides @IntoSet
-  fun restVerticle(uowRepository: EntityUnitOfWorkRepository): EntityCommandRestVerticle&lt;out Any&gt; {
+  fun restVerticle(uowRepository: EntityUnitOfWorkRepository):
+          EntityCommandRestVerticle&lt;out Any&gt;{
     return EntityCommandRestVerticle(Customer::class.java, config, uowRepository)
   }
 
   @Provides @IntoSet
-  fun handlerVerticle(service: SampleInternalService, eventRepository: EntityUnitOfWorkRepository):
+  fun handlerVerticle(service: SampleInternalService,
+                      eventRepository: EntityUnitOfWorkRepository):
           EntityCommandHandlerVerticle&lt;out Entity&gt; {
 
     val customer = Customer(sampleInternalService = service)
@@ -804,10 +745,10 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
             { instance -&gt; StateTransitionsTracker(instance, stateTransitionFn)
             }
     val cmdHandler = CommandHandlerFn(trackerFactory)
-    val snapshotPromoter =
-            SnapshotPromoter&lt;Customer&gt; { instance -&gt; StateTransitionsTracker(instance, stateTransitionFn) }
-    return EntityCommandHandlerVerticle(Customer::class.java, customer, cmdHandler, validator, snapshotPromoter,
-            eventRepository, cache, circuitBreaker)
+    val snapshotPromoter = SnapshotPromoter&lt;Customer&gt;
+                    { instance -&gt; StateTransitionsTracker(instance, stateTransitionFn) }
+    return EntityCommandHandlerVerticle(Customer::class.java, customer, cmdHandler, validator,
+            snapshotPromoter, eventRepository, cache, circuitBreaker)
   }
 
   @Provides
@@ -820,29 +761,149 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
 </div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="3-2-example1module"><a class="anchor" href="#3-2-example1module"></a>3.2 Example1Module</h3>
+<div class="listingblock">
+<div class="title">CustomerModule.kt</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">@Module
+class Example1Module(val vertx: Vertx, val config: JsonObject) {
+
+  init {
+    configureVertx()
+  }
+
+  @Provides
+  @Singleton
+  fun vertx(): Vertx {
+    return vertx
+  }
+
+  @Provides
+  @Singleton
+  fun config(): JsonObject {
+    return config
+  }
+
+  @Provides
+  @Singleton
+  fun customerSummaryDao(@QueryDatabase jdbi: Jdbi) : CustomerSummaryDao {
+    return jdbi.onDemand(CustomerSummaryDao::class.java)
+  }
+
+  @Provides
+  @Singleton
+  fun customerRepository(dao: CustomerSummaryDao): CustomerRepository {
+    return CustomerRepositoryImpl(dao)
+  }
+
+  @Provides
+  @Singleton
+  fun service(): SampleInternalService {
+    return SampleInternalServiceImpl()
+  }
+
+  fun configureVertx() {
+
+    Json.mapper.registerModule(ParameterNamesModule())
+            .registerModule(Jdk8Module())
+            .registerModule(JavaTimeModule())
+            .registerModule(KotlinModule())
+            .enable(SerializationFeature.INDENT_OUTPUT)
+
+    vertx.eventBus().registerDefaultCodec(EntityCommandExecution::class.java,
+            JacksonGenericCodec(Json.mapper, EntityCommandExecution::class.java))
+
+    vertx.eventBus().registerDefaultCodec(EntityId::class.java,
+            JacksonGenericCodec(Json.mapper, EntityId::class.java))
+
+    vertx.eventBus().registerDefaultCodec(EntityCommand::class.java,
+            JacksonGenericCodec(Json.mapper, EntityCommand::class.java))
+
+    vertx.eventBus().registerDefaultCodec(DomainEvent::class.java,
+            JacksonGenericCodec(Json.mapper, DomainEvent::class.java))
+
+    vertx.eventBus().registerDefaultCodec(EntityUnitOfWork::class.java,
+            JacksonGenericCodec(Json.mapper, EntityUnitOfWork::class.java))
+
+  }
+
+}</code></pre>
+</div>
+</div>
 </div>
 <div class="sect2">
-<h3 id="3-2-0-example1"><a class="anchor" href="#3-2-0-example1"></a>3.2.0 Example1</h3>
-<div class="sect3">
-<h4 id="3-2-1-eventprojectors"><a class="anchor" href="#3-2-1-eventprojectors"></a>3.2.1 EventProjectors</h4>
-<div class="paragraph">
-<p>A Bounded context can have many EventProjectors. This example has just one event projector:</p>
-</div>
+<h3 id="3-3-example1launcher"><a class="anchor" href="#3-3-example1launcher"></a>3.3 Example1Launcher</h3>
 <div class="listingblock">
-<div class="title">Example1EventProjector</div>
+<div class="title">Example1Launcher.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1EventProjector.kt[tags=projector]</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class Example1Launcher {
+
+  companion object {
+
+    val log = org.slf4j.LoggerFactory.getLogger(Example1Launcher::class.java.simpleName)
+
+    @Throws(Exception::class)
+    @JvmStatic
+    fun main(args: Array&lt;String&gt;) {
+
+      setProperty(LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory::class.java.name)
+      LoggerFactory.getLogger(LoggerFactory::class.java) // Required for Logback to work in Vertx
+
+      val parser = OptionParser()
+      parser.accepts("conf").withRequiredArg()
+      parser.allowsUnrecognizedOptions()
+
+      val options = parser.parse(*args)
+      val configFile = options.valueOf("conf") as String?
+      val vertx = Vertx.vertx()
+      val retriever = ConfigRetriever.create(vertx, cfgOptions(configFile))
+
+      retriever.getConfig { ar -&gt;
+
+        if (ar.failed()) {
+          log.error("failed to load config", ar.cause())
+          return@getConfig
+        }
+
+        val config = ar.result()
+        log.info("config = {}", config.encodePrettily())
+
+        val app = DaggerExample1Component.builder()
+                .example1Module(Example1Module(vertx, config))
+                .queryDbModule(QueryDbModule(vertx, config))
+                .writeDbModule(WriteDbModule(vertx, config))
+                .customerModule(CustomerModule(vertx, config))
+                .build()
+
+        app.commandVerticles().forEach({
+              vertx.deployVerticle(it) { event -&gt;
+              log.info("cmd verticle: $it.toString()")
+              if (!event.succeeded()) log.error("Error deploying verticle", event.cause()) }
+        })
+
+        app.restVerticles().forEach({
+          vertx.deployVerticle(it) { event -&gt;
+            log.info("rest verticle: $it.toString()")
+            if (!event.succeeded()) log.error("Error deploying verticle", event.cause()) }
+        })
+
+        // just a test
+        justForTest(vertx)
+
+      }
+
+    }
+
+
+  }
+
+}</code></pre>
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="3-2-2-example1module"><a class="anchor" href="#3-2-2-example1module"></a>3.2.2 Example1Module</h4>
-<div class="paragraph">
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.kt">Example1Module</a></p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="3-2-3-example1acceptanceit"><a class="anchor" href="#3-2-3-example1acceptanceit"></a>3.2.3 Example1AcceptanceIt</h4>
+<div class="sect2">
+<h3 id="3-4-example1acceptanceit"><a class="anchor" href="#3-4-example1acceptanceit"></a>3.4 Example1AcceptanceIt</h3>
 <div class="paragraph">
 <p>Now finally you will see this test passing:</p>
 </div>
@@ -870,7 +931,8 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
     assertThat(postCmdResponse.statusCode()).isEqualTo(201)
     assertThat(postCmdResponse.header(LOCATION_HEADER))
             .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
-                    + aggregateId(Customer::class.java) + "/commands/" + createCustomerCmd.commandId.toString())
+                    + aggregateId(Customer::class.java) + "/commands/"
+                    + createCustomerCmd.commandId.toString())
 
     val getUowResponse = given().contentType(JSON).body(json)
             .`when`().get(postCmdResponse.header(LOCATION_HEADER))
@@ -888,7 +950,6 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
     assertThat(uow.version).isEqualTo(expectedUow.version)
 
   }</code></pre>
-</div>
 </div>
 </div>
 </div>
@@ -916,10 +977,10 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHttpRpcVerticle.java">EntityCommandHttpRpcVerticle</a> to receive commands as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-web/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHttpRpcVerticle.kt">EntityCommandHttpRpcVerticle</a> to receive commands as JSON</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.java">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.kt">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
 </li>
 <li>
 <p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting units of work into a single table, being events and command as JSON</p>
@@ -935,7 +996,7 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-12-27 13:11:40 BRST
+Last updated 2017-12-27 17:49:23 BRST
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

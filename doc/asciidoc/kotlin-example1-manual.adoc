@@ -25,8 +25,8 @@ image::example1.png[scaledwidth=100%]
 
 == 1.0 crabzilla-example1-core
 
-This module contains only domain code: value objects, aggregates, commands, events, functions, etc. Within this module,
-internal services and repositories are just plain domain abstractions: interfaces or abstract classes.
+A library containing value objects, aggregates, commands, events, functions, etc. Within this module, internal services
+and repositories are just plain domain abstractions: interfaces or abstract classes. This is *persistence ignorance*.
 
 === 1.1 Data
 
@@ -108,56 +108,17 @@ include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/cr
 Example1 domain is built of functions. So far we didn't had to worry about any implementation detail. Example1 domain
 can be easily tested with mocks and stubs.
 
-== 2.0 crabzilla-example1-database
+== 2.0 crabzilla-example1-projection
 
-Here we will setup the Flyway to init our database and implements our DAOs.
+A service to read the event stream from db and project it to the query model database.
 
-=== 2.1.0 Write model
-This script creates a table to store events resulting from commands and also a table to control events projection data.
-
-[source,sql]
-.V1__write_model.sql
-----
-include::./crabzilla-example1/crabzilla-example1-database/src/main/resources/db/migration/V1__write_model.sql[ ]
-----
-
-=== 2.1.1 Read model
-For this example, our read model is only:
-
-[source,sql]
-.V2__read_model.sql
-----
-include::./crabzilla-example1/crabzilla-example1-database/src/main/resources/db/migration/V2__read_model.sql[ ]
-----
-
-=== 2.2.0 DAO implementations
-
-We also need to implement our DAOs for storing and retrieving read models. For this example:
-
-[source,kotlin]
-.CustomerSummaryDao.kt
-----
-include::./crabzilla-example1/crabzilla-example1-database/src/main/java/io/github/crabzilla/example1/CustomerSummaryDao.kt[tags=dao]
-----
-
-Now we have a running database !
+TODO
 
 == 3.0 crabzilla-example1-service
 
-Here is the module where we will run our domain model. We have to provide / wire components for our Example1 context and
-also a factory and a module for each aggregate we have.
+A service to accept and process the commands.
 
-=== 3.1.0 Customer components
-
-==== 3.1.1 CustomerFactory
-
-[source,kotlin]
-.CustomerFactory
-----
-include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerFactory.kt[tags=factory]
-----
-
-==== 3.1.2 CustomerModule
+=== 3.1 CustomerModule
 
 [source,kotlin]
 .CustomerModule.kt
@@ -165,23 +126,23 @@ include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github
 include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerModule.kt[tags=module]
 ----
 
-=== 3.2.0 Example1
-
-==== 3.2.1 EventProjectors
-
-A Bounded context can have many EventProjectors. This example has just one event projector:
+=== 3.2 Example1Module
 
 [source,kotlin]
-.Example1EventProjector
+.CustomerModule.kt
 ----
-include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1EventProjector.kt[tags=projector]
+include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.kt[tags=module]
 ----
 
-==== 3.2.2 Example1Module
+=== 3.3 Example1Launcher
 
-https://github.com/crabzilla/crabzilla/blob/master/crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.kt[Example1Module]
+[source,kotlin]
+.Example1Launcher.kt
+----
+include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Launcher.kt[tags=launcher]
+----
 
-==== 3.2.3 Example1AcceptanceIt
+=== 3.4 Example1AcceptanceIt
 
 Now finally you will see this test passing:
 
@@ -200,7 +161,7 @@ This example presented:
 
 Crabzilla will run your aggregate root by providing these components:
 
-* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHttpRpcVerticle.java[EntityCommandHttpRpcVerticle] to receive commands as JSON
-* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.java[EntityCommandHandlerVerticle] to validate and process commands against the latest snapshot found for the aggregate
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-web/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHttpRpcVerticle.java[EntityCommandHttpRpcVerticle] to receive commands as JSON
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.kt[EntityCommandHandlerVerticle] to validate and process commands against the latest snapshot found for the aggregate
 * https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityUnitOfWorkRepository.java[EntityUnitOfWorkRepository] to store resulting units of work into a single table, being events and command as JSON
 * https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/projection/EventsProjectionVerticle.java[EventsProjectionVerticle] to propagate and project events to read model database

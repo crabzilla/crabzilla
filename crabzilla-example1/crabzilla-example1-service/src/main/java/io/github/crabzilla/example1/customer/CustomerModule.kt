@@ -25,12 +25,14 @@ import javax.inject.Singleton
 class CustomerModule(val vertx: Vertx, val config: JsonObject) {
 
   @Provides @IntoSet
-  fun restVerticle(uowRepository: EntityUnitOfWorkRepository): EntityCommandRestVerticle<out Any> {
+  fun restVerticle(uowRepository: EntityUnitOfWorkRepository):
+          EntityCommandRestVerticle<out Any>{
     return EntityCommandRestVerticle(Customer::class.java, config, uowRepository)
   }
 
   @Provides @IntoSet
-  fun handlerVerticle(service: SampleInternalService, eventRepository: EntityUnitOfWorkRepository):
+  fun handlerVerticle(service: SampleInternalService,
+                      eventRepository: EntityUnitOfWorkRepository):
           EntityCommandHandlerVerticle<out Entity> {
 
     val customer = Customer(sampleInternalService = service)
@@ -43,10 +45,10 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
             { instance -> StateTransitionsTracker(instance, stateTransitionFn)
             }
     val cmdHandler = CommandHandlerFn(trackerFactory)
-    val snapshotPromoter =
-            SnapshotPromoter<Customer> { instance -> StateTransitionsTracker(instance, stateTransitionFn) }
-    return EntityCommandHandlerVerticle(Customer::class.java, customer, cmdHandler, validator, snapshotPromoter,
-            eventRepository, cache, circuitBreaker)
+    val snapshotPromoter = SnapshotPromoter<Customer>
+                    { instance -> StateTransitionsTracker(instance, stateTransitionFn) }
+    return EntityCommandHandlerVerticle(Customer::class.java, customer, cmdHandler, validator,
+            snapshotPromoter, eventRepository, cache, circuitBreaker)
   }
 
   @Provides

@@ -26,7 +26,7 @@ class StateTransitionFn : (DomainEvent, Customer) -> Customer {
 
 // tag::CommandValidatorFn[]
 
-class CommandValidatorFn : (EntityCommand) -> List<String> { // <3>
+class CommandValidatorFn : (EntityCommand) -> List<String> {
   override fun invoke(command: EntityCommand): List<String> {
     return when(command) {
       is CreateCustomer ->
@@ -41,7 +41,8 @@ class CommandValidatorFn : (EntityCommand) -> List<String> { // <3>
 
 // tag::CommandHandlerFn[]
 
-class CommandHandlerFn(private val trackerFactory: (Snapshot<Customer>) -> StateTransitionsTracker<Customer>) :
+class CommandHandlerFn(
+        private val trackerFactory: (Snapshot<Customer>) -> StateTransitionsTracker<Customer>) :
         (EntityCommand, Snapshot<Customer>) -> EntityCommandResult {
 
   override fun invoke(cmd: EntityCommand, snapshot: Snapshot<Customer>): EntityCommandResult {

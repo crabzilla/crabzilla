@@ -33,7 +33,8 @@ data class ActivateCustomer(override val commandId: UUID, override val targetId:
 data class DeactivateCustomer(override val commandId: UUID, override val targetId: CustomerId,
                               val reason: String) : EntityCommand
 
-data class CreateActivateCustomer(override val commandId: UUID, override val targetId: CustomerId,
+data class CreateActivateCustomer(override val commandId: UUID,
+                                  override val targetId: CustomerId,
                                   val name: String, val reason: String) : EntityCommand
 
 // end::commands[]

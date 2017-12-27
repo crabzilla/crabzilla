@@ -23,6 +23,8 @@ import io.vertx.core.json.JsonObject
 import org.jdbi.v3.core.Jdbi
 import javax.inject.Singleton
 
+
+// tag::module[]
 @Module
 class Example1Module(val vertx: Vertx, val config: JsonObject) {
 
@@ -86,3 +88,4 @@ class Example1Module(val vertx: Vertx, val config: JsonObject) {
   }
 
 }
+// end::module[]

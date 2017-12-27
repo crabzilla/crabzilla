@@ -16,6 +16,8 @@ import joptsimple.OptionParser
 import java.lang.System.setProperty
 import java.util.*
 
+// tag::launcher[]
+
 class Example1Launcher {
 
   companion object {
@@ -61,7 +63,6 @@ class Example1Launcher {
               if (!event.succeeded()) log.error("Error deploying verticle", event.cause()) }
         })
 
-
         app.restVerticles().forEach({
           vertx.deployVerticle(it) { event ->
             log.info("rest verticle: $it.toString()")
@@ -79,6 +80,8 @@ class Example1Launcher {
   }
 
 }
+
+// end::launcher[]
 
 fun justForTest(vertx: Vertx) {
 

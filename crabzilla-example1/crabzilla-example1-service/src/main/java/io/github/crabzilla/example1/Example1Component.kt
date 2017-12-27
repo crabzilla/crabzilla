@@ -13,8 +13,6 @@ import javax.inject.Singleton
 @Component(modules = [(CustomerModule::class), (Example1Module::class), (WriteDbModule::class), (QueryDbModule::class)])
 interface Example1Component {
 
-//  fun verticles(): Map<String, Verticle>
-
   fun commandVerticles(): Set<EntityCommandHandlerVerticle<out Entity>>
 
   fun restVerticles(): Set<EntityCommandRestVerticle<out Any>>
