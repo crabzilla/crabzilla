@@ -9,32 +9,23 @@ import io.github.crabzilla.core.entity.SnapshotPromoter
 import io.github.crabzilla.core.entity.StateTransitionsTracker
 import io.github.crabzilla.example1.SampleInternalService
 import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
-import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
 import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
-import io.github.crabzilla.vertx.helpers.StringHelper.*
+import io.github.crabzilla.vertx.helpers.StringHelper.cmdHandlerEndpoint
 import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.Vertx
-import io.vertx.core.json.JsonObject
 import io.vertx.ext.jdbc.JDBCClient
 import net.jodah.expiringmap.ExpiringMap
 import javax.inject.Singleton
-
 
 // tag::module[]
 @Module
 class CustomerModule {
 
   @Provides @IntoSet
-  fun restVerticle(uowRepository: EntityUnitOfWorkRepository, config: JsonObject):
-          EntityCommandRestVerticle<out Any>{
-    return EntityCommandRestVerticle(Customer::class.java, config, uowRepository)
-  }
-
-  @Provides @IntoSet
   fun handlerVerticle(service: SampleInternalService,
-                      eventRepository: EntityUnitOfWorkRepository, vertx: Vertx):
-          EntityCommandHandlerVerticle<out Entity> {
+                      eventRepository: EntityUnitOfWorkRepository,
+                      vertx: Vertx): EntityCommandHandlerVerticle<out Entity> {
 
     val customer = Customer(sampleInternalService = service)
     val stateTransitionFn = StateTransitionFn()

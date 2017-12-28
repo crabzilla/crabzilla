@@ -109,47 +109,44 @@ include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/cr
 Example1 domain is built of functions. So far we didn't had to worry about any implementation detail. Example1 domain
 can be easily tested with mocks and stubs.
 
-== 2.0 crabzilla-example1-projection
+== 2.0 crabzilla-example1-handler
 
-A library of EventProjectors. Each EventProjector instance will receive the event stream from db and project it to the
-query model database.
+A library of verticles to process the commands.
 
-TODO
+=== 2.1 HandlerModule
 
-== 3.0 crabzilla-example1-service
+[source,kotlin]
+.HandlerModule.kt
+----
+include::./crabzilla-example1/crabzilla-example1-handler/src/main/java/io/github/crabzilla/example1/HandlerModule.kt[tags=module]
+----
 
-A service to accept and process the commands.
-
-=== 3.1 CustomerModule
+=== 2.2 CustomerModule
 
 [source,kotlin]
 .CustomerModule.kt
 ----
-include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/customer/CustomerModule.kt[tags=module]
+include::./crabzilla-example1/crabzilla-example1-handler/src/main/java/io/github/crabzilla/example1/customer/CustomerModule.kt[tags=module]
 ----
 
-=== 3.2 Example1Module
+== 3.0 crabzilla-example1-handler-service
 
-[source,kotlin]
-.Example1Module.kt
-----
-include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Module.kt[tags=module]
-----
+A service using verticles from above library to process the commands.
 
-=== 3.4 Example1Component
+=== 3.4 HandlerServiceComponent
 
 [source,kotlin]
-.Example1Component.kt
+.HandlerServiceComponent.kt
 ----
-include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Component.kt[tags=component]
+include::./crabzilla-example1/crabzilla-example1-handler-service/src/main/java/io/github/crabzilla/example1/HandlerServiceComponent.kt[tags=component]
 ----
 
-=== 3.3 Example1Launcher
+=== 3.3 HandlerServiceLauncher
 
 [source,kotlin]
-.Example1Launcher.kt
+.HandlerServiceLauncher.kt
 ----
-include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Launcher.kt[tags=launcher]
+include::./crabzilla-example1/crabzilla-example1-handler-service/src/main/java/io/github/crabzilla/example1/HandlerServiceLauncher.kt[tags=launcher]
 ----
 
 === 3.4 CustomerAcceptanceIT
@@ -159,8 +156,15 @@ Now finally you will see this test passing:
 [source,kotlin]
 .CustomerAcceptanceIT.kt
 ----
-include::./crabzilla-example1/crabzilla-example1-service/src/test/java/io/github/crabzilla/example1/CustomerAcceptanceIT.kt[tags=create_customer_test]
+include::./crabzilla-example1/crabzilla-example1-handler-service/src/test/java/io/github/crabzilla/example1/CustomerAcceptanceIT.kt[tags=create_customer_test]
 ----
+
+== 4.0 crabzilla-example1-projector
+
+A library of verticles to receive the event stream from db and project it to the query model database.
+
+TODO
+
 
 == Conclusion
 

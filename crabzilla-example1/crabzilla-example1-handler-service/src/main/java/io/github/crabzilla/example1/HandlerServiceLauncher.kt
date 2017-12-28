@@ -51,8 +51,8 @@ class Example1Launcher {
         val config = ar.result()
         log.info("config = {}", config.encodePrettily())
 
-        val app = DaggerExample1Component.builder()
-                .example1Module(Example1Module(vertx, config))
+        val app = DaggerHandlerServiceComponent.builder()
+                .handlerServiceModule(HandlerServiceModule(vertx, config))
                 .build()
 
         app.commandVerticles().forEach({

@@ -13,8 +13,10 @@
     
     <modules>
         <module>crabzilla-example1-core</module>
+        <module>crabzilla-example1-handler</module>
+        <module>crabzilla-example1-handler-service</module>
         <module>crabzilla-example1-projector</module>
-        <module>crabzilla-example1-service</module>
+        <module>crabzilla-example1-projector-service</module>
     </modules>
 
     <dependencies>

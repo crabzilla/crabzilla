@@ -25,8 +25,8 @@ Crabzilla has these modules:
 
  crabzilla               → Project root
   └ crabzilla-core       → Command, DomainEvent, Aggregate, Snapshot, etc
-  └ crabzilla-vertx      → Crabzilla engine using Vert.x EventBus and JDBC
-  └ crabzilla-vertx-web  → Crabzilla engine using Vert.x Web
+  └ crabzilla-vertx      → EventBus based Verticles, Projectors, UnitOfWorkRepositories, etc
+  └ crabzilla-vertx-web  → REST based verticles using Vert.x Web
 
 and your typical *example1* bounded context project will have this structure:
 

@@ -443,21 +443,25 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#1-2-3-statetransitionfn">1.2.3 StateTransitionFn</a></li>
 </ul>
 </li>
-<li><a href="#1-3-aggregate">1.3 Aggregate</a></li>
+<li><a href="#1-3-aggregates">1.3 Aggregates</a></li>
 <li><a href="#1-4-internal-services">1.4 Internal Services</a></li>
 <li><a href="#1-5-read-model">1.5 Read Model</a></li>
 </ul>
 </li>
-<li><a href="#2-0-crabzilla-example1-projection">2.0 crabzilla-example1-projection</a></li>
-<li><a href="#3-0-crabzilla-example1-service">3.0 crabzilla-example1-service</a>
+<li><a href="#2-0-crabzilla-example1-handler">2.0 crabzilla-example1-handler</a>
 <ul class="sectlevel2">
-<li><a href="#3-1-customermodule">3.1 CustomerModule</a></li>
-<li><a href="#3-2-example1module">3.2 Example1Module</a></li>
-<li><a href="#3-4-example1component">3.4 Example1Component</a></li>
-<li><a href="#3-3-example1launcher">3.3 Example1Launcher</a></li>
+<li><a href="#2-1-handlermodule">2.1 HandlerModule</a></li>
+<li><a href="#2-2-customermodule">2.2 CustomerModule</a></li>
+</ul>
+</li>
+<li><a href="#3-0-crabzilla-example1-handler-service">3.0 crabzilla-example1-handler-service</a>
+<ul class="sectlevel2">
+<li><a href="#3-4-handlerservicecomponent">3.4 HandlerServiceComponent</a></li>
+<li><a href="#3-3-handlerservicelauncher">3.3 HandlerServiceLauncher</a></li>
 <li><a href="#3-4-customeracceptanceit">3.4 CustomerAcceptanceIT</a></li>
 </ul>
 </li>
+<li><a href="#4-0-crabzilla-example1-projector">4.0 crabzilla-example1-projector</a></li>
 <li><a href="#conclusion">Conclusion</a></li>
 </ul>
 </div>
@@ -626,9 +630,9 @@ data class CreateActivateCustomer(override val commandId: UUID,
 </div>
 </div>
 <div class="sect2">
-<h3 id="1-3-aggregate"><a class="anchor" href="#1-3-aggregate"></a>1.3 Aggregate</h3>
+<h3 id="1-3-aggregates"><a class="anchor" href="#1-3-aggregates"></a>1.3 Aggregates</h3>
 <div class="paragraph">
-<p>An aggregate runs business logic and emit events. It can uses internal services .</p>
+<p>An aggregate runs business logic and emit events. It can uses internal services and repositories.</p>
 </div>
 <div class="listingblock">
 <div class="title">Customer.kt</div>
@@ -702,25 +706,41 @@ can be easily tested with mocks and stubs.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="2-0-crabzilla-example1-projection"><a class="anchor" href="#2-0-crabzilla-example1-projection"></a>2.0 crabzilla-example1-projection</h2>
+<h2 id="2-0-crabzilla-example1-handler"><a class="anchor" href="#2-0-crabzilla-example1-handler"></a>2.0 crabzilla-example1-handler</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>A library of EventProjectors. Each EventProjector instance will receive the event stream from db and project it to the
-query model database.</p>
-</div>
-<div class="paragraph">
-<p>TODO</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="3-0-crabzilla-example1-service"><a class="anchor" href="#3-0-crabzilla-example1-service"></a>3.0 crabzilla-example1-service</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>A service to accept and process the commands.</p>
+<p>A library of verticles to process the commands.</p>
 </div>
 <div class="sect2">
-<h3 id="3-1-customermodule"><a class="anchor" href="#3-1-customermodule"></a>3.1 CustomerModule</h3>
+<h3 id="2-1-handlermodule"><a class="anchor" href="#2-1-handlermodule"></a>2.1 HandlerModule</h3>
+<div class="listingblock">
+<div class="title">HandlerModule.kt</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">/**
+ * This command handler module exposes DAOs for your repositories and also services implementations.
+ */
+@Module(includes = [CustomerModule::class])
+class HandlerModule {
+
+  @Provides
+  @Singleton
+  fun customerSummaryDao(@ReadDatabase jdbi: Jdbi) : CustomerSummaryDao {
+    return jdbi.onDemand(CustomerSummaryDao::class.java)
+  }
+
+
+  @Provides
+  @Singleton
+  fun service(): SampleInternalService {
+    return SampleInternalServiceImpl()
+  }
+
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="2-2-customermodule"><a class="anchor" href="#2-2-customermodule"></a>2.2 CustomerModule</h3>
 <div class="listingblock">
 <div class="title">CustomerModule.kt</div>
 <div class="content">
@@ -728,22 +748,16 @@ query model database.</p>
 class CustomerModule {
 
   @Provides @IntoSet
-  fun restVerticle(uowRepository: EntityUnitOfWorkRepository, config: JsonObject):
-          EntityCommandRestVerticle&lt;out Any&gt;{
-    return EntityCommandRestVerticle(Customer::class.java, config, uowRepository)
-  }
-
-  @Provides @IntoSet
   fun handlerVerticle(service: SampleInternalService,
-                      eventRepository: EntityUnitOfWorkRepository, vertx: Vertx):
-          EntityCommandHandlerVerticle&lt;out Entity&gt; {
+                      eventRepository: EntityUnitOfWorkRepository,
+                      vertx: Vertx): EntityCommandHandlerVerticle&lt;out Entity&gt; {
 
     val customer = Customer(sampleInternalService = service)
     val stateTransitionFn = StateTransitionFn()
     val validator =  CommandValidatorFn()
 
     val cache: ExpiringMap&lt;String, Snapshot&lt;Customer&gt;&gt; = ExpiringMap.create()
-    val circuitBreaker = CircuitBreaker.create(StringHelper.commandHandlerId(Customer::class.java), vertx)
+    val circuitBreaker = CircuitBreaker.create(cmdHandlerEndpoint(Customer::class.java), vertx)
     val trackerFactory : (Snapshot&lt;Customer&gt;) -&gt; StateTransitionsTracker&lt;Customer&gt; =
             { instance -&gt; StateTransitionsTracker(instance, stateTransitionFn)
             }
@@ -764,44 +778,22 @@ class CustomerModule {
 </div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="3-2-example1module"><a class="anchor" href="#3-2-example1module"></a>3.2 Example1Module</h3>
-<div class="listingblock">
-<div class="title">Example1Module.kt</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">@Module(includes = [CustomerModule::class])
-class Example1Module(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
-
-  @Provides
-  @Singleton
-  fun customerSummaryDao(@ReadDatabase jdbi: Jdbi) : CustomerSummaryDao {
-    return jdbi.onDemand(CustomerSummaryDao::class.java)
-  }
-
-  @Provides
-  @Singleton
-  fun customerRepository(dao: CustomerSummaryDao): CustomerRepository {
-    return CustomerRepositoryImpl(dao)
-  }
-
-  @Provides
-  @Singleton
-  fun service(): SampleInternalService {
-    return SampleInternalServiceImpl()
-  }
-
-}</code></pre>
 </div>
 </div>
+<div class="sect1">
+<h2 id="3-0-crabzilla-example1-handler-service"><a class="anchor" href="#3-0-crabzilla-example1-handler-service"></a>3.0 crabzilla-example1-handler-service</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A service using verticles from above library to process the commands.</p>
 </div>
 <div class="sect2">
-<h3 id="3-4-example1component"><a class="anchor" href="#3-4-example1component"></a>3.4 Example1Component</h3>
+<h3 id="3-4-handlerservicecomponent"><a class="anchor" href="#3-4-handlerservicecomponent"></a>3.4 HandlerServiceComponent</h3>
 <div class="listingblock">
-<div class="title">Example1Component.kt</div>
+<div class="title">HandlerServiceComponent.kt</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">@Singleton
-@Component(modules = [CustomerModule::class, Example1Module::class])
-interface Example1Component {
+@Component(modules = [CustomerModule::class, HandlerServiceModule::class])
+interface HandlerServiceComponent {
 
   fun commandVerticles(): Set&lt;EntityCommandHandlerVerticle&lt;out Entity&gt;&gt;
 
@@ -811,9 +803,9 @@ interface Example1Component {
 </div>
 </div>
 <div class="sect2">
-<h3 id="3-3-example1launcher"><a class="anchor" href="#3-3-example1launcher"></a>3.3 Example1Launcher</h3>
+<h3 id="3-3-handlerservicelauncher"><a class="anchor" href="#3-3-handlerservicelauncher"></a>3.3 HandlerServiceLauncher</h3>
 <div class="listingblock">
-<div class="title">Example1Launcher.kt</div>
+<div class="title">HandlerServiceLauncher.kt</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class Example1Launcher {
 
@@ -847,8 +839,8 @@ interface Example1Component {
         val config = ar.result()
         log.info("config = {}", config.encodePrettily())
 
-        val app = DaggerExample1Component.builder()
-                .example1Module(Example1Module(vertx, config))
+        val app = DaggerHandlerServiceComponent.builder()
+                .handlerServiceModule(HandlerServiceModule(vertx, config))
                 .build()
 
         app.commandVerticles().forEach({
@@ -899,13 +891,13 @@ interface Example1Component {
     log.info("command=\n" + json)
 
     val postCmdResponse = given().contentType(JSON).body(json)
-            .`when`().post("/" + aggregateId(Customer::class.java) + "/commands")
+            .`when`().post("/" + restEndpoint(Customer::class.java) + "/commands")
             .then().extract().response()
 
     assertThat(postCmdResponse.statusCode()).isEqualTo(201)
     assertThat(postCmdResponse.header(LOCATION_HEADER))
             .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
-                    + aggregateId(Customer::class.java) + "/commands/"
+                    + restEndpoint(Customer::class.java) + "/commands/"
                     + createCustomerCmd.commandId.toString())
 
     val getUowResponse = given().contentType(JSON).body(json)
@@ -926,6 +918,17 @@ interface Example1Component {
   }</code></pre>
 </div>
 </div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="4-0-crabzilla-example1-projector"><a class="anchor" href="#4-0-crabzilla-example1-projector"></a>4.0 crabzilla-example1-projector</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A library of verticles to receive the event stream from db and project it to the query model database.</p>
+</div>
+<div class="paragraph">
+<p>TODO</p>
 </div>
 </div>
 </div>
@@ -970,7 +973,7 @@ interface Example1Component {
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-12-28 00:33:11 BRST
+Last updated 2017-12-28 16:17:42 BRST
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
