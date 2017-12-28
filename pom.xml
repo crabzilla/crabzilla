@@ -81,9 +81,10 @@
 
         <module>crabzilla-core</module>
         <module>crabzilla-example1</module>
-        <module>crabzilla-vertx</module>
+        <module>crabzilla-vertx-core</module>
+        <module>crabzilla-vertx-handler</module>
+        <module>crabzilla-vertx-projector</module>
         <module>crabzilla-vertx-web</module>
-
     </modules>
 
     <dependencies>
@@ -161,7 +162,19 @@
 
             <dependency>
                 <groupId>io.github.crabzilla</groupId>
-                <artifactId>crabzilla-vertx</artifactId>
+                <artifactId>crabzilla-vertx-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.crabzilla</groupId>
+                <artifactId>crabzilla-vertx-handler</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.crabzilla</groupId>
+                <artifactId>crabzilla-vertx-projector</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -171,6 +184,13 @@
                 <version>${project.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>io.github.crabzilla</groupId>
+                <artifactId>crabzilla-core</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+                <scope>test</scope>
+            </dependency>
 
             <!-- kotlin -->
 

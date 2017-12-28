@@ -2,6 +2,7 @@ package io.github.crabzilla.vertx.entity;
 
 import io.github.crabzilla.core.entity.EntityCommand;
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
+import io.github.crabzilla.vertx.EntityCommandExecution;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -107,7 +108,7 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
         log.info("result = {}", result);
 
         if (result.getUnitOfWork() != null && result.getUowSequence() != null) {
-         // DON'T PUBLISH TO EVENT BUS
+         // TODO PUBLISH TO EVENT BUS using a flag
          //  MultiMap headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence() + "");
          // DeliveryOptions optionsUow = new DeliveryOptions().setCodecName(EntityUnitOfWork.class.getSimpleName())
          //         .setHeaders(headers);

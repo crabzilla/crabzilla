@@ -8,22 +8,24 @@
         <version>0.0.6-SNAPSHOT</version>
     </parent>
 
-    <artifactId>crabzilla-vertx-web</artifactId>
+    <artifactId>crabzilla-vertx-projector</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
 
         <dependency>
             <groupId>io.github.crabzilla</groupId>
-            <artifactId>crabzilla-vertx-handler</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-web</artifactId>
+            <artifactId>crabzilla-vertx-core</artifactId>
         </dependency>
 
         <!-- test -->
+        <dependency>
+            <groupId>io.github.crabzilla</groupId>
+            <artifactId>crabzilla-core</artifactId>
+            <version>0.0.6-SNAPSHOT</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>io.vertx</groupId>

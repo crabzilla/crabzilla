@@ -4,7 +4,7 @@ import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerId
-import io.github.crabzilla.vertx.entity.EntityCommandExecution
+import io.github.crabzilla.vertx.EntityCommandExecution
 import io.github.crabzilla.vertx.helpers.ConfigHelper.cfgOptions
 import io.github.crabzilla.vertx.helpers.StringHelper.cmdHandlerEndpoint
 import io.vertx.config.ConfigRetriever
