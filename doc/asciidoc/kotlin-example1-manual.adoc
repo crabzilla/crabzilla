@@ -25,8 +25,9 @@ image::example1.png[scaledwidth=100%]
 
 == 1.0 crabzilla-example1-core
 
-A library containing value objects, aggregates, commands, events, functions, etc. Within this module, internal services
-and repositories are just plain domain abstractions: interfaces or abstract classes. This is *persistence ignorance*.
+A library containing your domain model expressed in value objects, aggregates, commands, events, functions, etc.
+Internal services and repositories are just plain domain abstractions: interfaces or abstract classes. The scope is
+probably a _Bounded Context_. This module is also agnostic about how data will be persisted. This is called _persistence ignorance_.
 
 === 1.1 Data
 
@@ -110,7 +111,8 @@ can be easily tested with mocks and stubs.
 
 == 2.0 crabzilla-example1-projection
 
-A service to read the event stream from db and project it to the query model database.
+A library of EventProjectors. Each EventProjector instance will receive the event stream from db and project it to the
+query model database.
 
 TODO
 
@@ -150,14 +152,14 @@ include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github
 include::./crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Launcher.kt[tags=launcher]
 ----
 
-=== 3.4 Example1AcceptanceIt
+=== 3.4 CustomerAcceptanceIT
 
 Now finally you will see this test passing:
 
 [source,kotlin]
-.Example1AcceptanceIt.kt
+.CustomerAcceptanceIT.kt
 ----
-include::./crabzilla-example1/crabzilla-example1-service/src/test/java/io/github/crabzilla/example1/Example1AcceptanceIT.kt[tags=create_customer_test]
+include::./crabzilla-example1/crabzilla-example1-service/src/test/java/io/github/crabzilla/example1/CustomerAcceptanceIT.kt[tags=create_customer_test]
 ----
 
 == Conclusion

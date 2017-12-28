@@ -150,10 +150,6 @@ public class EntityCommandHandlerVerticleTest {
 
       verifyNoMoreInteractions(validatorFn, eventRepository, cmdHandlerFn);
 
-      System.out.println("***** success" + asyncResult.succeeded());
-      System.out.println("*****" + asyncResult.cause());
-      System.out.println("*****" + asyncResult.result());
-
       tc.assertTrue(asyncResult.succeeded());
 
       EntityCommandExecution response = (EntityCommandExecution) asyncResult.result().body();
