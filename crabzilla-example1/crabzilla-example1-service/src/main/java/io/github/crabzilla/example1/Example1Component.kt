@@ -11,7 +11,7 @@ import javax.inject.Singleton
 
 // tag::component[]
 @Singleton
-@Component(modules = [CustomerModule::class, Example1Module::class, WriteDbModule::class, ReadDbModule::class])
+@Component(modules = [CustomerModule::class, Example1Module::class])
 interface Example1Component {
 
   fun commandVerticles(): Set<EntityCommandHandlerVerticle<out Entity>>
