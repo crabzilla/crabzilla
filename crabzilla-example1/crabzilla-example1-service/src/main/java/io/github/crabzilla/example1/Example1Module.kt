@@ -16,7 +16,7 @@ import io.github.crabzilla.example1.repositories.CustomerSummaryDao
 import io.github.crabzilla.example1.services.SampleInternalServiceImpl
 import io.github.crabzilla.vertx.codecs.JacksonGenericCodec
 import io.github.crabzilla.vertx.entity.EntityCommandExecution
-import io.github.crabzilla.vertx.modules.qualifiers.QueryDatabase
+import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
@@ -46,7 +46,7 @@ class Example1Module(val vertx: Vertx, val config: JsonObject) {
 
   @Provides
   @Singleton
-  fun customerSummaryDao(@QueryDatabase jdbi: Jdbi) : CustomerSummaryDao {
+  fun customerSummaryDao(@ReadDatabase jdbi: Jdbi) : CustomerSummaryDao {
     return jdbi.onDemand(CustomerSummaryDao::class.java)
   }
 

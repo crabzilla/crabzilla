@@ -4,7 +4,7 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Module
 import dagger.Provides
-import io.github.crabzilla.vertx.modules.qualifiers.QueryDatabase
+import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.jdbc.JDBCClient
@@ -15,19 +15,19 @@ import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import javax.inject.Singleton
 
 @Module
-class QueryDbModule(val vertx: Vertx, val config: JsonObject) {
+class ReadDbModule(val vertx: Vertx, val config: JsonObject) {
 
   @Provides
   @Singleton
-  @QueryDatabase
-  fun jdbcClient(@QueryDatabase dataSource: HikariDataSource): JDBCClient {
+  @ReadDatabase
+  fun jdbcClient(@ReadDatabase dataSource: HikariDataSource): JDBCClient {
     return JDBCClient.create(vertx, dataSource)
   }
 
   @Provides
   @Singleton
-  @QueryDatabase
-  fun jdbi(@QueryDatabase dataSource: HikariDataSource): Jdbi {
+  @ReadDatabase
+  fun jdbi(@ReadDatabase dataSource: HikariDataSource): Jdbi {
     val jdbi = Jdbi.create(dataSource)
     jdbi.installPlugin(SqlObjectPlugin())
     jdbi.installPlugin(KotlinPlugin())
@@ -37,7 +37,7 @@ class QueryDbModule(val vertx: Vertx, val config: JsonObject) {
 
   @Provides
   @Singleton
-  @QueryDatabase
+  @ReadDatabase
   fun hikariDs(): HikariDataSource {
 
     val hikariConfig = HikariConfig()

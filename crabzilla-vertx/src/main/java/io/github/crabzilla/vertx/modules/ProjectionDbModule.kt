@@ -1,11 +1,11 @@
-package io.github.crabzilla.vertx.projection
+package io.github.crabzilla.vertx.modules
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Module
 import dagger.Provides
 import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
-import io.github.crabzilla.vertx.modules.qualifiers.QueryDatabase
+import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.jdbc.JDBCClient
@@ -20,7 +20,7 @@ class ProjectionDbModule(val vertx: Vertx, val config: JsonObject) {
 
   @Provides
   @Singleton
-  @QueryDatabase
+  @ReadDatabase
   fun jdbcClient(@ProjectionDatabase dataSource: HikariDataSource): JDBCClient {
     return JDBCClient.create(vertx, dataSource)
   }

@@ -61,8 +61,8 @@ public class EventsProjectionVerticle<DAO> extends AbstractVerticle {
       if (!resultHandler.succeeded()) {
         log.error("error cause: {}", resultHandler.cause());
         log.error("error message: {}", resultHandler.cause().getMessage());
-        resultHandler.cause().printStackTrace();
-        // TODO customize conform commandResult
+        // resultHandler.cause().printStackTrace();
+        // TODO customize given the commandResult
         msg.fail(400, resultHandler.cause().getMessage());
       }
       String resp = resultHandler.result();

@@ -52,13 +52,9 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
 
     HttpServer server = vertx.createHttpServer();
 
-    System.out.println("******************* " + config.getInteger("http.port"));
-
     server.requestHandler(router::accept)
             .listen(config.getInteger("http.port"));
 
-//    server.requestHandler(router::accept)
-//            .listen(8080);
   }
 
   void postCommandHandler(RoutingContext routingContext) {
