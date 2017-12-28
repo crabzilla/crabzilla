@@ -15,12 +15,12 @@ import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import javax.inject.Singleton
 
 @Module
-class WriteDbModule(val vertx: Vertx, val config: JsonObject) {
+class WriteDbModule() {
 
   @Provides
   @Singleton
   @WriteDatabase
-  fun jdbcClient(@WriteDatabase dataSource: HikariDataSource): JDBCClient {
+  fun jdbcClient(@WriteDatabase dataSource: HikariDataSource, vertx: Vertx): JDBCClient {
     return JDBCClient.create(vertx, dataSource)
   }
 
@@ -38,7 +38,7 @@ class WriteDbModule(val vertx: Vertx, val config: JsonObject) {
   @Provides
   @Singleton
   @WriteDatabase
-  fun hikariDs(): HikariDataSource {
+  fun hikariDs(config: JsonObject): HikariDataSource {
 
     val hikariConfig = HikariConfig()
     hikariConfig.driverClassName = config.getString("write.database.driver")

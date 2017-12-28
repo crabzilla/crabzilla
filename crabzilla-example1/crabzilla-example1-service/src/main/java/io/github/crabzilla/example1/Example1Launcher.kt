@@ -1,11 +1,12 @@
 package io.github.crabzilla.example1
 
-import io.github.crabzilla.example1.customer.*
+import io.github.crabzilla.example1.customer.ActivateCustomer
+import io.github.crabzilla.example1.customer.CreateCustomer
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.entity.EntityCommandExecution
 import io.github.crabzilla.vertx.helpers.ConfigHelper.cfgOptions
 import io.github.crabzilla.vertx.helpers.StringHelper.commandHandlerId
-import io.github.crabzilla.vertx.modules.ReadDbModule
-import io.github.crabzilla.vertx.modules.WriteDbModule
 import io.vertx.config.ConfigRetriever
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
@@ -52,9 +53,6 @@ class Example1Launcher {
 
         val app = DaggerExample1Component.builder()
                 .example1Module(Example1Module(vertx, config))
-                .readDbModule(ReadDbModule(vertx, config))
-                .writeDbModule(WriteDbModule(vertx, config))
-                .customerModule(CustomerModule(vertx, config))
                 .build()
 
         app.commandVerticles().forEach({

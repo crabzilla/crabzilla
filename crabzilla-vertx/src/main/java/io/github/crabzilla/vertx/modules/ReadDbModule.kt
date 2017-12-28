@@ -15,12 +15,12 @@ import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import javax.inject.Singleton
 
 @Module
-class ReadDbModule(val vertx: Vertx, val config: JsonObject) {
+class ReadDbModule {
 
   @Provides
   @Singleton
   @ReadDatabase
-  fun jdbcClient(@ReadDatabase dataSource: HikariDataSource): JDBCClient {
+  fun jdbcClient(@ReadDatabase dataSource: HikariDataSource, vertx: Vertx): JDBCClient {
     return JDBCClient.create(vertx, dataSource)
   }
 
@@ -38,7 +38,7 @@ class ReadDbModule(val vertx: Vertx, val config: JsonObject) {
   @Provides
   @Singleton
   @ReadDatabase
-  fun hikariDs(): HikariDataSource {
+  fun hikariDs(config: JsonObject): HikariDataSource {
 
     val hikariConfig = HikariConfig()
     hikariConfig.driverClassName = config.getString("query.database.driver")

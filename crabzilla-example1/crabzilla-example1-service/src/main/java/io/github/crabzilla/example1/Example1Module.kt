@@ -2,6 +2,7 @@ package io.github.crabzilla.example1
 
 import dagger.Module
 import dagger.Provides
+import io.github.crabzilla.example1.customer.CustomerModule
 import io.github.crabzilla.example1.repositories.CustomerRepositoryImpl
 import io.github.crabzilla.example1.repositories.CustomerSummaryDao
 import io.github.crabzilla.example1.services.SampleInternalServiceImpl
@@ -14,7 +15,7 @@ import javax.inject.Singleton
 
 
 // tag::module[]
-@Module
+@Module(includes = [CustomerModule::class])
 class Example1Module(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
 
   @Provides

@@ -22,17 +22,17 @@ import javax.inject.Singleton
 
 // tag::module[]
 @Module
-class CustomerModule(val vertx: Vertx, val config: JsonObject) {
+class CustomerModule {
 
   @Provides @IntoSet
-  fun restVerticle(uowRepository: EntityUnitOfWorkRepository):
+  fun restVerticle(uowRepository: EntityUnitOfWorkRepository, config: JsonObject):
           EntityCommandRestVerticle<out Any>{
     return EntityCommandRestVerticle(Customer::class.java, config, uowRepository)
   }
 
   @Provides @IntoSet
   fun handlerVerticle(service: SampleInternalService,
-                      eventRepository: EntityUnitOfWorkRepository):
+                      eventRepository: EntityUnitOfWorkRepository, vertx: Vertx):
           EntityCommandHandlerVerticle<out Entity> {
 
     val customer = Customer(sampleInternalService = service)
