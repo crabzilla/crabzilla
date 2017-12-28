@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static io.github.crabzilla.vertx.helpers.StringHelper.commandHandlerId;
+import static io.github.crabzilla.vertx.helpers.StringHelper.cmdHandlerEndpoint;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -131,7 +131,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
@@ -189,7 +189,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository);
 
@@ -245,7 +245,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
@@ -304,7 +304,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
@@ -365,7 +365,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
@@ -409,7 +409,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       verify(validatorFn).invoke(eq(createCustomerCmd));
 
@@ -452,7 +452,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(commandHandlerId(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 

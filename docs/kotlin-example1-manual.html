@@ -725,17 +725,17 @@ query model database.</p>
 <div class="title">CustomerModule.kt</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">@Module
-class CustomerModule(val vertx: Vertx, val config: JsonObject) {
+class CustomerModule {
 
   @Provides @IntoSet
-  fun restVerticle(uowRepository: EntityUnitOfWorkRepository):
+  fun restVerticle(uowRepository: EntityUnitOfWorkRepository, config: JsonObject):
           EntityCommandRestVerticle&lt;out Any&gt;{
     return EntityCommandRestVerticle(Customer::class.java, config, uowRepository)
   }
 
   @Provides @IntoSet
   fun handlerVerticle(service: SampleInternalService,
-                      eventRepository: EntityUnitOfWorkRepository):
+                      eventRepository: EntityUnitOfWorkRepository, vertx: Vertx):
           EntityCommandHandlerVerticle&lt;out Entity&gt; {
 
     val customer = Customer(sampleInternalService = service)
@@ -743,7 +743,7 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
     val validator =  CommandValidatorFn()
 
     val cache: ExpiringMap&lt;String, Snapshot&lt;Customer&gt;&gt; = ExpiringMap.create()
-    val circuitBreaker = CircuitBreaker.create("command-handler-circuit-breaker", vertx)
+    val circuitBreaker = CircuitBreaker.create(StringHelper.commandHandlerId(Customer::class.java), vertx)
     val trackerFactory : (Snapshot&lt;Customer&gt;) -&gt; StateTransitionsTracker&lt;Customer&gt; =
             { instance -&gt; StateTransitionsTracker(instance, stateTransitionFn)
             }
@@ -769,28 +769,12 @@ class CustomerModule(val vertx: Vertx, val config: JsonObject) {
 <div class="listingblock">
 <div class="title">Example1Module.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">@Module
-class Example1Module(val vertx: Vertx, val config: JsonObject) {
-
-  init {
-    configureVertx()
-  }
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">@Module(includes = [CustomerModule::class])
+class Example1Module(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
 
   @Provides
   @Singleton
-  fun vertx(): Vertx {
-    return vertx
-  }
-
-  @Provides
-  @Singleton
-  fun config(): JsonObject {
-    return config
-  }
-
-  @Provides
-  @Singleton
-  fun customerSummaryDao(@QueryDatabase jdbi: Jdbi) : CustomerSummaryDao {
+  fun customerSummaryDao(@ReadDatabase jdbi: Jdbi) : CustomerSummaryDao {
     return jdbi.onDemand(CustomerSummaryDao::class.java)
   }
 
@@ -806,31 +790,6 @@ class Example1Module(val vertx: Vertx, val config: JsonObject) {
     return SampleInternalServiceImpl()
   }
 
-  fun configureVertx() {
-
-    Json.mapper.registerModule(ParameterNamesModule())
-            .registerModule(Jdk8Module())
-            .registerModule(JavaTimeModule())
-            .registerModule(KotlinModule())
-            .enable(SerializationFeature.INDENT_OUTPUT)
-
-    vertx.eventBus().registerDefaultCodec(EntityCommandExecution::class.java,
-            JacksonGenericCodec(Json.mapper, EntityCommandExecution::class.java))
-
-    vertx.eventBus().registerDefaultCodec(EntityId::class.java,
-            JacksonGenericCodec(Json.mapper, EntityId::class.java))
-
-    vertx.eventBus().registerDefaultCodec(EntityCommand::class.java,
-            JacksonGenericCodec(Json.mapper, EntityCommand::class.java))
-
-    vertx.eventBus().registerDefaultCodec(DomainEvent::class.java,
-            JacksonGenericCodec(Json.mapper, DomainEvent::class.java))
-
-    vertx.eventBus().registerDefaultCodec(EntityUnitOfWork::class.java,
-            JacksonGenericCodec(Json.mapper, EntityUnitOfWork::class.java))
-
-  }
-
 }</code></pre>
 </div>
 </div>
@@ -841,7 +800,7 @@ class Example1Module(val vertx: Vertx, val config: JsonObject) {
 <div class="title">Example1Component.kt</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">@Singleton
-@Component(modules = [CustomerModule::class, Example1Module::class, WriteDbModule::class, QueryDbModule::class])
+@Component(modules = [CustomerModule::class, Example1Module::class])
 interface Example1Component {
 
   fun commandVerticles(): Set&lt;EntityCommandHandlerVerticle&lt;out Entity&gt;&gt;
@@ -890,9 +849,6 @@ interface Example1Component {
 
         val app = DaggerExample1Component.builder()
                 .example1Module(Example1Module(vertx, config))
-                .queryDbModule(QueryDbModule(vertx, config))
-                .writeDbModule(WriteDbModule(vertx, config))
-                .customerModule(CustomerModule(vertx, config))
                 .build()
 
         app.commandVerticles().forEach({
@@ -1014,7 +970,7 @@ interface Example1Component {
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-12-27 22:17:00 BRST
+Last updated 2017-12-28 00:33:11 BRST
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

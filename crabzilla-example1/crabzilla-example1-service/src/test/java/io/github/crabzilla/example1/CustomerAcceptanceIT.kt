@@ -14,7 +14,7 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.github.crabzilla.core.entity.Version
 import io.github.crabzilla.example1.customer.*
-import io.github.crabzilla.vertx.helpers.StringHelper.aggregateId
+import io.github.crabzilla.vertx.helpers.StringHelper.restEndpoint
 import io.vertx.core.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
@@ -67,13 +67,13 @@ class CustomerAcceptanceIT {
     log.info("command=\n" + json)
 
     val postCmdResponse = given().contentType(JSON).body(json)
-            .`when`().post("/" + aggregateId(Customer::class.java) + "/commands")
+            .`when`().post("/" + restEndpoint(Customer::class.java) + "/commands")
             .then().extract().response()
 
     assertThat(postCmdResponse.statusCode()).isEqualTo(201)
     assertThat(postCmdResponse.header(LOCATION_HEADER))
             .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
-                    + aggregateId(Customer::class.java) + "/commands/"
+                    + restEndpoint(Customer::class.java) + "/commands/"
                     + createCustomerCmd.commandId.toString())
 
     val getUowResponse = given().contentType(JSON).body(json)
@@ -110,13 +110,13 @@ class CustomerAcceptanceIT {
     log.info("command=\n" + json)
 
     val postCmdResponse = given().contentType(JSON).body(json)
-            .`when`().post("/" + aggregateId(Customer::class.java) + "/commands")
+            .`when`().post("/" + restEndpoint(Customer::class.java) + "/commands")
             .then().extract().response()
 
     assertThat(postCmdResponse.statusCode()).isEqualTo(201)
     assertThat(postCmdResponse.header(LOCATION_HEADER))
             .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
-                    + aggregateId(Customer::class.java)
+                    + restEndpoint(Customer::class.java)
                     + "/commands/" + createCustomerCmd.commandId.toString())
 
     val getUowResponse = given().contentType(JSON).body(json)
@@ -137,13 +137,13 @@ class CustomerAcceptanceIT {
     // now lets post it again
 
     val postCmdResponse2 = given().contentType(JSON).body(json).
-            `when`().post("/" + aggregateId(Customer::class.java) + "/commands")
+            `when`().post("/" + restEndpoint(Customer::class.java) + "/commands")
             .then().extract().response()
 
     assertThat(postCmdResponse2.statusCode()).isEqualTo(201)
     assertThat(postCmdResponse2.header(LOCATION_HEADER))
             .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
-            + aggregateId(Customer::class.java)
+            + restEndpoint(Customer::class.java)
                     + "/commands/" + createCustomerCmd.commandId.toString())
 
     val getUowResponse2 = given().contentType(JSON).body(json)
@@ -168,7 +168,7 @@ class CustomerAcceptanceIT {
     val json = mapper.writerFor(ActivateCustomer::class.java).writeValueAsString(activateCustomer)
 
     given().contentType(JSON).body(json)
-            .`when`().put("/" + aggregateId(Customer::class.java) + "/commands")
+            .`when`().put("/" + restEndpoint(Customer::class.java) + "/commands")
             .then().statusCode(404)
 
   }

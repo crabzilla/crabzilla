@@ -15,7 +15,7 @@ import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import javax.inject.Singleton
 
 @Module
-class WriteDbModule() {
+class WriteDbModule {
 
   @Provides
   @Singleton

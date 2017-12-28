@@ -17,7 +17,8 @@ class ProjectorsModule(val vertx: Vertx) {
   @Provides @IntoMap
   @StringKey("projector")
   fun eventsProjectorVerticle(@ProjectionDatabase jdbi: Jdbi): Verticle {
-    val projector = CustomerSummaryProjector("customer summary", CustomerSummaryProjectorDao::class.java, jdbi)
+    val projector = CustomerSummaryProjector(CustomerSummary::class.simpleName!!,
+            CustomerSummaryProjectorDao::class.java, jdbi)
     val circuitBreaker = CircuitBreaker.create("events-projection-circuit-breaker", vertx)
     return EventsProjectionVerticle(projector, circuitBreaker)
   }

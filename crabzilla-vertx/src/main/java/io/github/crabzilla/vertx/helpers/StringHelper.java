@@ -5,22 +5,19 @@ import java.util.regex.Pattern;
 
 public class StringHelper {
 
-	static final String COMMAND_HANDLER = "cmd-handler";
-	static final String EVENTS_HANDLER = "%s-events-handler";
+	static final String COMMAND_HANDLER = "-cmd-handler";
+	static final String EVENTS_HANDLER = "-events-handler";
 
-	public static String commandHandlerId(Class<?> aggregateRootClass) {
-		return COMMAND_HANDLER + "-" + camelCaseToSpinalCase(aggregateRootClass.getSimpleName());
+  public static String restEndpoint(Class<?> aggregateRootClass) {
+    return camelCaseToSpinalCase(aggregateRootClass.getSimpleName());
+  }
+
+  public static String cmdHandlerEndpoint(Class<?> aggregateRootClass) {
+		return COMMAND_HANDLER + camelCaseToSpinalCase(aggregateRootClass.getSimpleName());
 	}
 
-	public static String circuitBreakerId(Class<?> aggregateRootClass) {
-		return COMMAND_HANDLER + "-" + camelCaseToSpinalCase(aggregateRootClass.getSimpleName());
-	}
-	public static String eventsHandlerId(String bcName) {
-		return String.format(EVENTS_HANDLER, bcName);
-	}
-
-	public static String aggregateId(Class<?> aggregateRootClass) {
-		return camelCaseToSpinalCase(aggregateRootClass.getSimpleName());
+	public static String projectorEndpoint(String bcName) {
+		return EVENTS_HANDLER + camelCaseToSpinalCase(bcName);
 	}
 
 	private static String camelCaseToSpinalCase(String start) {

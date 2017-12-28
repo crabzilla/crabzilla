@@ -6,7 +6,7 @@ import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.entity.EntityCommandExecution
 import io.github.crabzilla.vertx.helpers.ConfigHelper.cfgOptions
-import io.github.crabzilla.vertx.helpers.StringHelper.commandHandlerId
+import io.github.crabzilla.vertx.helpers.StringHelper.cmdHandlerEndpoint
 import io.vertx.config.ConfigRetriever
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
@@ -88,7 +88,7 @@ fun justForTest(vertx: Vertx) {
   val options = DeliveryOptions().setCodecName("EntityCommand")
 
   // create customer command
-  vertx.eventBus().send<EntityCommandExecution>(commandHandlerId(Customer::class.java), createCustomerCmd, options) { asyncResult ->
+  vertx.eventBus().send<EntityCommandExecution>(cmdHandlerEndpoint(Customer::class.java), createCustomerCmd, options) { asyncResult ->
 
     Example1Launcher.log.info("Successful create customer test? {}", asyncResult.succeeded())
 
@@ -99,7 +99,7 @@ fun justForTest(vertx: Vertx) {
       val activateCustomerCmd = ActivateCustomer(UUID.randomUUID(), createCustomerCmd.targetId, "because I want it")
 
       // activate customer command
-      vertx.eventBus().send<EntityCommandExecution>(commandHandlerId(Customer::class.java), activateCustomerCmd, options) { asyncResult2 ->
+      vertx.eventBus().send<EntityCommandExecution>(cmdHandlerEndpoint(Customer::class.java), activateCustomerCmd, options) { asyncResult2 ->
 
         Example1Launcher.log.info("Successful activate customer test? {}", asyncResult2.succeeded())
 

@@ -76,9 +76,9 @@ A non blocking and side effect free function:
 include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerFunctions.kt[tags=StateTransitionFn]
 ----
 
-=== 1.3 Aggregate
+=== 1.3 Aggregates
 
-An aggregate runs business logic and emit events. It can uses internal services .
+An aggregate runs business logic and emit events. It can uses internal services and repositories.
 [source,kotlin]
 .Customer.kt
 ----

@@ -10,7 +10,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
 import org.slf4j.Logger;
 
-import static io.github.crabzilla.vertx.helpers.StringHelper.eventsHandlerId;
 import static java.util.Collections.singletonList;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -29,7 +28,7 @@ public class EventsProjectionVerticle<DAO> extends AbstractVerticle {
 
   @Override
   public void start() {
-    vertx.eventBus().consumer(eventsHandlerId("example1"), msgHandler());
+    vertx.eventBus().consumer(eventsProjector.getEventsChannelId(), msgHandler());
   }
 
   Handler<Message<EntityUnitOfWork>> msgHandler() {

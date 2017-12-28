@@ -4,7 +4,7 @@ import io.github.crabzilla.core.entity.*
 import io.github.crabzilla.core.exceptions.DbConcurrencyException
 import io.github.crabzilla.core.exceptions.UnknownCommandException
 import io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT.*
-import io.github.crabzilla.vertx.helpers.StringHelper.commandHandlerId
+import io.github.crabzilla.vertx.helpers.StringHelper.cmdHandlerEndpoint
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
@@ -26,7 +26,7 @@ class EntityCommandHandlerVerticle<A : Entity>(private val aggregateRootClass: C
   @Throws(Exception::class)
   override fun start() {
 
-    val consumer = vertx.eventBus().consumer<EntityCommand>(commandHandlerId(aggregateRootClass))
+    val consumer = vertx.eventBus().consumer<EntityCommand>(cmdHandlerEndpoint(aggregateRootClass))
 
     consumer.handler({ msg ->
 

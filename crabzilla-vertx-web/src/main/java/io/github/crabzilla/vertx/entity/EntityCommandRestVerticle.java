@@ -16,8 +16,8 @@ import org.slf4j.Logger;
 
 import java.util.UUID;
 
-import static io.github.crabzilla.vertx.helpers.StringHelper.aggregateId;
-import static io.github.crabzilla.vertx.helpers.StringHelper.commandHandlerId;
+import static io.github.crabzilla.vertx.helpers.StringHelper.restEndpoint;
+import static io.github.crabzilla.vertx.helpers.StringHelper.cmdHandlerEndpoint;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
@@ -44,10 +44,10 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
 
     router.route().handler(BodyHandler.create());
 
-    router.post("/" + aggregateId(aggregateRootClass) + "/commands")
+    router.post("/" + restEndpoint(aggregateRootClass) + "/commands")
             .handler(this::postCommandHandler);
 
-    router.get("/" + aggregateId(aggregateRootClass) + "/commands/:cmdID")
+    router.get("/" + restEndpoint(aggregateRootClass) + "/commands/:cmdID")
             .handler(this::getUowByCmdId);
 
     HttpServer server = vertx.createHttpServer();
@@ -95,7 +95,7 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
 
       DeliveryOptions options = new DeliveryOptions().setCodecName(EntityCommand.class.getSimpleName());
 
-      vertx.<EntityCommandExecution>eventBus().send(commandHandlerId(aggregateRootClass), command, options, response -> {
+      vertx.<EntityCommandExecution>eventBus().send(cmdHandlerEndpoint(aggregateRootClass), command, options, response -> {
         if (!response.succeeded()) {
           log.error("eventbus.handleCommand", response.cause());
           httpResp.setStatusCode(500);
@@ -111,7 +111,7 @@ public class EntityCommandRestVerticle<E> extends AbstractVerticle {
          //  MultiMap headers = new CaseInsensitiveHeaders().add("uowSequence", result.getUowSequence() + "");
          // DeliveryOptions optionsUow = new DeliveryOptions().setCodecName(EntityUnitOfWork.class.getSimpleName())
          //         .setHeaders(headers);
-         // vertx.<String>eventBus().publish(eventsHandlerId("example1"), result.getUnitOfWork(), optionsUow);
+         // vertx.<String>eventBus().publish(projectorEndpoint("example1"), result.getUnitOfWork(), optionsUow);
           httpResp.setStatusCode(201);
           String location = routingContext.request().absoluteURI() + "/" + result.getUnitOfWork()
                   .getCommand().getCommandId().toString();

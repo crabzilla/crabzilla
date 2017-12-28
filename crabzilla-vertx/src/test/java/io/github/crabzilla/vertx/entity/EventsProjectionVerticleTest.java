@@ -6,13 +6,11 @@ import io.github.crabzilla.example1.CustomerSummary;
 import io.github.crabzilla.example1.customer.CreateCustomer;
 import io.github.crabzilla.example1.customer.CustomerCreated;
 import io.github.crabzilla.example1.customer.CustomerId;
-import io.github.crabzilla.vertx.helpers.StringHelper;
 import io.github.crabzilla.vertx.helpers.VertxFactory;
 import io.github.crabzilla.vertx.projection.EventsProjectionVerticle;
 import io.github.crabzilla.vertx.projection.EventsProjector;
 import io.github.crabzilla.vertx.projection.ProjectionData;
 import io.vertx.circuitbreaker.CircuitBreaker;
-import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.ext.unit.Async;
@@ -32,11 +30,13 @@ import org.mockito.Mock;
 import java.util.List;
 import java.util.UUID;
 
+import static io.github.crabzilla.vertx.helpers.StringHelper.projectorEndpoint;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(VertxUnitRunner.class)
@@ -54,13 +54,9 @@ public class EventsProjectionVerticleTest {
     initMocks(this);
 
     vertx = new VertxFactory().vertx();
-    circuitBreaker = CircuitBreaker.create("cmd-handler-circuit-breaker", vertx,
-            new CircuitBreakerOptions()
-                    .setMaxFailures(5) // number SUCCESS failure before opening the circuit
-                    .setTimeout(2000) // consider a failure if the operation does not succeed in time
-                    .setFallbackOnFailure(true) // do we call the fallback on failure
-                    .setResetTimeout(10000) // time spent in open state before attempting to re-try
-    );
+    circuitBreaker = CircuitBreaker.create(projectorEndpoint(CustomerSummary.class.getSimpleName()), vertx);
+
+    when(eventsProjector.getEventsChannelId()).thenReturn(CustomerSummary.class.getSimpleName());
 
     EventsProjectionVerticle<CustomerSummaryDao> verticle =
             new EventsProjectionVerticle<>(eventsProjector, circuitBreaker);
@@ -82,7 +78,8 @@ public class EventsProjectionVerticleTest {
     CustomerId customerId = new CustomerId("customer#1");
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
-    EntityUnitOfWork expectedUow = EntityUnitOfWork.Companion.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    EntityUnitOfWork expectedUow =
+            EntityUnitOfWork.Companion.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
     long uowSequence = 1L;
     DeliveryOptions options = new DeliveryOptions().setCodecName(EntityUnitOfWork.class.getSimpleName())
             .addHeader("uowSequence", uowSequence + "");
@@ -90,7 +87,10 @@ public class EventsProjectionVerticleTest {
     ProjectionData projectionData = new ProjectionData(expectedUow.getUnitOfWorkId(), uowSequence,
             expectedUow.targetId().stringValue(), expectedUow.getEvents());
 
-    vertx.eventBus().send(StringHelper.eventsHandlerId("example1"), expectedUow, options, asyncResult -> {
+
+    vertx.eventBus().send(CustomerSummary.class.getSimpleName(), expectedUow, options, asyncResult -> {
+
+      verify(eventsProjector).getEventsChannelId();
 
       verify(eventsProjector).handle(eq(asList(projectionData)));
 

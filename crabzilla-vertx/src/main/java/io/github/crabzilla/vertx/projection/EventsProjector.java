@@ -41,6 +41,10 @@ public abstract class EventsProjector<DAO> {
     log.info("Wrote {} units for eventChannel {}", uowList.size(), eventsChannelId);
   }
 
+  public String getEventsChannelId() {
+    return eventsChannelId;
+  }
+
   public abstract void write(DAO dao, String targetId, DomainEvent event);
 
 }

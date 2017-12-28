@@ -16,12 +16,12 @@ import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import javax.inject.Singleton
 
 @Module
-class ProjectionDbModule(val vertx: Vertx, val config: JsonObject) {
+class ProjectionDbModule {
 
   @Provides
   @Singleton
   @ReadDatabase
-  fun jdbcClient(@ProjectionDatabase dataSource: HikariDataSource): JDBCClient {
+  fun jdbcClient(@ProjectionDatabase dataSource: HikariDataSource, vertx: Vertx): JDBCClient {
     return JDBCClient.create(vertx, dataSource)
   }
 
@@ -39,7 +39,7 @@ class ProjectionDbModule(val vertx: Vertx, val config: JsonObject) {
   @Provides
   @Singleton
   @ProjectionDatabase
-  fun hikariDs(): HikariDataSource {
+  fun hikariDs(config: JsonObject): HikariDataSource {
 
     val hikariConfig = HikariConfig()
     hikariConfig.driverClassName = config.getString("query.database.driver")

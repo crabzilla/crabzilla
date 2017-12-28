@@ -11,6 +11,7 @@ import io.github.crabzilla.example1.SampleInternalService
 import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
 import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
 import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
+import io.github.crabzilla.vertx.helpers.StringHelper.*
 import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.Vertx
@@ -40,7 +41,7 @@ class CustomerModule {
     val validator =  CommandValidatorFn()
 
     val cache: ExpiringMap<String, Snapshot<Customer>> = ExpiringMap.create()
-    val circuitBreaker = CircuitBreaker.create("command-handler-circuit-breaker", vertx)
+    val circuitBreaker = CircuitBreaker.create(cmdHandlerEndpoint(Customer::class.java), vertx)
     val trackerFactory : (Snapshot<Customer>) -> StateTransitionsTracker<Customer> =
             { instance -> StateTransitionsTracker(instance, stateTransitionFn)
             }
