@@ -7,32 +7,6 @@
 * [kotlin-example1-manual](https://crabzilla.github.io/crabzilla/docs/kotlin-example1-manual.html)
 * [Architecture decision records](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
 
-## Maven
-
-Your core domain module must import:
-
-```xml
-<dependency>
-  <groupId>io.github.crabzilla</groupId>
-  <artifactId>crabzilla-core</artifactId>
-  <version>0.0.6-SNAPSHOT</version>
-</dependency>
-```
-
-and your service module must import:
-
-```xml
-<dependency>
-  <groupId>io.github.crabzilla</groupId>
-  <artifactId>crabzilla-vertx</artifactId>
-  <version>0.0.6-SNAPSHOT</version>
-</dependency>
-```
-
-## Archetypes
-
-* TODO
-
 ## How to run the example
 
 ### Requirements
@@ -57,19 +31,75 @@ cd crabzilla
 docker-compose up
 ```
 
-3. Now you can run both unit and integration tests against database:
+3. Build it, running both unit and integration tests against database:
 
 ```bash
 mvn clean install
 ```
 
-4. Now you finally can run the current [example1](crabzilla-example1/crabzilla-example1-service/src/main/java/io/github/crabzilla/example1/Example1Launcher.kt):
+4. Now you can run the [command handler example](crabzilla-example1/crabzilla-example1-handler-service/src/main/java/io/github/crabzilla/example1/HandlerServiceLauncher.kt):
 
 ```bash
-cd crabzilla-example1/crabzilla-example1-service
-java -jar target/crabzilla-example1-service-0.0.6-SNAPSHOT-fat.jar -conf target/classes/conf/config.properties
+cd crabzilla-example1/crabzilla-example1-handler-service
+java -jar target/crabzilla-example1-handler-service-0.0.6-SNAPSHOT-fat.jar -conf target/classes/conf/config.properties
 
 ```
+
+5. Finally you can also run the [events projection example](crabzilla-example1/crabzilla-example1-projector-service/src/main/java/io/github/crabzilla/example1/ProjectorServiceLauncher.kt):
+
+```bash
+cd crabzilla-example1/crabzilla-example1-projector-service
+java -jar target/crabzilla-example1-projector-service-0.0.6-SNAPSHOT-fat.jar -conf target/classes/conf/config.properties
+
+```
+
+## Maven
+
+Your core domain module must import:
+
+```xml
+<dependency>
+  <groupId>io.github.crabzilla</groupId>
+  <artifactId>crabzilla-core</artifactId>
+  <version>0.0.6-SNAPSHOT</version>
+</dependency>
+```
+
+and your command handler service module must import:
+
+```xml
+<dependency>
+  <groupId>io.github.crabzilla</groupId>
+  <artifactId>crabzilla-vertx-handler</artifactId>
+  <version>0.0.6-SNAPSHOT</version>
+</dependency>
+```
+
+and your events projector service module must import:
+
+```xml
+<dependency>
+  <groupId>io.github.crabzilla</groupId>
+  <artifactId>crabzilla-vertx-projector</artifactId>
+  <version>0.0.6-SNAPSHOT</version>
+</dependency>
+```
+
+and if you want to expose you command handlers to the web you may want to import:
+
+```xml
+<dependency>
+  <groupId>io.github.crabzilla</groupId>
+  <artifactId>crabzilla-vertx-web</artifactId>
+  <version>0.0.6-SNAPSHOT</version>
+</dependency>
+```
+
+## Archetypes
+
+* TODO
+
+ 
  
 ## License
 

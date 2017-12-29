@@ -14,11 +14,11 @@ import java.lang.System.setProperty
 
 // tag::launcher[]
 
-abstract class ProjectorLauncher {
+class ProjectorServiceLauncher {
 
   companion object {
 
-    val log = org.slf4j.LoggerFactory.getLogger(ProjectorLauncher::class.java.simpleName)
+    val log = org.slf4j.LoggerFactory.getLogger(ProjectorServiceLauncher::class.java.simpleName)
 
     @Throws(Exception::class)
     @JvmStatic
@@ -46,7 +46,7 @@ abstract class ProjectorLauncher {
         val config = ar.result()
         log.info("config = {}", config.encodePrettily())
 
-        val app = DaggerProjectorComponent.builder()
+        val app = DaggerProjectorServiceComponent.builder()
                 .projectorServiceModule(ProjectorServiceModule(vertx, config))
                 .build()
 
@@ -66,12 +66,13 @@ abstract class ProjectorLauncher {
             run {
               if (r.failed()) {
                 log.error("when pulling form events ", r.cause())
-                f.fail(r.cause())
-              }
-              val list = f.result()
-              list.forEach { pd ->
-                log.info("will publish ${pd} to " + "example1-events")
-                vertx.eventBus().publish("example1-events", pd)
+              } else {
+                val list = f.result()
+                list.forEach { pd ->
+                  log.info("will publish ${pd} to " + "example1-events")
+                  vertx.eventBus().publish("example1-events", pd)
+                }
+
               }
             }
 

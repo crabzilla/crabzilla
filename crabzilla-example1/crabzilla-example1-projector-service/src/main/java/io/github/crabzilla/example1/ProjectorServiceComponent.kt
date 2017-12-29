@@ -8,7 +8,7 @@ import javax.inject.Singleton
 // tag::component[]
 @Singleton
 @Component(modules = [ProjectorServiceModule::class])
-interface ProjectorComponent {
+interface ProjectorServiceComponent {
 
   fun projectorVerticles(): Set<ProjectionHandlerVerticle<out Any>>
 

@@ -19,11 +19,11 @@ import java.util.*
 
 // tag::launcher[]
 
-class Example1Launcher {
+class HandlerServiceLauncher {
 
   companion object {
 
-    val log = org.slf4j.LoggerFactory.getLogger(Example1Launcher::class.java.simpleName)
+    val log = org.slf4j.LoggerFactory.getLogger(HandlerServiceLauncher::class.java.simpleName)
 
     @Throws(Exception::class)
     @JvmStatic
@@ -90,31 +90,31 @@ fun justForTest(vertx: Vertx) {
   // create customer command
   vertx.eventBus().send<EntityCommandExecution>(cmdHandlerEndpoint(Customer::class.java), createCustomerCmd, options) { asyncResult ->
 
-    Example1Launcher.log.info("Successful create customer test? {}", asyncResult.succeeded())
+    HandlerServiceLauncher.log.info("Successful create customer test? {}", asyncResult.succeeded())
 
     if (asyncResult.succeeded()) {
 
-      Example1Launcher.log.info("Result: {}", asyncResult.result().body())
+      HandlerServiceLauncher.log.info("Result: {}", asyncResult.result().body())
 
       val activateCustomerCmd = ActivateCustomer(UUID.randomUUID(), createCustomerCmd.targetId, "because I want it")
 
       // activate customer command
       vertx.eventBus().send<EntityCommandExecution>(cmdHandlerEndpoint(Customer::class.java), activateCustomerCmd, options) { asyncResult2 ->
 
-        Example1Launcher.log.info("Successful activate customer test? {}", asyncResult2.succeeded())
+        HandlerServiceLauncher.log.info("Successful activate customer test? {}", asyncResult2.succeeded())
 
         if (asyncResult2.succeeded()) {
-          Example1Launcher.log.info("Result: {}", asyncResult2.result().body())
+          HandlerServiceLauncher.log.info("Result: {}", asyncResult2.result().body())
         } else {
-          Example1Launcher.log.info("Cause: {}", asyncResult2.cause())
-          Example1Launcher.log.info("Message: {}", asyncResult2.cause().message)
+          HandlerServiceLauncher.log.info("Cause: {}", asyncResult2.cause())
+          HandlerServiceLauncher.log.info("Message: {}", asyncResult2.cause().message)
         }
 
       }
 
     } else {
-      Example1Launcher.log.info("Cause: {}", asyncResult.cause())
-      Example1Launcher.log.info("Message: {}", asyncResult.cause().message)
+      HandlerServiceLauncher.log.info("Cause: {}", asyncResult.cause())
+      HandlerServiceLauncher.log.info("Message: {}", asyncResult.cause().message)
     }
 
   }
