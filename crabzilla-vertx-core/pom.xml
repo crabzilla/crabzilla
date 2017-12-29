@@ -37,6 +37,8 @@
             <artifactId>HikariCP</artifactId>
         </dependency>
 
+        <!-- jdbi -->
+
         <dependency>
             <groupId>org.jdbi</groupId>
             <artifactId>jdbi3</artifactId>
