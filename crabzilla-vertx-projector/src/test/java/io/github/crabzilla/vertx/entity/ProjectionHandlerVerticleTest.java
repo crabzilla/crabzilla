@@ -80,7 +80,7 @@ public class ProjectionHandlerVerticleTest {
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
     EntityUnitOfWork expectedUow =
-            EntityUnitOfWork.Companion.unitOfWork(createCustomerCmd, new Version(1), singletonList(expectedEvent));
+            new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
     long uowSequence = 1L;
 
     DeliveryOptions options = new DeliveryOptions().setCodecName(ProjectionData.class.getSimpleName());

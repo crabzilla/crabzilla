@@ -46,11 +46,11 @@ public class EntityUnitOfWorkRepositoryIT {
   final CustomerId customerId = new CustomerId("customer#1");
   final CreateCustomer createCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
   final CustomerCreated created = new CustomerCreated(customerId, "customer");
-  final EntityUnitOfWork expectedUow1 = EntityUnitOfWork.Companion.unitOfWork(createCmd, new Version(1), singletonList(created));
+  final EntityUnitOfWork expectedUow1 = new EntityUnitOfWork(UUID.randomUUID(), createCmd, new Version(1), singletonList(created));
 
   final ActivateCustomer activateCmd = new ActivateCustomer(UUID.randomUUID(), customerId, "I want it");
   final CustomerActivated activated = new CustomerActivated(customerId.stringValue(), Instant.now());
-  final EntityUnitOfWork expectedUow2 = EntityUnitOfWork.Companion.unitOfWork(activateCmd, new Version(2), singletonList(activated));
+  final EntityUnitOfWork expectedUow2 = new EntityUnitOfWork(UUID.randomUUID(), activateCmd, new Version(2), singletonList(activated));
 
   @BeforeClass
   static public void setupClass(TestContext context) {

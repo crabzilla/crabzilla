@@ -10,14 +10,4 @@ data class EntityUnitOfWork(val unitOfWorkId: UUID, val command: EntityCommand,
   fun targetId(): EntityId {
     return command.targetId
   }
-
-  companion object {
-
-    fun unitOfWork(command: EntityCommand,
-                   version: Version,
-                   events: List<DomainEvent>): EntityUnitOfWork {
-      return EntityUnitOfWork(UUID.randomUUID(), command, version, events)
-    }
-  }
-
 }

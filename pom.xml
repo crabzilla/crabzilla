@@ -17,14 +17,14 @@
         <expiringmap.version>0.5.8</expiringmap.version>
         <sl4j.version>1.7.8</sl4j.version>
         <logback.version>1.2.3</logback.version>
-        <jdbi.version>3.0.0-beta2</jdbi.version>
+        <jdbi.version>3.0.0</jdbi.version>
         <mysql.version>6.0.6</mysql.version>
         <commons.version>3.5</commons.version>
-        <jackson.version>2.9.0.pr4</jackson.version>
+        <jackson.version>2.9.3</jackson.version>
         <hikari.version>2.7.4</hikari.version>
-        <junit.jupiter.version>5.0.0-RC2</junit.jupiter.version>
-        <junit.vintage.version>4.12.0-RC2</junit.vintage.version>
-        <junit.platform.version>1.0.0-RC2</junit.platform.version>
+        <junit.jupiter.version>5.1.0-M1</junit.jupiter.version>
+        <junit.vintage.version>5.1.0-M1</junit.vintage.version>
+        <junit.platform.version>1.1.0-M1</junit.platform.version>
         <asciidoctor.maven.plugin.version>1.5.5</asciidoctor.maven.plugin.version>
         <asciidoctorj.pdf.version>1.5.0-alpha.15</asciidoctorj.pdf.version>
         <asciidoctorj.version>1.5.5</asciidoctorj.version>
@@ -42,14 +42,6 @@
     <name>Crabzilla</name>
     <description>Yet another Event Sourcing experiment</description>
     <url>https://github.com/crabzilla/crabzilla</url>
-
-    <licenses>
-        <license>
-            <name>MIT License</name>
-            <url>http://www.opensource.org/licenses/mit-license.php</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
 
     <developers>
         <developer>
@@ -127,6 +119,27 @@
             <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!--<dependency>-->
+            <!--<groupId>org.junit.platform</groupId>-->
+            <!--<artifactId>junit-platform-launcher</artifactId>-->
+            <!--<version>${junit.platform.version}</version>-->
+            <!--<scope>test</scope>-->
+        <!--</dependency>-->
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!--<dependency>-->
+            <!--<groupId>org.junit.vintage</groupId>-->
+            <!--<artifactId>junit-vintage-engine</artifactId>-->
+            <!--<version>${junit.vintage.version}</version>-->
+            <!--<scope>test</scope>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>org.mockito</groupId>
@@ -303,7 +316,7 @@
             <!-- jdbi3 -->
             <dependency>
                 <groupId>org.jdbi</groupId>
-                <artifactId>jdbi3</artifactId>
+                <artifactId>jdbi3-core</artifactId>
                 <version>${jdbi.version}</version>
             </dependency>
             <dependency>
