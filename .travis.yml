@@ -34,4 +34,4 @@ script:
   - mvn clean install -DskipITs=false
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash) -t b9dfe7e0-829d-4961-bf6e-b820cfcec788
+  - bash <(curl -s https://codecov.io/bash)
