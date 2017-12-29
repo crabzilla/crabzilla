@@ -1,7 +1,10 @@
 package io.github.crabzilla.example1
 
+import io.github.crabzilla.vertx.ProjectionData
 import io.github.crabzilla.vertx.helpers.ConfigHelper.cfgOptions
 import io.vertx.config.ConfigRetriever
+import io.vertx.core.Future
+import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME
@@ -11,7 +14,7 @@ import java.lang.System.setProperty
 
 // tag::launcher[]
 
-class ProjectorLauncher {
+abstract class ProjectorLauncher {
 
   companion object {
 
@@ -49,8 +52,30 @@ class ProjectorLauncher {
 
         app.projectorVerticles().forEach({
           vertx.deployVerticle(it) { event ->
-            log.info("rest verticle: $it.toString()")
+            log.info("projection verticle: $it.toString()")
             if (!event.succeeded()) log.error("Error deploying verticle", event.cause()) }
+        })
+
+        vertx.setPeriodic(config.getLong("projector.interval.ms", 30000), Handler {
+
+          val f: Future<List<ProjectionData>> = Future.future<List<ProjectionData>>()
+
+          app.projectionRepo().selectAfterUowSequence(0, 1000, f)
+
+          f.setHandler { r ->
+            run {
+              if (r.failed()) {
+                log.error("when pulling form events ", r.cause())
+                f.fail(r.cause())
+              }
+              val list = f.result()
+              list.forEach { pd ->
+                log.info("will publish ${pd} to " + "example1-events")
+                vertx.eventBus().publish("example1-events", pd)
+              }
+            }
+
+          }
         })
 
       }

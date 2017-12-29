@@ -1,9 +1,5 @@
 package io.github.crabzilla.vertx.entity;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
@@ -11,10 +7,8 @@ import io.github.crabzilla.core.entity.SnapshotData;
 import io.github.crabzilla.core.entity.Version;
 import io.github.crabzilla.core.exceptions.DbConcurrencyException;
 import io.github.crabzilla.example1.customer.*;
-import io.github.crabzilla.vertx.helpers.VertxFactory;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -31,6 +25,7 @@ import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.UUID;
 
+import static io.github.crabzilla.vertx.helpers.VertxHelper.initVertx;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -60,13 +55,9 @@ public class EntityUnitOfWorkRepositoryIT {
   @BeforeClass
   static public void setupClass(TestContext context) {
 
-    vertx = new VertxFactory().vertx();
+    vertx = Vertx.vertx();
 
-    ObjectMapper mapper = Json.mapper;
-    mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
-    mapper.registerModule(new ParameterNamesModule())
-            .registerModule(new Jdk8Module())
-            .registerModule(new JavaTimeModule());
+    initVertx(vertx);
 
     HikariConfig config = new HikariConfig();
     config.setDriverClassName("com.mysql.cj.jdbc.Driver");

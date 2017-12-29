@@ -5,7 +5,6 @@ import com.zaxxer.hikari.HikariDataSource
 import dagger.Module
 import dagger.Provides
 import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
-import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.jdbc.JDBCClient
@@ -20,7 +19,7 @@ class ProjectionDbModule {
 
   @Provides
   @Singleton
-  @ReadDatabase
+  @ProjectionDatabase
   fun jdbcClient(@ProjectionDatabase dataSource: HikariDataSource, vertx: Vertx): JDBCClient {
     return JDBCClient.create(vertx, dataSource)
   }
@@ -42,12 +41,12 @@ class ProjectionDbModule {
   fun hikariDs(config: JsonObject): HikariDataSource {
 
     val hikariConfig = HikariConfig()
-    hikariConfig.driverClassName = config.getString("query.database.driver")
-    hikariConfig.jdbcUrl = config.getString("query.database.url")
-    hikariConfig.username = config.getString("query.database.user")
-    hikariConfig.password = config.getString("query.database.password")
+    hikariConfig.driverClassName = config.getString("read.database.driver")
+    hikariConfig.jdbcUrl = config.getString("read.database.url")
+    hikariConfig.username = config.getString("read.database.user")
+    hikariConfig.password = config.getString("read.database.password")
     hikariConfig.connectionTimeout = 5000
-    hikariConfig.maximumPoolSize = config.getInteger("database.pool.max.size")!!
+    hikariConfig.maximumPoolSize = config.getInteger("read.database.pool.max.size")!!
     hikariConfig.addDataSourceProperty("cachePrepStmts", "true")
     hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250")
     hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")

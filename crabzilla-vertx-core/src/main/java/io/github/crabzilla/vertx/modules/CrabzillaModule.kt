@@ -12,7 +12,9 @@ import io.github.crabzilla.core.entity.EntityCommand
 import io.github.crabzilla.core.entity.EntityId
 import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.github.crabzilla.vertx.EntityCommandExecution
+import io.github.crabzilla.vertx.ProjectionData
 import io.github.crabzilla.vertx.codecs.JacksonGenericCodec
+import io.github.crabzilla.vertx.helpers.VertxHelper
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
@@ -40,28 +42,7 @@ open class CrabzillaModule(val vertx: Vertx, val config: JsonObject) {
   }
 
   fun configureVertx() {
-
-    Json.mapper.registerModule(ParameterNamesModule())
-            .registerModule(Jdk8Module())
-            .registerModule(JavaTimeModule())
-            .registerModule(KotlinModule())
-            .enable(SerializationFeature.INDENT_OUTPUT)
-
-    vertx.eventBus().registerDefaultCodec(EntityCommandExecution::class.java,
-            JacksonGenericCodec(Json.mapper, EntityCommandExecution::class.java))
-
-    vertx.eventBus().registerDefaultCodec(EntityId::class.java,
-            JacksonGenericCodec(Json.mapper, EntityId::class.java))
-
-    vertx.eventBus().registerDefaultCodec(EntityCommand::class.java,
-            JacksonGenericCodec(Json.mapper, EntityCommand::class.java))
-
-    vertx.eventBus().registerDefaultCodec(DomainEvent::class.java,
-            JacksonGenericCodec(Json.mapper, DomainEvent::class.java))
-
-    vertx.eventBus().registerDefaultCodec(EntityUnitOfWork::class.java,
-            JacksonGenericCodec(Json.mapper, EntityUnitOfWork::class.java))
-
+    VertxHelper.initVertx(vertx)
   }
 
 }

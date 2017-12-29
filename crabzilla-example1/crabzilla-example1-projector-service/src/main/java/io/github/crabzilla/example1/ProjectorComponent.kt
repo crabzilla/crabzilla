@@ -1,7 +1,8 @@
 package io.github.crabzilla.example1
 
 import dagger.Component
-import io.github.crabzilla.vertx.projection.EventsProjectionVerticle
+import io.github.crabzilla.vertx.projection.ProjectionHandlerVerticle
+import io.github.crabzilla.vertx.projection.ProjectionRepository
 import javax.inject.Singleton
 
 // tag::component[]
@@ -9,7 +10,10 @@ import javax.inject.Singleton
 @Component(modules = [ProjectorServiceModule::class])
 interface ProjectorComponent {
 
-  fun projectorVerticles(): Set<EventsProjectionVerticle<out Any>>
+  fun projectorVerticles(): Set<ProjectionHandlerVerticle<out Any>>
+
+  fun projectionRepo(): ProjectionRepository
+
 }
 
 // end::component[]

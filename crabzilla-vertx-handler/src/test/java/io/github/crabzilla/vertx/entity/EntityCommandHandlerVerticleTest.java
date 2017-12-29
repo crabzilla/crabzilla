@@ -6,7 +6,7 @@ import io.github.crabzilla.core.exceptions.UnknownCommandException;
 import io.github.crabzilla.example1.SampleInternalService;
 import io.github.crabzilla.example1.customer.*;
 import io.github.crabzilla.vertx.EntityCommandExecution;
-import io.github.crabzilla.vertx.helpers.VertxFactory;
+import io.github.crabzilla.vertx.helpers.VertxHelper;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
@@ -78,7 +78,9 @@ public class EntityCommandHandlerVerticleTest {
 
     initMocks(this);
 
-    vertx = new VertxFactory().vertx();
+    vertx = Vertx.vertx();
+    VertxHelper.initVertx(vertx);
+
     circuitBreaker = CircuitBreaker.create("cmd-handler-circuit-breaker", vertx);
 
     cache = ExpiringMap.create();

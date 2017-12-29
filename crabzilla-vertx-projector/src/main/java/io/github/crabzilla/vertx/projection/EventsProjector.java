@@ -1,6 +1,7 @@
 package io.github.crabzilla.vertx.projection;
 
 import io.github.crabzilla.core.DomainEvent;
+import io.github.crabzilla.vertx.ProjectionData;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
@@ -31,7 +32,7 @@ public abstract class EventsProjector<DAO> {
     try {
       final Stream<TargetIDDomainEventPair> stream = uowList.stream()
               .flatMap(uowData -> uowData.getEvents().stream()
-                      .map(e -> new TargetIDDomainEventPair(uowData.getTargetId(), e)));
+              .map(e -> new TargetIDDomainEventPair(uowData.getTargetId(), e)));
       stream.forEach(tuple2 -> write(dao, tuple2.getId(), tuple2.getEvent()));
       handle.commit();
     } catch (Exception e) {

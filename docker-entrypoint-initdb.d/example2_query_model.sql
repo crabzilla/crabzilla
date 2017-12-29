@@ -1,6 +1,6 @@
-create database example1_query ;
+create database example1_read ;
 
-use example1_query ;
+use example1_read ;
 
 DROP TABLE if exists events_channels ;
 

@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.projection
+package io.github.crabzilla.vertx
 
 import io.github.crabzilla.core.DomainEvent
 import java.util.*

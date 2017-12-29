@@ -17,8 +17,8 @@ import org.slf4j.Logger;
 
 import java.util.UUID;
 
-import static io.github.crabzilla.vertx.helpers.StringHelper.restEndpoint;
 import static io.github.crabzilla.vertx.helpers.StringHelper.cmdHandlerEndpoint;
+import static io.github.crabzilla.vertx.helpers.StringHelper.restEndpoint;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
