@@ -58,6 +58,7 @@ class ProjectorServiceLauncher {
 
         vertx.setPeriodic(config.getLong("projector.interval.ms", 30000), Handler {
 
+          // TODO http://www.davsclaus.com/2013/08/apache-camel-212-backoff-support-for.html
           val f: Future<List<ProjectionData>> = Future.future<List<ProjectionData>>()
 
           app.projectionRepo().selectAfterUowSequence(0, 1000, f)
