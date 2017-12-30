@@ -1,9 +1,13 @@
 package io.github.crabzilla.core
 
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.crabzilla.core.entity.EntityCommand
 import io.github.crabzilla.core.entity.EntityCommandResult
 import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.github.crabzilla.core.entity.Version
+import java.io.IOException
 import java.util.*
 
 // helpers functions
@@ -23,3 +27,47 @@ fun eventsOf(vararg event: DomainEvent): List<DomainEvent> {
   return event.asList()
 }
 
+// serialization functions
+
+val eventsListType = object : TypeReference<List<DomainEvent>>() {}
+
+fun listOfEventsToJson(mapper: ObjectMapper, events: List<DomainEvent>): String {
+  try {
+    val cmdAsJson = mapper.writerFor(eventsListType).writeValueAsString(events)
+    return cmdAsJson
+  } catch (e: JsonProcessingException) {
+    throw RuntimeException("When writing listOfEventsToJson", e)
+  }
+
+}
+
+fun listOfEventsFromJson(mapper: ObjectMapper, eventsAsJson: String): List<DomainEvent> {
+  try {
+    return mapper.readerFor(eventsListType).readValue(eventsAsJson)
+  } catch (e: IOException) {
+    throw RuntimeException("When reading events list from JSON", e)
+  }
+
+}
+
+
+fun commandToJson(mapper: ObjectMapper, command: Command): String {
+  try {
+    val cmdAsJson = mapper.writerFor(Command::class.java).writeValueAsString(command)
+    return cmdAsJson
+  } catch (e: JsonProcessingException) {
+    throw RuntimeException("When writing commandToJson", e)
+  }
+
+}
+
+
+fun commandFromJson(mapper: ObjectMapper, commandAsJson: String): Command {
+  try {
+    val cmd = mapper.readValue(commandAsJson, Command::class.java)
+    return cmd
+  } catch (e: JsonProcessingException) {
+    throw RuntimeException("When reading commandToJson", e)
+  }
+
+}

@@ -1,8 +1,5 @@
 package io.github.crabzilla.vertx.entity;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import io.github.crabzilla.core.Command;
 import io.github.crabzilla.core.DomainEvent;
 import io.github.crabzilla.core.entity.EntityCommand;
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
@@ -20,14 +17,13 @@ import io.vertx.ext.sql.SQLRowStream;
 import io.vertx.ext.sql.UpdateResult;
 import org.slf4j.Logger;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static io.github.crabzilla.core.KrabzillaKt.*;
 import static io.github.crabzilla.vertx.helpers.VertxSqlHelper.*;
-import static io.vertx.core.json.Json.mapper;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class EntityUnitOfWorkRepository {
@@ -41,10 +37,6 @@ public class EntityUnitOfWorkRepository {
 
   private final String aggregateRootName;
   private final JDBCClient client;
-
-  private final TypeReference<List<DomainEvent>> eventsListTpe = new TypeReference<List<DomainEvent>>() {
-  };
-
   private final String SELECT_UOW_BY_CMD_ID = "select * from units_of_work where cmd_id =? ";
   private final String SELECT_UOW_BY_UOW_ID = "select * from units_of_work where uow_id =? ";
 
@@ -91,7 +83,7 @@ public class EntityUnitOfWorkRepository {
         } else {
           for (JsonObject row : rows) {
             EntityCommand command = Json.decodeValue(row.getString(CMD_DATA), EntityCommand.class);
-            final List<DomainEvent> events = readEvents(row.getString(UOW_EVENTS));
+            final List<DomainEvent> events = listOfEventsFromJson(Json.mapper, row.getString(UOW_EVENTS));
             EntityUnitOfWork uow = new EntityUnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
                     new Version(row.getLong(VERSION)), events);
             uowFuture.complete(uow);
@@ -145,7 +137,7 @@ public class EntityUnitOfWorkRepository {
                 })
                 .handler(row -> {
 
-                  List<DomainEvent> events = readEvents(row.getString(0));
+                  List<DomainEvent> events = listOfEventsFromJson(Json.mapper, row.getString(0));
                   SnapshotData snapshotData = new SnapshotData(new Version(row.getLong(1)), events);
                   list.add(snapshotData);
                 }).endHandler(event -> {
@@ -246,8 +238,8 @@ public class EntityUnitOfWorkRepository {
           }
 
           // if version is OK, then insert
-          final String cmdAsJson = commandToJson(unitOfWork.getCommand());
-          final String eventsListAsJson = listOfEventsToJson(unitOfWork.getEvents());
+          final String cmdAsJson = commandToJson(Json.mapper, unitOfWork.getCommand());
+          final String eventsListAsJson = listOfEventsToJson(Json.mapper, unitOfWork.getEvents());
 
           JsonArray params2 = new JsonArray()
                   .add(unitOfWork.getUnitOfWorkId().toString())
@@ -298,35 +290,6 @@ public class EntityUnitOfWorkRepository {
 
     });
 
-  }
-
-  private String commandToJson(Command command) {
-    try {
-      String cmdAsJson = mapper.writerFor(Command.class).writeValueAsString(command);
-      log.info("commandToJson {}", cmdAsJson);
-      return cmdAsJson;
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException("When writing commandToJson", e);
-    }
-  }
-
-  private String listOfEventsToJson(List<DomainEvent> events) {
-    try {
-      String cmdAsJson = mapper.writerFor(eventsListTpe).writeValueAsString(events);
-      log.info("listOfEventsToJson {}", cmdAsJson);
-      return cmdAsJson;
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException("When writing listOfEventsToJson", e);
-    }
-  }
-
-  private List<DomainEvent> readEvents(String eventsAsJson) {
-    try {
-      log.info("eventsAsJson {}", eventsAsJson);
-      return mapper.readerFor(eventsListTpe).readValue(eventsAsJson);
-    } catch (IOException e) {
-      throw new RuntimeException("When reading events list from JSON", e);
-    }
   }
 
 }
