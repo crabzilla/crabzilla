@@ -132,7 +132,7 @@ public class EntityUnitOfWorkRepositoryIT {
 
         Future<SnapshotData> snapshotDataFuture = Future.future();
 
-        repo.selectAfterVersion(expectedUow1.targetId().stringValue(), Version.Companion.getVERSION_ZERO(), snapshotDataFuture);
+        repo.selectAfterVersion(expectedUow1.targetId().stringValue(), new Version(0), snapshotDataFuture);
 
         snapshotDataFuture.setHandler(snapshotDataAsyncResult -> {
           if (snapshotDataAsyncResult.failed()) {

@@ -14,8 +14,8 @@ class ProjectorModule {
 
   @Provides @IntoSet
   fun eventsProjectorVerticle(@ProjectionDatabase jdbi: Jdbi, vertx: Vertx): ProjectionHandlerVerticle<out Any> {
-    val projector = CustomerSummaryProjector(CustomerSummary::class.simpleName!!,
-            CustomerSummaryProjectorDao::class.java, jdbi)
+    val daoFactory = { _jdbi: Jdbi -> _jdbi.onDemand(CustomerSummaryProjectorDao::class.java)}
+    val projector = CustomerSummaryProjector(CustomerSummary::class.simpleName!!, jdbi, daoFactory)
     val circuitBreaker = CircuitBreaker.create("events-projection-circuit-breaker", vertx)
     return ProjectionHandlerVerticle("example1-events", projector, circuitBreaker)
   }

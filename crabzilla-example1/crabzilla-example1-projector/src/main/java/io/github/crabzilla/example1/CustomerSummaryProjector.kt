@@ -10,9 +10,9 @@ import org.jdbi.v3.core.Jdbi
 import org.slf4j.LoggerFactory
 
 // tag::projector[]
-class CustomerSummaryProjector(channelId: String, projectorDaoClazz: Class<CustomerSummaryProjectorDao>, jdbi: Jdbi)
+class CustomerSummaryProjector(channelId: String, jdbi: Jdbi, dao: (Jdbi) -> CustomerSummaryProjectorDao)
 
-  : EventsProjector<CustomerSummaryProjectorDao>(channelId, projectorDaoClazz, jdbi) {
+  : EventsProjector<CustomerSummaryProjectorDao>(channelId, jdbi, dao) {
 
   private val log = LoggerFactory.getLogger(EventsProjector::class.java.simpleName)
 
