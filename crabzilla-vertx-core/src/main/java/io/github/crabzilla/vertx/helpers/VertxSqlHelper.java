@@ -6,27 +6,27 @@ import io.vertx.ext.sql.*;
 
 public class VertxSqlHelper {
 
-  public static void execute(SQLConnection conn, String sql, Future<Void> future) {
-    conn.execute(sql, res -> {
-      if (res.failed()) {
-        future.fail(res.cause());
-        return;
-      }
-
-      future.complete(null);
-    });
-  }
-
-  public static void query(SQLConnection conn, String sql, Future<ResultSet> future) {
-    conn.query(sql, res -> {
-      if (res.failed()) {
-        future.fail(res.cause());
-        return;
-      }
-
-      future.complete(res.result());
-    });
-  }
+//  public static void execute(SQLConnection conn, String sql, Future<Void> future) {
+//    conn.execute(sql, res -> {
+//      if (res.failed()) {
+//        future.fail(res.cause());
+//        return;
+//      }
+//
+//      future.complete(null);
+//    });
+//  }
+//
+//  public static void query(SQLConnection conn, String sql, Future<ResultSet> future) {
+//    conn.query(sql, res -> {
+//      if (res.failed()) {
+//        future.fail(res.cause());
+//        return;
+//      }
+//
+//      future.complete(res.result());
+//    });
+//  }
 
   public static void queryWithParams(SQLConnection conn, String sql, JsonArray params, Future<ResultSet> future) {
     conn.queryWithParams(sql, params, res -> {

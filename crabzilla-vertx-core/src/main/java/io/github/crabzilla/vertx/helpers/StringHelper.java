@@ -13,11 +13,11 @@ public class StringHelper {
   }
 
   public static String cmdHandlerEndpoint(Class<?> aggregateRootClass) {
-		return COMMAND_HANDLER + camelCaseToSpinalCase(aggregateRootClass.getSimpleName());
+		return camelCaseToSpinalCase(aggregateRootClass.getSimpleName()).concat(COMMAND_HANDLER);
 	}
 
 	public static String projectorEndpoint(String bcName) {
-		return EVENTS_HANDLER + camelCaseToSpinalCase(bcName);
+  	return camelCaseToSpinalCase(bcName).concat(EVENTS_HANDLER);
 	}
 
 	private static String camelCaseToSpinalCase(String start) {

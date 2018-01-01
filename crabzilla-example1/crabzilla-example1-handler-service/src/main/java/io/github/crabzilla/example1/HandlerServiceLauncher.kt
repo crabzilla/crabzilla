@@ -1,13 +1,13 @@
 package io.github.crabzilla.example1
 
+import com.zaxxer.hikari.HikariDataSource
 import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.EntityCommandExecution
-import io.github.crabzilla.vertx.helpers.ConfigHelper.cfgOptions
+import io.github.crabzilla.vertx.configHandler
 import io.github.crabzilla.vertx.helpers.StringHelper.cmdHandlerEndpoint
-import io.vertx.config.ConfigRetriever
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.logging.LoggerFactory
@@ -25,6 +25,8 @@ class HandlerServiceLauncher {
 
     val log = org.slf4j.LoggerFactory.getLogger(HandlerServiceLauncher::class.java.simpleName)
 
+    lateinit var ds: HikariDataSource
+
     @Throws(Exception::class)
     @JvmStatic
     fun main(args: Array<String>) {
@@ -39,26 +41,19 @@ class HandlerServiceLauncher {
       val options = parser.parse(*args)
       val configFile = options.valueOf("conf") as String?
       val vertx = Vertx.vertx()
-      val retriever = ConfigRetriever.create(vertx, cfgOptions(configFile))
 
-      retriever.getConfig { ar ->
-
-        if (ar.failed()) {
-          log.error("failed to load config", ar.cause())
-          return@getConfig
-        }
-
-        val config = ar.result()
-        log.info("config = {}", config.encodePrettily())
+      configHandler(vertx, configFile, { config ->
 
         val app = DaggerHandlerServiceComponent.builder()
                 .handlerServiceModule(HandlerServiceModule(vertx, config))
                 .build()
 
+        ds = app.datasource()
+
         app.commandVerticles().forEach({
-              vertx.deployVerticle(it) { event ->
-              log.info("cmd verticle: $it.toString()")
-              if (!event.succeeded()) log.error("Error deploying verticle", event.cause()) }
+          vertx.deployVerticle(it) { event ->
+            log.info("cmd verticle: $it.toString()")
+            if (!event.succeeded()) log.error("Error deploying verticle", event.cause()) }
         })
 
         app.restVerticles().forEach({
@@ -70,7 +65,9 @@ class HandlerServiceLauncher {
         // just a test
         justForTest(vertx)
 
-      }
+      }, {
+        ds.close()
+      })
 
     }
 
