@@ -25,7 +25,7 @@ import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.UUID;
 
-import static io.github.crabzilla.vertx.helpers.VertxHelper.initVertx;
+import static io.github.crabzilla.vertx.CrabzillaVertxKt.initVertx;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;

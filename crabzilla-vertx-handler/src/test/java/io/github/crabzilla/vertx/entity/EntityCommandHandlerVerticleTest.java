@@ -6,7 +6,6 @@ import io.github.crabzilla.core.exceptions.UnknownCommandException;
 import io.github.crabzilla.example1.SampleInternalService;
 import io.github.crabzilla.example1.customer.*;
 import io.github.crabzilla.vertx.EntityCommandExecution;
-import io.github.crabzilla.vertx.helpers.VertxHelper;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
@@ -33,7 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static io.github.crabzilla.vertx.helpers.StringHelper.cmdHandlerEndpoint;
+import static io.github.crabzilla.vertx.CrabzillaVertxKt.initVertx;
+import static io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -79,7 +79,8 @@ public class EntityCommandHandlerVerticleTest {
     initMocks(this);
 
     vertx = Vertx.vertx();
-    VertxHelper.initVertx(vertx);
+
+    initVertx(vertx);
 
     circuitBreaker = CircuitBreaker.create("cmd-handler-circuit-breaker", vertx);
 

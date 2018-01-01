@@ -14,7 +14,7 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.github.crabzilla.core.entity.Version
 import io.github.crabzilla.example1.customer.*
-import io.github.crabzilla.vertx.helpers.StringHelper.restEndpoint
+import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
 import io.vertx.core.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After

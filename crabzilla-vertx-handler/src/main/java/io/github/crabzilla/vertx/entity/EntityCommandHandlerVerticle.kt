@@ -5,7 +5,7 @@ import io.github.crabzilla.core.exceptions.DbConcurrencyException
 import io.github.crabzilla.core.exceptions.UnknownCommandException
 import io.github.crabzilla.vertx.EntityCommandExecution
 import io.github.crabzilla.vertx.EntityCommandExecution.RESULT.*
-import io.github.crabzilla.vertx.helpers.StringHelper.cmdHandlerEndpoint
+import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult

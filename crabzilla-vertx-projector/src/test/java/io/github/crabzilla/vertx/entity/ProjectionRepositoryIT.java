@@ -27,7 +27,7 @@ import java.util.UUID;
 
 import static io.github.crabzilla.core.KrabzillaKt.commandToJson;
 import static io.github.crabzilla.core.KrabzillaKt.listOfEventsToJson;
-import static io.github.crabzilla.vertx.helpers.VertxHelper.initVertx;
+import static io.github.crabzilla.vertx.CrabzillaVertxKt.initVertx;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.slf4j.LoggerFactory.getLogger;

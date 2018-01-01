@@ -7,7 +7,7 @@ import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.EntityCommandExecution
 import io.github.crabzilla.vertx.configHandler
-import io.github.crabzilla.vertx.helpers.StringHelper.cmdHandlerEndpoint
+import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.logging.LoggerFactory

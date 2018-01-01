@@ -8,7 +8,6 @@ import io.github.crabzilla.example1.customer.CreateCustomer;
 import io.github.crabzilla.example1.customer.CustomerCreated;
 import io.github.crabzilla.example1.customer.CustomerId;
 import io.github.crabzilla.vertx.ProjectionData;
-import io.github.crabzilla.vertx.helpers.VertxHelper;
 import io.github.crabzilla.vertx.projection.EventsProjector;
 import io.github.crabzilla.vertx.projection.ProjectionHandlerVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
@@ -29,7 +28,8 @@ import org.mockito.Mock;
 
 import java.util.UUID;
 
-import static io.github.crabzilla.vertx.helpers.StringHelper.projectorEndpoint;
+import static io.github.crabzilla.vertx.CrabzillaVertxKt.initVertx;
+import static io.github.crabzilla.vertx.helpers.EndpointsHelper.projectorEndpoint;
 import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
@@ -60,7 +60,7 @@ public class ProjectionHandlerVerticleTest {
 
     vertx = Vertx.vertx();
 
-    VertxHelper.initVertx(vertx);
+    initVertx(vertx);
 
     eventsProjector = new EventsProjector<CustomerSummaryDao>(EVENTS_ENDPOINT, jdbi, daoFactory) {
       @Override

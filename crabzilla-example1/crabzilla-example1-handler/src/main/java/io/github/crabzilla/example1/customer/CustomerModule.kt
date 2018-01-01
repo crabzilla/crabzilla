@@ -10,7 +10,7 @@ import io.github.crabzilla.core.entity.StateTransitionsTracker
 import io.github.crabzilla.example1.SampleInternalService
 import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
 import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
-import io.github.crabzilla.vertx.helpers.StringHelper.cmdHandlerEndpoint
+import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.Vertx

@@ -6,6 +6,8 @@ import io.github.crabzilla.vertx.configHandler
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
+import io.vertx.core.logging.LoggerFactory
+import io.vertx.core.logging.SLF4JLogDelegateFactory
 import joptsimple.OptionParser
 
 // tag::launcher[]
@@ -21,6 +23,9 @@ class ProjectorServiceLauncher {
     @Throws(Exception::class)
     @JvmStatic
     fun main(args: Array<String>) {
+
+      System.setProperty(LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory::class.java.name)
+      LoggerFactory.getLogger(LoggerFactory::class.java) // Required for Logback to work in Vertx
 
       val parser = OptionParser()
       parser.accepts("conf").withRequiredArg()
