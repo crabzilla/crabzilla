@@ -944,12 +944,15 @@ interface HandlerServiceComponent {
 <p>How to implement a very simple domain model with just one aggregate: Customer</p>
 </li>
 <li>
-<p>How to deploy the domain model into crabzilla-vertx</p>
+<p>How to implement a command handler service</p>
+</li>
+<li>
+<p>How to implement a projection service</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>Crabzilla will run your aggregate root by providing these components:</p>
+<p>Crabzilla will run your domain model by providing these components:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -957,13 +960,13 @@ interface HandlerServiceComponent {
 <p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-web/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandRestVerticle.java">EntityCommandRestVerticle</a> to receive commands as JSON</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.kt">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-handler/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.kt">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/entity/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting units of work into a single table, being events and command as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-handler/src/main/java/io/github/crabzilla/vertx/entity/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting units of work into a single table, being events and command as JSON</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx/src/main/java/io/github/crabzilla/vertx/projection/EventsProjectionVerticle.java">EventsProjectionVerticle</a> to propagate and project events to read model database</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-projector/src/main/java/io/github/crabzilla/vertx/projection/EventsProjectionVerticle.java">EventsProjectionVerticle</a> to propagate and project events to read model database</p>
 </li>
 </ul>
 </div>
@@ -973,7 +976,7 @@ interface HandlerServiceComponent {
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-12-28 16:17:42 BRST
+Last updated 2018-01-02 20:03:20 BRST
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
