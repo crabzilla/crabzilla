@@ -798,6 +798,9 @@ interface HandlerServiceComponent {
   fun commandVerticles(): Set&lt;EntityCommandHandlerVerticle&lt;out Entity&gt;&gt;
 
   fun restVerticles(): Set&lt;EntityCommandRestVerticle&lt;out Any&gt;&gt;
+
+  @WriteDatabase
+  fun datasource(): HikariDataSource
 }</code></pre>
 </div>
 </div>
@@ -813,6 +816,8 @@ interface HandlerServiceComponent {
 
     val log = org.slf4j.LoggerFactory.getLogger(HandlerServiceLauncher::class.java.simpleName)
 
+    lateinit var ds: HikariDataSource
+
     @Throws(Exception::class)
     @JvmStatic
     fun main(args: Array&lt;String&gt;) {
@@ -827,26 +832,19 @@ interface HandlerServiceComponent {
       val options = parser.parse(*args)
       val configFile = options.valueOf("conf") as String?
       val vertx = Vertx.vertx()
-      val retriever = ConfigRetriever.create(vertx, cfgOptions(configFile))
 
-      retriever.getConfig { ar -&gt;
-
-        if (ar.failed()) {
-          log.error("failed to load config", ar.cause())
-          return@getConfig
-        }
-
-        val config = ar.result()
-        log.info("config = {}", config.encodePrettily())
+      configHandler(vertx, configFile, { config -&gt;
 
         val app = DaggerHandlerServiceComponent.builder()
                 .handlerServiceModule(HandlerServiceModule(vertx, config))
                 .build()
 
+        ds = app.datasource()
+
         app.commandVerticles().forEach({
-              vertx.deployVerticle(it) { event -&gt;
-              log.info("cmd verticle: $it.toString()")
-              if (!event.succeeded()) log.error("Error deploying verticle", event.cause()) }
+          vertx.deployVerticle(it) { event -&gt;
+            log.info("cmd verticle: $it.toString()")
+            if (!event.succeeded()) log.error("Error deploying verticle", event.cause()) }
         })
 
         app.restVerticles().forEach({
@@ -858,7 +856,9 @@ interface HandlerServiceComponent {
         // just a test
         justForTest(vertx)
 
-      }
+      }, {
+        ds.close()
+      })
 
     }
 
