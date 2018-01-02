@@ -91,8 +91,6 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
-        <!-- test -->
-
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
@@ -100,13 +98,6 @@
         </dependency>
 
         <!-- test -->
-
-        <!--<dependency>-->
-        <!--<groupId>org.jetbrains.kotlin</groupId>-->
-        <!--<artifactId>kotlin-test</artifactId>-->
-        <!--<version>${kotlin.version}</version>-->
-        <!--<scope>test</scope>-->
-        <!--</dependency>-->
 
         <dependency>
             <groupId>org.junit.vintage</groupId>
@@ -120,26 +111,12 @@
             <scope>test</scope>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>org.junit.platform</groupId>-->
-            <!--<artifactId>junit-platform-launcher</artifactId>-->
-            <!--<version>${junit.platform.version}</version>-->
-            <!--<scope>test</scope>-->
-        <!--</dependency>-->
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <!--<dependency>-->
-            <!--<groupId>org.junit.vintage</groupId>-->
-            <!--<artifactId>junit-vintage-engine</artifactId>-->
-            <!--<version>${junit.vintage.version}</version>-->
-            <!--<scope>test</scope>-->
-        <!--</dependency>-->
 
         <dependency>
             <groupId>org.mockito</groupId>
@@ -153,11 +130,25 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.jayway.restassured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <scope>test</scope>
-        </dependency>
+        <!--<dependency>-->
+        <!--<groupId>org.jetbrains.spek</groupId>-->
+        <!--<artifactId>spek-api</artifactId>-->
+        <!--<version>1.1.5</version>-->
+        <!--<scope>test</scope>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+        <!--<groupId>org.jetbrains.kotlin</groupId>-->
+        <!--<artifactId>kotlin-test</artifactId>-->
+        <!--<version>1.2.10</version>-->
+        <!--<scope>test</scope>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+        <!--<groupId>org.jetbrains.spek</groupId>-->
+        <!--<artifactId>spek-junit-platform-engine</artifactId>-->
+        <!--<version>1.1.5</version>-->
+        <!--<scope>test</scope>-->
+        <!--</dependency>-->
+
 
     </dependencies>
 
@@ -400,13 +391,6 @@
                 <scope>test</scope>
             </dependency>
 
-            <dependency>
-                <groupId>com.jayway.restassured</groupId>
-                <artifactId>rest-assured</artifactId>
-                <version>2.9.0</version>
-                <scope>test</scope>
-            </dependency>
-
         </dependencies>
     </dependencyManagement>
 
@@ -550,6 +534,13 @@
                     <excludes>
                         <exclude>**/IT*.java</exclude>
                     </excludes>
+                    <includes>
+                        <include>**/Test*.java</include>
+                        <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
+                        <include>**/*TestCase.java</include>
+                        <include>**/*Spec.*</include>
+                    </includes>
                     <properties>
                         <!--<includeTags>fast</includeTags>-->
                         <!--<excludeTags>slow</excludeTags>-->

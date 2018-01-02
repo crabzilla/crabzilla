@@ -36,7 +36,6 @@
             <artifactId>jackson-module-kotlin</artifactId>
         </dependency>
 
-        <!-- test -->
 
     </dependencies>
 
