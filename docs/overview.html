@@ -469,19 +469,19 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 <div class="ulist">
 <ul>
 <li>
-<p>crabzilla-core            → Command, DomainEvent, Aggregate, Snapshot, etc Your domain will depend on it.</p>
+<p><strong>crabzilla-core</strong>            → Command, DomainEvent, Aggregate, Snapshot, etc Your domain will depend on it.</p>
 </li>
 <li>
-<p>crabzilla-vertx-core      → Codecs, Modules, Helpers, etc. Your services will depend on it.</p>
+<p><strong>crabzilla-vertx-core</strong>      → Codecs, Modules, Helpers, etc. Your services will depend on it.</p>
 </li>
 <li>
-<p>crabzilla-vertx-handler   → CommandHandlerVerticles and UnitOfWorkRepositories</p>
+<p><strong>crabzilla-vertx-handler</strong>   → CommandHandlerVerticles and UnitOfWorkRepositories.</p>
 </li>
 <li>
-<p>crabzilla-vertx-projector → ProjectionHandlerVerticle, EventsProjector and ProjectionRepository</p>
+<p><strong>crabzilla-vertx-projector</strong> → ProjectionHandlerVerticle, EventsProjector and ProjectionRepository.</p>
 </li>
 <li>
-<p>crabzilla-vertx-web       → CommandRestVerticle using Vert.x Web</p>
+<p><strong>crabzilla-vertx-web</strong>       → CommandRestVerticle using Vert.x Web.</p>
 </li>
 </ul>
 </div>
@@ -505,13 +505,13 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 <p>example1-handler           → Library exposing command handler verticles for your domain.</p>
 </li>
 <li>
-<p>example1-handler-service   → Service (wiring and configuration) exposing commands endpoints.</p>
+<p>example1-handler-service   → Service (wiring and configuration) to accept and handle commands.</p>
 </li>
 <li>
 <p>example1-projector         → Library exposing projection verticles.</p>
 </li>
 <li>
-<p>example1-handler-projector → Service (wiring and configuration) consuming events to be projected.</p>
+<p>example1-handler-projector → Service (wiring and configuration) to consume and project events.</p>
 </li>
 </ul>
 </div>
@@ -524,7 +524,7 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2018-01-03 00:31:41 BRST
+Last updated 2018-01-03 00:38:00 BRST
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

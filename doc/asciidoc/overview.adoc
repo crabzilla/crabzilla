@@ -23,11 +23,11 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 
 Crabzilla has these modules:
 
-* crabzilla-core            → Command, DomainEvent, Aggregate, Snapshot, etc Your domain will depend on it.
-* crabzilla-vertx-core      → Codecs, Modules, Helpers, etc. Your services will depend on it.
-* crabzilla-vertx-handler   → CommandHandlerVerticles and UnitOfWorkRepositories
-* crabzilla-vertx-projector → ProjectionHandlerVerticle, EventsProjector and ProjectionRepository
-* crabzilla-vertx-web       → CommandRestVerticle using Vert.x Web
+* **crabzilla-core**            → Command, DomainEvent, Aggregate, Snapshot, etc Your domain will depend on it.
+* **crabzilla-vertx-core**      → Codecs, Modules, Helpers, etc. Your services will depend on it.
+* **crabzilla-vertx-handler**   → CommandHandlerVerticles and UnitOfWorkRepositories.
+* **crabzilla-vertx-projector** → ProjectionHandlerVerticle, EventsProjector and ProjectionRepository.
+* **crabzilla-vertx-web**       → CommandRestVerticle using Vert.x Web.
 
 The dependencies between the modules:
 
@@ -38,9 +38,9 @@ and your typical *crabzilla-example1* project will have this structure:
 
 * example1-core              → Your domain code. Services as interfaces. Almost zero dependencies.
 * example1-handler           → Library exposing command handler verticles for your domain.
-* example1-handler-service   → Service (wiring and configuration) exposing commands endpoints.
+* example1-handler-service   → Service (wiring and configuration) to accept and handle commands.
 * example1-projector         → Library exposing projection verticles.
-* example1-handler-projector → Service (wiring and configuration) consuming events to be projected.
+* example1-handler-projector → Service (wiring and configuration) to consume and project events.
 
 The granularity of this module is probably a *bounded context*.
 
