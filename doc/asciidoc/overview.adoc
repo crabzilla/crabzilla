@@ -1,4 +1,4 @@
-= Krabzila Documentation
+= Crabzila Documentation
 :source-highlighter: highlightjs
 :highlightjsdir: highlight
 :highlightjs-theme: rainbow
@@ -23,21 +23,24 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 
 Crabzilla has these modules:
 
- crabzilla               → Project root
-  └ crabzilla-core       → Command, DomainEvent, Aggregate, Snapshot, etc
-  └ crabzilla-vertx      → EventBus based Verticles, Projectors, UnitOfWorkRepositories, etc
-  └ crabzilla-vertx-web  → REST based verticles using Vert.x Web
-
-and your typical *example1* bounded context project will have this structure:
-
- kotlin-example1              → Project root
-  └ example1-kotlin-core      → Your domain code. Services as interfaces. Almost zero dependencies.
-  └ example1-kotlin-projector → Library to be used to project events into query model database.
-  └ example1-kotlin-service   → The application: wiring, configuration and services implementations.
-
-Load, integration and acceptance tests are against the service module.
+* crabzilla-core            → Command, DomainEvent, Aggregate, Snapshot, etc Your domain will depend on it.
+* crabzilla-vertx-core      → Codecs, Modules, Helpers, etc. Your services will depend on it.
+* crabzilla-vertx-handler   → CommandHandlerVerticles and UnitOfWorkRepositories
+* crabzilla-vertx-projector → ProjectionHandlerVerticle, EventsProjector and ProjectionRepository
+* crabzilla-vertx-web       → CommandRestVerticle using Vert.x Web
 
 The dependencies between the modules:
 
 [.thumb]
 image::modules.png[scaledwidth=100%]
+
+and your typical *crabzilla-example1* project will have this structure:
+
+* example1-core              → Your domain code. Services as interfaces. Almost zero dependencies.
+* example1-handler           → Library exposing command handler verticles for your domain.
+* example1-handler-service   → Service (wiring and configuration) exposing commands endpoints.
+* example1-projector         → Library exposing projection verticles.
+* example1-handler-projector → Service (wiring and configuration) consuming events to be projected.
+
+The granularity of this module is probably a *bounded context*.
+

@@ -5,7 +5,7 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.5">
-<title>Krabzila Documentation</title>
+<title>Crabzila Documentation</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -421,7 +421,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>Krabzila Documentation</h1>
+<h1>Crabzila Documentation</h1>
 <div class="details">
 <span id="revnumber">version 0.0.6-SNAPSHOT</span>
 </div>
@@ -466,27 +466,24 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 <div class="paragraph">
 <p>Crabzilla has these modules:</p>
 </div>
-<div class="literalblock">
-<div class="content">
-<pre>crabzilla               → Project root
- └ crabzilla-core       → Command, DomainEvent, Aggregate, Snapshot, etc
- └ crabzilla-vertx      → EventBus based Verticles, Projectors, UnitOfWorkRepositories, etc
- └ crabzilla-vertx-web  → REST based verticles using Vert.x Web</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>and your typical <strong>example1</strong> bounded context project will have this structure:</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>kotlin-example1              → Project root
- └ example1-kotlin-core      → Your domain code. Services as interfaces. Almost zero dependencies.
- └ example1-kotlin-projector → Library to be used to project events into query model database.
- └ example1-kotlin-service   → The application: wiring, configuration and services implementations.</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Load, integration and acceptance tests are against the service module.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>crabzilla-core            → Command, DomainEvent, Aggregate, Snapshot, etc Your domain will depend on it.</p>
+</li>
+<li>
+<p>crabzilla-vertx-core      → Codecs, Modules, Helpers, etc. Your services will depend on it.</p>
+</li>
+<li>
+<p>crabzilla-vertx-handler   → CommandHandlerVerticles and UnitOfWorkRepositories</p>
+</li>
+<li>
+<p>crabzilla-vertx-projector → ProjectionHandlerVerticle, EventsProjector and ProjectionRepository</p>
+</li>
+<li>
+<p>crabzilla-vertx-web       → CommandRestVerticle using Vert.x Web</p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
 <p>The dependencies between the modules:</p>
@@ -496,13 +493,38 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 <img src="./images/modules.png" alt="modules">
 </div>
 </div>
+<div class="paragraph">
+<p>and your typical <strong>crabzilla-example1</strong> project will have this structure:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>example1-core              → Your domain code. Services as interfaces. Almost zero dependencies.</p>
+</li>
+<li>
+<p>example1-handler           → Library exposing command handler verticles for your domain.</p>
+</li>
+<li>
+<p>example1-handler-service   → Service (wiring and configuration) exposing commands endpoints.</p>
+</li>
+<li>
+<p>example1-projector         → Library exposing projection verticles.</p>
+</li>
+<li>
+<p>example1-handler-projector → Service (wiring and configuration) consuming events to be projected.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The granularity of this module is probably a <strong>bounded context</strong>.</p>
+</div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2017-12-28 13:53:19 BRST
+Last updated 2018-01-03 00:26:38 BRST
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
