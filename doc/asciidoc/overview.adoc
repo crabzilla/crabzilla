@@ -32,7 +32,7 @@ Crabzilla has these modules:
 The dependencies between the modules:
 
 [.thumb]
-image::modules.png[scaledwidth=100%]
+image::crabzilla-modules.png[scaledwidth=100%]
 
 and your typical *crabzilla-example1* project will have this structure:
 
