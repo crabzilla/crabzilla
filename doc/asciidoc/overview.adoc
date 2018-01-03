@@ -40,7 +40,7 @@ and your typical *crabzilla-example1* project will have this structure:
 * example1-handler           → Library exposing command handler verticles for your domain.
 * example1-handler-service   → Service (wiring and configuration) to accept and handle commands.
 * example1-projector         → Library exposing projection verticles.
-* example1-handler-projector → Service (wiring and configuration) to consume and project events.
+* example1-projector-service → Service (wiring and configuration) to consume and project events.
 
 The granularity of this module is probably a *bounded context*.
 
