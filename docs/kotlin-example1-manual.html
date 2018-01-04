@@ -505,9 +505,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>A library containing your domain model expressed in value objects, aggregates, commands, events, functions, etc.
 Internal services and repositories are just plain domain abstractions: interfaces or abstract classes. The scope is
 probably a <em>Bounded Context</em>. This module is also 100% agnostic about how data will be persisted to a relational
-database. This is called <em>persistence ignorance</em>. Although it is agnostic about relational persistence, this module
-is aware of the JSON format needed to persist its commands, events, units of work, etc since its only required
-dependency is crabzilla-core, witch depends on <a href="https://github.com/FasterXML/jackson-module-kotlin">jackson-module-kotlin</a>.</p>
+database. This is called <em>persistence ignorance</em>. But it is aware of the JSON format needed to persist its commands,
+events, units of work, etc</p>
 </div>
 <div class="sect2">
 <h3 id="1-1-data"><a class="anchor" href="#1-1-data"></a>1.1 Data</h3>
@@ -571,8 +570,8 @@ data class CreateActivateCustomer(override val commandId: UUID,
 <div class="sect3">
 <h4 id="1-2-2-commandhandlerfn"><a class="anchor" href="#1-2-2-commandhandlerfn"></a>1.2.2 CommandHandlerFn</h4>
 <div class="paragraph">
-<p>An possibly blocking and possibly NON side effect free function. Although not being side effect free (throws an exception),
-command handler verticles will wrap the result of this function into a result type something like <a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-core/src/main/java/io/github/crabzilla/core/entity/EntityCommandResult.kt">EntityCommandResult</a></p>
+<p>An possibly blocking NO side effect free function. Although not being side effect free (throws an exception), command
+handler verticles will wrap the result of this function into a result type something like <a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-core/src/main/java/io/github/crabzilla/core/entity/EntityCommandResult.kt">EntityCommandResult</a></p>
 </div>
 <div class="listingblock">
 <div class="title">CustomerFunctions.kt</div>
@@ -977,7 +976,7 @@ interface HandlerServiceComponent {
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2018-01-04 02:17:42 BRST
+Last updated 2018-01-04 11:08:39 BRST
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
