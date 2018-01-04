@@ -27,7 +27,8 @@ A library containing your domain model expressed in value objects, aggregates, c
 Internal services and repositories are just plain domain abstractions: interfaces or abstract classes. The scope is
 probably a _Bounded Context_. This module is also 100% agnostic about how data will be persisted to a relational
 database. This is called _persistence ignorance_. Although it is agnostic about relational persistence, this module
-is aware of the JSON format needed to persist its commands, events, units of work, etc since it depends to Jackson.
+is aware of the JSON format needed to persist its commands, events, units of work, etc since its only required
+dependency is crabzilla-core, witch depends on https://github.com/FasterXML/jackson-module-kotlin[jackson-module-kotlin].
 
 === 1.1 Data
 
@@ -59,7 +60,8 @@ include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/cr
 ----
 
 ==== 1.2.2 CommandHandlerFn
-An possibly blocking and side effect free function.
+An possibly blocking and possibly NON side effect free function. Although not being side effect free (throws an exception),
+command handler verticles will wrap the result of this function into a result type something like https://github.com/crabzilla/crabzilla/blob/master/crabzilla-core/src/main/java/io/github/crabzilla/core/entity/EntityCommandResult.kt[EntityCommandResult]
 [source,kotlin]
 .CustomerFunctions.kt
 ----
