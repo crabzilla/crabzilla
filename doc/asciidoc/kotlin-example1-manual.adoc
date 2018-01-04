@@ -11,9 +11,7 @@ ifndef::sourcedir[:sourcedir: ../../main/java]
 
 Status: *WORK IN PROGRESS*
 
-This example is based on https://kotlinlang.org/[Kotlin].
-
-Let's examine the crabzilla-example1 example with just one aggregate: Customer.
+Let's examine the crabzilla-example1. It has just one aggregate: Customer.
 
 * An user can create a new customer
 * An user can activate an existing customer
@@ -27,7 +25,9 @@ image::example1.png[scaledwidth=100%]
 
 A library containing your domain model expressed in value objects, aggregates, commands, events, functions, etc.
 Internal services and repositories are just plain domain abstractions: interfaces or abstract classes. The scope is
-probably a _Bounded Context_. This module is also agnostic about how data will be persisted. This is called _persistence ignorance_.
+probably a _Bounded Context_. This module is also 100% agnostic about how data will be persisted to a relational
+database. This is called _persistence ignorance_. Although it is agnostic about relational persistence, this module
+is aware of the JSON format needed to persist its commands, events, units of work, etc since it depends to Jackson.
 
 === 1.1 Data
 
@@ -59,7 +59,6 @@ include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/cr
 ----
 
 ==== 1.2.2 CommandHandlerFn
-
 An possibly blocking and side effect free function.
 [source,kotlin]
 .CustomerFunctions.kt
@@ -78,7 +77,7 @@ include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/cr
 
 === 1.3 Aggregates
 
-An aggregate runs business logic and emit events. It can uses internal services and repositories.
+An aggregate runs *side effect free* business logic and returns events. It can uses internal services and repositories.
 [source,kotlin]
 .Customer.kt
 ----
