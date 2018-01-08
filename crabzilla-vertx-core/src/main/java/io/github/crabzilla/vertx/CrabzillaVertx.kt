@@ -14,6 +14,7 @@ import io.github.crabzilla.vertx.modules.CrabzillaModule
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
+import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
@@ -106,4 +107,12 @@ fun initVertx(vertx: Vertx) {
   vertx.eventBus().registerDefaultCodec(EntityUnitOfWork::class.java,
           JacksonGenericCodec(Json.mapper, EntityUnitOfWork::class.java))
 
+}
+
+fun deployVerticles(vertx: Vertx, verticles: Set<Verticle>) {
+ verticles.forEach({
+   vertx.deployVerticle(it) { event ->
+      if (!event.succeeded()) log.error("Error deploying verticle", event.cause())
+    }
+ })
 }

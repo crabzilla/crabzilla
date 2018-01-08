@@ -7,14 +7,11 @@ import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.EntityCommandExecution
 import io.github.crabzilla.vertx.configHandler
+import io.github.crabzilla.vertx.deployVerticles
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
-import io.vertx.core.logging.LoggerFactory
-import io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME
-import io.vertx.core.logging.SLF4JLogDelegateFactory
 import joptsimple.OptionParser
-import java.lang.System.setProperty
 import java.util.*
 
 // tag::launcher[]
@@ -30,9 +27,6 @@ class HandlerServiceLauncher {
     @Throws(Exception::class)
     @JvmStatic
     fun main(args: Array<String>) {
-
-      setProperty(LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory::class.java.name)
-      LoggerFactory.getLogger(LoggerFactory::class.java) // Required for Logback to work in Vertx
 
       val parser = OptionParser()
       parser.accepts("conf").withRequiredArg()
@@ -50,22 +44,15 @@ class HandlerServiceLauncher {
 
         ds = app.datasource()
 
-        app.commandVerticles().forEach({
-          vertx.deployVerticle(it) { event ->
-            log.info("cmd verticle: $it.toString()")
-            if (!event.succeeded()) log.error("Error deploying verticle", event.cause()) }
-        })
+        deployVerticles(vertx, app.commandVerticles())
 
-        app.restVerticles().forEach({
-          vertx.deployVerticle(it) { event ->
-            log.info("rest verticle: $it.toString()")
-            if (!event.succeeded()) log.error("Error deploying verticle", event.cause()) }
-        })
+        deployVerticles(vertx, app.restVerticles())
 
-        // just a test
         justForTest(vertx)
 
       }, {
+
+        // close db conn pool
         ds.close()
       })
 
