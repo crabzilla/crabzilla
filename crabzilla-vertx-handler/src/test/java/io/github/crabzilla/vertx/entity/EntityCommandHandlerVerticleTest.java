@@ -1,8 +1,7 @@
 package io.github.crabzilla.vertx.entity;
 
 import io.github.crabzilla.core.entity.*;
-import io.github.crabzilla.core.exceptions.DbConcurrencyException;
-import io.github.crabzilla.core.exceptions.UnknownCommandException;
+import io.github.crabzilla.core.UnknownCommandException;
 import io.github.crabzilla.example1.SampleInternalService;
 import io.github.crabzilla.example1.customer.*;
 import io.github.crabzilla.vertx.EntityCommandExecution;

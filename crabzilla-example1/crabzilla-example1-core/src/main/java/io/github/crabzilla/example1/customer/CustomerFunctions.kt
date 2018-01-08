@@ -5,7 +5,7 @@ import io.github.crabzilla.core.entity.EntityCommand
 import io.github.crabzilla.core.entity.EntityCommandResult
 import io.github.crabzilla.core.entity.Snapshot
 import io.github.crabzilla.core.entity.StateTransitionsTracker
-import io.github.crabzilla.core.exceptions.UnknownCommandException
+import io.github.crabzilla.core.UnknownCommandException
 import io.github.crabzilla.core.resultOf
 import io.github.crabzilla.core.uowOf
 

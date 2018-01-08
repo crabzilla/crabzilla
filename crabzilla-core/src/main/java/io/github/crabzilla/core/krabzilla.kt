@@ -10,6 +10,8 @@ import io.github.crabzilla.core.entity.Version
 import java.io.IOException
 import java.util.*
 
+class UnknownCommandException(s: String) : RuntimeException(s)
+
 // helpers functions
 
 fun resultOf(f: () -> EntityUnitOfWork): EntityCommandResult {

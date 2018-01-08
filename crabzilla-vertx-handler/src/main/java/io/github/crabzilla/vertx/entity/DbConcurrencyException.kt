@@ -1,3 +1,3 @@
-package io.github.crabzilla.core.exceptions
+package io.github.crabzilla.vertx.entity
 
 class DbConcurrencyException(s: String) : RuntimeException(s)

@@ -5,7 +5,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
 import io.github.crabzilla.core.entity.SnapshotData;
 import io.github.crabzilla.core.entity.Version;
-import io.github.crabzilla.core.exceptions.DbConcurrencyException;
 import io.github.crabzilla.example1.customer.*;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;

@@ -5,7 +5,6 @@ import io.github.crabzilla.core.entity.EntityCommand;
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
 import io.github.crabzilla.core.entity.SnapshotData;
 import io.github.crabzilla.core.entity.Version;
-import io.github.crabzilla.core.exceptions.DbConcurrencyException;
 import io.vertx.core.Future;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
