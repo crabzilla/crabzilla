@@ -822,9 +822,6 @@ interface HandlerServiceComponent {
     @JvmStatic
     fun main(args: Array&lt;String&gt;) {
 
-      setProperty(LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory::class.java.name)
-      LoggerFactory.getLogger(LoggerFactory::class.java) // Required for Logback to work in Vertx
-
       val parser = OptionParser()
       parser.accepts("conf").withRequiredArg()
       parser.allowsUnrecognizedOptions()
@@ -841,22 +838,15 @@ interface HandlerServiceComponent {
 
         ds = app.datasource()
 
-        app.commandVerticles().forEach({
-          vertx.deployVerticle(it) { event -&gt;
-            log.info("cmd verticle: $it.toString()")
-            if (!event.succeeded()) log.error("Error deploying verticle", event.cause()) }
-        })
+        deployVerticles(vertx, app.commandVerticles())
 
-        app.restVerticles().forEach({
-          vertx.deployVerticle(it) { event -&gt;
-            log.info("rest verticle: $it.toString()")
-            if (!event.succeeded()) log.error("Error deploying verticle", event.cause()) }
-        })
+        deployVerticles(vertx, app.restVerticles())
 
-        // just a test
         justForTest(vertx)
 
       }, {
+
+        // close db conn pool
         ds.close()
       })
 
