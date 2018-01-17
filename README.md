@@ -42,8 +42,8 @@ mvn clean install
 
 ```bash
 cd crabzilla-example1/crabzilla-example1-handler-service
-java -jar target/crabzilla-example1-handler-service-0.0.6-SNAPSHOT-fat.jar \ 
--conf target/classes/conf/config.properties
+java -jar target/crabzilla-example1-handler-service-0.0.6-SNAPSHOT-fat.jar \
+     -conf target/classes/conf/config.properties
 
 ```
 
@@ -51,8 +51,8 @@ java -jar target/crabzilla-example1-handler-service-0.0.6-SNAPSHOT-fat.jar \
 
 ```bash
 cd crabzilla-example1/crabzilla-example1-projector-service
-java -jar target/crabzilla-example1-projector-service-0.0.6-SNAPSHOT-fat.jar \ 
--conf target/classes/conf/config.properties
+java -jar target/crabzilla-example1-projector-service-0.0.6-SNAPSHOT-fat.jar \
+     -conf target/classes/conf/config.properties
 
 ```
 
