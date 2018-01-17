@@ -10,7 +10,6 @@ import io.github.crabzilla.core.entity.EntityCommand
 import io.github.crabzilla.core.entity.EntityId
 import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.github.crabzilla.vertx.codecs.JacksonGenericCodec
-import io.github.crabzilla.vertx.modules.CrabzillaModule
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -20,6 +19,7 @@ import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import java.io.File
 
+class CrabzillaVertx
 
 val log = org.slf4j.LoggerFactory.getLogger("CrabzillaVertx")
 
@@ -65,7 +65,7 @@ private fun cfgOptions(configFile: String?): ConfigRetrieverOptions {
     return ConfigRetrieverOptions().addStore(file)
   }
 
-  val defaultConfigFile = CrabzillaModule::class.java.classLoader
+  val defaultConfigFile = CrabzillaVertx::class.java.classLoader
           .getResource("conf/config.properties")!!.path
 
   val file = ConfigStoreOptions()
@@ -108,6 +108,7 @@ fun initVertx(vertx: Vertx) {
           JacksonGenericCodec(Json.mapper, EntityUnitOfWork::class.java))
 
 }
+
 
 fun deployVerticles(vertx: Vertx, verticles: Set<Verticle>) {
  verticles.forEach({

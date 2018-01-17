@@ -24,12 +24,6 @@
             <artifactId>jopt-simple</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>com.google.dagger</groupId>
-            <artifactId>dagger</artifactId>
-            <version>${dagger.version}</version>
-        </dependency>
-
         <!-- database -->
 
         <dependency>

@@ -4,29 +4,24 @@
 
     <parent>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-example1</artifactId>
+        <artifactId>crabzilla</artifactId>
         <version>0.0.6-SNAPSHOT</version>
     </parent>
 
-    <artifactId>crabzilla-example1-projector</artifactId>
+    <artifactId>crabzilla-vertx-dagger</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
 
         <dependency>
             <groupId>io.github.crabzilla</groupId>
-            <artifactId>crabzilla-example1-core</artifactId>
-            <version>${project.parent.version}</version>
+            <artifactId>crabzilla-vertx-core</artifactId>
         </dependency>
 
-      <dependency>
-        <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-vertx-dagger</artifactId>
-      </dependency>
-
-      <dependency>
-            <groupId>io.github.crabzilla</groupId>
-            <artifactId>crabzilla-vertx-projector</artifactId>
+        <dependency>
+            <groupId>com.google.dagger</groupId>
+            <artifactId>dagger</artifactId>
+            <version>${dagger.version}</version>
         </dependency>
 
     </dependencies>
