@@ -4,7 +4,7 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Module
 import dagger.Provides
-import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
+import io.github.crabzilla.vertx.qualifiers.ReadDatabase
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.jdbc.JDBCClient

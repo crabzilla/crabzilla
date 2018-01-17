@@ -24,10 +24,11 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 Crabzilla has these modules:
 
 * **crabzilla-core**            → Command, DomainEvent, Aggregate, Snapshot, etc Your domain will depend on it.
-* **crabzilla-vertx-core**      → Codecs, Modules, Helpers, etc. Your services will depend on it.
+* **crabzilla-vertx-core**      → Codecs, Helpers, etc. Your services will depend on it.
 * **crabzilla-vertx-handler**   → CommandHandlerVerticles and UnitOfWorkRepositories.
 * **crabzilla-vertx-projector** → ProjectionHandlerVerticle, EventsProjector and ProjectionRepository.
 * **crabzilla-vertx-web**       → CommandRestVerticle using Vert.x Web.
+* **crabzilla-vertx-dagger**    → Useful modules definitions you can optionally leverage.
 
 The dependencies between the modules:
 

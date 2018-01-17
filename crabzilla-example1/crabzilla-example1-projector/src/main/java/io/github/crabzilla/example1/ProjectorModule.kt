@@ -3,7 +3,7 @@ package io.github.crabzilla.example1
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoSet
-import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
+import io.github.crabzilla.vertx.qualifiers.ProjectionDatabase
 import io.github.crabzilla.vertx.projection.ProjectionHandlerVerticle
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.Vertx

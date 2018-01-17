@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.modules.qualifiers;
+package io.github.crabzilla.vertx.qualifiers;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Documented;
@@ -9,5 +9,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Qualifier
 @Documented
 @Retention(RUNTIME)
-public @interface ReadDatabase {
+public @interface ProjectionDatabase {
 }
