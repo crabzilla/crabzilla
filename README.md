@@ -66,7 +66,7 @@ mvn clean install
 cd crabzilla-example1/crabzilla-example1-services/crabzilla-example1-dual-db
 ```
 
-4. Now you can run the command handler service: 
+5. Now you can run the command handler service: 
 
 ```bash
 cd crabzilla-example1-dual-db-handler
@@ -75,7 +75,7 @@ java -jar target/crabzilla-example1-dual-db-handler-0.0.6-SNAPSHOT-fat.jar \
 
 ```
 
-5. Finally you can also run the events projection service:
+6. Finally you can also run the events projection service:
 
 ```bash
 cd crabzilla-example1-dual-db-projector
