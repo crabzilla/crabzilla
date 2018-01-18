@@ -12,7 +12,7 @@ on Vert.x and a relational database of your choice.
 ## Status
 
 Its still in very early development stage. APIs can change. So far Crabzilla has only an Aggregate example. Inspired by 
-[http://eventstorming.com/](Eventstorming), the goal is to develop examples and implementations for an ExternalSystem, 
+[Eventstorming](http://eventstorming.com), the goal is to develop examples and implementations for an ExternalSystem, 
 a Listener and a ProcessManager / Saga.
 
 ## Modules
