@@ -428,8 +428,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#goal-for-version-1-0-0">Goal for version 1.0.0</a></li>
-<li><a href="#status">Status</a></li>
 <li><a href="#modules">Modules</a></li>
 </ul>
 </div>
@@ -439,24 +437,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="paragraph">
 <p>Status: <strong>WORK IN PROGRESS</strong></p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="goal-for-version-1-0-0"><a class="anchor" href="#goal-for-version-1-0-0"></a>Goal for version 1.0.0</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>To help you write your domain model with very little framework overhead and smoothly put it to work using a stack based
-on Vert.x and a relational database of your choice.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="status"><a class="anchor" href="#status"></a>Status</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>So far Crabzilla has only an Aggregate example. Inspired by <a href="http://eventstorming.com/">Eventstorming</a>, the goal is to
-also develop examples and implementations for an ExternalSystem, a Listener and a ProcessManager / Saga.</p>
 </div>
 </div>
 </div>
@@ -472,6 +452,9 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 <p><strong>crabzilla-core</strong>            → Command, DomainEvent, Aggregate, Snapshot, etc Your domain will depend on it.</p>
 </li>
 <li>
+<p><strong>crabzilla-example1</strong>        → An example using Crabzilla.</p>
+</li>
+<li>
 <p><strong>crabzilla-vertx-core</strong>      → Codecs, Helpers, etc. Your services will depend on it.</p>
 </li>
 <li>
@@ -481,7 +464,7 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 <p><strong>crabzilla-vertx-projector</strong> → ProjectionHandlerVerticle, EventsProjector and ProjectionRepository.</p>
 </li>
 <li>
-<p><strong>crabzilla-vertx-web</strong>       → CommandRestVerticle using Vert.x Web.</p>
+<p><strong>crabzilla-vertx-web</strong>       → CommandRestVerticle. Depends on vertx-web module.</p>
 </li>
 <li>
 <p><strong>crabzilla-vertx-dagger</strong>    → Useful modules definitions you can optionally leverage.</p>
@@ -508,13 +491,10 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 <p><strong>example1-handler</strong>           → Library exposing command handler verticles for your domain.</p>
 </li>
 <li>
-<p><strong>example1-handler-service</strong>   → Service (verticles wiring and configuration) to accept and handle commands.</p>
-</li>
-<li>
 <p><strong>example1-projector</strong>         → Library exposing projection verticles.</p>
 </li>
 <li>
-<p><strong>example1-projector-service</strong> → Service (verticles wiring and configuration) to consume and project events.</p>
+<p><strong>example1-services</strong>          → Running services (verticles wiring and configuration).</p>
 </li>
 </ul>
 </div>
@@ -527,7 +507,7 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2018-01-17 08:02:41 BRST
+Last updated 2018-01-18 21:03:09 BRST
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

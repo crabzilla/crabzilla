@@ -28,16 +28,11 @@
     <asciidoctor.maven.plugin.version>1.5.5</asciidoctor.maven.plugin.version>
     <asciidoctorj.pdf.version>1.5.0-alpha.15</asciidoctorj.pdf.version>
     <asciidoctorj.version>1.5.5</asciidoctorj.version>
-    <!-- Only unit tests are run by default. -->
-    <!--<jacoco.it.execution.data.file>${project.build.directory}/coverage-reports/jacoco-it.exec-->
-    <!--</jacoco.it.execution.data.file>-->
-    <!--<jacoco.ut.execution.data.file>${project.build.directory}/coverage-reports/jacoco-ut.exec-->
-    <!--</jacoco.ut.execution.data.file>-->
 
     <maven.jacoco.plugin.version>0.8.0</maven.jacoco.plugin.version>
     <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
-    <sonar.jacoco.reportPath>${project.build.directory}/jacoco.exec</sonar.jacoco.reportPath>
-    <sonar.jacoco.itReportPath>${project.build.directory}/jacoco-it.exec</sonar.jacoco.itReportPath>
+    <sonar.jacoco.reportPath>${project.build.directory}/coverage-reports/jacoco.exec</sonar.jacoco.reportPath>
+    <sonar.jacoco.itReportPath>${project.build.directory}/coverage-reports/jacoco-it.exec</sonar.jacoco.itReportPath>
 
     <maven-compiler-plugin.version>3.6.2</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>2.18.1</maven-surefire-plugin.version>
@@ -145,26 +140,6 @@
       <artifactId>assertj-core</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <!--<dependency>-->
-    <!--<groupId>org.jetbrains.spek</groupId>-->
-    <!--<artifactId>spek-api</artifactId>-->
-    <!--<version>1.1.5</version>-->
-    <!--<scope>test</scope>-->
-    <!--</dependency>-->
-    <!--<dependency>-->
-    <!--<groupId>org.jetbrains.kotlin</groupId>-->
-    <!--<artifactId>kotlin-test</artifactId>-->
-    <!--<version>1.2.10</version>-->
-    <!--<scope>test</scope>-->
-    <!--</dependency>-->
-    <!--<dependency>-->
-    <!--<groupId>org.jetbrains.spek</groupId>-->
-    <!--<artifactId>spek-junit-platform-engine</artifactId>-->
-    <!--<version>1.1.5</version>-->
-    <!--<scope>test</scope>-->
-    <!--</dependency>-->
-
 
   </dependencies>
 

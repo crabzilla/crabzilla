@@ -108,3 +108,75 @@ include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/cr
 
 Example1 domain is built of functions. So far we didn't had to worry about any implementation detail. Example1 domain
 can be easily tested with mocks and stubs.
+
+== 2.0 crabzilla-example1-handler
+
+A library of verticles to process the commands.
+
+=== 2.1 HandlerModule
+
+[source,kotlin]
+.HandlerModule.kt
+----
+include::./crabzilla-example1/crabzilla-example1-handler/src/main/java/io/github/crabzilla/example1/HandlerModule.kt[tags=module]
+----
+
+=== 2.2 CustomerModule
+
+[source,kotlin]
+.CustomerModule.kt
+----
+include::./crabzilla-example1/crabzilla-example1-handler/src/main/java/io/github/crabzilla/example1/customer/CustomerModule.kt[tags=module]
+----
+
+== 3.0 crabzilla-example1-handler-service
+
+A service using verticles from above library to process the commands.
+
+=== 3.4 HandlerServiceComponent
+
+[source,kotlin]
+.HandlerServiceComponent.kt
+----
+include::./crabzilla-example1/crabzilla-example1-handler-service/src/main/java/io/github/crabzilla/example1/HandlerServiceComponent.kt[tags=component]
+----
+
+=== 3.3 HandlerServiceLauncher
+
+[source,kotlin]
+.HandlerServiceLauncher.kt
+----
+include::./crabzilla-example1/crabzilla-example1-handler-service/src/main/java/io/github/crabzilla/example1/HandlerServiceLauncher.kt[tags=launcher]
+----
+
+=== 3.4 CustomerAcceptanceIT
+
+Now finally you will see this test passing:
+
+[source,kotlin]
+.CustomerAcceptanceIT.kt
+----
+include::./crabzilla-example1/crabzilla-example1-handler-service/src/test/java/io/github/crabzilla/example1/CustomerAcceptanceIT.kt[tags=create_customer_test]
+----
+
+== 4.0 crabzilla-example1-projector
+
+A library of verticles to receive the event stream from db and project it to the query model database.
+
+TODO
+
+
+== Conclusion
+
+This example presented:
+
+* How to implement a very simple domain model with just one aggregate: Customer
+* How to implement a command handler service
+* How to implement a projection service
+
+Crabzilla will run your domain model by providing these components:
+
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-web/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandRestVerticle.java[EntityCommandRestVerticle] to receive commands as JSON
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-handler/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.kt[EntityCommandHandlerVerticle] to validate and process commands against the latest snapshot found for the aggregate
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-handler/src/main/java/io/github/crabzilla/vertx/entity/EntityUnitOfWorkRepository.java[EntityUnitOfWorkRepository] to store resulting units of work into a single table, being events and command as JSON
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-projector/src/main/java/io/github/crabzilla/vertx/projection/ProjectionHandlerVerticle.java[ProjectionHandlerVerticle] to propagate and project events to read model database

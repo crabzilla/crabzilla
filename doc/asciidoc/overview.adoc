@@ -9,21 +9,13 @@ ifndef::sourcedir[:sourcedir: ../../main/java]
 
 Status: *WORK IN PROGRESS*
 
-== Goal for version 1.0.0
-
-To help you write your domain model with very little framework overhead and smoothly put it to work using a stack based
-on Vert.x and a relational database of your choice.
-
-== Status
-
-So far Crabzilla has only an Aggregate example. Inspired by http://eventstorming.com/[Eventstorming], the goal is to
-also develop examples and implementations for an ExternalSystem, a Listener and a ProcessManager / Saga.
 
 == Modules
 
 Crabzilla has these modules:
 
 * **crabzilla-core**            → Command, DomainEvent, Aggregate, Snapshot, etc Your domain will depend on it.
+* **crabzilla-example1**        → An example using Crabzilla.
 * **crabzilla-vertx-core**      → Codecs, Helpers, etc. Your services will depend on it.
 * **crabzilla-vertx-handler**   → CommandHandlerVerticles and UnitOfWorkRepositories.
 * **crabzilla-vertx-projector** → ProjectionHandlerVerticle, EventsProjector and ProjectionRepository.
@@ -39,9 +31,8 @@ and your typical *crabzilla-example1* project will have this structure:
 
 * **example1-core**              → Your domain code. Services and Repositories as interfaces. Almost zero dependencies.
 * **example1-handler**           → Library exposing command handler verticles for your domain.
-* **example1-handler-service**   → Service (verticles wiring and configuration) to accept and handle commands.
 * **example1-projector**         → Library exposing projection verticles.
-* **example1-projector-service** → Service (verticles wiring and configuration) to consume and project events.
+* **example1-services**          → Running services (verticles wiring and configuration).
 
 The granularity of this module is probably a *bounded context*.
 

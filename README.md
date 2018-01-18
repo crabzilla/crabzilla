@@ -4,11 +4,32 @@
 
 # crabzilla
 
-* [Overview](https://crabzilla.github.io/crabzilla/docs/overview.html)
+== Goal for version 1.0.0
+
+To help you write your domain model with very little framework overhead and smoothly put it to work using a stack based
+on Vert.x and a relational database of your choice.
+
+== Status
+
+Its still in very early development stage. APIs can change. So far Crabzilla has only an Aggregate example. Inspired by http://eventstorming.com/[Eventstorming], the goal is to
+also develop examples and implementations for an ExternalSystem, a Listener and a ProcessManager / Saga.
+
+== Modules
+
+* **crabzilla-core**            → Command, DomainEvent, Aggregate, Snapshot, etc Your domain will depend on it.
+* **crabzilla-example1**        → An example using Crabzilla. 
+* **crabzilla-vertx-core**      → Codecs, Helpers, etc. Your services will depend on it.
+* **crabzilla-vertx-handler**   → CommandHandlerVerticles and UnitOfWorkRepositories.
+* **crabzilla-vertx-projector** → ProjectionHandlerVerticle, EventsProjector and ProjectionRepository.
+* **crabzilla-vertx-web**       → CommandRestVerticle. Depends on vertx-web module.
+* **crabzilla-vertx-dagger**    → Useful modules definitions you can optionally leverage.
+
+== Links
+
 * [kotlin-example1-manual](https://crabzilla.github.io/crabzilla/docs/kotlin-example1-manual.html)
 * [Architecture decision records](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
 
-## How to run the example
+== How to run the example
 
 ### Requirements
 
@@ -38,74 +59,21 @@ docker-compose up
 mvn clean install
 ```
 
-4. Now you can run the [command handler example](crabzilla-example1/crabzilla-example1-handler-service/src/main/java/io/github/crabzilla/example1/HandlerServiceLauncher.kt):
+4. Now you can run the command handler service: 
 
 ```bash
-cd crabzilla-example1/crabzilla-example1-handler-service
-java -jar target/crabzilla-example1-handler-service-0.0.6-SNAPSHOT-fat.jar \
+cd crabzilla-example1/crabzilla-example1-services/crabzilla-example1-dual-db/crabzilla-example1-dual-db-handler
+java -jar target/crabzilla-example1-dual-db-handler-0.0.6-SNAPSHOT-fat.jar \
      -conf target/classes/conf/config.properties
 
 ```
 
-5. Finally you can also run the [events projection example](crabzilla-example1/crabzilla-example1-projector-service/src/main/java/io/github/crabzilla/example1/ProjectorServiceLauncher.kt):
+5. Finally you can also run the events projection service:
 
 ```bash
-cd crabzilla-example1/crabzilla-example1-projector-service
-java -jar target/crabzilla-example1-projector-service-0.0.6-SNAPSHOT-fat.jar \
+cd crabzilla-example1/crabzilla-example1-services/crabzilla-example1-dual-db/crabzilla-example1-dual-db-projector
+java -jar target/crabzilla-example1-dual-db-projector-0.0.6-SNAPSHOT-fat.jar \
      -conf target/classes/conf/config.properties
 
 ```
 
-## Maven
-
-Your core domain module must import:
-
-```xml
-<dependency>
-  <groupId>io.github.crabzilla</groupId>
-  <artifactId>crabzilla-core</artifactId>
-  <version>0.0.6-SNAPSHOT</version>
-</dependency>
-```
-
-and your command handler service module must import:
-
-```xml
-<dependency>
-  <groupId>io.github.crabzilla</groupId>
-  <artifactId>crabzilla-vertx-handler</artifactId>
-  <version>0.0.6-SNAPSHOT</version>
-</dependency>
-```
-
-and your events projector service module must import:
-
-```xml
-<dependency>
-  <groupId>io.github.crabzilla</groupId>
-  <artifactId>crabzilla-vertx-projector</artifactId>
-  <version>0.0.6-SNAPSHOT</version>
-</dependency>
-```
-
-and if you want to expose you command handlers to the web you may want to import:
-
-```xml
-<dependency>
-  <groupId>io.github.crabzilla</groupId>
-  <artifactId>crabzilla-vertx-web</artifactId>
-  <version>0.0.6-SNAPSHOT</version>
-</dependency>
-```
-
-## Archetypes
-
-* TODO
-
- 
- 
-## License
-
-Copyright © 2017 Rodolfo de Paula
-
-Distributed under Apache License 2.0.
