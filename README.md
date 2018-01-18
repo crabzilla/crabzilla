@@ -4,17 +4,17 @@
 
 # crabzilla
 
-== Goal for version 1.0.0
+## Goal for version 1.0.0
 
 To help you write your domain model with very little framework overhead and smoothly put it to work using a stack based
 on Vert.x and a relational database of your choice.
 
-== Status
+## Status
 
 Its still in very early development stage. APIs can change. So far Crabzilla has only an Aggregate example. Inspired by http://eventstorming.com/[Eventstorming], the goal is to
 also develop examples and implementations for an ExternalSystem, a Listener and a ProcessManager / Saga.
 
-== Modules
+## Modules
 
 * **crabzilla-core**            → Command, DomainEvent, Aggregate, Snapshot, etc Your domain will depend on it.
 * **crabzilla-example1**        → An example using Crabzilla. 
@@ -24,12 +24,12 @@ also develop examples and implementations for an ExternalSystem, a Listener and 
 * **crabzilla-vertx-web**       → CommandRestVerticle. Depends on vertx-web module.
 * **crabzilla-vertx-dagger**    → Useful modules definitions you can optionally leverage.
 
-== Links
+## Links
 
 * [kotlin-example1-manual](https://crabzilla.github.io/crabzilla/docs/kotlin-example1-manual.html)
 * [Architecture decision records](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
 
-== How to run the example
+## How to run the example
 
 ### Requirements
 
