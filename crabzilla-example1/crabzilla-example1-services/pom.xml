@@ -4,18 +4,15 @@
 
     <parent>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla</artifactId>
+        <artifactId>crabzilla-example1</artifactId>
         <version>0.0.6-SNAPSHOT</version>
     </parent>
 
-    <artifactId>crabzilla-example1</artifactId>
+    <artifactId>crabzilla-example1-services</artifactId>
     <packaging>pom</packaging>
 
     <modules>
-        <module>crabzilla-example1-core</module>
-        <module>crabzilla-example1-handler</module>
-        <module>crabzilla-example1-projector</module>
-        <module>crabzilla-example1-services</module>
+      <module>crabzilla-example1-dual-db</module>
     </modules>
 
 </project>

@@ -4,11 +4,11 @@
 
     <parent>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-example1</artifactId>
+        <artifactId>crabzilla-example1-dual-db</artifactId>
         <version>0.0.6-SNAPSHOT</version>
     </parent>
 
-    <artifactId>crabzilla-example1-handler-service</artifactId>
+    <artifactId>crabzilla-example1-dual-db-handler</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
