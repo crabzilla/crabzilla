@@ -60,10 +60,16 @@ docker-compose up
 mvn clean install
 ```
 
+4. Now you can run the **crabzilla-example1-dual-db**: 
+
+```bash
+cd crabzilla-example1/crabzilla-example1-services/crabzilla-example1-dual-db
+```
+
 4. Now you can run the command handler service: 
 
 ```bash
-cd crabzilla-example1/crabzilla-example1-services/crabzilla-example1-dual-db/\crabzilla-example1-dual-db-handler
+cd crabzilla-example1-dual-db-handler
 java -jar target/crabzilla-example1-dual-db-handler-0.0.6-SNAPSHOT-fat.jar \
      -conf target/classes/conf/config.properties
 
@@ -72,7 +78,7 @@ java -jar target/crabzilla-example1-dual-db-handler-0.0.6-SNAPSHOT-fat.jar \
 5. Finally you can also run the events projection service:
 
 ```bash
-cd crabzilla-example1/crabzilla-example1-services/crabzilla-example1-dual-db/\crabzilla-example1-dual-db-projector
+cd crabzilla-example1-dual-db-projector
 java -jar target/crabzilla-example1-dual-db-projector-0.0.6-SNAPSHOT-fat.jar \
      -conf target/classes/conf/config.properties
 
