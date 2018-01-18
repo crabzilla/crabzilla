@@ -36,7 +36,10 @@ class HandlerServiceLauncher {
       val configFile = options.valueOf("conf") as String?
       val vertx = Vertx.vertx()
 
-      configHandler(vertx, configFile, { config ->
+      val defaultConfigFile = HandlerServiceLauncher::class.java.classLoader
+        .getResource("conf/config.properties").path
+
+      configHandler(vertx, configFile, defaultConfigFile, { config ->
 
         val app = DaggerHandlerServiceComponent.builder()
                 .handlerServiceModule(HandlerServiceModule(vertx, config))

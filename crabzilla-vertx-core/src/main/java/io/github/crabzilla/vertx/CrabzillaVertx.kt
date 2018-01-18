@@ -23,10 +23,10 @@ class CrabzillaVertx
 
 val log = org.slf4j.LoggerFactory.getLogger("CrabzillaVertx")
 
-fun configHandler(vertx: Vertx, configFile: String?,
+fun configHandler(vertx: Vertx, configFile: String?, defaultConfigFile: String?,
                   handler: (JsonObject) -> Unit, shutdownHook: () -> Unit) {
 
-  val retriever = ConfigRetriever.create(vertx, cfgOptions(configFile))
+  val retriever = ConfigRetriever.create(vertx, cfgOptions(configFile, defaultConfigFile))
 
   retriever.getConfig { ar ->
 
@@ -50,7 +50,7 @@ fun configHandler(vertx: Vertx, configFile: String?,
 
 }
 
-private fun cfgOptions(configFile: String?): ConfigRetrieverOptions {
+private fun cfgOptions(configFile: String?, defaultConfigFile: String?): ConfigRetrieverOptions {
 
   if (configFile != null && !configFile.isEmpty()
           && File(configFile).exists()) {
@@ -64,9 +64,6 @@ private fun cfgOptions(configFile: String?): ConfigRetrieverOptions {
 
     return ConfigRetrieverOptions().addStore(file)
   }
-
-  val defaultConfigFile = CrabzillaVertx::class.java.classLoader
-          .getResource("conf/config.properties")!!.path
 
   val file = ConfigStoreOptions()
           .setType("file")
