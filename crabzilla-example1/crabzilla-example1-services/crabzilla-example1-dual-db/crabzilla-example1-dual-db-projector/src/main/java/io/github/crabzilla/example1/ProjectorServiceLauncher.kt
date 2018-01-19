@@ -7,6 +7,7 @@ import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import joptsimple.OptionParser
+import java.util.concurrent.atomic.AtomicLong
 
 // tag::launcher[]
 
@@ -59,12 +60,14 @@ class ProjectorServiceLauncher {
 
     private fun startEventsScanner(vertx: Vertx, config: JsonObject, app: ProjectorServiceComponent) {
 
+      val counter = AtomicLong(0) // TODO must get last uowSequence from db
+
       vertx.setPeriodic(config.getLong("projector.interval.ms", 30000), {
 
         // TODO http://www.davsclaus.com/2013/08/apache-camel-212-backoff-support-for.html
         val f: Future<List<ProjectionData>> = Future.future<List<ProjectionData>>()
 
-        app.projectionRepo().selectAfterUowSequence(0, 1000, f)
+        app.projectionRepo().selectAfterUowSequence(counter.get(), 1000, f)
 
         f.setHandler { r ->
           run {
@@ -73,6 +76,7 @@ class ProjectorServiceLauncher {
             } else {
               val list = f.result()
               list.forEach { pd ->
+                counter.getAndIncrement()
                 log.info("will publish ${pd} to " + "example1-events")
                 vertx.eventBus().publish("example1-events", pd)
               }

@@ -220,6 +220,7 @@
                             <systemProperties>
                                 <http.port>${http.port}</http.port>
                             </systemProperties>
+                          <includes>*HttpAcceptance*</includes>
                         </configuration>
                     </execution>
                 </executions>

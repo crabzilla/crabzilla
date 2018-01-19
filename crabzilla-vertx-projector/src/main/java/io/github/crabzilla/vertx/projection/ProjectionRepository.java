@@ -32,11 +32,6 @@ public class ProjectionRepository {
     this.client = client;
   }
 
-  public void selectAfterUowSequence(final Long uowSequence,
-                                     final Future<List<ProjectionData>> selectAfterUowSeq) {
-    selectAfterUowSequence(uowSequence, 100, selectAfterUowSeq);
-  }
-
   public void selectAfterUowSequence(final Long uowSequence, final Integer maxRows,
                    final Future<List<ProjectionData>> selectAfterUowSeq) {
 

@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.util.*
 
-class CustomerAcceptanceIT {
+class CustomerHttpAcceptance {
 
   internal val LOCATION_HEADER = "Location"
 
@@ -175,7 +175,7 @@ class CustomerAcceptanceIT {
 
   companion object {
 
-    val log = LoggerFactory.getLogger(CustomerAcceptanceIT::class.java.simpleName)
+    val log = LoggerFactory.getLogger(CustomerHttpAcceptance::class.java.simpleName)
   }
 
 }
