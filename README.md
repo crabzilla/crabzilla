@@ -70,7 +70,7 @@ cd crabzilla-example1/crabzilla-example1-services/crabzilla-example1-ha
 
 ```bash
 cd crabzilla-example1-ha-handler
-java -jar target/crabzilla-example1-handler-0.0.6-SNAPSHOT-fat.jar \
+java -jar target/crabzilla-example1-ha-handler-0.0.6-SNAPSHOT-fat.jar \
      -conf target/classes/conf/config.properties
 
 ```
