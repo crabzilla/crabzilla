@@ -8,7 +8,7 @@
         <version>0.0.6-SNAPSHOT</version>
     </parent>
 
-    <artifactId>crabzilla-example1-ha-ha-handler</artifactId>
+    <artifactId>crabzilla-example1-ha-handler</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
