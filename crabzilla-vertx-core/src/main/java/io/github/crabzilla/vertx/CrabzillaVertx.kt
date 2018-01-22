@@ -20,8 +20,6 @@ import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import java.io.File
 
-class CrabzillaVertx
-
 val log = org.slf4j.LoggerFactory.getLogger("CrabzillaVertx")
 
 fun configHandler(vertx: Vertx, configFile: String?, defaultConfigFile: String?,
@@ -32,7 +30,7 @@ fun configHandler(vertx: Vertx, configFile: String?, defaultConfigFile: String?,
   retriever.getConfig { ar ->
 
     if (ar.failed()) {
-      log.error("failed to load config", ar.cause())
+      log.error("failed to load config file ${configFile}", ar.cause())
       return@getConfig
     }
 
