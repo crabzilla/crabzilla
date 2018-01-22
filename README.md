@@ -69,7 +69,7 @@ cd crabzilla-example1/crabzilla-example1-services/crabzilla-example1-ha
 5. Now you can run the command handler service: 
 
 ```bash
-cd crabzilla-example1-handler
+cd crabzilla-example1-ha-handler
 java -jar target/crabzilla-example1-handler-0.0.6-SNAPSHOT-fat.jar \
      -conf target/classes/conf/config.properties
 
