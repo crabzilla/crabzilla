@@ -29,13 +29,17 @@ public class ProjectionHandlerVerticle<DAO> extends AbstractVerticle {
 
   @Override
   public void start() {
+
+    log.info("starting consuming from {}", eventsSourceEndpoint);
+
     vertx.eventBus().consumer(eventsSourceEndpoint, msgHandler());
   }
 
   Handler<Message<ProjectionData>> msgHandler() {
+
     return (Message<ProjectionData> msg) -> vertx.executeBlocking((Future<String> future) -> {
-      log.info("Received ProjectionData msg {} ", msg);
       final ProjectionData projectionData = msg.body();
+      log.info("Received ProjectionData {} ", projectionData);
       circuitBreaker.fallback(throwable -> {
         log.error("Fallback for uowHandler ", throwable);
         return "fallback";

@@ -12,7 +12,7 @@
     <packaging>pom</packaging>
 
     <modules>
-      <module>crabzilla-example1-dual-db</module>
+      <module>crabzilla-example1-ha</module>
     </modules>
 
 </project>

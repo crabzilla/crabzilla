@@ -1,43 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla</artifactId>
-        <version>0.0.6-SNAPSHOT</version>
-    </parent>
+  <parent>
+    <groupId>io.github.crabzilla</groupId>
+    <artifactId>crabzilla</artifactId>
+    <version>0.0.6-SNAPSHOT</version>
+  </parent>
 
-    <artifactId>crabzilla-vertx-handler</artifactId>
-    <packaging>jar</packaging>
+  <artifactId>crabzilla-vertx-handler</artifactId>
+  <packaging>jar</packaging>
 
-    <dependencies>
+  <dependencies>
 
-        <dependency>
-            <groupId>io.github.crabzilla</groupId>
-            <artifactId>crabzilla-vertx-core</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-vertx-core</artifactId>
+    </dependency>
 
-        <!-- test -->
-        <dependency>
-            <groupId>io.github.crabzilla</groupId>
-            <artifactId>crabzilla-core</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
+    <!-- test -->
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
 
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-unit</artifactId>
-            <scope>test</scope>
-        </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-unit</artifactId>
+      <scope>test</scope>
+    </dependency>
 
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <scope>test</scope>
-        </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <scope>test</scope>
+    </dependency>
 
-    </dependencies>
+  </dependencies>
 
 </project>

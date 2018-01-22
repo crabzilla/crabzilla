@@ -38,7 +38,7 @@ class JacksonJsonTest {
   fun createCommand() {
 
     val id = CustomerId(UUID.randomUUID().toString())
-    val command = CreateCustomer(UUID.randomUUID(), id, "customer1")
+    val command = CreateCustomer(UUID.randomUUID(), id, id.stringValue())
 
     val cmdAsJson = mapper.writerFor(CreateCustomer::class.java).writeValueAsString(command)
 
@@ -53,7 +53,7 @@ class JacksonJsonTest {
   fun oneEvent() {
 
     val id = CustomerId(UUID.randomUUID().toString())
-    val command = CreateCustomer(UUID.randomUUID(), id, "customer1")
+    val command = CreateCustomer(UUID.randomUUID(), id, "customer " + id)
     val event = CustomerCreated(id, command.name)
     val uow1 = EntityUnitOfWork(UUID.randomUUID(), command, Version(1), listOf<DomainEvent>(event))
 
@@ -69,8 +69,9 @@ class JacksonJsonTest {
   @Throws(Exception::class)
   fun moreEvents() {
 
-    val id = CustomerId("customer#1")
+    val id = CustomerId(UUID.randomUUID().toString())
     val command = CreateCustomer(UUID.randomUUID(), id, "customer1")
+
     val event1 = CustomerCreated(id, command.name)
     val event2 = CustomerActivated("a rgood reason", Instant.now())
 

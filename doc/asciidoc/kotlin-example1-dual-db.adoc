@@ -136,9 +136,9 @@ A service using verticles from above library to process the commands.
 === 3.4 HandlerServiceComponent
 
 [source,kotlin]
-.HandlerServiceComponent.kt
+.RestServiceComponent.kt
 ----
-include::./crabzilla-example1/crabzilla-example1-handler-service/src/main/java/io/github/crabzilla/example1/HandlerServiceComponent.kt[tags=component]
+include::./crabzilla-example1/crabzilla-example1-handler-service/src/main/java/io/github/crabzilla/example1/RestServiceComponent.kt[tags=component]
 ----
 
 === 3.3 HandlerServiceLauncher

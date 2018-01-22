@@ -1,7 +1,7 @@
 package io.github.crabzilla.vertx.entity;
 
-import io.github.crabzilla.core.entity.*;
 import io.github.crabzilla.core.UnknownCommandException;
+import io.github.crabzilla.core.entity.*;
 import io.github.crabzilla.example1.SampleInternalService;
 import io.github.crabzilla.example1.customer.*;
 import io.github.crabzilla.vertx.EntityCommandExecution;
@@ -68,7 +68,7 @@ public class EntityCommandHandlerVerticleTest {
   @Mock
   Function2<EntityCommand, Snapshot<? extends Customer>, EntityCommandResult> cmdHandlerFn;
   @Mock
-  EntityUnitOfWorkRepository eventRepository;
+  EntityUnitOfWorkJournal eventRepository;
 
   SnapshotPromoter<Customer> snapshotPromoterFn;
 
@@ -140,8 +140,8 @@ public class EntityCommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
-              any());
+//      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
+//              any());
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
@@ -198,9 +198,9 @@ public class EntityCommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
-              any());
-
+//      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
+//              any());
+//
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
                                                          any());
@@ -254,8 +254,8 @@ public class EntityCommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
-              any());
+//      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
+//              any());
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
@@ -313,8 +313,8 @@ public class EntityCommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
-              any());
+//      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
+//              any());
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),
@@ -374,8 +374,8 @@ public class EntityCommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
-              any());
+//      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
+//              any());
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),
@@ -461,8 +461,8 @@ public class EntityCommandHandlerVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
-              any());
+//      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
+//              any());
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),

@@ -14,16 +14,16 @@
     <dependencies>
 
         <dependency>
-            <groupId>io.github.crabzilla</groupId>
-            <artifactId>crabzilla-vertx-handler</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
         </dependency>
 
-        <!-- test -->
+      <dependency>
+        <groupId>io.github.crabzilla</groupId>
+        <artifactId>crabzilla-vertx-core</artifactId>
+      </dependency>
+
+      <!-- test -->
 
         <dependency>
             <groupId>io.vertx</groupId>

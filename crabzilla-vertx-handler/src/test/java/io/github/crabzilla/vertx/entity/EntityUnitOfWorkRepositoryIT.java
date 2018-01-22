@@ -40,7 +40,7 @@ public class EntityUnitOfWorkRepositoryIT {
   static JDBCClient jdbcClient;
   static Jdbi dbi;
 
-  EntityUnitOfWorkRepository repo;
+  EntityUnitOfWorkJournal repo;
 
   final CustomerId customerId = new CustomerId("customer#1");
   final CreateCustomer createCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
@@ -87,7 +87,7 @@ public class EntityUnitOfWorkRepositoryIT {
   @Before
   public void setup(TestContext context) throws IOException, URISyntaxException {
 
-    this.repo = new EntityUnitOfWorkRepository(Customer.class, jdbcClient);
+    this.repo = new EntityUnitOfWorkJournal(Customer.class, jdbcClient);
 
   }
 

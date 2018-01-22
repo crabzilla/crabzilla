@@ -1,7 +1,7 @@
 package io.github.crabzilla.vertx.entity
 
-import io.github.crabzilla.core.entity.*
 import io.github.crabzilla.core.UnknownCommandException
+import io.github.crabzilla.core.entity.*
 import io.github.crabzilla.vertx.EntityCommandExecution
 import io.github.crabzilla.vertx.EntityCommandExecution.RESULT.*
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
@@ -19,7 +19,7 @@ class EntityCommandHandlerVerticle<A : Entity>(private val aggregateRootClass: C
                                                private val cmdHandler: (EntityCommand, Snapshot<A>) -> EntityCommandResult,
                                                private val validatorFn: (EntityCommand) -> List<String>,
                                                private val snapshotPromoter: SnapshotPromoter<A>,
-                                               private val eventRepository: EntityUnitOfWorkRepository,
+                                               private val eventJournal: EntityUnitOfWorkJournal,
                                                private val cache: ExpiringMap<String, Snapshot<A>>,
                                                private val circuitBreaker: CircuitBreaker) : AbstractVerticle() {
 
@@ -74,24 +74,6 @@ class EntityCommandHandlerVerticle<A : Entity>(private val aggregateRootClass: C
 
       val targetId = command.targetId.stringValue()
 
-      // now check if the command was already processed
-      val uowFuture = Future.future<EntityUnitOfWork>()
-      eventRepository.getUowByCmdId(command.commandId, uowFuture)
-
-      uowFuture.setHandler { fromEventRepoResult ->
-        if (fromEventRepoResult.failed()) {
-          future1.fail(fromEventRepoResult.cause())
-          return@setHandler
-        }
-        val uow = fromEventRepoResult.result()
-        // if it was already processed, just return it
-        if (uow != null) {
-          future1.complete(EntityCommandExecution(result = SUCCESS,
-                  commandId = uow.command.commandId, unitOfWork = uow))
-          return@setHandler
-        }
-      }
-
       // get from cache _may_ be blocking if you plug an EntryLoader (from ExpiringMap)
       vertx.executeBlocking<Snapshot<A>>({ fromCacheFuture ->
 
@@ -116,7 +98,7 @@ class EntityCommandHandlerVerticle<A : Entity>(private val aggregateRootClass: C
         val selectAfterVersionFuture = Future.future<SnapshotData>()
 
         // command handler function _may_ be blocking if your aggregate are using blocking internal services
-        eventRepository.selectAfterVersion(targetId, cachedSnapshot.version, selectAfterVersionFuture)
+        eventJournal.selectAfterVersion(targetId, cachedSnapshot.version, selectAfterVersionFuture)
 
         selectAfterVersionFuture.setHandler { fromEventRepoResult ->
 
@@ -146,9 +128,12 @@ class EntityCommandHandlerVerticle<A : Entity>(private val aggregateRootClass: C
             val result = cmdHandler.invoke(command, resultingSnapshot)
 
             result.inCaseOfSuccess({ uow ->
+
               val appendFuture = Future.future<Long>()
-              eventRepository.append(uow, appendFuture)
+              eventJournal.append(uow!!, appendFuture)
+
               appendFuture.setHandler { appendAsyncResult ->
+
                 if (appendAsyncResult.failed()) {
                   val error = appendAsyncResult.cause()
                   log.error("appendUnitOfWork for command " + command.commandId, error.message)

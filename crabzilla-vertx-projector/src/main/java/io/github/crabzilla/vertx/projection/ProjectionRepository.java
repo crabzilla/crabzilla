@@ -1,22 +1,21 @@
 package io.github.crabzilla.vertx.projection;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import io.github.crabzilla.core.DomainEvent;
 import io.github.crabzilla.vertx.ProjectionData;
 import io.vertx.core.Future;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.SQLRowStream;
 import org.slf4j.Logger;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static io.github.crabzilla.core.KrabzillaKt.listOfEventsFromJson;
 import static io.github.crabzilla.vertx.helpers.VertxSqlHelper.queryStreamWithParams;
-import static io.vertx.core.json.Json.mapper;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class ProjectionRepository {
@@ -24,9 +23,6 @@ public class ProjectionRepository {
   static Logger log = getLogger(ProjectionRepository.class);
 
   private final JDBCClient client;
-
-  private final TypeReference<List<DomainEvent>> eventsListTpe = new TypeReference<List<DomainEvent>>() {
-  };
 
   public ProjectionRepository(JDBCClient client) {
     this.client = client;
@@ -68,31 +64,31 @@ public class ProjectionRepository {
         SQLRowStream stream = ar.result();
         ArrayList<ProjectionData> list = new ArrayList<>();
         stream
-                .resultSetClosedHandler(v -> {
-                  // will ask to restart the stream with the new result set if any
-                  stream.moreResults();
-                })
-                .handler(row -> {
-                  final UUID _uowId = UUID.fromString(row.getString(0));
-                  final Long _uowSequence = row.getLong(1);
-                  final String _targetId = row.getString(2);
-                  final List<DomainEvent> _events = readEvents(row.getString(3));
+          .resultSetClosedHandler(v -> {
+            // will ask to restart the stream with the new result set if any
+            stream.moreResults();
+          })
+          .handler(row -> {
+            final UUID _uowId = UUID.fromString(row.getString(0));
+            final Long _uowSequence = row.getLong(1);
+            final String _targetId = row.getString(2);
+            final List<DomainEvent> _events = listOfEventsFromJson(Json.mapper, row.getString(3));
 
-                  final ProjectionData projectionData = new ProjectionData(_uowId, _uowSequence, _targetId, _events);
-                  list.add(projectionData);
+            final ProjectionData projectionData = new ProjectionData(_uowId, _uowSequence, _targetId, _events);
+            list.add(projectionData);
 
-                }).endHandler(event -> {
+          }).endHandler(event -> {
 
-          selectAfterUowSeq.complete(list);
+            selectAfterUowSeq.complete(list);
 
-          log.info("found {} instances of projectionData after uowSequence {}",
-                  list.size(), uowSequence);
+            log.info("found {} instances of projectionData after uowSequence {}",
+                    list.size(), uowSequence);
 
-          sqlConn.close(done -> {
+            sqlConn.close(done -> {
 
-            if (done.failed()) {
-              log.error("when closing sql connection", done.cause());
-            }
+              if (done.failed()) {
+                log.error("when closing sql connection", done.cause());
+              }
 
           });
 
@@ -103,13 +99,15 @@ public class ProjectionRepository {
     });
   }
 
-  private List<DomainEvent> readEvents(String eventsAsJson) {
-    try {
-      log.info("eventsAsJson {}", eventsAsJson);
-      return mapper.readerFor(eventsListTpe).readValue(eventsAsJson);
-    } catch (IOException e) {
-      throw new RuntimeException("When reading events list from JSON", e);
-    }
+  // TODO
+  public void selectUowSequence(String poolerId, Future<Long> selectUowSeq) {
+    log.info("will load uowSequence for [{}]", poolerId);
   }
+
+  // TODO
+  public void updateUowSequence(String poolerId, Long value, Future<Void> updateUowSeq) {
+    log.info("will update uowSequence for [{}] to {}", poolerId, value);
+  }
+
 
 }

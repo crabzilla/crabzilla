@@ -63,13 +63,3 @@ fun commandToJson(mapper: ObjectMapper, command: Command): String {
 
 }
 
-
-fun commandFromJson(mapper: ObjectMapper, commandAsJson: String): Command {
-  try {
-    val cmd = mapper.readValue(commandAsJson, Command::class.java)
-    return cmd
-  } catch (e: JsonProcessingException) {
-    throw RuntimeException("When reading commandToJson", e)
-  }
-
-}

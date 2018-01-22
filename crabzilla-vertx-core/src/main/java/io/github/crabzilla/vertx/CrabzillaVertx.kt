@@ -13,6 +13,7 @@ import io.github.crabzilla.vertx.codecs.JacksonGenericCodec
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
+import io.vertx.core.DeploymentOptions
 import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
@@ -106,11 +107,18 @@ fun initVertx(vertx: Vertx) {
 
 }
 
-
-fun deployVerticles(vertx: Vertx, verticles: Set<Verticle>) {
+fun deployVerticles(vertx: Vertx, verticles: Set<Verticle>, deploymentOptions: DeploymentOptions = DeploymentOptions()) {
  verticles.forEach({
-   vertx.deployVerticle(it) { event ->
-      if (!event.succeeded()) log.error("Error deploying verticle", event.cause())
+   vertx.deployVerticle(it, deploymentOptions) { event ->
+      if (!event.succeeded()) log.error("Error deploying verticle ${it}", event.cause())
     }
  })
+}
+
+fun deployVerticlesByName(vertx: Vertx, verticles: Set<String>, deploymentOptions: DeploymentOptions = DeploymentOptions()) {
+  verticles.forEach({
+    vertx.deployVerticle(it, deploymentOptions) { event ->
+      if (!event.succeeded()) log.error("Error deploying verticle ${it}", event.cause())
+    }
+  })
 }
