@@ -7,6 +7,7 @@ import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import joptsimple.OptionParser
+import java.net.InetAddress
 
 // tag::launcher[]
 
@@ -28,8 +29,12 @@ class RestServiceLauncher {
 
       val options = parser.parse(*args)
       val configFile = options.valueOf("conf") as String?
+
+      val hostName = InetAddress.getLocalHost().hostName
       val mgr = HazelcastClusterManager()
-      val vertxOptions = VertxOptions().setClusterManager(mgr)
+      val vertxOptions = VertxOptions().setClusterManager(mgr).setClusterHost(hostName)
+
+      println("** hostname ${hostName}")
 
       Vertx.clusteredVertx(vertxOptions) { res ->
         if (res.succeeded()) {

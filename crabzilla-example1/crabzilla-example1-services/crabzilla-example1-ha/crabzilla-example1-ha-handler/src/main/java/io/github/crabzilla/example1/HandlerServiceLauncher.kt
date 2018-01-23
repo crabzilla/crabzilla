@@ -18,6 +18,7 @@ import io.vertx.core.VertxOptions
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import joptsimple.OptionParser
+import java.net.InetAddress
 import java.util.*
 
 // tag::launcher[]
@@ -41,10 +42,12 @@ class HandlerServiceLauncher : AbstractVerticle() {
       val options = parser.parse(*args)
       val configFile = options.valueOf("conf") as String?
 
+      val hostName = InetAddress.getLocalHost().hostName
       val mgr = HazelcastClusterManager()
       val vertxOptions = VertxOptions().setClusterManager(mgr).setHAEnabled(true).setHAGroup("command-handler")
+        .setClusterHost(hostName)
 
-      println("**  HA group" + vertxOptions.haGroup)
+      println("**  HA group ${vertxOptions.haGroup} hostname ${hostName}")
 
       Vertx.clusteredVertx(vertxOptions) { res ->
         if (res.succeeded()) {
