@@ -42,7 +42,7 @@ class ProjectionDbModule {
 
     val hikariConfig = HikariConfig()
     hikariConfig.driverClassName = config.getString("read.database.driver")
-    hikariConfig.jdbcUrl = config.getString("read.database.url")
+    hikariConfig.jdbcUrl = config.getString("read_database_url")
     hikariConfig.username = config.getString("read.database.user")
     hikariConfig.password = config.getString("read.database.password")
     hikariConfig.connectionTimeout = 5000

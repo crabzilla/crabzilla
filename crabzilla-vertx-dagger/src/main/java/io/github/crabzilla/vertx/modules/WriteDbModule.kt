@@ -42,7 +42,7 @@ class WriteDbModule {
 
     val hikariConfig = HikariConfig()
     hikariConfig.driverClassName = config.getString("write.database.driver")
-    hikariConfig.jdbcUrl = config.getString("write.database.url")
+    hikariConfig.jdbcUrl = config.getString("write_database_url")
     hikariConfig.username = config.getString("write.database.user")
     hikariConfig.password = config.getString("write.database.password")
     hikariConfig.connectionTimeout = 5000
