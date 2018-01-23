@@ -36,3 +36,7 @@ and your typical *crabzilla-example1* project will have this structure:
 
 The granularity of this module is probably a *bounded context*.
 
+crabzilla-example1-ha has these three services:
+
+[.thumb]
+image::crabzilla-bc-architecture.png[scaledwidth=100%]

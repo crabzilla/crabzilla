@@ -44,7 +44,7 @@ class RestServiceLauncher {
             log.info("config = {}", config.encodePrettily())
 
             val app = DaggerRestServiceComponent.builder()
-              .restServiceModule(RestServiceModule(vertx, config))
+                .restServiceModule(RestServiceModule(vertx, config))
               .build()
 
             ds = app.datasource()

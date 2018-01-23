@@ -57,7 +57,7 @@ docker-compose up
 3. Build it, running both unit and integration tests against database:
 
 ```bash
-mvn clean install
+mvn clean install -Dskip.integration.tests=false
 ```
 
 4. Now you can run the **crabzilla-example1-ha**: 
@@ -66,7 +66,7 @@ mvn clean install
 cd crabzilla-example1/crabzilla-example1-services/crabzilla-example1-ha
 ```
 
-5. Now you can run the command handler service: 
+5. Start the command handler service: 
 
 ```bash
 cd crabzilla-example1-ha-handler
@@ -75,7 +75,7 @@ java -jar target/crabzilla-example1-ha-handler-0.0.6-SNAPSHOT-fat.jar \
 
 ```
 
-6. Finally you can also run the events projection service:
+6. Start the events projection service:
 
 ```bash
 cd crabzilla-example1-ha-projector
@@ -84,3 +84,29 @@ java -jar target/crabzilla-example1-ha-projector-0.0.6-SNAPSHOT-fat.jar \
 
 ```
 
+7. Start the web service: 
+
+```bash
+cd crabzilla-example1-ha-web
+java -jar target/crabzilla-example1-ha-web-0.0.6-SNAPSHOT-fat.jar \
+     -conf target/classes/conf/config.properties
+
+```
+
+8. Now you can finally submit a command: 
+
+```bash
+curl -X POST \
+  http://localhost:8080/customer/commands \
+  -H 'content-type: application/json' \
+  -d '{
+  "@class" : "io.github.crabzilla.example1.customer.CreateCustomer",
+  "commandId" : "b128066b-64f1-457d-8e35-3f019175468c",
+  "targetId" : {
+    "@class" : "io.github.crabzilla.example1.customer.CustomerId",
+    "id" : "6dec4ef2-1882-4e60-9292-ef4a0cba9b06"
+  },
+  "name" : "6dec4ef2-1882-4e60-9292-ef4a0cba9b06"
+}
+'
+```
