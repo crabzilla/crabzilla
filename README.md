@@ -32,6 +32,10 @@ a Listener and a ProcessManager / Saga.
 
 ## How to run the example
 
+crabzilla-example1-ha has these three services:
+
+![alt text](https://github.com/crabzilla/crabzilla/blob/master/doc/asciidoc/images/crabzilla-bc-architecture.png "crabzilla-example1-ha")
+
 ### Requirements
 
 * Java 8
@@ -110,3 +114,4 @@ curl -X POST \
 }
 '
 ```
+
