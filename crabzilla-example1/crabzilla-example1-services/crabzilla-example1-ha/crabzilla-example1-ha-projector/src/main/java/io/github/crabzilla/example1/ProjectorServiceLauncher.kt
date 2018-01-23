@@ -11,6 +11,7 @@ import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import joptsimple.OptionParser
+import java.net.InetAddress
 
 
 // tag::launcher[]
@@ -34,10 +35,12 @@ class ProjectorServiceLauncher : AbstractVerticle() {
       val options = parser.parse(*args)
       val configFile = options.valueOf("conf") as String?
 
+      val hostName = InetAddress.getLocalHost().hostName
       val mgr = HazelcastClusterManager()
       val vertxOptions = VertxOptions().setClusterManager(mgr).setHAEnabled(true).setHAGroup("events-projector")
+        .setClusterHost(hostName)
 
-      println("**  HA group" + vertxOptions.haGroup)
+      println("**  HA group ${vertxOptions.haGroup} hostname ${hostName}")
 
       Vertx.clusteredVertx(vertxOptions) { res ->
         if (res.succeeded()) {

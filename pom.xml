@@ -22,9 +22,20 @@
     <commons.version>3.5</commons.version>
     <jackson.version>2.9.3</jackson.version>
     <hikari.version>2.7.4</hikari.version>
-    <junit.jupiter.version>5.1.0-M1</junit.jupiter.version>
-    <junit.vintage.version>5.1.0-M1</junit.vintage.version>
-    <junit.platform.version>1.1.0-M1</junit.platform.version>
+
+    <junit.version>4.12</junit.version>
+    <junit.jupiter.version>5.0.3</junit.jupiter.version>
+    <junit.vintage.version>${junit.version}.3</junit.vintage.version>
+    <junit.platform.version>1.0.3</junit.platform.version>
+
+    <skip.integration.tests>false</skip.integration.tests>
+    <skip.unit.tests>false</skip.unit.tests>
+
+    <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
+    <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
+    <maven-failsafe-plugin.version>2.19.1</maven-failsafe-plugin.version>
+    <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
+
     <asciidoctor.maven.plugin.version>1.5.5</asciidoctor.maven.plugin.version>
     <asciidoctorj.pdf.version>1.5.0-alpha.15</asciidoctorj.pdf.version>
     <asciidoctorj.version>1.5.5</asciidoctorj.version>
@@ -33,12 +44,6 @@
     <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
     <sonar.jacoco.reportPath>${project.build.directory}/coverage-reports/jacoco.exec</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${project.build.directory}/coverage-reports/jacoco-it.exec</sonar.jacoco.itReportPath>
-
-    <maven-compiler-plugin.version>3.6.2</maven-compiler-plugin.version>
-    <maven-surefire-plugin.version>2.18.1</maven-surefire-plugin.version>
-    <skip.integration.tests>false</skip.integration.tests>
-    <skip.unit.tests>false</skip.unit.tests>
-    <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
   </properties>
 
   <name>Crabzilla</name>
@@ -490,7 +495,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.7.0</version>
+        <version>${maven-compiler-plugin.version}</version>
         <configuration>
           <proc>none</proc>
           <source>1.8</source>
@@ -526,7 +531,7 @@
 
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.19.1</version>
+        <version>${maven-surefire-plugin.version}</version>
         <configuration>
           <!-- Sets the VM argument line used when unit tests are run. -->
           <argLine>${surefireArgLine}</argLine>
@@ -541,16 +546,15 @@
             <include>**/*Test.java</include>
             <include>**/*Tests.java</include>
             <include>**/*TestCase.java</include>
-            <include>**/*Spec.*</include>
           </includes>
           <properties>
-            <!--<includeTags>fast</includeTags>-->
-            <!--<excludeTags>slow</excludeTags>-->
+            <!-- <includeTags>fast</includeTags> -->
+            <excludeTags>slow</excludeTags>
             <!--
-            <configurationParameters>
-                     junit.jupiter.conditions.deactivate = *
-            </configurationParameters>
-            -->
+                        <configurationParameters>
+                            junit.jupiter.conditions.deactivate = *
+                        </configurationParameters>
+                        -->
           </properties>
         </configuration>
         <dependencies>
@@ -570,12 +574,12 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.20.1</version>
+        <version>${maven-failsafe-plugin.version}</version>
         <executions>
           <!--
-              Ensures that both integration-test and verify goals of the Failsafe Maven
-              plugin are executed.
-          -->
+                        Ensures that both integration-test and verify goals of the Failsafe Maven
+                        plugin are executed.
+                    -->
           <execution>
             <id>integration-tests</id>
             <goals>
@@ -586,13 +590,20 @@
               <!-- Sets the VM argument line used when integration tests are run. -->
               <argLine>${failsafeArgLine}</argLine>
               <!--
-                  Skips integration tests if the value of skip.integration.tests property
-                  is true
-              -->
+                                Skips integration tests if the value of skip.integration.tests property
+                                is true
+                            -->
               <skipTests>${skip.integration.tests}</skipTests>
             </configuration>
           </execution>
         </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-surefire-provider</artifactId>
+            <version>${junit.platform.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
 
       <plugin>
