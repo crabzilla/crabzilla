@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 import static io.github.crabzilla.vertx.CrabzillaVertxKt.initVertx;
@@ -32,9 +33,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class EntityUnitOfWorkRepositoryIT {
+public class EntityUnitOfWorkJournalIT {
 
-  private static Logger log = getLogger(EntityUnitOfWorkRepositoryIT.class);
+  private static Logger log = getLogger(EntityUnitOfWorkJournalIT.class);
 
   static Vertx vertx;
   static JDBCClient jdbcClient;
@@ -58,15 +59,23 @@ public class EntityUnitOfWorkRepositoryIT {
 
     initVertx(vertx);
 
+    Map<String, String> env = System.getenv();
+
+//    System.out.println("*************");
+//    System.out.println("WRITE_DATABASE_DRIVER: " + env.get("WRITE_DATABASE_DRIVER"));
+//    System.out.println("WRITE_DATABASE_URL: " + env.get("WRITE_DATABASE_URL"));
+//    System.out.println("WRITE_DATABASE_USER: " + env.get("WRITE_DATABASE_USER"));
+//    System.out.println("WRITE_DATABASE_PASSWORD: " + env.get("WRITE_DATABASE_PASSWORD"));
+
     HikariConfig config = new HikariConfig();
-    config.setDriverClassName("com.mysql.cj.jdbc.Driver");
-    config.setJdbcUrl("jdbc:mysql://127.0.0.1:3306/example1_write?serverTimezone=UTC&useSSL=false");
-    config.setUsername("root");
-    config.setPassword("my-secret-pwd");
+    config.setDriverClassName(env.get("WRITE_DATABASE_DRIVER"));
+    config.setJdbcUrl(env.get("WRITE_DATABASE_URL"));
+    config.setUsername(env.get("WRITE_DATABASE_USER"));
+    config.setPassword(env.get("WRITE_DATABASE_PASSWORD"));
     config.setAutoCommit(false);
     config.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
 
-    HikariDataSource datasource = new HikariDataSource(config);;
+    HikariDataSource datasource = new HikariDataSource(config);
 
     jdbcClient = JDBCClient.create(vertx, datasource);
 

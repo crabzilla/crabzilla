@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -61,11 +62,13 @@ public class ProjectionRepositoryIT {
 
     cleanReadDb();
 
+    Map<String, String> env = System.getenv();
+
     HikariConfig config = new HikariConfig();
-    config.setDriverClassName("com.mysql.cj.jdbc.Driver");
-    config.setJdbcUrl("jdbc:mysql://127.0.0.1:3306/example1_write?serverTimezone=UTC&useSSL=false");
-    config.setUsername("root");
-    config.setPassword("my-secret-pwd");
+    config.setDriverClassName(env.get("WRITE_DATABASE_DRIVER"));
+    config.setJdbcUrl(env.get("WRITE_DATABASE_URL"));
+    config.setUsername(env.get("WRITE_DATABASE_USER"));
+    config.setPassword(env.get("WRITE_DATABASE_PASSWORD"));
     config.setAutoCommit(false);
     config.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
 
@@ -88,11 +91,13 @@ public class ProjectionRepositoryIT {
 
   static void cleanReadDb() {
 
+    Map<String, String> env = System.getenv();
+
     HikariConfig config = new HikariConfig();
-    config.setDriverClassName("com.mysql.cj.jdbc.Driver");
-    config.setJdbcUrl("jdbc:mysql://127.0.0.1:3306/example1_read?serverTimezone=UTC&useSSL=false");
-    config.setUsername("root");
-    config.setPassword("my-secret-pwd");
+    config.setDriverClassName(env.get("READ_DATABASE_DRIVER"));
+    config.setJdbcUrl(env.get("READ_DATABASE_URL"));
+    config.setUsername(env.get("READ_DATABASE_USER"));
+    config.setPassword(env.get("READ_DATABASE_PASSWORD"));
     config.setAutoCommit(false);
     config.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
 

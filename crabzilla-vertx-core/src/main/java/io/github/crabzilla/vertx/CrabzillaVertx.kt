@@ -51,6 +51,9 @@ fun configHandler(vertx: Vertx, configFile: String?, defaultConfigFile: String?,
 
 private fun cfgOptions(configFile: String?, defaultConfigFile: String?): ConfigRetrieverOptions {
 
+  val environment = ConfigStoreOptions()
+    .setType("env")
+
   if (configFile != null && !configFile.isEmpty()
           && File(configFile).exists()) {
 
@@ -59,9 +62,11 @@ private fun cfgOptions(configFile: String?, defaultConfigFile: String?): ConfigR
             .setFormat("properties")
             .setConfig(JsonObject().put("path", configFile))
 
-    log.info("Using config {}", configFile)
+    log.info("Using file config {}", configFile)
 
-    return ConfigRetrieverOptions().addStore(file)
+    log.info("Using env config {}", environment)
+
+    return ConfigRetrieverOptions().addStore(file).addStore(environment)
   }
 
   val file = ConfigStoreOptions()
@@ -71,7 +76,9 @@ private fun cfgOptions(configFile: String?, defaultConfigFile: String?): ConfigR
 
   log.info("Using config {}", defaultConfigFile)
 
-  return ConfigRetrieverOptions().addStore(file)
+  log.info("Using env config {}", environment)
+
+  return ConfigRetrieverOptions().addStore(file).addStore(environment)
 
 }
 
