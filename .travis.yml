@@ -19,6 +19,9 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
   - docker-compose rm -f
+  - source setDbEnv.sh
+  - ./setDbEnv.sh
+  - mvn clean
   - docker-compose up -d
 
 cache:
@@ -31,9 +34,7 @@ script:
   - docker ps
   - sleep 30
   - docker ps
-  - source setDbEnv.sh
-  - ./setDbEnv.sh
-  - mvn clean install -DskipITs=false
+  - mvn clean install
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
