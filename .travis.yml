@@ -31,6 +31,8 @@ script:
   - docker ps
   - sleep 30
   - docker ps
+  - source setDbEnv.sh
+  - ./setDbEnv.sh
   - mvn clean install -DskipITs=false
 
 after_success:
