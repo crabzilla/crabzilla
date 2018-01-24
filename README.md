@@ -39,7 +39,7 @@ crabzilla-example1-ha has these three services:
 ### Requirements
 
 * Java 8
-* Maven
+* Maven (tested with 3.5.0+)
 * Docker compose
 * Kotlin plugin for your IDE
 
@@ -58,46 +58,33 @@ cd crabzilla
 docker-compose up
 ```
 
-3. Build it, running both unit and integration tests against database:
+3. On another terminal console, export environment variables for databases:
 
 ```bash
-mvn clean install -Dskip.integration.tests=false
+source setDbEnv.sh
+./setDbEnv.sh
 ```
 
-4. Now you can run the **crabzilla-example1-ha**: 
+4. Build it, running both unit and integration tests against database:
+
+```bash
+mvn clean install
+```
+
+5. Once build finished, stop the MySql instance:
+
+```bash
+docker-compose stop
+```
+
+6. Now you can run the **crabzilla-example1-ha**: 
 
 ```bash
 cd crabzilla-example1/crabzilla-example1-services/crabzilla-example1-ha
+docker-compose up
 ```
 
-5. Start the command handler service: 
-
-```bash
-cd crabzilla-example1-ha-handler
-java -jar target/crabzilla-example1-ha-handler-0.0.6-SNAPSHOT-fat.jar \
-     -conf target/classes/conf/config.properties
-
-```
-
-6. Start the events projection service:
-
-```bash
-cd crabzilla-example1-ha-projector
-java -jar target/crabzilla-example1-ha-projector-0.0.6-SNAPSHOT-fat.jar \
-     -conf target/classes/conf/config.properties
-
-```
-
-7. Start the web service: 
-
-```bash
-cd crabzilla-example1-ha-web
-java -jar target/crabzilla-example1-ha-web-0.0.6-SNAPSHOT-fat.jar \
-     -conf target/classes/conf/config.properties
-
-```
-
-8. Now you can finally submit a command: 
+7. Now you can finally submit a command: 
 
 ```bash
 curl -X POST \

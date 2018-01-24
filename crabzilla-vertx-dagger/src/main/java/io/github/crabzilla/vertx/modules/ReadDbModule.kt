@@ -41,12 +41,12 @@ class ReadDbModule {
   fun hikariDs(config: JsonObject): HikariDataSource {
 
     val hikariConfig = HikariConfig()
-    hikariConfig.driverClassName = config.getString("read.database.driver")
-    hikariConfig.jdbcUrl = config.getString("read_database_url")
-    hikariConfig.username = config.getString("read.database.user")
-    hikariConfig.password = config.getString("read.database.password")
+    hikariConfig.driverClassName = config.getString("READ_DATABASE_DRIVER")
+    hikariConfig.jdbcUrl = config.getString("READ_DATABASE_URL")
+    hikariConfig.username = config.getString("READ_DATABASE_USER")
+    hikariConfig.password = config.getString("READ_DATABASE_PASSWORD")
     hikariConfig.connectionTimeout = 5000
-    hikariConfig.maximumPoolSize = config.getInteger("read.database.pool.max.size")!!
+    hikariConfig.maximumPoolSize = config.getInteger("READ_DATABASE_POOL_MAX_SIZE")!!
     hikariConfig.addDataSourceProperty("cachePrepStmts", "true")
     hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250")
     hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
