@@ -40,7 +40,7 @@ crabzilla-example1-ha has these three services:
 
 * Java 8
 * Maven (tested with 3.5.0+)
-* Docker compose
+* Docker compose (tested with 1.18.0)
 * Kotlin plugin for your IDE
 
 ### Steps
