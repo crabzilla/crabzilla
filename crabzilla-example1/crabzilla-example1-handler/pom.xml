@@ -21,11 +21,6 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-vertx-dagger</artifactId>
-      </dependency>
-
-      <dependency>
-        <groupId>io.github.crabzilla</groupId>
         <artifactId>crabzilla-vertx-handler</artifactId>
       </dependency>
 

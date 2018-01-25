@@ -4,7 +4,7 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Module
 import dagger.Provides
-import io.github.crabzilla.vertx.qualifiers.WriteDatabase
+import io.github.crabzilla.vertx.qualifiers.ProjectionDatabase
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.jdbc.JDBCClient
@@ -15,19 +15,19 @@ import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import javax.inject.Singleton
 
 @Module
-class WriteDbModule {
+class ProjectionDbModule {
 
   @Provides
   @Singleton
-  @WriteDatabase
-  fun jdbcClient(@WriteDatabase dataSource: HikariDataSource, vertx: Vertx): JDBCClient {
+  @ProjectionDatabase
+  fun jdbcClient(@ProjectionDatabase dataSource: HikariDataSource, vertx: Vertx): JDBCClient {
     return JDBCClient.create(vertx, dataSource)
   }
 
   @Provides
   @Singleton
-  @WriteDatabase
-  fun jdbi(@WriteDatabase dataSource: HikariDataSource): Jdbi {
+  @ProjectionDatabase
+  fun jdbi(@ProjectionDatabase dataSource: HikariDataSource): Jdbi {
     val jdbi = Jdbi.create(dataSource)
     jdbi.installPlugin(SqlObjectPlugin())
     jdbi.installPlugin(KotlinPlugin())
@@ -37,22 +37,23 @@ class WriteDbModule {
 
   @Provides
   @Singleton
-  @WriteDatabase
+  @ProjectionDatabase
   fun hikariDs(config: JsonObject): HikariDataSource {
 
     val hikariConfig = HikariConfig()
-    hikariConfig.driverClassName = config.getString("WRITE_DATABASE_DRIVER")
-    hikariConfig.jdbcUrl = config.getString("WRITE_DATABASE_URL")
-    hikariConfig.username = config.getString("WRITE_DATABASE_USER")
-    hikariConfig.password = config.getString("WRITE_DATABASE_PASSWORD")
+    hikariConfig.driverClassName = config.getString("READ_DATABASE_DRIVER")
+    hikariConfig.jdbcUrl = config.getString("READ_DATABASE_URL")
+    hikariConfig.username = config.getString("READ_DATABASE_USER")
+    hikariConfig.password = config.getString("READ_DATABASE_PASSWORD")
     hikariConfig.connectionTimeout = 5000
-    hikariConfig.maximumPoolSize = config.getInteger("WRITE_DATABASE_POOL_MAX_SIZE")!!
+    hikariConfig.maximumPoolSize = config.getInteger("READ_DATABASE_POOL_MAX_SIZE")!!
     hikariConfig.addDataSourceProperty("cachePrepStmts", "true")
     hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250")
     hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
-    hikariConfig.isAutoCommit = false
+//    hikariConfig.addDataSourceProperty("initializationFailTimeout", "30000")
+    hikariConfig.isAutoCommit = true
     hikariConfig.isReadOnly =  false
-    hikariConfig.transactionIsolation = "TRANSACTION_SERIALIZABLE"
+    hikariConfig.transactionIsolation = "TRANSACTION_READ_UNCOMMITTED"
     return HikariDataSource(hikariConfig)
   }
 

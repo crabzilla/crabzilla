@@ -61,21 +61,32 @@ class HandlerServiceLauncher : AbstractVerticle() {
 
             log.info("config = {}", config.encodePrettily())
 
-            val app = DaggerHandlerServiceComponent.builder()
-              .handlerServiceModule(HandlerServiceModule(vertx, config))
-              .build()
+            vertx.executeBlocking<Any>({ future ->
 
-            ds = app.datasource()
+              val app = DaggerHandlerServiceComponent.builder()
+                .handlerServiceModule(HandlerServiceModule(vertx, config))
+                .build()
 
-            vertx.registerVerticleFactory(CmdHandlerVerticleFactory(app.commandVerticles()))
+              ds = app.datasource()
 
-            val workerDeploymentOptions = DeploymentOptions().setHa(true).setWorker(true)
+              vertx.registerVerticleFactory(CmdHandlerVerticleFactory(app.commandVerticles()))
 
-            deployVerticles(vertx, setOf(HandlerServiceLauncher()))
+              val workerDeploymentOptions = DeploymentOptions().setHa(true).setWorker(true)
 
-            deployVerticlesByName(vertx, setOf("crabzilla-command-handler:example1"), workerDeploymentOptions)
+              deployVerticles(vertx, setOf(HandlerServiceLauncher()))
 
-            // justForTest(vertx)
+              deployVerticlesByName(vertx, setOf("crabzilla-command-handler:example1"), workerDeploymentOptions)
+
+              // justForTest(vertx)
+
+              future.complete()
+
+            }, { res ->
+
+              if (res.failed()) {
+                log.error("when starting component", res.cause())
+              }
+            })
 
           }, {
             ds.close()

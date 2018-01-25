@@ -1,4 +1,4 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.vertx.pooler
 
 import io.vertx.core.Verticle
 import io.vertx.core.spi.VerticleFactory

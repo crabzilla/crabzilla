@@ -4,6 +4,8 @@ import com.zaxxer.hikari.HikariDataSource
 import io.github.crabzilla.vertx.configHandler
 import io.github.crabzilla.vertx.deployVerticles
 import io.github.crabzilla.vertx.deployVerticlesByName
+import io.github.crabzilla.vertx.pooler.PoolerVerticle
+import io.github.crabzilla.vertx.pooler.PoolerVerticleFactory
 import io.github.crabzilla.vertx.projection.ProjectorVerticleFactory
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.DeploymentOptions
@@ -11,6 +13,7 @@ import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import joptsimple.OptionParser
+import java.lang.Thread.sleep
 import java.net.InetAddress
 
 
@@ -54,24 +57,36 @@ class ProjectorServiceLauncher : AbstractVerticle() {
 
             log.info("config = {}", config.encodePrettily())
 
-            val component = DaggerProjectorServiceComponent.builder()
-              .projectorServiceModule(ProjectorServiceModule(vertx, config))
-              .build()
+            vertx.executeBlocking<Any>({ future ->
 
-//            val poolerVerticle = PoolerVerticle(component.projectionRepo(), 10000, AtomicLong(0)) // TODO get from db
-//            vertx.registerVerticleFactory(PoolerVerticleFactory(setOf(poolerVerticle)))
+                log.warn("*** waiting for database connection...")
+                sleep(20000)
 
-            vertx.registerVerticleFactory(ProjectorVerticleFactory(component.projectorVerticles()))
+              val component = DaggerProjectorServiceComponent.builder()
+                .projectorServiceModule(ProjectorServiceModule(vertx, config))
+                .build()
 
-            val workerDeploymentOptions = DeploymentOptions().setHa(true).setWorker(true)
+              ds = component.datasource()
 
-            deployVerticles(vertx, setOf(ProjectorServiceLauncher()))
+              val poolerVerticle = PoolerVerticle("example1", component.projectionRepo(), 10000)
 
-            deployVerticlesByName(vertx, setOf("crabzilla-projector:example1"), workerDeploymentOptions)
+              vertx.registerVerticleFactory(PoolerVerticleFactory(setOf(poolerVerticle)))
+              vertx.registerVerticleFactory(ProjectorVerticleFactory(component.projectorVerticles()))
 
-//            deployVerticlesByName(vertx, setOf("crabzilla-pooler:example1"), workerDeploymentOptions)
+              val workerDeploymentOptions = DeploymentOptions().setHa(true).setWorker(true)
 
-            ds = component.datasource()
+              deployVerticles(vertx, setOf(ProjectorServiceLauncher()))
+              deployVerticlesByName(vertx, setOf("crabzilla-projector:example1"), workerDeploymentOptions)
+              deployVerticlesByName(vertx, setOf("crabzilla-pooler:example1"), workerDeploymentOptions)
+
+              future.complete()
+
+            }, { res ->
+
+              if (res.failed()) {
+                log.error("when starting component", res.cause())
+              }
+            })
 
           }, {
             ds.close()

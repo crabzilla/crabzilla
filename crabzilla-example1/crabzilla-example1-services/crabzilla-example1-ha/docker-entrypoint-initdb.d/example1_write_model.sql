@@ -6,7 +6,7 @@ DROP TABLE if exists units_of_work ;
 
 CREATE TABLE units_of_work (
       uow_seq_number BIGINT AUTO_INCREMENT,
-	  uow_id VARCHAR(36) NOT NULL,
+	    uow_id VARCHAR(36) NOT NULL,
       uow_events TEXT NOT NULL,
       cmd_id VARCHAR(36) NOT NULL,
       cmd_data TEXT NOT NULL,

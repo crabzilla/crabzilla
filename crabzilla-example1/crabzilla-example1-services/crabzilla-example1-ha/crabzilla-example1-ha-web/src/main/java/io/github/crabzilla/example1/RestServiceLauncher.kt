@@ -3,6 +3,8 @@ package io.github.crabzilla.example1
 import com.zaxxer.hikari.HikariDataSource
 import io.github.crabzilla.vertx.configHandler
 import io.github.crabzilla.vertx.deployVerticles
+import io.github.crabzilla.vertx.deployVerticlesByName
+import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
@@ -48,13 +50,24 @@ class RestServiceLauncher {
 
             log.info("config = {}", config.encodePrettily())
 
-            val app = DaggerRestServiceComponent.builder()
+            vertx.executeBlocking<Any>({ future ->
+
+              val app = DaggerRestServiceComponent.builder()
                 .restServiceModule(RestServiceModule(vertx, config))
-              .build()
+                .build()
 
-            ds = app.datasource()
+              ds = app.datasource()
 
-            deployVerticles(vertx, app.restVerticles())
+              deployVerticles(vertx, app.restVerticles())
+
+              future.complete()
+
+            }, { res ->
+
+              if (res.failed()) {
+                log.error("when starting component", res.cause())
+              }
+            })
 
           }, {
             ds.close()

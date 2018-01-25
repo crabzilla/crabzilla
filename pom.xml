@@ -89,7 +89,6 @@
     <module>crabzilla-core</module>
     <module>crabzilla-example1</module>
     <module>crabzilla-vertx-core</module>
-    <module>crabzilla-vertx-dagger</module>
     <module>crabzilla-vertx-handler</module>
     <module>crabzilla-vertx-projector</module>
     <module>crabzilla-vertx-web</module>
@@ -175,12 +174,6 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-vertx-dagger</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>io.github.crabzilla</groupId>
         <artifactId>crabzilla-vertx-handler</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -242,6 +235,12 @@
         <groupId>javax.inject</groupId>
         <artifactId>javax.inject</artifactId>
         <version>1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.dagger</groupId>
+        <artifactId>dagger</artifactId>
+        <version>${dagger.version}</version>
       </dependency>
 
       <dependency>
