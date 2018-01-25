@@ -23,7 +23,6 @@ a Listener and a ProcessManager / Saga.
 * crabzilla-vertx-handler   → CommandHandlerVerticles and UnitOfWorkRepositories.
 * crabzilla-vertx-projector → ProjectionHandlerVerticle, EventsProjector and ProjectionRepository.
 * crabzilla-vertx-web       → CommandRestVerticle. Depends on vertx-web module.
-* crabzilla-vertx-dagger    → Useful modules definitions you can optionally leverage.
 
 ## Links
 
