@@ -36,7 +36,31 @@
             <artifactId>jackson-module-kotlin</artifactId>
         </dependency>
 
-
     </dependencies>
+
+  <!--<build>-->
+    <!--<plugins>-->
+      <!--<plugin>-->
+        <!--<groupId>org.codehaus.mojo</groupId>-->
+        <!--<artifactId>build-helper-maven-plugin</artifactId>-->
+        <!--<version>3.0.0</version>-->
+        <!--<executions>-->
+          <!--<execution>-->
+            <!--<id>add-test-source</id>-->
+            <!--<phase>generate-sources</phase>-->
+            <!--<goals>-->
+              <!--<goal>add-test-source</goal>-->
+            <!--</goals>-->
+            <!--<configuration>-->
+              <!--<sources>-->
+                <!--<source>${project.parent.basedir}/crabzilla-example1/crabzilla-example1-core/src</source>-->
+                <!--&lt;!&ndash;<source>${project.parent.basedir}/crabzilla-example1/crabzilla-example1-handler/src</source>&ndash;&gt;-->
+              <!--</sources>-->
+            <!--</configuration>-->
+          <!--</execution>-->
+        <!--</executions>-->
+      <!--</plugin>-->
+    <!--</plugins>-->
+  <!--</build>-->
 
 </project>

@@ -3,7 +3,6 @@ package io.github.crabzilla.example1
 import com.zaxxer.hikari.HikariDataSource
 import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
-import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.EntityCommandExecution
 import io.github.crabzilla.vertx.configHandler

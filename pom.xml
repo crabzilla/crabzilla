@@ -445,7 +445,9 @@
                   <directory>
                     ${basedir}/crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1
                   </directory>
-                  <!--<filtering>true</filtering>-->
+                  <includes>
+                    <include>**/*.*</include>
+                  </includes>
                 </resource>
               </resources>
             </configuration>
