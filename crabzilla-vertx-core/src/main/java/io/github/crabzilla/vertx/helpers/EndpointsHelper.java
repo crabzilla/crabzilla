@@ -8,12 +8,12 @@ public class EndpointsHelper {
 	static final String COMMAND_HANDLER = "-cmd-handler";
 	static final String EVENTS_HANDLER = "-events-handler";
 
-  public static String restEndpoint(Class<?> aggregateRootClass) {
-    return camelCaseToSpinalCase(aggregateRootClass.getSimpleName());
+  public static String restEndpoint(String name) {
+    return camelCaseToSpinalCase(name);
   }
 
-  public static String cmdHandlerEndpoint(Class<?> aggregateRootClass) {
-		return camelCaseToSpinalCase(aggregateRootClass.getSimpleName()).concat(COMMAND_HANDLER);
+  public static String cmdHandlerEndpoint(String name) {
+		return camelCaseToSpinalCase(name).concat(COMMAND_HANDLER);
 	}
 
 	public static String projectorEndpoint(String bcName) {

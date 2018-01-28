@@ -15,7 +15,7 @@ class EntityCommandHandlerServiceImpl(private val vertx: Vertx, private val proj
   EntityCommandHandlerService {
 
   init {
-    log.info("wil publish resulting events to {}", projectionEndpoint)
+    log.info("will publish resulting events to {}", projectionEndpoint)
   }
 
   override fun postCommand(handlerEndpoint: String, command: EntityCommand,

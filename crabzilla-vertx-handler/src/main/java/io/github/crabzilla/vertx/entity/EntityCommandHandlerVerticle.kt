@@ -14,7 +14,7 @@ import io.vertx.core.eventbus.Message
 import net.jodah.expiringmap.ExpiringMap
 import org.slf4j.LoggerFactory.getLogger
 
-class EntityCommandHandlerVerticle<A : Entity>(private val aggregateRootClass: Class<A>,
+class EntityCommandHandlerVerticle<A : Entity>(private val name: String,
                                                private val seedValue: A,
                                                private val cmdHandler: (EntityCommand, Snapshot<A>) -> EntityCommandResult,
                                                private val validatorFn: (EntityCommand) -> List<String>,
@@ -26,7 +26,7 @@ class EntityCommandHandlerVerticle<A : Entity>(private val aggregateRootClass: C
   @Throws(Exception::class)
   override fun start() {
 
-    val consumer = vertx.eventBus().consumer<EntityCommand>(cmdHandlerEndpoint(aggregateRootClass))
+    val consumer = vertx.eventBus().consumer<EntityCommand>(cmdHandlerEndpoint(name))
 
     consumer.handler({ msg ->
 

@@ -48,6 +48,7 @@
       <artifactId>vertx-unit</artifactId>
       <scope>test</scope>
     </dependency>
+
   </dependencies>
 
 </project>

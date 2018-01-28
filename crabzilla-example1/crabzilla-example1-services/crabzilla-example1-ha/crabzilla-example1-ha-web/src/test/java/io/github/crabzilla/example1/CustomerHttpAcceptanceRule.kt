@@ -10,6 +10,8 @@ import com.jayway.restassured.RestAssured
 import com.jayway.restassured.RestAssured.given
 import com.jayway.restassured.http.ContentType
 import com.jayway.restassured.http.ContentType.JSON
+import com.palantir.docker.compose.DockerComposeRule
+import com.palantir.docker.compose.connection.waiting.HealthChecks.toRespondOverHttp
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.github.crabzilla.core.entity.Version
@@ -17,25 +19,26 @@ import io.github.crabzilla.example1.customer.*
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
 import io.vertx.core.json.Json
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.*
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.util.*
 
-class CustomerHttpAcceptance {
 
-  internal val LOCATION_HEADER = "Location"
+class CustomerHttpAcceptanceRule {
 
-  internal var mapper: ObjectMapper = Json.prettyMapper
+  val LOCATION_HEADER = "Location"
+  val ENTITY_NAME = "Customer"
+
+  var mapper: ObjectMapper = Json.prettyMapper
 
   @Before
   @Throws(InterruptedException::class)
   fun configureRestAssured() {
-    RestAssured.baseURI = "http://localhost"
-    RestAssured.port = Integer.getInteger("http.port", 8080)!!
-//    RestAssured.port = 8080
+
+    RestAssured.baseURI = "http://127.0.0.1"
+//    RestAssured.port = Integer.getInteger("http.port", 8081)!!
+    RestAssured.port = 8080
 
     log.info("----> RestAssured.port=" + RestAssured.port)
     mapper.registerModule(ParameterNamesModule())
@@ -67,13 +70,13 @@ class CustomerHttpAcceptance {
     log.info("command=\n" + json)
 
     val postCmdResponse = given().contentType(JSON).body(json)
-            .`when`().post("/" + restEndpoint(Customer::class.java) + "/commands")
+            .`when`().post("/" + restEndpoint(ENTITY_NAME) + "/commands")
             .then().extract().response()
 
     assertThat(postCmdResponse.statusCode()).isEqualTo(201)
     assertThat(postCmdResponse.header(LOCATION_HEADER))
             .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
-                    + restEndpoint(Customer::class.java) + "/commands/"
+                    + restEndpoint(ENTITY_NAME) + "/commands/"
                     + createCustomerCmd.commandId.toString())
 
     val getUowResponse = given().contentType(JSON).body(json)
@@ -110,13 +113,13 @@ class CustomerHttpAcceptance {
     log.info("command=\n" + json)
 
     val postCmdResponse = given().contentType(JSON).body(json)
-            .`when`().post("/" + restEndpoint(Customer::class.java) + "/commands")
+            .`when`().post("/" + restEndpoint(ENTITY_NAME) + "/commands")
             .then().extract().response()
 
     assertThat(postCmdResponse.statusCode()).isEqualTo(201)
     assertThat(postCmdResponse.header(LOCATION_HEADER))
             .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
-                    + restEndpoint(Customer::class.java)
+                    + restEndpoint(ENTITY_NAME)
                     + "/commands/" + createCustomerCmd.commandId.toString())
 
     val getUowResponse = given().contentType(JSON).body(json)
@@ -137,13 +140,13 @@ class CustomerHttpAcceptance {
     // now lets post it again
 
     val postCmdResponse2 = given().contentType(JSON).body(json).
-            `when`().post("/" + restEndpoint(Customer::class.java) + "/commands")
+            `when`().post("/" + restEndpoint(ENTITY_NAME) + "/commands")
             .then().extract().response()
 
     assertThat(postCmdResponse2.statusCode()).isEqualTo(201)
     assertThat(postCmdResponse2.header(LOCATION_HEADER))
             .isEqualTo(RestAssured.baseURI + ":" + RestAssured.port + "/"
-            + restEndpoint(Customer::class.java)
+            + restEndpoint(ENTITY_NAME)
                     + "/commands/" + createCustomerCmd.commandId.toString())
 
     val getUowResponse2 = given().contentType(JSON).body(json)
@@ -168,14 +171,31 @@ class CustomerHttpAcceptance {
     val json = mapper.writerFor(ActivateCustomer::class.java).writeValueAsString(activateCustomer)
 
     given().contentType(JSON).body(json)
-            .`when`().put("/" + restEndpoint(Customer::class.java) + "/commands")
+            .`when`().put("/" + restEndpoint(ENTITY_NAME) + "/commands")
             .then().statusCode(404)
 
   }
 
   companion object {
 
-    val log = LoggerFactory.getLogger(CustomerHttpAcceptance::class.java.simpleName)
+    val log = LoggerFactory.getLogger(CustomerHttpAcceptanceRule::class.java.simpleName)
+
+    @JvmStatic
+    @ClassRule
+    fun docker(): DockerComposeRule = DockerComposeRule.builder()
+      .file("../docker-compose-test.yml")
+//      .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
+      .waitingForService("web", toRespondOverHttp(8080) { port -> port.inFormat("http://127.0.0.1:8080/ping") })
+      .saveLogsTo("target/dockerComposeRuleTest")
+      .build()
+
+    @JvmStatic
+    @BeforeClass
+    fun sleep() {
+      log.info("waiting for 1 second...")
+      Thread.sleep(1000)
+    }
+
   }
 
 }

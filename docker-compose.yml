@@ -10,3 +10,13 @@ services:
             MYSQL_ROOT_PASSWORD: my-secret-pwd
         volumes:
             - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+
+    dbtest:
+        image: java:alpine
+        restart: always
+        volumes:
+            - ./wait-for-port.sh:/var/wait-for-port.sh:z
+        command: ["/var/wait-for-port.sh", "db:3306", "--", "ls"]
+        depends_on:
+            - db
+

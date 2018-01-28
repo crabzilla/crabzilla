@@ -21,7 +21,7 @@
     <mysql.version>6.0.6</mysql.version>
     <commons.version>3.5</commons.version>
     <jackson.version>2.9.3</jackson.version>
-    <hikari.version>2.7.4</hikari.version>
+    <hikari.version>2.7.6</hikari.version>
 
     <junit.version>4.12</junit.version>
     <junit.jupiter.version>5.0.3</junit.jupiter.version>
@@ -64,6 +64,15 @@
     <url>https://github.com/crabzilla/crabzilla</url>
     <tag>crabzilla-0.0.5</tag>
   </scm>
+
+
+  <repositories>
+    <repository>
+      <id>palantir</id>
+      <name>Palantir docker-compose-rule</name>
+      <url>https://dl.bintray.com/palantir/releases</url>
+    </repository>
+  </repositories>
 
   <pluginRepositories>
     <pluginRepository>
@@ -396,6 +405,13 @@
         <groupId>org.assertj</groupId>
         <artifactId>assertj-core</artifactId>
         <version>3.8.0</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>com.palantir.docker.compose</groupId>
+        <artifactId>docker-compose-rule-junit4</artifactId>
+        <version>0.33.0</version>
         <scope>test</scope>
       </dependency>
 

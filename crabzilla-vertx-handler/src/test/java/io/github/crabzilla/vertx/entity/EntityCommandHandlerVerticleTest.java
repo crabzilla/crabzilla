@@ -44,7 +44,9 @@ import static org.mockito.MockitoAnnotations.initMocks;
 @RunWith(VertxUnitRunner.class)
 public class EntityCommandHandlerVerticleTest {
 
-  public static final String FORCED_CONCURRENCY_EXCEPTION = "FORCED CONCURRENCY EXCEPTION";
+  static final String FORCED_CONCURRENCY_EXCEPTION = "FORCED CONCURRENCY EXCEPTION";
+  static final String ENTITY_NAME = Customer.class.getSimpleName();
+
   Vertx vertx;
   CircuitBreaker circuitBreaker;
   ExpiringMap<String, Snapshot<Customer>> cache;
@@ -91,8 +93,8 @@ public class EntityCommandHandlerVerticleTest {
 
     snapshotPromoterFn = new SnapshotPromoter<Customer>(trackerFactory);
 
-    Verticle verticle = new EntityCommandHandlerVerticle<Customer>(Customer.class, seedValue, cmdHandlerFn, validatorFn,
-            snapshotPromoterFn, eventRepository, cache, circuitBreaker);
+    Verticle verticle = new EntityCommandHandlerVerticle<Customer>(ENTITY_NAME,
+            seedValue, cmdHandlerFn, validatorFn, snapshotPromoterFn, eventRepository, cache, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
 
@@ -134,7 +136,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
@@ -192,7 +194,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository);
 
@@ -248,7 +250,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
@@ -307,7 +309,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
@@ -368,7 +370,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
@@ -412,7 +414,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
       verify(validatorFn).invoke(eq(createCustomerCmd));
 
@@ -455,7 +457,7 @@ public class EntityCommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
-    vertx.eventBus().send(cmdHandlerEndpoint(Customer.class), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 

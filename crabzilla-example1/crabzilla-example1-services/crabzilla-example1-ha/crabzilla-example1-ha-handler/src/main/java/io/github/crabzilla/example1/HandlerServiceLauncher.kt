@@ -71,7 +71,7 @@ class HandlerServiceLauncher : AbstractVerticle() {
 
               vertx.registerVerticleFactory(CmdHandlerVerticleFactory(app.commandVerticles()))
 
-              val workerDeploymentOptions = DeploymentOptions().setHa(true).setWorker(true)
+              val workerDeploymentOptions = DeploymentOptions().setHa(true)
 
               deployVerticles(vertx, setOf(HandlerServiceLauncher()))
 
@@ -113,7 +113,7 @@ fun justForTest(vertx: Vertx) {
   val options = DeliveryOptions().setCodecName("EntityCommand")
 
   // create customer command
-  vertx.eventBus().send<EntityCommandExecution>(cmdHandlerEndpoint(Customer::class.java), createCustomerCmd, options) { asyncResult ->
+  vertx.eventBus().send<EntityCommandExecution>(cmdHandlerEndpoint("Customer"), createCustomerCmd, options) { asyncResult ->
 
     HandlerServiceLauncher.log.info("Successful create customer test? {}", asyncResult.succeeded())
 
@@ -124,7 +124,7 @@ fun justForTest(vertx: Vertx) {
       val activateCustomerCmd = ActivateCustomer(UUID.randomUUID(), createCustomerCmd.targetId, "because I want it")
 
       // activate customer command
-      vertx.eventBus().send<EntityCommandExecution>(cmdHandlerEndpoint(Customer::class.java), activateCustomerCmd, options) { asyncResult2 ->
+      vertx.eventBus().send<EntityCommandExecution>(cmdHandlerEndpoint("Customer"), activateCustomerCmd, options) { asyncResult2 ->
 
         HandlerServiceLauncher.log.info("Successful activate customer test? {}", asyncResult2.succeeded())
 

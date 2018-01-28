@@ -1,5 +1,7 @@
 package io.github.crabzilla.vertx.entity;
 
+import com.palantir.docker.compose.DockerComposeRule;
+import com.palantir.docker.compose.connection.waiting.HealthChecks;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.crabzilla.core.entity.EntityUnitOfWork;
@@ -22,10 +24,10 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Instant;
-import java.util.Map;
 import java.util.UUID;
 
 import static io.github.crabzilla.vertx.CrabzillaVertxKt.initVertx;
+import static java.lang.Thread.sleep;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -52,39 +54,54 @@ public class EntityUnitOfWorkJournalIT {
   final CustomerActivated activated = new CustomerActivated(customerId.stringValue(), Instant.now());
   final EntityUnitOfWork expectedUow2 = new EntityUnitOfWork(UUID.randomUUID(), activateCmd, new Version(2), singletonList(activated));
 
+  @ClassRule
+  public static final DockerComposeRule docker = DockerComposeRule.builder()
+    .file("../docker-compose.yml")
+    .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
+    .waitingForService("dbtest", HealthChecks.toHaveAllPortsOpen())
+    .saveLogsTo("target/dockerComposeRuleTest")
+    .build();
+
   @BeforeClass
-  static public void setupClass(TestContext context) {
+  static public void setupClass(TestContext context) throws InterruptedException {
 
     vertx = Vertx.vertx();
 
     initVertx(vertx);
 
-    Map<String, String> env = System.getenv();
-
-//    System.out.println("*************");
-//    System.out.println("WRITE_DATABASE_DRIVER: " + env.get("WRITE_DATABASE_DRIVER"));
-//    System.out.println("WRITE_DATABASE_URL: " + env.get("WRITE_DATABASE_URL"));
-//    System.out.println("WRITE_DATABASE_USER: " + env.get("WRITE_DATABASE_USER"));
-//    System.out.println("WRITE_DATABASE_PASSWORD: " + env.get("WRITE_DATABASE_PASSWORD"));
+    // TODO move this to test config file
+    String WRITE_DATABASE_URL = "jdbc:mysql://127.0.0.1:3306/example1_write?serverTimezone=UTC&useSSL=false";
+    String WRITE_DATABASE_DRIVER = "com.mysql.cj.jdbc.Driver";
+    String WRITE_DATABASE_USER = "root";
+    String WRITE_DATABASE_PASSWORD = "my-secret-pwd";
 
     HikariConfig config = new HikariConfig();
-    config.setDriverClassName(env.get("WRITE_DATABASE_DRIVER"));
-    config.setJdbcUrl(env.get("WRITE_DATABASE_URL"));
-    config.setUsername(env.get("WRITE_DATABASE_USER"));
-    config.setPassword(env.get("WRITE_DATABASE_PASSWORD"));
+    config.setDriverClassName(WRITE_DATABASE_DRIVER);
+    config.setJdbcUrl(WRITE_DATABASE_URL);
+    config.setUsername(WRITE_DATABASE_USER);
+    config.setPassword(WRITE_DATABASE_PASSWORD);
     config.setAutoCommit(false);
     config.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
 
-    HikariDataSource datasource = new HikariDataSource(config);
-
-    jdbcClient = JDBCClient.create(vertx, datasource);
-
-    dbi = Jdbi.create(datasource);
-
-    Handle h = dbi.open();
-    h.createScript("DELETE FROM units_of_work").execute();
-//    h.createScript("DELETE FROM customer_summary").execute();
-    h.commit();
+    int attempt= 0;
+    while (attempt <= 3) {
+      try {
+        HikariDataSource datasource = new HikariDataSource(config);
+        jdbcClient = JDBCClient.create(vertx, datasource);
+        dbi = Jdbi.create(datasource);
+        Handle h = dbi.open();
+        h.createScript("DELETE FROM units_of_work").execute();
+        h.commit();
+        break;
+      } catch (Exception e) {
+        if (++attempt <= 3) {
+          log.warn("Failed to access db, will try again");
+        } else {
+          log.error("Failed to access db", e);
+        }
+        sleep(1_000);
+      }
+    }
 
   }
 

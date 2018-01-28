@@ -3,7 +3,6 @@ package io.github.crabzilla.example1
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoSet
-import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.vertx.EntityUnitOfWorkRepositoryImpl
 import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
 import io.github.crabzilla.vertx.entity.service.EntityCommandHandlerService
@@ -22,15 +21,15 @@ import javax.inject.Singleton
 class RestServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
 
   @Provides
-  fun handlerService(verx: Vertx) : EntityCommandHandlerService {
+  fun handlerService() : EntityCommandHandlerService {
     return EntityCommandHandlerServiceImpl(vertx, "example1-events")
   }
 
   @Provides @IntoSet
   fun restVerticle(uowRepository: EntityUnitOfWorkRepositoryImpl, config: JsonObject,
                    handlerService: EntityCommandHandlerService):
-    EntityCommandRestVerticle<out Any> {
-    return EntityCommandRestVerticle(Customer::class.java, config, uowRepository, handlerService)
+    EntityCommandRestVerticle {
+    return EntityCommandRestVerticle("Customer", config, uowRepository, handlerService)
   }
 
   @Provides

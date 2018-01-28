@@ -59,9 +59,6 @@ class ProjectorServiceLauncher : AbstractVerticle() {
 
             vertx.executeBlocking<Any>({ future ->
 
-                log.warn("*** waiting for database connection...")
-                sleep(20000)
-
               val component = DaggerProjectorServiceComponent.builder()
                 .projectorServiceModule(ProjectorServiceModule(vertx, config))
                 .build()

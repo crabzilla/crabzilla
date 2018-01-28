@@ -19,11 +19,11 @@ import io.vertx.ext.web.handler.BodyHandler
 import org.slf4j.LoggerFactory.getLogger
 import java.util.*
 
-
-class EntityCommandRestVerticle<E>(private val aggregateRootClass: Class<E>,
-                                   private val config: JsonObject,
-                                   private val uowRepository: EntityUnitOfWorkRepositoryImpl,
-                                   private val handlerService: EntityCommandHandlerService) : AbstractVerticle() {
+// TODO circuit breakers and healthchecks
+class EntityCommandRestVerticle(private val entityName: String,
+                                private val config: JsonObject,
+                                private val uowRepository: EntityUnitOfWorkRepositoryImpl,
+                                private val handlerService: EntityCommandHandlerService) : AbstractVerticle() {
 
   override fun start() {
 
@@ -31,10 +31,18 @@ class EntityCommandRestVerticle<E>(private val aggregateRootClass: Class<E>,
 
     router.route().handler(BodyHandler.create())
 
-    router.post("/" + restEndpoint(aggregateRootClass) + "/commands")
+    router.route("/ping").handler {
+      routingContext ->
+      run {
+        routingContext.response().putHeader("content-type", "text/plain").end("pong")
+        log.info("*** pong")
+      }
+    }
+
+    router.post("/" + restEndpoint(entityName) + "/commands")
             .handler({ this.postCommandHandler(it) })
 
-    router.get("/" + restEndpoint(aggregateRootClass) + "/commands/:cmdID")
+    router.get("/" + restEndpoint(entityName) + "/commands/:cmdID")
             .handler({ this.getUowByCmdId(it) })
 
     val server = vertx.createHttpServer()
@@ -85,7 +93,7 @@ class EntityCommandRestVerticle<E>(private val aggregateRootClass: Class<E>,
         return@setHandler
       }
 
-      handlerService.postCommand(cmdHandlerEndpoint(aggregateRootClass), command, { response ->
+      handlerService.postCommand(cmdHandlerEndpoint(entityName), command, { response ->
 
         if (!response.succeeded()) {
           log.error("eventbus.handleCommand", response.cause())

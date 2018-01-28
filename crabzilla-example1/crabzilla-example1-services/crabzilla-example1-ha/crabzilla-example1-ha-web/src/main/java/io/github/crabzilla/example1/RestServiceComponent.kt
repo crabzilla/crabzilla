@@ -11,7 +11,7 @@ import javax.inject.Singleton
 @Component(modules = [RestServiceModule::class])
 interface RestServiceComponent {
 
-  fun restVerticles(): Set<EntityCommandRestVerticle<out Any>>
+  fun restVerticles(): Set<EntityCommandRestVerticle>
 
   @WriteDatabase
   fun datasource(): HikariDataSource

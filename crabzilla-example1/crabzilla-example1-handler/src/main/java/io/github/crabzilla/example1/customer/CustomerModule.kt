@@ -29,17 +29,17 @@ class CustomerModule {
 
     val customer = Customer(sampleInternalService = service)
     val stateTransitionFn = StateTransitionFn()
-    val validator =  CommandValidatorFn()
+    val validator = CommandValidatorFn()
 
     val cache: ExpiringMap<String, Snapshot<Customer>> = ExpiringMap.create()
-    val circuitBreaker = CircuitBreaker.create(cmdHandlerEndpoint(Customer::class.java), vertx)
+    val circuitBreaker = CircuitBreaker.create(cmdHandlerEndpoint("Customer"), vertx)
     val trackerFactory : (Snapshot<Customer>) -> StateTransitionsTracker<Customer> =
             { instance -> StateTransitionsTracker(instance, stateTransitionFn)
             }
     val cmdHandler = CommandHandlerFn(trackerFactory)
     val snapshotPromoter = SnapshotPromoter<Customer>
                     { instance -> StateTransitionsTracker(instance, stateTransitionFn) }
-    return EntityCommandHandlerVerticle(Customer::class.java, customer, cmdHandler, validator,
+    return EntityCommandHandlerVerticle("Customer", customer, cmdHandler, validator,
             snapshotPromoter, eventJournal, cache, circuitBreaker)
   }
 
