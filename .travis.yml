@@ -22,7 +22,7 @@ before_install:
   - source setDbEnv.sh
   - ./setDbEnv.sh
   - mvn clean
-  - docker-compose up -d
+#  - docker-compose up -d
 
 cache:
   directories:
@@ -31,9 +31,7 @@ cache:
 install: false
 
 script:
-  - docker ps
   - sleep 30
-  - docker ps
   - mvn clean install
 
 after_success:
