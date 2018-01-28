@@ -15,7 +15,10 @@ import com.palantir.docker.compose.connection.waiting.HealthChecks.toRespondOver
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.github.crabzilla.core.entity.Version
-import io.github.crabzilla.example1.customer.*
+import io.github.crabzilla.example1.customer.ActivateCustomer
+import io.github.crabzilla.example1.customer.CreateCustomer
+import io.github.crabzilla.example1.customer.CustomerCreated
+import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
 import io.vertx.core.json.Json
 import org.assertj.core.api.Assertions.assertThat

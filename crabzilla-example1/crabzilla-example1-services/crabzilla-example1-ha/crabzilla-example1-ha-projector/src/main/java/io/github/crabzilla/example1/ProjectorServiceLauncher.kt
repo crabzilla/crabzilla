@@ -13,7 +13,6 @@ import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import joptsimple.OptionParser
-import java.lang.Thread.sleep
 import java.net.InetAddress
 
 

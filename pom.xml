@@ -34,7 +34,7 @@
     <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
     <maven-failsafe-plugin.version>2.19.1</maven-failsafe-plugin.version>
-    <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
+    <kotlin.compiler.incremental>false</kotlin.compiler.incremental>
 
     <asciidoctor.maven.plugin.version>1.5.5</asciidoctor.maven.plugin.version>
     <asciidoctorj.pdf.version>1.5.0-alpha.15</asciidoctorj.pdf.version>
@@ -425,35 +425,35 @@
 
     <plugins>
 
-      <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <groupId>org.apache.maven.plugins</groupId>
-        <version>3.0.2</version>
-        <executions>
-          <execution>
-            <id>copy-resources</id>
-            <!-- here the phase you need -->
-            <phase>validate</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <encoding>${project.build.sourceEncoding}</encoding>
-              <outputDirectory>${basedir}/crabzilla-core/src/test/java/io/github/crabzilla/example1</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>
-                    ${basedir}/crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1
-                  </directory>
-                  <includes>
-                    <include>**/*.*</include>
-                  </includes>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
+      <!--<plugin>-->
+        <!--<artifactId>maven-resources-plugin</artifactId>-->
+        <!--<groupId>org.apache.maven.plugins</groupId>-->
+        <!--<version>3.0.2</version>-->
+        <!--<executions>-->
+          <!--<execution>-->
+            <!--<id>copy-resources</id>-->
+            <!--&lt;!&ndash; here the phase you need &ndash;&gt;-->
+            <!--<phase>validate</phase>-->
+            <!--<goals>-->
+              <!--<goal>copy-resources</goal>-->
+            <!--</goals>-->
+            <!--<configuration>-->
+              <!--<encoding>${project.build.sourceEncoding}</encoding>-->
+              <!--<outputDirectory>${basedir}/crabzilla-core/src/test/java/io/github/crabzilla/example1</outputDirectory>-->
+              <!--<resources>-->
+                <!--<resource>-->
+                  <!--<directory>-->
+                    <!--${basedir}/crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1-->
+                  <!--</directory>-->
+                  <!--<includes>-->
+                    <!--<include>**/*.*</include>-->
+                  <!--</includes>-->
+                <!--</resource>-->
+              <!--</resources>-->
+            <!--</configuration>-->
+          <!--</execution>-->
+        <!--</executions>-->
+      <!--</plugin>-->
 
       <plugin>
         <artifactId>kotlin-maven-plugin</artifactId>

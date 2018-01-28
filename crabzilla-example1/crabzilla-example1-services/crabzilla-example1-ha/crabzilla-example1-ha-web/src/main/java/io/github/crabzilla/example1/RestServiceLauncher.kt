@@ -3,8 +3,6 @@ package io.github.crabzilla.example1
 import com.zaxxer.hikari.HikariDataSource
 import io.github.crabzilla.vertx.configHandler
 import io.github.crabzilla.vertx.deployVerticles
-import io.github.crabzilla.vertx.deployVerticlesByName
-import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
