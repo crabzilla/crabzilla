@@ -57,20 +57,14 @@ cd crabzilla
 mvn clean install
 ```
 
-3. Once build finished, stop the MySql instance:
-
-```bash
-docker-compose stop
-```
-
-4. Now you can run the **crabzilla-example1-ha**: 
+3. Now you can run the **crabzilla-example1-ha**: 
 
 ```bash
 cd crabzilla-example1/crabzilla-example1-services/crabzilla-example1-ha
 docker-compose up
 ```
 
-5. Now you can finally submit a command: 
+4. Now you can finally submit a command: 
 
 ```bash
 curl -X POST \
