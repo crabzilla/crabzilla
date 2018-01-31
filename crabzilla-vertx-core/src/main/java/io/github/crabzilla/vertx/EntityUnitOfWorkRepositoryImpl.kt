@@ -13,7 +13,7 @@ import io.vertx.ext.sql.ResultSet
 import org.slf4j.LoggerFactory.getLogger
 import java.util.*
 
-class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUnitOfWorkRepository1 {
+class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUnitOfWorkRepository {
 
   companion object {
 

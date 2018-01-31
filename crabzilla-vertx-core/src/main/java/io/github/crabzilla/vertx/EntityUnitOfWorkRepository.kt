@@ -4,7 +4,7 @@ import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.vertx.core.Future
 import java.util.*
 
-interface EntityUnitOfWorkRepository1 {
+interface EntityUnitOfWorkRepository {
 
   fun getUowByCmdId(cmdId: UUID, uowFuture: Future<EntityUnitOfWork>)
 
