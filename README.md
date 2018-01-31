@@ -51,7 +51,7 @@ git clone https://github.com/crabzilla/crabzilla
 cd crabzilla
 ```
 
-2. Build it, running both unit and integration tests:
+2. Build it, running both unit and integration tests (ports 3306 and 8080 will be used):
 
 ```bash
 mvn clean install
