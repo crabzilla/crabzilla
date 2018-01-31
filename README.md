@@ -51,39 +51,26 @@ git clone https://github.com/crabzilla/crabzilla
 cd crabzilla
 ```
 
-2. Start a MySql instance. You can use docker-compose:
-
-```bash
-docker-compose up
-```
-
-3. On another terminal console, export environment variables for databases:
-
-```bash
-source setDbEnv.sh
-./setDbEnv.sh
-```
-
-4. Build it, running both unit and integration tests against database:
+2. Build it, running both unit and integration tests:
 
 ```bash
 mvn clean install
 ```
 
-5. Once build finished, stop the MySql instance:
+3. Once build finished, stop the MySql instance:
 
 ```bash
 docker-compose stop
 ```
 
-6. Now you can run the **crabzilla-example1-ha**: 
+4. Now you can run the **crabzilla-example1-ha**: 
 
 ```bash
 cd crabzilla-example1/crabzilla-example1-services/crabzilla-example1-ha
 docker-compose up
 ```
 
-7. Now you can finally submit a command: 
+5. Now you can finally submit a command: 
 
 ```bash
 curl -X POST \
