@@ -12,8 +12,8 @@ class CmdHandlerVerticleFactory(val verticles: Set<EntityCommandHandlerVerticle<
   }
 
   @Throws(Exception::class)
-  override fun createVerticle(verticleName: String, classLoader: ClassLoader): Verticle? {
-    return verticles.first() // TODO match by name
+  override fun createVerticle(name: String, classLoader: ClassLoader): Verticle? {
+    return verticles.associateBy({it.name}, {it})[name]
   }
 
   override fun init(vertx: Vertx) {

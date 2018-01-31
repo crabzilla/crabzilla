@@ -19,8 +19,8 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
   - docker-compose rm -f
-  - source setDbEnv.sh
-  - ./setDbEnv.sh
+#  - source setDbEnv.sh
+#  - ./setDbEnv.sh
   - mvn clean
 #  - docker-compose up -d
 

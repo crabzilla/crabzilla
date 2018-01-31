@@ -11,8 +11,8 @@ class ProjectorVerticleFactory(val projectorVerticles: Set<ProjectionHandlerVert
   }
 
   @Throws(Exception::class)
-  override fun createVerticle(s: String, classLoader: ClassLoader): Verticle? {
-    return projectorVerticles.first() // TODO match by name
+  override fun createVerticle(name: String, classLoader: ClassLoader): Verticle? {
+    return projectorVerticles.associateBy({it.name}, {it})[name]
   }
 
   override fun init(vertx: Vertx) {

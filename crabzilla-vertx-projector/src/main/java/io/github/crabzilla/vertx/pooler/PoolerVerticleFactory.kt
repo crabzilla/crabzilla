@@ -10,8 +10,8 @@ class PoolerVerticleFactory(val poolerVerticles: Set<PoolerVerticle>) : Verticle
   }
 
   @Throws(Exception::class)
-  override fun createVerticle(s: String, classLoader: ClassLoader): Verticle? {
-    return poolerVerticles.first() // TODO match by name
+  override fun createVerticle(name: String, classLoader: ClassLoader): Verticle? {
+    return poolerVerticles.associateBy({it.name}, {it})[name]
   }
 
 }

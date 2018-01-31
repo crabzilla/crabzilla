@@ -50,10 +50,9 @@ class WriteDbModule {
     hikariConfig.addDataSourceProperty("cachePrepStmts", "true")
     hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250")
     hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
-//    hikariConfig.addDataSourceProperty("initializationFailTimeout", "10000")
     hikariConfig.isAutoCommit = false
     hikariConfig.isReadOnly =  false
-    hikariConfig.transactionIsolation = "TRANSACTION_SERIALIZABLE"
+//    hikariConfig.transactionIsolation = "TRANSACTION_SERIALIZABLE"
     return HikariDataSource(hikariConfig)
   }
 

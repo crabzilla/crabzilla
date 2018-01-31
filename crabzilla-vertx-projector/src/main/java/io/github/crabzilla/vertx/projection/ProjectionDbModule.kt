@@ -50,10 +50,8 @@ class ProjectionDbModule {
     hikariConfig.addDataSourceProperty("cachePrepStmts", "true")
     hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250")
     hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
-//    hikariConfig.addDataSourceProperty("initializationFailTimeout", "30000")
     hikariConfig.isAutoCommit = true
     hikariConfig.isReadOnly =  false
-    hikariConfig.transactionIsolation = "TRANSACTION_READ_UNCOMMITTED"
     return HikariDataSource(hikariConfig)
   }
 

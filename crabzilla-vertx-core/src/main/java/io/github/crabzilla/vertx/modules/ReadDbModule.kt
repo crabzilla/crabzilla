@@ -50,10 +50,8 @@ class ReadDbModule {
     hikariConfig.addDataSourceProperty("cachePrepStmts", "true")
     hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250")
     hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
-//    hikariConfig.addDataSourceProperty("initializationFailTimeout", "10000")
     hikariConfig.isAutoCommit = true
     hikariConfig.isReadOnly =  true
-    hikariConfig.transactionIsolation = "TRANSACTION_REPEATABLE_READ"
     return HikariDataSource(hikariConfig)
   }
 

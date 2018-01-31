@@ -2,6 +2,7 @@ package io.github.crabzilla.vertx.entity
 
 import io.github.crabzilla.core.UnknownCommandException
 import io.github.crabzilla.core.entity.*
+import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.EntityCommandExecution
 import io.github.crabzilla.vertx.EntityCommandExecution.RESULT.*
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
@@ -14,14 +15,14 @@ import io.vertx.core.eventbus.Message
 import net.jodah.expiringmap.ExpiringMap
 import org.slf4j.LoggerFactory.getLogger
 
-class EntityCommandHandlerVerticle<A : Entity>(private val name: String,
+class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
                                                private val seedValue: A,
                                                private val cmdHandler: (EntityCommand, Snapshot<A>) -> EntityCommandResult,
                                                private val validatorFn: (EntityCommand) -> List<String>,
                                                private val snapshotPromoter: SnapshotPromoter<A>,
                                                private val eventJournal: EntityUnitOfWorkJournal,
                                                private val cache: ExpiringMap<String, Snapshot<A>>,
-                                               private val circuitBreaker: CircuitBreaker) : AbstractVerticle() {
+                                               private val circuitBreaker: CircuitBreaker) : CrabzillaVerticle(name) {
 
   @Throws(Exception::class)
   override fun start() {

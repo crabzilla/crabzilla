@@ -19,7 +19,7 @@ import io.vertx.ext.web.handler.BodyHandler
 import org.slf4j.LoggerFactory.getLogger
 import java.util.*
 
-// TODO circuit breakers and healthchecks
+// TODO add circuit breakers and healthchecks
 class EntityCommandRestVerticle(private val entityName: String,
                                 private val config: JsonObject,
                                 private val uowRepository: EntityUnitOfWorkRepositoryImpl,

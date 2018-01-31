@@ -1,5 +1,6 @@
 package io.github.crabzilla.vertx.projection;
 
+import io.github.crabzilla.vertx.CrabzillaVerticle;
 import io.github.crabzilla.vertx.ProjectionData;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.AbstractVerticle;
@@ -12,7 +13,7 @@ import org.slf4j.Logger;
 import static java.util.Collections.singletonList;
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class ProjectionHandlerVerticle<DAO> extends AbstractVerticle {
+public class ProjectionHandlerVerticle<DAO> extends CrabzillaVerticle {
 
   private static Logger log = getLogger(ProjectionHandlerVerticle.class);
 
@@ -22,6 +23,7 @@ public class ProjectionHandlerVerticle<DAO> extends AbstractVerticle {
 
   public ProjectionHandlerVerticle(String eventsSourceEndpoint, EventsProjector<DAO> eventsProjector,
                                    CircuitBreaker circuitBreaker) {
+    super(eventsSourceEndpoint);
     this.eventsSourceEndpoint = eventsSourceEndpoint;
     this.eventsProjector = eventsProjector;
     this.circuitBreaker = circuitBreaker;
@@ -29,14 +31,11 @@ public class ProjectionHandlerVerticle<DAO> extends AbstractVerticle {
 
   @Override
   public void start() {
-
     log.info("starting consuming from {}", eventsSourceEndpoint);
-
     vertx.eventBus().consumer(eventsSourceEndpoint, msgHandler());
   }
 
   Handler<Message<ProjectionData>> msgHandler() {
-
     return (Message<ProjectionData> msg) -> vertx.executeBlocking((Future<String> future) -> {
       final ProjectionData projectionData = msg.body();
       log.info("Received ProjectionData {} ", projectionData);

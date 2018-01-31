@@ -33,9 +33,9 @@ class EntityCommandHandlerServiceImpl(private val vertx: Vertx, private val proj
 
       val result = response.result().body() as EntityCommandExecution
       log.info("result = {}", result)
+
       val headers = CaseInsensitiveHeaders().add("uowSequence", result.uowSequence.toString())
       val optionsUow = DeliveryOptions().setCodecName(ProjectionData::class.simpleName).setHeaders(headers)
-
       val uow = result.unitOfWork
 
       if (uow != null) {

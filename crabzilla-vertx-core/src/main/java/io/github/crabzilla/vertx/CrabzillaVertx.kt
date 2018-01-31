@@ -13,6 +13,7 @@ import io.github.crabzilla.vertx.codecs.JacksonGenericCodec
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
+import io.vertx.core.AbstractVerticle
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Verticle
 import io.vertx.core.Vertx
@@ -127,3 +128,5 @@ fun deployVerticlesByName(vertx: Vertx, verticles: Set<String>, deploymentOption
     }
   })
 }
+
+abstract class CrabzillaVerticle(open val name: String) : AbstractVerticle()
