@@ -6,13 +6,15 @@ import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerDeactivated
 import io.github.crabzilla.vertx.projection.EventsProjector
+import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
 import org.slf4j.LoggerFactory
 
 // tag::projector[]
-class CustomerSummaryProjector(channelId: String, jdbi: Jdbi, dao: (Jdbi) -> CustomerSummaryProjectorDao)
+class CustomerSummaryProjector(channelId: String, jdbi: Jdbi,
+                               daoFactory: (Handle, Class<CustomerSummaryProjectorDao>) -> CustomerSummaryProjectorDao)
 
-  : EventsProjector<CustomerSummaryProjectorDao>(channelId, jdbi, dao) {
+  : EventsProjector<CustomerSummaryProjectorDao>(channelId, jdbi, CustomerSummaryProjectorDao::class.java, daoFactory) {
 
   private val log = LoggerFactory.getLogger(EventsProjector::class.java.simpleName)
 

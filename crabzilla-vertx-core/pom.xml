@@ -90,6 +90,10 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-jdbc-client</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-kotlin</artifactId>
+    </dependency>
 
     <!-- test -->
     <dependency>

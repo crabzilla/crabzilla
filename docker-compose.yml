@@ -16,7 +16,13 @@ services:
         restart: always
         volumes:
             - ./wait-for-port.sh:/var/wait-for-port.sh:z
-        command: ["/var/wait-for-port.sh", "db:3306", "--", "ls"]
+        command: ["/var/wait-for-port.sh", "-q", "db:3306", "--", "ls"]
         depends_on:
             - db
 
+#    dbtest:
+#        image: sami/mysql-client:latest
+#        restart: always
+#        command: ["mysql", "-h", "db", "-P",  "3306", "-u", "root", "-pmy-secret-pwd", "-e", "show databases;"]
+#        depends_on:
+#            - db

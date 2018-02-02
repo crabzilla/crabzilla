@@ -9,7 +9,8 @@ import io.github.crabzilla.example1.customer.CustomerCreated;
 import io.github.crabzilla.example1.customer.CustomerId;
 import io.github.crabzilla.vertx.ProjectionData;
 import io.github.crabzilla.vertx.projection.EventsProjector;
-import kotlin.jvm.functions.Function1;
+import kotlin.jvm.functions.Function2;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -25,24 +26,26 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 public class EventsProjectorTest {
 
-  final static String EVENTS_ENDPOINT = "example1-events";
+  final static String EVENTS_ENDPOINT = "example1";
 
-  EventsProjector<CustomerSummaryDao> eventsProjector;
+  EventsProjector<CustomerSummaryProjectionDao> eventsProjector;
   @Mock
-  Function1<Jdbi, CustomerSummaryDao> daoFactory;
+  Function2<Handle, Class<CustomerSummaryProjectionDao>, CustomerSummaryProjectionDao> daoFactory;
   @Mock
-  CustomerSummaryDao dao;
+  CustomerSummaryProjectionDao dao;
   @Mock
   Jdbi jdbi;
+  @Mock
+  Handle handle;
 
   @Before
   public void setUp() {
 
     initMocks(this);
 
-    eventsProjector = new EventsProjector<CustomerSummaryDao>(EVENTS_ENDPOINT, jdbi, daoFactory) {
+    eventsProjector = new EventsProjector<CustomerSummaryProjectionDao>(EVENTS_ENDPOINT, jdbi, CustomerSummaryProjectionDao.class, daoFactory) {
       @Override
-      public void write(CustomerSummaryDao customerSummaryDao, @NotNull String targetId, @NotNull DomainEvent event) {
+      public void write(CustomerSummaryProjectionDao customerSummaryDao, @NotNull String targetId, @NotNull DomainEvent event) {
         CustomerCreated e = (CustomerCreated) event;
         dao.insert(new CustomerSummary(targetId, e.getName(), false));
       }
@@ -62,18 +65,21 @@ public class EventsProjectorTest {
     ProjectionData projectionData = new ProjectionData(expectedUow.getUnitOfWorkId(), uowSequence,
             expectedUow.targetId().stringValue(), expectedUow.getEvents());
 
+    InOrder inOrder = inOrder(jdbi, handle, daoFactory, dao);
 
-    InOrder inOrder = inOrder(daoFactory, dao);
-
-    when(daoFactory.invoke(refEq(jdbi))).thenReturn(dao);
+    when(jdbi.open()).thenReturn(handle);
+    when(daoFactory.invoke(refEq(handle), any())).thenReturn(dao);
 
     eventsProjector.handle(singletonList(projectionData));
 
-    inOrder.verify(daoFactory).invoke(any(Jdbi.class));
-
+    inOrder.verify(jdbi).open();
+    inOrder.verify(handle).begin();
+    inOrder.verify(daoFactory).invoke(any(), any());
     inOrder.verify(dao).insert(eq(new CustomerSummary(customerId.getId(), "customer", false)));
+    inOrder.verify(handle).commit();
+    inOrder.verify(handle).close();
 
-    verifyNoMoreInteractions(daoFactory, dao);
+    verifyNoMoreInteractions(jdbi, handle, daoFactory, dao);
 
   }
 

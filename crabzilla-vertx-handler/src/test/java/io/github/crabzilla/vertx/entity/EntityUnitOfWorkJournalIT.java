@@ -1,6 +1,7 @@
 package io.github.crabzilla.vertx.entity;
 
 import com.palantir.docker.compose.DockerComposeRule;
+import com.palantir.docker.compose.configuration.ProjectName;
 import com.palantir.docker.compose.connection.waiting.HealthChecks;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -57,6 +58,12 @@ public class EntityUnitOfWorkJournalIT {
   @ClassRule
   public static final DockerComposeRule docker = DockerComposeRule.builder()
     .file("../docker-compose.yml")
+    .projectName(new ProjectName() {
+      @Override
+      protected String projectName() {
+        return "crabzilla-EntityUnitOfWorkJournalIT";
+      }
+    })
     .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
     .waitingForService("dbtest", HealthChecks.toHaveAllPortsOpen())
     .saveLogsTo("target/dockerComposeRuleTest")
@@ -99,7 +106,7 @@ public class EntityUnitOfWorkJournalIT {
         } else {
           log.error("Failed to access db", e);
         }
-        sleep(1_000);
+        sleep(5_000);
       }
     }
 
@@ -274,7 +281,6 @@ public class EntityUnitOfWorkJournalIT {
       assertThat(snapshotData.getVersion()).isEqualTo(new Version(2));
       assertThat(snapshotData.getEvents().get(0)).isEqualTo(created);
       assertThat(snapshotData.getEvents().get(1)).isEqualToIgnoringGivenFields(activated, "_when");
-      //TODO problem with Instant serialization
 
       async.complete();
 

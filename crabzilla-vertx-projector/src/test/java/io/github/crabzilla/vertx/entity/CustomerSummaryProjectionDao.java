@@ -9,7 +9,7 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 import java.util.List;
 
-public interface CustomerSummaryDao {
+public interface CustomerSummaryProjectionDao {
 
   @SqlUpdate("insert into customer_summary (id, name, is_active) values " +
           "(:id, :name, false)")

@@ -1,12 +1,11 @@
 package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
+import io.github.crabzilla.vertx.CrabzillaVerticleFactory
 import io.github.crabzilla.vertx.configHandler
 import io.github.crabzilla.vertx.deployVerticles
 import io.github.crabzilla.vertx.deployVerticlesByName
 import io.github.crabzilla.vertx.pooler.PoolerVerticle
-import io.github.crabzilla.vertx.pooler.PoolerVerticleFactory
-import io.github.crabzilla.vertx.projection.ProjectorVerticleFactory
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
@@ -66,14 +65,16 @@ class ProjectorServiceLauncher : AbstractVerticle() {
 
               val poolerVerticle = PoolerVerticle("example1", component.projectionRepo(), 10000)
 
-              vertx.registerVerticleFactory(PoolerVerticleFactory(setOf(poolerVerticle)))
-              vertx.registerVerticleFactory(ProjectorVerticleFactory(component.projectorVerticles()))
+              vertx.registerVerticleFactory(CrabzillaVerticleFactory(setOf(poolerVerticle), "crabzilla-pooler"))
+
+              vertx.registerVerticleFactory(CrabzillaVerticleFactory(component.projectorVerticles(), "crabzilla-projector"))
 
               val workerDeploymentOptions = DeploymentOptions().setHa(true).setWorker(true)
 
               deployVerticles(vertx, setOf(ProjectorServiceLauncher()))
+
+//              deployVerticlesByName(vertx, setOf("crabzilla-pooler:example1"), workerDeploymentOptions)
               deployVerticlesByName(vertx, setOf("crabzilla-projector:example1"), workerDeploymentOptions)
-              deployVerticlesByName(vertx, setOf("crabzilla-pooler:example1"), workerDeploymentOptions)
 
               future.complete()
 

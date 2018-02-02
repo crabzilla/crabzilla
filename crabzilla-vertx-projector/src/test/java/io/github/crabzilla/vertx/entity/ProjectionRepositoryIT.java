@@ -1,6 +1,7 @@
 package io.github.crabzilla.vertx.entity;
 
 import com.palantir.docker.compose.DockerComposeRule;
+import com.palantir.docker.compose.configuration.ProjectName;
 import com.palantir.docker.compose.connection.waiting.HealthChecks;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -58,6 +59,12 @@ public class ProjectionRepositoryIT {
   @ClassRule
   public static final DockerComposeRule docker = DockerComposeRule.builder()
     .file("../docker-compose.yml")
+    .projectName(new ProjectName() {
+      @Override
+      protected String projectName() {
+        return "crabzilla-ProjectionRepositoryIT";
+      }
+    })
     .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
     .waitingForService("dbtest", HealthChecks.toHaveAllPortsOpen())
     .saveLogsTo("target/dockerComposeRuleTest")

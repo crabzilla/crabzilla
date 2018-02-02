@@ -22,7 +22,7 @@ class RestServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vert
 
   @Provides
   fun handlerService() : EntityCommandHandlerService {
-    return EntityCommandHandlerServiceImpl(vertx, "example1-events")
+    return EntityCommandHandlerServiceImpl(vertx, "example1")
   }
 
   @Provides @IntoSet

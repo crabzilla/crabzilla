@@ -4,11 +4,7 @@ import com.zaxxer.hikari.HikariDataSource
 import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerId
-import io.github.crabzilla.vertx.EntityCommandExecution
-import io.github.crabzilla.vertx.configHandler
-import io.github.crabzilla.vertx.deployVerticles
-import io.github.crabzilla.vertx.deployVerticlesByName
-import io.github.crabzilla.vertx.entity.CmdHandlerVerticleFactory
+import io.github.crabzilla.vertx.*
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.DeploymentOptions
@@ -68,13 +64,13 @@ class HandlerServiceLauncher : AbstractVerticle() {
 
               ds = app.datasource()
 
-              vertx.registerVerticleFactory(CmdHandlerVerticleFactory(app.commandVerticles()))
+              vertx.registerVerticleFactory(CrabzillaVerticleFactory(app.commandVerticles(), "crabzilla-command-handler"))
 
               val workerDeploymentOptions = DeploymentOptions().setHa(true)
 
               deployVerticles(vertx, setOf(HandlerServiceLauncher()))
 
-              deployVerticlesByName(vertx, setOf("crabzilla-command-handler:example1"), workerDeploymentOptions)
+              deployVerticlesByName(vertx, setOf("crabzilla-command-handler:Customer"), workerDeploymentOptions)
 
               // justForTest(vertx)
 

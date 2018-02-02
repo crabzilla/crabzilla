@@ -7,7 +7,6 @@ import io.github.crabzilla.vertx.EntityCommandExecution
 import io.github.crabzilla.vertx.EntityCommandExecution.RESULT.*
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.circuitbreaker.CircuitBreaker
-import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions

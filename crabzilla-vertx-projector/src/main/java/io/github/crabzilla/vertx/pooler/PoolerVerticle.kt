@@ -3,7 +3,6 @@ package io.github.crabzilla.vertx.pooler
 import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.ProjectionData
 import io.github.crabzilla.vertx.projection.ProjectionRepository
-import io.vertx.core.AbstractVerticle
 import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Vertx

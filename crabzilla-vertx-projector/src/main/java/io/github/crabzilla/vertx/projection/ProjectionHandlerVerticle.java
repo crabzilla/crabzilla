@@ -3,7 +3,6 @@ package io.github.crabzilla.vertx.projection;
 import io.github.crabzilla.vertx.CrabzillaVerticle;
 import io.github.crabzilla.vertx.ProjectionData;
 import io.vertx.circuitbreaker.CircuitBreaker;
-import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
