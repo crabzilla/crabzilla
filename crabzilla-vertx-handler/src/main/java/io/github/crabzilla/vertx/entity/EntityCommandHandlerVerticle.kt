@@ -146,7 +146,7 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
                   return@setHandler
                 }
 
-                val finalSnapshot = snapshotPromoter.promote(resultingSnapshot, uow!!.version, uow.events)
+                val finalSnapshot = snapshotPromoter.promote(resultingSnapshot, uow.version, uow.events)
                 cache.put(targetId, finalSnapshot)
                 val uowSequence = appendAsyncResult.result()
                 log.debug("uowSequence: {}", uowSequence)

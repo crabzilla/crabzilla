@@ -39,7 +39,6 @@ class WriteDbModule {
   @Singleton
   @WriteDatabase
   fun hikariDs(config: JsonObject): HikariDataSource {
-
     val hikariConfig = HikariConfig()
     hikariConfig.driverClassName = config.getString("WRITE_DATABASE_DRIVER")
     hikariConfig.jdbcUrl = config.getString("WRITE_DATABASE_URL")
@@ -52,7 +51,7 @@ class WriteDbModule {
     hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
     hikariConfig.isAutoCommit = false
     hikariConfig.isReadOnly =  false
-//    hikariConfig.transactionIsolation = "TRANSACTION_SERIALIZABLE"
+    hikariConfig.transactionIsolation = "TRANSACTION_SERIALIZABLE"
     return HikariDataSource(hikariConfig)
   }
 

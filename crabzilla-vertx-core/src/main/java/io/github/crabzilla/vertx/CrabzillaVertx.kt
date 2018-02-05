@@ -64,7 +64,6 @@ private fun cfgOptions(configFile: String?, defaultConfigFile: String?): ConfigR
             .setConfig(JsonObject().put("path", configFile))
 
     log.info("Using file config {}", configFile)
-
     log.info("Using env config {}", environment)
 
     return ConfigRetrieverOptions().addStore(file).addStore(environment)
@@ -76,7 +75,6 @@ private fun cfgOptions(configFile: String?, defaultConfigFile: String?): ConfigR
           .setConfig(JsonObject().put("path", defaultConfigFile))
 
   log.info("Using config {}", defaultConfigFile)
-
   log.info("Using env config {}", environment)
 
   return ConfigRetrieverOptions().addStore(file).addStore(environment)

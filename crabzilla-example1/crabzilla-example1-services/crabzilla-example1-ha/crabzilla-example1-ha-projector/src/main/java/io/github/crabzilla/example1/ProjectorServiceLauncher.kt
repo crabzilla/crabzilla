@@ -35,11 +35,10 @@ class ProjectorServiceLauncher : AbstractVerticle() {
 
       val options = parser.parse(*args)
       val configFile = options.valueOf("conf") as String?
-
       val hostName = InetAddress.getLocalHost().hostName
       val mgr = HazelcastClusterManager()
       val vertxOptions = VertxOptions().setClusterManager(mgr).setHAEnabled(true).setHAGroup("events-projector")
-        .setClusterHost(hostName)
+                                       .setClusterHost(hostName)
 
       println("**  HA group ${vertxOptions.haGroup} hostname ${hostName}")
 
@@ -63,16 +62,12 @@ class ProjectorServiceLauncher : AbstractVerticle() {
 
               ds = component.datasource()
 
+              val workerDeploymentOptions = DeploymentOptions().setHa(true).setWorker(true)
               val poolerVerticle = PoolerVerticle("example1", component.projectionRepo(), 10000)
-
               vertx.registerVerticleFactory(CrabzillaVerticleFactory(setOf(poolerVerticle), "crabzilla-pooler"))
-
               vertx.registerVerticleFactory(CrabzillaVerticleFactory(component.projectorVerticles(), "crabzilla-projector"))
 
-              val workerDeploymentOptions = DeploymentOptions().setHa(true).setWorker(true)
-
               deployVerticles(vertx, setOf(ProjectorServiceLauncher()))
-
 //              deployVerticlesByName(vertx, setOf("crabzilla-pooler:example1"), workerDeploymentOptions)
               deployVerticlesByName(vertx, setOf("crabzilla-projector:example1"), workerDeploymentOptions)
 

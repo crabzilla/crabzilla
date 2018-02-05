@@ -19,7 +19,7 @@ class ProjectorModule {
       handle, daoClass -> handle.attach(daoClass)
     }
     val projector = CustomerSummaryProjector(CustomerSummary::class.simpleName!!, jdbi, daoFactory)
-    val circuitBreaker = CircuitBreaker.create("events-projection-circuit-breaker", vertx)
+    val circuitBreaker = CircuitBreaker.create("example1-projection-circuit-breaker", vertx)
     return ProjectionHandlerVerticle("example1", projector, circuitBreaker)
   }
 

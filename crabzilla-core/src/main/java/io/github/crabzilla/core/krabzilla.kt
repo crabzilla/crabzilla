@@ -52,7 +52,6 @@ fun listOfEventsFromJson(mapper: ObjectMapper, eventsAsJson: String): List<Domai
 
 }
 
-
 fun commandToJson(mapper: ObjectMapper, command: Command): String {
   try {
     val cmdAsJson = mapper.writerFor(Command::class.java).writeValueAsString(command)

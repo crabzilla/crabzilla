@@ -54,7 +54,6 @@ class PoolerVerticle(override val name: String,
                 if (listOfAfterUowSeqFuture.failed()) {
                   log.error("when pulling form events ", listOfAfterUowSeqFuture.cause())
                   return@run
-
                 }
 
                 val list = selectAfterUowSeqFuture.result()

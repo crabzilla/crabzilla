@@ -73,7 +73,6 @@ public class ProjectionRepository {
             final Long _uowSequence = row.getLong(1);
             final String _targetId = row.getString(2);
             final List<DomainEvent> _events = listOfEventsFromJson(Json.mapper, row.getString(3));
-
             final ProjectionData projectionData = new ProjectionData(_uowId, _uowSequence, _targetId, _events);
             list.add(projectionData);
 

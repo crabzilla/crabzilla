@@ -24,8 +24,8 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
     private val CMD_DATA = "cmd_data"
     private val VERSION = "version"
 
-    private val SELECT_UOW_BY_CMD_ID = "select * from units_of_work where cmd_id =? "
-    private val SELECT_UOW_BY_UOW_ID = "select * from units_of_work where uow_id =? "
+    private const val SELECT_UOW_BY_CMD_ID = "select * from units_of_work where cmd_id =? "
+    private const val SELECT_UOW_BY_UOW_ID = "select * from units_of_work where uow_id =? "
 
   }
 

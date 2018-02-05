@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory
 class EntityCommandHandlerServiceImpl(private val vertx: Vertx, private val projectionEndpoint: String) :
   EntityCommandHandlerService {
 
+  private val commandDeliveryOptions = DeliveryOptions().setCodecName(EntityCommand::class.java.simpleName)
+
   init {
     log.info("will publish resulting events to {}", projectionEndpoint)
   }
@@ -21,9 +23,7 @@ class EntityCommandHandlerServiceImpl(private val vertx: Vertx, private val proj
   override fun postCommand(handlerEndpoint: String, command: EntityCommand,
                            handler: Handler<AsyncResult<EntityCommandExecution>>) {
 
-    val options = DeliveryOptions().setCodecName(EntityCommand::class.java.simpleName)
-
-    vertx.eventBus().send<EntityCommand>(handlerEndpoint, command, options) { response ->
+    vertx.eventBus().send<EntityCommand>(handlerEndpoint, command, commandDeliveryOptions) { response ->
 
       if (!response.succeeded()) {
         log.error("eventbus.handleCommand", response.cause())
@@ -32,15 +32,16 @@ class EntityCommandHandlerServiceImpl(private val vertx: Vertx, private val proj
       }
 
       val result = response.result().body() as EntityCommandExecution
+      val uow = result.unitOfWork
+      val uowSequence = result.uowSequence ?: 0L
+
       log.info("result = {}", result)
 
-      val headers = CaseInsensitiveHeaders().add("uowSequence", result.uowSequence.toString())
-      val optionsUow = DeliveryOptions().setCodecName(ProjectionData::class.simpleName).setHeaders(headers)
-      val uow = result.unitOfWork
-
-      if (uow != null) {
-        val pd = ProjectionData(uow.unitOfWorkId, result.uowSequence!!, uow.targetId().stringValue(), uow.events)
-        vertx.eventBus().publish(projectionEndpoint, pd, optionsUow)
+      if (uow != null && uowSequence != 0L) {
+        val headers = CaseInsensitiveHeaders().add("uowSequence", uowSequence.toString())
+        val eventsDeliveryOptions = DeliveryOptions().setCodecName(ProjectionData::class.simpleName).setHeaders(headers)
+        val pd = ProjectionData(uow.unitOfWorkId, uowSequence, uow.targetId().stringValue(), uow.events)
+        vertx.eventBus().publish(projectionEndpoint, pd, eventsDeliveryOptions)
       }
 
       handler.handle(Future.succeededFuture(result))

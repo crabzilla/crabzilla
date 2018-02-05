@@ -39,7 +39,6 @@ class ProjectionDbModule {
   @Singleton
   @ProjectionDatabase
   fun hikariDs(config: JsonObject): HikariDataSource {
-
     val hikariConfig = HikariConfig()
     hikariConfig.driverClassName = config.getString("READ_DATABASE_DRIVER")
     hikariConfig.jdbcUrl = config.getString("READ_DATABASE_URL")
@@ -50,8 +49,8 @@ class ProjectionDbModule {
     hikariConfig.addDataSourceProperty("cachePrepStmts", "true")
     hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250")
     hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
-    hikariConfig.isAutoCommit = true
-    hikariConfig.isReadOnly =  false
+    hikariConfig.isAutoCommit = false
+    hikariConfig.isReadOnly = false
     return HikariDataSource(hikariConfig)
   }
 

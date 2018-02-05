@@ -27,7 +27,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class EntityUnitOfWorkJournal {
 
-  static Logger log = getLogger(EntityUnitOfWorkJournal.class);
+  private static final Logger log = getLogger(EntityUnitOfWorkJournal.class);
 
   private static final String UOW_ID = "uow_id";
   private static final String UOW_EVENTS = "uow_events";
@@ -36,8 +36,6 @@ public class EntityUnitOfWorkJournal {
 
   private final String aggregateRootName;
   private final JDBCClient client;
-  private final String SELECT_UOW_BY_CMD_ID = "select * from units_of_work where cmd_id =? ";
-  private final String SELECT_UOW_BY_UOW_ID = "select * from units_of_work where uow_id =? ";
 
   public EntityUnitOfWorkJournal(Class<?> aggregateRootName, JDBCClient client) {
     this.aggregateRootName = aggregateRootName.getSimpleName();
@@ -46,12 +44,14 @@ public class EntityUnitOfWorkJournal {
 
   void getUowByCmdId(final UUID cmdId, final Future<EntityUnitOfWork> uowFuture) {
 
+    String SELECT_UOW_BY_CMD_ID = "select * from units_of_work where cmd_id =? ";
     get(SELECT_UOW_BY_CMD_ID, cmdId, uowFuture);
 
   }
 
   void getUowByUowId(final UUID uowId, final Future<EntityUnitOfWork> uowFuture) {
 
+    String SELECT_UOW_BY_UOW_ID = "select * from units_of_work where uow_id =? ";
     get(SELECT_UOW_BY_UOW_ID, uowId, uowFuture);
 
   }
@@ -176,7 +176,6 @@ public class EntityUnitOfWorkJournal {
             "(uow_id, uow_events, cmd_id, cmd_data, ar_id, ar_name, version) " +
             "values (?, ?, ?, ?, ?, ?, ?)";
 
-
     client.getConnection(conn -> {
 
       if (conn.failed()) {
@@ -196,7 +195,7 @@ public class EntityUnitOfWorkJournal {
           return;
         }
 
-        // check current version  // TODO also check if command was not already processed given the commandId
+        // check current version
         JsonArray params1 = new JsonArray()
                 .add(unitOfWork.targetId().stringValue())
                 .add(aggregateRootName);

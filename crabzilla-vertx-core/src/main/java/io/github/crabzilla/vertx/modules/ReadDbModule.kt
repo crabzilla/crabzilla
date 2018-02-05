@@ -39,7 +39,6 @@ class ReadDbModule {
   @Singleton
   @ReadDatabase
   fun hikariDs(config: JsonObject): HikariDataSource {
-
     val hikariConfig = HikariConfig()
     hikariConfig.driverClassName = config.getString("READ_DATABASE_DRIVER")
     hikariConfig.jdbcUrl = config.getString("READ_DATABASE_URL")

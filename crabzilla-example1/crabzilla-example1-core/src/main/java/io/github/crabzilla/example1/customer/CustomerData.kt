@@ -38,6 +38,3 @@ data class CreateActivateCustomer(override val commandId: UUID,
                                   val name: String, val reason: String) : EntityCommand
 
 // end::commands[]
-
-data class UnknownCommand(override val commandId: UUID, override val targetId: CustomerId)
-  : EntityCommand

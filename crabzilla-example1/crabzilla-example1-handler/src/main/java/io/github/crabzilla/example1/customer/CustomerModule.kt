@@ -32,7 +32,7 @@ class CustomerModule {
     val validator = CommandValidatorFn()
 
     val cache: ExpiringMap<String, Snapshot<Customer>> = ExpiringMap.create()
-    val circuitBreaker = CircuitBreaker.create(cmdHandlerEndpoint("Customer"), vertx)
+    val circuitBreaker = CircuitBreaker.create("Customer", vertx)
     val trackerFactory : (Snapshot<Customer>) -> StateTransitionsTracker<Customer> =
             { instance -> StateTransitionsTracker(instance, stateTransitionFn)
             }

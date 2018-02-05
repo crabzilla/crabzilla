@@ -18,15 +18,15 @@ class CustomerSummaryProjector(channelId: String, jdbi: Jdbi,
 
   private val log = LoggerFactory.getLogger(EventsProjector::class.java.simpleName)
 
-  override fun write(projectorDao: CustomerSummaryProjectorDao, targetId: String, event: DomainEvent) {
+  override fun write(dao: CustomerSummaryProjectorDao, targetId: String, event: DomainEvent) {
 
     log.info("event {} from channel {}", event, eventsChannelId)
 
     when (event) {
-      is CustomerCreated -> projectorDao.insert(CustomerSummary(targetId, event.name, false))
-      is CustomerActivated -> projectorDao.updateStatus(targetId, true)
-      is CustomerDeactivated -> projectorDao.updateStatus(targetId, false)
-      else -> println("${event.javaClass.simpleName} does not have any event projection handler")
+      is CustomerCreated -> dao.insert(CustomerSummary(targetId, event.name, false))
+      is CustomerActivated -> dao.updateStatus(targetId, true)
+      is CustomerDeactivated -> dao.updateStatus(targetId, false)
+      else -> log.info("${event.javaClass.simpleName} does not have any event projection handler")
     }
   }
 }
