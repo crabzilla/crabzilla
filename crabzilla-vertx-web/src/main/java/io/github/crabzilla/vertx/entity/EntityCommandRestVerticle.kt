@@ -2,9 +2,7 @@ package io.github.crabzilla.vertx.entity
 
 import io.github.crabzilla.core.entity.EntityCommand
 import io.github.crabzilla.core.entity.EntityUnitOfWork
-import io.github.crabzilla.vertx.EntityCommandExecution
-import io.github.crabzilla.vertx.EntityCommandExecution.RESULT
-import io.github.crabzilla.vertx.EntityUnitOfWorkRepositoryImpl
+import io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT
 import io.github.crabzilla.vertx.entity.service.EntityCommandHandlerService
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint

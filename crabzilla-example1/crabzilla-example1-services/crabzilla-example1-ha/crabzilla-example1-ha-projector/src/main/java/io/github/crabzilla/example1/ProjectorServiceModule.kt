@@ -5,7 +5,7 @@ import dagger.Provides
 import io.github.crabzilla.vertx.modules.CrabzillaModule
 import io.github.crabzilla.vertx.modules.ProjectionDbModule
 import io.github.crabzilla.vertx.projection.ProjectionRepository
-import io.github.crabzilla.vertx.qualifiers.WriteDatabase
+import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.jdbc.JDBCClient

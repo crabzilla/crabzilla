@@ -9,11 +9,11 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.entity.EntityCommand
 import io.github.crabzilla.core.entity.EntityId
 import io.github.crabzilla.core.entity.EntityUnitOfWork
-import io.github.crabzilla.vertx.codecs.JacksonGenericCodec
+import io.github.crabzilla.vertx.entity.EntityCommandExecution
+import io.github.crabzilla.vertx.projection.ProjectionData
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
-import io.vertx.core.AbstractVerticle
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Verticle
 import io.vertx.core.Vertx
@@ -92,22 +92,22 @@ fun initVertx(vertx: Vertx) {
   //    Json.mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
 
   vertx.eventBus().registerDefaultCodec(ProjectionData::class.java,
-          JacksonGenericCodec(Json.mapper, ProjectionData::class.java))
+    JacksonGenericCodec(Json.mapper, ProjectionData::class.java))
 
   vertx.eventBus().registerDefaultCodec(EntityCommandExecution::class.java,
-          JacksonGenericCodec(Json.mapper, EntityCommandExecution::class.java))
+    JacksonGenericCodec(Json.mapper, EntityCommandExecution::class.java))
 
   vertx.eventBus().registerDefaultCodec(EntityId::class.java,
-          JacksonGenericCodec(Json.mapper, EntityId::class.java))
+    JacksonGenericCodec(Json.mapper, EntityId::class.java))
 
   vertx.eventBus().registerDefaultCodec(EntityCommand::class.java,
-          JacksonGenericCodec(Json.mapper, EntityCommand::class.java))
+    JacksonGenericCodec(Json.mapper, EntityCommand::class.java))
 
   vertx.eventBus().registerDefaultCodec(DomainEvent::class.java,
-          JacksonGenericCodec(Json.mapper, DomainEvent::class.java))
+    JacksonGenericCodec(Json.mapper, DomainEvent::class.java))
 
   vertx.eventBus().registerDefaultCodec(EntityUnitOfWork::class.java,
-          JacksonGenericCodec(Json.mapper, EntityUnitOfWork::class.java))
+    JacksonGenericCodec(Json.mapper, EntityUnitOfWork::class.java))
 
 }
 
@@ -127,4 +127,3 @@ fun deployVerticlesByName(vertx: Vertx, verticles: Set<String>, deploymentOption
   })
 }
 
-abstract class CrabzillaVerticle(open val name: String) : AbstractVerticle()

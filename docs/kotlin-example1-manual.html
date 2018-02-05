@@ -539,16 +539,7 @@ data class CreateActivateCustomer(override val commandId: UUID,
 <div class="listingblock">
 <div class="title">CustomerFunctions.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandValidatorFn : (EntityCommand) -&gt; List&lt;String&gt; {
-  override fun invoke(command: EntityCommand): List&lt;String&gt; {
-    return when(command) {
-      is CreateCustomer -&gt;
-        if (command.name.equals("a bad name"))
-          listOf("Invalid name: ${command.name}") else listOf()
-      else -&gt; listOf() // all other commands are valid
-    }
-  }
-}</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerFunctions.kt[tags=CommandValidatorFn]</code></pre>
 </div>
 </div>
 </div>
@@ -561,34 +552,7 @@ handler verticles will wrap the result of this function into a result type somet
 <div class="listingblock">
 <div class="title">CustomerFunctions.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandHandlerFn(
-        private val trackerFactory: (Snapshot&lt;Customer&gt;) -&gt; StateTransitionsTracker&lt;Customer&gt;) :
-        (EntityCommand, Snapshot&lt;Customer&gt;) -&gt; EntityCommandResult {
-
-  override fun invoke(cmd: EntityCommand, snapshot: Snapshot&lt;Customer&gt;): EntityCommandResult {
-
-    val customer = snapshot.instance
-    val newVersion = snapshot.version.nextVersion()
-
-    return resultOf {
-      when (cmd) {
-        is CreateCustomer -&gt;
-          uowOf(cmd, customer.create(cmd.targetId, cmd.name), newVersion)
-        is ActivateCustomer -&gt; uowOf(cmd, customer.activate(cmd.reason), newVersion)
-        is DeactivateCustomer -&gt; uowOf(cmd, customer.deactivate(cmd.reason), newVersion)
-        is CreateActivateCustomer -&gt; {
-          val tracker = trackerFactory.invoke(snapshot)
-          val events = tracker
-                  .applyEvents({ c -&gt; c.create(cmd.targetId, cmd.name) })
-                  .applyEvents({ c -&gt; c.activate(cmd.reason) })
-                  .collectEvents()
-          uowOf(cmd, events, newVersion)
-        }
-        else -&gt; throw UnknownCommandException("for command ${cmd.javaClass.simpleName}")
-      }
-    }
-  }
-}</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerFunctions.kt[tags=CommandHandlerFn]</code></pre>
 </div>
 </div>
 </div>
@@ -600,16 +564,7 @@ handler verticles will wrap the result of this function into a result type somet
 <div class="listingblock">
 <div class="title">CustomerFunctions.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class StateTransitionFn : (DomainEvent, Customer) -&gt; Customer {
-  override fun invoke(event: DomainEvent, customer: Customer): Customer {
-    return when(event) {
-      is CustomerCreated -&gt; customer.copy(customerId = event.id, name =  event.name)
-      is CustomerActivated -&gt; customer.copy(isActive = true, reason = event.reason)
-      is CustomerDeactivated -&gt; customer.copy(isActive = false, reason = event.reason)
-      else -&gt; customer
-    }
-  }
-}</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerFunctions.kt[tags=StateTransitionFn]</code></pre>
 </div>
 </div>
 </div>
@@ -622,31 +577,7 @@ handler verticles will wrap the result of this function into a result type somet
 <div class="listingblock">
 <div class="title">Customer.kt</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">data class Customer(val customerId: CustomerId? = null,
-                    val name: String? = null,
-                    val isActive: Boolean? = false,
-                    val reason: String? = null,
-                    val sampleInternalService: SampleInternalService) : Entity {
-
-  override val id: EntityId
-    get() = customerId!!
-
-  internal fun create(id: CustomerId, name: String): List&lt;DomainEvent&gt; {
-    require(this.customerId == null, { "customer already created" })
-    return eventsOf(CustomerCreated(id, name))
-  }
-
-  internal fun activate(reason: String): List&lt;DomainEvent&gt; {
-    require(this.customerId != null, { "customer must exists" })
-    return eventsOf(CustomerActivated(reason, sampleInternalService.now()))
-  }
-
-  internal fun deactivate(reason: String): List&lt;DomainEvent&gt; {
-    require(this.customerId != null, { "customer must exists" })
-    return eventsOf(CustomerDeactivated(reason, sampleInternalService.now()))
-  }
-
-}</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/Customer.kt[tags=aggregate]</code></pre>
 </div>
 </div>
 </div>

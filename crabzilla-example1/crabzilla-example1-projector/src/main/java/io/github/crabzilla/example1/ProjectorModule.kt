@@ -4,7 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoSet
 import io.github.crabzilla.vertx.projection.ProjectionHandlerVerticle
-import io.github.crabzilla.vertx.qualifiers.ProjectionDatabase
+import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.Vertx
 import org.jdbi.v3.core.Handle

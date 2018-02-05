@@ -21,7 +21,7 @@
 
       <dependency>
             <groupId>io.github.crabzilla</groupId>
-            <artifactId>crabzilla-vertx-projector</artifactId>
+            <artifactId>crabzilla-vertx-core</artifactId>
         </dependency>
 
     </dependencies>

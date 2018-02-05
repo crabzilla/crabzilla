@@ -4,7 +4,7 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Module
 import dagger.Provides
-import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
+import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.jdbc.JDBCClient
@@ -15,19 +15,19 @@ import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import javax.inject.Singleton
 
 @Module
-class ReadDbModule {
+class ProjectionDbModule {
 
   @Provides
   @Singleton
-  @ReadDatabase
-  fun jdbcClient(@ReadDatabase dataSource: HikariDataSource, vertx: Vertx): JDBCClient {
+  @ProjectionDatabase
+  fun jdbcClient(@ProjectionDatabase dataSource: HikariDataSource, vertx: Vertx): JDBCClient {
     return JDBCClient.create(vertx, dataSource)
   }
 
   @Provides
   @Singleton
-  @ReadDatabase
-  fun jdbi(@ReadDatabase dataSource: HikariDataSource): Jdbi {
+  @ProjectionDatabase
+  fun jdbi(@ProjectionDatabase dataSource: HikariDataSource): Jdbi {
     val jdbi = Jdbi.create(dataSource)
     jdbi.installPlugin(SqlObjectPlugin())
     jdbi.installPlugin(KotlinPlugin())
@@ -37,7 +37,7 @@ class ReadDbModule {
 
   @Provides
   @Singleton
-  @ReadDatabase
+  @ProjectionDatabase
   fun hikariDs(config: JsonObject): HikariDataSource {
     val hikariConfig = HikariConfig()
     hikariConfig.driverClassName = config.getString("READ_DATABASE_DRIVER")
@@ -49,8 +49,8 @@ class ReadDbModule {
     hikariConfig.addDataSourceProperty("cachePrepStmts", "true")
     hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250")
     hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
-    hikariConfig.isAutoCommit = true
-    hikariConfig.isReadOnly =  true
+    hikariConfig.isAutoCommit = false
+    hikariConfig.isReadOnly = false
     return HikariDataSource(hikariConfig)
   }
 

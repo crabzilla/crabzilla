@@ -19,9 +19,7 @@ a Listener and a ProcessManager / Saga.
 
 * crabzilla-core            → Command, DomainEvent, Snapshot, etc Your domain will depend on this.
 * crabzilla-example1        → An example using Crabzilla. 
-* crabzilla-vertx-core      → Codecs, Helpers, etc. Your services will depend on this.
-* crabzilla-vertx-handler   → CommandHandlerVerticles and UnitOfWorkRepositories.
-* crabzilla-vertx-projector → ProjectionHandlerVerticle, EventsProjector and ProjectionRepository.
+* crabzilla-vertx-core      → Verticles, Repositories, etc. Your services will depend on this.
 * crabzilla-vertx-web       → CommandRestVerticle. Depends on vertx-web module.
 
 ## Links

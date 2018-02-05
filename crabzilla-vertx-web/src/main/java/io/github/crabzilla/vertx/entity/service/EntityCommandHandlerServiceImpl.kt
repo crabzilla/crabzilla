@@ -1,8 +1,8 @@
 package io.github.crabzilla.vertx.entity.service
 
 import io.github.crabzilla.core.entity.EntityCommand
-import io.github.crabzilla.vertx.EntityCommandExecution
-import io.github.crabzilla.vertx.ProjectionData
+import io.github.crabzilla.vertx.entity.EntityCommandExecution
+import io.github.crabzilla.vertx.projection.ProjectionData
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler

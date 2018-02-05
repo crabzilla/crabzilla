@@ -16,7 +16,9 @@ class CustomerSummaryProjector(channelId: String, jdbi: Jdbi,
 
   : EventsProjector<CustomerSummaryProjectorDao>(channelId, jdbi, CustomerSummaryProjectorDao::class.java, daoFactory) {
 
-  private val log = LoggerFactory.getLogger(EventsProjector::class.java.simpleName)
+  companion object {
+    private val log = LoggerFactory.getLogger(CustomerSummaryProjector::class.java.simpleName)
+  }
 
   override fun write(dao: CustomerSummaryProjectorDao, targetId: String, event: DomainEvent) {
 
