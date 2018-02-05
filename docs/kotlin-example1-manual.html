@@ -429,25 +429,22 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#1-0-crabzilla-example1-core">1.0 crabzilla-example1-core</a>
-<ul class="sectlevel2">
-<li><a href="#1-1-data">1.1 Data</a>
 <ul class="sectlevel3">
-<li><a href="#1-1-1-events">1.1.1 Events</a></li>
-<li><a href="#1-1-2-commands">1.1.2 Commands</a></li>
+<li><a href="#1-1-events">1.1 Events</a></li>
+<li><a href="#1-2-commands">1.2 Commands</a></li>
+<li><a href="#1-3-internal-services">1.3 Internal Services</a></li>
+<li><a href="#1-4-read-model">1.4 Read Model</a></li>
 </ul>
 </li>
-<li><a href="#1-2-functions">1.2 Functions</a>
+<li><a href="#2-0-crabzilla-example1-handler">2.0 crabzilla-example1-handler</a>
 <ul class="sectlevel3">
-<li><a href="#1-2-1-commandvalidatorfn">1.2.1 CommandValidatorFn</a></li>
-<li><a href="#1-2-2-commandhandlerfn">1.2.2 CommandHandlerFn</a></li>
-<li><a href="#1-2-3-statetransitionfn">1.2.3 StateTransitionFn</a></li>
+<li><a href="#2-1-commandvalidatorfn">2.1 CommandValidatorFn</a></li>
+<li><a href="#2-2-commandhandlerfn">2.2 CommandHandlerFn</a></li>
+<li><a href="#2-3-statetransitionfn">2.3 StateTransitionFn</a></li>
+<li><a href="#2-4-aggregates">2.4 Aggregates</a></li>
 </ul>
 </li>
-<li><a href="#1-3-aggregates">1.3 Aggregates</a></li>
-<li><a href="#1-4-internal-services">1.4 Internal Services</a></li>
-<li><a href="#1-5-read-model">1.5 Read Model</a></li>
-</ul>
-</li>
+<li><a href="#3-0-crabzilla-example1-projector">3.0 crabzilla-example1-projector</a></li>
 </ul>
 </div>
 </div>
@@ -487,16 +484,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="1-0-crabzilla-example1-core"><a class="anchor" href="#1-0-crabzilla-example1-core"></a>1.0 crabzilla-example1-core</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>A library containing your domain model expressed in value objects, aggregates, commands, events, functions, etc.
+<p>A library containing your domain model expressed in value objects, aggregates, commands, events, etc.
 Internal services and repositories are just plain domain abstractions: interfaces or abstract classes. The scope is
 probably a <em>Bounded Context</em>. This module is also 100% agnostic about how data will be persisted to a relational
 database. This is called <em>persistence ignorance</em>. But it is aware of the JSON format needed to persist its commands,
 events, units of work, etc</p>
 </div>
-<div class="sect2">
-<h3 id="1-1-data"><a class="anchor" href="#1-1-data"></a>1.1 Data</h3>
 <div class="sect3">
-<h4 id="1-1-1-events"><a class="anchor" href="#1-1-1-events"></a>1.1.1 Events</h4>
+<h4 id="1-1-events"><a class="anchor" href="#1-1-events"></a>1.1 Events</h4>
 <div class="listingblock">
 <div class="title">CustomerData.kt</div>
 <div class="content">
@@ -509,7 +504,7 @@ data class CustomerDeactivated(val reason: String, val _when: Instant) : DomainE
 </div>
 </div>
 <div class="sect3">
-<h4 id="1-1-2-commands"><a class="anchor" href="#1-1-2-commands"></a>1.1.2 Commands</h4>
+<h4 id="1-2-commands"><a class="anchor" href="#1-2-commands"></a>1.2 Commands</h4>
 <div class="listingblock">
 <div class="title">CustomerData.kt</div>
 <div class="content">
@@ -528,61 +523,8 @@ data class CreateActivateCustomer(override val commandId: UUID,
 </div>
 </div>
 </div>
-</div>
 <div class="sect2">
-<h3 id="1-2-functions"><a class="anchor" href="#1-2-functions"></a>1.2 Functions</h3>
-<div class="sect3">
-<h4 id="1-2-1-commandvalidatorfn"><a class="anchor" href="#1-2-1-commandvalidatorfn"></a>1.2.1 CommandValidatorFn</h4>
-<div class="paragraph">
-<p>A non blocking and side effect free function:</p>
-</div>
-<div class="listingblock">
-<div class="title">CustomerFunctions.kt</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerFunctions.kt[tags=CommandValidatorFn]</code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="1-2-2-commandhandlerfn"><a class="anchor" href="#1-2-2-commandhandlerfn"></a>1.2.2 CommandHandlerFn</h4>
-<div class="paragraph">
-<p>A possibly blocking and NO side effect free function. Although not being side effect free (throws an exception), command
-handler verticles will wrap the result of this function into a result type something like <a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-core/src/main/java/io/github/crabzilla/core/entity/EntityCommandResult.kt">EntityCommandResult</a></p>
-</div>
-<div class="listingblock">
-<div class="title">CustomerFunctions.kt</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerFunctions.kt[tags=CommandHandlerFn]</code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="1-2-3-statetransitionfn"><a class="anchor" href="#1-2-3-statetransitionfn"></a>1.2.3 StateTransitionFn</h4>
-<div class="paragraph">
-<p>A non blocking and side effect free function:</p>
-</div>
-<div class="listingblock">
-<div class="title">CustomerFunctions.kt</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerFunctions.kt[tags=StateTransitionFn]</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="1-3-aggregates"><a class="anchor" href="#1-3-aggregates"></a>1.3 Aggregates</h3>
-<div class="paragraph">
-<p>An aggregate runs <strong>side effect free</strong> business logic and returns events. It can uses internal services and repositories.</p>
-</div>
-<div class="listingblock">
-<div class="title">Customer.kt</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">Unresolved directive in kotlin-example1-manual.adoc - include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/Customer.kt[tags=aggregate]</code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="1-4-internal-services"><a class="anchor" href="#1-4-internal-services"></a>1.4 Internal Services</h3>
+<h3 id="1-3-internal-services"><a class="anchor" href="#1-3-internal-services"></a>1.3 Internal Services</h3>
 <div class="paragraph">
 <p>Any internal service is expressed as an abstraction. No implementations within core module. And very important: <strong>internal
 services can  be blocking but must be side effect free</strong>.</p>
@@ -599,7 +541,7 @@ services can  be blocking but must be side effect free</strong>.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="1-5-read-model"><a class="anchor" href="#1-5-read-model"></a>1.5 Read Model</h3>
+<h3 id="1-4-read-model"><a class="anchor" href="#1-4-read-model"></a>1.4 Read Model</h3>
 <div class="paragraph">
 <p>Any repository is expressed as an abstraction. No implementations within core module.</p>
 </div>
@@ -621,11 +563,149 @@ can be easily tested with mocks and stubs.</p>
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="2-0-crabzilla-example1-handler"><a class="anchor" href="#2-0-crabzilla-example1-handler"></a>2.0 crabzilla-example1-handler</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Aggregates, functions to handle command and events and also implementations for your services and repositories.</p>
+</div>
+<div class="sect3">
+<h4 id="2-1-commandvalidatorfn"><a class="anchor" href="#2-1-commandvalidatorfn"></a>2.1 CommandValidatorFn</h4>
+<div class="paragraph">
+<p>A non blocking and side effect free function:</p>
+</div>
+<div class="listingblock">
+<div class="title">CustomerFunctions.kt</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandValidatorFn : (EntityCommand) -&gt; List&lt;String&gt; {
+  override fun invoke(command: EntityCommand): List&lt;String&gt; {
+    return when(command) {
+      is CreateCustomer -&gt;
+        if (command.name.equals("a bad name"))
+          listOf("Invalid name: ${command.name}") else listOf()
+      else -&gt; listOf() // all other commands are valid
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="2-2-commandhandlerfn"><a class="anchor" href="#2-2-commandhandlerfn"></a>2.2 CommandHandlerFn</h4>
+<div class="paragraph">
+<p>A possibly blocking and NO side effect free function. Although not being side effect free (throws an exception), command
+handler verticles will wrap the result of this function into a result type something like <a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-core/src/main/java/io/github/crabzilla/core/entity/EntityCommandResult.kt">EntityCommandResult</a></p>
+</div>
+<div class="listingblock">
+<div class="title">CustomerFunctions.kt</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class CommandHandlerFn(
+        private val trackerFactory: (Snapshot&lt;Customer&gt;) -&gt; StateTransitionsTracker&lt;Customer&gt;) :
+        (EntityCommand, Snapshot&lt;Customer&gt;) -&gt; EntityCommandResult {
+
+  override fun invoke(cmd: EntityCommand, snapshot: Snapshot&lt;Customer&gt;): EntityCommandResult {
+
+    val customer = snapshot.instance
+    val newVersion = snapshot.version.nextVersion()
+
+    return resultOf {
+      when (cmd) {
+        is CreateCustomer -&gt;
+          uowOf(cmd, customer.create(cmd.targetId, cmd.name), newVersion)
+        is ActivateCustomer -&gt; uowOf(cmd, customer.activate(cmd.reason), newVersion)
+        is DeactivateCustomer -&gt; uowOf(cmd, customer.deactivate(cmd.reason), newVersion)
+        is CreateActivateCustomer -&gt; {
+          val tracker = trackerFactory.invoke(snapshot)
+          val events = tracker
+                  .applyEvents({ c -&gt; c.create(cmd.targetId, cmd.name) })
+                  .applyEvents({ c -&gt; c.activate(cmd.reason) })
+                  .collectEvents()
+          uowOf(cmd, events, newVersion)
+        }
+        else -&gt; throw UnknownCommandException("for command ${cmd.javaClass.simpleName}")
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="2-3-statetransitionfn"><a class="anchor" href="#2-3-statetransitionfn"></a>2.3 StateTransitionFn</h4>
+<div class="paragraph">
+<p>A non blocking and side effect free function:</p>
+</div>
+<div class="listingblock">
+<div class="title">CustomerFunctions.kt</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">class StateTransitionFn : (DomainEvent, Customer) -&gt; Customer {
+  override fun invoke(event: DomainEvent, customer: Customer): Customer {
+    return when(event) {
+      is CustomerCreated -&gt; customer.copy(customerId = event.id, name =  event.name)
+      is CustomerActivated -&gt; customer.copy(isActive = true, reason = event.reason)
+      is CustomerDeactivated -&gt; customer.copy(isActive = false, reason = event.reason)
+      else -&gt; customer
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="2-4-aggregates"><a class="anchor" href="#2-4-aggregates"></a>2.4 Aggregates</h3>
+<div class="paragraph">
+<p>An aggregate runs <strong>side effect free</strong> business logic and returns events. It can uses internal services and repositories.</p>
+</div>
+<div class="listingblock">
+<div class="title">Customer.kt</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">data class Customer(val customerId: CustomerId? = null,
+                    val name: String? = null,
+                    val isActive: Boolean? = false,
+                    val reason: String? = null,
+                    val sampleInternalService: SampleInternalService) : Entity {
+
+  override val id: EntityId
+    get() = customerId!!
+
+  internal fun create(id: CustomerId, name: String): List&lt;DomainEvent&gt; {
+    require(this.customerId == null, { "customer already created" })
+    return eventsOf(CustomerCreated(id, name))
+  }
+
+  internal fun activate(reason: String): List&lt;DomainEvent&gt; {
+    customerMustExist()
+    return eventsOf(CustomerActivated(reason, sampleInternalService.now()))
+  }
+
+  internal fun deactivate(reason: String): List&lt;DomainEvent&gt; {
+    customerMustExist()
+    return eventsOf(CustomerDeactivated(reason, sampleInternalService.now()))
+  }
+
+  private fun customerMustExist() {
+    require(this.customerId != null, { "customer must exists" })
+  }
+
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="3-0-crabzilla-example1-projector"><a class="anchor" href="#3-0-crabzilla-example1-projector"></a>3.0 crabzilla-example1-projector</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><em>TODO</em></p>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2018-01-18 21:01:22 BRST
+Last updated 2018-02-05 01:27:18 BRST
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
