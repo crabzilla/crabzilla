@@ -1,12 +1,8 @@
 package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
-import io.github.crabzilla.vertx.CrabzillaVerticleFactory
-import io.github.crabzilla.vertx.configHandler
-import io.github.crabzilla.vertx.deployVerticles
-import io.github.crabzilla.vertx.deployVerticlesByName
+import io.github.crabzilla.vertx.*
 import io.github.crabzilla.vertx.pooler.PoolerVerticle
-import io.vertx.core.AbstractVerticle
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
@@ -16,7 +12,7 @@ import java.net.InetAddress
 
 // tag::launcher[]
 
-class ProjectorServiceLauncher : AbstractVerticle() {
+class ProjectorServiceLauncher : CrabzillaVerticle("example1-projector-launcher") {
 
   companion object {
 

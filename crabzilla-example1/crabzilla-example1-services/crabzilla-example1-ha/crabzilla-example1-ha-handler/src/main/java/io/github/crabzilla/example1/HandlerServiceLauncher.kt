@@ -4,13 +4,9 @@ import com.zaxxer.hikari.HikariDataSource
 import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerId
-import io.github.crabzilla.vertx.CrabzillaVerticleFactory
-import io.github.crabzilla.vertx.configHandler
-import io.github.crabzilla.vertx.deployVerticles
-import io.github.crabzilla.vertx.deployVerticlesByName
+import io.github.crabzilla.vertx.*
 import io.github.crabzilla.vertx.entity.EntityCommandExecution
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
-import io.vertx.core.AbstractVerticle
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
@@ -21,7 +17,7 @@ import java.util.*
 
 // tag::launcher[]
 
-class HandlerServiceLauncher : AbstractVerticle() {
+class HandlerServiceLauncher : CrabzillaVerticle("example1-handler-launcher") {
 
   companion object {
 

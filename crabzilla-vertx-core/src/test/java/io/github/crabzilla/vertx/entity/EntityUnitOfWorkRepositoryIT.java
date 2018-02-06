@@ -10,6 +10,7 @@ import io.github.crabzilla.core.entity.SnapshotData;
 import io.github.crabzilla.core.entity.Version;
 import io.github.crabzilla.example1.customer.*;
 import io.github.crabzilla.vertx.DbConcurrencyException;
+import io.github.crabzilla.vertx.entity.impl.EntityUnitOfWorkRepositoryImpl;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.jdbc.JDBCClient;

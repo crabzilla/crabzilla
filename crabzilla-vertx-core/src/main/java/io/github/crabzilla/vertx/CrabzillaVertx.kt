@@ -15,7 +15,6 @@ import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.DeploymentOptions
-import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
@@ -80,10 +79,14 @@ fun initVertx(vertx: Vertx) {
 
 }
 
-fun deployVerticles(vertx: Vertx, verticles: Set<Verticle>, deploymentOptions: DeploymentOptions = DeploymentOptions()) {
+fun deployVerticles(vertx: Vertx, verticles: Set<CrabzillaVerticle>, deploymentOptions: DeploymentOptions = DeploymentOptions()) {
  verticles.forEach({
    vertx.deployVerticle(it, deploymentOptions) { event ->
-      if (!event.succeeded()) log.error("Error deploying verticle ${it}", event.cause())
+      if (!event.succeeded()) {
+        log.error("Error deploying verticle ${it.name}", event.cause())
+      } else {
+        log.info("Verticle: ${it.name} deployed with ID: ${event.result()}", event.cause())
+      }
     }
  })
 }
@@ -91,8 +94,12 @@ fun deployVerticles(vertx: Vertx, verticles: Set<Verticle>, deploymentOptions: D
 fun deployVerticlesByName(vertx: Vertx, verticles: Set<String>, deploymentOptions: DeploymentOptions = DeploymentOptions()) {
   verticles.forEach({
     vertx.deployVerticle(it, deploymentOptions) { event ->
-      if (!event.succeeded()) log.error("Error deploying verticle ${it}", event.cause())
-    }
+      if (!event.succeeded()) {
+        log.error("Error deploying verticle ${it}", event.cause())
+      } else {
+        log.info("Verticle $it deployed with ID: ${event.result()}", event.cause())
+      }
+  }
   })
 }
 

@@ -25,7 +25,7 @@ services:
             - db
             - command-handler
         env_file:
-            - example1.env
+            - example1-test.env
 
     command-handler:
         image: java:alpine
@@ -37,7 +37,7 @@ services:
         depends_on:
             - db
         env_file:
-            - example1.env
+            - example1-test.env
 
     events-projector:
         image: java:alpine
@@ -49,4 +49,4 @@ services:
         depends_on:
             - db
         env_file:
-            - example1.env
+            - example1-test.env
