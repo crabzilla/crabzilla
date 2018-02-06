@@ -2,11 +2,11 @@ package io.github.crabzilla.vertx.entity
 
 import io.github.crabzilla.core.entity.EntityCommand
 import io.github.crabzilla.core.entity.EntityUnitOfWork
+import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT
-import io.github.crabzilla.vertx.entity.service.EntityCommandHandlerService
+import io.github.crabzilla.vertx.entity.impl.EntityUnitOfWorkRepositoryImpl
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
-import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
@@ -21,7 +21,7 @@ import java.util.*
 class EntityCommandRestVerticle(private val entityName: String,
                                 private val config: JsonObject,
                                 private val uowRepository: EntityUnitOfWorkRepositoryImpl,
-                                private val handlerService: EntityCommandHandlerService) : AbstractVerticle() {
+                                private val handlerService: EntityCommandHandlerService) : CrabzillaVerticle(entityName) {
 
   override fun start() {
 
@@ -53,7 +53,7 @@ class EntityCommandRestVerticle(private val entityName: String,
 
   }
 
-  internal fun postCommandHandler(routingContext: RoutingContext) {
+  private fun postCommandHandler(routingContext: RoutingContext) {
 
     val uowFuture = Future.future<EntityUnitOfWork>()
     val httpResp = routingContext.response()
@@ -116,7 +116,7 @@ class EntityCommandRestVerticle(private val entityName: String,
 
   }
 
-  internal fun getUowByCmdId(routingContext: RoutingContext) {
+  private fun getUowByCmdId(routingContext: RoutingContext) {
 
     val httpResp = routingContext.response()
     val cmdID = routingContext.request().getParam("cmdID")

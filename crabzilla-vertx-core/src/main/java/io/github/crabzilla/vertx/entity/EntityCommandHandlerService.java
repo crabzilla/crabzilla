@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.entity.service;
+package io.github.crabzilla.vertx.entity;
 
 import io.github.crabzilla.core.entity.EntityCommand;
 import io.github.crabzilla.vertx.entity.EntityCommandExecution;
