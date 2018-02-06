@@ -8,6 +8,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
 import org.slf4j.Logger;
 
+import static io.github.crabzilla.vertx.VerticleRole.PROJECTOR;
 import static java.util.Collections.singletonList;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -21,7 +22,7 @@ public class ProjectionHandlerVerticle<DAO> extends CrabzillaVerticle {
 
   public ProjectionHandlerVerticle(String eventsSourceEndpoint, EventsProjector<DAO> eventsProjector,
                                    CircuitBreaker circuitBreaker) {
-    super(eventsSourceEndpoint);
+    super(eventsSourceEndpoint, PROJECTOR);
     this.eventsSourceEndpoint = eventsSourceEndpoint;
     this.eventsProjector = eventsProjector;
     this.circuitBreaker = circuitBreaker;

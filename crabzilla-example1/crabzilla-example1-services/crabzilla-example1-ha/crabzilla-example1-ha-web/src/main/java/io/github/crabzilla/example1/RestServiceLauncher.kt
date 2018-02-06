@@ -1,7 +1,6 @@
 package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
-import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.configHandler
 import io.github.crabzilla.vertx.deployVerticles
 import io.vertx.core.Vertx
@@ -11,7 +10,7 @@ import java.net.InetAddress
 
 // tag::launcher[]
 
-class RestServiceLauncher : CrabzillaVerticle("example1-rest-launcher") {
+class RestServiceLauncher {
 
   companion object {
 

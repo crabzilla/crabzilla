@@ -25,8 +25,7 @@ public class JacksonGenericCodec<T> implements MessageCodec<T, T> {
       buffer.appendInt(barray.length);
       buffer.appendBytes(barray);
     } catch (JsonProcessingException e) {
-      e.printStackTrace();
-      throw new RuntimeException("Json exception", e);
+      throw new RuntimeException("Encoding Json", e);
     }
 
 
@@ -49,7 +48,7 @@ public class JacksonGenericCodec<T> implements MessageCodec<T, T> {
     try {
       readObj = mapper.readValue(content, clazz);
     } catch (Exception e) {
-      throw new RuntimeException("When decodingFromWire", e);
+      throw new RuntimeException("Decoding Json", e);
     }
 
     return (T) readObj;

@@ -34,8 +34,7 @@ class CustomerModule {
     val cache: ExpiringMap<String, Snapshot<Customer>> = ExpiringMap.create()
     val circuitBreaker = CircuitBreaker.create("Customer", vertx)
     val trackerFactory : (Snapshot<Customer>) -> StateTransitionsTracker<Customer> =
-            { instance -> StateTransitionsTracker(instance, stateTransitionFn)
-            }
+            { instance -> StateTransitionsTracker(instance, stateTransitionFn) }
     val cmdHandler = CommandHandlerFn(trackerFactory)
     val snapshotPromoter = SnapshotPromoter<Customer>
                     { instance -> StateTransitionsTracker(instance, stateTransitionFn) }

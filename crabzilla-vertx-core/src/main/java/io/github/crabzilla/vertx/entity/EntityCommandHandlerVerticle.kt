@@ -4,6 +4,7 @@ import io.github.crabzilla.core.UnknownCommandException
 import io.github.crabzilla.core.entity.*
 import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.DbConcurrencyException
+import io.github.crabzilla.vertx.VerticleRole.HANDLER
 import io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT.*
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.circuitbreaker.CircuitBreaker
@@ -21,7 +22,7 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
                                                private val snapshotPromoter: SnapshotPromoter<A>,
                                                private val eventJournal: EntityUnitOfWorkRepository,
                                                private val cache: ExpiringMap<String, Snapshot<A>>,
-                                               private val circuitBreaker: CircuitBreaker) : CrabzillaVerticle(name) {
+                                               private val circuitBreaker: CircuitBreaker) : CrabzillaVerticle(name, HANDLER) {
 
   @Throws(Exception::class)
   override fun start() {

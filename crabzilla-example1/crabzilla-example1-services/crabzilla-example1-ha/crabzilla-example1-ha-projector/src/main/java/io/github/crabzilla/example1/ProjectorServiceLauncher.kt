@@ -1,8 +1,10 @@
 package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
-import io.github.crabzilla.vertx.*
-import io.github.crabzilla.vertx.pooler.PoolerVerticle
+import io.github.crabzilla.vertx.CrabzillaVerticleFactory
+import io.github.crabzilla.vertx.VerticleRole.PROJECTOR
+import io.github.crabzilla.vertx.configHandler
+import io.github.crabzilla.vertx.deployVerticlesByName
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
@@ -12,7 +14,7 @@ import java.net.InetAddress
 
 // tag::launcher[]
 
-class ProjectorServiceLauncher : CrabzillaVerticle("example1-projector-launcher") {
+class ProjectorServiceLauncher {
 
   companion object {
 
@@ -24,7 +26,7 @@ class ProjectorServiceLauncher : CrabzillaVerticle("example1-projector-launcher"
     @JvmStatic
     fun main(args: Array<String>) {
 
-       val hostName = InetAddress.getLocalHost().hostName
+      val hostName = InetAddress.getLocalHost().hostName
       val mgr = HazelcastClusterManager()
       val vertxOptions = VertxOptions().setClusterManager(mgr).setHAEnabled(true).setHAGroup("events-projector")
                                        .setClusterHost(hostName)
@@ -49,13 +51,8 @@ class ProjectorServiceLauncher : CrabzillaVerticle("example1-projector-launcher"
               ds = component.datasource()
 
               val workerDeploymentOptions = DeploymentOptions().setHa(true).setWorker(true)
-              val poolerVerticle = PoolerVerticle("example1", component.projectionRepo(), 10000)
-              vertx.registerVerticleFactory(CrabzillaVerticleFactory(setOf(poolerVerticle), "crabzilla-pooler"))
-              vertx.registerVerticleFactory(CrabzillaVerticleFactory(component.projectorVerticles(), "crabzilla-projector"))
-
-              deployVerticles(vertx, setOf(ProjectorServiceLauncher()))
-//              deployVerticlesByName(vertx, setOf("crabzilla-pooler:example1"), workerDeploymentOptions)
-              deployVerticlesByName(vertx, setOf("crabzilla-projector:example1"), workerDeploymentOptions)
+              vertx.registerVerticleFactory(CrabzillaVerticleFactory(component.projectorVerticles(), PROJECTOR.prefix))
+              deployVerticlesByName(vertx, setOf(PROJECTOR.verticle("example1")), workerDeploymentOptions)
 
               future.complete()
 

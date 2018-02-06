@@ -1,6 +1,5 @@
-package io.github.crabzilla.example1.repositories
+package io.github.crabzilla.example1
 
-import io.github.crabzilla.example1.CustomerSummary
 import org.jdbi.v3.sqlobject.statement.SqlQuery
 
 // tag::dao[]

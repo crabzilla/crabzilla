@@ -1,4 +1,4 @@
-package io.github.crabzilla.example1.services
+package io.github.crabzilla.example1.impl
 
 import io.github.crabzilla.example1.SampleInternalService
 import java.time.Instant

@@ -3,8 +3,7 @@ package io.github.crabzilla.example1
 import dagger.Module
 import dagger.Provides
 import io.github.crabzilla.example1.customer.CustomerModule
-import io.github.crabzilla.example1.repositories.CustomerSummaryDao
-import io.github.crabzilla.example1.services.SampleInternalServiceImpl
+import io.github.crabzilla.example1.impl.SampleInternalServiceImpl
 import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
 import org.jdbi.v3.core.Jdbi
 import javax.inject.Singleton

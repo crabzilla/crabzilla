@@ -3,6 +3,7 @@ package io.github.crabzilla.vertx.entity
 import io.github.crabzilla.core.entity.EntityCommand
 import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.github.crabzilla.vertx.CrabzillaVerticle
+import io.github.crabzilla.vertx.VerticleRole.REST
 import io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT
 import io.github.crabzilla.vertx.entity.impl.EntityUnitOfWorkRepositoryImpl
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
@@ -18,10 +19,11 @@ import java.util.*
 
 
 // TODO add circuit breakers and healthchecks
+// TODO add endpoints for list/start/stop crabzilla verticles
 class EntityCommandRestVerticle(private val entityName: String,
                                 private val config: JsonObject,
                                 private val uowRepository: EntityUnitOfWorkRepositoryImpl,
-                                private val handlerService: EntityCommandHandlerService) : CrabzillaVerticle(entityName) {
+                                private val handlerService: EntityCommandHandlerService) : CrabzillaVerticle(entityName, REST) {
 
   override fun start() {
 

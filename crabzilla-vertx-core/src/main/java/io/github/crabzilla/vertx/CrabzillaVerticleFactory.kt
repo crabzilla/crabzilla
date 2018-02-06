@@ -17,4 +17,5 @@ class CrabzillaVerticleFactory(verticles: Set<CrabzillaVerticle>,
     return map[name.removePrefix(prefix() + ":")]
   }
 
+
 }

@@ -42,8 +42,6 @@ class JacksonJsonTest {
 
     val cmdAsJson = mapper.writerFor(CreateCustomer::class.java).writeValueAsString(command)
 
-    println(cmdAsJson)
-
     assertThat(mapper.readValue(cmdAsJson, CreateCustomer::class.java)).isEqualTo(command)
 
   }
@@ -79,41 +77,10 @@ class JacksonJsonTest {
 
     val uowAsJson = mapper.writeValueAsString(uow1)
 
-    System.out.println(uowAsJson);
-
-
-    System.out.println(uow1);
-
-
     val uow2 = mapper.readValue(uowAsJson, EntityUnitOfWork::class.java)
 
     assertThat(uow2).isEqualTo(uow1)
 
   }
 
-  val uow1 = """
-    {
-  "unitOfWorkId" : "7741355a-520b-4f36-a1e4-418a61b1a3f9",
-  "command" : {
-    "@class" : "io.github.crabzilla.example1.customer.CreateCustomer",
-    "commandId" : "49f0f4ca-7c19-46fb-9406-c8a33c2eb971",
-    "targetId" : {
-      "@class" : "io.github.crabzilla.example1.customer.CustomerId",
-      "id" : "fdcf38e4-34a7-46c9-b5de-051e6e19bd74"
-    },
-    "name" : "customer test"
-  },
-  "version" : {
-    "valueAsLong" : 1
-  },
-  "events" : [ {
-    "@class" : "io.github.crabzilla.example1.customer.CustomerCreated",
-    "id" : {
-      "@class" : "io.github.crabzilla.example1.customer.CustomerId",
-      "id" : "fdcf38e4-34a7-46c9-b5de-051e6e19bd74"
-    },
-    "name" : "customer test"
-  } ]
-}
-    """
 }
