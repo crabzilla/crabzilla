@@ -6,7 +6,6 @@ import io.github.crabzilla.vertx.deployVerticles
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
-import joptsimple.OptionParser
 import java.net.InetAddress
 
 // tag::launcher[]
@@ -23,13 +22,6 @@ class RestServiceLauncher {
     @JvmStatic
     fun main(args: Array<String>) {
 
-      val parser = OptionParser()
-      parser.accepts("conf").withRequiredArg()
-      parser.allowsUnrecognizedOptions()
-
-      val options = parser.parse(*args)
-      val configFile = options.valueOf("conf") as String?
-
       val hostName = InetAddress.getLocalHost().hostName
       val mgr = HazelcastClusterManager()
       val vertxOptions = VertxOptions().setClusterManager(mgr).setClusterHost(hostName)
@@ -41,10 +33,7 @@ class RestServiceLauncher {
 
           val vertx = res.result()
 
-          val defaultConfigFile = RestServiceLauncher::class.java.classLoader
-            .getResource("conf/config.properties").path
-
-          configHandler(vertx, configFile, defaultConfigFile, { config ->
+          configHandler(vertx, { config ->
 
             log.info("config = {}", config.encodePrettily())
 

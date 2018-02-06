@@ -19,19 +19,19 @@ import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
-import java.io.File
 
-val log = org.slf4j.LoggerFactory.getLogger("CrabzillaVertx")
+private val log = org.slf4j.LoggerFactory.getLogger("CrabzillaVertx")
 
-fun configHandler(vertx: Vertx, configFile: String?, defaultConfigFile: String?,
-                  handler: (JsonObject) -> Unit, shutdownHook: () -> Unit) {
+fun configHandler(vertx: Vertx, handler: (JsonObject) -> Unit, shutdownHook: () -> Unit) {
 
-  val retriever = ConfigRetriever.create(vertx, cfgOptions(configFile, defaultConfigFile))
+  val envOptions = ConfigStoreOptions().setType("env")
+  val retrieverOptions = ConfigRetrieverOptions().addStore(envOptions)
+  val retriever = ConfigRetriever.create(vertx,  retrieverOptions)
 
   retriever.getConfig { ar ->
 
     if (ar.failed()) {
-      log.error("failed to load config file ${configFile}", ar.cause())
+      log.error("failed to load configuration", ar.cause())
       return@getConfig
     }
 
@@ -47,37 +47,6 @@ fun configHandler(vertx: Vertx, configFile: String?, defaultConfigFile: String?,
     handler.invoke(config)
 
   }
-
-}
-
-private fun cfgOptions(configFile: String?, defaultConfigFile: String?): ConfigRetrieverOptions {
-
-  val environment = ConfigStoreOptions()
-    .setType("env")
-
-  if (configFile != null && !configFile.isEmpty()
-          && File(configFile).exists()) {
-
-    val file = ConfigStoreOptions()
-            .setType("file")
-            .setFormat("properties")
-            .setConfig(JsonObject().put("path", configFile))
-
-    log.info("Using file config {}", configFile)
-    log.info("Using env config {}", environment)
-
-    return ConfigRetrieverOptions().addStore(file).addStore(environment)
-  }
-
-  val file = ConfigStoreOptions()
-          .setType("file")
-          .setFormat("properties")
-          .setConfig(JsonObject().put("path", defaultConfigFile))
-
-  log.info("Using config {}", defaultConfigFile)
-  log.info("Using env config {}", environment)
-
-  return ConfigRetrieverOptions().addStore(file).addStore(environment)
 
 }
 

@@ -4,7 +4,10 @@ import com.zaxxer.hikari.HikariDataSource
 import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerId
-import io.github.crabzilla.vertx.*
+import io.github.crabzilla.vertx.CrabzillaVerticleFactory
+import io.github.crabzilla.vertx.configHandler
+import io.github.crabzilla.vertx.deployVerticles
+import io.github.crabzilla.vertx.deployVerticlesByName
 import io.github.crabzilla.vertx.entity.EntityCommandExecution
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.core.AbstractVerticle
@@ -13,7 +16,6 @@ import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
-import joptsimple.OptionParser
 import java.net.InetAddress
 import java.util.*
 
@@ -31,13 +33,6 @@ class HandlerServiceLauncher : AbstractVerticle() {
     @JvmStatic
     fun main(args: Array<String>) {
 
-      val parser = OptionParser()
-      parser.accepts("conf").withRequiredArg()
-      parser.allowsUnrecognizedOptions()
-
-      val options = parser.parse(*args)
-      val configFile = options.valueOf("conf") as String?
-
       val hostName = InetAddress.getLocalHost().hostName
       val mgr = HazelcastClusterManager()
       val vertxOptions = VertxOptions().setClusterManager(mgr).setHAEnabled(true).setHAGroup("command-handler")
@@ -50,10 +45,7 @@ class HandlerServiceLauncher : AbstractVerticle() {
 
           val vertx = res.result()
 
-          val defaultConfigFile = HandlerServiceLauncher::class.java.classLoader
-            .getResource("conf/config.properties").path
-
-          configHandler(vertx, configFile, defaultConfigFile, { config ->
+          configHandler(vertx, { config ->
 
             log.info("config = {}", config.encodePrettily())
 
@@ -70,11 +62,8 @@ class HandlerServiceLauncher : AbstractVerticle() {
               val workerDeploymentOptions = DeploymentOptions().setHa(true)
 
               deployVerticles(vertx, setOf(HandlerServiceLauncher()))
-
               deployVerticlesByName(vertx, setOf("crabzilla-command-handler:Customer"), workerDeploymentOptions)
-
               // justForTest(vertx)
-
               future.complete()
 
             }, { res ->

@@ -20,9 +20,3 @@ services:
         depends_on:
             - db
 
-#    dbtest:
-#        image: sami/mysql-client:latest
-#        restart: always
-#        command: ["mysql", "-h", "db", "-P",  "3306", "-u", "root", "-pmy-secret-pwd", "-e", "show databases;"]
-#        depends_on:
-#            - db

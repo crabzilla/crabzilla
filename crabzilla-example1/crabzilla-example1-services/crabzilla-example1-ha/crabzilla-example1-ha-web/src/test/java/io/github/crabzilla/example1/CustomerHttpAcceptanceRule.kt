@@ -186,7 +186,7 @@ class CustomerHttpAcceptanceRule {
     @JvmStatic
     @ClassRule
     fun docker(): DockerComposeRule = DockerComposeRule.builder()
-      .file("../docker-compose-test.yml")
+      .file("../docker-compose.yml")
 //      .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
       .waitingForService("web", toRespondOverHttp(8080) { port -> port.inFormat("http://127.0.0.1:8080/ping") })
       .saveLogsTo("target/dockerComposeRuleTest")

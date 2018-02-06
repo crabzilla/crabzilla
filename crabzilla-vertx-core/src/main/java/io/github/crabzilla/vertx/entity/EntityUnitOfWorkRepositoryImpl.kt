@@ -1,6 +1,5 @@
 package io.github.crabzilla.vertx.entity
 
-import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.commandToJson
 import io.github.crabzilla.core.entity.EntityCommand
 import io.github.crabzilla.core.entity.EntityUnitOfWork
@@ -19,7 +18,6 @@ import io.vertx.ext.sql.SQLRowStream
 import io.vertx.ext.sql.UpdateResult
 import org.slf4j.LoggerFactory.getLogger
 import java.util.*
-import java.util.stream.Collectors
 
 class EntityUnitOfWorkRepositoryImpl(private val aggregateRootName: String, private val client: JDBCClient) : EntityUnitOfWorkRepository {
 

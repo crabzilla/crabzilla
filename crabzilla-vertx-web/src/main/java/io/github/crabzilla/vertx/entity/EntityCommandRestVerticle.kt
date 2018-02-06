@@ -44,7 +44,7 @@ class EntityCommandRestVerticle(private val entityName: String,
             .handler({ this.getUowByCmdId(it) })
 
     val server = vertx.createHttpServer()
-    val port = config.getInteger("http.port")!!
+    val port = config.getInteger("HTTP_PORT")!!
 
     log.info("*** server on port ${port}")
 

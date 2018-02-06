@@ -8,7 +8,7 @@ import io.github.crabzilla.core.entity.EntityCommandResult
 import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.github.crabzilla.core.entity.Version
 import java.io.IOException
-import java.util.UUID
+import java.util.*
 
 class UnknownCommandException(s: String) : RuntimeException(s)
 

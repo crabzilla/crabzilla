@@ -2,9 +2,9 @@ package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Component
+import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
 import io.github.crabzilla.vertx.projection.ProjectionHandlerVerticle
 import io.github.crabzilla.vertx.projection.ProjectionRepository
-import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
 import javax.inject.Singleton
 
 // tag::component[]

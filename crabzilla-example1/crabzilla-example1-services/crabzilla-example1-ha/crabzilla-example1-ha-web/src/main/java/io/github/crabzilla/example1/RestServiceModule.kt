@@ -3,8 +3,8 @@ package io.github.crabzilla.example1
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoSet
-import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepositoryImpl
 import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
+import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepositoryImpl
 import io.github.crabzilla.vertx.entity.service.EntityCommandHandlerService
 import io.github.crabzilla.vertx.entity.service.EntityCommandHandlerServiceImpl
 import io.github.crabzilla.vertx.modules.CrabzillaModule

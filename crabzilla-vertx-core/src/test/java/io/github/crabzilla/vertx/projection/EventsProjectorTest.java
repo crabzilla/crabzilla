@@ -72,7 +72,7 @@ public class EventsProjectorTest {
 
     inOrder.verify(jdbi).open();
     inOrder.verify(handle).begin();
-    inOrder.verify(daoFactory).invoke(any(), any());
+    inOrder.verify(daoFactory).invoke(refEq(handle), any());
     inOrder.verify(dao).insert(eq(new CustomerSummary(customerId.getId(), "customer", false)));
     inOrder.verify(handle).commit();
     inOrder.verify(handle).close();
