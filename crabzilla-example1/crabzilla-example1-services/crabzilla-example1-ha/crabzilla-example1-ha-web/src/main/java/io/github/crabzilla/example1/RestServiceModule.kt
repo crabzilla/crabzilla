@@ -34,8 +34,8 @@ class RestServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vert
 
   @Provides
   @Singleton
-  fun uowRepo(@WriteDatabase jdbcClient: JDBCClient): EntityUnitOfWorkRepositoryImpl {
-    return EntityUnitOfWorkRepositoryImpl("Customer", jdbcClient)
+  fun uowRepository(@WriteDatabase jdbcClient: JDBCClient): EntityUnitOfWorkRepositoryImpl {
+    return EntityUnitOfWorkRepositoryImpl(jdbcClient)
   }
 
 }

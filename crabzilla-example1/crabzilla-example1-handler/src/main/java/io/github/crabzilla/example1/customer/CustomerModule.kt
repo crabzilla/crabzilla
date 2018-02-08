@@ -42,11 +42,5 @@ class CustomerModule {
       snapshotPromoter, eventJournal, cache, circuitBreaker)
   }
 
-  @Provides
-  @Singleton
-  fun uowRepo(@WriteDatabase jdbcClient: JDBCClient): EntityUnitOfWorkRepository {
-    return EntityUnitOfWorkRepositoryImpl("Customer", jdbcClient)
-  }
-
 }
 // end::module[]

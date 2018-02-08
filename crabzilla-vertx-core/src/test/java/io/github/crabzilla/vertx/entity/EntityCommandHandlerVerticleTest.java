@@ -122,11 +122,11 @@ public class EntityCommandHandlerVerticleTest {
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                       eq(initialSnapshot.getVersion()),
-                                                      any(Future.class));
+                                                      any(Future.class), eq(ENTITY_NAME));
 
     doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Long>>) (uow, future) ->
             future.complete(1L)))
-            .when(eventRepository).append(eq(expectedUow), any(Future.class));
+            .when(eventRepository).append(eq(expectedUow), any(Future.class), eq(ENTITY_NAME));
 
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(EntityCommandResult.Companion.success(expectedUow));
@@ -147,11 +147,11 @@ public class EntityCommandHandlerVerticleTest {
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
-                                                         any());
+                                                         any(), eq(ENTITY_NAME));
 
       inOrder.verify(cmdHandlerFn).invoke(eq(createCustomerCmd), eq(initialSnapshot));
 
-      inOrder.verify(eventRepository).append(eq(expectedUow), any());
+      inOrder.verify(eventRepository).append(eq(expectedUow), any(), eq(ENTITY_NAME));
 
       verifyNoMoreInteractions(validatorFn, eventRepository, cmdHandlerFn);
 
@@ -190,7 +190,7 @@ public class EntityCommandHandlerVerticleTest {
             future.fail(expectedException)))
             .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                       eq(initialSnapshot.getVersion()),
-                                                      any(Future.class));
+                                                      any(Future.class), eq(ENTITY_NAME));
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
@@ -205,7 +205,7 @@ public class EntityCommandHandlerVerticleTest {
 //
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
-                                                         any());
+                                                         any(), eq(ENTITY_NAME));
 
       verifyNoMoreInteractions(validatorFn, eventRepository);
 
@@ -239,11 +239,11 @@ public class EntityCommandHandlerVerticleTest {
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                       eq(initialSnapshot.getVersion()),
-                                                      any(Future.class));
+                                                      any(Future.class), eq(ENTITY_NAME));
 
     doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Long>>) (uow, future) ->
             future.fail(expectedException)))
-            .when(eventRepository).append(eq(expectedUow), any(Future.class));
+            .when(eventRepository).append(eq(expectedUow), any(Future.class), eq(ENTITY_NAME));
 
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(EntityCommandResult.Companion.success(expectedUow));
@@ -261,11 +261,11 @@ public class EntityCommandHandlerVerticleTest {
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
-                                                         any());
+                                                         any(), eq(ENTITY_NAME));
 
       inOrder.verify(cmdHandlerFn).invoke(eq(createCustomerCmd), eq(initialSnapshot));
 
-      inOrder.verify(eventRepository).append(eq(expectedUow), any());
+      inOrder.verify(eventRepository).append(eq(expectedUow), any(), eq(ENTITY_NAME));
 
       verifyNoMoreInteractions(validatorFn, eventRepository, cmdHandlerFn);
 
@@ -298,11 +298,11 @@ public class EntityCommandHandlerVerticleTest {
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
             eq(initialSnapshot.getVersion()),
-            any(Future.class));
+            any(Future.class), eq(ENTITY_NAME));
 
     doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Long>>) (uow, future) ->
             future.fail(new DbConcurrencyException(FORCED_CONCURRENCY_EXCEPTION))))
-            .when(eventRepository).append(eq(expectedUow), any(Future.class));
+            .when(eventRepository).append(eq(expectedUow), any(Future.class), eq(ENTITY_NAME));
 
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(EntityCommandResult.Companion.success(expectedUow));
@@ -320,11 +320,11 @@ public class EntityCommandHandlerVerticleTest {
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),
-              any());
+              any(), eq(ENTITY_NAME));
 
       inOrder.verify(cmdHandlerFn).invoke(eq(createCustomerCmd), eq(initialSnapshot));
 
-      inOrder.verify(eventRepository).append(eq(expectedUow), any());
+      inOrder.verify(eventRepository).append(eq(expectedUow), any(), eq(ENTITY_NAME));
 
       verifyNoMoreInteractions(validatorFn, eventRepository, cmdHandlerFn);
 
@@ -359,11 +359,11 @@ public class EntityCommandHandlerVerticleTest {
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
             eq(initialSnapshot.getVersion()),
-            any(Future.class));
+            any(Future.class), eq(ENTITY_NAME));
 
     doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Long>>) (uow, future) ->
             future.complete(1L)))
-            .when(eventRepository).append(eq(expectedUow), any(Future.class));
+            .when(eventRepository).append(eq(expectedUow), any(Future.class), eq(ENTITY_NAME));
 
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(EntityCommandResult.Companion.error(new RuntimeException("SOME ERROR WITHIN COMMAND HANDLER")));
@@ -381,7 +381,7 @@ public class EntityCommandHandlerVerticleTest {
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),
-              any());
+              any(), eq(ENTITY_NAME));
 
       inOrder.verify(cmdHandlerFn).invoke(eq(createCustomerCmd), eq(initialSnapshot));
 
@@ -450,7 +450,7 @@ public class EntityCommandHandlerVerticleTest {
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
             eq(initialSnapshot.getVersion()),
-            any(Future.class));
+            any(Future.class), eq(ENTITY_NAME));
 
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(EntityCommandResult.Companion.error(new UnknownCommandException("for command UnknownCommand")));
@@ -468,7 +468,7 @@ public class EntityCommandHandlerVerticleTest {
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),
-              any());
+              any(), eq(ENTITY_NAME));
 
       inOrder.verify(cmdHandlerFn).invoke(eq(createCustomerCmd), eq(initialSnapshot));
 

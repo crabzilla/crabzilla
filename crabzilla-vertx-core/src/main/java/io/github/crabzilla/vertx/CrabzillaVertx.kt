@@ -14,10 +14,13 @@ import io.github.crabzilla.vertx.projection.ProjectionData
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
+import io.vertx.core.AbstractVerticle
 import io.vertx.core.DeploymentOptions
+import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
+import io.vertx.core.spi.VerticleFactory
 
 private val log = org.slf4j.LoggerFactory.getLogger("CrabzillaVertx")
 
@@ -25,7 +28,7 @@ fun configHandler(vertx: Vertx, handler: (JsonObject) -> Unit, shutdownHook: () 
 
   val envOptions = ConfigStoreOptions().setType("env")
   val retrieverOptions = ConfigRetrieverOptions().addStore(envOptions)
-  val retriever = ConfigRetriever.create(vertx,  retrieverOptions)
+  val retriever = ConfigRetriever.create(vertx, retrieverOptions)
 
   retriever.getConfig { ar ->
 
@@ -103,3 +106,35 @@ fun deployVerticlesByName(vertx: Vertx, verticles: Set<String>, deploymentOption
   })
 }
 
+abstract class CrabzillaVerticle(open val name: String, val role: VerticleRole) : AbstractVerticle()
+
+class CrabzillaVerticleFactory(verticles: Set<CrabzillaVerticle>, val role: VerticleRole) : VerticleFactory {
+
+  private val map = verticles.associateBy({it.name}, {it})
+
+  override fun prefix(): String {
+    return role.prefix()
+  }
+
+  @Throws(Exception::class)
+  override fun createVerticle(name: String, classLoader: ClassLoader): Verticle? {
+    return map[name.removePrefix(prefix() + ":")]
+  }
+
+}
+
+enum class VerticleRole {
+
+  REST, HANDLER, PROJECTOR, POOLER ;
+
+  fun verticle(verticleName: String): String {
+    return "${prefix()}.toLowerCase():$verticleName"
+  }
+
+  fun prefix(): String {
+    return this.name.toLowerCase()
+  }
+
+}
+
+class DbConcurrencyException(s: String) : RuntimeException(s)

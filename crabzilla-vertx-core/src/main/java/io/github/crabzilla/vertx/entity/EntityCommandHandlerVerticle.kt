@@ -99,7 +99,7 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
         val selectAfterVersionFuture = Future.future<SnapshotData>()
 
         // command handler function _may_ be blocking if your aggregate are using blocking internal services
-        eventJournal.selectAfterVersion(targetId, cachedSnapshot.version, selectAfterVersionFuture)
+        eventJournal.selectAfterVersion(targetId, cachedSnapshot.version, selectAfterVersionFuture, name)
 
         selectAfterVersionFuture.setHandler { fromEventRepoResult ->
 
@@ -131,7 +131,7 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
             result.inCaseOfSuccess({ uow ->
 
               val appendFuture = Future.future<Long>()
-              eventJournal.append(uow!!, appendFuture)
+              eventJournal.append(uow!!, appendFuture, name)
 
               appendFuture.setHandler { appendAsyncResult ->
 

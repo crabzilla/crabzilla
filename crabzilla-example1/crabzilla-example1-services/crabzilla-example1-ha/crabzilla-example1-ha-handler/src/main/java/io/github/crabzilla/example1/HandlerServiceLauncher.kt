@@ -56,7 +56,7 @@ class HandlerServiceLauncher {
 
               ds = app.datasource()
 
-              vertx.registerVerticleFactory(CrabzillaVerticleFactory(app.commandVerticles(), HANDLER.prefix))
+              vertx.registerVerticleFactory(CrabzillaVerticleFactory(app.commandVerticles(), HANDLER))
 
               val workerDeploymentOptions = DeploymentOptions().setHa(true)
 

@@ -10,6 +10,7 @@ import io.github.crabzilla.core.listOfEventsToJson
 import io.github.crabzilla.vertx.DbConcurrencyException
 import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
 import io.github.crabzilla.vertx.helpers.VertxSqlHelper.*
+import io.github.crabzilla.vertx.projection.ProjectionData
 import io.vertx.core.Future
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
@@ -20,7 +21,7 @@ import io.vertx.ext.sql.UpdateResult
 import org.slf4j.LoggerFactory.getLogger
 import java.util.*
 
-class EntityUnitOfWorkRepositoryImpl(private val aggregateRootName: String, private val client: JDBCClient) : EntityUnitOfWorkRepository {
+class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUnitOfWorkRepository {
 
   companion object {
 
@@ -86,7 +87,8 @@ class EntityUnitOfWorkRepositoryImpl(private val aggregateRootName: String, priv
   }
 
   override fun selectAfterVersion(id: String, version: Version,
-                                  selectAfterVersionFuture: Future<SnapshotData>) {
+                                  selectAfterVersionFuture: Future<SnapshotData>,
+                                  aggregateRootName: String) {
 
     log.info("will load id [{}] after version [{}]", id, version.valueAsLong)
 
@@ -156,7 +158,7 @@ class EntityUnitOfWorkRepositoryImpl(private val aggregateRootName: String, priv
     }
   }
 
-  override fun append(unitOfWork: EntityUnitOfWork, appendFuture: Future<Long>) {
+  override fun append(unitOfWork: EntityUnitOfWork, appendFuture: Future<Long>, aggregateRootName: String) {
 
     val SELECT_CURRENT_VERSION = "select max(version) as last_version from units_of_work where ar_id = ? and ar_name = ? "
 
@@ -276,6 +278,74 @@ class EntityUnitOfWorkRepositoryImpl(private val aggregateRootName: String, priv
 
     }
 
+  }
+
+  override fun selectAfterUowSequence(uowSequence: Long?, maxRows: Int?,
+                                      selectAfterUowSeq: Future<List<ProjectionData>>) {
+
+    log.info("will load after uowSequence [{}]", uowSequence)
+
+    val params = JsonArray().add(uowSequence!!)
+
+    val SELECT_AFTER_UOW_SEQ = "select uow_id, uow_seq_number, ar_id as target_id, uow_events " +
+      "  from units_of_work " +
+      " where uow_seq_number > ? " +
+      " order by uow_seq_number " +
+      " limit " + maxRows
+
+    client.getConnection { getConn ->
+      if (getConn.failed()) {
+        selectAfterUowSeq.fail(getConn.cause())
+        return@getConnection
+      }
+
+      val sqlConn = getConn.result()
+      val streamFuture = Future.future<SQLRowStream>()
+      queryStreamWithParams(sqlConn, SELECT_AFTER_UOW_SEQ, params, streamFuture)
+
+      streamFuture.setHandler { ar ->
+
+        if (ar.failed()) {
+          selectAfterUowSeq.fail(ar.cause())
+          log.error("when scanning for projectionData after uowSequence " + uowSequence, ar.cause())
+          return@setHandler
+        }
+
+        val stream = ar.result()
+        val list = ArrayList<ProjectionData>()
+        stream
+          .resultSetClosedHandler { v ->
+            // will ask to restart the stream with the new result set if any
+            stream.moreResults()
+          }
+          .handler { row ->
+            val _uowId = UUID.fromString(row.getString(0))
+            val _uowSequence = row.getLong(1)
+            val _targetId = row.getString(2)
+            val _events = listOfEventsFromJson(Json.mapper, row.getString(3))
+            val projectionData = ProjectionData(_uowId, _uowSequence!!, _targetId, _events)
+            list.add(projectionData)
+
+          }.endHandler { event ->
+
+            selectAfterUowSeq.complete(list)
+
+            log.info("found {} instances of projectionData after uowSequence {}",
+              list.size, uowSequence)
+
+            sqlConn.close { done ->
+
+              if (done.failed()) {
+                log.error("when closing sql connection", done.cause())
+              }
+
+            }
+
+          }
+
+      }
+
+    }
   }
 
 }
