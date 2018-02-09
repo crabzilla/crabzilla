@@ -1,6 +1,5 @@
 package io.github.crabzilla.vertx.entity;
 
-import io.github.crabzilla.core.UnknownCommandException;
 import io.github.crabzilla.core.entity.*;
 import io.github.crabzilla.example1.SampleInternalService;
 import io.github.crabzilla.example1.customer.*;
@@ -453,7 +452,7 @@ public class EntityCommandHandlerVerticleTest {
             any(Future.class), eq(ENTITY_NAME));
 
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
-            .thenReturn(EntityCommandResult.Companion.error(new UnknownCommandException("for command UnknownCommand")));
+            .thenReturn(null);
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 

@@ -22,11 +22,11 @@ import static java.util.Collections.singletonList;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-public class EventsProjectorTest {
+public class AbstractEventsProjectorTest {
 
   final static String EVENTS_ENDPOINT = "example1";
 
-  EventsProjector<CustomerSummaryProjectionDao> eventsProjector;
+  AbstractEventsProjector<CustomerSummaryProjectionDao> eventsProjector;
   @Mock
   Function2<Handle, Class<CustomerSummaryProjectionDao>, CustomerSummaryProjectionDao> daoFactory;
   @Mock
@@ -41,7 +41,7 @@ public class EventsProjectorTest {
 
     initMocks(this);
 
-    eventsProjector = new EventsProjector<CustomerSummaryProjectionDao>(EVENTS_ENDPOINT, jdbi, CustomerSummaryProjectionDao.class, daoFactory) {
+    eventsProjector = new AbstractEventsProjector<CustomerSummaryProjectionDao>(EVENTS_ENDPOINT, jdbi, CustomerSummaryProjectionDao.class, daoFactory) {
       @Override
       public void write(CustomerSummaryProjectionDao customerSummaryDao, @NotNull String targetId, @NotNull DomainEvent event) {
         CustomerCreated e = (CustomerCreated) event;

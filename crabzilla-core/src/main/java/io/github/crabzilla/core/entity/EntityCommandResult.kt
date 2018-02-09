@@ -17,7 +17,7 @@ class EntityCommandResult private constructor(private val unitOfWork: EntityUnit
 
   companion object {
 
-    fun success(uow: EntityUnitOfWork): EntityCommandResult {
+    fun success(uow: EntityUnitOfWork?): EntityCommandResult {
       return EntityCommandResult(uow, null)
     }
 

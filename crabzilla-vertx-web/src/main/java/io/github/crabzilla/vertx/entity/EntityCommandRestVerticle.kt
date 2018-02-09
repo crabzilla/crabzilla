@@ -4,7 +4,7 @@ import io.github.crabzilla.core.entity.EntityCommand
 import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.VerticleRole.REST
-import io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT
+import io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT.*
 import io.github.crabzilla.vertx.entity.impl.EntityUnitOfWorkRepositoryImpl
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
@@ -99,12 +99,12 @@ class EntityCommandRestVerticle(private val entityName: String,
         val result = response.result() as EntityCommandExecution
         log.info("result = {}", result)
 
-        if (result.result == RESULT.SUCCESS) {
+        if (result.result == SUCCESS) {
           val location = routingContext.request().absoluteURI() + "/" + result.unitOfWork!!
             .command.commandId.toString()
           httpResp.setStatusCode(201).headers().add("Location", location).add("Content-Type", "application/json")
         } else {
-          if (result.result == RESULT.VALIDATION_ERROR || result.result == RESULT.UNKNOWN_COMMAND) {
+          if (result.result == VALIDATION_ERROR || result.result == UNKNOWN_COMMAND) {
             httpResp.statusCode = 400
           } else {
             httpResp.statusCode = 500

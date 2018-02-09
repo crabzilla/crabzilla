@@ -41,7 +41,7 @@ public class ProjectionHandlerVerticleTest {
 
   Vertx vertx;
   CircuitBreaker circuitBreaker;
-  EventsProjector<CustomerSummaryProjectionDao> eventsProjector;
+  AbstractEventsProjector<CustomerSummaryProjectionDao> eventsProjector;
 
   @Mock
   Function2<Handle, Class<CustomerSummaryProjectionDao>, CustomerSummaryProjectionDao> daoFactory;
@@ -64,7 +64,7 @@ public class ProjectionHandlerVerticleTest {
     when(jdbi.open()).thenReturn(handle);
     when(daoFactory.invoke(refEq(handle), any())).thenReturn(dao);
 
-    eventsProjector = new EventsProjector<CustomerSummaryProjectionDao>(EVENTS_ENDPOINT, jdbi, CustomerSummaryProjectionDao.class, daoFactory) {
+    eventsProjector = new AbstractEventsProjector<CustomerSummaryProjectionDao>(EVENTS_ENDPOINT, jdbi, CustomerSummaryProjectionDao.class, daoFactory) {
       @Override
       public void write(CustomerSummaryProjectionDao customerSummaryDao, @NotNull String targetId, @NotNull DomainEvent event) {
         CustomerCreated e = (CustomerCreated) event;

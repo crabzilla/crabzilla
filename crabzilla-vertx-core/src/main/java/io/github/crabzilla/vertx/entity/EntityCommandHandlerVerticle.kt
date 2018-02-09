@@ -1,6 +1,5 @@
 package io.github.crabzilla.vertx.entity
 
-import io.github.crabzilla.core.UnknownCommandException
 import io.github.crabzilla.core.entity.*
 import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.DbConcurrencyException
@@ -17,7 +16,7 @@ import org.slf4j.LoggerFactory.getLogger
 
 class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
                                                private val seedValue: A,
-                                               private val cmdHandler: (EntityCommand, Snapshot<A>) -> EntityCommandResult,
+                                               private val cmdHandler: (EntityCommand, Snapshot<A>) -> EntityCommandResult?,
                                                private val validatorFn: (EntityCommand) -> List<String>,
                                                private val snapshotPromoter: SnapshotPromoter<A>,
                                                private val eventJournal: EntityUnitOfWorkRepository,
@@ -128,6 +127,11 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
 
             val result = cmdHandler.invoke(command, resultingSnapshot)
 
+            if (result == null) {
+              future2.complete(EntityCommandExecution(result = UNKNOWN_COMMAND, commandId = command.commandId))
+              return@executeBlocking
+            }
+
             result.inCaseOfSuccess({ uow ->
 
               val appendFuture = Future.future<Long>()
@@ -158,12 +162,8 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
 
             result.inCaseOfError({ error ->
               log.error("commandExecution", error.message)
-              if (error is UnknownCommandException) {
-                future2.complete(EntityCommandExecution(result = UNKNOWN_COMMAND, commandId = command.commandId))
-              } else {
                 future2.complete(EntityCommandExecution(result = HANDLING_ERROR, commandId = command.commandId,
                   constraints = listOf(error.message)))
-              }
             })
 
           }) { res ->

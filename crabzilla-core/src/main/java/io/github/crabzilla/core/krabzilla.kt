@@ -10,15 +10,13 @@ import io.github.crabzilla.core.entity.Version
 import java.io.IOException
 import java.util.*
 
-class UnknownCommandException(s: String) : RuntimeException(s)
+// command handling helper functions
 
-// helpers functions
-
-fun resultOf(f: () -> EntityUnitOfWork): EntityCommandResult {
+fun resultOf(f: () -> EntityUnitOfWork?): EntityCommandResult {
   return try {
     EntityCommandResult.success(f.invoke()) }
-  catch (e: Throwable) {
-    EntityCommandResult.error(RuntimeException(e)) }
+  catch (e: RuntimeException) {
+    EntityCommandResult.error(e) }
 }
 
 fun uowOf(command: EntityCommand, events: List<DomainEvent>, version: Version): EntityUnitOfWork {

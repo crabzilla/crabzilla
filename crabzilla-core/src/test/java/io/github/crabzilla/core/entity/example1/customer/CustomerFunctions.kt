@@ -1,7 +1,6 @@
 package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.UnknownCommandException
 import io.github.crabzilla.core.entity.EntityCommand
 import io.github.crabzilla.core.entity.EntityCommandResult
 import io.github.crabzilla.core.entity.Snapshot
@@ -43,9 +42,9 @@ class CommandValidatorFn : (EntityCommand) -> List<String> {
 
 class CommandHandlerFn(
         private val trackerFactory: (Snapshot<Customer>) -> StateTransitionsTracker<Customer>) :
-        (EntityCommand, Snapshot<Customer>) -> EntityCommandResult {
+        (EntityCommand, Snapshot<Customer>) -> EntityCommandResult? {
 
-  override fun invoke(cmd: EntityCommand, snapshot: Snapshot<Customer>): EntityCommandResult {
+  override fun invoke(cmd: EntityCommand, snapshot: Snapshot<Customer>): EntityCommandResult? {
 
     val customer = snapshot.instance
     val newVersion = snapshot.version.nextVersion()
@@ -64,7 +63,7 @@ class CommandHandlerFn(
                   .collectEvents()
           uowOf(cmd, events, newVersion)
         }
-        else -> throw UnknownCommandException("for command ${cmd.javaClass.simpleName}")
+        else -> null
       }
     }
   }

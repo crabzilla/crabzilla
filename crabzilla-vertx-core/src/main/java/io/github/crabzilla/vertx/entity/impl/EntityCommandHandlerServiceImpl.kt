@@ -27,7 +27,7 @@ class EntityCommandHandlerServiceImpl(private val vertx: Vertx, private val proj
     vertx.eventBus().send<EntityCommand>(handlerEndpoint, command, commandDeliveryOptions) { response ->
 
       if (!response.succeeded()) {
-        log.error("eventbus.handleCommand", response.cause())
+        log.error("postCommand", response.cause())
         handler.handle(Future.failedFuture(response.cause()))
         return@send
       }

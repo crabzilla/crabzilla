@@ -5,7 +5,7 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerDeactivated
-import io.github.crabzilla.vertx.projection.EventsProjector
+import io.github.crabzilla.vertx.projection.AbstractEventsProjector
 import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
 import org.slf4j.LoggerFactory
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 class CustomerSummaryProjector(channelId: String, jdbi: Jdbi,
                                daoFactory: (Handle, Class<CustomerSummaryProjectorDao>) -> CustomerSummaryProjectorDao)
 
-  : EventsProjector<CustomerSummaryProjectorDao>(channelId, jdbi, CustomerSummaryProjectorDao::class.java, daoFactory) {
+  : AbstractEventsProjector<CustomerSummaryProjectorDao>(channelId, jdbi, CustomerSummaryProjectorDao::class.java, daoFactory) {
 
   companion object {
     private val log = LoggerFactory.getLogger(CustomerSummaryProjector::class.java.simpleName)

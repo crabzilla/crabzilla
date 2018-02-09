@@ -1,22 +1,15 @@
 package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
-import io.github.crabzilla.example1.customer.ActivateCustomer
-import io.github.crabzilla.example1.customer.CreateCustomer
-import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.CrabzillaVerticleFactory
 import io.github.crabzilla.vertx.VerticleRole.HANDLER
 import io.github.crabzilla.vertx.configHandler
 import io.github.crabzilla.vertx.deployVerticlesByName
-import io.github.crabzilla.vertx.entity.EntityCommandExecution
-import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
-import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import java.net.InetAddress
-import java.util.*
 
 // tag::launcher[]
 
