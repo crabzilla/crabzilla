@@ -92,7 +92,7 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
 
     log.info("will load id [{}] after version [{}]", id, version.valueAsLong)
 
-    val SELECT_AFTER_VERSION = "select uow_events, version from units_of_work " +
+    val selectAfterVersionSql = "select uow_events, version from units_of_work " +
       " where ar_id = ? " +
       "   and ar_name = ? " +
       "   and version > ? " +
@@ -108,7 +108,7 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
 
       val sqlConn = getConn.result()
       val streamFuture = Future.future<SQLRowStream>()
-      queryStreamWithParams(sqlConn, SELECT_AFTER_VERSION, params, streamFuture)
+      queryStreamWithParams(sqlConn, selectAfterVersionSql, params, streamFuture)
 
       streamFuture.setHandler { ar ->
 
@@ -120,7 +120,7 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
         val stream = ar.result()
         val list = ArrayList<SnapshotData>()
         stream
-          .resultSetClosedHandler { v ->
+          .resultSetClosedHandler {
             // will ask to restart the stream with the new result set if any
             stream.moreResults()
           }
@@ -160,9 +160,9 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
 
   override fun append(unitOfWork: EntityUnitOfWork, appendFuture: Future<Long>, aggregateRootName: String) {
 
-    val SELECT_CURRENT_VERSION = "select max(version) as last_version from units_of_work where ar_id = ? and ar_name = ? "
+    val selectCurrentVersionSql = "select max(version) as last_version from units_of_work where ar_id = ? and ar_name = ? "
 
-    val INSERT_UOW = "insert into units_of_work " +
+    val insertUnitOfWorkSql = "insert into units_of_work " +
       "(uow_id, uow_events, cmd_id, cmd_data, ar_id, ar_name, version) " +
       "values (?, ?, ?, ?, ?, ?, ?)"
 
@@ -191,7 +191,7 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
           .add(aggregateRootName)
 
         val resultSetFuture = Future.future<ResultSet>()
-        queryWithParams(sqlConn, SELECT_CURRENT_VERSION, params1, resultSetFuture)
+        queryWithParams(sqlConn, selectCurrentVersionSql, params1, resultSetFuture)
         resultSetFuture.setHandler { asyncResultResultSet ->
 
           if (asyncResultResultSet.failed()) {
@@ -239,7 +239,7 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
             .add(unitOfWork.version.valueAsLong)
 
           val updateResultFuture = Future.future<UpdateResult>()
-          updateWithParams(sqlConn, INSERT_UOW, params2, updateResultFuture)
+          updateWithParams(sqlConn, insertUnitOfWorkSql, params2, updateResultFuture)
 
           updateResultFuture.setHandler { asyncResultUpdateResult ->
             if (asyncResultUpdateResult.failed()) {
@@ -280,14 +280,14 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
 
   }
 
-  override fun selectAfterUowSequence(uowSequence: Long?, maxRows: Int?,
+  override fun selectAfterUowSequence(uowSequence: Long, maxRows: Int,
                                       selectAfterUowSeq: Future<List<ProjectionData>>) {
 
     log.info("will load after uowSequence [{}]", uowSequence)
 
-    val params = JsonArray().add(uowSequence!!)
+    val params = JsonArray().add(uowSequence)
 
-    val SELECT_AFTER_UOW_SEQ = "select uow_id, uow_seq_number, ar_id as target_id, uow_events " +
+    val selectAfterUowSequenceSql = "select uow_id, uow_seq_number, ar_id as target_id, uow_events " +
       "  from units_of_work " +
       " where uow_seq_number > ? " +
       " order by uow_seq_number " +
@@ -301,7 +301,7 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
 
       val sqlConn = getConn.result()
       val streamFuture = Future.future<SQLRowStream>()
-      queryStreamWithParams(sqlConn, SELECT_AFTER_UOW_SEQ, params, streamFuture)
+      queryStreamWithParams(sqlConn, selectAfterUowSequenceSql, params, streamFuture)
 
       streamFuture.setHandler { ar ->
 
@@ -314,19 +314,19 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
         val stream = ar.result()
         val list = ArrayList<ProjectionData>()
         stream
-          .resultSetClosedHandler { v ->
+          .resultSetClosedHandler { _ ->
             // will ask to restart the stream with the new result set if any
             stream.moreResults()
           }
           .handler { row ->
-            val _uowId = UUID.fromString(row.getString(0))
-            val _uowSequence = row.getLong(1)
-            val _targetId = row.getString(2)
-            val _events = listOfEventsFromJson(Json.mapper, row.getString(3))
-            val projectionData = ProjectionData(_uowId, _uowSequence!!, _targetId, _events)
+            val uowId = UUID.fromString(row.getString(0))
+            val uowSeq = row.getLong(1)
+            val targetId = row.getString(2)
+            val events = listOfEventsFromJson(Json.mapper, row.getString(3))
+            val projectionData = ProjectionData(uowId, uowSeq, targetId, events)
             list.add(projectionData)
 
-          }.endHandler { event ->
+          }.endHandler {
 
             selectAfterUowSeq.complete(list)
 

@@ -20,6 +20,6 @@ interface EntityUnitOfWorkRepository {
 
   fun append(unitOfWork: EntityUnitOfWork, appendFuture: Future<Long>, aggregateRootName: String)
 
-  fun selectAfterUowSequence(uowSequence: Long?, maxRows: Int?,
+  fun selectAfterUowSequence(uowSequence: Long, maxRows: Int,
                              selectAfterUowSeq: Future<List<ProjectionData>>)
 }
