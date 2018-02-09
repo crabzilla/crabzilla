@@ -61,7 +61,7 @@ class HandlerServiceLauncher {
               val workerDeploymentOptions = DeploymentOptions().setHa(true)
 
               deployVerticlesByName(vertx, setOf(HANDLER.verticle("Customer")), workerDeploymentOptions)
-              // justForTest(vertx)
+
               future.complete()
 
             }, { res ->
@@ -87,44 +87,3 @@ class HandlerServiceLauncher {
 }
 
 // end::launcher[]
-
-fun justForTest(vertx: Vertx) {
-
-  val customerId = CustomerId(UUID.randomUUID().toString())
-  //    val customerId = new CustomerId("customer123");
-  val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "a good customer")
-  val options = DeliveryOptions().setCodecName("EntityCommand")
-
-  // create customer command
-  vertx.eventBus().send<EntityCommandExecution>(cmdHandlerEndpoint("Customer"), createCustomerCmd, options) { asyncResult ->
-
-    HandlerServiceLauncher.log.info("Successful create customer test? {}", asyncResult.succeeded())
-
-    if (asyncResult.succeeded()) {
-
-      HandlerServiceLauncher.log.info("Result: {}", asyncResult.result().body())
-
-      val activateCustomerCmd = ActivateCustomer(UUID.randomUUID(), createCustomerCmd.targetId, "because I want it")
-
-      // activate customer command
-      vertx.eventBus().send<EntityCommandExecution>(cmdHandlerEndpoint("Customer"), activateCustomerCmd, options) { asyncResult2 ->
-
-        HandlerServiceLauncher.log.info("Successful activate customer test? {}", asyncResult2.succeeded())
-
-        if (asyncResult2.succeeded()) {
-          HandlerServiceLauncher.log.info("Result: {}", asyncResult2.result().body())
-        } else {
-          HandlerServiceLauncher.log.info("Cause: {}", asyncResult2.cause())
-          HandlerServiceLauncher.log.info("Message: {}", asyncResult2.cause().message)
-        }
-
-      }
-
-    } else {
-      HandlerServiceLauncher.log.info("Cause: {}", asyncResult.cause())
-      HandlerServiceLauncher.log.info("Message: {}", asyncResult.cause().message)
-    }
-
-  }
-
-}
