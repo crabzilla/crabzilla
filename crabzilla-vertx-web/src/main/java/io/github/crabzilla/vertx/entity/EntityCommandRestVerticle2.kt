@@ -20,31 +20,28 @@ import java.util.*
 
 // TODO add circuit breakers and healthchecks
 // TODO add endpoints for list/start/stop crabzilla verticles
-class EntityCommandRestVerticle(private val entityName: String,
-                                private val config: JsonObject,
-                                private val uowRepository: EntityUnitOfWorkRepository,
-                                private val handlerService: EntityCommandHandlerService) : CrabzillaVerticle(entityName, REST) {
+class EntityCommandRestVerticle2(override val name: String,
+                                 private val config: JsonObject,
+                                 private val uowRepository: EntityUnitOfWorkRepository,
+                                 private val handlerService: EntityCommandHandlerService)
+                                                                      : CrabzillaVerticle(name, REST) {
 
   override fun start() {
 
     val router = Router.router(vertx)
 
-    router.route().handler(BodyHandler.create())
-
     router.route("/health").handler {
       routingContext ->
       run {
         routingContext.response().putHeader("content-type", "text/plain").end("pong")
-        log.info("*** pong")
+        log.info("*** health OK")
       }
     }
 
-    log.info("/" + restEndpoint(entityName) + "/commands")
-
-    router.post("/" + restEndpoint(entityName) + "/commands")
+    router.post("/customer/commands")
             .handler({ this.postCommandHandler(it) })
 
-    router.get("/" + restEndpoint(entityName) + "/commands/:cmdID")
+    router.get("/:targetEntity/commands/:cmdID")
             .handler({ this.getUowByCmdId(it) })
 
     val server = vertx.createHttpServer()
@@ -61,10 +58,12 @@ class EntityCommandRestVerticle(private val entityName: String,
 
     val uowFuture = Future.future<EntityUnitOfWork>()
     val httpResp = routingContext.response()
+
     val commandStr = routingContext.bodyAsString
     val command = Json.decodeValue(commandStr, EntityCommand::class.java)
+    val targetEntity = routingContext.pathParam("targetEntity")
 
-    log.info("command=:\n" + commandStr)
+    log.info("target entity={}, command={}", targetEntity, commandStr)
 
     if (command == null) {
       httpResp.setStatusCode(400).end()
@@ -90,23 +89,23 @@ class EntityCommandRestVerticle(private val entityName: String,
         return@setHandler
       }
 
-      handlerService.postCommand(cmdHandlerEndpoint(entityName), command, { response ->
+      handlerService.postCommand(cmdHandlerEndpoint(targetEntity), command, { response ->
 
         if (!response.succeeded()) {
-          log.error("eventbus.handleCommand", response.cause())
+          log.error(cmdHandlerEndpoint(targetEntity), response.cause())
           httpResp.setStatusCode(500).end(response.cause().message)
           return@postCommand
         }
 
-        val result = response.result() as EntityCommandExecution
-        log.info("result = {}", result)
+        val commandExecution = response.result() as EntityCommandExecution
+        log.info("commandExecution = {}", commandExecution)
 
-        if (result.result == SUCCESS) {
-          val location = routingContext.request().absoluteURI() + "/" + result.unitOfWork!!
+        if (commandExecution.result == SUCCESS) {
+          val location = routingContext.request().absoluteURI() + "/" + commandExecution.unitOfWork!!
             .command.commandId.toString()
           httpResp.setStatusCode(201).headers().add("Location", location).add("Content-Type", "application/json")
         } else {
-          if (result.result == VALIDATION_ERROR || result.result == UNKNOWN_COMMAND) {
+          if (commandExecution.result == VALIDATION_ERROR || commandExecution.result == UNKNOWN_COMMAND) {
             httpResp.statusCode = 400
           } else {
             httpResp.statusCode = 500
@@ -152,7 +151,7 @@ class EntityCommandRestVerticle(private val entityName: String,
   }
 
   companion object {
-    internal var log = getLogger(EntityCommandHandlerService::class.java)
+    internal var log = getLogger(EntityCommandRestVerticle2::class.java)
   }
 
 }

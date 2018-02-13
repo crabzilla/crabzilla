@@ -9,7 +9,7 @@ import javax.inject.Singleton
 
 // tag::component[]
 @Singleton
-@Component(modules = [ProjectorServiceModule::class])
+@Component(modules = arrayOf(ProjectorServiceModule::class))
 interface ProjectorServiceComponent {
 
   fun projectorVerticles(): Set<ProjectionHandlerVerticle<out Any>>

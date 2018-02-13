@@ -28,7 +28,7 @@ import java.io.IOException
 import java.util.*
 
 
-class CustomerHttpAcceptanceRule {
+class CustomerHttpAcceptanceIT {
 
   val LOCATION_HEADER = "Location"
   val ENTITY_NAME = "Customer"
@@ -181,14 +181,14 @@ class CustomerHttpAcceptanceRule {
 
   companion object {
 
-    val log = LoggerFactory.getLogger(CustomerHttpAcceptanceRule::class.java.simpleName)
+    val log = LoggerFactory.getLogger(CustomerHttpAcceptanceIT::class.java.simpleName)
 
     @JvmStatic
     @ClassRule
     fun docker(): DockerComposeRule = DockerComposeRule.builder()
       .file("../docker-compose-test.yml")
 //      .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
-      .waitingForService("web", toRespondOverHttp(8080) { port -> port.inFormat("http://127.0.0.1:8080/ping") })
+      .waitingForService("web", toRespondOverHttp(8080) { port -> port.inFormat("http://127.0.0.1:8080/health") })
       .saveLogsTo("target/dockerComposeRuleTest")
       .build()
 

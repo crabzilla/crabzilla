@@ -5,6 +5,7 @@ import dagger.Provides
 import dagger.multibindings.IntoSet
 import io.github.crabzilla.vertx.entity.EntityCommandHandlerService
 import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
+import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
 import io.github.crabzilla.vertx.entity.impl.EntityCommandHandlerServiceImpl
 import io.github.crabzilla.vertx.entity.impl.EntityUnitOfWorkRepositoryImpl
 import io.github.crabzilla.vertx.modules.CrabzillaModule
@@ -26,15 +27,15 @@ class RestServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vert
   }
 
   @Provides @IntoSet
-  fun restVerticle(uowRepository: EntityUnitOfWorkRepositoryImpl, config: JsonObject,
+  fun restVerticle(uowRepository: EntityUnitOfWorkRepository, config: JsonObject,
                    handlerService: EntityCommandHandlerService):
     EntityCommandRestVerticle {
-    return EntityCommandRestVerticle("Customer", config, uowRepository, handlerService)
+    return EntityCommandRestVerticle("customer", config, uowRepository, handlerService)
   }
 
   @Provides
   @Singleton
-  fun uowRepository(@WriteDatabase jdbcClient: JDBCClient): EntityUnitOfWorkRepositoryImpl {
+  fun uowRepository(@WriteDatabase jdbcClient: JDBCClient): EntityUnitOfWorkRepository {
     return EntityUnitOfWorkRepositoryImpl(jdbcClient)
   }
 
