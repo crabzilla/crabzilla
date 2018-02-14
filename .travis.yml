@@ -28,8 +28,8 @@ cache:
 install: false
 
 script:
-#  - sleep 30
-  - mvn clean install
+  - sleep 3
+  - mvn clean install -U
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
