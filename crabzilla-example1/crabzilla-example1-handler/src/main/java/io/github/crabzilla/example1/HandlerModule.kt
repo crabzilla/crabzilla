@@ -17,7 +17,7 @@ import javax.inject.Singleton
 /**
  * This command handler module exposes DAOs, repositories and also services implementations.
  */
-@Module(includes = [CustomerModule::class])
+@Module(includes = arrayOf(CustomerModule::class))
 class HandlerModule {
 
   @Provides

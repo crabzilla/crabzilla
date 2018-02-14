@@ -5,7 +5,6 @@ import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.VerticleRole.REST
 import io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT.*
-import io.github.crabzilla.vertx.entity.impl.EntityUnitOfWorkRepositoryImpl
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
 import io.vertx.core.Future
@@ -22,7 +21,7 @@ import java.util.*
 // TODO add endpoints for list/start/stop crabzilla verticles
 class EntityCommandRestVerticle(private val entityName: String,
                                 private val config: JsonObject,
-                                private val uowRepository: EntityUnitOfWorkRepositoryImpl,
+                                private val uowRepository: EntityUnitOfWorkRepository,
                                 private val handlerService: EntityCommandHandlerService) : CrabzillaVerticle(entityName, REST) {
 
   override fun start() {
@@ -31,13 +30,15 @@ class EntityCommandRestVerticle(private val entityName: String,
 
     router.route().handler(BodyHandler.create())
 
-    router.route("/ping").handler {
+    router.route("/health").handler {
       routingContext ->
       run {
         routingContext.response().putHeader("content-type", "text/plain").end("pong")
         log.info("*** pong")
       }
     }
+
+    log.info("/" + restEndpoint(entityName) + "/commands")
 
     router.post("/" + restEndpoint(entityName) + "/commands")
             .handler({ this.postCommandHandler(it) })

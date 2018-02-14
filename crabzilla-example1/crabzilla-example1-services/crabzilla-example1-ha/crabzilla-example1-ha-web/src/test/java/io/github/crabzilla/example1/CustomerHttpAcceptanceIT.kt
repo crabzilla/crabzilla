@@ -11,6 +11,7 @@ import com.jayway.restassured.RestAssured.given
 import com.jayway.restassured.http.ContentType
 import com.jayway.restassured.http.ContentType.JSON
 import com.palantir.docker.compose.DockerComposeRule
+import com.palantir.docker.compose.connection.waiting.HealthChecks
 import com.palantir.docker.compose.connection.waiting.HealthChecks.toRespondOverHttp
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.entity.EntityUnitOfWork
@@ -28,12 +29,36 @@ import java.io.IOException
 import java.util.*
 
 
-class CustomerHttpAcceptanceRule {
+class CustomerHttpAcceptanceIT {
 
-  val LOCATION_HEADER = "Location"
-  val ENTITY_NAME = "Customer"
+  companion object {
 
-  var mapper: ObjectMapper = Json.prettyMapper
+    @JvmStatic
+    val log = LoggerFactory.getLogger(CustomerHttpAcceptanceIT::class.java.simpleName)
+
+    val LOCATION_HEADER = "Location"
+    val ENTITY_NAME = "Customer"
+
+    var mapper: ObjectMapper = Json.prettyMapper
+
+    @JvmStatic
+    @ClassRule
+    fun docker(): DockerComposeRule = DockerComposeRule.builder()
+      .file("../docker-compose.yml")
+      .removeConflictingContainersOnStartup(true)
+//      .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
+      .waitingForService("web", toRespondOverHttp(8080) { port -> port.inFormat("http://127.0.0.1:8080/health") })
+      .saveLogsTo("../target/dockerComposeRuleTest")
+      .build()
+
+    @JvmStatic
+    @BeforeClass
+    fun sleep() {
+      log.info("waiting for 3 seconds...")
+      Thread.sleep(3_000)
+    }
+
+  }
 
   @Before
   @Throws(InterruptedException::class)
@@ -176,28 +201,6 @@ class CustomerHttpAcceptanceRule {
     given().contentType(JSON).body(json)
             .`when`().put("/" + restEndpoint(ENTITY_NAME) + "/commands")
             .then().statusCode(404)
-
-  }
-
-  companion object {
-
-    val log = LoggerFactory.getLogger(CustomerHttpAcceptanceRule::class.java.simpleName)
-
-    @JvmStatic
-    @ClassRule
-    fun docker(): DockerComposeRule = DockerComposeRule.builder()
-      .file("../docker-compose-test.yml")
-//      .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
-      .waitingForService("web", toRespondOverHttp(8080) { port -> port.inFormat("http://127.0.0.1:8080/ping") })
-      .saveLogsTo("target/dockerComposeRuleTest")
-      .build()
-
-    @JvmStatic
-    @BeforeClass
-    fun sleep() {
-      log.info("waiting for 1 second...")
-      Thread.sleep(1000)
-    }
 
   }
 

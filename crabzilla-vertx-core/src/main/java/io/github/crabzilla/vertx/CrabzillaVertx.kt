@@ -82,6 +82,19 @@ fun initVertx(vertx: Vertx) {
 
 }
 
+
+fun deployVerticles(vertx: Vertx, vararg verticles: CrabzillaVerticle) {
+  verticles.forEach({
+    vertx.deployVerticle(it) { event ->
+      if (!event.succeeded()) {
+        log.error("Error deploying verticle ${it.name}", event.cause())
+      } else {
+        log.info("Verticle: ${it.name} deployed with ID: ${event.result()}", event.cause())
+      }
+    }
+  })
+}
+
 fun deployVerticles(vertx: Vertx, verticles: Set<CrabzillaVerticle>, deploymentOptions: DeploymentOptions = DeploymentOptions()) {
  verticles.forEach({
    vertx.deployVerticle(it, deploymentOptions) { event ->
@@ -128,7 +141,7 @@ enum class VerticleRole {
   REST, HANDLER, PROJECTOR, POOLER ;
 
   fun verticle(verticleName: String): String {
-    return "${prefix()}.toLowerCase():$verticleName"
+    return "${prefix()}:${verticleName}"
   }
 
   fun prefix(): String {

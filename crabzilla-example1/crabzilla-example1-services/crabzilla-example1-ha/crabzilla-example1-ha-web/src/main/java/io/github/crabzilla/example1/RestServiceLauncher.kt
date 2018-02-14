@@ -16,7 +16,8 @@ class RestServiceLauncher {
 
     val log = org.slf4j.LoggerFactory.getLogger(RestServiceLauncher::class.java.simpleName)
 
-    lateinit var ds: HikariDataSource
+    lateinit var writeDs: HikariDataSource
+    lateinit var readDs: HikariDataSource
 
     @Throws(Exception::class)
     @JvmStatic
@@ -43,7 +44,8 @@ class RestServiceLauncher {
                 .restServiceModule(RestServiceModule(vertx, config))
                 .build()
 
-              ds = app.datasource()
+              writeDs = app.writeDatasource()
+              readDs = app.readDatasource()
 
               deployVerticles(vertx, app.restVerticles())
 
@@ -57,7 +59,8 @@ class RestServiceLauncher {
             })
 
           }, {
-            ds.close()
+            writeDs.close()
+            readDs.close()
           })
 
         } else {

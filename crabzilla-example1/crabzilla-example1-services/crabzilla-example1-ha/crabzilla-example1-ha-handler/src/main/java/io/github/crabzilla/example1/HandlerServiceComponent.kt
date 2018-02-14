@@ -10,7 +10,7 @@ import javax.inject.Singleton
 
 // tag::component[]
 @Singleton
-@Component(modules = [CustomerModule::class, HandlerServiceModule::class])
+@Component(modules = arrayOf(CustomerModule::class, HandlerServiceModule::class))
 interface HandlerServiceComponent {
 
   fun commandVerticles(): Set<EntityCommandHandlerVerticle<out Entity>>

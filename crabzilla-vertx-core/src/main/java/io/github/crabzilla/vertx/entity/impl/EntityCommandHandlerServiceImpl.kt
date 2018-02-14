@@ -24,6 +24,8 @@ class EntityCommandHandlerServiceImpl(private val vertx: Vertx, private val proj
   override fun postCommand(handlerEndpoint: String, command: EntityCommand,
                            handler: Handler<AsyncResult<EntityCommandExecution>>) {
 
+    log.info("posting a command to {}", handlerEndpoint)
+
     vertx.eventBus().send<EntityCommand>(handlerEndpoint, command, commandDeliveryOptions) { response ->
 
       if (!response.succeeded()) {

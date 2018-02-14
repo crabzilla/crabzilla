@@ -13,14 +13,14 @@
 
     <dependencies>
 
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-web</artifactId>
-        </dependency>
-
       <dependency>
         <groupId>io.github.crabzilla</groupId>
         <artifactId>crabzilla-vertx-core</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-web</artifactId>
       </dependency>
 
       <!-- test -->
@@ -36,6 +36,7 @@
             <artifactId>mysql-connector-java</artifactId>
             <scope>test</scope>
         </dependency>
+
 
     </dependencies>
 

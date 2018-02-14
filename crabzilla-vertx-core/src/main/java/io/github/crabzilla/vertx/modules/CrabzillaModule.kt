@@ -7,10 +7,13 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.core.logging.SLF4JLogDelegateFactory
+import io.vertx.ext.healthchecks.HealthCheckHandler
+import io.vertx.ext.healthchecks.Status
+import io.vertx.ext.jdbc.JDBCClient
 import javax.inject.Singleton
 
 // tag::module[]
-@Module(includes = [WriteDbModule::class, ReadDbModule::class])
+@Module(includes = arrayOf(WriteDbModule::class, ReadDbModule::class))
 open class CrabzillaModule(val vertx: Vertx, val config: JsonObject) {
 
   init {
@@ -32,6 +35,21 @@ open class CrabzillaModule(val vertx: Vertx, val config: JsonObject) {
   @Singleton
   fun config(): JsonObject {
     return config
+  }
+
+  @Provides
+  @Singleton
+  fun healthcheck(jdbcClientWrite: JDBCClient, jdbcClientRead: JDBCClient): HealthCheckHandler {
+
+    val healthCheckHandler = HealthCheckHandler.create(vertx)
+
+    // TODO
+    healthCheckHandler.register("health-write-database", { f -> f.complete(Status.OK()) })
+    healthCheckHandler.register("health-read-database", { f -> f.complete(Status.OK()) })
+    healthCheckHandler.register("health-handler", { f -> f.complete(Status.OK()) })
+    healthCheckHandler.register("health-projector", { f -> f.complete(Status.OK()) })
+
+    return healthCheckHandler
   }
 
 }

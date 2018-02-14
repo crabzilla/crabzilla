@@ -27,7 +27,7 @@ fun eventsOf(vararg event: DomainEvent): List<DomainEvent> {
   return event.asList()
 }
 
-// serialization functions
+// json serialization functions
 
 val eventsListType = object : TypeReference<List<DomainEvent>>() {}
 

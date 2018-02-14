@@ -11,16 +11,16 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>1.8</java.version>
-    <kotlin.version>1.2.10</kotlin.version>
-    <dagger.version>2.14.1</dagger.version>
-    <vertx.version>3.5.0</vertx.version>
-    <expiringmap.version>0.5.8</expiringmap.version>
-    <sl4j.version>1.7.8</sl4j.version>
-    <logback.version>1.2.3</logback.version>
-    <jdbi.version>3.0.0</jdbi.version>
-    <mysql.version>6.0.6</mysql.version>
-    <commons.version>3.5</commons.version>
+
+    <vertx.version>3.5.1</vertx.version>
+    <kotlin.version>1.2.20</kotlin.version>
     <jackson.version>2.9.3</jackson.version>
+
+    <jdbi.version>3.0.0</jdbi.version>
+    <dagger.version>2.14.1</dagger.version>
+    <expiringmap.version>0.5.8</expiringmap.version>
+    <sl4fj.version>1.8.0-beta1</sl4fj.version>
+    <mysql.version>6.0.6</mysql.version>
     <hikari.version>2.7.6</hikari.version>
 
     <junit.version>4.12</junit.version>
@@ -28,8 +28,7 @@
     <junit.vintage.version>${junit.version}.3</junit.vintage.version>
     <junit.platform.version>1.0.3</junit.platform.version>
 
-    <skip.integration.tests>false</skip.integration.tests>
-    <skip.unit.tests>false</skip.unit.tests>
+    <skipTests>false</skipTests>
 
     <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
@@ -64,7 +63,6 @@
     <url>https://github.com/crabzilla/crabzilla</url>
     <tag>crabzilla-0.0.5</tag>
   </scm>
-
 
   <repositories>
     <repository>
@@ -113,12 +111,6 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>org.jetbrains.kotlin</groupId>
-      <artifactId>kotlin-stdlib-jdk8</artifactId>
-      <version>${kotlin.version}</version>
-    </dependency>
-
     <!-- test -->
 
     <dependency>
@@ -156,7 +148,7 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
       <scope>test</scope>
-      <version>${sl4j.version}</version>
+      <version>${sl4fj.version}</version>
     </dependency>
 
   </dependencies>
@@ -202,20 +194,35 @@
         <artifactId>crabzilla-core</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
-        <scope>test</scope>
       </dependency>
 
-      <!-- kotlin -->
+      <!-- vertx -->
 
       <dependency>
-        <groupId>org.jetbrains.kotlin</groupId>
-        <artifactId>kotlin-stdlib-jdk8</artifactId>
-        <version>${kotlin.version}</version>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-dependencies</artifactId>
+        <version>${vertx.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
+
+      <!-- util -->
       <dependency>
-        <groupId>org.jetbrains.kotlin</groupId>
-        <artifactId>kotlin-reflect</artifactId>
-        <version>${kotlin.version}</version>
+        <groupId>javax.inject</groupId>
+        <artifactId>javax.inject</artifactId>
+        <version>1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.dagger</groupId>
+        <artifactId>dagger</artifactId>
+        <version>${dagger.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>net.jodah</groupId>
+        <artifactId>expiringmap</artifactId>
+        <version>${expiringmap.version}</version>
       </dependency>
 
       <dependency>
@@ -236,53 +243,11 @@
         <version>${jdbi.version}</version>
       </dependency>
 
-      <!-- util -->
-
-      <dependency>
-        <groupId>javax.inject</groupId>
-        <artifactId>javax.inject</artifactId>
-        <version>1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.google.dagger</groupId>
-        <artifactId>dagger</artifactId>
-        <version>${dagger.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-lang3</artifactId>
-        <version>${commons.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>net.sf.jopt-simple</groupId>
-        <artifactId>jopt-simple</artifactId>
-        <version>5.0.4</version>
-      </dependency>
-
-      <dependency>
-        <groupId>net.jodah</groupId>
-        <artifactId>expiringmap</artifactId>
-        <version>${expiringmap.version}</version>
-      </dependency>
-
       <!-- logging -->
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>${sl4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-classic</artifactId>
-        <version>${logback.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-core</artifactId>
-        <version>${logback.version}</version>
+        <version>${sl4fj.version}</version>
       </dependency>
 
       <!-- json -->
@@ -307,18 +272,6 @@
         <version>${jackson.version}</version>
       </dependency>
 
-      <!-- sql stack -->
-      <dependency>
-        <groupId>mysql</groupId>
-        <artifactId>mysql-connector-java</artifactId>
-        <version>${mysql.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.zaxxer</groupId>
-        <artifactId>HikariCP</artifactId>
-        <version>${hikari.version}</version>
-      </dependency>
-
       <!-- jdbi3 -->
       <dependency>
         <groupId>org.jdbi</groupId>
@@ -331,58 +284,20 @@
         <version>${jdbi.version}</version>
       </dependency>
 
-      <!--Vertx -->
+      <!-- database -->
+      <dependency>
+        <groupId>mysql</groupId>
+        <artifactId>mysql-connector-java</artifactId>
+        <version>${mysql.version}</version>
+      </dependency>
 
       <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-core</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-config</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-web</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-circuit-breaker</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-hazelcast</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-jdbc-client</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-sql-common</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-lang-kotlin</artifactId>
-        <version>${vertx.version}</version>
+        <groupId>com.zaxxer</groupId>
+        <artifactId>HikariCP</artifactId>
+        <version>${hikari.version}</version>
       </dependency>
 
       <!-- test -->
-
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-unit</artifactId>
-        <scope>test</scope>
-        <version>${vertx.version}</version>
-      </dependency>
-
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-api</artifactId>
@@ -428,35 +343,18 @@
 
     <plugins>
 
-      <!--<plugin>-->
-        <!--<artifactId>maven-resources-plugin</artifactId>-->
-        <!--<groupId>org.apache.maven.plugins</groupId>-->
-        <!--<version>3.0.2</version>-->
-        <!--<executions>-->
-          <!--<execution>-->
-            <!--<id>copy-resources</id>-->
-            <!--&lt;!&ndash; here the phase you need &ndash;&gt;-->
-            <!--<phase>validate</phase>-->
-            <!--<goals>-->
-              <!--<goal>copy-resources</goal>-->
-            <!--</goals>-->
-            <!--<configuration>-->
-              <!--<encoding>${project.build.sourceEncoding}</encoding>-->
-              <!--<outputDirectory>${basedir}/crabzilla-core/src/test/java/io/github/crabzilla/example1</outputDirectory>-->
-              <!--<resources>-->
-                <!--<resource>-->
-                  <!--<directory>-->
-                    <!--${basedir}/crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1-->
-                  <!--</directory>-->
-                  <!--<includes>-->
-                    <!--<include>**/*.*</include>-->
-                  <!--</includes>-->
-                <!--</resource>-->
-              <!--</resources>-->
-            <!--</configuration>-->
-          <!--</execution>-->
-        <!--</executions>-->
-      <!--</plugin>-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.0.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
       <plugin>
         <artifactId>kotlin-maven-plugin</artifactId>
@@ -563,7 +461,7 @@
           <!-- Sets the VM argument line used when unit tests are run. -->
           <argLine>${surefireArgLine}</argLine>
           <!-- Skips unit tests if the value of skip.unit.tests property is true -->
-          <skipTests>${skip.unit.tests}</skipTests>
+          <skipTests>${skipTests}</skipTests>
           <!-- Excludes integration tests when unit tests are run. -->
           <excludes>
             <exclude>**/IT*.java</exclude>
@@ -620,7 +518,7 @@
                                 Skips integration tests if the value of skip.integration.tests property
                                 is true
                             -->
-              <skipTests>${skip.integration.tests}</skipTests>
+              <skipTests>${skipTests}</skipTests>
             </configuration>
           </execution>
         </executions>
@@ -824,8 +722,7 @@
     <profile>
       <id>documents</id>
       <properties>
-        <skip.integration.tests>true</skip.integration.tests>
-        <skip.unit.tests>true</skip.unit.tests>
+        <skipTests>true</skipTests>
       </properties>
       <build>
         <plugins>

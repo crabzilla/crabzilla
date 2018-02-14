@@ -80,7 +80,7 @@ public class EntityUnitOfWorkRepositoryIT {
     })
     .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
     .waitingForService("dbtest", HealthChecks.toHaveAllPortsOpen())
-    .saveLogsTo("target/dockerComposeRuleTest")
+    .saveLogsTo("../target/dockerComposeRuleTest")
     .build();
 
   @BeforeClass
@@ -120,7 +120,7 @@ public class EntityUnitOfWorkRepositoryIT {
         } else {
           log.error("Failed to access db", e);
         }
-        sleep(1_000);
+        sleep(5_000);
       }
     }
 

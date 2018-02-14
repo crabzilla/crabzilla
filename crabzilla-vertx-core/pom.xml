@@ -19,12 +19,6 @@
       <artifactId>crabzilla-core</artifactId>
     </dependency>
 
-    <!-- cmd line arguments parser -->
-    <dependency>
-      <groupId>net.sf.jopt-simple</groupId>
-      <artifactId>jopt-simple</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>com.google.dagger</groupId>
       <artifactId>dagger</artifactId>
@@ -94,12 +88,15 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-lang-kotlin</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-health-check</artifactId>
+    </dependency>
 
     <!-- test -->
     <dependency>
       <groupId>io.github.crabzilla</groupId>
       <artifactId>crabzilla-core</artifactId>
-      <version>0.0.6-SNAPSHOT</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
