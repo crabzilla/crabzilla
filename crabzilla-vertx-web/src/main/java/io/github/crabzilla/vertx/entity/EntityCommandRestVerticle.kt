@@ -5,7 +5,6 @@ import io.github.crabzilla.core.entity.EntityUnitOfWork
 import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.VerticleRole.REST
 import io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT.*
-import io.github.crabzilla.vertx.entity.impl.EntityUnitOfWorkRepositoryImpl
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
 import io.vertx.core.Future

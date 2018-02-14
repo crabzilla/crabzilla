@@ -79,8 +79,8 @@ public class EntityUnitOfWorkRepositoryIT {
       }
     })
     .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
-    .waitingForService("dbtest", HealthChecks.toHaveAllPortsOpen())
-    .saveLogsTo("target/dockerComposeRuleTest")
+//    .waitingForService("dbtest", HealthChecks.toHaveAllPortsOpen())
+    .saveLogsTo("../target/dockerComposeRuleTest")
     .build();
 
   @BeforeClass

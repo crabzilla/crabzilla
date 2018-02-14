@@ -19,8 +19,7 @@
     <jdbi.version>3.0.0</jdbi.version>
     <dagger.version>2.14.1</dagger.version>
     <expiringmap.version>0.5.8</expiringmap.version>
-    <sl4j.version>1.7.8</sl4j.version>
-    <logback.version>1.2.3</logback.version>
+    <sl4fj.version>1.8.0-beta1</sl4fj.version>
     <mysql.version>6.0.6</mysql.version>
     <hikari.version>2.7.6</hikari.version>
 
@@ -151,7 +150,7 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
       <scope>test</scope>
-      <version>${sl4j.version}</version>
+      <version>${sl4fj.version}</version>
     </dependency>
 
   </dependencies>
@@ -251,12 +250,7 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>${sl4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-classic</artifactId>
-        <version>${logback.version}</version>
+        <version>${sl4fj.version}</version>
       </dependency>
 
       <!-- json -->
