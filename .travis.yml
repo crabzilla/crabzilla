@@ -28,7 +28,7 @@ cache:
 install: false
 
 script:
-  - sleep 30
+#  - sleep 30
   - mvn clean install
 
 after_success:
