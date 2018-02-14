@@ -11,6 +11,7 @@ import com.jayway.restassured.RestAssured.given
 import com.jayway.restassured.http.ContentType
 import com.jayway.restassured.http.ContentType.JSON
 import com.palantir.docker.compose.DockerComposeRule
+import com.palantir.docker.compose.connection.waiting.HealthChecks
 import com.palantir.docker.compose.connection.waiting.HealthChecks.toRespondOverHttp
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.entity.EntityUnitOfWork
@@ -44,16 +45,17 @@ class CustomerHttpAcceptanceIT {
     @ClassRule
     fun docker(): DockerComposeRule = DockerComposeRule.builder()
       .file("../docker-compose.yml")
+      .removeConflictingContainersOnStartup(true)
 //      .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
       .waitingForService("web", toRespondOverHttp(8080) { port -> port.inFormat("http://127.0.0.1:8080/health") })
-      .saveLogsTo("target/dockerComposeRuleTest")
+      .saveLogsTo("../target/dockerComposeRuleTest")
       .build()
 
     @JvmStatic
     @BeforeClass
     fun sleep() {
-      log.info("waiting for 1 second...")
-      Thread.sleep(1000)
+      log.info("waiting for 3 seconds...")
+      Thread.sleep(3_000)
     }
 
   }

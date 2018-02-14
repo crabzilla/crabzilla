@@ -5,7 +5,7 @@
 
   <groupId>io.github.crabzilla</groupId>
   <artifactId>crabzilla</artifactId>
-  <version>0.0.6</version>
+  <version>0.0.6-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -28,8 +28,7 @@
     <junit.vintage.version>${junit.version}.3</junit.vintage.version>
     <junit.platform.version>1.0.3</junit.platform.version>
 
-    <skip.integration.tests>false</skip.integration.tests>
-    <skip.unit.tests>false</skip.unit.tests>
+    <skipTests>false</skipTests>
 
     <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
@@ -64,7 +63,6 @@
     <url>https://github.com/crabzilla/crabzilla</url>
     <tag>crabzilla-0.0.5</tag>
   </scm>
-
 
   <repositories>
     <repository>
@@ -196,7 +194,6 @@
         <artifactId>crabzilla-core</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
-        <scope>test</scope>
       </dependency>
 
       <!-- vertx -->
@@ -346,35 +343,18 @@
 
     <plugins>
 
-      <!--<plugin>-->
-        <!--<artifactId>maven-resources-plugin</artifactId>-->
-        <!--<groupId>org.apache.maven.plugins</groupId>-->
-        <!--<version>3.0.2</version>-->
-        <!--<executions>-->
-          <!--<execution>-->
-            <!--<id>copy-resources</id>-->
-            <!--&lt;!&ndash; here the phase you need &ndash;&gt;-->
-            <!--<phase>validate</phase>-->
-            <!--<goals>-->
-              <!--<goal>copy-resources</goal>-->
-            <!--</goals>-->
-            <!--<configuration>-->
-              <!--<encoding>${project.build.sourceEncoding}</encoding>-->
-              <!--<outputDirectory>${basedir}/crabzilla-core/src/test/java/io/github/crabzilla/example1</outputDirectory>-->
-              <!--<resources>-->
-                <!--<resource>-->
-                  <!--<directory>-->
-                    <!--${basedir}/crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1-->
-                  <!--</directory>-->
-                  <!--<includes>-->
-                    <!--<include>**/*.*</include>-->
-                  <!--</includes>-->
-                <!--</resource>-->
-              <!--</resources>-->
-            <!--</configuration>-->
-          <!--</execution>-->
-        <!--</executions>-->
-      <!--</plugin>-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.0.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
       <plugin>
         <artifactId>kotlin-maven-plugin</artifactId>
@@ -481,7 +461,7 @@
           <!-- Sets the VM argument line used when unit tests are run. -->
           <argLine>${surefireArgLine}</argLine>
           <!-- Skips unit tests if the value of skip.unit.tests property is true -->
-          <skipTests>${skip.unit.tests}</skipTests>
+          <skipTests>${skipTests}</skipTests>
           <!-- Excludes integration tests when unit tests are run. -->
           <excludes>
             <exclude>**/IT*.java</exclude>
@@ -538,7 +518,7 @@
                                 Skips integration tests if the value of skip.integration.tests property
                                 is true
                             -->
-              <skipTests>${skip.integration.tests}</skipTests>
+              <skipTests>${skipTests}</skipTests>
             </configuration>
           </execution>
         </executions>
@@ -742,8 +722,7 @@
     <profile>
       <id>documents</id>
       <properties>
-        <skip.integration.tests>true</skip.integration.tests>
-        <skip.unit.tests>true</skip.unit.tests>
+        <skipTests>true</skipTests>
       </properties>
       <build>
         <plugins>
