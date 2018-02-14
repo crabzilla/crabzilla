@@ -9,7 +9,7 @@ services:
   - docker
 
 env:
-  - DOCKER_COMPOSE_VERSION=1.11.2
+  - DOCKER_COMPOSE_VERSION=1.18.0
 
 before_install:
   - sudo /etc/init.d/mysql stop
@@ -19,10 +19,7 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
   - docker-compose rm -f
-#  - source setDbEnv.sh
-#  - ./setDbEnv.sh
   - mvn clean
-#  - docker-compose up -d
 
 cache:
   directories:
