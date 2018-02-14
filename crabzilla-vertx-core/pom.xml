@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.0.6-SNAPSHOT</version>
+    <version>0.0.6</version>
   </parent>
 
   <artifactId>crabzilla-vertx-core</artifactId>
@@ -97,7 +97,7 @@
     <dependency>
       <groupId>io.github.crabzilla</groupId>
       <artifactId>crabzilla-core</artifactId>
-      <version>0.0.6-SNAPSHOT</version>
+      <version>0.0.6</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
