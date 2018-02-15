@@ -10,5 +10,7 @@ services:
             MYSQL_ROOT_PASSWORD: my-secret-pwd
         volumes:
             - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
-
+            - crabzilla-data-volume1:/var/lib/mysql
+volumes:
+    crabzilla-data-volume1:
 

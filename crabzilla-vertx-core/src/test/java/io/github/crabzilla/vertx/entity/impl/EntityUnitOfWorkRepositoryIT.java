@@ -1,6 +1,7 @@
 package io.github.crabzilla.vertx.entity.impl;
 
 import com.palantir.docker.compose.DockerComposeRule;
+import com.palantir.docker.compose.configuration.ProjectName;
 import com.palantir.docker.compose.connection.waiting.HealthChecks;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -71,13 +72,13 @@ public class EntityUnitOfWorkRepositoryIT {
   @ClassRule
   public static final DockerComposeRule docker = DockerComposeRule.builder()
     .file("../docker-compose.yml")
-//    .removeConflictingContainersOnStartup(true)
-//    .projectName(new ProjectName() {
-//      @Override
-//      protected String projectName() {
-//        return "crabzilla-EntityUnitOfWorkRepositoryIT";
-//      }
-//    })
+    .removeConflictingContainersOnStartup(true)
+    .projectName(new ProjectName() {
+      @Override
+      protected String projectName() {
+        return "crabzilla-EntityUnitOfWorkRepositoryIT";
+      }
+    })
     .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
     .saveLogsTo("target/dockerComposeRuleTest")
     .build();
@@ -102,8 +103,6 @@ public class EntityUnitOfWorkRepositoryIT {
     config.setJdbcUrl(WRITE_DATABASE_URL);
     config.setUsername(WRITE_DATABASE_USER);
     config.setPassword(WRITE_DATABASE_PASSWORD);
-    config.setAutoCommit(false);
-    config.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
 
     int attempt= 0;
     while (attempt <= 3) {
@@ -144,8 +143,6 @@ public class EntityUnitOfWorkRepositoryIT {
     config.setJdbcUrl(READ_DATABASE_URL);
     config.setUsername(READ_DATABASE_USER);
     config.setPassword(READ_DATABASE_PASSWORD);
-    config.setAutoCommit(true);
-    config.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
 
     int attempt= 0;
     while (attempt <= 3) {
@@ -162,7 +159,7 @@ public class EntityUnitOfWorkRepositoryIT {
         } else {
           log.error("Failed to access db", e);
         }
-        sleep(1_000);
+        sleep(5_000);
       }
     }
 
