@@ -103,6 +103,8 @@ public class EntityUnitOfWorkRepositoryIT {
     config.setJdbcUrl(WRITE_DATABASE_URL);
     config.setUsername(WRITE_DATABASE_USER);
     config.setPassword(WRITE_DATABASE_PASSWORD);
+    config.setAutoCommit(false);
+    config.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
 
     int attempt= 0;
     while (attempt <= 3) {
@@ -143,6 +145,8 @@ public class EntityUnitOfWorkRepositoryIT {
     config.setJdbcUrl(READ_DATABASE_URL);
     config.setUsername(READ_DATABASE_USER);
     config.setPassword(READ_DATABASE_PASSWORD);
+    config.setAutoCommit(false);
+    config.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
 
     int attempt= 0;
     while (attempt <= 3) {
