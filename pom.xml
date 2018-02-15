@@ -148,7 +148,6 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
       <scope>test</scope>
-      <version>${sl4fj.version}</version>
     </dependency>
 
   </dependencies>
@@ -247,6 +246,12 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
+        <version>${sl4fj.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
         <version>${sl4fj.version}</version>
       </dependency>
 

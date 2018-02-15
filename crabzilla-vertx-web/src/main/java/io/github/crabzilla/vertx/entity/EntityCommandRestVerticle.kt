@@ -10,6 +10,7 @@ import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
 import io.vertx.core.Future
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
+import io.vertx.ext.healthchecks.HealthCheckHandler
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
@@ -21,6 +22,7 @@ import java.util.*
 // TODO add endpoints for list/start/stop crabzilla verticles
 class EntityCommandRestVerticle(private val entityName: String,
                                 private val config: JsonObject,
+                                private val healthCheckHandler : HealthCheckHandler,
                                 private val uowRepository: EntityUnitOfWorkRepository,
                                 private val handlerService: EntityCommandHandlerService) : CrabzillaVerticle(entityName, REST) {
 
@@ -30,13 +32,7 @@ class EntityCommandRestVerticle(private val entityName: String,
 
     router.route().handler(BodyHandler.create())
 
-    router.route("/health").handler {
-      routingContext ->
-      run {
-        routingContext.response().putHeader("content-type", "text/plain").end("pong")
-        log.info("*** pong")
-      }
-    }
+    router.route("/health").handler(healthCheckHandler)
 
     log.info("/" + restEndpoint(entityName) + "/commands")
 

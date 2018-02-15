@@ -11,12 +11,4 @@ services:
         volumes:
             - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
 
-    dbtest:
-        image: java:alpine
-        restart: always
-        volumes:
-            - ./wait-for-port.sh:/var/wait-for-port.sh:z
-        command: ["/var/wait-for-port.sh", "-q", "db:3306", "--", "ls"]
-        depends_on:
-            - db
 

@@ -30,7 +30,11 @@
       <version>${vertx.version}</version>
     </dependency>
 
-    <!-- mysql -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>

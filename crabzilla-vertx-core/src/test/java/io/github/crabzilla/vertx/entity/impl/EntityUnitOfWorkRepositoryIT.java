@@ -1,7 +1,6 @@
 package io.github.crabzilla.vertx.entity.impl;
 
 import com.palantir.docker.compose.DockerComposeRule;
-import com.palantir.docker.compose.configuration.ProjectName;
 import com.palantir.docker.compose.connection.waiting.HealthChecks;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -72,15 +71,15 @@ public class EntityUnitOfWorkRepositoryIT {
   @ClassRule
   public static final DockerComposeRule docker = DockerComposeRule.builder()
     .file("../docker-compose.yml")
-    .projectName(new ProjectName() {
-      @Override
-      protected String projectName() {
-        return "crabzilla-EntityUnitOfWorkRepositoryIT";
-      }
-    })
+//    .removeConflictingContainersOnStartup(true)
+//    .projectName(new ProjectName() {
+//      @Override
+//      protected String projectName() {
+//        return "crabzilla-EntityUnitOfWorkRepositoryIT";
+//      }
+//    })
     .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
-    .waitingForService("dbtest", HealthChecks.toHaveAllPortsOpen())
-    .saveLogsTo("../target/dockerComposeRuleTest")
+    .saveLogsTo("target/dockerComposeRuleTest")
     .build();
 
   @BeforeClass

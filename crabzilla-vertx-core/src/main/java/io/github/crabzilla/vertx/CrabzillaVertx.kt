@@ -39,6 +39,8 @@ fun configHandler(vertx: Vertx, handler: (JsonObject) -> Unit, shutdownHook: () 
 
     val config = ar.result()
 
+    log.info("config = {}", config.encodePrettily())
+
     Runtime.getRuntime().addShutdownHook(object : Thread() {
       override fun run() {
         shutdownHook.invoke()
