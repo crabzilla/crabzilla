@@ -6,8 +6,8 @@ import io.github.crabzilla.example1.customer.CustomerModule
 import io.github.crabzilla.example1.impl.SampleInternalServiceImpl
 import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
 import io.github.crabzilla.vertx.entity.impl.EntityUnitOfWorkRepositoryImpl
-import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
-import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
+import io.github.crabzilla.vertx.modules.ReadDatabase
+import io.github.crabzilla.vertx.modules.WriteDatabase
 import io.vertx.ext.jdbc.JDBCClient
 import org.jdbi.v3.core.Jdbi
 import javax.inject.Singleton

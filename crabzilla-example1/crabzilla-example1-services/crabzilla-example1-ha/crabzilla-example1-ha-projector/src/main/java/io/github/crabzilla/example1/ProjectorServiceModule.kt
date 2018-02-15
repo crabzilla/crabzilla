@@ -6,7 +6,7 @@ import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
 import io.github.crabzilla.vertx.entity.impl.EntityUnitOfWorkRepositoryImpl
 import io.github.crabzilla.vertx.modules.CrabzillaModule
 import io.github.crabzilla.vertx.modules.ProjectionDbModule
-import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
+import io.github.crabzilla.vertx.modules.WriteDatabase
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.jdbc.JDBCClient

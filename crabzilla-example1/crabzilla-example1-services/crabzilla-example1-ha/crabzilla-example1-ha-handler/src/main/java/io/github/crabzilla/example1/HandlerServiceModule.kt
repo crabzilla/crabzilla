@@ -7,8 +7,6 @@ import io.vertx.core.json.JsonObject
 
 
 // tag::module[]
-@Module(includes = arrayOf(HandlerModule::class))
-class HandlerServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
-
-}
+@Module(includes = [(HandlerModule::class)])
+class HandlerServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config)
 // end::module[]

@@ -11,7 +11,6 @@ import com.jayway.restassured.RestAssured.given
 import com.jayway.restassured.http.ContentType
 import com.jayway.restassured.http.ContentType.JSON
 import com.palantir.docker.compose.DockerComposeRule
-import com.palantir.docker.compose.connection.waiting.HealthChecks
 import com.palantir.docker.compose.connection.waiting.HealthChecks.toRespondOverHttp
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.entity.EntityUnitOfWork
@@ -23,7 +22,10 @@ import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
 import io.vertx.core.json.Json
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.*
+import org.junit.After
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Test
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.util.*
@@ -43,19 +45,12 @@ class CustomerHttpAcceptanceIT {
 
     @JvmStatic
     @ClassRule
-    fun docker(): DockerComposeRule = DockerComposeRule.builder()
-      .file("../docker-compose.yml")
-      .removeConflictingContainersOnStartup(true)
-//      .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
-      .waitingForService("web", toRespondOverHttp(8080) { port -> port.inFormat("http://127.0.0.1:8080/health") })
-      .saveLogsTo("../target/dockerComposeRuleTest")
-      .build()
-
-    @JvmStatic
-    @BeforeClass
-    fun sleep() {
-      log.info("waiting for 3 seconds...")
-      Thread.sleep(3_000)
+    fun docker(): DockerComposeRule {
+      return DockerComposeRule.builder()
+        .file("../docker-compose.yml")
+        .waitingForService("web", toRespondOverHttp(8080) { port -> port.inFormat("http://127.0.0.1:8080/health") })
+        .saveLogsTo("../target/dockerComposeRuleTest")
+        .build()
     }
 
   }

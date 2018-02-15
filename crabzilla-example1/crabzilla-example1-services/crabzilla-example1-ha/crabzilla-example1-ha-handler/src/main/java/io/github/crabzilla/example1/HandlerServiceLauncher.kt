@@ -37,11 +37,15 @@ class HandlerServiceLauncher {
 
           val vertx = res.result()
 
+          log.info("got vertx")
+
           configHandler(vertx, { config ->
 
-            log.info("config = {}", config.encodePrettily())
+            log.info("will initialize...")
 
             vertx.executeBlocking<Any>({ future ->
+
+              log.info("will instantiate components...")
 
               val app = DaggerHandlerServiceComponent.builder()
                 .handlerServiceModule(HandlerServiceModule(vertx, config))
