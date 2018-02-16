@@ -1,6 +1,6 @@
 package io.github.crabzilla.vertx.entity.impl
 
-import io.github.crabzilla.core.entity.EntityCommand
+import io.github.crabzilla.core.EntityCommand
 import io.github.crabzilla.vertx.entity.EntityCommandExecution
 import io.github.crabzilla.vertx.entity.EntityCommandHandlerService
 import io.github.crabzilla.vertx.projection.ProjectionData

@@ -1,8 +1,8 @@
 package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.EntityId
 import io.github.crabzilla.core.entity.Entity
-import io.github.crabzilla.core.entity.EntityId
 import io.github.crabzilla.core.eventsOf
 import io.github.crabzilla.example1.SampleInternalService
 

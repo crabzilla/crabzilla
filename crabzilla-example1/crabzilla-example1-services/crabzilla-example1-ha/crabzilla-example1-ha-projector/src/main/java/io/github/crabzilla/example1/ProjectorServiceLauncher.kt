@@ -52,7 +52,7 @@ class ProjectorServiceLauncher {
 
               val workerDeploymentOptions = DeploymentOptions().setHa(true).setWorker(true)
               vertx.registerVerticleFactory(CrabzillaVerticleFactory(component.projectorVerticles(), PROJECTOR))
-              deployVerticlesByName(vertx, setOf(PROJECTOR.verticle("example1")), workerDeploymentOptions)
+              deployVerticlesByName(vertx, setOf(PROJECTOR.verticle(subDomainName())), workerDeploymentOptions)
 
               future.complete()
 

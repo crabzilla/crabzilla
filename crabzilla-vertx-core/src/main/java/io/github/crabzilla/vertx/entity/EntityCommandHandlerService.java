@@ -1,6 +1,6 @@
 package io.github.crabzilla.vertx.entity;
 
-import io.github.crabzilla.core.entity.EntityCommand;
+import io.github.crabzilla.core.EntityCommand;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 

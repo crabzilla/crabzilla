@@ -6,9 +6,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.entity.EntityCommand
-import io.github.crabzilla.core.entity.EntityId
-import io.github.crabzilla.core.entity.EntityUnitOfWork
+import io.github.crabzilla.core.EntityCommand
+import io.github.crabzilla.core.EntityId
+import io.github.crabzilla.core.EntityUnitOfWork
 import io.github.crabzilla.vertx.entity.EntityCommandExecution
 import io.github.crabzilla.vertx.projection.ProjectionData
 import io.vertx.config.ConfigRetriever

@@ -1,8 +1,8 @@
 package io.github.crabzilla.vertx.entity
 
-import io.github.crabzilla.core.entity.EntityUnitOfWork
+import io.github.crabzilla.core.EntityUnitOfWork
+import io.github.crabzilla.core.Version
 import io.github.crabzilla.core.entity.SnapshotData
-import io.github.crabzilla.core.entity.Version
 import io.github.crabzilla.vertx.projection.ProjectionData
 import io.vertx.core.Future
 import java.util.*
