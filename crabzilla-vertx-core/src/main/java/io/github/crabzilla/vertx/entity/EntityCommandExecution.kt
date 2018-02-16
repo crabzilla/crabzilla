@@ -1,6 +1,6 @@
 package io.github.crabzilla.vertx.entity
 
-import io.github.crabzilla.core.entity.EntityUnitOfWork
+import io.github.crabzilla.core.EntityUnitOfWork
 import java.io.Serializable
 import java.util.*
 

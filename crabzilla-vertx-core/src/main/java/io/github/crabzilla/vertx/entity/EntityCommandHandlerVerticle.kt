@@ -1,5 +1,7 @@
 package io.github.crabzilla.vertx.entity
 
+import io.github.crabzilla.core.EntityCommand
+import io.github.crabzilla.core.Version
 import io.github.crabzilla.core.entity.*
 import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.DbConcurrencyException

@@ -1,12 +1,11 @@
 package io.github.crabzilla.vertx.entity
 
-import io.github.crabzilla.core.entity.EntityCommand
-import io.github.crabzilla.core.entity.EntityUnitOfWork
+import io.github.crabzilla.core.EntityCommand
+import io.github.crabzilla.core.EntityUnitOfWork
 import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.VerticleRole.REST
 import io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT.*
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
-import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
 import io.vertx.core.Future
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
@@ -18,13 +17,14 @@ import org.slf4j.LoggerFactory.getLogger
 import java.util.*
 
 
-// TODO add circuit breakers and healthchecks
+// TODO add circuit breakers
 // TODO add endpoints for list/start/stop crabzilla verticles
 class EntityCommandRestVerticle(private val entityName: String,
                                 private val config: JsonObject,
                                 private val healthCheckHandler : HealthCheckHandler,
                                 private val uowRepository: EntityUnitOfWorkRepository,
-                                private val handlerService: EntityCommandHandlerService) : CrabzillaVerticle(entityName, REST) {
+                                private val handlerService: EntityCommandHandlerService)
+  : CrabzillaVerticle(entityName, REST) {
 
   override fun start() {
 
@@ -34,12 +34,12 @@ class EntityCommandRestVerticle(private val entityName: String,
 
     router.route("/health").handler(healthCheckHandler)
 
-    log.info("/" + restEndpoint(entityName) + "/commands")
+    log.info("/:resource/commands")
 
-    router.post("/" + restEndpoint(entityName) + "/commands")
+    router.post("/:resource/commands")
             .handler({ this.postCommandHandler(it) })
 
-    router.get("/" + restEndpoint(entityName) + "/commands/:cmdID")
+    router.get("/:resource/commands/:cmdID")
             .handler({ this.getUowByCmdId(it) })
 
     val server = vertx.createHttpServer()
@@ -58,6 +58,7 @@ class EntityCommandRestVerticle(private val entityName: String,
     val httpResp = routingContext.response()
     val commandStr = routingContext.bodyAsString
     val command = Json.decodeValue(commandStr, EntityCommand::class.java)
+    val resource = routingContext.request().getParam("resource")
 
     log.info("command=:\n" + commandStr)
 
@@ -85,7 +86,7 @@ class EntityCommandRestVerticle(private val entityName: String,
         return@setHandler
       }
 
-      handlerService.postCommand(cmdHandlerEndpoint(entityName), command, { response ->
+      handlerService.postCommand(cmdHandlerEndpoint(resource), command, { response ->
 
         if (!response.succeeded()) {
           log.error("eventbus.handleCommand", response.cause())

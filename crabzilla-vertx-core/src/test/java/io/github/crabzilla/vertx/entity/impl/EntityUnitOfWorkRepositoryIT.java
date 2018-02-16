@@ -5,9 +5,10 @@ import com.palantir.docker.compose.configuration.ProjectName;
 import com.palantir.docker.compose.connection.waiting.HealthChecks;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import io.github.crabzilla.core.entity.EntityUnitOfWork;
+import io.github.crabzilla.core.EntityUnitOfWork;
+import io.github.crabzilla.core.Version;
 import io.github.crabzilla.core.entity.SnapshotData;
-import io.github.crabzilla.core.entity.Version;
+import io.github.crabzilla.core.entity.example1.CommandHandlers;
 import io.github.crabzilla.example1.customer.*;
 import io.github.crabzilla.vertx.DbConcurrencyException;
 import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository;
@@ -32,8 +33,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static io.github.crabzilla.core.KrabzillaKt.commandToJson;
-import static io.github.crabzilla.core.KrabzillaKt.listOfEventsToJson;
+import static io.github.crabzilla.core.CrabzillaKt.commandToJson;
+import static io.github.crabzilla.core.CrabzillaKt.listOfEventsToJson;
 import static io.github.crabzilla.vertx.CrabzillaVertxKt.initVertx;
 import static java.lang.Thread.sleep;
 import static java.util.Collections.singletonList;
@@ -54,7 +55,7 @@ public class EntityUnitOfWorkRepositoryIT {
   static Long seqAfterActivateCmd;
   static HikariDataSource datasource;
 
-  static String aggregateId = "Customer";
+  static String aggregateId = CommandHandlers.CUSTOMER.name();
 
 
   EntityUnitOfWorkRepository repo;

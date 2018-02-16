@@ -1,6 +1,8 @@
 package io.github.crabzilla.core.entity
 
 import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.EntityUnitOfWork
+import io.github.crabzilla.core.Version
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerId
@@ -24,9 +26,9 @@ class EntityCommandResultTest {
   internal val commandId = UUID.randomUUID()
   internal val event: DomainEvent = CustomerCreated(customerId, "c1")
   internal val uow = EntityUnitOfWork(UUID.randomUUID(),
-          CreateCustomer(commandId, customerId, "c1"),
-          version,
-          asList(event))
+    CreateCustomer(commandId, customerId, "c1"),
+    version,
+    asList(event))
 
   @Test
   @DisplayName("Success can be instantiated")

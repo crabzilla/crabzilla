@@ -1,5 +1,7 @@
 package io.github.crabzilla.core.entity
 
+import io.github.crabzilla.core.EntityUnitOfWork
+
 class EntityCommandResult private constructor(private val unitOfWork: EntityUnitOfWork?,
                                               private val exception: Throwable?) {
 

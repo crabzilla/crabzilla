@@ -1,12 +1,7 @@
 package io.github.crabzilla.vertx.entity.impl
 
-import io.github.crabzilla.core.commandToJson
-import io.github.crabzilla.core.entity.EntityCommand
-import io.github.crabzilla.core.entity.EntityUnitOfWork
+import io.github.crabzilla.core.*
 import io.github.crabzilla.core.entity.SnapshotData
-import io.github.crabzilla.core.entity.Version
-import io.github.crabzilla.core.listOfEventsFromJson
-import io.github.crabzilla.core.listOfEventsToJson
 import io.github.crabzilla.vertx.DbConcurrencyException
 import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
 import io.github.crabzilla.vertx.helpers.VertxSqlHelper.*
@@ -73,7 +68,7 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
             val command = Json.decodeValue(row.getString(CMD_DATA), EntityCommand::class.java)
             val events = listOfEventsFromJson(Json.mapper, row.getString(UOW_EVENTS))
             val uow = EntityUnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
-                    Version(row.getLong(VERSION)!!), events)
+              Version(row.getLong(VERSION)!!), events)
             uowFuture.complete(uow)
           }
         }

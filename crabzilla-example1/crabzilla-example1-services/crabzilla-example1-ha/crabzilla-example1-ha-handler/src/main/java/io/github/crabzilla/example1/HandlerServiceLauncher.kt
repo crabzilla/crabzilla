@@ -6,7 +6,7 @@ import io.github.crabzilla.vertx.VerticleRole.HANDLER
 import io.github.crabzilla.vertx.configHandler
 import io.github.crabzilla.vertx.deployVerticlesByName
 import io.vertx.core.DeploymentOptions
-import io.vertx.core.Vertx
+import io.vertx.core.Vertx.clusteredVertx
 import io.vertx.core.VertxOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import java.net.InetAddress
@@ -32,7 +32,7 @@ class HandlerServiceLauncher {
 
       println("**  HA group ${vertxOptions.haGroup} hostname ${hostName}")
 
-      Vertx.clusteredVertx(vertxOptions) { res ->
+      clusteredVertx(vertxOptions) { res ->
         if (res.succeeded()) {
 
           val vertx = res.result()
@@ -57,7 +57,7 @@ class HandlerServiceLauncher {
 
               val workerDeploymentOptions = DeploymentOptions().setHa(true)
 
-              deployVerticlesByName(vertx, setOf(HANDLER.verticle("Customer")), workerDeploymentOptions)
+              deployVerticlesByName(vertx, setOf(HANDLER.verticle(CommandHandlers.CUSTOMER.name)), workerDeploymentOptions)
 
               future.complete()
 

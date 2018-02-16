@@ -1,5 +1,8 @@
 package io.github.crabzilla.vertx.entity;
 
+import io.github.crabzilla.core.EntityCommand;
+import io.github.crabzilla.core.EntityUnitOfWork;
+import io.github.crabzilla.core.Version;
 import io.github.crabzilla.core.entity.*;
 import io.github.crabzilla.example1.SampleInternalService;
 import io.github.crabzilla.example1.customer.*;

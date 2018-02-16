@@ -23,14 +23,14 @@ class RestServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vert
 
   @Provides
   fun handlerService() : EntityCommandHandlerService {
-    return EntityCommandHandlerServiceImpl(vertx, "example1")
+    return EntityCommandHandlerServiceImpl(vertx, subDomainName())
   }
 
   @Provides @IntoSet
   fun restVerticle(uowRepository: EntityUnitOfWorkRepository, config: JsonObject,
                    handlerService: EntityCommandHandlerService,
                    @WebHealthCheck healthCheckHandler: HealthCheckHandler): EntityCommandRestVerticle {
-    return EntityCommandRestVerticle("Customer", config, healthCheckHandler, uowRepository, handlerService)
+    return EntityCommandRestVerticle(subDomainName(), config, healthCheckHandler, uowRepository, handlerService)
   }
 
   @Provides

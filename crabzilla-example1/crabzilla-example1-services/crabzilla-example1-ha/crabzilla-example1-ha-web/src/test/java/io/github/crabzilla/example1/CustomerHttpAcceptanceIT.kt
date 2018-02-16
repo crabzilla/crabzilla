@@ -13,8 +13,8 @@ import com.jayway.restassured.http.ContentType.JSON
 import com.palantir.docker.compose.DockerComposeRule
 import com.palantir.docker.compose.connection.waiting.HealthChecks.toRespondOverHttp
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.entity.EntityUnitOfWork
-import io.github.crabzilla.core.entity.Version
+import io.github.crabzilla.core.EntityUnitOfWork
+import io.github.crabzilla.core.Version
 import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerCreated
@@ -39,7 +39,7 @@ class CustomerHttpAcceptanceIT {
     val log = LoggerFactory.getLogger(CustomerHttpAcceptanceIT::class.java.simpleName)
 
     val LOCATION_HEADER = "Location"
-    val ENTITY_NAME = "Customer"
+    val ENTITY_NAME = CommandHandlers.CUSTOMER.name
 
     var mapper: ObjectMapper = Json.prettyMapper
 
@@ -86,7 +86,7 @@ class CustomerHttpAcceptanceIT {
     val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer test")
     val expectedEvent = CustomerCreated(createCustomerCmd.targetId, "customer test")
     val expectedUow = EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
-            Version(1), listOf<DomainEvent>(expectedEvent))
+      Version(1), listOf<DomainEvent>(expectedEvent))
 
     val json = mapper.writerFor(CreateCustomer::class.java).writeValueAsString(createCustomerCmd)
 
@@ -129,7 +129,7 @@ class CustomerHttpAcceptanceIT {
     val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer test")
     val expectedEvent = CustomerCreated(createCustomerCmd.targetId, "customer test")
     val expectedUow = EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
-            Version(1), listOf<DomainEvent>(expectedEvent))
+      Version(1), listOf<DomainEvent>(expectedEvent))
 
     val json = mapper.writerFor(CreateCustomer::class.java).writeValueAsString(createCustomerCmd)
 

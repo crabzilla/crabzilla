@@ -7,8 +7,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.entity.EntityUnitOfWork
-import io.github.crabzilla.core.entity.Version
+import io.github.crabzilla.core.EntityUnitOfWork
+import io.github.crabzilla.core.Version
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated
