@@ -19,12 +19,12 @@ import java.util.*
 
 // TODO add circuit breakers
 // TODO add endpoints for list/start/stop crabzilla verticles
-class EntityCommandRestVerticle(private val entityName: String,
+class EntityCommandRestVerticle(override val name: String,
                                 private val config: JsonObject,
                                 private val healthCheckHandler : HealthCheckHandler,
                                 private val uowRepository: EntityUnitOfWorkRepository,
                                 private val handlerService: EntityCommandHandlerService)
-  : CrabzillaVerticle(entityName, REST) {
+  : CrabzillaVerticle(name, REST) {
 
   override fun start() {
 
@@ -33,8 +33,6 @@ class EntityCommandRestVerticle(private val entityName: String,
     router.route().handler(BodyHandler.create())
 
     router.route("/health").handler(healthCheckHandler)
-
-    log.info("/:resource/commands")
 
     router.post("/:resource/commands")
             .handler({ this.postCommandHandler(it) })
@@ -97,17 +95,23 @@ class EntityCommandRestVerticle(private val entityName: String,
         val result = response.result() as EntityCommandExecution
         log.info("result = {}", result)
 
-        if (result.result == SUCCESS) {
-          val location = routingContext.request().absoluteURI() + "/" + result.unitOfWork!!
-            .command.commandId.toString()
-          httpResp.setStatusCode(201).headers().add("Location", location).add("Content-Type", "application/json")
-        } else {
-          if (result.result == VALIDATION_ERROR || result.result == UNKNOWN_COMMAND) {
-            httpResp.statusCode = 400
-          } else {
-            httpResp.statusCode = 500
+        when (result.result) {
+          SUCCESS -> {
+            val location = routingContext.request().absoluteURI() + "/" + result.unitOfWork!!
+              .command.commandId.toString()
+            httpResp.setStatusCode(201).headers().add("Content-Type", "application/json")
+              .add("Location", location)
           }
+          VALIDATION_ERROR -> {
+            httpResp.setStatusCode(400).headers().add("Content-Type", "application/json")
+            httpResp.write(Json.encode(result.constraints))
+          }
+          UNKNOWN_COMMAND -> {
+            httpResp.statusCode = 400
+          }
+          else -> httpResp.statusCode = 500
         }
+
         httpResp.end()
 
       })

@@ -23,7 +23,7 @@ abstract class AbstractEventsProjector<in DAO>(val eventsChannelId: String,
       h.commit()
     } catch (e:  Exception) {
       h.rollback()
-      log.error("When projection events to db", e)
+      log.error("When projecting events to db", e)
     } finally {
       h.close()
     }

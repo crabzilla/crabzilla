@@ -29,7 +29,7 @@ install: false
 
 script:
   - sleep 3
-  - mvn clean install -U
+  - mvn verify
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

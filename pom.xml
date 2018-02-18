@@ -12,16 +12,16 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>1.8</java.version>
 
+    <sl4fj.version>1.8.0-beta1</sl4fj.version>
     <vertx.version>3.5.1</vertx.version>
     <kotlin.version>1.2.20</kotlin.version>
     <jackson.version>2.9.3</jackson.version>
 
-    <jdbi.version>3.0.0</jdbi.version>
     <dagger.version>2.14.1</dagger.version>
     <expiringmap.version>0.5.8</expiringmap.version>
-    <sl4fj.version>1.8.0-beta1</sl4fj.version>
+    <jdbi.version>3.0.0</jdbi.version>
+    <hikari.version>2.7.7</hikari.version>
     <mysql.version>6.0.6</mysql.version>
-    <hikari.version>2.7.6</hikari.version>
 
     <junit.version>4.12</junit.version>
     <junit.jupiter.version>5.0.3</junit.jupiter.version>
