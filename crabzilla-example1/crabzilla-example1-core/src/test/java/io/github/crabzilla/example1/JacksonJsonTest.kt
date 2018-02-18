@@ -71,7 +71,7 @@ class JacksonJsonTest {
     val command = CreateCustomer(UUID.randomUUID(), id, "customer1")
 
     val event1 = CustomerCreated(id, command.name)
-    val event2 = CustomerActivated("a rgood reason", Instant.now())
+    val event2 = CustomerActivated("a good reason", Instant.now())
 
     val uow1 = EntityUnitOfWork(UUID.randomUUID(), command, Version(1), asList<DomainEvent>(event1, event2))
 

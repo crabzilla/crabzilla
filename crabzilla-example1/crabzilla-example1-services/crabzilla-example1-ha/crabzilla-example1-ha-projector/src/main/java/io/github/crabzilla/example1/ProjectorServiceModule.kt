@@ -14,7 +14,7 @@ import javax.inject.Singleton
 
 
 // tag::module[]
-@Module(includes = arrayOf(ProjectorModule::class, ProjectionDbModule::class))
+@Module(includes = [(ProjectorModule::class), (ProjectionDbModule::class)])
 class ProjectorServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
 
   @Provides
