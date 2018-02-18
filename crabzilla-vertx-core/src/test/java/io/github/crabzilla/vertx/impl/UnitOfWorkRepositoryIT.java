@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import static io.github.crabzilla.core.SerializationKt.commandToJson;
 import static io.github.crabzilla.core.SerializationKt.listOfEventsToJson;
@@ -43,7 +44,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class UnitOfWorkRepositoryIT {
 
-//  private static Logger log = Logger.getLogger(UnitOfWorkRepositoryIT.class.getSimpleName());
+  private static Logger log = Logger.getLogger(UnitOfWorkRepositoryIT.class.getSimpleName());
 
   static Vertx vertx;
   static JDBCClient jdbcClient;
@@ -114,9 +115,9 @@ public class UnitOfWorkRepositoryIT {
         break;
       } catch (Exception e) {
         if (++attempt <= 3) {
-          // log.warning("Failed to access db, will try again");
+          log.warning("Failed to access db, will try again");
         } else {
-          // log.warning("Failed to access db");
+          log.warning("Failed to access db");
         }
         sleep(5_000);
       }
@@ -157,9 +158,9 @@ public class UnitOfWorkRepositoryIT {
         break;
       } catch (Exception e) {
         if (++attempt <= 3) {
-          // log.warning("Failed to access db, will try again");
+          log.warning("Failed to access db, will try again");
         } else {
-          // log.warning("Failed to access db");
+          log.warning("Failed to access db");
         }
         sleep(5_000);
       }
@@ -324,7 +325,7 @@ public class UnitOfWorkRepositoryIT {
         }
 
         UnitOfWork uow = uowAsyncResult.result();
-        // log.info("uow $uow");
+        log.info("uow $uow");
 
         if (uow != null) {
           assertThat(uow).isEqualTo(expectedUow1);
@@ -343,7 +344,7 @@ public class UnitOfWorkRepositoryIT {
           }
 
           SnapshotData data = snapshotDataAsyncResult.result();
-          // log.info("data $data}");
+          log.info("data $data}");
           assertThat(data.getVersion()).isEqualTo(expectedUow1.getVersion());
           assertThat(data.getEvents()).isEqualTo(expectedUow1.getEvents());
 
@@ -384,7 +385,7 @@ public class UnitOfWorkRepositoryIT {
         }
 
         UnitOfWork uow = uowAsyncResult.result();
-        // log.info("uow $uow");
+        log.info("uow $uow");
 
         if (uow != null) {
           assertThat(uow).isEqualTo(expectedUow2);
@@ -404,7 +405,7 @@ public class UnitOfWorkRepositoryIT {
           }
 
           SnapshotData data = snapshotDataAsyncResult.result();
-          // log.info("data $data");
+          log.info("data $data");
           assertThat(data.getVersion()).isEqualTo(expectedUow2.getVersion());
           assertThat(data.getEvents()).isEqualTo(expectedUow2.getEvents());
 

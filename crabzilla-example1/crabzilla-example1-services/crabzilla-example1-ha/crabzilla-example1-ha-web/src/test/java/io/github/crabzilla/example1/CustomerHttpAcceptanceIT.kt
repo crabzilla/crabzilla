@@ -107,8 +107,8 @@ class CustomerHttpAcceptanceIT {
             .then().statusCode(200).contentType(ContentType.JSON)
             .extract().response()
 
-//    log.info("response -------------------")
-//    log.info(getUowResponse.asString())
+    log.info("response -------------------")
+    log.info(getUowResponse.asString())
 
     val uow = mapper.readValue(getUowResponse.asString(), UnitOfWork::class.java)
 
@@ -150,8 +150,8 @@ class CustomerHttpAcceptanceIT {
             .then().statusCode(200).contentType(ContentType.JSON)
             .extract().response()
 
-//    log.info("response -------------------")
-//    log.info(getUowResponse.asString())
+    log.info("response -------------------")
+    log.info(getUowResponse.asString())
 
     val uow = mapper.readValue(getUowResponse.asString(), UnitOfWork::class.java)
 
@@ -179,8 +179,8 @@ class CustomerHttpAcceptanceIT {
 
     val uow2 = mapper.readValue(getUowResponse2, UnitOfWork::class.java)
 
-//    log.info("response 2-------------------")
-//    log.info(getUowResponse2.toString())
+    log.info("response 2-------------------")
+    log.info(getUowResponse2.toString())
 
     assertThat(uow).isEqualTo(uow2)
   }
