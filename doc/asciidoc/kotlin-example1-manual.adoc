@@ -25,7 +25,7 @@ image::example1.png[scaledwidth=100%]
 
 A library containing your domain model expressed in value objects, aggregates, commands, events, etc.
 Internal services and repositories are just plain domain abstractions: interfaces or abstract classes. The scope is
-probably a _Bounded Context_. This module is also 100% agnostic about how data will be persisted to a relational
+probably a _Bounded Context_ or a _Subdomain_. This module is also 100% agnostic about how data will be persisted to a relational
 database. This is called _persistence ignorance_. But it is aware of the JSON format needed to persist its commands,
 events, units of work, etc
 
@@ -84,7 +84,7 @@ include::./crabzilla-example1/crabzilla-example1-handler/src/main/java/io/github
 
 ==== 2.2 CommandHandlerFn
 A possibly blocking and NO side effect free function. Although not being side effect free (may throws an RuntimeException), command
-handler verticles will wrap the result of this function into a result type something like https://github.com/crabzilla/crabzilla/blob/master/crabzilla-core/src/main/java/io/github/crabzilla/core/entity/EntityCommandResult.kt[EntityCommandResult]
+handler verticles will wrap the result of this function into a result type something like https://github.com/crabzilla/crabzilla/blob/master/crabzilla-core/src/main/java/io/github/crabzilla/core/CommandResult.kt[CommandResult]
 [source,kotlin]
 .CustomerFunctions.kt
 ----

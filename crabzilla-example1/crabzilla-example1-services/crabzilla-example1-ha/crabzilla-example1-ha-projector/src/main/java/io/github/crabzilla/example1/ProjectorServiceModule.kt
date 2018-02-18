@@ -2,11 +2,11 @@ package io.github.crabzilla.example1
 
 import dagger.Module
 import dagger.Provides
-import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
-import io.github.crabzilla.vertx.entity.impl.EntityUnitOfWorkRepositoryImpl
-import io.github.crabzilla.vertx.modules.CrabzillaModule
+import io.github.crabzilla.vertx.CrabzillaModule
+import io.github.crabzilla.vertx.UnitOfWorkRepository
+import io.github.crabzilla.vertx.WriteDatabase
+import io.github.crabzilla.vertx.impl.UnitOfWorkRepositoryImpl
 import io.github.crabzilla.vertx.modules.ProjectionDbModule
-import io.github.crabzilla.vertx.modules.WriteDatabase
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.jdbc.JDBCClient
@@ -19,8 +19,8 @@ class ProjectorServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule
 
   @Provides
   @Singleton
-  fun projectionRepo(@WriteDatabase jdbiClient: JDBCClient): EntityUnitOfWorkRepository {
-    return EntityUnitOfWorkRepositoryImpl(jdbiClient)
+  fun projectionRepo(@WriteDatabase jdbiClient: JDBCClient): UnitOfWorkRepository {
+    return UnitOfWorkRepositoryImpl(jdbiClient)
   }
 
 }

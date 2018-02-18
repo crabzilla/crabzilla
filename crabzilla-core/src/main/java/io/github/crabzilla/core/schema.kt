@@ -49,8 +49,8 @@ interface EntityCommand : Command {
   val targetId: EntityId
 }
 
-data class EntityUnitOfWork(val unitOfWorkId: UUID, val command: EntityCommand,
-                            val version: Version, val events: List<DomainEvent>)  {
+data class UnitOfWork(val unitOfWorkId: UUID, val command: EntityCommand,
+                      val version: Version, val events: List<DomainEvent>)  {
 
   fun targetId(): EntityId {
     return command.targetId

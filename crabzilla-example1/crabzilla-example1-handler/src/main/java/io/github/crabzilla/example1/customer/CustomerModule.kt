@@ -3,14 +3,14 @@ package io.github.crabzilla.example1.customer
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoSet
-import io.github.crabzilla.core.entity.Entity
-import io.github.crabzilla.core.entity.Snapshot
-import io.github.crabzilla.core.entity.SnapshotPromoter
-import io.github.crabzilla.core.entity.StateTransitionsTracker
+import io.github.crabzilla.core.Entity
+import io.github.crabzilla.core.Snapshot
+import io.github.crabzilla.core.SnapshotPromoter
+import io.github.crabzilla.core.StateTransitionsTracker
 import io.github.crabzilla.example1.CommandHandlers
 import io.github.crabzilla.example1.SampleInternalService
-import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
-import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
+import io.github.crabzilla.vertx.CommandHandlerVerticle
+import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.Vertx
 import net.jodah.expiringmap.ExpiringMap
@@ -21,8 +21,8 @@ class CustomerModule {
 
   @Provides @IntoSet
   fun handlerVerticle(service: SampleInternalService,
-                      eventJournal: EntityUnitOfWorkRepository,
-                      vertx: Vertx): EntityCommandHandlerVerticle<out Entity> {
+                      eventJournal: UnitOfWorkRepository,
+                      vertx: Vertx): CommandHandlerVerticle<out Entity> {
 
     val customer = Customer(sampleInternalService = service)
     val stateTransitionFn = StateTransitionFn()
@@ -34,8 +34,8 @@ class CustomerModule {
             { instance -> StateTransitionsTracker(instance, stateTransitionFn) }
     val cmdHandler = CommandHandlerFn(trackerFactory)
     val snapshotPromoter = SnapshotPromoter<Customer>
-                    { instance -> StateTransitionsTracker(instance, stateTransitionFn) }
-    return EntityCommandHandlerVerticle(CommandHandlers.CUSTOMER.name, customer, cmdHandler, validator,
+    { instance -> StateTransitionsTracker(instance, stateTransitionFn) }
+    return CommandHandlerVerticle(CommandHandlers.CUSTOMER.name, customer, cmdHandler, validator,
       snapshotPromoter, eventJournal, cache, circuitBreaker)
   }
 

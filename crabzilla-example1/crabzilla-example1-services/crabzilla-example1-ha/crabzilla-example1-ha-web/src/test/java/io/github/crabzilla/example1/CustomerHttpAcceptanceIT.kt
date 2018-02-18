@@ -13,7 +13,7 @@ import com.jayway.restassured.http.ContentType.JSON
 import com.palantir.docker.compose.DockerComposeRule
 import com.palantir.docker.compose.connection.waiting.HealthChecks.toRespondOverHttp
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.EntityUnitOfWork
+import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.Version
 import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
@@ -85,7 +85,7 @@ class CustomerHttpAcceptanceIT {
     val customerId = CustomerId(UUID.randomUUID().toString())
     val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer test")
     val expectedEvent = CustomerCreated(createCustomerCmd.targetId, "customer test")
-    val expectedUow = EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
+    val expectedUow = UnitOfWork(UUID.randomUUID(), createCustomerCmd,
       Version(1), listOf<DomainEvent>(expectedEvent))
 
     val json = mapper.writerFor(CreateCustomer::class.java).writeValueAsString(createCustomerCmd)
@@ -110,7 +110,7 @@ class CustomerHttpAcceptanceIT {
 //    log.info("response -------------------")
 //    log.info(getUowResponse.asString())
 
-    val uow = mapper.readValue(getUowResponse.asString(), EntityUnitOfWork::class.java)
+    val uow = mapper.readValue(getUowResponse.asString(), UnitOfWork::class.java)
 
     assertThat(uow.targetId()).isEqualTo(expectedUow.targetId())
     assertThat(uow.command).isEqualTo(expectedUow.command)
@@ -128,7 +128,7 @@ class CustomerHttpAcceptanceIT {
     val customerId = CustomerId(UUID.randomUUID().toString())
     val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer test")
     val expectedEvent = CustomerCreated(createCustomerCmd.targetId, "customer test")
-    val expectedUow = EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd,
+    val expectedUow = UnitOfWork(UUID.randomUUID(), createCustomerCmd,
       Version(1), listOf<DomainEvent>(expectedEvent))
 
     val json = mapper.writerFor(CreateCustomer::class.java).writeValueAsString(createCustomerCmd)
@@ -153,7 +153,7 @@ class CustomerHttpAcceptanceIT {
 //    log.info("response -------------------")
 //    log.info(getUowResponse.asString())
 
-    val uow = mapper.readValue(getUowResponse.asString(), EntityUnitOfWork::class.java)
+    val uow = mapper.readValue(getUowResponse.asString(), UnitOfWork::class.java)
 
     assertThat(uow.targetId()).isEqualTo(expectedUow.targetId())
     assertThat(uow.command).isEqualTo(expectedUow.command)
@@ -177,7 +177,7 @@ class CustomerHttpAcceptanceIT {
             .then().statusCode(200).contentType(ContentType.JSON)
             .extract().response().asString()
 
-    val uow2 = mapper.readValue(getUowResponse2, EntityUnitOfWork::class.java)
+    val uow2 = mapper.readValue(getUowResponse2, UnitOfWork::class.java)
 
 //    log.info("response 2-------------------")
 //    log.info(getUowResponse2.toString())

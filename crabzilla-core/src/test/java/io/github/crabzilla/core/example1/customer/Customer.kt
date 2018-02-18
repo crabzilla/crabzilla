@@ -23,17 +23,13 @@ data class Customer(val customerId: CustomerId? = null,
   }
 
   internal fun activate(reason: String): List<DomainEvent> {
-    customerMustExist()
+    require(this.customerId != null, { "customer must exists" })
     return eventsOf(CustomerActivated(reason, sampleInternalService.now()))
   }
 
   internal fun deactivate(reason: String): List<DomainEvent> {
-    customerMustExist()
-    return eventsOf(CustomerDeactivated(reason, sampleInternalService.now()))
-  }
-
-  private fun customerMustExist() {
     require(this.customerId != null, { "customer must exists" })
+    return eventsOf(CustomerDeactivated(reason, sampleInternalService.now()))
   }
 
 }
