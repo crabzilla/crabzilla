@@ -2,10 +2,10 @@ package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Component
-import io.github.crabzilla.core.entity.Entity
+import io.github.crabzilla.core.Entity
 import io.github.crabzilla.example1.customer.CustomerModule
-import io.github.crabzilla.vertx.entity.EntityCommandHandlerVerticle
-import io.github.crabzilla.vertx.modules.WriteDatabase
+import io.github.crabzilla.vertx.CommandHandlerVerticle
+import io.github.crabzilla.vertx.WriteDatabase
 import javax.inject.Singleton
 
 // tag::component[]
@@ -13,7 +13,7 @@ import javax.inject.Singleton
 @Component(modules = arrayOf(CustomerModule::class, HandlerServiceModule::class))
 interface HandlerServiceComponent {
 
-  fun commandVerticles(): Set<EntityCommandHandlerVerticle<out Entity>>
+  fun commandVerticles(): Set<CommandHandlerVerticle<out Entity>>
 
   @WriteDatabase
   fun datasource(): HikariDataSource

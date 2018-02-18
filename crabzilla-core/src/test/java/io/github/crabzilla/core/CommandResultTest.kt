@@ -1,8 +1,5 @@
-package io.github.crabzilla.core.entity
+package io.github.crabzilla.core
 
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.EntityUnitOfWork
-import io.github.crabzilla.core.Version
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerId
@@ -16,16 +13,16 @@ import org.junit.jupiter.api.Test
 import java.util.*
 import java.util.Arrays.asList
 
-@DisplayName("An EntityCommandResult")
-class EntityCommandResultTest {
+@DisplayName("An CommandResult")
+class CommandResultTest {
 
-  internal lateinit var result: EntityCommandResult
+  internal lateinit var result: CommandResult
 
   internal val version = Version(1)
   internal val customerId = CustomerId("c1")
   internal val commandId = UUID.randomUUID()
   internal val event: DomainEvent = CustomerCreated(customerId, "c1")
-  internal val uow = EntityUnitOfWork(UUID.randomUUID(),
+  internal val uow = UnitOfWork(UUID.randomUUID(),
     CreateCustomer(commandId, customerId, "c1"),
     version,
     asList(event))
@@ -33,27 +30,27 @@ class EntityCommandResultTest {
   @Test
   @DisplayName("Success can be instantiated")
   fun successCanBeInstantiated() {
-    result = EntityCommandResult.success(uow)
+    result = CommandResult.success(uow)
     assertThat(result).isNotNull()
   }
 
   @Test
   @DisplayName("Success can not be null")
   fun successCannotBeNull() {
-    assertThrows(NullPointerException::class.java) { result = EntityCommandResult.success(null!!) }
+    assertThrows(NullPointerException::class.java) { result = CommandResult.success(null!!) }
   }
 
   @Test
   @DisplayName("Error can be instantiated")
   fun errorCanBeInstantiated() {
-    result = EntityCommandResult.error(RuntimeException("test"))
+    result = CommandResult.error(RuntimeException("test"))
     assertThat(result).isNotNull()
   }
 
   @Test
   @DisplayName("Error cannot be null")
   fun errorCannnotBeNull() {
-    assertThrows(NullPointerException::class.java) { result = EntityCommandResult.error(null!!) }
+    assertThrows(NullPointerException::class.java) { result = CommandResult.error(null!!) }
   }
 
   @Nested
@@ -62,7 +59,7 @@ class EntityCommandResultTest {
 
     @BeforeEach
     internal fun setUp() {
-      result = EntityCommandResult.success(uow)
+      result = CommandResult.success(uow)
     }
 
     @Test
@@ -85,7 +82,7 @@ class EntityCommandResultTest {
 
     @BeforeEach
     internal fun setUp() {
-      result = EntityCommandResult.error(RuntimeException("test"))
+      result = CommandResult.error(RuntimeException("test"))
     }
 
     @Test

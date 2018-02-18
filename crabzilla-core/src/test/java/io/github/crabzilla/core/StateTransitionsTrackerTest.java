@@ -1,6 +1,5 @@
-package io.github.crabzilla.core.entity;
+package io.github.crabzilla.core;
 
-import io.github.crabzilla.core.Version;
 import io.github.crabzilla.example1.SampleInternalService;
 import io.github.crabzilla.example1.customer.*;
 import org.junit.jupiter.api.BeforeEach;

@@ -562,7 +562,7 @@ data class CreateActivateCustomer(override val commandId: UUID,
 <h4 id="1-2-2-commandhandlerfn"><a class="anchor" href="#1-2-2-commandhandlerfn"></a>1.2.2 CommandHandlerFn</h4>
 <div class="paragraph">
 <p>A possibly blocking and NO side effect free function. Although not being side effect free (throws an exception), command
-handler verticles will wrap the result of this function into a result type something like <a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-core/src/main/java/io/github/crabzilla/core/entity/EntityCommandResult.kt">EntityCommandResult</a></p>
+handler verticles will wrap the result of this function into a result type something like <a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-core/src/main/java/io/github/crabzilla/core/CommandResult.kt">CommandResult</a></p>
 </div>
 <div class="listingblock">
 <div class="title">CustomerFunctions.kt</div>
@@ -650,13 +650,13 @@ can be easily tested with mocks and stubs.</p>
 <pre class="highlightjs highlight"><code class="language-kotlin" data-lang="kotlin">/**
  * This command handler module exposes DAOs, repositories and also services implementations.
  */
-@Module(includes = [CustomerModule::class])
+@Module(includes = [(CustomerModule::class)])
 class HandlerModule {
 
   @Provides
   @Singleton
-  fun uowRepo(@WriteDatabase jdbcClient: JDBCClient): EntityUnitOfWorkRepository {
-    return EntityUnitOfWorkRepositoryImpl(jdbcClient)
+  fun uowRepo(@WriteDatabase jdbcClient: JDBCClient): UnitOfWorkRepository {
+    return UnitOfWorkRepositoryImpl(jdbcClient)
   }
 
   @Provides
@@ -685,21 +685,21 @@ class CustomerModule {
 
   @Provides @IntoSet
   fun handlerVerticle(service: SampleInternalService,
-                      eventJournal: EntityUnitOfWorkRepository,
-                      vertx: Vertx): EntityCommandHandlerVerticle&lt;out Entity&gt; {
+                      eventJournal: UnitOfWorkRepository,
+                      vertx: Vertx): CommandHandlerVerticle&lt;out Entity&gt; {
 
     val customer = Customer(sampleInternalService = service)
     val stateTransitionFn = StateTransitionFn()
     val validator = CommandValidatorFn()
 
     val cache: ExpiringMap&lt;String, Snapshot&lt;Customer&gt;&gt; = ExpiringMap.create()
-    val circuitBreaker = CircuitBreaker.create("Customer", vertx)
+    val circuitBreaker = CircuitBreaker.create(CommandHandlers.CUSTOMER.name, vertx)
     val trackerFactory : (Snapshot&lt;Customer&gt;) -&gt; StateTransitionsTracker&lt;Customer&gt; =
             { instance -&gt; StateTransitionsTracker(instance, stateTransitionFn) }
     val cmdHandler = CommandHandlerFn(trackerFactory)
     val snapshotPromoter = SnapshotPromoter&lt;Customer&gt;
-                    { instance -&gt; StateTransitionsTracker(instance, stateTransitionFn) }
-    return EntityCommandHandlerVerticle("Customer", customer, cmdHandler, validator,
+    { instance -&gt; StateTransitionsTracker(instance, stateTransitionFn) }
+    return CommandHandlerVerticle(CommandHandlers.CUSTOMER.name, customer, cmdHandler, validator,
       snapshotPromoter, eventJournal, cache, circuitBreaker)
   }
 
@@ -783,13 +783,13 @@ class CustomerModule {
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-web/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandRestVerticle.java">EntityCommandRestVerticle</a> to receive commands as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-web/src/main/java/io/github/crabzilla/vertx/CommandRestVerticle.java">CommandRestVerticle</a> to receive commands as JSON</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-handler/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.kt">EntityCommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-handler/src/main/java/io/github/crabzilla/vertx/entity/CommandHandlerVerticle.kt">CommandHandlerVerticle</a> to validate and process commands against the latest snapshot found for the aggregate</p>
 </li>
 <li>
-<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-handler/src/main/java/io/github/crabzilla/vertx/entity/EntityUnitOfWorkRepository.java">EntityUnitOfWorkRepository</a> to store resulting units of work into a single table, being events and command as JSON</p>
+<p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-handler/src/main/java/io/github/crabzilla/vertx/UnitOfWorkRepository.java">UnitOfWorkRepository</a> to store resulting units of work into a single table, being events and command as JSON</p>
 </li>
 <li>
 <p><a href="https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-projector/src/main/java/io/github/crabzilla/vertx/projection/ProjectionHandlerVerticle.java">ProjectionHandlerVerticle</a> to propagate and project events to read model database</p>
@@ -802,7 +802,7 @@ class CustomerModule {
 <div id="footer">
 <div id="footer-text">
 Version 0.0.6-SNAPSHOT<br>
-Last updated 2018-02-06 01:30:58 BRST
+Last updated 2018-02-18 02:43:05 BRT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

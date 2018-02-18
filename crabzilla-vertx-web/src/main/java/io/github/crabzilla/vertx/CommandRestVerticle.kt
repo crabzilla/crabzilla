@@ -1,12 +1,13 @@
-package io.github.crabzilla.vertx.entity
+package io.github.crabzilla.vertx
 
 import io.github.crabzilla.core.EntityCommand
-import io.github.crabzilla.core.EntityUnitOfWork
-import io.github.crabzilla.vertx.CrabzillaVerticle
+import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.vertx.VerticleRole.REST
-import io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT.*
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
+import io.vertx.core.AsyncResult
 import io.vertx.core.Future
+import io.vertx.core.Handler
+import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.healthchecks.HealthCheckHandler
@@ -19,12 +20,17 @@ import java.util.*
 
 // TODO add circuit breakers
 // TODO add endpoints for list/start/stop crabzilla verticles
-class EntityCommandRestVerticle(override val name: String,
-                                private val config: JsonObject,
-                                private val healthCheckHandler : HealthCheckHandler,
-                                private val uowRepository: EntityUnitOfWorkRepository,
-                                private val handlerService: EntityCommandHandlerService)
+class CommandRestVerticle(override val name: String,
+                          private val config: JsonObject,
+                          private val healthCheckHandler : HealthCheckHandler,
+                          private val uowRepository: UnitOfWorkRepository,
+                          private val handlerService: CommandHandlerService)
   : CrabzillaVerticle(name, REST) {
+
+
+  companion object {
+    internal var log = getLogger(CommandHandlerService::class.java)
+  }
 
   override fun start() {
 
@@ -52,7 +58,7 @@ class EntityCommandRestVerticle(override val name: String,
 
   private fun postCommandHandler(routingContext: RoutingContext) {
 
-    val uowFuture = Future.future<EntityUnitOfWork>()
+    val uowFuture = Future.future<UnitOfWork>()
     val httpResp = routingContext.response()
     val commandStr = routingContext.bodyAsString
     val command = Json.decodeValue(commandStr, EntityCommand::class.java)
@@ -77,45 +83,51 @@ class EntityCommandRestVerticle(override val name: String,
 
       if (uowResult.result() != null) {
         val location = (routingContext.request().absoluteURI() + "/"
-                + uowResult.result().command.commandId.toString())
+          + uowResult.result().command.commandId.toString())
         val resultAsJson = Json.encode(uowResult.result())
         httpResp.setStatusCode(201).headers().add("Location", location).add("Content-Type", "application/json")
         httpResp.end(resultAsJson)
         return@setHandler
       }
 
-      handlerService.postCommand(cmdHandlerEndpoint(resource), command, { response ->
+      handlerService.postCommand(cmdHandlerEndpoint(resource), command, cmdHandler(routingContext, httpResp))
+
+    }
+
+  }
+
+  private fun cmdHandler(routingContext: RoutingContext, httpResp: HttpServerResponse):
+    Handler<AsyncResult<CommandExecution>> {
+
+    return Handler { response ->
 
         if (!response.succeeded()) {
           log.error("eventbus.handleCommand", response.cause())
           httpResp.setStatusCode(500).end(response.cause().message)
-          return@postCommand
+          return@Handler
         }
 
-        val result = response.result() as EntityCommandExecution
+        val result = response.result() as CommandExecution
         log.info("result = {}", result)
 
         when (result.result) {
-          SUCCESS -> {
+          CommandExecution.RESULT.SUCCESS -> {
             val location = routingContext.request().absoluteURI() + "/" + result.unitOfWork!!
               .command.commandId.toString()
             httpResp.setStatusCode(201).headers().add("Content-Type", "application/json")
               .add("Location", location)
           }
-          VALIDATION_ERROR -> {
+          CommandExecution.RESULT.VALIDATION_ERROR -> {
             httpResp.setStatusCode(400).headers().add("Content-Type", "application/json")
             httpResp.write(Json.encode(result.constraints))
           }
-          UNKNOWN_COMMAND -> {
+          CommandExecution.RESULT.UNKNOWN_COMMAND -> {
             httpResp.statusCode = 400
           }
           else -> httpResp.statusCode = 500
         }
 
         httpResp.end()
-
-      })
-
     }
 
   }
@@ -130,7 +142,7 @@ class EntityCommandRestVerticle(override val name: String,
       return
     }
 
-    val uowFuture = Future.future<EntityUnitOfWork>()
+    val uowFuture = Future.future<UnitOfWork>()
 
     uowRepository.getUowByCmdId(UUID.fromString(cmdID), uowFuture)
 
@@ -151,8 +163,7 @@ class EntityCommandRestVerticle(override val name: String,
 
   }
 
-  companion object {
-    internal var log = getLogger(EntityCommandHandlerService::class.java)
-  }
-
 }
+
+
+

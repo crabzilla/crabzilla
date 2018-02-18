@@ -1,12 +1,8 @@
-package io.github.crabzilla.vertx.entity
+package io.github.crabzilla.vertx
 
-import io.github.crabzilla.core.EntityCommand
-import io.github.crabzilla.core.Version
-import io.github.crabzilla.core.entity.*
-import io.github.crabzilla.vertx.CrabzillaVerticle
-import io.github.crabzilla.vertx.DbConcurrencyException
+import io.github.crabzilla.core.*
+import io.github.crabzilla.vertx.CommandExecution.RESULT.*
 import io.github.crabzilla.vertx.VerticleRole.HANDLER
-import io.github.crabzilla.vertx.entity.EntityCommandExecution.RESULT.*
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.AsyncResult
@@ -16,14 +12,14 @@ import io.vertx.core.eventbus.Message
 import net.jodah.expiringmap.ExpiringMap
 import org.slf4j.LoggerFactory.getLogger
 
-class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
-                                               private val seedValue: A,
-                                               private val cmdHandler: (EntityCommand, Snapshot<A>) -> EntityCommandResult?,
-                                               private val validatorFn: (EntityCommand) -> List<String>,
-                                               private val snapshotPromoter: SnapshotPromoter<A>,
-                                               private val eventJournal: EntityUnitOfWorkRepository,
-                                               private val cache: ExpiringMap<String, Snapshot<A>>,
-                                               private val circuitBreaker: CircuitBreaker) : CrabzillaVerticle(name, HANDLER) {
+class CommandHandlerVerticle<A : Entity>(override val name: String,
+                                         private val seedValue: A,
+                                         private val cmdHandler: (EntityCommand, Snapshot<A>) -> CommandResult?,
+                                         private val validatorFn: (EntityCommand) -> List<String>,
+                                         private val snapshotPromoter: SnapshotPromoter<A>,
+                                         private val eventJournal: UnitOfWorkRepository,
+                                         private val cache: ExpiringMap<String, Snapshot<A>>,
+                                         private val circuitBreaker: CircuitBreaker) : CrabzillaVerticle(name, HANDLER) {
 
   @Throws(Exception::class)
   override fun start() {
@@ -36,7 +32,7 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
 
       if (command == null) {
 
-        val cmdExecResult = EntityCommandExecution(commandId = command, result = VALIDATION_ERROR,
+        val cmdExecResult = CommandExecution(commandId = command, result = VALIDATION_ERROR,
           constraints = listOf("Command cannot be null. Check if JSON payload is valid."))
         msg.reply(cmdExecResult)
         return@handler
@@ -48,7 +44,7 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
 
       if (!constraints.isEmpty()) {
 
-        val result = EntityCommandExecution(commandId = command.commandId, result = VALIDATION_ERROR,
+        val result = CommandExecution(commandId = command.commandId, result = VALIDATION_ERROR,
           constraints = constraints)
         msg.reply(result)
         return@handler
@@ -57,12 +53,12 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
       circuitBreaker.fallback { throwable ->
 
         log.error("Fallback for command $command.commandId", throwable)
-        val cmdExecResult = EntityCommandExecution(commandId = command.commandId, result = FALLBACK)
+        val cmdExecResult = CommandExecution(commandId = command.commandId, result = FALLBACK)
         msg.reply(cmdExecResult)
 
       }
 
-        .execute<EntityCommandExecution>(cmdHandler(command))
+        .execute<CommandExecution>(cmdHandler(command))
 
         .setHandler(resultHandler(msg))
 
@@ -70,7 +66,7 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
 
   }
 
-  internal fun cmdHandler(command: EntityCommand): (Future<EntityCommandExecution>) -> Unit {
+  internal fun cmdHandler(command: EntityCommand): (Future<CommandExecution>) -> Unit {
 
     return { future1 ->
 
@@ -116,7 +112,7 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
 
           // cmd handler _may_ be blocking. Otherwise, aggregate root would need to use reactive API to call
           // external services
-          vertx.executeBlocking<EntityCommandExecution>({ future2 ->
+          vertx.executeBlocking<CommandExecution>({ future2 ->
 
             val resultingSnapshot = if (totalOfNonCachedEvents > 0)
               snapshotPromoter.promote(cachedSnapshot, nonCached.version, nonCached.events)
@@ -130,7 +126,7 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
             val result = cmdHandler.invoke(command, resultingSnapshot)
 
             if (result == null) {
-              future2.complete(EntityCommandExecution(result = UNKNOWN_COMMAND, commandId = command.commandId))
+              future2.complete(CommandExecution(result = UNKNOWN_COMMAND, commandId = command.commandId))
               return@executeBlocking
             }
 
@@ -145,7 +141,7 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
                   val error = appendAsyncResult.cause()
                   log.error("appendUnitOfWork for command " + command.commandId, error.message)
                   if (error is DbConcurrencyException) {
-                    future2.complete(EntityCommandExecution(result = CONCURRENCY_ERROR, commandId = command.commandId,
+                    future2.complete(CommandExecution(result = CONCURRENCY_ERROR, commandId = command.commandId,
                       constraints = listOf(error.message)))
                   } else {
                     future2.fail(appendAsyncResult.cause())
@@ -157,14 +153,14 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
                 cache.put(targetId, finalSnapshot)
                 val uowSequence = appendAsyncResult.result()
                 log.debug("uowSequence: {}", uowSequence)
-                future2.complete(EntityCommandExecution(result = SUCCESS, commandId = command.commandId,
+                future2.complete(CommandExecution(result = SUCCESS, commandId = command.commandId,
                   unitOfWork = uow, uowSequence = uowSequence))
               }
             })
 
             result.inCaseOfError({ error ->
               log.error("commandExecution", error.message)
-                future2.complete(EntityCommandExecution(result = HANDLING_ERROR, commandId = command.commandId,
+                future2.complete(CommandExecution(result = HANDLING_ERROR, commandId = command.commandId,
                   constraints = listOf(error.message)))
             })
 
@@ -183,18 +179,18 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
     }
   }
 
-  internal fun resultHandler(msg: Message<EntityCommand>): (AsyncResult<EntityCommandExecution>) -> Unit {
+  internal fun resultHandler(msg: Message<EntityCommand>): (AsyncResult<CommandExecution>) -> Unit {
 
-    return { resultHandler: AsyncResult<EntityCommandExecution> ->
+    return { resultHandler: AsyncResult<CommandExecution> ->
       if (!resultHandler.succeeded()) {
         log.error("resultHandler", resultHandler.cause())
         // TODO customize
         msg.fail(400, resultHandler.cause().message)
       }
       val resp = resultHandler.result()
-      val options = DeliveryOptions().setCodecName("EntityCommandExecution")
+      val options = DeliveryOptions().setCodecName("CommandExecution")
       msg.reply(resp, options)
-      //      msg.reply(resp, options, (Handler<AsyncResult<Message<EntityCommandExecution>>>)
+      //      msg.reply(resp, options, (Handler<AsyncResult<Message<CommandExecution>>>)
       //              event -> {
       //        if (!event.succeeded()) {
       //          log.error("msg.reply ", event.cause());
@@ -205,7 +201,7 @@ class EntityCommandHandlerVerticle<A : Entity>(override val name: String,
 
   companion object {
 
-    internal var log = getLogger(EntityCommandHandlerVerticle::class.java)
+    internal var log = getLogger(CommandHandlerVerticle::class.java)
   }
 
 }

@@ -3,15 +3,9 @@ package io.github.crabzilla.example1
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoSet
-import io.github.crabzilla.vertx.CrabzillaWebModule
-import io.github.crabzilla.vertx.entity.EntityCommandHandlerService
-import io.github.crabzilla.vertx.entity.EntityCommandRestVerticle
-import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
-import io.github.crabzilla.vertx.entity.impl.EntityCommandHandlerServiceImpl
-import io.github.crabzilla.vertx.entity.impl.EntityUnitOfWorkRepositoryImpl
-import io.github.crabzilla.vertx.modules.CrabzillaModule
-import io.github.crabzilla.vertx.modules.WebHealthCheck
-import io.github.crabzilla.vertx.modules.WriteDatabase
+import io.github.crabzilla.vertx.*
+import io.github.crabzilla.vertx.impl.CommandHandlerServiceImpl
+import io.github.crabzilla.vertx.impl.UnitOfWorkRepositoryImpl
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.healthchecks.HealthCheckHandler
@@ -22,21 +16,21 @@ import javax.inject.Singleton
 class RestServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
 
   @Provides
-  fun handlerService() : EntityCommandHandlerService {
-    return EntityCommandHandlerServiceImpl(vertx, subDomainName())
+  fun handlerService() : CommandHandlerService {
+    return CommandHandlerServiceImpl(vertx, subDomainName())
   }
 
   @Provides @IntoSet
-  fun restVerticle(uowRepository: EntityUnitOfWorkRepository, config: JsonObject,
-                   handlerService: EntityCommandHandlerService,
-                   @WebHealthCheck healthCheckHandler: HealthCheckHandler): EntityCommandRestVerticle {
-    return EntityCommandRestVerticle(subDomainName(), config, healthCheckHandler, uowRepository, handlerService)
+  fun restVerticle(uowRepository: UnitOfWorkRepository, config: JsonObject,
+                   handlerService: CommandHandlerService,
+                   @WebHealthCheck healthCheckHandler: HealthCheckHandler): CommandRestVerticle {
+    return CommandRestVerticle(subDomainName(), config, healthCheckHandler, uowRepository, handlerService)
   }
 
   @Provides
   @Singleton
-  fun uowRepository(@WriteDatabase jdbcClient: JDBCClient): EntityUnitOfWorkRepository {
-    return EntityUnitOfWorkRepositoryImpl(jdbcClient)
+  fun uowRepository(@WriteDatabase jdbcClient: JDBCClient): UnitOfWorkRepository {
+    return UnitOfWorkRepositoryImpl(jdbcClient)
   }
 
 }

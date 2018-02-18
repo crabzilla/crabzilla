@@ -8,8 +8,8 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EntityCommand
 import io.github.crabzilla.core.EntityId
-import io.github.crabzilla.core.EntityUnitOfWork
-import io.github.crabzilla.vertx.entity.EntityCommandExecution
+import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.vertx.helpers.JacksonGenericCodec
 import io.github.crabzilla.vertx.projection.ProjectionData
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
@@ -67,8 +67,8 @@ fun initVertx(vertx: Vertx) {
   vertx.eventBus().registerDefaultCodec(ProjectionData::class.java,
     JacksonGenericCodec(Json.mapper, ProjectionData::class.java))
 
-  vertx.eventBus().registerDefaultCodec(EntityCommandExecution::class.java,
-    JacksonGenericCodec(Json.mapper, EntityCommandExecution::class.java))
+  vertx.eventBus().registerDefaultCodec(CommandExecution::class.java,
+    JacksonGenericCodec(Json.mapper, CommandExecution::class.java))
 
   vertx.eventBus().registerDefaultCodec(EntityId::class.java,
     JacksonGenericCodec(Json.mapper, EntityId::class.java))
@@ -79,22 +79,9 @@ fun initVertx(vertx: Vertx) {
   vertx.eventBus().registerDefaultCodec(DomainEvent::class.java,
     JacksonGenericCodec(Json.mapper, DomainEvent::class.java))
 
-  vertx.eventBus().registerDefaultCodec(EntityUnitOfWork::class.java,
-    JacksonGenericCodec(Json.mapper, EntityUnitOfWork::class.java))
+  vertx.eventBus().registerDefaultCodec(UnitOfWork::class.java,
+    JacksonGenericCodec(Json.mapper, UnitOfWork::class.java))
 
-}
-
-
-fun deployVerticles(vertx: Vertx, vararg verticles: CrabzillaVerticle) {
-  verticles.forEach({
-    vertx.deployVerticle(it) { event ->
-      if (!event.succeeded()) {
-        log.error("Error deploying verticle ${it.name}", event.cause())
-      } else {
-        log.info("Verticle: ${it.name} deployed with ID: ${event.result()}", event.cause())
-      }
-    }
-  })
 }
 
 fun deployVerticles(vertx: Vertx, verticles: Set<CrabzillaVerticle>, deploymentOptions: DeploymentOptions = DeploymentOptions()) {
@@ -152,4 +139,3 @@ enum class VerticleRole {
 
 }
 
-class DbConcurrencyException(s: String) : RuntimeException(s)

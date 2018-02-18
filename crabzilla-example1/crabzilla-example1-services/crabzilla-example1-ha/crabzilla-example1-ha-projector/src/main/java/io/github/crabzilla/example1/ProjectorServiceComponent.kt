@@ -2,8 +2,8 @@ package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Component
-import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
-import io.github.crabzilla.vertx.modules.ProjectionDatabase
+import io.github.crabzilla.vertx.ProjectionDatabase
+import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.github.crabzilla.vertx.projection.ProjectionHandlerVerticle
 import javax.inject.Singleton
 
@@ -14,7 +14,7 @@ interface ProjectorServiceComponent {
 
   fun projectorVerticles(): Set<ProjectionHandlerVerticle<out Any>>
 
-  fun projectionRepo(): EntityUnitOfWorkRepository
+  fun projectionRepo(): UnitOfWorkRepository
 
   @ProjectionDatabase
   fun datasource(): HikariDataSource

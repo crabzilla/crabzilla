@@ -1,9 +1,8 @@
-package io.github.crabzilla.vertx.entity.impl
+package io.github.crabzilla.vertx.impl
 
 import io.github.crabzilla.core.*
-import io.github.crabzilla.core.entity.SnapshotData
 import io.github.crabzilla.vertx.DbConcurrencyException
-import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
+import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.github.crabzilla.vertx.helpers.VertxSqlHelper.*
 import io.github.crabzilla.vertx.projection.ProjectionData
 import io.vertx.core.Future
@@ -16,11 +15,11 @@ import io.vertx.ext.sql.UpdateResult
 import org.slf4j.LoggerFactory.getLogger
 import java.util.*
 
-class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUnitOfWorkRepository {
+class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepository {
 
   companion object {
 
-    internal var log = getLogger(EntityUnitOfWorkRepositoryImpl::class.java)
+    internal var log = getLogger(UnitOfWorkRepositoryImpl::class.java)
 
     private val UOW_ID = "uow_id"
     private val UOW_EVENTS = "uow_events"
@@ -32,15 +31,15 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
 
   }
 
-  override fun getUowByCmdId(cmdId: UUID, uowFuture: Future<EntityUnitOfWork>) {
+  override fun getUowByCmdId(cmdId: UUID, uowFuture: Future<UnitOfWork>) {
     get(SELECT_UOW_BY_CMD_ID, cmdId, uowFuture)
   }
 
-  override fun getUowByUowId(uowId: UUID, uowFuture: Future<EntityUnitOfWork>) {
+  override fun getUowByUowId(uowId: UUID, uowFuture: Future<UnitOfWork>) {
     get(SELECT_UOW_BY_UOW_ID, uowId, uowFuture)
   }
 
-  override fun get(querie: String, id: UUID, uowFuture: Future<EntityUnitOfWork>) {
+  override fun get(querie: String, id: UUID, uowFuture: Future<UnitOfWork>) {
 
     val params = JsonArray().add(id.toString())
 
@@ -67,7 +66,7 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
           for (row in rows) {
             val command = Json.decodeValue(row.getString(CMD_DATA), EntityCommand::class.java)
             val events = listOfEventsFromJson(Json.mapper, row.getString(UOW_EVENTS))
-            val uow = EntityUnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
+            val uow = UnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
               Version(row.getLong(VERSION)!!), events)
             uowFuture.complete(uow)
           }
@@ -153,7 +152,7 @@ class EntityUnitOfWorkRepositoryImpl(private val client: JDBCClient) : EntityUni
     }
   }
 
-  override fun append(unitOfWork: EntityUnitOfWork, appendFuture: Future<Long>, aggregateRootName: String) {
+  override fun append(unitOfWork: UnitOfWork, appendFuture: Future<Long>, aggregateRootName: String) {
 
     val selectCurrentVersionSql = "select max(version) as last_version from units_of_work where ar_id = ? and ar_name = ? "
 

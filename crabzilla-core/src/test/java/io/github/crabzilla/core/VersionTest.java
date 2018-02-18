@@ -1,6 +1,5 @@
-package io.github.crabzilla.core.entity;
+package io.github.crabzilla.core;
 
-import io.github.crabzilla.core.Version;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

@@ -1,59 +1,54 @@
 package io.github.crabzilla.core
 
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.crabzilla.core.entity.EntityCommandResult
-import java.io.IOException
+import java.io.Serializable
 import java.util.*
+
+interface Entity : Serializable {
+  val id: EntityId
+}
+
+class CommandResult private constructor(private val unitOfWork: UnitOfWork?,
+                                        private val exception: Throwable?) {
+
+  fun inCaseOfSuccess(uowFn: (UnitOfWork?) -> Unit) {
+    if (unitOfWork != null) {
+      uowFn.invoke(unitOfWork)
+    }
+  }
+
+  fun inCaseOfError(uowFn: (Throwable) -> Unit) {
+    if (exception != null) {
+      uowFn.invoke(exception)
+    }
+  }
+
+  companion object {
+
+    fun success(uow: UnitOfWork?): CommandResult {
+      return CommandResult(uow, null)
+    }
+
+    fun error(e: Throwable): CommandResult {
+      return CommandResult(null, e)
+    }
+  }
+
+}
 
 // command handling helper functions
 
-fun resultOf(f: () -> EntityUnitOfWork?): EntityCommandResult {
+fun resultOf(f: () -> UnitOfWork?): CommandResult {
   return try {
-    EntityCommandResult.success(f.invoke()) }
+    CommandResult.success(f.invoke()) }
   catch (e: RuntimeException) {
-    EntityCommandResult.error(e) }
+    CommandResult.error(e) }
 }
 
-fun uowOf(command: EntityCommand, events: List<DomainEvent>, version: Version): EntityUnitOfWork {
-  return EntityUnitOfWork(UUID.randomUUID(), command, version, events)
+fun uowOf(command: EntityCommand, events: List<DomainEvent>, version: Version): UnitOfWork {
+  return UnitOfWork(UUID.randomUUID(), command, version, events)
 }
 
 fun eventsOf(vararg event: DomainEvent): List<DomainEvent> {
   return event.asList()
-}
-
-// json serialization functions
-
-val eventsListType = object : TypeReference<List<DomainEvent>>() {}
-
-fun listOfEventsToJson(mapper: ObjectMapper, events: List<DomainEvent>): String {
-  try {
-    val cmdAsJson = mapper.writerFor(eventsListType).writeValueAsString(events)
-    return cmdAsJson
-  } catch (e: JsonProcessingException) {
-    throw RuntimeException("When writing listOfEventsToJson", e)
-  }
-
-}
-
-fun listOfEventsFromJson(mapper: ObjectMapper, eventsAsJson: String): List<DomainEvent> {
-  try {
-    return mapper.readerFor(eventsListType).readValue(eventsAsJson)
-  } catch (e: IOException) {
-    throw RuntimeException("When reading events list from JSON", e)
-  }
-
-}
-
-fun commandToJson(mapper: ObjectMapper, command: Command): String {
-  try {
-    val cmdAsJson = mapper.writerFor(Command::class.java).writeValueAsString(command)
-    return cmdAsJson
-  } catch (e: JsonProcessingException) {
-    throw RuntimeException("When writing commandToJson", e)
-  }
-
 }
 

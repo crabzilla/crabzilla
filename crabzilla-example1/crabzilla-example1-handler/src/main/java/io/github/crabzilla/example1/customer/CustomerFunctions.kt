@@ -1,12 +1,6 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.EntityCommand
-import io.github.crabzilla.core.entity.EntityCommandResult
-import io.github.crabzilla.core.entity.Snapshot
-import io.github.crabzilla.core.entity.StateTransitionsTracker
-import io.github.crabzilla.core.resultOf
-import io.github.crabzilla.core.uowOf
+import io.github.crabzilla.core.*
 
 // tag::StateTransitionFn[]
 
@@ -42,9 +36,9 @@ class CommandValidatorFn : (EntityCommand) -> List<String> {
 
 class CommandHandlerFn(
         private val trackerFactory: (Snapshot<Customer>) -> StateTransitionsTracker<Customer>) :
-        (EntityCommand, Snapshot<Customer>) -> EntityCommandResult? {
+        (EntityCommand, Snapshot<Customer>) -> CommandResult? {
 
-  override fun invoke(cmd: EntityCommand, snapshot: Snapshot<Customer>): EntityCommandResult? {
+  override fun invoke(cmd: EntityCommand, snapshot: Snapshot<Customer>): CommandResult? {
 
     val customer = snapshot.instance
     val newVersion = snapshot.version.nextVersion()

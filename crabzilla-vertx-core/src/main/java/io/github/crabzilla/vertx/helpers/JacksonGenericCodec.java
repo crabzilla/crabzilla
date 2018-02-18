@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx;
+package io.github.crabzilla.vertx.helpers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

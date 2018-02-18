@@ -60,7 +60,7 @@ include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/cr
 
 ==== 1.2.2 CommandHandlerFn
 A possibly blocking and NO side effect free function. Although not being side effect free (throws an exception), command
-handler verticles will wrap the result of this function into a result type something like https://github.com/crabzilla/crabzilla/blob/master/crabzilla-core/src/main/java/io/github/crabzilla/core/entity/EntityCommandResult.kt[EntityCommandResult]
+handler verticles will wrap the result of this function into a result type something like https://github.com/crabzilla/crabzilla/blob/master/crabzilla-core/src/main/java/io/github/crabzilla/core/CommandResult.kt[CommandResult]
 [source,kotlin]
 .CustomerFunctions.kt
 ----
@@ -176,7 +176,7 @@ This example presented:
 
 Crabzilla will run your domain model by providing these components:
 
-* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-web/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandRestVerticle.java[EntityCommandRestVerticle] to receive commands as JSON
-* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-handler/src/main/java/io/github/crabzilla/vertx/entity/EntityCommandHandlerVerticle.kt[EntityCommandHandlerVerticle] to validate and process commands against the latest snapshot found for the aggregate
-* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-handler/src/main/java/io/github/crabzilla/vertx/entity/EntityUnitOfWorkRepository.java[EntityUnitOfWorkRepository] to store resulting units of work into a single table, being events and command as JSON
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-web/src/main/java/io/github/crabzilla/vertx/CommandRestVerticle.java[CommandRestVerticle] to receive commands as JSON
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-handler/src/main/java/io/github/crabzilla/vertx/entity/CommandHandlerVerticle.kt[CommandHandlerVerticle] to validate and process commands against the latest snapshot found for the aggregate
+* https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-handler/src/main/java/io/github/crabzilla/vertx/UnitOfWorkRepository.java[UnitOfWorkRepository] to store resulting units of work into a single table, being events and command as JSON
 * https://github.com/crabzilla/crabzilla/blob/master/crabzilla-vertx-projector/src/main/java/io/github/crabzilla/vertx/projection/ProjectionHandlerVerticle.java[ProjectionHandlerVerticle] to propagate and project events to read model database

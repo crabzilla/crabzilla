@@ -1,17 +1,17 @@
-package io.github.crabzilla.vertx.entity.impl;
+package io.github.crabzilla.vertx.impl;
 
 import com.palantir.docker.compose.DockerComposeRule;
 import com.palantir.docker.compose.configuration.ProjectName;
 import com.palantir.docker.compose.connection.waiting.HealthChecks;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import io.github.crabzilla.core.EntityUnitOfWork;
+import io.github.crabzilla.core.SnapshotData;
+import io.github.crabzilla.core.UnitOfWork;
 import io.github.crabzilla.core.Version;
-import io.github.crabzilla.core.entity.SnapshotData;
-import io.github.crabzilla.core.entity.example1.CommandHandlers;
+import io.github.crabzilla.core.example1.CommandHandlers;
 import io.github.crabzilla.example1.customer.*;
 import io.github.crabzilla.vertx.DbConcurrencyException;
-import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository;
+import io.github.crabzilla.vertx.UnitOfWorkRepository;
 import io.github.crabzilla.vertx.projection.ProjectionData;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -20,7 +20,6 @@ import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.*;
@@ -33,9 +32,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static io.github.crabzilla.core.CrabzillaKt.commandToJson;
-import static io.github.crabzilla.core.CrabzillaKt.listOfEventsToJson;
-import static io.github.crabzilla.vertx.CrabzillaVertxKt.initVertx;
+import static io.github.crabzilla.core.SerializationKt.commandToJson;
+import static io.github.crabzilla.core.SerializationKt.listOfEventsToJson;
+import static io.github.crabzilla.vertx.VertxKt.initVertx;
 import static java.lang.Thread.sleep;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
@@ -44,9 +43,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class EntityUnitOfWorkRepositoryIT {
+public class UnitOfWorkRepositoryIT {
 
-  private static Logger log = getLogger(EntityUnitOfWorkRepositoryIT.class);
+  private static Logger log = getLogger(UnitOfWorkRepositoryIT.class);
 
   static Vertx vertx;
   static JDBCClient jdbcClient;
@@ -58,16 +57,16 @@ public class EntityUnitOfWorkRepositoryIT {
   static String aggregateId = CommandHandlers.CUSTOMER.name();
 
 
-  EntityUnitOfWorkRepository repo;
+  UnitOfWorkRepository repo;
 
   final CustomerId customerId = new CustomerId("customer#1");
   final CreateCustomer createCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
   final CustomerCreated created = new CustomerCreated(customerId, "customer");
-  final EntityUnitOfWork expectedUow1 = new EntityUnitOfWork(UUID.randomUUID(), createCmd, new Version(1), singletonList(created));
+  final UnitOfWork expectedUow1 = new UnitOfWork(UUID.randomUUID(), createCmd, new Version(1), singletonList(created));
 
   final ActivateCustomer activateCmd = new ActivateCustomer(UUID.randomUUID(), customerId, "I want it");
   final CustomerActivated activated = new CustomerActivated(customerId.stringValue(), Instant.now());
-  final EntityUnitOfWork expectedUow2 = new EntityUnitOfWork(UUID.randomUUID(), activateCmd, new Version(2), singletonList(activated));
+  final UnitOfWork expectedUow2 = new UnitOfWork(UUID.randomUUID(), activateCmd, new Version(2), singletonList(activated));
 
 
   @ClassRule
@@ -77,7 +76,7 @@ public class EntityUnitOfWorkRepositoryIT {
     .projectName(new ProjectName() {
       @Override
       protected String projectName() {
-        return "crabzilla-EntityUnitOfWorkRepositoryIT";
+        return "crabzilla-UnitOfWorkRepositoryIT";
       }
     })
     .waitingForService("db", HealthChecks.toHaveAllPortsOpen())
@@ -177,7 +176,7 @@ public class EntityUnitOfWorkRepositoryIT {
 
   @Before
   public void setup(TestContext context) {
-    this.repo = new EntityUnitOfWorkRepositoryImpl(jdbcClient);
+    this.repo = new UnitOfWorkRepositoryImpl(jdbcClient);
   }
 
   @Test
@@ -316,7 +315,7 @@ public class EntityUnitOfWorkRepositoryIT {
 
       assertThat(uowSequence).isGreaterThan(0);
 
-      Future<EntityUnitOfWork> uowFuture = Future.future();
+      Future<UnitOfWork> uowFuture = Future.future();
 
       repo.getUowByUowId(expectedUow1.getUnitOfWorkId(), uowFuture);
 
@@ -326,11 +325,11 @@ public class EntityUnitOfWorkRepositoryIT {
           return;
         }
 
-        EntityUnitOfWork uow = uowAsyncResult.result();
+        UnitOfWork uow = uowAsyncResult.result();
         log.debug("uow {}", uow);
 
         if (uow != null) {
-          AssertionsForClassTypes.assertThat(uow).isEqualTo(expectedUow1);
+          assertThat(uow).isEqualTo(expectedUow1);
         } else {
           fail("not found");
         }
@@ -347,7 +346,7 @@ public class EntityUnitOfWorkRepositoryIT {
 
           SnapshotData data = snapshotDataAsyncResult.result();
           log.debug("data {}", data);
-          AssertionsForClassTypes.assertThat(data.getVersion()).isEqualTo(expectedUow1.getVersion());
+          assertThat(data.getVersion()).isEqualTo(expectedUow1.getVersion());
           assertThat(data.getEvents()).isEqualTo(expectedUow1.getEvents());
 
           async.complete();
@@ -376,7 +375,7 @@ public class EntityUnitOfWorkRepositoryIT {
 
       assertThat(uowSequence).isGreaterThan(0);
 
-      Future<EntityUnitOfWork> uowFuture = Future.future();
+      Future<UnitOfWork> uowFuture = Future.future();
 
       repo.getUowByUowId(expectedUow2.getUnitOfWorkId(), uowFuture);
 
@@ -386,11 +385,11 @@ public class EntityUnitOfWorkRepositoryIT {
           return;
         }
 
-        EntityUnitOfWork uow = uowAsyncResult.result();
+        UnitOfWork uow = uowAsyncResult.result();
         log.debug("uow {}", uow);
 
         if (uow != null) {
-          AssertionsForClassTypes.assertThat(uow).isEqualTo(expectedUow2);
+          assertThat(uow).isEqualTo(expectedUow2);
         } else {
           fail("not found");
           return;
@@ -408,7 +407,7 @@ public class EntityUnitOfWorkRepositoryIT {
 
           SnapshotData data = snapshotDataAsyncResult.result();
           log.debug("data {}", data);
-          AssertionsForClassTypes.assertThat(data.getVersion()).isEqualTo(expectedUow2.getVersion());
+          assertThat(data.getVersion()).isEqualTo(expectedUow2.getVersion());
           assertThat(data.getEvents()).isEqualTo(expectedUow2.getEvents());
 
           async.complete();
@@ -451,9 +450,9 @@ public class EntityUnitOfWorkRepositoryIT {
 
       SnapshotData snapshotData = selectAsyncResult.result();
 
-      AssertionsForClassTypes.assertThat(snapshotData.getVersion()).isEqualTo(new Version(2));
-      AssertionsForClassTypes.assertThat(snapshotData.getEvents().get(0)).isEqualTo(created);
-      AssertionsForClassTypes.assertThat(snapshotData.getEvents().get(1)).isEqualToIgnoringGivenFields(activated, "_when");
+      assertThat(snapshotData.getVersion()).isEqualTo(new Version(2));
+      assertThat(snapshotData.getEvents().get(0)).isEqualTo(created);
+      assertThat(snapshotData.getEvents().get(1)).isEqualToIgnoringGivenFields(activated, "_when");
 
       async.complete();
 

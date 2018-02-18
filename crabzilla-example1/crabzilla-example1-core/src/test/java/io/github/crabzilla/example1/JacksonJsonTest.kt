@@ -7,7 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.EntityUnitOfWork
+import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.Version
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerActivated
@@ -53,11 +53,11 @@ class JacksonJsonTest {
     val id = CustomerId(UUID.randomUUID().toString())
     val command = CreateCustomer(UUID.randomUUID(), id, "customer " + id)
     val event = CustomerCreated(id, command.name)
-    val uow1 = EntityUnitOfWork(UUID.randomUUID(), command, Version(1), listOf<DomainEvent>(event))
+    val uow1 = UnitOfWork(UUID.randomUUID(), command, Version(1), listOf<DomainEvent>(event))
 
     val uowAsJson = mapper.writeValueAsString(uow1)
 
-    val uow2 = mapper.readValue(uowAsJson, EntityUnitOfWork::class.java)
+    val uow2 = mapper.readValue(uowAsJson, UnitOfWork::class.java)
 
     assertThat(uow2).isEqualTo(uow1)
 
@@ -73,11 +73,11 @@ class JacksonJsonTest {
     val event1 = CustomerCreated(id, command.name)
     val event2 = CustomerActivated("a good reason", Instant.now())
 
-    val uow1 = EntityUnitOfWork(UUID.randomUUID(), command, Version(1), asList<DomainEvent>(event1, event2))
+    val uow1 = UnitOfWork(UUID.randomUUID(), command, Version(1), asList<DomainEvent>(event1, event2))
 
     val uowAsJson = mapper.writeValueAsString(uow1)
 
-    val uow2 = mapper.readValue(uowAsJson, EntityUnitOfWork::class.java)
+    val uow2 = mapper.readValue(uowAsJson, UnitOfWork::class.java)
 
     assertThat(uow2).isEqualTo(uow1)
 

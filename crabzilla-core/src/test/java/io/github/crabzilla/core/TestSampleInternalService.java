@@ -1,4 +1,4 @@
-package io.github.crabzilla.core.entity;
+package io.github.crabzilla.core;
 
 import io.github.crabzilla.example1.SampleInternalService;
 import org.jetbrains.annotations.NotNull;

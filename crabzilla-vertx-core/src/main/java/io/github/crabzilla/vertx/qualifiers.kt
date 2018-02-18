@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.modules
+package io.github.crabzilla.vertx
 
 import java.lang.annotation.Documented
 import java.lang.annotation.Retention

@@ -1,10 +1,29 @@
-package io.github.crabzilla.core.entity
+package io.github.crabzilla.core
 
-import io.github.crabzilla.core.DomainEvent
 import java.util.*
 
+data class Snapshot<out A : Entity>(val instance: A, val version: Version)
+
+data class SnapshotData(val version: Version, val events: List<DomainEvent>)
+
+open class SnapshotPromoter<A : Entity>(private val trackerFactory: (Snapshot<A>) -> StateTransitionsTracker<A>) {
+
+  fun promote(originalSnapshot: Snapshot<A>, newVersion: Version, newEvents: List<DomainEvent>): Snapshot<A> {
+
+    if (originalSnapshot.version.valueAsLong != newVersion.valueAsLong - 1) {
+      throw RuntimeException(String.format("Cannot upgrade to version %s since current version is %s",
+              newVersion, originalSnapshot.version))
+    }
+
+    val tracker: StateTransitionsTracker<A> = trackerFactory.invoke(originalSnapshot)
+
+    return Snapshot(tracker.applyEvents({ newEvents }).currentState(), newVersion)
+  }
+
+}
+
 class StateTransitionsTracker<A : Entity>(private val originalSnapshot: Snapshot<A>,
-                                          private val applyEventsFn: (DomainEvent, A) -> A) {
+                                                                   private val applyEventsFn: (DomainEvent, A) -> A) {
   private val stateTransitions = ArrayList<StateTransition<A>>()
 
   inline fun applyEvents(aggregateRootMethodFn: (A) -> List<DomainEvent>): StateTransitionsTracker<A> {

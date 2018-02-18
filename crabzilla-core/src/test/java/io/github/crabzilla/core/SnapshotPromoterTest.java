@@ -1,6 +1,5 @@
-package io.github.crabzilla.core.entity;
+package io.github.crabzilla.core;
 
-import io.github.crabzilla.core.Version;
 import io.github.crabzilla.example1.SampleInternalService;
 import io.github.crabzilla.example1.customer.Customer;
 import io.github.crabzilla.example1.customer.CustomerCreated;
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -61,7 +60,7 @@ public class SnapshotPromoterTest {
 
     @Test
     void it_has_expected_snapshot() {
-      resultingSnapshot1 = promoter.promote(originalSnapshot, new Version(1), asList(customerCreated));
+      resultingSnapshot1 = promoter.promote(originalSnapshot, new Version(1), singletonList(customerCreated));
       final Customer expectedCustomer1 = new Customer(id, "customer-1", false, null, service);
       final Snapshot<Customer> expectedSnapshot1 = new Snapshot<>(expectedCustomer1, new Version(1));
       assertThat(resultingSnapshot1).isEqualTo(expectedSnapshot1);
@@ -87,9 +86,7 @@ public class SnapshotPromoterTest {
     @Test
     void it_should_throw_an_exception() {
       Throwable exception = assertThrows(RuntimeException.class, () ->
-      {
-        resultingSnapshot1 = promoter.promote(originalSnapshot, new Version(2), asList(customerCreated));
-      });
+        resultingSnapshot1 = promoter.promote(originalSnapshot, new Version(2), singletonList(customerCreated)));
       assertEquals("Cannot upgrade to version Version(valueAsLong=2) since current version is Version(valueAsLong=0)",
               exception.getMessage());
     }

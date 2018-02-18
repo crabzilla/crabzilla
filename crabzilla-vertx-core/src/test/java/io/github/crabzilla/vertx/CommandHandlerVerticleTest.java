@@ -1,12 +1,8 @@
-package io.github.crabzilla.vertx.entity;
+package io.github.crabzilla.vertx;
 
-import io.github.crabzilla.core.EntityCommand;
-import io.github.crabzilla.core.EntityUnitOfWork;
-import io.github.crabzilla.core.Version;
-import io.github.crabzilla.core.entity.*;
+import io.github.crabzilla.core.*;
 import io.github.crabzilla.example1.SampleInternalService;
 import io.github.crabzilla.example1.customer.*;
-import io.github.crabzilla.vertx.DbConcurrencyException;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
@@ -33,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static io.github.crabzilla.vertx.CrabzillaVertxKt.initVertx;
+import static io.github.crabzilla.vertx.VertxKt.initVertx;
 import static io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -44,7 +40,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(VertxUnitRunner.class)
-public class EntityCommandHandlerVerticleTest {
+public class CommandHandlerVerticleTest {
 
   static final String FORCED_CONCURRENCY_EXCEPTION = "FORCED CONCURRENCY EXCEPTION";
   static final String ENTITY_NAME = Customer.class.getSimpleName();
@@ -70,9 +66,9 @@ public class EntityCommandHandlerVerticleTest {
   @Mock
   Function1<EntityCommand, List<String>> validatorFn;
   @Mock
-  Function2<EntityCommand, Snapshot<? extends Customer>, EntityCommandResult> cmdHandlerFn;
+  Function2<EntityCommand, Snapshot<? extends Customer>, CommandResult> cmdHandlerFn;
   @Mock
-  EntityUnitOfWorkRepository eventRepository;
+  UnitOfWorkRepository eventRepository;
 
   SnapshotPromoter<Customer> snapshotPromoterFn;
 
@@ -95,7 +91,7 @@ public class EntityCommandHandlerVerticleTest {
 
     snapshotPromoterFn = new SnapshotPromoter<Customer>(trackerFactory);
 
-    Verticle verticle = new EntityCommandHandlerVerticle<Customer>(ENTITY_NAME,
+    Verticle verticle = new CommandHandlerVerticle<Customer>(ENTITY_NAME,
             seedValue, cmdHandlerFn, validatorFn, snapshotPromoterFn, eventRepository, cache, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
@@ -116,7 +112,7 @@ public class EntityCommandHandlerVerticleTest {
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     Snapshot<Customer> initialSnapshot = new Snapshot<>(seedValue, new Version(0));
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
-    EntityUnitOfWork expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    UnitOfWork expectedUow = new UnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
@@ -126,12 +122,12 @@ public class EntityCommandHandlerVerticleTest {
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class), eq(ENTITY_NAME));
 
-    doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Long>>) (uow, future) ->
+    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Future<Long>>) (uow, future) ->
             future.complete(1L)))
             .when(eventRepository).append(eq(expectedUow), any(Future.class), eq(ENTITY_NAME));
 
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
-            .thenReturn(EntityCommandResult.Companion.success(expectedUow));
+            .thenReturn(CommandResult.Companion.success(expectedUow));
 
 //    when(snapshotPromoterFn.promote(any(Snapshot.class), eq(new Version(1)), eq(singletonList(expectedEvent))))
 //            .thenReturn(finalSnapshot);
@@ -159,12 +155,12 @@ public class EntityCommandHandlerVerticleTest {
 
       tc.assertTrue(asyncResult.succeeded());
 
-      EntityCommandExecution response = (EntityCommandExecution) asyncResult.result().body();
+      CommandExecution response = (CommandExecution) asyncResult.result().body();
 
-      tc.assertEquals(EntityCommandExecution.RESULT.SUCCESS, response.getResult());
+      tc.assertEquals(CommandExecution.RESULT.SUCCESS, response.getResult());
       tc.assertEquals(1L, response.getUowSequence());
 
-      EntityUnitOfWork uow = response.getUnitOfWork();
+      UnitOfWork uow = response.getUnitOfWork();
 
       tc.assertEquals(expectedUow.getCommand(), uow.getCommand());
       tc.assertEquals(expectedUow.getEvents(), uow.getEvents());
@@ -232,7 +228,7 @@ public class EntityCommandHandlerVerticleTest {
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
-    EntityUnitOfWork expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    UnitOfWork expectedUow = new UnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
     Throwable expectedException = new Throwable("Expected");
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
@@ -243,12 +239,12 @@ public class EntityCommandHandlerVerticleTest {
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class), eq(ENTITY_NAME));
 
-    doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Long>>) (uow, future) ->
+    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Future<Long>>) (uow, future) ->
             future.fail(expectedException)))
             .when(eventRepository).append(eq(expectedUow), any(Future.class), eq(ENTITY_NAME));
 
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
-            .thenReturn(EntityCommandResult.Companion.success(expectedUow));
+            .thenReturn(CommandResult.Companion.success(expectedUow));
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
@@ -292,7 +288,7 @@ public class EntityCommandHandlerVerticleTest {
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     Snapshot<Customer> initialSnapshot = new Snapshot<>(seedValue, new Version(0));
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
-    EntityUnitOfWork expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    UnitOfWork expectedUow = new UnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
@@ -302,12 +298,12 @@ public class EntityCommandHandlerVerticleTest {
             eq(initialSnapshot.getVersion()),
             any(Future.class), eq(ENTITY_NAME));
 
-    doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Long>>) (uow, future) ->
+    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Future<Long>>) (uow, future) ->
             future.fail(new DbConcurrencyException(FORCED_CONCURRENCY_EXCEPTION))))
             .when(eventRepository).append(eq(expectedUow), any(Future.class), eq(ENTITY_NAME));
 
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
-            .thenReturn(EntityCommandResult.Companion.success(expectedUow));
+            .thenReturn(CommandResult.Companion.success(expectedUow));
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
@@ -332,9 +328,9 @@ public class EntityCommandHandlerVerticleTest {
 
       tc.assertTrue(asyncResult.succeeded());
 
-      EntityCommandExecution response = (EntityCommandExecution) asyncResult.result().body();
+      CommandExecution response = (CommandExecution) asyncResult.result().body();
 
-      tc.assertEquals(EntityCommandExecution.RESULT.CONCURRENCY_ERROR, response.getResult());
+      tc.assertEquals(CommandExecution.RESULT.CONCURRENCY_ERROR, response.getResult());
       tc.assertEquals(singletonList(FORCED_CONCURRENCY_EXCEPTION), response.getConstraints());
 
       async.complete();
@@ -353,7 +349,7 @@ public class EntityCommandHandlerVerticleTest {
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
-    EntityUnitOfWork expectedUow = new EntityUnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    UnitOfWork expectedUow = new UnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
@@ -363,12 +359,12 @@ public class EntityCommandHandlerVerticleTest {
             eq(initialSnapshot.getVersion()),
             any(Future.class), eq(ENTITY_NAME));
 
-    doAnswer(answerVoid((VoidAnswer2<EntityUnitOfWork, Future<Long>>) (uow, future) ->
+    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Future<Long>>) (uow, future) ->
             future.complete(1L)))
             .when(eventRepository).append(eq(expectedUow), any(Future.class), eq(ENTITY_NAME));
 
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
-            .thenReturn(EntityCommandResult.Companion.error(new RuntimeException("SOME ERROR WITHIN COMMAND HANDLER")));
+            .thenReturn(CommandResult.Companion.error(new RuntimeException("SOME ERROR WITHIN COMMAND HANDLER")));
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
 
@@ -391,9 +387,9 @@ public class EntityCommandHandlerVerticleTest {
 
       tc.assertTrue(asyncResult.succeeded());
 
-      EntityCommandExecution response = (EntityCommandExecution) asyncResult.result().body();
+      CommandExecution response = (CommandExecution) asyncResult.result().body();
 
-      tc.assertEquals(EntityCommandExecution.RESULT.HANDLING_ERROR, response.getResult());
+      tc.assertEquals(CommandExecution.RESULT.HANDLING_ERROR, response.getResult());
       //  TODO inform exception message
       // tc.assertEquals(singletonList(FORCED_CONCURRENCY_EXCEPTION), response.getConstraints().get());
 
@@ -424,9 +420,9 @@ public class EntityCommandHandlerVerticleTest {
 
       tc.assertTrue(asyncResult.succeeded());
 
-      EntityCommandExecution response = (EntityCommandExecution) asyncResult.result().body();
+      CommandExecution response = (CommandExecution) asyncResult.result().body();
 
-      tc.assertEquals(EntityCommandExecution.RESULT.VALIDATION_ERROR, response.getResult());
+      tc.assertEquals(CommandExecution.RESULT.VALIDATION_ERROR, response.getResult());
 
       tc.assertEquals(asList("Invalid name: a bad name"), response.getConstraints());
 
@@ -478,9 +474,9 @@ public class EntityCommandHandlerVerticleTest {
 
       tc.assertTrue(asyncResult.succeeded());
 
-      EntityCommandExecution response = (EntityCommandExecution) asyncResult.result().body();
+      CommandExecution response = (CommandExecution) asyncResult.result().body();
 
-      tc.assertEquals(EntityCommandExecution.RESULT.UNKNOWN_COMMAND, response.getResult());
+      tc.assertEquals(CommandExecution.RESULT.UNKNOWN_COMMAND, response.getResult());
 
       async.complete();
 

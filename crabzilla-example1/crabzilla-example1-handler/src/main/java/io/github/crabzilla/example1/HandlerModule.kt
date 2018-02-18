@@ -4,10 +4,10 @@ import dagger.Module
 import dagger.Provides
 import io.github.crabzilla.example1.customer.CustomerModule
 import io.github.crabzilla.example1.impl.SampleInternalServiceImpl
-import io.github.crabzilla.vertx.entity.EntityUnitOfWorkRepository
-import io.github.crabzilla.vertx.entity.impl.EntityUnitOfWorkRepositoryImpl
-import io.github.crabzilla.vertx.modules.ReadDatabase
-import io.github.crabzilla.vertx.modules.WriteDatabase
+import io.github.crabzilla.vertx.ReadDatabase
+import io.github.crabzilla.vertx.UnitOfWorkRepository
+import io.github.crabzilla.vertx.WriteDatabase
+import io.github.crabzilla.vertx.impl.UnitOfWorkRepositoryImpl
 import io.vertx.ext.jdbc.JDBCClient
 import org.jdbi.v3.core.Jdbi
 import javax.inject.Singleton
@@ -22,8 +22,8 @@ class HandlerModule {
 
   @Provides
   @Singleton
-  fun uowRepo(@WriteDatabase jdbcClient: JDBCClient): EntityUnitOfWorkRepository {
-    return EntityUnitOfWorkRepositoryImpl(jdbcClient)
+  fun uowRepo(@WriteDatabase jdbcClient: JDBCClient): UnitOfWorkRepository {
+    return UnitOfWorkRepositoryImpl(jdbcClient)
   }
 
   @Provides
