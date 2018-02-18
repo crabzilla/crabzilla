@@ -26,9 +26,9 @@ import org.junit.After
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
-import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.util.*
+import java.util.logging.Logger
 
 
 class CustomerHttpAcceptanceIT {
@@ -36,7 +36,7 @@ class CustomerHttpAcceptanceIT {
   companion object {
 
     @JvmStatic
-    val log = LoggerFactory.getLogger(CustomerHttpAcceptanceIT::class.java.simpleName)
+    val log = Logger.getLogger(CustomerHttpAcceptanceIT::class.java.simpleName)
 
     val LOCATION_HEADER = "Location"
     val ENTITY_NAME = CommandHandlers.CUSTOMER.name
@@ -107,8 +107,8 @@ class CustomerHttpAcceptanceIT {
             .then().statusCode(200).contentType(ContentType.JSON)
             .extract().response()
 
-//    log.info("response -------------------")
-//    log.info(getUowResponse.asString())
+    log.info("response -------------------")
+    log.info(getUowResponse.asString())
 
     val uow = mapper.readValue(getUowResponse.asString(), UnitOfWork::class.java)
 
@@ -150,8 +150,8 @@ class CustomerHttpAcceptanceIT {
             .then().statusCode(200).contentType(ContentType.JSON)
             .extract().response()
 
-//    log.info("response -------------------")
-//    log.info(getUowResponse.asString())
+    log.info("response -------------------")
+    log.info(getUowResponse.asString())
 
     val uow = mapper.readValue(getUowResponse.asString(), UnitOfWork::class.java)
 
@@ -179,8 +179,8 @@ class CustomerHttpAcceptanceIT {
 
     val uow2 = mapper.readValue(getUowResponse2, UnitOfWork::class.java)
 
-//    log.info("response 2-------------------")
-//    log.info(getUowResponse2.toString())
+    log.info("response 2-------------------")
+    log.info(getUowResponse2.toString())
 
     assertThat(uow).isEqualTo(uow2)
   }

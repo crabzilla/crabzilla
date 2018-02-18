@@ -15,7 +15,7 @@ class RestServiceLauncher {
 
   companion object {
 
-    val log = org.slf4j.LoggerFactory.getLogger(RestServiceLauncher::class.java.simpleName)
+    val log = io.vertx.core.logging.LoggerFactory.getLogger(RestServiceLauncher::class.java.simpleName)
 
     lateinit var writeDs: HikariDataSource
     lateinit var readDs: HikariDataSource

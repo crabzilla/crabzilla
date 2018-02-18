@@ -1,9 +1,9 @@
-package io.github.crabzilla.vertx.projection
+package io.github.crabzilla.vertx.projector
 
 import io.github.crabzilla.core.DomainEvent
+import io.vertx.core.logging.LoggerFactory.getLogger
 import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
-import org.slf4j.LoggerFactory.getLogger
 
 abstract class AbstractEventsProjector<in DAO>(val eventsChannelId: String,
                                                private val jdbi: Jdbi,

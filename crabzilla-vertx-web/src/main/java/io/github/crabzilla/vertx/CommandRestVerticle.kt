@@ -3,6 +3,8 @@ package io.github.crabzilla.vertx
 import io.github.crabzilla.core.EntityCommand
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.vertx.VerticleRole.REST
+import io.github.crabzilla.vertx.handler.CommandExecution
+import io.github.crabzilla.vertx.handler.CommandHandlerService
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
@@ -10,11 +12,11 @@ import io.vertx.core.Handler
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
+import io.vertx.core.logging.LoggerFactory.getLogger
 import io.vertx.ext.healthchecks.HealthCheckHandler
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
-import org.slf4j.LoggerFactory.getLogger
 import java.util.*
 
 

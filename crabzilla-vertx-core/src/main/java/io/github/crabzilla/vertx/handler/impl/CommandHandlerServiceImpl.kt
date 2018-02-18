@@ -1,16 +1,16 @@
-package io.github.crabzilla.vertx.impl
+package io.github.crabzilla.vertx.handler.impl
 
 import io.github.crabzilla.core.EntityCommand
-import io.github.crabzilla.vertx.CommandExecution
-import io.github.crabzilla.vertx.CommandHandlerService
-import io.github.crabzilla.vertx.projection.ProjectionData
+import io.github.crabzilla.vertx.handler.CommandExecution
+import io.github.crabzilla.vertx.handler.CommandHandlerService
+import io.github.crabzilla.vertx.projector.ProjectionData
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.http.CaseInsensitiveHeaders
-import org.slf4j.LoggerFactory
+import io.vertx.core.logging.LoggerFactory
 
 class CommandHandlerServiceImpl(private val vertx: Vertx, private val projectionEndpoint: String) :
   CommandHandlerService {

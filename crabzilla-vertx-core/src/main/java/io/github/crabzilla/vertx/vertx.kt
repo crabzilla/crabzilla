@@ -9,8 +9,9 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EntityCommand
 import io.github.crabzilla.core.EntityId
 import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.vertx.handler.CommandExecution
 import io.github.crabzilla.vertx.helpers.JacksonGenericCodec
-import io.github.crabzilla.vertx.projection.ProjectionData
+import io.github.crabzilla.vertx.projector.ProjectionData
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -22,7 +23,7 @@ import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import io.vertx.core.spi.VerticleFactory
 
-private val log = org.slf4j.LoggerFactory.getLogger("CrabzillaVertx")
+private val log = io.vertx.core.logging.LoggerFactory.getLogger("CrabzillaVertx")
 
 fun configHandler(vertx: Vertx, handler: (JsonObject) -> Unit, shutdownHook: () -> Unit) {
 

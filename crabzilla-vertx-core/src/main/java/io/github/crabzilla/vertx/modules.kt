@@ -6,8 +6,6 @@ import dagger.Module
 import dagger.Provides
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
-import io.vertx.core.logging.LoggerFactory
-import io.vertx.core.logging.SLF4JLogDelegateFactory
 import io.vertx.ext.jdbc.JDBCClient
 import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.core.kotlin.KotlinPlugin
@@ -19,12 +17,7 @@ import javax.inject.Singleton
 open class CrabzillaModule(val vertx: Vertx, val config: JsonObject) {
 
   init {
-
-    System.setProperty(LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory::class.java.name)
-    LoggerFactory.getLogger(LoggerFactory::class.java) // Required for Logback to work in Vertx
-
     initVertx(vertx)
-
   }
 
   @Provides

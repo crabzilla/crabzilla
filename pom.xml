@@ -11,8 +11,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>1.8</java.version>
+    <slf4j.version>1.7.25</slf4j.version>
 
-    <sl4fj.version>1.8.0-beta1</sl4fj.version>
     <vertx.version>3.5.1</vertx.version>
     <kotlin.version>1.2.20</kotlin.version>
     <jackson.version>2.9.3</jackson.version>
@@ -106,11 +106,6 @@
       <artifactId>javax.inject</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
-
     <!-- test -->
 
     <dependency>
@@ -146,7 +141,15 @@
 
     <dependency>
       <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+      <!--<scope>test</scope>-->
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
+      <version>${slf4j.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -206,6 +209,7 @@
       </dependency>
 
       <!-- util -->
+
       <dependency>
         <groupId>javax.inject</groupId>
         <artifactId>javax.inject</artifactId>
@@ -240,19 +244,6 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-kotlin-sqlobject</artifactId>
         <version>${jdbi.version}</version>
-      </dependency>
-
-      <!-- logging -->
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>${sl4fj.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-simple</artifactId>
-        <version>${sl4fj.version}</version>
       </dependency>
 
       <!-- json -->

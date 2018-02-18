@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.projection;
+package io.github.crabzilla.vertx.projector;
 
 import io.github.crabzilla.vertx.CrabzillaVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
@@ -6,11 +6,11 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
-import org.slf4j.Logger;
+import io.vertx.core.logging.Logger;
 
 import static io.github.crabzilla.vertx.VerticleRole.PROJECTOR;
+import static io.vertx.core.logging.LoggerFactory.getLogger;
 import static java.util.Collections.singletonList;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class ProjectionHandlerVerticle<DAO> extends CrabzillaVerticle {
 
