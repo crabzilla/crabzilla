@@ -18,7 +18,7 @@ class ProjectorServiceLauncher {
 
   companion object {
 
-    val log = org.slf4j.LoggerFactory.getLogger(ProjectorServiceLauncher::class.java.simpleName)
+    val log = io.vertx.core.logging.LoggerFactory.getLogger(ProjectorServiceLauncher::class.java.simpleName)
 
     lateinit var ds: HikariDataSource
 

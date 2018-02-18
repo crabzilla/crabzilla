@@ -1,16 +1,19 @@
-package io.github.crabzilla.vertx
+package io.github.crabzilla.vertx.handler
 
 import io.github.crabzilla.core.*
-import io.github.crabzilla.vertx.CommandExecution.RESULT.*
+import io.github.crabzilla.vertx.CrabzillaVerticle
+import io.github.crabzilla.vertx.DbConcurrencyException
+import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.github.crabzilla.vertx.VerticleRole.HANDLER
+import io.github.crabzilla.vertx.handler.CommandExecution.RESULT.*
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.Message
+import io.vertx.core.logging.LoggerFactory.getLogger
 import net.jodah.expiringmap.ExpiringMap
-import org.slf4j.LoggerFactory.getLogger
 
 class CommandHandlerVerticle<A : Entity>(override val name: String,
                                          private val seedValue: A,

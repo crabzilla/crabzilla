@@ -17,7 +17,7 @@ class HandlerServiceLauncher {
 
   companion object {
 
-    val log = org.slf4j.LoggerFactory.getLogger(HandlerServiceLauncher::class.java.simpleName)
+    val log = io.vertx.core.logging.LoggerFactory.getLogger(HandlerServiceLauncher::class.java.simpleName)
 
     lateinit var ds: HikariDataSource
 

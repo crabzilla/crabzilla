@@ -12,10 +12,11 @@ import io.github.crabzilla.core.example1.CommandHandlers;
 import io.github.crabzilla.example1.customer.*;
 import io.github.crabzilla.vertx.DbConcurrencyException;
 import io.github.crabzilla.vertx.UnitOfWorkRepository;
-import io.github.crabzilla.vertx.projection.ProjectionData;
+import io.github.crabzilla.vertx.projector.ProjectionData;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
+import io.vertx.core.logging.Logger;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -25,7 +26,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
-import org.slf4j.Logger;
 
 import java.time.Instant;
 import java.util.List;
@@ -35,11 +35,11 @@ import java.util.UUID;
 import static io.github.crabzilla.core.SerializationKt.commandToJson;
 import static io.github.crabzilla.core.SerializationKt.listOfEventsToJson;
 import static io.github.crabzilla.vertx.VertxKt.initVertx;
+import static io.vertx.core.logging.LoggerFactory.getLogger;
 import static java.lang.Thread.sleep;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.slf4j.LoggerFactory.getLogger;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)

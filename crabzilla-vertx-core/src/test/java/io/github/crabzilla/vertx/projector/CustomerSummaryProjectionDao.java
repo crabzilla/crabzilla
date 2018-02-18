@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.projection;
+package io.github.crabzilla.vertx.projector;
 
 import io.github.crabzilla.example1.CustomerSummary;
 import org.jdbi.v3.sqlobject.customizer.BindBean;

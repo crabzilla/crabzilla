@@ -3,11 +3,11 @@ package io.github.crabzilla.vertx.pooler
 import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.github.crabzilla.vertx.VerticleRole.POOLER
-import io.github.crabzilla.vertx.projection.ProjectionData
+import io.github.crabzilla.vertx.projector.ProjectionData
 import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Vertx
-import org.slf4j.LoggerFactory
+import io.vertx.core.logging.LoggerFactory
 
 
 class PoolerVerticle(override val name: String,

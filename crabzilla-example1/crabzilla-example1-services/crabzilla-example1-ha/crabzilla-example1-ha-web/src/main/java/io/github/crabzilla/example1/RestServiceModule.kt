@@ -4,7 +4,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoSet
 import io.github.crabzilla.vertx.*
-import io.github.crabzilla.vertx.impl.CommandHandlerServiceImpl
+import io.github.crabzilla.vertx.handler.CommandHandlerService
+import io.github.crabzilla.vertx.handler.impl.CommandHandlerServiceImpl
 import io.github.crabzilla.vertx.impl.UnitOfWorkRepositoryImpl
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
