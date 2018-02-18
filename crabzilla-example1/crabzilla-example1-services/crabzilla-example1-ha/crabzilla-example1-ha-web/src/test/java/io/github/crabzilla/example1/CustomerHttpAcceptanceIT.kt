@@ -21,7 +21,6 @@ import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
 import io.vertx.core.json.Json
-import io.vertx.core.logging.LoggerFactory
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before
@@ -29,6 +28,7 @@ import org.junit.ClassRule
 import org.junit.Test
 import java.io.IOException
 import java.util.*
+import java.util.logging.Logger
 
 
 class CustomerHttpAcceptanceIT {
@@ -36,7 +36,7 @@ class CustomerHttpAcceptanceIT {
   companion object {
 
     @JvmStatic
-    val log = LoggerFactory.getLogger(CustomerHttpAcceptanceIT::class.java.simpleName)
+    val log = Logger.getLogger(CustomerHttpAcceptanceIT::class.java.simpleName)
 
     val LOCATION_HEADER = "Location"
     val ENTITY_NAME = CommandHandlers.CUSTOMER.name

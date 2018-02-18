@@ -16,7 +16,6 @@ import io.github.crabzilla.vertx.projector.ProjectionData;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
-import io.vertx.core.logging.Logger;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -35,7 +34,6 @@ import java.util.UUID;
 import static io.github.crabzilla.core.SerializationKt.commandToJson;
 import static io.github.crabzilla.core.SerializationKt.listOfEventsToJson;
 import static io.github.crabzilla.vertx.VertxKt.initVertx;
-import static io.vertx.core.logging.LoggerFactory.getLogger;
 import static java.lang.Thread.sleep;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
@@ -45,7 +43,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class UnitOfWorkRepositoryIT {
 
-  private static Logger log = getLogger(UnitOfWorkRepositoryIT.class);
+//  private static Logger log = Logger.getLogger(UnitOfWorkRepositoryIT.class.getSimpleName());
 
   static Vertx vertx;
   static JDBCClient jdbcClient;
@@ -116,9 +114,9 @@ public class UnitOfWorkRepositoryIT {
         break;
       } catch (Exception e) {
         if (++attempt <= 3) {
-          log.warn("Failed to access db, will try again");
+          // log.warning("Failed to access db, will try again");
         } else {
-          log.error("Failed to access db", e);
+          // log.warning("Failed to access db");
         }
         sleep(5_000);
       }
@@ -159,9 +157,9 @@ public class UnitOfWorkRepositoryIT {
         break;
       } catch (Exception e) {
         if (++attempt <= 3) {
-          log.warn("Failed to access db, will try again");
+          // log.warning("Failed to access db, will try again");
         } else {
-          log.error("Failed to access db", e);
+          // log.warning("Failed to access db");
         }
         sleep(5_000);
       }
@@ -326,7 +324,7 @@ public class UnitOfWorkRepositoryIT {
         }
 
         UnitOfWork uow = uowAsyncResult.result();
-        log.debug("uow {}", uow);
+        // log.info("uow $uow");
 
         if (uow != null) {
           assertThat(uow).isEqualTo(expectedUow1);
@@ -345,7 +343,7 @@ public class UnitOfWorkRepositoryIT {
           }
 
           SnapshotData data = snapshotDataAsyncResult.result();
-          log.debug("data {}", data);
+          // log.info("data $data}");
           assertThat(data.getVersion()).isEqualTo(expectedUow1.getVersion());
           assertThat(data.getEvents()).isEqualTo(expectedUow1.getEvents());
 
@@ -386,7 +384,7 @@ public class UnitOfWorkRepositoryIT {
         }
 
         UnitOfWork uow = uowAsyncResult.result();
-        log.debug("uow {}", uow);
+        // log.info("uow $uow");
 
         if (uow != null) {
           assertThat(uow).isEqualTo(expectedUow2);
@@ -406,7 +404,7 @@ public class UnitOfWorkRepositoryIT {
           }
 
           SnapshotData data = snapshotDataAsyncResult.result();
-          log.debug("data {}", data);
+          // log.info("data $data");
           assertThat(data.getVersion()).isEqualTo(expectedUow2.getVersion());
           assertThat(data.getEvents()).isEqualTo(expectedUow2.getEvents());
 
