@@ -44,7 +44,7 @@ fun resultOf(f: () -> UnitOfWork?): CommandResult {
     CommandResult.error(e) }
 }
 
-fun uowOf(command: EntityCommand, events: List<DomainEvent>, version: Version): UnitOfWork {
+fun uowOf(command: Command, events: List<DomainEvent>, version: Version): UnitOfWork {
   return UnitOfWork(UUID.randomUUID(), command, version, events)
 }
 

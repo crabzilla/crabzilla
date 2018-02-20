@@ -64,7 +64,7 @@ class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepos
           uowFuture.complete(null)
         } else {
           for (row in rows) {
-            val command = Json.decodeValue(row.getString(CMD_DATA), EntityCommand::class.java)
+            val command = Json.decodeValue(row.getString(CMD_DATA), Command::class.java)
             val events = listOfEventsFromJson(Json.mapper, row.getString(UOW_EVENTS))
             val uow = UnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
               row.getLong(VERSION)!!, events)

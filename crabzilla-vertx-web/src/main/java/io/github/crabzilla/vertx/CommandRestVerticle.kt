@@ -1,6 +1,6 @@
 package io.github.crabzilla.vertx
 
-import io.github.crabzilla.core.EntityCommand
+import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.vertx.VerticleRole.REST
 import io.github.crabzilla.vertx.handler.CommandExecution
@@ -63,7 +63,7 @@ class CommandRestVerticle(override val name: String,
     val uowFuture = Future.future<UnitOfWork>()
     val httpResp = routingContext.response()
     val commandStr = routingContext.bodyAsString
-    val command = Json.decodeValue(commandStr, EntityCommand::class.java)
+    val command = Json.decodeValue(commandStr, Command::class.java)
     val resource = routingContext.request().getParam("resource")
 
     log.info("command=:\n" + commandStr)

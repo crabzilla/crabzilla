@@ -6,7 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.EntityCommand
+import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.EntityId
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.vertx.handler.CommandExecution
@@ -74,8 +74,8 @@ fun initVertx(vertx: Vertx) {
   vertx.eventBus().registerDefaultCodec(EntityId::class.java,
     JacksonGenericCodec(Json.mapper, EntityId::class.java))
 
-  vertx.eventBus().registerDefaultCodec(EntityCommand::class.java,
-    JacksonGenericCodec(Json.mapper, EntityCommand::class.java))
+  vertx.eventBus().registerDefaultCodec(Command::class.java,
+    JacksonGenericCodec(Json.mapper, Command::class.java))
 
   vertx.eventBus().registerDefaultCodec(DomainEvent::class.java,
     JacksonGenericCodec(Json.mapper, DomainEvent::class.java))

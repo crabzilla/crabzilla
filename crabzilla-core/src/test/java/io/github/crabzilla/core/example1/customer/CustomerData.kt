@@ -1,7 +1,7 @@
 package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.EntityCommand
+import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.EntityId
 import java.time.Instant
 import java.util.*
@@ -25,19 +25,19 @@ data class CustomerDeactivated(val reason: String, val _when: Instant) : DomainE
 // tag::commands[]
 
 data class CreateCustomer(override val commandId: UUID, override val targetId: CustomerId,
-                          val name: String) : EntityCommand
+                          val name: String) : Command
 
 data class ActivateCustomer(override val commandId: UUID, override val targetId: CustomerId,
-                            val reason: String) : EntityCommand
+                            val reason: String) : Command
 
 data class DeactivateCustomer(override val commandId: UUID, override val targetId: CustomerId,
-                              val reason: String) : EntityCommand
+                              val reason: String) : Command
 
 data class CreateActivateCustomer(override val commandId: UUID,
                                   override val targetId: CustomerId,
-                                  val name: String, val reason: String) : EntityCommand
+                                  val name: String, val reason: String) : Command
 
 // end::commands[]
 
 data class UnknownCommand(override val commandId: UUID, override val targetId: CustomerId)
-  : EntityCommand
+  : Command

@@ -1,6 +1,6 @@
 package io.github.crabzilla.vertx.handler
 
-import io.github.crabzilla.core.EntityCommand
+import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.UnitOfWork
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
@@ -26,6 +26,6 @@ data class CommandExecution(val result: RESULT,
 
 interface CommandHandlerService {
 
-  fun postCommand(handlerEndpoint: String, command: EntityCommand, handler: Handler<AsyncResult<CommandExecution>>)
+  fun postCommand(handlerEndpoint: String, command: Command, handler: Handler<AsyncResult<CommandExecution>>)
 
 }

@@ -17,8 +17,8 @@ import net.jodah.expiringmap.ExpiringMap
 
 class CommandHandlerVerticle<A : Entity>(override val name: String,
                                          private val seedValue: A,
-                                         private val cmdHandler: (EntityCommand, Snapshot<A>) -> CommandResult?,
-                                         private val validatorFn: (EntityCommand) -> List<String>,
+                                         private val cmdHandler: (Command, Snapshot<A>) -> CommandResult?,
+                                         private val validatorFn: (Command) -> List<String>,
                                          private val snapshotPromoter: SnapshotPromoter<A>,
                                          private val eventJournal: UnitOfWorkRepository,
                                          private val cache: ExpiringMap<String, Snapshot<A>>,
@@ -27,7 +27,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
   @Throws(Exception::class)
   override fun start() {
 
-    val consumer = vertx.eventBus().consumer<EntityCommand>(cmdHandlerEndpoint(name))
+    val consumer = vertx.eventBus().consumer<Command>(cmdHandlerEndpoint(name))
 
     consumer.handler({ msg ->
 
@@ -69,7 +69,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
 
   }
 
-  internal fun cmdHandler(command: EntityCommand): (Future<CommandExecution>) -> Unit {
+  internal fun cmdHandler(command: Command): (Future<CommandExecution>) -> Unit {
 
     return { future1 ->
 
@@ -182,7 +182,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
     }
   }
 
-  internal fun resultHandler(msg: Message<EntityCommand>): (AsyncResult<CommandExecution>) -> Unit {
+  internal fun resultHandler(msg: Message<Command>): (AsyncResult<CommandExecution>) -> Unit {
 
     return { resultHandler: AsyncResult<CommandExecution> ->
       if (!resultHandler.succeeded()) {

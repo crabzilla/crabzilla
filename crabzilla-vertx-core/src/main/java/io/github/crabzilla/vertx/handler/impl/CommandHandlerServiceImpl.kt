@@ -1,6 +1,6 @@
 package io.github.crabzilla.vertx.handler.impl
 
-import io.github.crabzilla.core.EntityCommand
+import io.github.crabzilla.core.Command
 import io.github.crabzilla.vertx.handler.CommandExecution
 import io.github.crabzilla.vertx.handler.CommandHandlerService
 import io.github.crabzilla.vertx.projector.ProjectionData
@@ -15,18 +15,18 @@ import io.vertx.core.logging.LoggerFactory
 class CommandHandlerServiceImpl(private val vertx: Vertx, private val projectionEndpoint: String) :
   CommandHandlerService {
 
-  private val commandDeliveryOptions = DeliveryOptions().setCodecName(EntityCommand::class.java.simpleName)
+  private val commandDeliveryOptions = DeliveryOptions().setCodecName(Command::class.java.simpleName)
 
   init {
     log.info("will publish resulting events to {}", projectionEndpoint)
   }
 
-  override fun postCommand(handlerEndpoint: String, command: EntityCommand,
+  override fun postCommand(handlerEndpoint: String, command: Command,
                            handler: Handler<AsyncResult<CommandExecution>>) {
 
     log.info("posting a command to {}", handlerEndpoint)
 
-    vertx.eventBus().send<EntityCommand>(handlerEndpoint, command, commandDeliveryOptions) { response ->
+    vertx.eventBus().send<Command>(handlerEndpoint, command, commandDeliveryOptions) { response ->
 
       if (!response.succeeded()) {
         log.error("postCommand", response.cause())

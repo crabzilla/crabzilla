@@ -66,9 +66,9 @@ public class CommandHandlerVerticleTest {
   final Customer seedValue =  new Customer(null, null, false, null, service);
 
   @Mock
-  Function1<EntityCommand, List<String>> validatorFn;
+  Function1<Command, List<String>> validatorFn;
   @Mock
-  Function2<EntityCommand, Snapshot<? extends Customer>, CommandResult> cmdHandlerFn;
+  Function2<Command, Snapshot<? extends Customer>, CommandResult> cmdHandlerFn;
   @Mock
   UnitOfWorkRepository eventRepository;
 
@@ -134,7 +134,7 @@ public class CommandHandlerVerticleTest {
 //    when(snapshotPromoterFn.promote(any(Snapshot.class), eq(1), eq(singletonList(expectedEvent))))
 //            .thenReturn(finalSnapshot);
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
@@ -192,7 +192,7 @@ public class CommandHandlerVerticleTest {
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class), eq(ENTITY_NAME));
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
@@ -248,7 +248,7 @@ public class CommandHandlerVerticleTest {
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(CommandResult.Companion.success(expectedUow));
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
@@ -307,7 +307,7 @@ public class CommandHandlerVerticleTest {
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(CommandResult.Companion.success(expectedUow));
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
@@ -365,7 +365,7 @@ public class CommandHandlerVerticleTest {
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(CommandResult.Companion.error(new RuntimeException("SOME ERROR WITHIN COMMAND HANDLER")));
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
@@ -409,7 +409,7 @@ public class CommandHandlerVerticleTest {
     List<String> errorList = singletonList("Invalid name: a bad name");
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(errorList);
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
@@ -452,7 +452,7 @@ public class CommandHandlerVerticleTest {
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(null);
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
