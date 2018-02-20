@@ -23,7 +23,7 @@ typealias Version = Long
 data class UnitOfWork(val unitOfWorkId: UUID, val command: Command,
                       val version: Version, val events: List<DomainEvent>) : Serializable  {
   init {
-    require(this.version >= 0, { "version must be >= 0" })
+    require(this.version >= 1, { "version must be >= 1" })
   }
 
   fun targetId(): EntityId {

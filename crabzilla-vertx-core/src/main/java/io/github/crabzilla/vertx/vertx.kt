@@ -5,8 +5,8 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
-import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EntityId
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.vertx.handler.CommandExecution
