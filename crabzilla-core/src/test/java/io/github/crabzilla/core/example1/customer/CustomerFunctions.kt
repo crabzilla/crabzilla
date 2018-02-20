@@ -41,7 +41,7 @@ class CommandHandlerFn(
   override fun invoke(cmd: EntityCommand, snapshot: Snapshot<Customer>): CommandResult? {
 
     val customer = snapshot.instance
-    val newVersion = snapshot.version.nextVersion()
+    val newVersion = snapshot.version+1
 
     return resultOf {
       when (cmd) {

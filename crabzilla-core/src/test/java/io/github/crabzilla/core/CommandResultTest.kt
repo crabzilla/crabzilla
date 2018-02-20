@@ -18,7 +18,7 @@ class CommandResultTest {
 
   internal lateinit var result: CommandResult
 
-  internal val version = Version(1)
+  internal val version = 0L
   internal val customerId = CustomerId("c1")
   internal val commandId = UUID.randomUUID()
   internal val event: DomainEvent = CustomerCreated(customerId, "c1")

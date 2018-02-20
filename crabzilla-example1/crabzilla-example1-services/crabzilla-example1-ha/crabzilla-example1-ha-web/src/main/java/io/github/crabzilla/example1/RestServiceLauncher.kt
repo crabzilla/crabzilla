@@ -28,7 +28,7 @@ class RestServiceLauncher {
       val mgr = HazelcastClusterManager()
       val vertxOptions = VertxOptions().setClusterManager(mgr).setClusterHost(hostName)
 
-      println("** hostname ${hostName}")
+      log.info("** hostname $hostName")
 
       Vertx.clusteredVertx(vertxOptions) { res ->
         if (res.succeeded()) {

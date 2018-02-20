@@ -67,7 +67,7 @@ class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepos
             val command = Json.decodeValue(row.getString(CMD_DATA), EntityCommand::class.java)
             val events = listOfEventsFromJson(Json.mapper, row.getString(UOW_EVENTS))
             val uow = UnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
-              Version(row.getLong(VERSION)!!), events)
+              row.getLong(VERSION)!!, events)
             uowFuture.complete(uow)
           }
         }
@@ -84,7 +84,7 @@ class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepos
                                   selectAfterVersionFuture: Future<SnapshotData>,
                                   aggregateRootName: String) {
 
-    log.info("will load id [{}] after version [{}]", id, version.valueAsLong)
+    log.info("will load id [{}] after version [{}]", id, version)
 
     val selectAfterVersionSql = "select uow_events, version from units_of_work " +
       " where ar_id = ? " +
@@ -92,7 +92,7 @@ class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepos
       "   and version > ? " +
       " order by version "
 
-    val params = JsonArray().add(id).add(aggregateRootName).add(version.valueAsLong)
+    val params = JsonArray().add(id).add(aggregateRootName).add(version)
 
     client.getConnection { getConn ->
       if (getConn.failed()) {
@@ -121,15 +121,15 @@ class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepos
           .handler { row ->
 
             val events = listOfEventsFromJson(Json.mapper, row.getString(0))
-            val snapshotData = SnapshotData(Version(row.getLong(1)!!), events)
+            val snapshotData = SnapshotData(row.getLong(1)!!, events)
             list.add(snapshotData)
           }.endHandler { event ->
 
             log.info("found {} units of work for id {} and version > {}",
-              list.size, id, version.valueAsLong)
+              list.size, id, version)
 
             val finalVersion = if (list.size == 0)
-              Version(0)
+              0
             else
               list[list.size - 1].version
 
@@ -200,12 +200,12 @@ class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepos
           log.info("Found version  {}", currentVersion)
 
           // apply optimistic locking
-          if (currentVersion != unitOfWork.version.valueAsLong - 1) {
+          if (currentVersion != unitOfWork.version - 1) {
 
             val error = DbConcurrencyException(
               String.format("ar_id = [%s], current_version = %d, new_version = %d",
                 unitOfWork.targetId().stringValue(),
-                currentVersion, unitOfWork.version.valueAsLong))
+                currentVersion, unitOfWork.version))
 
             appendFuture.fail(error)
 
@@ -230,7 +230,7 @@ class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepos
             .add(cmdAsJson)
             .add(unitOfWork.targetId().stringValue())
             .add(aggregateRootName)
-            .add(unitOfWork.version.valueAsLong)
+            .add(unitOfWork.version)
 
           val updateResultFuture = Future.future<UpdateResult>()
           updateWithParams(sqlConn, insertUnitOfWorkSql, params2, updateResultFuture)

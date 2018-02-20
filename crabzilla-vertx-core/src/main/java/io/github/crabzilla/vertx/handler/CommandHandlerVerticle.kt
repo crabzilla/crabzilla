@@ -90,7 +90,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
         }
 
         val snapshotFromCache = fromCacheResult.result()
-        val emptySnapshot = Snapshot(seedValue, Version(0))
+        val emptySnapshot = Snapshot(seedValue, 0)
         val cachedSnapshot = snapshotFromCache ?: emptySnapshot
 
         log.debug("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",

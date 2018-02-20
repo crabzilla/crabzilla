@@ -86,7 +86,7 @@ class CustomerHttpAcceptanceIT {
     val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer test")
     val expectedEvent = CustomerCreated(createCustomerCmd.targetId, "customer test")
     val expectedUow = UnitOfWork(UUID.randomUUID(), createCustomerCmd,
-      Version(1), listOf<DomainEvent>(expectedEvent))
+      1, listOf<DomainEvent>(expectedEvent))
 
     val json = mapper.writerFor(CreateCustomer::class.java).writeValueAsString(createCustomerCmd)
 
@@ -129,7 +129,7 @@ class CustomerHttpAcceptanceIT {
     val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer test")
     val expectedEvent = CustomerCreated(createCustomerCmd.targetId, "customer test")
     val expectedUow = UnitOfWork(UUID.randomUUID(), createCustomerCmd,
-      Version(1), listOf<DomainEvent>(expectedEvent))
+      1, listOf<DomainEvent>(expectedEvent))
 
     val json = mapper.writerFor(CreateCustomer::class.java).writeValueAsString(createCustomerCmd)
 

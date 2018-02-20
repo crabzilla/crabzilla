@@ -8,7 +8,6 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.core.Version
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated
@@ -53,7 +52,7 @@ class JacksonJsonTest {
     val id = CustomerId(UUID.randomUUID().toString())
     val command = CreateCustomer(UUID.randomUUID(), id, "customer " + id)
     val event = CustomerCreated(id, command.name)
-    val uow1 = UnitOfWork(UUID.randomUUID(), command, Version(1), listOf<DomainEvent>(event))
+    val uow1 = UnitOfWork(UUID.randomUUID(), command, 1, listOf<DomainEvent>(event))
 
     val uowAsJson = mapper.writeValueAsString(uow1)
 
@@ -73,7 +72,7 @@ class JacksonJsonTest {
     val event1 = CustomerCreated(id, command.name)
     val event2 = CustomerActivated("a good reason", Instant.now())
 
-    val uow1 = UnitOfWork(UUID.randomUUID(), command, Version(1), asList<DomainEvent>(event1, event2))
+    val uow1 = UnitOfWork(UUID.randomUUID(), command, 1, asList<DomainEvent>(event1, event2))
 
     val uowAsJson = mapper.writeValueAsString(uow1)
 
