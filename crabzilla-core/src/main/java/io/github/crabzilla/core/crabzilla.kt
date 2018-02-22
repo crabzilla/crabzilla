@@ -7,8 +7,8 @@ interface Entity : Serializable {
   val id: EntityId
 }
 
-class CommandResult private constructor(private val unitOfWork: UnitOfWork?,
-                                        private val exception: Throwable?) {
+class CommandResult private constructor(val unitOfWork: UnitOfWork?,
+                                        val exception: Throwable?) {
 
   fun inCaseOfSuccess(uowFn: (UnitOfWork?) -> Unit) {
     if (unitOfWork != null) {
