@@ -12,13 +12,13 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.Message
-import io.vertx.core.logging.LoggerFactory.getLogger
 import net.jodah.expiringmap.ExpiringMap
+import org.slf4j.LoggerFactory.getLogger
 
 class CommandHandlerVerticle<A : Entity>(override val name: String,
                                          private val seedValue: A,
-                                         private val cmdHandler: (EntityCommand, Snapshot<A>) -> CommandResult?,
-                                         private val validatorFn: (EntityCommand) -> List<String>,
+                                         private val cmdHandler: (Command, Snapshot<A>) -> CommandResult?,
+                                         private val validatorFn: (Command) -> List<String>,
                                          private val snapshotPromoter: SnapshotPromoter<A>,
                                          private val eventJournal: UnitOfWorkRepository,
                                          private val cache: ExpiringMap<String, Snapshot<A>>,
@@ -27,7 +27,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
   @Throws(Exception::class)
   override fun start() {
 
-    val consumer = vertx.eventBus().consumer<EntityCommand>(cmdHandlerEndpoint(name))
+    val consumer = vertx.eventBus().consumer<Command>(cmdHandlerEndpoint(name))
 
     consumer.handler({ msg ->
 
@@ -69,7 +69,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
 
   }
 
-  internal fun cmdHandler(command: EntityCommand): (Future<CommandExecution>) -> Unit {
+  internal fun cmdHandler(command: Command): (Future<CommandExecution>) -> Unit {
 
     return { future1 ->
 
@@ -90,7 +90,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
         }
 
         val snapshotFromCache = fromCacheResult.result()
-        val emptySnapshot = Snapshot(seedValue, Version(0))
+        val emptySnapshot = Snapshot(seedValue, 0)
         val cachedSnapshot = snapshotFromCache ?: emptySnapshot
 
         log.debug("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
@@ -163,6 +163,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
 
             result.inCaseOfError({ error ->
               log.error("commandExecution", error.message)
+
                 future2.complete(CommandExecution(result = HANDLING_ERROR, commandId = command.commandId,
                   constraints = listOf(error.message)))
             })
@@ -182,7 +183,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
     }
   }
 
-  internal fun resultHandler(msg: Message<EntityCommand>): (AsyncResult<CommandExecution>) -> Unit {
+  internal fun resultHandler(msg: Message<Command>): (AsyncResult<CommandExecution>) -> Unit {
 
     return { resultHandler: AsyncResult<CommandExecution> ->
       if (!resultHandler.succeeded()) {

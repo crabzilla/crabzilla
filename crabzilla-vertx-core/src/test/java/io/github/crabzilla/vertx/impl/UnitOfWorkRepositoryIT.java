@@ -7,7 +7,6 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.crabzilla.core.SnapshotData;
 import io.github.crabzilla.core.UnitOfWork;
-import io.github.crabzilla.core.Version;
 import io.github.crabzilla.core.example1.CommandHandlers;
 import io.github.crabzilla.example1.customer.*;
 import io.github.crabzilla.vertx.DbConcurrencyException;
@@ -61,11 +60,11 @@ public class UnitOfWorkRepositoryIT {
   final CustomerId customerId = new CustomerId("customer#1");
   final CreateCustomer createCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
   final CustomerCreated created = new CustomerCreated(customerId, "customer");
-  final UnitOfWork expectedUow1 = new UnitOfWork(UUID.randomUUID(), createCmd, new Version(1), singletonList(created));
+  final UnitOfWork expectedUow1 = new UnitOfWork(UUID.randomUUID(), createCmd, 1, singletonList(created));
 
   final ActivateCustomer activateCmd = new ActivateCustomer(UUID.randomUUID(), customerId, "I want it");
   final CustomerActivated activated = new CustomerActivated(customerId.stringValue(), Instant.now());
-  final UnitOfWork expectedUow2 = new UnitOfWork(UUID.randomUUID(), activateCmd, new Version(2), singletonList(activated));
+  final UnitOfWork expectedUow2 = new UnitOfWork(UUID.randomUUID(), activateCmd, 2, singletonList(activated));
 
 
   @ClassRule
@@ -335,7 +334,7 @@ public class UnitOfWorkRepositoryIT {
 
         Future<SnapshotData> snapshotDataFuture = Future.future();
 
-        repo.selectAfterVersion(expectedUow1.targetId().stringValue(), new Version(0), snapshotDataFuture, aggregateId);
+        repo.selectAfterVersion(expectedUow1.targetId().stringValue(), 0, snapshotDataFuture, aggregateId);
 
         snapshotDataFuture.setHandler(snapshotDataAsyncResult -> {
           if (snapshotDataAsyncResult.failed()) {
@@ -396,7 +395,7 @@ public class UnitOfWorkRepositoryIT {
 
         Future<SnapshotData> snapshotDataFuture = Future.future();
 
-        repo.selectAfterVersion(expectedUow2.targetId().stringValue(), new Version(1), snapshotDataFuture, aggregateId);
+        repo.selectAfterVersion(expectedUow2.targetId().stringValue(), 1, snapshotDataFuture, aggregateId);
 
         snapshotDataFuture.setHandler(snapshotDataAsyncResult -> {
           if (snapshotDataAsyncResult.failed()) {
@@ -443,13 +442,13 @@ public class UnitOfWorkRepositoryIT {
 
     Future<SnapshotData> selectFuture = Future.future();
 
-    repo.selectAfterVersion(customerId.stringValue(), new Version(0), selectFuture, aggregateId);
+    repo.selectAfterVersion(customerId.stringValue(), 0, selectFuture, aggregateId);
 
     selectFuture.setHandler(selectAsyncResult -> {
 
       SnapshotData snapshotData = selectAsyncResult.result();
 
-      assertThat(snapshotData.getVersion()).isEqualTo(new Version(2));
+      assertThat(snapshotData.getVersion()).isEqualTo(2);
       assertThat(snapshotData.getEvents().get(0)).isEqualTo(created);
       assertThat(snapshotData.getEvents().get(1)).isEqualToIgnoringGivenFields(activated, "_when");
 

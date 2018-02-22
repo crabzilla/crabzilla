@@ -31,7 +31,7 @@ public class SnapshotPromoterTest {
 
   final SampleInternalService service = new TestSampleInternalService();
   final Customer customer = new Customer(null, null, false, null, service);
-  final Snapshot<Customer> originalSnapshot = new Snapshot<>(customer, new Version(0));
+  final Snapshot<Customer> originalSnapshot = new Snapshot<>(customer, 0L);
 
   @BeforeEach
   void instantiate() {
@@ -60,9 +60,9 @@ public class SnapshotPromoterTest {
 
     @Test
     void it_has_expected_snapshot() {
-      resultingSnapshot1 = promoter.promote(originalSnapshot, new Version(1), singletonList(customerCreated));
+      resultingSnapshot1 = promoter.promote(originalSnapshot, 1, singletonList(customerCreated));
       final Customer expectedCustomer1 = new Customer(id, "customer-1", false, null, service);
-      final Snapshot<Customer> expectedSnapshot1 = new Snapshot<>(expectedCustomer1, new Version(1));
+      final Snapshot<Customer> expectedSnapshot1 = new Snapshot<>(expectedCustomer1, 1);
       assertThat(resultingSnapshot1).isEqualTo(expectedSnapshot1);
     }
 
@@ -86,8 +86,8 @@ public class SnapshotPromoterTest {
     @Test
     void it_should_throw_an_exception() {
       Throwable exception = assertThrows(RuntimeException.class, () ->
-        resultingSnapshot1 = promoter.promote(originalSnapshot, new Version(2), singletonList(customerCreated)));
-      assertEquals("Cannot upgrade to version Version(valueAsLong=2) since current version is Version(valueAsLong=0)",
+        resultingSnapshot1 = promoter.promote(originalSnapshot, 2, singletonList(customerCreated)));
+      assertEquals("Cannot upgrade to version 2 since current version is 0",
               exception.getMessage());
     }
 

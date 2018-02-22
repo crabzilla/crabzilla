@@ -66,9 +66,9 @@ public class CommandHandlerVerticleTest {
   final Customer seedValue =  new Customer(null, null, false, null, service);
 
   @Mock
-  Function1<EntityCommand, List<String>> validatorFn;
+  Function1<Command, List<String>> validatorFn;
   @Mock
-  Function2<EntityCommand, Snapshot<? extends Customer>, CommandResult> cmdHandlerFn;
+  Function2<Command, Snapshot<? extends Customer>, CommandResult> cmdHandlerFn;
   @Mock
   UnitOfWorkRepository eventRepository;
 
@@ -112,13 +112,13 @@ public class CommandHandlerVerticleTest {
 
     CustomerId customerId = new CustomerId("customer#1");
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
-    Snapshot<Customer> initialSnapshot = new Snapshot<>(seedValue, new Version(0));
+    Snapshot<Customer> initialSnapshot = new Snapshot<>(seedValue, 0);
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
-    UnitOfWork expectedUow = new UnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    UnitOfWork expectedUow = new UnitOfWork(UUID.randomUUID(), createCustomerCmd, 1, singletonList(expectedEvent));
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
+    doAnswer(answerVoid((VoidAnswer3<String, Long, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                       eq(initialSnapshot.getVersion()),
@@ -131,10 +131,10 @@ public class CommandHandlerVerticleTest {
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(CommandResult.Companion.success(expectedUow));
 
-//    when(snapshotPromoterFn.promote(any(Snapshot.class), eq(new Version(1)), eq(singletonList(expectedEvent))))
+//    when(snapshotPromoterFn.promote(any(Snapshot.class), eq(1), eq(singletonList(expectedEvent))))
 //            .thenReturn(finalSnapshot);
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
@@ -181,18 +181,18 @@ public class CommandHandlerVerticleTest {
 
     CustomerId customerId = new CustomerId("customer#1");
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
-    Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
+    Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, 0);
     Throwable expectedException = new Throwable("Expected");
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
+    doAnswer(answerVoid((VoidAnswer3<String, Long, Future<SnapshotData>>) (s, version, future) ->
             future.fail(expectedException)))
             .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class), eq(ENTITY_NAME));
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
@@ -228,14 +228,14 @@ public class CommandHandlerVerticleTest {
 
     CustomerId customerId = new CustomerId("customer#1");
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
-    Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
+    Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, 0);
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
-    UnitOfWork expectedUow = new UnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    UnitOfWork expectedUow = new UnitOfWork(UUID.randomUUID(), createCustomerCmd, 1, singletonList(expectedEvent));
     Throwable expectedException = new Throwable("Expected");
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
+    doAnswer(answerVoid((VoidAnswer3<String, Long, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                       eq(initialSnapshot.getVersion()),
@@ -248,7 +248,7 @@ public class CommandHandlerVerticleTest {
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(CommandResult.Companion.success(expectedUow));
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
@@ -288,13 +288,13 @@ public class CommandHandlerVerticleTest {
 
     CustomerId customerId = new CustomerId("customer#1");
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
-    Snapshot<Customer> initialSnapshot = new Snapshot<>(seedValue, new Version(0));
+    Snapshot<Customer> initialSnapshot = new Snapshot<>(seedValue, 0);
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
-    UnitOfWork expectedUow = new UnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    UnitOfWork expectedUow = new UnitOfWork(UUID.randomUUID(), createCustomerCmd, 1, singletonList(expectedEvent));
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
+    doAnswer(answerVoid((VoidAnswer3<String, Long, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
             eq(initialSnapshot.getVersion()),
@@ -307,16 +307,13 @@ public class CommandHandlerVerticleTest {
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(CommandResult.Companion.success(expectedUow));
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
-
-//      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
-//              any());
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),
@@ -349,13 +346,13 @@ public class CommandHandlerVerticleTest {
 
     CustomerId customerId = new CustomerId("customer#1");
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
-    Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
+    Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, 0);
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
-    UnitOfWork expectedUow = new UnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
+    UnitOfWork expectedUow = new UnitOfWork(UUID.randomUUID(), createCustomerCmd, 1, singletonList(expectedEvent));
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
+    doAnswer(answerVoid((VoidAnswer3<String, Long, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
             eq(initialSnapshot.getVersion()),
@@ -368,7 +365,7 @@ public class CommandHandlerVerticleTest {
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(CommandResult.Companion.error(new RuntimeException("SOME ERROR WITHIN COMMAND HANDLER")));
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
@@ -412,7 +409,7 @@ public class CommandHandlerVerticleTest {
     List<String> errorList = singletonList("Invalid name: a bad name");
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(errorList);
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
@@ -442,11 +439,11 @@ public class CommandHandlerVerticleTest {
 
     CustomerId customerId = new CustomerId("customer#1");
     UnknownCommand createCustomerCmd = new UnknownCommand(UUID.randomUUID(), customerId);
-    Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, new Version(0));
+    Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, 0);
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Version, Future<SnapshotData>>) (s, version, future) ->
+    doAnswer(answerVoid((VoidAnswer3<String, Long, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
             .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
             eq(initialSnapshot.getVersion()),
@@ -455,7 +452,7 @@ public class CommandHandlerVerticleTest {
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(null);
 
-    DeliveryOptions options = new DeliveryOptions().setCodecName("EntityCommand");
+    DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 

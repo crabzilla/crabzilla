@@ -6,9 +6,9 @@ import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerDeactivated
 import io.github.crabzilla.vertx.projector.AbstractEventsProjector
-import io.vertx.core.logging.LoggerFactory
 import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
+import org.slf4j.LoggerFactory
 
 // tag::projector[]
 class CustomerSummaryProjector(channelId: String, jdbi: Jdbi,

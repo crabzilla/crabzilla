@@ -19,8 +19,8 @@ class StateTransitionFn : (DomainEvent, Customer) -> Customer {
 
 // tag::CommandValidatorFn[]
 
-class CommandValidatorFn : (EntityCommand) -> List<String> {
-  override fun invoke(command: EntityCommand): List<String> {
+class CommandValidatorFn : (Command) -> List<String> {
+  override fun invoke(command: Command): List<String> {
     return when(command) {
       is CreateCustomer ->
         if (command.name.equals("a bad name"))
@@ -36,26 +36,25 @@ class CommandValidatorFn : (EntityCommand) -> List<String> {
 
 class CommandHandlerFn(
         private val trackerFactory: (Snapshot<Customer>) -> StateTransitionsTracker<Customer>) :
-        (EntityCommand, Snapshot<Customer>) -> CommandResult? {
+        (Command, Snapshot<Customer>) -> CommandResult? {
 
-  override fun invoke(cmd: EntityCommand, snapshot: Snapshot<Customer>): CommandResult? {
+  override fun invoke(cmd: Command, snapshot: Snapshot<Customer>): CommandResult? {
 
     val customer = snapshot.instance
-    val newVersion = snapshot.version.nextVersion()
 
     return resultOf {
       when (cmd) {
         is CreateCustomer ->
-          uowOf(cmd, customer.create(cmd.targetId, cmd.name), newVersion)
-        is ActivateCustomer -> uowOf(cmd, customer.activate(cmd.reason), newVersion)
-        is DeactivateCustomer -> uowOf(cmd, customer.deactivate(cmd.reason), newVersion)
+          uowOf(cmd, customer.create(cmd.targetId, cmd.name), snapshot.version)
+        is ActivateCustomer -> uowOf(cmd, customer.activate(cmd.reason), snapshot.version)
+        is DeactivateCustomer -> uowOf(cmd, customer.deactivate(cmd.reason), snapshot.version)
         is CreateActivateCustomer -> {
           val tracker = trackerFactory.invoke(snapshot)
           val events = tracker
                   .applyEvents({ c -> c.create(cmd.targetId, cmd.name) })
                   .applyEvents({ c -> c.activate(cmd.reason) })
                   .collectEvents()
-          uowOf(cmd, events, newVersion)
+          uowOf(cmd, events, snapshot.version)
         }
         else -> null
       }

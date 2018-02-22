@@ -2,7 +2,6 @@ package io.github.crabzilla.vertx.projector;
 
 import io.github.crabzilla.core.DomainEvent;
 import io.github.crabzilla.core.UnitOfWork;
-import io.github.crabzilla.core.Version;
 import io.github.crabzilla.example1.CustomerSummary;
 import io.github.crabzilla.example1.customer.CreateCustomer;
 import io.github.crabzilla.example1.customer.CustomerCreated;
@@ -58,7 +57,7 @@ public class AbstractEventsProjectorTest {
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
     UnitOfWork expectedUow =
-            new UnitOfWork(UUID.randomUUID(), createCustomerCmd, new Version(1), singletonList(expectedEvent));
+            new UnitOfWork(UUID.randomUUID(), createCustomerCmd, 1, singletonList(expectedEvent));
     long uowSequence = 1L;
 
     ProjectionData projectionData = new ProjectionData(expectedUow.getUnitOfWorkId(), uowSequence,

@@ -7,6 +7,7 @@ import io.github.crabzilla.vertx.deployVerticles
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
+import org.slf4j.LoggerFactory
 import java.net.InetAddress
 
 // tag::launcher[]
@@ -15,7 +16,7 @@ class RestServiceLauncher {
 
   companion object {
 
-    val log = io.vertx.core.logging.LoggerFactory.getLogger(RestServiceLauncher::class.java.simpleName)
+    val log = LoggerFactory.getLogger(RestServiceLauncher::class.java.simpleName)
 
     lateinit var writeDs: HikariDataSource
     lateinit var readDs: HikariDataSource
@@ -28,7 +29,7 @@ class RestServiceLauncher {
       val mgr = HazelcastClusterManager()
       val vertxOptions = VertxOptions().setClusterManager(mgr).setClusterHost(hostName)
 
-      println("** hostname ${hostName}")
+      log.info("** hostname $hostName")
 
       Vertx.clusteredVertx(vertxOptions) { res ->
         if (res.succeeded()) {

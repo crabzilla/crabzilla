@@ -21,7 +21,7 @@ public class StateTransitionsTrackerTest {
 
   final SampleInternalService service = new TestSampleInternalService();
   final Customer customer = new Customer(null, null, false, null, service);
-  final Snapshot<Customer> originalSnapshot = new Snapshot<>(customer, new Version(0));
+  final Snapshot<Customer> originalSnapshot = new Snapshot<>(customer, 0);
 
   @BeforeEach
   void instantiate() {
