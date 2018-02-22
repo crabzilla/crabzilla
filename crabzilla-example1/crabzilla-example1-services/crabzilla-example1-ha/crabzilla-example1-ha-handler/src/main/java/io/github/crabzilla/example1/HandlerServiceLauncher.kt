@@ -17,7 +17,7 @@ class HandlerServiceLauncher {
 
   companion object {
 
-    val log = io.vertx.core.logging.LoggerFactory.getLogger(HandlerServiceLauncher::class.java.simpleName)
+    val log = org.slf4j.LoggerFactory.getLogger(HandlerServiceLauncher::class.java.simpleName)
 
     lateinit var ds: HikariDataSource
 
@@ -30,7 +30,7 @@ class HandlerServiceLauncher {
       val vertxOptions = VertxOptions().setClusterManager(mgr).setHAEnabled(true).setHAGroup("command-handler")
                                        .setClusterHost(hostName)
 
-      println("**  HA group ${vertxOptions.haGroup} hostname ${hostName}")
+      log.info("HA group ${vertxOptions.haGroup} hostname ${hostName}")
 
       clusteredVertx(vertxOptions) { res ->
         if (res.succeeded()) {

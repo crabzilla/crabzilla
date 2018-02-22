@@ -23,7 +23,7 @@ import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import io.vertx.core.spi.VerticleFactory
 
-private val log = io.vertx.core.logging.LoggerFactory.getLogger("CrabzillaVertx")
+private val log = org.slf4j.LoggerFactory.getLogger("CrabzillaVertx")
 
 fun configHandler(vertx: Vertx, handler: (JsonObject) -> Unit, shutdownHook: () -> Unit) {
 

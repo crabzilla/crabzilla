@@ -12,8 +12,8 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.Message
-import io.vertx.core.logging.LoggerFactory.getLogger
 import net.jodah.expiringmap.ExpiringMap
+import org.slf4j.LoggerFactory.getLogger
 
 class CommandHandlerVerticle<A : Entity>(override val name: String,
                                          private val seedValue: A,
@@ -163,6 +163,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
 
             result.inCaseOfError({ error ->
               log.error("commandExecution", error.message)
+
                 future2.complete(CommandExecution(result = HANDLING_ERROR, commandId = command.commandId,
                   constraints = listOf(error.message)))
             })

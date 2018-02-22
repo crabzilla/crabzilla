@@ -41,21 +41,20 @@ class CommandHandlerFn(
   override fun invoke(cmd: Command, snapshot: Snapshot<Customer>): CommandResult? {
 
     val customer = snapshot.instance
-    val newVersion = snapshot.version+1
 
     return resultOf {
       when (cmd) {
         is CreateCustomer ->
-          uowOf(cmd, customer.create(cmd.targetId, cmd.name), newVersion)
-        is ActivateCustomer -> uowOf(cmd, customer.activate(cmd.reason), newVersion)
-        is DeactivateCustomer -> uowOf(cmd, customer.deactivate(cmd.reason), newVersion)
+          uowOf(cmd, customer.create(cmd.targetId, cmd.name), snapshot.version)
+        is ActivateCustomer -> uowOf(cmd, customer.activate(cmd.reason), snapshot.version)
+        is DeactivateCustomer -> uowOf(cmd, customer.deactivate(cmd.reason), snapshot.version)
         is CreateActivateCustomer -> {
           val tracker = trackerFactory.invoke(snapshot)
           val events = tracker
                   .applyEvents({ c -> c.create(cmd.targetId, cmd.name) })
                   .applyEvents({ c -> c.activate(cmd.reason) })
                   .collectEvents()
-          uowOf(cmd, events, newVersion)
+          uowOf(cmd, events, snapshot.version)
         }
         else -> null
       }

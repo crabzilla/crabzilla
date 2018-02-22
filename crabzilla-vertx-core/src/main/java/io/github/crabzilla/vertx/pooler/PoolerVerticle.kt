@@ -7,7 +7,7 @@ import io.github.crabzilla.vertx.projector.ProjectionData
 import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Vertx
-import io.vertx.core.logging.LoggerFactory
+import org.slf4j.LoggerFactory
 
 
 class PoolerVerticle(override val name: String,

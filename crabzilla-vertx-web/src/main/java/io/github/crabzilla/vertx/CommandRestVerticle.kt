@@ -12,11 +12,11 @@ import io.vertx.core.Handler
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
-import io.vertx.core.logging.LoggerFactory.getLogger
 import io.vertx.ext.healthchecks.HealthCheckHandler
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
+import org.slf4j.LoggerFactory.getLogger
 import java.util.*
 
 

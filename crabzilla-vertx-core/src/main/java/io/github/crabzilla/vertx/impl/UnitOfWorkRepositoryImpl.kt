@@ -8,11 +8,11 @@ import io.github.crabzilla.vertx.projector.ProjectionData
 import io.vertx.core.Future
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
-import io.vertx.core.logging.LoggerFactory.getLogger
 import io.vertx.ext.jdbc.JDBCClient
 import io.vertx.ext.sql.ResultSet
 import io.vertx.ext.sql.SQLRowStream
 import io.vertx.ext.sql.UpdateResult
+import org.slf4j.LoggerFactory.getLogger
 import java.util.*
 
 class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepository {

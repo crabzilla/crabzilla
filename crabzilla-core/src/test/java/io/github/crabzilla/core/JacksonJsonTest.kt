@@ -38,6 +38,8 @@ class JacksonJsonTest {
 
     val cmdAsJson = commandToJson(mapper, command)
 
+    println(cmdAsJson)
+
     assertThat(mapper.readValue(cmdAsJson, CreateCustomer::class.java)).isEqualTo(command)
 
   }

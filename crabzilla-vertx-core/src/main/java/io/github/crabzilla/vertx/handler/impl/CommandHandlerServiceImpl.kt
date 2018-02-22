@@ -10,7 +10,7 @@ import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.http.CaseInsensitiveHeaders
-import io.vertx.core.logging.LoggerFactory
+import org.slf4j.LoggerFactory
 
 class CommandHandlerServiceImpl(private val vertx: Vertx, private val projectionEndpoint: String) :
   CommandHandlerService {

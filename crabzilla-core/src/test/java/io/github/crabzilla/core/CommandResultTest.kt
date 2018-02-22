@@ -18,7 +18,7 @@ class CommandResultTest {
 
   internal lateinit var result: CommandResult
 
-  internal val version = 0L
+  internal val version = 1L
   internal val customerId = CustomerId("c1")
   internal val commandId = UUID.randomUUID()
   internal val event: DomainEvent = CustomerCreated(customerId, "c1")
@@ -65,13 +65,13 @@ class CommandResultTest {
     @Test
     @DisplayName("success must run success block")
     internal fun successMustRunSuccessBlock() {
-      result.inCaseOfSuccess { uow -> assertThat(result).isNotNull() }
+      result.inCaseOfSuccess { assertThat(result).isNotNull() }
     }
 
     @Test
     @DisplayName("success cannot run an error block")
     internal fun successMustNotRunErrorBlock() {
-      result.inCaseOfError { uow -> fail<Unit>("success cannot run an error block") }
+      result.inCaseOfError { fail<Unit>("success cannot run an error block") }
     }
 
   }
@@ -88,13 +88,13 @@ class CommandResultTest {
     @Test
     @DisplayName("error must run error block")
     internal fun errorMustRunErrorBlock() {
-      result.inCaseOfError { uow -> assertThat(result).isNotNull() }
+      result.inCaseOfError { assertThat(result).isNotNull() }
     }
 
     @Test
     @DisplayName("error cannot run an success block")
     internal fun errorMustNotRunSuccessBlock() {
-      result.inCaseOfSuccess { uow -> fail<Unit>("error cannot run an success block") }
+      result.inCaseOfSuccess { fail<Unit>("error cannot run an success block") }
     }
 
   }
