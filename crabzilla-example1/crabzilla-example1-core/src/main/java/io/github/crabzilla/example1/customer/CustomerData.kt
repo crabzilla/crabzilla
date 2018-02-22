@@ -24,8 +24,7 @@ data class CustomerDeactivated(val reason: String, val _when: Instant) : DomainE
 
 // tag::commands[]
 
-data class CreateCustomer(override val commandId: UUID, override val targetId: CustomerId,
-                          val name: String) : Command
+data class CreateCustomer(override val commandId: UUID, override val targetId: CustomerId, val name: String) : Command
 
 data class ActivateCustomer(override val commandId: UUID, override val targetId: CustomerId,
                             val reason: String) : Command

@@ -33,10 +33,11 @@ class CustomerHttpAcceptanceIT {
 
   companion object {
 
-    val LOCATION_HEADER = "Location"
     val ENTITY_NAME = CommandHandlers.CUSTOMER.name
-    val port = 8080
-    val baseURI = "http://127.0.0.1"
+
+    const val LOCATION_HEADER = "Location"
+    const val port = 8080
+    const val baseURI = "http://127.0.0.1"
 
     var mapper: ObjectMapper = Json.prettyMapper
 
@@ -80,7 +81,6 @@ class CustomerHttpAcceptanceIT {
     fun docker(): DockerComposeRule {
       return DockerComposeRule.builder()
         .file("../docker-compose.yml")
-//        .waitingForService("web", toRespondOverHttp(port) { port -> port.inFormat("$baseURI:$port/health") })
         .waitingForService("web", toRespondOverHttp(port) { port -> port.inFormat("http://127.0.0.1:8080/health") })
         .saveLogsTo("../target/dockerComposeRuleTest")
         .build()
@@ -177,10 +177,10 @@ class CustomerHttpAcceptanceIT {
 
     val uow2 = getUowResponse2.body()!!
 
-    assertThat(uow.targetId()).isEqualTo(expectedUow.targetId())
-    assertThat(uow.command).isEqualTo(expectedUow.command)
-    assertThat(uow.events).isEqualTo(expectedUow.events)
-    assertThat(uow.version).isEqualTo(expectedUow.version)
+    assertThat(uow2.targetId()).isEqualTo(expectedUow.targetId())
+    assertThat(uow2.command).isEqualTo(expectedUow.command)
+    assertThat(uow2.events).isEqualTo(expectedUow.events)
+    assertThat(uow2.version).isEqualTo(expectedUow.version)
 
     assertThat(uow).isEqualTo(uow2)
   }
