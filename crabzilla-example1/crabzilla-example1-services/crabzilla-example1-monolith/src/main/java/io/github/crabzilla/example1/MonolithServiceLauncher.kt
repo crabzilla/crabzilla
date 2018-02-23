@@ -4,7 +4,6 @@ import com.zaxxer.hikari.HikariDataSource
 import io.github.crabzilla.vertx.*
 import io.vertx.core.Vertx
 import io.vertx.kotlin.core.DeploymentOptions
-import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import org.slf4j.LoggerFactory
 import java.net.InetAddress
 
@@ -24,7 +23,6 @@ class MonolithServiceLauncher {
     fun main(args: Array<String>) {
 
       val hostName = InetAddress.getLocalHost().hostName
-      val mgr = HazelcastClusterManager()
 
       log.info("** hostname $hostName")
 

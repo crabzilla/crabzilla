@@ -15,13 +15,13 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-example1-ha-handler</artifactId>
+      <artifactId>crabzilla-example1-handler</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-example1-ha-projector</artifactId>
+      <artifactId>crabzilla-example1-projector</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
 
