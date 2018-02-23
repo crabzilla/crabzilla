@@ -11,7 +11,7 @@ import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
 
 @Module
-class ProjectorModule {
+class Example1ProjectorModule {
 
   @Provides @IntoSet
   fun eventsProjectorVerticle(@ProjectionDatabase jdbi: Jdbi, vertx: Vertx): ProjectionHandlerVerticle<out Any> {

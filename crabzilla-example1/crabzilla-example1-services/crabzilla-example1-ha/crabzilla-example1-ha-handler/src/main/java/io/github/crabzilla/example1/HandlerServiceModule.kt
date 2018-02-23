@@ -7,6 +7,6 @@ import io.vertx.core.json.JsonObject
 
 
 // tag::module[]
-@Module(includes = [(HandlerModule::class)])
+@Module(includes = [(Example1HandlerModule::class)])
 class HandlerServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config)
 // end::module[]

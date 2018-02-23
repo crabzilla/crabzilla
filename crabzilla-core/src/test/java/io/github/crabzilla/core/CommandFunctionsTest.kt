@@ -8,7 +8,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.util.*
 
-@DisplayName("An CommandResult")
+@DisplayName("CommandFunctions")
 class CommandFunctionsTest {
 
   private val customerId = CustomerId("c1")

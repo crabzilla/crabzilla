@@ -16,7 +16,7 @@ import javax.inject.Singleton
  * This command handler module exposes UnitOfWorkRepository and services implementations.
  */
 @Module(includes = [(CustomerModule::class)])
-class HandlerModule {
+class Example1HandlerModule {
 
   @Provides
   @Singleton

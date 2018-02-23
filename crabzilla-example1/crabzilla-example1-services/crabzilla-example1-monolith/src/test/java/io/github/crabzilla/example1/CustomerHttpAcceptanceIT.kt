@@ -80,7 +80,7 @@ class CustomerHttpAcceptanceIT {
     @ClassRule
     fun docker(): DockerComposeRule {
       return DockerComposeRule.builder()
-        .file("../docker-compose.yml")
+        .file("./docker-compose.yml")
         .waitingForService("web", toRespondOverHttp(port) { port -> port.inFormat("http://127.0.0.1:8080/health") })
         .saveLogsTo("../target/dockerComposeRuleTest")
         .build()

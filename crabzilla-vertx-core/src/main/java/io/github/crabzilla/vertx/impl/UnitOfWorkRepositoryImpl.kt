@@ -63,7 +63,7 @@ class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepos
         if (rows.size == 0) {
           uowFuture.complete(null)
         } else {
-          for (row in rows) {
+          for (row in rows) { // only 1 will be here
             val command = Json.decodeValue(row.getString(CMD_DATA), Command::class.java)
             val events = listOfEventsFromJson(Json.mapper, row.getString(UOW_EVENTS))
             val uow = UnitOfWork(UUID.fromString(row.getString(UOW_ID)), command,
@@ -71,11 +71,14 @@ class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepos
             uowFuture.complete(uow)
           }
         }
-        sqlConn.close { done ->
-          if (done.failed()) {
-            log.error("when closing sql connection", done.cause())
+        sqlConn.commit {
+          sqlConn.close { done ->
+            if (done.failed()) {
+              log.error("when closing sql connection", done.cause())
+            }
           }
         }
+
       }
     }
   }
@@ -137,12 +140,15 @@ class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepos
 
             selectAfterVersionFuture.complete(SnapshotData(finalVersion, flatMappedToEvents))
 
-            sqlConn.close { done ->
+            sqlConn.commit {
 
-              if (done.failed()) {
-                log.error("when closing sql connection", done.cause())
+              sqlConn.close { done ->
+
+                if (done.failed()) {
+                  log.error("when closing sql connection", done.cause())
+                }
+
               }
-
             }
 
           }
@@ -256,12 +262,16 @@ class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepos
 
               appendFuture.complete(updateResult.keys.getLong(0))
 
-              // and close the connection
-              sqlConn.close { done ->
-                if (done.failed()) {
-                  log.error("when closing sql connection", done.cause())
+              sqlConn.commit {
+
+                // and close the connection
+                sqlConn.close { done ->
+                  if (done.failed()) {
+                    log.error("when closing sql connection", done.cause())
+                  }
                 }
               }
+
             }
 
           }
@@ -327,10 +337,14 @@ class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWorkRepos
             log.info("found {} instances of projectionData after uowSequence {}",
               list.size, uowSequence)
 
-            sqlConn.close { done ->
+            sqlConn.commit {
 
-              if (done.failed()) {
-                log.error("when closing sql connection", done.cause())
+              sqlConn.close { done ->
+
+                if (done.failed()) {
+                  log.error("when closing sql connection", done.cause())
+                }
+
               }
 
             }
