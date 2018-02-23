@@ -97,7 +97,6 @@
   <modules>
 
     <module>crabzilla-core</module>
-    <module>crabzilla-example1</module>
     <module>crabzilla-vertx-core</module>
     <module>crabzilla-vertx-web</module>
   </modules>
