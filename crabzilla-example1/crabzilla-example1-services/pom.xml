@@ -12,7 +12,45 @@
     <packaging>pom</packaging>
 
     <modules>
+      <module>crabzilla-example1-monolith</module>
       <module>crabzilla-example1-ha</module>
     </modules>
+
+  <dependencies>
+
+    <!-- test -->
+
+    <dependency>
+      <groupId>com.squareup.retrofit2</groupId>
+      <artifactId>retrofit</artifactId>
+      <version>${retrofit2.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.retrofit2</groupId>
+      <artifactId>converter-jackson</artifactId>
+      <version>${retrofit2.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.retrofit2</groupId>
+      <artifactId>converter-scalars</artifactId>
+      <version>${retrofit2.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>logging-interceptor</artifactId>
+      <version>${okhttp.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.palantir.docker.compose</groupId>
+      <artifactId>docker-compose-rule-junit4</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
 
 </project>
