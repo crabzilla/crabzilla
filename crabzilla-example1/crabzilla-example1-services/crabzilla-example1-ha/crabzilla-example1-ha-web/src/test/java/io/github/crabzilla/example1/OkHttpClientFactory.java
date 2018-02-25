@@ -9,7 +9,6 @@ import java.security.cert.CertificateException;
 public class OkHttpClientFactory {
 
   /**
-   * Deve-se usar esta instância apenas no ambiente sysint
    * @return
    * @throws Exception
    */

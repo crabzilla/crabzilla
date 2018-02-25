@@ -6,12 +6,11 @@ import dagger.multibindings.IntoSet
 import io.github.crabzilla.vertx.*
 import io.github.crabzilla.vertx.handler.CommandHandlerService
 import io.github.crabzilla.vertx.handler.impl.CommandHandlerServiceImpl
-import io.github.crabzilla.vertx.modules.ProjectionDbModule
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.healthchecks.HealthCheckHandler
 
-@Module(includes = [Example1HandlerModule::class, Example1ProjectorModule::class, ProjectionDbModule::class, CrabzillaWebModule::class])
+@Module(includes = [CrabzillaWebModule::class, Example1HandlerModule::class, Example1ProjectorModule::class])
 class MonolithServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
 
   @Provides
