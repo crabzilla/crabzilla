@@ -99,7 +99,7 @@ I know any Java library should not depended to other libraries. But these are he
 1. [Jackson](https://github.com/FasterXML/jackson) Used to ser/des polymorphic objects (commands, events, etc)  
 2. [Dagger2](https://google.github.io/dagger/) It's very light, statically compiled and just works.
 3. [Jdbi](http://jdbi.org/) Used to implement DAOs and repositories consumed by your domain code. 
-4. [ExpiringMap](https://github.com/jhalterman/expiringmap) Used as a mechanism to plug lazy entry loading for sharpshooting. This is useful for entities with lot of events.
+4. [ExpiringMap](https://github.com/jhalterman/expiringmap) Used as a mechanism to plug lazy entry loading for Snapshots. This is useful for entities with lot of events.
 
 Except for Jackson, these dependencies are used only in crabzilla-vertx and not in your domain code.
 
