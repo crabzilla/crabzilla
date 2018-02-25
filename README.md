@@ -33,6 +33,8 @@ crabzilla-example1-ha has these three services:
 
 ![alt text](https://github.com/crabzilla/crabzilla/blob/master/doc/asciidoc/images/crabzilla-bc-architecture.png "crabzilla-example1-ha")
 
+while crabzilla-example1-monolith has these 3 services embedded within just one service.
+
 ### Requirements
 
 * Java 8
@@ -79,4 +81,25 @@ curl -X POST \
 }
 '
 ```
+
+### Random notes
+
+1. Crabzilla attempts to provide a chassis for wiring and running your domain by using verticles and other components.
+2. Domain Model code is agnostic about any persistence, fp or reactive frameworks. It's mostly expressed as functions.
+3. If your functions are pure, all mutability is segregated to UnitOfWorkRepository and EventsProjector components.
+4. As result, you will have a domain service leveraging some Vert.x power: reactive http, jdbc, distributed HA, etc.
+5. And at same time the domain can be very focused and agnostic about the infrastructure and can use blocking api's.  
+6. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned table.
+7. So far simplicity in order to develop domain code always wins on any trade off.
+
+### Dependencies
+
+I know any Java library should not depended to other libraries. But these are helping a lot in Crabzilla: 
+
+1. [Jackson](https://github.com/FasterXML/jackson) Used to ser/des polymorphic objects (commands, events, etc)  
+2. [Dagger2](https://google.github.io/dagger/) It's very light, statically compiled and just works.
+3. [Jdbi](http://jdbi.org/) Used to implement DAOs and repositories consumed by your domain code. 
+4. [ExpiringMap](https://github.com/jhalterman/expiringmap) Used as a mechanism to plug lazy entry loading for Snapshots. This is useful for entities with lot of events.
+
+Except for Jackson, these dependencies are used only in crabzilla-vertx and not in your domain code.
 
