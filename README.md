@@ -89,7 +89,7 @@ curl -X POST \
 3. If your functions are pure, all mutability is segregated to UnitOfWorkRepository and EventsProjector components.
 4. As result, you will have a domain service leveraging some Vert.x power: reactive http, jdbc, distributed HA, etc.
 5. And at same time the domain can be very focused and agnostic about the infrastructure and can use blocking api's.  
-6. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned table.
+6. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
 7. So far simplicity in order to develop domain code always wins on any trade off.
 
 ### Dependencies
