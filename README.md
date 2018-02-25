@@ -87,7 +87,7 @@ curl -X POST \
 1. Crabzilla attempts to provide a chassis for wiring and running your domain by using verticles and other components.
 2. Domain Model code is agnostic about any persistence, fp or reactive frameworks. It's mostly expressed as functions.
 3. If your functions are pure, all mutability is segregated to UnitOfWorkRepository and EventsProjector components.
-4. As result, you will have a domain service leveraging some Vert.x power: reactive http, jdbc, distributed HA, etc.
+4. As result, you will have a domain service leveraging some Vert.x power: reactive http, jdbc, rpc, distributed HA, etc.
 5. Another result is the domain can be very focused and agnostic about the infrastructure and can use blocking api's.  
 6. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
 7. So far simplicity in order to develop domain code always wins on any trade off.
