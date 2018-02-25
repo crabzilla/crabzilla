@@ -94,9 +94,9 @@ curl -X POST \
 
 ### Dependencies
 
-I know any Java library should not depended to other libraries. But these are helping a lot in Crabzilla: 
+I know any Java library should be very conservative about dependecy to other libraries. But these are helping a lot in Crabzilla: 
 
-1. [Jackson](https://github.com/FasterXML/jackson) Used to ser/des polymorphic objects (commands, events, etc)  
+1. [jackson-module-plugin](https://github.com/FasterXML/jackson-module-kotlin) Used to ser/des polymorphic objects (commands, events, etc) 
 2. [Dagger2](https://google.github.io/dagger/) It's very light, statically compiled and just works.
 3. [Jdbi](http://jdbi.org/) Used to implement DAOs and repositories consumed by your domain code. 
 4. [ExpiringMap](https://github.com/jhalterman/expiringmap) Used as a mechanism to plug lazy entry loading for Snapshots. This is useful for entities with lot of events.
