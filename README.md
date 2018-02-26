@@ -13,7 +13,7 @@ on [Vert.x](http://vertx.io/) and a relational database of your choice.
 
 Its still in very early development stage. APIs can change. So far Crabzilla has only an Aggregate example. Inspired by 
 [Eventstorming](http://eventstorming.com), the goal is to develop examples and implementations for an ExternalSystem, 
-a Listener and a ProcessManager / Saga.
+a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch is very diferent from that. A 1.0.0-SNAPSHOT is under way.
 
 ## Modules
 
