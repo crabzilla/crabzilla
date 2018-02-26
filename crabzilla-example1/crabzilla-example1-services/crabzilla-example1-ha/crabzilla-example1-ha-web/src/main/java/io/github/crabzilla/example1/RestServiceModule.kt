@@ -6,17 +6,16 @@ import dagger.multibindings.IntoSet
 import io.github.crabzilla.vertx.*
 import io.github.crabzilla.vertx.handler.CommandHandlerService
 import io.github.crabzilla.vertx.handler.impl.CommandHandlerServiceImpl
-import io.github.crabzilla.vertx.impl.UnitOfWorkRepositoryImpl
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.healthchecks.HealthCheckHandler
-import io.vertx.ext.jdbc.JDBCClient
 import javax.inject.Singleton
 
-@Module(includes = [(CrabzillaWebModule::class)])
+@Module(includes = [CrabzillaWebModule::class])
 class RestServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
 
   @Provides
+  @Singleton
   fun handlerService() : CommandHandlerService {
     return CommandHandlerServiceImpl(vertx, subDomainName())
   }
