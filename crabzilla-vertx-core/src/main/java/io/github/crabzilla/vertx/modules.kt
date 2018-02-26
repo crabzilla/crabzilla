@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Module
 import dagger.Provides
+import io.github.crabzilla.vertx.impl.UnitOfWorkRepositoryImpl
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
@@ -123,5 +124,12 @@ class WriteDbModule {
     hikariConfig.transactionIsolation = "TRANSACTION_SERIALIZABLE"
     return HikariDataSource(hikariConfig)
   }
+
+  @Provides
+  @Singleton
+  fun uowRepository(@WriteDatabase jdbcClient: JDBCClient): UnitOfWorkRepository {
+    return UnitOfWorkRepositoryImpl(jdbcClient)
+  }
+
 
 }

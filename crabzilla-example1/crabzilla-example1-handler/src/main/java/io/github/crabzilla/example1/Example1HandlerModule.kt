@@ -20,12 +20,6 @@ class Example1HandlerModule {
 
   @Provides
   @Singleton
-  fun uowRepo(@WriteDatabase jdbcClient: JDBCClient): UnitOfWorkRepository {
-    return UnitOfWorkRepositoryImpl(jdbcClient)
-  }
-
-  @Provides
-  @Singleton
   fun service(): SampleInternalService {
     return SampleInternalServiceImpl()
   }

@@ -28,10 +28,4 @@ class RestServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vert
     return CommandRestVerticle(subDomainName(), config, healthCheckHandler, uowRepository, handlerService)
   }
 
-  @Provides
-  @Singleton
-  fun uowRepository(@WriteDatabase jdbcClient: JDBCClient): UnitOfWorkRepository {
-    return UnitOfWorkRepositoryImpl(jdbcClient)
-  }
-
 }
