@@ -7,7 +7,7 @@
 ## Goal for version 1.0.0
 
 To help you write your domain model with very little framework overhead and smoothly put it to work using a stack based
-on Vert.x and a relational database of your choice.
+on [Vert.x](http://vertx.io/) and a relational database of your choice.
 
 ## Status
 
@@ -87,19 +87,21 @@ curl -X POST \
 1. Crabzilla attempts to provide a chassis for wiring and running your domain by using verticles and other components.
 2. Domain Model code is agnostic about any persistence, fp or reactive frameworks. It's mostly expressed as functions.
 3. If your functions are pure, all mutability is segregated to UnitOfWorkRepository and EventsProjector components.
-4. As result, you will have a domain service leveraging some Vert.x power: reactive http, jdbc, distributed HA, etc.
-5. And at same time the domain can be very focused and agnostic about the infrastructure and can use blocking api's.  
+4. As result, you will have a domain service leveraging some Vert.x power: reactive http, jdbc, rpc, distributed HA, etc.
+5. Another result is the domain can be very focused and agnostic about the infrastructure and can use blocking api's.  
 6. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
 7. So far simplicity in order to develop domain code always wins on any trade off.
+8. Another concern is to develop modularized solutions within a monolith and then, eventually and only if needed, to break it into smaller services. See the 2 examples: crabzilla-example-ha and crabzilla-example1-monolith.
+9. So far it's using "classical" Vertx apis. I do plan to eventually rewrite some code using RxJava or Kotlin corroutines.
 
 ### Dependencies
 
-I know any Java library should not depended to other libraries. But these are helping a lot in Crabzilla: 
+I know any Java library should be very conservative about dependecy to other libraries. But these are helping a lot in Crabzilla: 
 
-1. [Jackson](https://github.com/FasterXML/jackson) Used to ser/des polymorphic objects (commands, events, etc)  
+1. [jackson-module-plugin](https://github.com/FasterXML/jackson-module-kotlin) Used to ser/des polymorphic objects (commands, events, etc) 
 2. [Dagger2](https://google.github.io/dagger/) It's very light, statically compiled and just works.
 3. [Jdbi](http://jdbi.org/) Used to implement DAOs and repositories consumed by your domain code. 
-4. [ExpiringMap](https://github.com/jhalterman/expiringmap) Used as a mechanism to plug lazy entry loading for Snapshots. This is useful for entities with lot of events.
+4. [ExpiringMap](https://github.com/jhalterman/expiringmap) Used as a mechanism to plug lazy entry loading of Snapshots. This is useful for entities with lot of events.
 
 Except for Jackson, these dependencies are used only in crabzilla-vertx and not in your domain code.
 
