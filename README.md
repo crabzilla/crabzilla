@@ -91,7 +91,7 @@ curl -X POST \
 5. Another result is the domain can be very focused and agnostic about the infrastructure and can use blocking api's.  
 6. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
 7. So far simplicity in order to develop domain code always wins on any trade off.
-8. Another concern is to develop modularized solutions within a monolith and then, eventually and only if needed, to break it into smaller services. See the 2 examples: crabzilla-example-ha and crabzilla-example1-monolith.
+8. Another concern is to develop modularized solutions within a monolith and then, eventually and only if needed, to seamless break it into smaller services. See the 2 examples: crabzilla-example1-monolith and crabzilla-example-ha.
 9. So far it's using "classical" Vertx apis. I do plan to eventually rewrite some code using RxJava or Kotlin corroutines.
 
 ### Dependencies
