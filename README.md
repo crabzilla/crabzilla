@@ -91,6 +91,8 @@ curl -X POST \
 5. Another result is the domain can be very focused and agnostic about the infrastructure and can use blocking api's.  
 6. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
 7. So far simplicity in order to develop domain code always wins on any trade off.
+8. Another concern is to develop modularized solutions within a monolith and then, eventually and only if needed, to break it into smaller services. See the 2 examples: crabzilla-example-ha and crabzilla-example1-monolith.
+9. So far it's using "classical" Vertx apis. I do plan to eventually rewrite some code using RxJava or Kotlin corroutines.
 
 ### Dependencies
 
@@ -99,7 +101,7 @@ I know any Java library should be very conservative about dependecy to other lib
 1. [jackson-module-plugin](https://github.com/FasterXML/jackson-module-kotlin) Used to ser/des polymorphic objects (commands, events, etc) 
 2. [Dagger2](https://google.github.io/dagger/) It's very light, statically compiled and just works.
 3. [Jdbi](http://jdbi.org/) Used to implement DAOs and repositories consumed by your domain code. 
-4. [ExpiringMap](https://github.com/jhalterman/expiringmap) Used as a mechanism to plug lazy entry loading for Snapshots. This is useful for entities with lot of events.
+4. [ExpiringMap](https://github.com/jhalterman/expiringmap) Used as a mechanism to plug lazy entry loading of Snapshots. This is useful for entities with lot of events.
 
 Except for Jackson, these dependencies are used only in crabzilla-vertx and not in your domain code.
 
