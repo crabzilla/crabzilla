@@ -4,6 +4,7 @@ import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.vertx.VerticleRole.REST
 import io.github.crabzilla.vertx.handler.CommandExecution
+import io.github.crabzilla.vertx.handler.CommandExecution.RESULT
 import io.github.crabzilla.vertx.handler.CommandHandlerService
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.core.AsyncResult
@@ -22,11 +23,11 @@ import java.util.*
 
 // TODO add circuit breakers
 // TODO add endpoints for list/start/stop crabzilla verticles
-class CommandRestVerticle(override val name: String,
-                          private val config: JsonObject,
-                          private val healthCheckHandler : HealthCheckHandler,
-                          private val uowRepository: UnitOfWorkRepository,
-                          private val handlerService: CommandHandlerService)
+class CrabzillaRestVerticle(override val name: String,
+                            private val config: JsonObject,
+                            private val healthCheckHandler : HealthCheckHandler,
+                            private val uowRepository: UnitOfWorkRepository,
+                            private val handlerService: CommandHandlerService)
   : CrabzillaVerticle(name, REST) {
 
 
@@ -69,7 +70,8 @@ class CommandRestVerticle(override val name: String,
     log.info("command=:\n" + commandStr)
 
     if (command == null) {
-      httpResp.setStatusCode(400).end()
+      httpResp.setStatusCode(400).headers().add("Content-Type", "application/json")
+      httpResp.end(Json.encode(listOf("invalid command")))
       return
     }
 
@@ -84,11 +86,9 @@ class CommandRestVerticle(override val name: String,
       }
 
       if (uowResult.result() != null) {
-        val location = (routingContext.request().absoluteURI() + "/"
-          + uowResult.result().command.commandId.toString())
-        val resultAsJson = Json.encode(uowResult.result())
+        val location = (routingContext.request().absoluteURI() + "/" + uowResult.result().command.commandId.toString())
         httpResp.setStatusCode(201).headers().add("Location", location).add("Content-Type", "application/json")
-        httpResp.end(resultAsJson)
+        httpResp.end(Json.encode(listOf<String>()))
         return@setHandler
       }
 
@@ -103,33 +103,43 @@ class CommandRestVerticle(override val name: String,
 
     return Handler { response ->
 
-        if (!response.succeeded()) {
-          log.error("eventbus.handleCommand", response.cause())
-          httpResp.setStatusCode(500).end(response.cause().message)
-          return@Handler
+      httpResp.headers().add("Content-Type", "application/json")
+
+      if (!response.succeeded()) {
+        log.error("eventbus.handleCommand", response.cause())
+        httpResp.setStatusCode(500).end(Json.encode(listOf("server error")))
+        return@Handler
+      }
+
+      val result = response.result() as CommandExecution
+      log.info("*** result = {}", result)
+
+      when (result.result) {
+        RESULT.SUCCESS -> {
+          val location = routingContext.request().absoluteURI() + "/" + result.unitOfWork!!
+            .command.commandId.toString()
+          httpResp.setStatusCode(201).headers().add("Location", location)
+          httpResp.end(Json.encode(listOf<String>()))
+        }
+        RESULT.VALIDATION_ERROR -> {
+          httpResp.statusCode = 400
+          httpResp.end(Json.encode(result.constraints))
+        }
+        RESULT.HANDLING_ERROR -> {
+          httpResp.statusCode = 400
+          httpResp.end(Json.encode(result.constraints))
+        }
+        RESULT.UNKNOWN_COMMAND -> {
+          httpResp.statusCode = 400
+          httpResp.end(Json.encode(listOf("unknown command")))
+        }
+        else -> {
+          httpResp.statusCode = 500
+          httpResp.end(Json.encode(listOf("server error")))
         }
 
-        val result = response.result() as CommandExecution
-        log.info("result = {}", result)
+      }
 
-        when (result.result) {
-          CommandExecution.RESULT.SUCCESS -> {
-            val location = routingContext.request().absoluteURI() + "/" + result.unitOfWork!!
-              .command.commandId.toString()
-            httpResp.setStatusCode(201).headers().add("Content-Type", "application/json")
-              .add("Location", location)
-          }
-          CommandExecution.RESULT.VALIDATION_ERROR -> {
-            httpResp.setStatusCode(400).headers().add("Content-Type", "application/json")
-            httpResp.write(Json.encode(result.constraints))
-          }
-          CommandExecution.RESULT.UNKNOWN_COMMAND -> {
-            httpResp.statusCode = 400
-          }
-          else -> httpResp.statusCode = 500
-        }
-
-        httpResp.end()
     }
 
   }
@@ -150,15 +160,18 @@ class CommandRestVerticle(override val name: String,
 
     uowFuture.setHandler { uowResult ->
       if (uowResult.failed()) {
-        httpResp.setStatusCode(500).end()
+        httpResp.statusCode = 500
+        httpResp.end()
+        return@setHandler
       }
 
       if (uowResult.result() == null) {
-        httpResp.setStatusCode(400).end()
+        httpResp.statusCode = 404
+        httpResp.end()
+        return@setHandler
       } else {
-        val resultAsJson = Json.encode(uowResult.result())
         httpResp.setStatusCode(200).headers().add("Content-Type", "application/json")
-        httpResp.end(resultAsJson)
+        httpResp.end(Json.encode(uowResult.result()))
       }
 
     }

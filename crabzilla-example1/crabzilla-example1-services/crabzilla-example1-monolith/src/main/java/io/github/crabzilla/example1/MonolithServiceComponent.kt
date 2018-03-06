@@ -22,11 +22,11 @@ interface MonolithServiceComponent {
   @ProjectionDatabase
   fun datasource(): HikariDataSource
 
-  fun restVerticles(): Set<CommandRestVerticle>
+  fun restVerticles(): CrabzillaRestVerticle
+  fun projectionRepo(): UnitOfWorkRepository
+
   fun handlerVerticles(): Set<CommandHandlerVerticle<out Entity>>
   fun projectorVerticles(): Set<ProjectionHandlerVerticle<out Any>>
-
-  fun projectionRepo(): UnitOfWorkRepository
 
 }
 

@@ -8,7 +8,7 @@ interface Entity : Serializable {
 }
 
 class CommandResult private constructor(val unitOfWork: UnitOfWork?,
-                                        val exception: Throwable?) {
+                                        val exception: Exception?) {
 
   fun inCaseOfSuccess(uowFn: (UnitOfWork?) -> Unit) {
     if (unitOfWork != null) {
@@ -16,7 +16,7 @@ class CommandResult private constructor(val unitOfWork: UnitOfWork?,
     }
   }
 
-  fun inCaseOfError(uowFn: (Throwable) -> Unit) {
+  fun inCaseOfError(uowFn: (Exception) -> Unit) {
     if (exception != null) {
       uowFn.invoke(exception)
     }
@@ -28,7 +28,7 @@ class CommandResult private constructor(val unitOfWork: UnitOfWork?,
       return CommandResult(uow, null)
     }
 
-    fun error(e: Throwable): CommandResult {
+    fun error(e: Exception): CommandResult {
       return CommandResult(null, e)
     }
   }
@@ -40,7 +40,7 @@ class CommandResult private constructor(val unitOfWork: UnitOfWork?,
 fun resultOf(f: () -> UnitOfWork?): CommandResult {
   return try {
     CommandResult.success(f.invoke()) }
-  catch (e: RuntimeException) {
+  catch (e: Exception) {
     CommandResult.error(e) }
 }
 

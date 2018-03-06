@@ -34,27 +34,9 @@
     <!-- test -->
 
     <dependency>
-      <groupId>com.squareup.retrofit2</groupId>
-      <artifactId>retrofit</artifactId>
-      <version>${retrofit2.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.retrofit2</groupId>
-      <artifactId>converter-jackson</artifactId>
-      <version>${retrofit2.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.retrofit2</groupId>
-      <artifactId>converter-scalars</artifactId>
-      <version>${retrofit2.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>logging-interceptor</artifactId>
-      <version>${okhttp.version}</version>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-core</artifactId>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
 

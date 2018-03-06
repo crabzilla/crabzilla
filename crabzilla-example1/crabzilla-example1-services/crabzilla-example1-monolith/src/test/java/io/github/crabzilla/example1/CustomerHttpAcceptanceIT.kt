@@ -1,30 +1,16 @@
 package io.github.crabzilla.example1
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import com.palantir.docker.compose.DockerComposeRule
 import com.palantir.docker.compose.connection.waiting.HealthChecks.toRespondOverHttp
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.core.*
 import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
-import io.vertx.core.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Test
-import retrofit2.Call
-import retrofit2.Retrofit
-import retrofit2.converter.jackson.JacksonConverterFactory
-import retrofit2.converter.scalars.ScalarsConverterFactory
-import retrofit2.http.*
 import java.io.IOException
 import java.util.*
 
@@ -39,42 +25,9 @@ class CustomerHttpAcceptanceIT {
     const val port = 8080
     const val baseURI = "http://127.0.0.1"
 
-    var mapper: ObjectMapper = Json.prettyMapper
+    val mapper = ObjectMapperFactory.mapper()
 
-    val client = create()
-
-    interface Example1Api {
-
-      @Headers("Content-Type: application/json")
-      @POST("/{resourceId}/commands")
-      fun postCommand(@Path("resourceId") resourceId: String, @Body command: Command): Call<Void>
-
-      @Headers("Content-Type: application/json")
-      @GET("/{resourceId}/commands/{commandId}")
-      fun getUnitOfWork(@Path("resourceId") resourceId: String, @Path("commandId") commandId: String): Call<UnitOfWork>
-
-    }
-
-    @JvmStatic
-    @Throws(Exception::class)
-    internal fun create(): Example1Api { // just for test
-
-      mapper.registerModule(ParameterNamesModule())
-        .registerModule(Jdk8Module())
-        .registerModule(JavaTimeModule())
-        .registerModule(KotlinModule())
-        .enable(SerializationFeature.INDENT_OUTPUT)
-
-      val retrofit = Retrofit.Builder()
-        .baseUrl("$baseURI:$port")
-        .addConverterFactory(ScalarsConverterFactory.create())
-        .addConverterFactory(JacksonConverterFactory.create(mapper))
-        .client(OkHttpClientFactory.getUnsafeOkHttpClient())
-        .build()
-
-      return retrofit.create(Example1Api::class.java)
-
-    }
+    val client = RetrofitClientFactory.create("$baseURI:$port", CrabzillaRestApi::class.java, mapper)
 
     @JvmStatic
     @ClassRule
@@ -82,7 +35,7 @@ class CustomerHttpAcceptanceIT {
       return DockerComposeRule.builder()
         .file("./docker-compose.yml")
         .waitingForService("web", toRespondOverHttp(port) { port -> port.inFormat("http://127.0.0.1:8080/health") })
-        .saveLogsTo("../target/dockerComposeRuleTest")
+        .saveLogsTo("./target/dockerComposeRuleTest")
         .build()
     }
 
@@ -197,7 +150,9 @@ class CustomerHttpAcceptanceIT {
     val postCall = client.postCommand(restEndpoint(ENTITY_NAME), activateCustomer)
     val postCmdResponse = postCall.execute()
 
-    assertThat(postCmdResponse.code()).isEqualTo(500)
+    assertThat(400).isEqualTo(postCmdResponse.code())
+    // TODO
+    // assertThat(postCmdResponse.body()).isEqualTo(listOf("customer must exists"))
 
   }
 

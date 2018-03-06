@@ -1,11 +1,6 @@
 package io.github.crabzilla.core
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated
@@ -19,15 +14,13 @@ import java.util.Arrays.asList
 
 class JacksonJsonTest {
 
-  internal var mapper = ObjectMapper()
+  companion object {
+    private val mapper = ObjectMapperFactory.mapper()
+  }
 
   @Before
   fun setUp() {
-    mapper.registerModule(ParameterNamesModule())
-            .registerModule(Jdk8Module())
-            .registerModule(JavaTimeModule())
-            .registerModule(KotlinModule())
-            .enable(SerializationFeature.INDENT_OUTPUT)
+    mapper.enable(SerializationFeature.INDENT_OUTPUT)
   }
 
   @Test

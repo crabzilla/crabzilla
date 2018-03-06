@@ -1,4 +1,4 @@
-package io.github.crabzilla.example1;
+package io.github.crabzilla.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
@@ -42,7 +42,7 @@ public class RetrofitClientFactory {
       return retrofitClient;
 
     } catch (Exception e) {
-      log.error("Nao foi possível criar retrofit client para " + retrofitInterface.getName(), e);
+      log.error("Retrofit client for " + retrofitInterface.getName(), e);
     }
 
     return null;

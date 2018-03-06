@@ -8,9 +8,6 @@ import javax.inject.Singleton
 
 
 // tag::module[]
-/**
- * This command handler module exposes UnitOfWorkRepository and services implementations.
- */
 @Module(includes = [CustomerModule::class])
 class Example1HandlerModule {
 

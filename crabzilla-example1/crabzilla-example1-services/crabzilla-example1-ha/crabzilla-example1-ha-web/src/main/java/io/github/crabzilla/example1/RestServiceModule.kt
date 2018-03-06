@@ -2,7 +2,6 @@ package io.github.crabzilla.example1
 
 import dagger.Module
 import dagger.Provides
-import dagger.multibindings.IntoSet
 import io.github.crabzilla.vertx.*
 import io.github.crabzilla.vertx.handler.CommandHandlerService
 import io.github.crabzilla.vertx.handler.impl.CommandHandlerServiceImpl
@@ -20,11 +19,12 @@ class RestServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vert
     return CommandHandlerServiceImpl(vertx, subDomainName())
   }
 
-  @Provides @IntoSet
+  @Provides
+  @Singleton
   fun restVerticle(uowRepository: UnitOfWorkRepository, config: JsonObject,
                    handlerService: CommandHandlerService,
-                   @WebHealthCheck healthCheckHandler: HealthCheckHandler): CommandRestVerticle {
-    return CommandRestVerticle(subDomainName(), config, healthCheckHandler, uowRepository, handlerService)
+                   @WebHealthCheck healthCheckHandler: HealthCheckHandler): CrabzillaRestVerticle {
+    return CrabzillaRestVerticle(subDomainName(), config, healthCheckHandler, uowRepository, handlerService)
   }
 
 }

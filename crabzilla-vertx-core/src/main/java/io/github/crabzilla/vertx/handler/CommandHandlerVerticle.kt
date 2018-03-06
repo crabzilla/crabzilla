@@ -123,7 +123,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
               cachedSnapshot
 
             if (totalOfNonCachedEvents > 0) {
-              cache.put(targetId, resultingSnapshot)
+              cache[targetId] = resultingSnapshot
             }
 
             val result = cmdHandler.invoke(command, resultingSnapshot)
@@ -145,7 +145,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
                   log.error("appendUnitOfWork for command " + command.commandId, error.message)
                   if (error is DbConcurrencyException) {
                     future2.complete(CommandExecution(result = CONCURRENCY_ERROR, commandId = command.commandId,
-                      constraints = listOf(error.message)))
+                      constraints = listOf(error.message ?: "optimistic locking error")))
                   } else {
                     future2.fail(appendAsyncResult.cause())
                   }
@@ -165,7 +165,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
               log.error("commandExecution", error.message)
 
                 future2.complete(CommandExecution(result = HANDLING_ERROR, commandId = command.commandId,
-                  constraints = listOf(error.message)))
+                  constraints = listOf(error.message ?: "entity handling error")))
             })
 
           }) { res ->

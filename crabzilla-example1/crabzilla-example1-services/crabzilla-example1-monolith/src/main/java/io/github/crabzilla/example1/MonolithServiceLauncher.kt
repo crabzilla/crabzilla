@@ -52,7 +52,7 @@ class MonolithServiceLauncher {
           val workerDeploymentOptions = DeploymentOptions().setHa(true).setWorker(true)
           deployVerticlesByName(vertx, setOf(VerticleRole.PROJECTOR.verticle(subDomainName())), workerDeploymentOptions)
 
-          deployVerticles(vertx, app.restVerticles())
+          deployVerticles(vertx, setOf(app.restVerticles()))
 
           future.complete()
 

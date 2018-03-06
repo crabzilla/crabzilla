@@ -9,7 +9,7 @@ import java.util.*
 
 data class CommandExecution(val result: RESULT,
                             val commandId: UUID?,
-                            val constraints: List<String?> = listOf(),
+                            val constraints: List<String> = listOf(),
                             val uowSequence: Long? = 0L,
                             val unitOfWork: UnitOfWork? = null) : Serializable {
 

@@ -50,7 +50,7 @@ class RestServiceLauncher {
               writeDs = app.writeDatasource()
               readDs = app.readDatasource()
 
-              deployVerticles(vertx, app.restVerticles())
+              deployVerticles(vertx, setOf(app.restVerticle()))
 
               future.complete()
 
