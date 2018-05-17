@@ -46,7 +46,6 @@ class CustomerHttpAcceptanceIT {
 
   @Test
   @Throws(IOException::class)
-  @Ignore
   fun createCustomer() {
 
     val customerId = CustomerId(UUID.randomUUID().toString())
@@ -83,7 +82,6 @@ class CustomerHttpAcceptanceIT {
 
   @Test
   @Throws(IOException::class)
-  @Ignore
   fun createCustomerIdempotency() {
 
     val customerId = CustomerId(UUID.randomUUID().toString())
@@ -143,7 +141,6 @@ class CustomerHttpAcceptanceIT {
 
   @Test
   @Throws(IOException::class)
-  @Ignore
   fun unknownCustomer() {
 
     val customerId = CustomerId(UUID.randomUUID().toString())
