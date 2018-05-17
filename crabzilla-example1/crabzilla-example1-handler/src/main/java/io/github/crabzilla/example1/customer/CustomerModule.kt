@@ -33,8 +33,9 @@ class CustomerModule {
     val trackerFactory : (Snapshot<Customer>) -> StateTransitionsTracker<Customer> =
             { instance -> StateTransitionsTracker(instance, stateTransitionFn) }
     val cmdHandler = CommandHandlerFn(trackerFactory)
-    val snapshotPromoter = SnapshotPromoter<Customer>
-    { instance -> StateTransitionsTracker(instance, stateTransitionFn) }
+    val snapshotPromoter =
+      SnapshotPromoter<Customer> { instance -> StateTransitionsTracker(instance, stateTransitionFn) }
+
     return CommandHandlerVerticle(CommandHandlers.CUSTOMER.name, customer, cmdHandler, validator,
       snapshotPromoter, eventJournal, cache, circuitBreaker)
   }

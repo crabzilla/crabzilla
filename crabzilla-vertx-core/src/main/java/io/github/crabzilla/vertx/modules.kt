@@ -10,13 +10,9 @@ import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.core.logging.SLF4JLogDelegateFactory
 import io.vertx.ext.jdbc.JDBCClient
-import org.jdbi.v3.core.Jdbi
-import org.jdbi.v3.core.kotlin.KotlinPlugin
-import org.jdbi.v3.sqlobject.SqlObjectPlugin
-import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import javax.inject.Singleton
 
-@Module(includes = arrayOf(WriteDbModule::class, ReadDbModule::class))
+@Module(includes = [WriteDbModule::class, ReadDbModule::class])
 open class CrabzillaModule(val vertx: Vertx, val config: JsonObject) {
 
   init {
@@ -55,17 +51,6 @@ class ReadDbModule {
   @Provides
   @Singleton
   @ReadDatabase
-  fun jdbi(@ReadDatabase dataSource: HikariDataSource): Jdbi {
-    val jdbi = Jdbi.create(dataSource)
-    jdbi.installPlugin(SqlObjectPlugin())
-    jdbi.installPlugin(KotlinPlugin())
-    jdbi.installPlugin(KotlinSqlObjectPlugin())
-    return jdbi
-  }
-
-  @Provides
-  @Singleton
-  @ReadDatabase
   fun hikariDs(config: JsonObject): HikariDataSource {
     val hikariConfig = HikariConfig()
     hikariConfig.driverClassName = config.getString("READ_DATABASE_DRIVER")
@@ -92,17 +77,6 @@ class WriteDbModule {
   @WriteDatabase
   fun jdbcClient(@WriteDatabase dataSource: HikariDataSource, vertx: Vertx): JDBCClient {
     return JDBCClient.create(vertx, dataSource)
-  }
-
-  @Provides
-  @Singleton
-  @WriteDatabase
-  fun jdbi(@WriteDatabase dataSource: HikariDataSource): Jdbi {
-    val jdbi = Jdbi.create(dataSource)
-    jdbi.installPlugin(SqlObjectPlugin())
-    jdbi.installPlugin(KotlinPlugin())
-    jdbi.installPlugin(KotlinSqlObjectPlugin())
-    return jdbi
   }
 
   @Provides

@@ -4,6 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoSet
 import io.github.crabzilla.vertx.ProjectionDatabase
+import io.github.crabzilla.vertx.modules.JdbiDbProjectionModule
 import io.github.crabzilla.vertx.modules.ProjectionDbModule
 import io.github.crabzilla.vertx.projector.ProjectionHandlerVerticle
 import io.vertx.circuitbreaker.CircuitBreaker
@@ -11,7 +12,7 @@ import io.vertx.core.Vertx
 import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
 
-@Module(includes = [ProjectionDbModule::class])
+@Module(includes = [JdbiDbProjectionModule::class, ProjectionDbModule::class])
 class Example1ProjectorModule {
 
   @Provides @IntoSet

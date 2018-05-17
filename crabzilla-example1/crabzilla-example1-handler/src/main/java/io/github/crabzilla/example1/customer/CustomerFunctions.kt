@@ -44,8 +44,7 @@ class CommandHandlerFn(
 
     return resultOf {
       when (cmd) {
-        is CreateCustomer ->
-          uowOf(cmd, customer.create(cmd.targetId, cmd.name), snapshot.version)
+        is CreateCustomer -> uowOf(cmd, customer.create(cmd.targetId, cmd.name), snapshot.version)
         is ActivateCustomer -> uowOf(cmd, customer.activate(cmd.reason), snapshot.version)
         is DeactivateCustomer -> uowOf(cmd, customer.deactivate(cmd.reason), snapshot.version)
         is CreateActivateCustomer -> {

@@ -8,10 +8,6 @@ import io.github.crabzilla.vertx.ProjectionDatabase
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.jdbc.JDBCClient
-import org.jdbi.v3.core.Jdbi
-import org.jdbi.v3.core.kotlin.KotlinPlugin
-import org.jdbi.v3.sqlobject.SqlObjectPlugin
-import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import javax.inject.Singleton
 
 @Module
@@ -22,17 +18,6 @@ class ProjectionDbModule {
   @ProjectionDatabase
   fun jdbcClient(@ProjectionDatabase dataSource: HikariDataSource, vertx: Vertx): JDBCClient {
     return JDBCClient.create(vertx, dataSource)
-  }
-
-  @Provides
-  @Singleton
-  @ProjectionDatabase
-  fun jdbi(@ProjectionDatabase dataSource: HikariDataSource): Jdbi {
-    val jdbi = Jdbi.create(dataSource)
-    jdbi.installPlugin(SqlObjectPlugin())
-    jdbi.installPlugin(KotlinPlugin())
-    jdbi.installPlugin(KotlinSqlObjectPlugin())
-    return jdbi
   }
 
   @Provides

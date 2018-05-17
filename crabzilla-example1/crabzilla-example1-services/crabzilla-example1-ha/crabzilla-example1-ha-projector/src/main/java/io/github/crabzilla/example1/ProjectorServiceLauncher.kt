@@ -18,7 +18,7 @@ class ProjectorServiceLauncher {
 
   companion object {
 
-    val log = org.slf4j.LoggerFactory.getLogger(ProjectorServiceLauncher::class.java.simpleName)
+    private val log = org.slf4j.LoggerFactory.getLogger(ProjectorServiceLauncher::class.java.simpleName)
 
     lateinit var ds: HikariDataSource
 

@@ -10,8 +10,6 @@
   </parent>
 
   <properties>
-    <retrofit2.version>2.3.0</retrofit2.version>
-    <okhttp.version>3.9.1</okhttp.version>
   </properties>
 
   <artifactId>crabzilla-example1-ha-web</artifactId>

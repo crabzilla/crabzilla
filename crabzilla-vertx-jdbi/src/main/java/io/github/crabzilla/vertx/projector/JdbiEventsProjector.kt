@@ -1,15 +1,14 @@
 package io.github.crabzilla.vertx.projector
 
-import io.github.crabzilla.core.DomainEvent
 import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
 import org.slf4j.LoggerFactory.getLogger
 
-abstract class AbstractEventsProjector<in DAO>(val eventsChannelId: String,
-                                               private val jdbi: Jdbi,
-                                               private val daoClass: Class<DAO>,
-                                               private val daoFactory: (Handle, Class<DAO>) -> DAO) {
-  fun handle(uowList: List<ProjectionData>) {
+abstract class JdbiEventsProjector<DAO>(override val eventsChannelId: String,
+                                        private val jdbi: Jdbi,
+                                        override val daoClass: Class<DAO>,
+                                        val daoFactory: (Handle, Class<DAO>) -> DAO) : EventsProjector<DAO> {
+  override fun handle(uowList: List<ProjectionData>) {
 
     log.info("Writing {} units for eventChannel {}", uowList.size, eventsChannelId)
 
@@ -30,11 +29,9 @@ abstract class AbstractEventsProjector<in DAO>(val eventsChannelId: String,
 
   }
 
-  abstract fun write(dao: DAO, targetId: String, event: DomainEvent)
-
   companion object {
 
-    private val log = getLogger(AbstractEventsProjector::class.java)
+    private val log = getLogger(JdbiEventsProjector::class.java)
   }
 
 }

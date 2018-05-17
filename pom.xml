@@ -99,6 +99,7 @@
     <module>crabzilla-core</module>
     <module>crabzilla-vertx-core</module>
     <module>crabzilla-vertx-web</module>
+    <module>crabzilla-vertx-jdbi</module>
     <module>crabzilla-example1</module>
   </modules>
 
@@ -191,6 +192,12 @@
       <dependency>
         <groupId>io.github.crabzilla</groupId>
         <artifactId>crabzilla-vertx-web</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.github.crabzilla</groupId>
+        <artifactId>crabzilla-vertx-jdbi</artifactId>
         <version>${project.version}</version>
       </dependency>
 

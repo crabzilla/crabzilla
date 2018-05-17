@@ -9,11 +9,11 @@ import java.net.InetAddress
 
 // tag::launcher[]
 
-class MonolithServiceLauncher {
+class Example1MonolithServiceLauncher {
 
   companion object {
 
-    val log = LoggerFactory.getLogger(MonolithServiceLauncher::class.java.simpleName)
+    val log = LoggerFactory.getLogger(Example1MonolithServiceLauncher::class.java.simpleName)
 
     lateinit var writeDs: HikariDataSource
     lateinit var readDs: HikariDataSource
@@ -34,11 +34,11 @@ class MonolithServiceLauncher {
 
         vertx.executeBlocking<Any>({ future ->
 
-          val app = DaggerMonolithServiceComponent.builder()
+          val app = DaggerExample1MonolithServiceComponent.builder()
             .crabzillaWebModule(CrabzillaWebModule(vertx, config))
             .example1HandlerModule(Example1HandlerModule())
             .example1ProjectorModule(Example1ProjectorModule())
-            .monolithServiceModule(MonolithServiceModule(vertx, config))
+            .example1MonolithServiceModule(Example1MonolithServiceModule(vertx, config))
             .build()
 
           writeDs = app.writeDatasource()

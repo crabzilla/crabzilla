@@ -10,8 +10,8 @@ import javax.inject.Singleton
 
 // tag::component[]
 @Singleton
-@Component(modules = [(MonolithServiceModule::class)])
-interface MonolithServiceComponent {
+@Component(modules = [(Example1MonolithServiceModule::class)])
+interface Example1MonolithServiceComponent {
 
   @WriteDatabase
   fun writeDatasource(): HikariDataSource

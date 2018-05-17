@@ -52,10 +52,14 @@ class CrabzillaRestVerticle(override val name: String,
     val server = vertx.createHttpServer()
     val port = config.getInteger("HTTP_PORT")!!
 
-    log.info("*** server on port ${port}")
-
     server.requestHandler({ router.accept(it) })
-            .listen(port)
+      .listen(port, { result ->
+        if (result.succeeded()) {
+          log.info("*** server on port $port")
+        } else {
+          log.error("*** server on port $port")
+        }
+      })
 
   }
 

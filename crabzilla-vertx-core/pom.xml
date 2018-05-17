@@ -36,28 +36,6 @@
       <!--</exclusions>-->
     </dependency>
 
-    <!-- jdbi -->
-
-    <dependency>
-      <groupId>org.jdbi</groupId>
-      <artifactId>jdbi3-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jdbi</groupId>
-      <artifactId>jdbi3-sqlobject</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jdbi</groupId>
-      <artifactId>jdbi3-kotlin</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jdbi</groupId>
-      <artifactId>jdbi3-kotlin-sqlobject</artifactId>
-    </dependency>
-
     <!-- cache -->
     <dependency>
       <groupId>net.jodah</groupId>
@@ -124,6 +102,33 @@
       <artifactId>docker-compose-rule-junit4</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!-- jdbi -->
+
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-sqlobject</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-kotlin</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-kotlin-sqlobject</artifactId>
+      <scope>test</scope>
+    </dependency>
+
 
   </dependencies>
 

@@ -17,10 +17,10 @@ public class ProjectionHandlerVerticle<DAO> extends CrabzillaVerticle {
   private static Logger log = getLogger(ProjectionHandlerVerticle.class);
 
   private final String eventsSourceEndpoint;
-  private final AbstractEventsProjector<DAO> eventsProjector;
+  private final EventsProjector<DAO> eventsProjector;
   private final CircuitBreaker circuitBreaker;
 
-  public ProjectionHandlerVerticle(String eventsSourceEndpoint, AbstractEventsProjector<DAO> eventsProjector,
+  public ProjectionHandlerVerticle(String eventsSourceEndpoint, EventsProjector<DAO> eventsProjector,
                                    CircuitBreaker circuitBreaker) {
     super(eventsSourceEndpoint, PROJECTOR);
     this.eventsSourceEndpoint = eventsSourceEndpoint;
