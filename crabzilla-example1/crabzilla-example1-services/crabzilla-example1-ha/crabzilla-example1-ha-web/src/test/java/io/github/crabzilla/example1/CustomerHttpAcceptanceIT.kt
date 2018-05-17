@@ -10,6 +10,7 @@ import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
+import org.junit.Ignore
 import org.junit.Test
 import java.io.IOException
 import java.util.*
@@ -45,6 +46,7 @@ class CustomerHttpAcceptanceIT {
 
   @Test
   @Throws(IOException::class)
+  @Ignore
   fun createCustomer() {
 
     val customerId = CustomerId(UUID.randomUUID().toString())
@@ -81,6 +83,7 @@ class CustomerHttpAcceptanceIT {
 
   @Test
   @Throws(IOException::class)
+  @Ignore
   fun createCustomerIdempotency() {
 
     val customerId = CustomerId(UUID.randomUUID().toString())
@@ -140,6 +143,7 @@ class CustomerHttpAcceptanceIT {
 
   @Test
   @Throws(IOException::class)
+  @Ignore
   fun unknownCustomer() {
 
     val customerId = CustomerId(UUID.randomUUID().toString())

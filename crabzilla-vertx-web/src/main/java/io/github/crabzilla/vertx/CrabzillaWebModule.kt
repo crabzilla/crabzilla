@@ -22,8 +22,11 @@ open class CrabzillaWebModule(val vertx: Vertx, val config: JsonObject) {
     val healthCheckHandler = HealthCheckHandler.create(vertx)
 
     healthCheckHandler.register("health-write-database",{ future ->
+      println("*** healht check")
       jdbcClientWrite.getConnection({ connection ->
         if (connection.failed()) {
+          println("*** healht check failed")
+          connection.cause().printStackTrace()
           future.fail(connection.cause())
         } else {
           connection.result().close()
