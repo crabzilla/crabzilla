@@ -11,20 +11,27 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>1.8</java.version>
+
+    <!-- crabzilla core -->
+    <kotlin.version>1.2.41</kotlin.version>
+    <jackson.version>2.9.5</jackson.version>
     <slf4j.version>1.7.25</slf4j.version>
 
+    <!-- crabzilla vertx -->
     <vertx.version>3.5.1</vertx.version>
-    <kotlin.version>1.2.20</kotlin.version>
-    <jackson.version>2.9.3</jackson.version>
-
-    <dagger.version>2.14.1</dagger.version>
+    <dagger.version>2.16</dagger.version>
     <expiringmap.version>0.5.8</expiringmap.version>
-    <jdbi.version>3.0.0</jdbi.version>
-    <hikari.version>2.7.7</hikari.version>
+
+    <!-- crabzilla jdbi -->
+    <jdbi.version>3.2.0</jdbi.version>
+    <hikari.version>3.1.0</hikari.version>
+
+    <!-- crabzilla example1 -->
     <mysql.version>6.0.6</mysql.version>
 
-    <retrofit2.version>2.3.0</retrofit2.version>
-    <okhttp.version>3.9.1</okhttp.version>
+    <!-- tests-->
+    <retrofit2.version>2.4.0</retrofit2.version>
+    <okhttp.version>3.10.0</okhttp.version>
 
     <junit.version>4.12</junit.version>
     <junit.jupiter.version>5.0.3</junit.jupiter.version>
@@ -36,7 +43,7 @@
     <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
     <maven-failsafe-plugin.version>2.19.1</maven-failsafe-plugin.version>
-    <kotlin.compiler.incremental>false</kotlin.compiler.incremental>
+    <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
 
     <asciidoctor.maven.plugin.version>1.5.5</asciidoctor.maven.plugin.version>
     <asciidoctorj.pdf.version>1.5.0-alpha.15</asciidoctorj.pdf.version>
@@ -110,6 +117,12 @@
       <artifactId>javax.inject</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+
     <!-- test -->
 
     <dependency>
@@ -141,13 +154,6 @@
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
       <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
-      <!--<scope>test</scope>-->
     </dependency>
 
     <dependency>
