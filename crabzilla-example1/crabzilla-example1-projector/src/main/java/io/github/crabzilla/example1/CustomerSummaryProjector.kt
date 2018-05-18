@@ -10,7 +10,6 @@ import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
 import org.slf4j.LoggerFactory
 
-// tag::projector[]
 class CustomerSummaryProjector(channelId: String, jdbi: Jdbi,
                                daoFactory: (Handle, Class<CustomerSummaryProjectorDao>) -> CustomerSummaryProjectorDao)
 
@@ -32,4 +31,3 @@ class CustomerSummaryProjector(channelId: String, jdbi: Jdbi,
     }
   }
 }
-// end::projector[]

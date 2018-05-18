@@ -9,17 +9,11 @@ enum class CommandHandlers {
   CUSTOMER
 }
 
-//tag::readmodel[]
-
 data class CustomerSummary(val id: String, val name: String, val isActive: Boolean)
 
 interface CustomerRepository {
   fun getAll(): List<CustomerSummary>
 }
-
-//end::readmodel[]
-
-//tag::service[]
 
 interface SampleInternalService {
 
@@ -27,4 +21,3 @@ interface SampleInternalService {
   fun now(): Instant
 }
 
-//end::

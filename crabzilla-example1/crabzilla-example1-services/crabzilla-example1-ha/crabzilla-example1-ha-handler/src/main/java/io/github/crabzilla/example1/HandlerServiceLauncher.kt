@@ -11,8 +11,6 @@ import io.vertx.core.VertxOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import java.net.InetAddress
 
-// tag::launcher[]
-
 class HandlerServiceLauncher {
 
   companion object {
@@ -82,5 +80,3 @@ class HandlerServiceLauncher {
   }
 
 }
-
-// end::launcher[]

@@ -10,8 +10,6 @@ import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import org.slf4j.LoggerFactory
 import java.net.InetAddress
 
-// tag::launcher[]
-
 class RestServiceLauncher {
 
   companion object {

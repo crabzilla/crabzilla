@@ -7,7 +7,6 @@ import io.github.crabzilla.vertx.ReadDatabase
 import io.github.crabzilla.vertx.WriteDatabase
 import javax.inject.Singleton
 
-// tag::component[]
 @Singleton
 @Component(modules = [(RestServiceModule::class)])
 interface RestServiceComponent {
@@ -20,5 +19,3 @@ interface RestServiceComponent {
   @ReadDatabase
   fun readDatasource(): HikariDataSource
 }
-
-// end::component[]

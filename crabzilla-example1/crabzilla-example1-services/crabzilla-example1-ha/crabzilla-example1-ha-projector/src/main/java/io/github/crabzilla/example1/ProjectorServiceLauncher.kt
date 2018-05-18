@@ -12,8 +12,6 @@ import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import java.net.InetAddress
 
 
-// tag::launcher[]
-
 class ProjectorServiceLauncher {
 
   companion object {
@@ -76,6 +74,4 @@ class ProjectorServiceLauncher {
 
   }
 }
-
-// end::launcher[]
 
