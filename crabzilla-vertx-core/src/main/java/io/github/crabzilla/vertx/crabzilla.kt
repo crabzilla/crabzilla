@@ -30,7 +30,7 @@ interface UnitOfWorkRepository {
 
   fun getUowByUowId(uowId: UUID, uowFuture: Future<UnitOfWork>)
 
-  operator fun get(querie: String, id: UUID, uowFuture: Future<UnitOfWork>)
+  operator fun get(query: String, id: UUID, uowFuture: Future<UnitOfWork>)
 
   fun selectAfterVersion(id: String, version: Version, selectAfterVersionFuture: Future<SnapshotData>,
                          aggregateRootName: String)
@@ -65,7 +65,7 @@ open class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWork
     get(SELECT_UOW_BY_UOW_ID, uowId, uowFuture)
   }
 
-  override fun get(querie: String, id: UUID, uowFuture: Future<UnitOfWork>) {
+  override fun get(query: String, id: UUID, uowFuture: Future<UnitOfWork>) {
 
     val params = JsonArray().add(id.toString())
 
@@ -77,7 +77,7 @@ open class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWork
 
       val sqlConn = getConn.result()
       val resultSetFuture = Future.future<ResultSet>()
-      VertxSqlHelper.queryWithParams(sqlConn, querie, params, resultSetFuture)
+      VertxSqlHelper.queryWithParams(sqlConn, query, params, resultSetFuture)
 
       resultSetFuture.setHandler { resultSetAsyncResult ->
         if (resultSetAsyncResult.failed()) {

@@ -12,17 +12,12 @@ data class CustomerId(val id: String) : EntityId {
   }
 }
 
-// tag::events[]
-
 data class CustomerCreated(val id: CustomerId, val name: String) : DomainEvent
 
 data class CustomerActivated(val reason: String, val _when: Instant) : DomainEvent
 
 data class CustomerDeactivated(val reason: String, val _when: Instant) : DomainEvent
 
-// end::events[]
-
-// tag::commands[]
 
 data class CreateCustomer(override val commandId: UUID, override val targetId: CustomerId, val name: String) : Command
 
@@ -35,5 +30,3 @@ data class DeactivateCustomer(override val commandId: UUID, override val targetI
 data class CreateActivateCustomer(override val commandId: UUID,
                                   override val targetId: CustomerId,
                                   val name: String, val reason: String) : Command
-
-// end::commands[]

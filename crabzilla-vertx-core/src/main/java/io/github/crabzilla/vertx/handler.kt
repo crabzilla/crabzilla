@@ -32,7 +32,6 @@ data class CommandExecution(val result: RESULT,
 
 }
 
-
 interface CommandHandlerService {
 
   fun postCommand(handlerEndpoint: String, command: Command,

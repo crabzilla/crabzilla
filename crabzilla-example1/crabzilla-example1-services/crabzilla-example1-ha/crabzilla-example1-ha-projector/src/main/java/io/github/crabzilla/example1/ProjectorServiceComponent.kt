@@ -7,9 +7,8 @@ import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.github.crabzilla.vertx.projector.ProjectionHandlerVerticle
 import javax.inject.Singleton
 
-// tag::component[]
 @Singleton
-@Component(modules = arrayOf(ProjectorServiceModule::class))
+@Component(modules = [ProjectorServiceModule::class])
 interface ProjectorServiceComponent {
 
   fun projectorVerticles(): Set<ProjectionHandlerVerticle<out Any>>
@@ -20,5 +19,3 @@ interface ProjectorServiceComponent {
   fun datasource(): HikariDataSource
 
 }
-
-// end::component[]

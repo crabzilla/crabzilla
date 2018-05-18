@@ -2,8 +2,6 @@ package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.*
 
-// tag::StateTransitionFn[]
-
 class StateTransitionFn : (DomainEvent, Customer) -> Customer {
   override fun invoke(event: DomainEvent, customer: Customer): Customer {
     return when(event) {
@@ -15,10 +13,6 @@ class StateTransitionFn : (DomainEvent, Customer) -> Customer {
   }
 }
 
-// end::StateTransitionFn[]
-
-// tag::CommandValidatorFn[]
-
 class CommandValidatorFn : (Command) -> List<String> {
   override fun invoke(command: Command): List<String> {
     return when(command) {
@@ -29,10 +23,6 @@ class CommandValidatorFn : (Command) -> List<String> {
     }
   }
 }
-
-// end::CommandValidatorFn[]
-
-// tag::CommandHandlerFn[]
 
 class CommandHandlerFn(
         private val trackerFactory: (Snapshot<Customer>) -> StateTransitionsTracker<Customer>) :
@@ -60,5 +50,3 @@ class CommandHandlerFn(
     }
   }
 }
-
-// end::CommandHandlerFn[]

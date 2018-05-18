@@ -2,7 +2,6 @@ package io.github.crabzilla.example1
 
 import org.jdbi.v3.sqlobject.statement.SqlUpdate
 
-// tag::dao[]
 interface CustomerSummaryProjectorDao {
 
   @SqlUpdate("insert into customer_summary (id, name, is_active) values " +
@@ -14,4 +13,3 @@ interface CustomerSummaryProjectorDao {
   fun updateStatus(id: String, isActive: Boolean)
 
 }
-// end::dao[]

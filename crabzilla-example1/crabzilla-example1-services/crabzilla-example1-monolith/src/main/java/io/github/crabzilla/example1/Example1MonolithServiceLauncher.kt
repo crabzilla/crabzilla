@@ -7,8 +7,6 @@ import io.vertx.kotlin.core.DeploymentOptions
 import org.slf4j.LoggerFactory
 import java.net.InetAddress
 
-// tag::launcher[]
-
 class Example1MonolithServiceLauncher {
 
   companion object {
