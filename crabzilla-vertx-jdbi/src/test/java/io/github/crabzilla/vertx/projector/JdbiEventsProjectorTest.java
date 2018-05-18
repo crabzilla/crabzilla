@@ -6,6 +6,7 @@ import io.github.crabzilla.example1.CustomerSummary;
 import io.github.crabzilla.example1.customer.CreateCustomer;
 import io.github.crabzilla.example1.customer.CustomerCreated;
 import io.github.crabzilla.example1.customer.CustomerId;
+import io.github.crabzilla.vertx.ProjectionData;
 import kotlin.jvm.functions.Function2;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;

@@ -1,5 +1,7 @@
 package io.github.crabzilla.vertx.projector
 
+import io.github.crabzilla.vertx.EventsProjector
+import io.github.crabzilla.vertx.ProjectionData
 import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
 import org.slf4j.LoggerFactory.getLogger

@@ -1,6 +1,8 @@
 package io.github.crabzilla.vertx.projector;
 
 import io.github.crabzilla.vertx.CrabzillaVerticle;
+import io.github.crabzilla.vertx.EventsProjector;
+import io.github.crabzilla.vertx.ProjectionData;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;

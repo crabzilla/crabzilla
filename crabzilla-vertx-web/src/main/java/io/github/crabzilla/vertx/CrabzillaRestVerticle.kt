@@ -3,9 +3,7 @@ package io.github.crabzilla.vertx
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.vertx.VerticleRole.REST
-import io.github.crabzilla.vertx.handler.CommandExecution
-import io.github.crabzilla.vertx.handler.CommandExecution.RESULT
-import io.github.crabzilla.vertx.handler.CommandHandlerService
+import io.github.crabzilla.vertx.CommandExecution.RESULT
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future

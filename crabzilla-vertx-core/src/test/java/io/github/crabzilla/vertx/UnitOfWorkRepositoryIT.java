@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.impl;
+package io.github.crabzilla.vertx;
 
 import com.palantir.docker.compose.DockerComposeRule;
 import com.palantir.docker.compose.configuration.ProjectName;
@@ -9,9 +9,6 @@ import io.github.crabzilla.core.SnapshotData;
 import io.github.crabzilla.core.UnitOfWork;
 import io.github.crabzilla.core.example1.CommandHandlers;
 import io.github.crabzilla.example1.customer.*;
-import io.github.crabzilla.vertx.DbConcurrencyException;
-import io.github.crabzilla.vertx.UnitOfWorkRepository;
-import io.github.crabzilla.vertx.projector.ProjectionData;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;

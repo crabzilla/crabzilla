@@ -1,19 +1,91 @@
-package io.github.crabzilla.vertx.handler
+package io.github.crabzilla.vertx
 
 import io.github.crabzilla.core.*
-import io.github.crabzilla.vertx.CrabzillaVerticle
-import io.github.crabzilla.vertx.DbConcurrencyException
-import io.github.crabzilla.vertx.UnitOfWorkRepository
-import io.github.crabzilla.vertx.VerticleRole.HANDLER
-import io.github.crabzilla.vertx.handler.CommandExecution.RESULT.*
-import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
+import io.github.crabzilla.vertx.helpers.EndpointsHelper
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
+import io.vertx.core.Handler
+import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.Message
+import io.vertx.core.http.CaseInsensitiveHeaders
 import net.jodah.expiringmap.ExpiringMap
-import org.slf4j.LoggerFactory.getLogger
+import org.slf4j.LoggerFactory
+import java.io.Serializable
+import java.util.*
+
+data class CommandExecution(val result: RESULT,
+                            val commandId: UUID?,
+                            val constraints: List<String> = listOf(),
+                            val uowSequence: Long? = 0L,
+                            val unitOfWork: UnitOfWork? = null) : Serializable {
+
+  enum class RESULT {
+    FALLBACK,
+    VALIDATION_ERROR,
+    HANDLING_ERROR,
+    CONCURRENCY_ERROR,
+    UNKNOWN_COMMAND,
+    SUCCESS
+  }
+
+}
+
+
+interface CommandHandlerService {
+
+  fun postCommand(handlerEndpoint: String, command: Command,
+                  handler: Handler<AsyncResult<CommandExecution>>)
+}
+
+open class CommandHandlerServiceImpl(private val vertx: Vertx, private val projectionEndpoint: String) : CommandHandlerService {
+
+  companion object {
+
+    internal var log = LoggerFactory.getLogger(CommandHandlerService::class.java)
+  }
+
+  private val commandDeliveryOptions = DeliveryOptions().setCodecName(Command::class.java.simpleName)
+
+  init {
+    log.info("will publish resulting events to {}", projectionEndpoint)
+  }
+
+  override fun postCommand(handlerEndpoint: String, command: Command,
+                           handler: Handler<AsyncResult<CommandExecution>>) {
+
+    log.info("posting a command to {}", handlerEndpoint)
+
+    vertx.eventBus().send<Command>(handlerEndpoint, command, commandDeliveryOptions) { response ->
+
+      if (!response.succeeded()) {
+        log.error("postCommand", response.cause())
+        handler.handle(Future.failedFuture(response.cause()))
+        return@send
+      }
+
+      val result = response.result().body() as CommandExecution
+      val uow = result.unitOfWork
+      val uowSequence = result.uowSequence ?: 0L
+
+      log.info("result = {}", result)
+
+      if (uow != null && uowSequence != 0L) {
+        val headers = CaseInsensitiveHeaders().add("uowSequence", uowSequence.toString())
+        val eventsDeliveryOptions = DeliveryOptions().setCodecName(ProjectionData::class.simpleName).setHeaders(headers)
+        val pd = ProjectionData(uow.unitOfWorkId, uowSequence, uow.targetId().stringValue(), uow.events)
+        vertx.eventBus().publish(projectionEndpoint, pd, eventsDeliveryOptions)
+      }
+
+      handler.handle(Future.succeededFuture(result))
+
+    }
+
+  }
+
+}
+
 
 class CommandHandlerVerticle<A : Entity>(override val name: String,
                                          private val seedValue: A,
@@ -22,12 +94,17 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
                                          private val snapshotPromoter: SnapshotPromoter<A>,
                                          private val eventJournal: UnitOfWorkRepository,
                                          private val cache: ExpiringMap<String, Snapshot<A>>,
-                                         private val circuitBreaker: CircuitBreaker) : CrabzillaVerticle(name, HANDLER) {
+                                         private val circuitBreaker: CircuitBreaker) : CrabzillaVerticle(name, VerticleRole.HANDLER) {
+
+  companion object {
+
+    internal var log = LoggerFactory.getLogger(CommandHandlerVerticle::class.java)
+  }
 
   @Throws(Exception::class)
   override fun start() {
 
-    val consumer = vertx.eventBus().consumer<Command>(cmdHandlerEndpoint(name))
+    val consumer = vertx.eventBus().consumer<Command>(EndpointsHelper.cmdHandlerEndpoint(name))
 
     consumer.handler({ msg ->
 
@@ -35,7 +112,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
 
       if (command == null) {
 
-        val cmdExecResult = CommandExecution(commandId = command, result = VALIDATION_ERROR,
+        val cmdExecResult = CommandExecution(commandId = command, result = CommandExecution.RESULT.VALIDATION_ERROR,
           constraints = listOf("Command cannot be null. Check if JSON payload is valid."))
         msg.reply(cmdExecResult)
         return@handler
@@ -47,7 +124,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
 
       if (!constraints.isEmpty()) {
 
-        val result = CommandExecution(commandId = command.commandId, result = VALIDATION_ERROR,
+        val result = CommandExecution(commandId = command.commandId, result = CommandExecution.RESULT.VALIDATION_ERROR,
           constraints = constraints)
         msg.reply(result)
         return@handler
@@ -56,7 +133,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
       circuitBreaker.fallback { throwable ->
 
         log.error("Fallback for command $command.commandId", throwable)
-        val cmdExecResult = CommandExecution(commandId = command.commandId, result = FALLBACK)
+        val cmdExecResult = CommandExecution(commandId = command.commandId, result = CommandExecution.RESULT.FALLBACK)
         msg.reply(cmdExecResult)
 
       }
@@ -129,7 +206,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
             val result = cmdHandler.invoke(command, resultingSnapshot)
 
             if (result == null) {
-              future2.complete(CommandExecution(result = UNKNOWN_COMMAND, commandId = command.commandId))
+              future2.complete(CommandExecution(result = CommandExecution.RESULT.UNKNOWN_COMMAND, commandId = command.commandId))
               return@executeBlocking
             }
 
@@ -144,7 +221,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
                   val error = appendAsyncResult.cause()
                   log.error("appendUnitOfWork for command " + command.commandId, error.message)
                   if (error is DbConcurrencyException) {
-                    future2.complete(CommandExecution(result = CONCURRENCY_ERROR, commandId = command.commandId,
+                    future2.complete(CommandExecution(result = CommandExecution.RESULT.CONCURRENCY_ERROR, commandId = command.commandId,
                       constraints = listOf(error.message ?: "optimistic locking error")))
                   } else {
                     future2.fail(appendAsyncResult.cause())
@@ -156,7 +233,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
                 cache.put(targetId, finalSnapshot)
                 val uowSequence = appendAsyncResult.result()
                 log.debug("uowSequence: {}", uowSequence)
-                future2.complete(CommandExecution(result = SUCCESS, commandId = command.commandId,
+                future2.complete(CommandExecution(result = CommandExecution.RESULT.SUCCESS, commandId = command.commandId,
                   unitOfWork = uow, uowSequence = uowSequence))
               }
             })
@@ -164,7 +241,7 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
             result.inCaseOfError({ error ->
               log.error("commandExecution", error.message)
 
-                future2.complete(CommandExecution(result = HANDLING_ERROR, commandId = command.commandId,
+                future2.complete(CommandExecution(result = CommandExecution.RESULT.HANDLING_ERROR, commandId = command.commandId,
                   constraints = listOf(error.message ?: "entity handling error")))
             })
 
@@ -203,10 +280,4 @@ class CommandHandlerVerticle<A : Entity>(override val name: String,
     }
   }
 
-  companion object {
-
-    internal var log = getLogger(CommandHandlerVerticle::class.java)
-  }
-
 }
-
