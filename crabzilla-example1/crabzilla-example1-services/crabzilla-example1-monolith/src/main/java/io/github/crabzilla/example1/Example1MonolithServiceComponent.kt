@@ -4,7 +4,7 @@ import com.zaxxer.hikari.HikariDataSource
 import dagger.Component
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.vertx.*
-import io.github.crabzilla.vertx.handler.CommandHandlerVerticle
+import io.github.crabzilla.vertx.CommandHandlerVerticle
 import io.github.crabzilla.vertx.projector.ProjectionHandlerVerticle
 import javax.inject.Singleton
 

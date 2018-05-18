@@ -15,17 +15,14 @@ open class CrabzillaWebModule(val vertx: Vertx, val config: JsonObject) {
 
   @Provides
   @Singleton
-  @WebHealthCheck
   fun healthcheck(@WriteDatabase jdbcClientWrite: JDBCClient, @ReadDatabase jdbcClientRead: JDBCClient)
     : HealthCheckHandler {
 
     val healthCheckHandler = HealthCheckHandler.create(vertx)
 
-    healthCheckHandler.register("health-write-database",{ future ->
-      println("*** healht check")
+    healthCheckHandler.register("databases:write-database",{ future ->
       jdbcClientWrite.getConnection({ connection ->
         if (connection.failed()) {
-          println("*** healht check failed")
           connection.cause().printStackTrace()
           future.fail(connection.cause())
         } else {
@@ -35,7 +32,7 @@ open class CrabzillaWebModule(val vertx: Vertx, val config: JsonObject) {
       })
     })
 
-    healthCheckHandler.register("health-read-database",{ future ->
+    healthCheckHandler.register("databases:read-database",{ future ->
       jdbcClientRead.getConnection({ connection ->
         if (connection.failed()) {
           future.fail(connection.cause())
@@ -45,10 +42,6 @@ open class CrabzillaWebModule(val vertx: Vertx, val config: JsonObject) {
         }
       })
     })
-
-    // TODO
-    healthCheckHandler.register("health-handler", { f -> f.complete(Status.OK()) })
-    healthCheckHandler.register("health-projector", { f -> f.complete(Status.OK()) })
 
     return healthCheckHandler
 

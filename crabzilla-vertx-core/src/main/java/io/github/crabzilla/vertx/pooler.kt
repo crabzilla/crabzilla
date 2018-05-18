@@ -1,18 +1,13 @@
-package io.github.crabzilla.vertx.pooler
+package io.github.crabzilla.vertx
 
-import io.github.crabzilla.vertx.CrabzillaVerticle
-import io.github.crabzilla.vertx.UnitOfWorkRepository
-import io.github.crabzilla.vertx.VerticleRole.POOLER
-import io.github.crabzilla.vertx.projector.ProjectionData
 import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import org.slf4j.LoggerFactory
 
-
 class PoolerVerticle(override val name: String,
                      val repo: UnitOfWorkRepository,
-                     val intervalMs: Long): CrabzillaVerticle(name, POOLER) {
+                     val intervalMs: Long): CrabzillaVerticle(name, VerticleRole.POOLER) {
 
   @Throws(Exception::class)
   override fun start() {

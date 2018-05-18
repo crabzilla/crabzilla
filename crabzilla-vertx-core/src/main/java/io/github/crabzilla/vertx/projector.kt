@@ -1,14 +1,29 @@
-package io.github.crabzilla.vertx.modules
+package io.github.crabzilla.vertx
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Module
 import dagger.Provides
-import io.github.crabzilla.vertx.ProjectionDatabase
+import io.github.crabzilla.core.DomainEvent
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.jdbc.JDBCClient
+import java.util.*
 import javax.inject.Singleton
+
+interface EventsProjector<DAO> {
+
+  val eventsChannelId: String
+  val daoClass: Class<DAO>
+
+  fun handle(uowList: List<ProjectionData>)
+
+  fun write(dao: DAO, targetId: String, event: DomainEvent)
+
+}
+
+data class ProjectionData(val uowId: UUID, val uowSequence: Long,
+                          val targetId: String, val events: List<DomainEvent>)
 
 @Module
 class ProjectionDbModule {

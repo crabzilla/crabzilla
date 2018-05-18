@@ -9,9 +9,7 @@ import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EntityId
 import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.vertx.handler.CommandExecution
 import io.github.crabzilla.vertx.helpers.JacksonGenericCodec
-import io.github.crabzilla.vertx.projector.ProjectionData
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions

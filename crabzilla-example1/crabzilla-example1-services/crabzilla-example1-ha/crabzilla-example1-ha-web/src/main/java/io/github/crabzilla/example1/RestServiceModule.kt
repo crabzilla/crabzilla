@@ -3,8 +3,6 @@ package io.github.crabzilla.example1
 import dagger.Module
 import dagger.Provides
 import io.github.crabzilla.vertx.*
-import io.github.crabzilla.vertx.handler.CommandHandlerService
-import io.github.crabzilla.vertx.handler.impl.CommandHandlerServiceImpl
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.healthchecks.HealthCheckHandler
@@ -23,7 +21,7 @@ class RestServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vert
   @Singleton
   fun restVerticle(uowRepository: UnitOfWorkRepository, config: JsonObject,
                    handlerService: CommandHandlerService,
-                   @WebHealthCheck healthCheckHandler: HealthCheckHandler): CrabzillaRestVerticle {
+                   healthCheckHandler: HealthCheckHandler): CrabzillaRestVerticle {
     return CrabzillaRestVerticle(subDomainName(), config, healthCheckHandler, uowRepository, handlerService)
   }
 

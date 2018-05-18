@@ -5,7 +5,7 @@ import dagger.Component
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.example1.customer.CustomerModule
 import io.github.crabzilla.vertx.WriteDatabase
-import io.github.crabzilla.vertx.handler.CommandHandlerVerticle
+import io.github.crabzilla.vertx.CommandHandlerVerticle
 import javax.inject.Singleton
 
 // tag::component[]
