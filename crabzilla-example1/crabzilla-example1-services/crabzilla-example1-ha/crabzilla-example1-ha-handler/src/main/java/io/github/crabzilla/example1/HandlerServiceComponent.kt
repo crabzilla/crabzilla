@@ -4,8 +4,8 @@ import com.zaxxer.hikari.HikariDataSource
 import dagger.Component
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.example1.customer.CustomerModule
-import io.github.crabzilla.vertx.WriteDatabase
-import io.github.crabzilla.vertx.CommandHandlerVerticle
+import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
+import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle
 import javax.inject.Singleton
 
 @Singleton

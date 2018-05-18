@@ -3,8 +3,8 @@ package io.github.crabzilla.vertx.modules
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Module
 import dagger.Provides
-import io.github.crabzilla.vertx.ProjectionDatabase
-import io.github.crabzilla.vertx.ReadDatabase
+import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
+import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
 import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.core.kotlin.KotlinPlugin
 import org.jdbi.v3.sqlobject.SqlObjectPlugin
@@ -12,12 +12,12 @@ import org.jdbi.v3.sqlobject.kotlin.KotlinSqlObjectPlugin
 import javax.inject.Singleton
 
 @Module
-class JdbiDbReadModule {
+class JdbiModule {
 
   @Provides
   @Singleton
   @ReadDatabase
-  fun jdbi(@ReadDatabase dataSource: HikariDataSource): Jdbi {
+  fun readDb(@ReadDatabase dataSource: HikariDataSource): Jdbi {
     val jdbi = Jdbi.create(dataSource)
     jdbi.installPlugin(SqlObjectPlugin())
     jdbi.installPlugin(KotlinPlugin())
@@ -25,6 +25,15 @@ class JdbiDbReadModule {
     return jdbi
   }
 
-
+  @Provides
+  @Singleton
+  @ProjectionDatabase
+  fun projectionDb(@ProjectionDatabase dataSource: HikariDataSource): Jdbi {
+    val jdbi = Jdbi.create(dataSource)
+    jdbi.installPlugin(SqlObjectPlugin())
+    jdbi.installPlugin(KotlinPlugin())
+    jdbi.installPlugin(KotlinSqlObjectPlugin())
+    return jdbi
+  }
 
 }

@@ -16,7 +16,6 @@ interface CustomerRepository {
 }
 
 interface SampleInternalService {
-
   fun uuid(): UUID
   fun now(): Instant
 }

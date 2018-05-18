@@ -3,6 +3,7 @@ package io.github.crabzilla.vertx;
 import io.github.crabzilla.core.*;
 import io.github.crabzilla.example1.SampleInternalService;
 import io.github.crabzilla.example1.customer.*;
+import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;

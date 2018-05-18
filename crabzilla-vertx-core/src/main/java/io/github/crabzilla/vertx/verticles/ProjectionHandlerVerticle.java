@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.projector;
+package io.github.crabzilla.vertx.verticles;
 
 import io.github.crabzilla.vertx.CrabzillaVerticle;
 import io.github.crabzilla.vertx.EventsProjector;

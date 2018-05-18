@@ -2,6 +2,10 @@ package io.github.crabzilla.vertx
 
 import dagger.Module
 import dagger.Provides
+import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
+import io.github.crabzilla.vertx.modules.ReadDbModule
+import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
+import io.github.crabzilla.vertx.modules.WriteDbModule
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.healthchecks.HealthCheckHandler

@@ -7,6 +7,7 @@ import io.github.crabzilla.example1.customer.CreateCustomer;
 import io.github.crabzilla.example1.customer.CustomerCreated;
 import io.github.crabzilla.example1.customer.CustomerId;
 import io.github.crabzilla.vertx.ProjectionData;
+import io.github.crabzilla.vertx.verticles.ProjectionHandlerVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;

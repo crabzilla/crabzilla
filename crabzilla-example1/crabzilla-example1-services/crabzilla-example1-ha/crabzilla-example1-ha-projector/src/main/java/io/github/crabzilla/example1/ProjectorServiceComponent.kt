@@ -2,9 +2,9 @@ package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Component
-import io.github.crabzilla.vertx.ProjectionDatabase
+import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
 import io.github.crabzilla.vertx.UnitOfWorkRepository
-import io.github.crabzilla.vertx.projector.ProjectionHandlerVerticle
+import io.github.crabzilla.vertx.verticles.ProjectionHandlerVerticle
 import javax.inject.Singleton
 
 @Singleton

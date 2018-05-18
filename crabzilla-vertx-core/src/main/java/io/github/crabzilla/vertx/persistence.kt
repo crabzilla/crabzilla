@@ -1,18 +1,10 @@
 package io.github.crabzilla.vertx
 
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
-import dagger.Module
-import dagger.Provides
 import io.github.crabzilla.core.*
 import io.github.crabzilla.vertx.helpers.VertxSqlHelper
 import io.vertx.core.Future
-import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
-import io.vertx.core.json.JsonObject
-import io.vertx.core.logging.LoggerFactory
-import io.vertx.core.logging.SLF4JLogDelegateFactory
 import io.vertx.ext.jdbc.JDBCClient
 import io.vertx.ext.sql.ResultSet
 import io.vertx.ext.sql.SQLRowStream
@@ -22,7 +14,6 @@ import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 import java.util.*
 import javax.inject.Qualifier
-import javax.inject.Singleton
 
 interface UnitOfWorkRepository {
 
@@ -386,116 +377,4 @@ open class UnitOfWorkRepositoryImpl(private val client: JDBCClient) : UnitOfWork
 
 class DbConcurrencyException(s: String) : RuntimeException(s)
 
-// database qualifiers
 
-@Qualifier
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-annotation class ReadDatabase
-
-@Qualifier
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-annotation class WriteDatabase
-
-@Qualifier
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-annotation class ProjectionDatabase
-
-// modules
-
-@Module(includes = [WriteDbModule::class, ReadDbModule::class])
-open class CrabzillaModule(val vertx: Vertx, val config: JsonObject) {
-
-  init {
-
-    System.setProperty(LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory::class.java.name)
-    LoggerFactory.getLogger(LoggerFactory::class.java) // Required for Logback to work in Vertx
-
-    initVertx(vertx)
-
-  }
-
-  @Provides
-  @Singleton
-  fun vertx(): Vertx {
-    return vertx
-  }
-
-  @Provides
-  @Singleton
-  fun config(): JsonObject {
-    return config
-  }
-
-}
-
-@Module
-class ReadDbModule {
-
-  @Provides
-  @Singleton
-  @ReadDatabase
-  fun jdbcClient(@ReadDatabase dataSource: HikariDataSource, vertx: Vertx): JDBCClient {
-    return JDBCClient.create(vertx, dataSource)
-  }
-
-  @Provides
-  @Singleton
-  @ReadDatabase
-  fun hikariDs(config: JsonObject): HikariDataSource {
-    val hikariConfig = HikariConfig()
-    hikariConfig.driverClassName = config.getString("READ_DATABASE_DRIVER")
-    hikariConfig.jdbcUrl = config.getString("READ_DATABASE_URL")
-    hikariConfig.username = config.getString("READ_DATABASE_USER")
-    hikariConfig.password = config.getString("READ_DATABASE_PASSWORD")
-    hikariConfig.connectionTimeout = 5000
-    hikariConfig.maximumPoolSize = config.getInteger("READ_DATABASE_POOL_MAX_SIZE")!!
-    hikariConfig.addDataSourceProperty("cachePrepStmts", "true")
-    hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250")
-    hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
-    hikariConfig.isAutoCommit = true
-    hikariConfig.isReadOnly =  true
-    return HikariDataSource(hikariConfig)
-  }
-
-}
-
-@Module
-class WriteDbModule {
-
-  @Provides
-  @Singleton
-  @WriteDatabase
-  fun jdbcClient(@WriteDatabase dataSource: HikariDataSource, vertx: Vertx): JDBCClient {
-    return JDBCClient.create(vertx, dataSource)
-  }
-
-  @Provides
-  @Singleton
-  @WriteDatabase
-  fun hikariDs(config: JsonObject): HikariDataSource {
-    val hikariConfig = HikariConfig()
-    hikariConfig.driverClassName = config.getString("WRITE_DATABASE_DRIVER")
-    hikariConfig.jdbcUrl = config.getString("WRITE_DATABASE_URL")
-    hikariConfig.username = config.getString("WRITE_DATABASE_USER")
-    hikariConfig.password = config.getString("WRITE_DATABASE_PASSWORD")
-    hikariConfig.connectionTimeout = 5000
-    hikariConfig.maximumPoolSize = config.getInteger("WRITE_DATABASE_POOL_MAX_SIZE")!!
-    hikariConfig.addDataSourceProperty("cachePrepStmts", "true")
-    hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250")
-    hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
-    hikariConfig.isAutoCommit = false
-    hikariConfig.isReadOnly =  false
-    hikariConfig.transactionIsolation = "TRANSACTION_SERIALIZABLE"
-    return HikariDataSource(hikariConfig)
-  }
-
-  @Provides
-  @Singleton
-  fun uowRepository(@WriteDatabase jdbcClient: JDBCClient): UnitOfWorkRepository {
-    return UnitOfWorkRepositoryImpl(jdbcClient)
-  }
-
-}

@@ -4,8 +4,11 @@ import com.zaxxer.hikari.HikariDataSource
 import dagger.Component
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.vertx.*
-import io.github.crabzilla.vertx.CommandHandlerVerticle
-import io.github.crabzilla.vertx.projector.ProjectionHandlerVerticle
+import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
+import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
+import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
+import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle
+import io.github.crabzilla.vertx.verticles.ProjectionHandlerVerticle
 import javax.inject.Singleton
 
 // tag::component[]
