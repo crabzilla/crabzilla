@@ -1,5 +1,9 @@
-package io.github.crabzilla.vertx
+package io.github.crabzilla.vertx.verticles
 
+import io.github.crabzilla.vertx.CrabzillaVerticle
+import io.github.crabzilla.vertx.ProjectionData
+import io.github.crabzilla.vertx.UnitOfWorkRepository
+import io.github.crabzilla.vertx.VerticleRole
 import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Vertx
@@ -8,6 +12,10 @@ import org.slf4j.LoggerFactory
 class PoolerVerticle(override val name: String,
                      val repo: UnitOfWorkRepository,
                      val intervalMs: Long): CrabzillaVerticle(name, VerticleRole.POOLER) {
+
+  companion object {
+    internal var log = LoggerFactory.getLogger(PoolerVerticle::class.java)
+  }
 
   @Throws(Exception::class)
   override fun start() {
@@ -72,10 +80,6 @@ class PoolerVerticle(override val name: String,
       }
     })
 
-  }
-
-  companion object {
-    internal var log = LoggerFactory.getLogger(PoolerVerticle::class.java)
   }
 
 }

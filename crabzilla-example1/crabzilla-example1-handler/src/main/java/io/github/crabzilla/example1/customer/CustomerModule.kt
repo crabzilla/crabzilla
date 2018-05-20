@@ -9,7 +9,7 @@ import io.github.crabzilla.core.SnapshotPromoter
 import io.github.crabzilla.core.StateTransitionsTracker
 import io.github.crabzilla.example1.CommandHandlers
 import io.github.crabzilla.example1.SampleInternalService
-import io.github.crabzilla.vertx.CommandHandlerVerticle
+import io.github.crabzilla.vertx.verticles.CommandVerticle
 import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.Vertx
@@ -21,7 +21,7 @@ class CustomerModule {
   @Provides @IntoSet
   fun handlerVerticle(service: SampleInternalService,
                       eventJournal: UnitOfWorkRepository,
-                      vertx: Vertx): CommandHandlerVerticle<out Entity> {
+                      vertx: Vertx): CommandVerticle<out Entity> {
 
     val customer = Customer(sampleInternalService = service)
     val stateTransitionFn = StateTransitionFn()
@@ -35,7 +35,7 @@ class CustomerModule {
     val snapshotPromoter =
       SnapshotPromoter<Customer> { instance -> StateTransitionsTracker(instance, stateTransitionFn) }
 
-    return CommandHandlerVerticle(CommandHandlers.CUSTOMER.name, customer, cmdHandler, validator,
+    return CommandVerticle(CommandHandlers.CUSTOMER.name, customer, cmdHandler, validator,
       snapshotPromoter, eventJournal, cache, circuitBreaker)
   }
 

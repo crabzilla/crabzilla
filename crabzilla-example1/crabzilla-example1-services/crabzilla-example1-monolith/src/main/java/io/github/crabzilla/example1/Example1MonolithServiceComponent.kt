@@ -4,8 +4,11 @@ import com.zaxxer.hikari.HikariDataSource
 import dagger.Component
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.vertx.*
-import io.github.crabzilla.vertx.CommandHandlerVerticle
-import io.github.crabzilla.vertx.projector.ProjectionHandlerVerticle
+import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
+import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
+import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
+import io.github.crabzilla.vertx.verticles.CommandVerticle
+import io.github.crabzilla.vertx.verticles.ProjectionVerticle
 import javax.inject.Singleton
 
 // tag::component[]
@@ -25,8 +28,8 @@ interface Example1MonolithServiceComponent {
   fun restVerticles(): CrabzillaRestVerticle
   fun projectionRepo(): UnitOfWorkRepository
 
-  fun handlerVerticles(): Set<CommandHandlerVerticle<out Entity>>
-  fun projectorVerticles(): Set<ProjectionHandlerVerticle<out Any>>
+  fun handlerVerticles(): Set<CommandVerticle<out Entity>>
+  fun projectorVerticles(): Set<ProjectionVerticle<out Any>>
 
 }
 
