@@ -6,7 +6,7 @@ import dagger.multibindings.IntoSet
 import io.github.crabzilla.vertx.modules.JdbiModule
 import io.github.crabzilla.vertx.modules.ProjectionDbModule
 import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
-import io.github.crabzilla.vertx.verticles.ProjectionHandlerVerticle
+import io.github.crabzilla.vertx.verticles.ProjectionVerticle
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.Vertx
 import org.jdbi.v3.core.Handle
@@ -16,13 +16,13 @@ import org.jdbi.v3.core.Jdbi
 class Example1ProjectorModule {
 
   @Provides @IntoSet
-  fun eventsProjectorVerticle(@ProjectionDatabase jdbi: Jdbi, vertx: Vertx): ProjectionHandlerVerticle<out Any> {
+  fun eventsProjectorVerticle(@ProjectionDatabase jdbi: Jdbi, vertx: Vertx): ProjectionVerticle<out Any> {
     val daoFactory: (Handle, Class<CustomerSummaryProjectorDao>) -> CustomerSummaryProjectorDao = {
       handle, daoClass -> handle.attach(daoClass)
     }
     val projector = CustomerSummaryProjector(CustomerSummary::class.simpleName!!, jdbi, daoFactory)
     val circuitBreaker = CircuitBreaker.create("example1-projector-circuit-breaker", vertx)
-    return ProjectionHandlerVerticle(subDomainName(), projector, circuitBreaker)
+    return ProjectionVerticle(subDomainName(), projector, circuitBreaker)
   }
 
 }

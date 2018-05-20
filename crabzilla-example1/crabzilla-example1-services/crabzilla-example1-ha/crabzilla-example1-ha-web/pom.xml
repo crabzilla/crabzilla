@@ -89,7 +89,7 @@
                 </transformer>
               </transformers>
               <artifactSet/>
-              <outputFile>${project.build.directory}/${project.artifactId}-${project.version}-fat.jar
+              <outputFile>${project.build.directory}/${project.artifactId}.jar
               </outputFile>
             </configuration>
           </execution>

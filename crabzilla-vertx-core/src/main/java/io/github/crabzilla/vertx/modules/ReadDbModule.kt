@@ -13,6 +13,8 @@ import javax.inject.Singleton
 @Module
 class ReadDbModule {
 
+  private val log = org.slf4j.LoggerFactory.getLogger(ReadDbModule::class.java)
+
   @Provides
   @Singleton
   @ReadDatabase

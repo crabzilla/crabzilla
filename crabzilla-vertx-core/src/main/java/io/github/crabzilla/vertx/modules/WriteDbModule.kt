@@ -15,6 +15,8 @@ import javax.inject.Singleton
 @Module
 class WriteDbModule {
 
+  private val log = org.slf4j.LoggerFactory.getLogger(WriteDbModule::class.java)
+
   @Provides
   @Singleton
   @WriteDatabase
@@ -38,8 +40,8 @@ class WriteDbModule {
     hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
     hikariConfig.isAutoCommit = false
     hikariConfig.isReadOnly =  false
-    hikariConfig.transactionIsolation = "TRANSACTION_SERIALIZABLE"
     return HikariDataSource(hikariConfig)
+
   }
 
   @Provides

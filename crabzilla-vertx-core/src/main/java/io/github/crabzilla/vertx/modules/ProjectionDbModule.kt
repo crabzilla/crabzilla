@@ -13,6 +13,8 @@ import javax.inject.Singleton
 @Module
 class ProjectionDbModule {
 
+  private val log = org.slf4j.LoggerFactory.getLogger(ProjectionDbModule::class.java)
+
   @Provides
   @Singleton
   @ProjectionDatabase

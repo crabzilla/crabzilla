@@ -7,7 +7,7 @@ import io.github.crabzilla.example1.customer.CreateCustomer;
 import io.github.crabzilla.example1.customer.CustomerCreated;
 import io.github.crabzilla.example1.customer.CustomerId;
 import io.github.crabzilla.vertx.ProjectionData;
-import io.github.crabzilla.vertx.verticles.ProjectionHandlerVerticle;
+import io.github.crabzilla.vertx.verticles.ProjectionVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(VertxUnitRunner.class)
-public class ProjectionHandlerVerticleTest {
+public class ProjectionVerticleTest {
 
   final static String EVENTS_ENDPOINT = subDomainName();
 
@@ -76,8 +76,8 @@ public class ProjectionHandlerVerticleTest {
 
     circuitBreaker = CircuitBreaker.create(projectorEndpoint(CustomerSummary.class.getSimpleName()), vertx);
 
-    ProjectionHandlerVerticle<CustomerSummaryProjectionDao> verticle =
-            new ProjectionHandlerVerticle<>(EVENTS_ENDPOINT, eventsProjector, circuitBreaker);
+    ProjectionVerticle<CustomerSummaryProjectionDao> verticle =
+            new ProjectionVerticle<>(EVENTS_ENDPOINT, eventsProjector, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());
 

@@ -3,7 +3,7 @@ package io.github.crabzilla.vertx;
 import io.github.crabzilla.core.*;
 import io.github.crabzilla.example1.SampleInternalService;
 import io.github.crabzilla.example1.customer.*;
-import io.github.crabzilla.vertx.verticles.CommandHandlerVerticle;
+import io.github.crabzilla.vertx.verticles.CommandVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
@@ -41,7 +41,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(VertxUnitRunner.class)
-public class CommandHandlerVerticleTest {
+public class CommandVerticleTest {
 
   static final String FORCED_CONCURRENCY_EXCEPTION = "FORCED CONCURRENCY EXCEPTION";
   static final String ENTITY_NAME = Customer.class.getSimpleName();
@@ -92,7 +92,7 @@ public class CommandHandlerVerticleTest {
 
     snapshotPromoterFn = new SnapshotPromoter<Customer>(trackerFactory);
 
-    Verticle verticle = new CommandHandlerVerticle<Customer>(ENTITY_NAME,
+    Verticle verticle = new CommandVerticle<Customer>(ENTITY_NAME,
             seedValue, cmdHandlerFn, validatorFn, snapshotPromoterFn, eventRepository, cache, circuitBreaker);
 
     vertx.deployVerticle(verticle, context.asyncAssertSuccess());

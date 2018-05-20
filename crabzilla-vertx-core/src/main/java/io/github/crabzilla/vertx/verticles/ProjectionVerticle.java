@@ -14,16 +14,16 @@ import static io.github.crabzilla.vertx.VerticleRole.PROJECTOR;
 import static java.util.Collections.singletonList;
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class ProjectionHandlerVerticle<DAO> extends CrabzillaVerticle {
+public class ProjectionVerticle<DAO> extends CrabzillaVerticle {
 
-  private static Logger log = getLogger(ProjectionHandlerVerticle.class);
+  private static Logger log = getLogger(ProjectionVerticle.class);
 
   private final String eventsSourceEndpoint;
   private final EventsProjector<DAO> eventsProjector;
   private final CircuitBreaker circuitBreaker;
 
-  public ProjectionHandlerVerticle(String eventsSourceEndpoint, EventsProjector<DAO> eventsProjector,
-                                   CircuitBreaker circuitBreaker) {
+  public ProjectionVerticle(String eventsSourceEndpoint, EventsProjector<DAO> eventsProjector,
+                            CircuitBreaker circuitBreaker) {
     super(eventsSourceEndpoint, PROJECTOR);
     this.eventsSourceEndpoint = eventsSourceEndpoint;
     this.eventsProjector = eventsProjector;

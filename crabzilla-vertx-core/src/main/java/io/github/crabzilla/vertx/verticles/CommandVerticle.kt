@@ -11,17 +11,17 @@ import io.vertx.core.eventbus.Message
 import net.jodah.expiringmap.ExpiringMap
 import org.slf4j.LoggerFactory
 
-class CommandHandlerVerticle<A : Entity>(override val name: String,
-                                         private val seedValue: A,
-                                         private val cmdHandler: (Command, Snapshot<A>) -> CommandResult?,
-                                         private val validatorFn: (Command) -> List<String>,
-                                         private val snapshotPromoter: SnapshotPromoter<A>,
-                                         private val eventJournal: UnitOfWorkRepository,
-                                         private val cache: ExpiringMap<String, Snapshot<A>>,
-                                         private val circuitBreaker: CircuitBreaker) : CrabzillaVerticle(name, VerticleRole.HANDLER) {
+class CommandVerticle<A : Entity>(override val name: String,
+                                  private val seedValue: A,
+                                  private val cmdHandler: (Command, Snapshot<A>) -> CommandResult?,
+                                  private val validatorFn: (Command) -> List<String>,
+                                  private val snapshotPromoter: SnapshotPromoter<A>,
+                                  private val eventJournal: UnitOfWorkRepository,
+                                  private val cache: ExpiringMap<String, Snapshot<A>>,
+                                  private val circuitBreaker: CircuitBreaker) : CrabzillaVerticle(name, VerticleRole.HANDLER) {
 
   companion object {
-    internal var log = LoggerFactory.getLogger(CommandHandlerVerticle::class.java)
+    internal var log = LoggerFactory.getLogger(CommandVerticle::class.java)
   }
 
   @Throws(Exception::class)
