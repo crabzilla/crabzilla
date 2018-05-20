@@ -37,7 +37,6 @@ interface CommandHandlerService {
 open class CommandHandlerServiceImpl(private val vertx: Vertx, private val projectionEndpoint: String) : CommandHandlerService {
 
   companion object {
-
     internal var log = LoggerFactory.getLogger(CommandHandlerService::class.java)
   }
 

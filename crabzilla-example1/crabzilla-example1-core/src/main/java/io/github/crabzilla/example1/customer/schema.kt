@@ -12,12 +12,15 @@ data class CustomerId(val id: String) : EntityId {
   }
 }
 
+// events
+
 data class CustomerCreated(val id: CustomerId, val name: String) : DomainEvent
 
 data class CustomerActivated(val reason: String, val _when: Instant) : DomainEvent
 
 data class CustomerDeactivated(val reason: String, val _when: Instant) : DomainEvent
 
+// commands
 
 data class CreateCustomer(override val commandId: UUID, override val targetId: CustomerId, val name: String) : Command
 
