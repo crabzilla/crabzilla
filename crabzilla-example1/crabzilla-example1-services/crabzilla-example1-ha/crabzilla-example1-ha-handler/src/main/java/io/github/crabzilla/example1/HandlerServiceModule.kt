@@ -10,7 +10,7 @@ import io.vertx.ext.healthchecks.HealthCheckHandler
 import javax.inject.Singleton
 
 
-@Module(includes = [(Example1HandlerModule::class)])
+@Module(includes = [Example1Module::class])
 class HandlerServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
 
   @Provides

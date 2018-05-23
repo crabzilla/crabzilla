@@ -10,7 +10,7 @@ import io.vertx.core.json.JsonObject
 import io.vertx.ext.healthchecks.HealthCheckHandler
 import javax.inject.Singleton
 
-@Module(includes = [(Example1ProjectorModule::class), (ProjectionDbModule::class)])
+@Module(includes = [Example1Module::class, ProjectionDbModule::class])
 class ProjectorServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
 
   @Provides

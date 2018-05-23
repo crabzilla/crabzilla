@@ -6,7 +6,7 @@ import io.github.crabzilla.vertx.CommandHandlerService
 import io.github.crabzilla.vertx.CommandHandlerServiceImpl
 import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.github.crabzilla.vertx.modules.CrabzillaModule
-import io.github.crabzilla.vertx.verticles.CrabzillaRestVerticle
+import io.github.crabzilla.vertx.verticles.WebVerticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.healthchecks.HealthCheckHandler
@@ -25,8 +25,8 @@ class RestServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vert
   @Singleton
   fun restVerticle(uowRepository: UnitOfWorkRepository, config: JsonObject,
                    handlerService: CommandHandlerService,
-                   healthCheckHandler: HealthCheckHandler): CrabzillaRestVerticle {
-    return CrabzillaRestVerticle(subDomainName(), config, healthCheckHandler, uowRepository, handlerService)
+                   healthCheckHandler: HealthCheckHandler): WebVerticle {
+    return WebVerticle(subDomainName(), config, healthCheckHandler, uowRepository, handlerService)
   }
 
 }

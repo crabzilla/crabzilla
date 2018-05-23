@@ -7,11 +7,11 @@ import io.vertx.kotlin.core.DeploymentOptions
 import org.slf4j.LoggerFactory
 import java.net.InetAddress
 
-class Example1MonolithServiceLauncher {
+class Example1ServiceLauncher {
 
   companion object {
 
-    val log = LoggerFactory.getLogger(Example1MonolithServiceLauncher::class.java.simpleName)
+    val log = LoggerFactory.getLogger(Example1ServiceLauncher::class.java.simpleName)
 
     lateinit var writeDs: HikariDataSource
     lateinit var readDs: HikariDataSource
@@ -32,10 +32,8 @@ class Example1MonolithServiceLauncher {
 
         vertx.executeBlocking<Any>({ future ->
 
-          val app = DaggerExample1MonolithServiceComponent.builder()
-            .example1HandlerModule(Example1HandlerModule())
-            .example1ProjectorModule(Example1ProjectorModule())
-            .example1MonolithServiceModule(Example1MonolithServiceModule(vertx, config))
+          val app = DaggerExample1ServiceComponent.builder()
+            .example1ServiceModule(Example1ServiceModule(vertx, config))
             .build()
 
           writeDs = app.writeDatasource()

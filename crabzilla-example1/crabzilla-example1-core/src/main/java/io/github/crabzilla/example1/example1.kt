@@ -11,7 +11,7 @@ enum class CommandHandlers {
 
 data class CustomerSummary(val id: String, val name: String, val isActive: Boolean)
 
-// https://streamdata.io/blog/vert-x-and-the-async-calls-chain/ TODO make these services async
+// https://streamdata.io/blog/vert-x-and-the-async-calls-chain/ TODO consider to make these services async
 
 interface CustomerRepository {
   fun getAll(): List<CustomerSummary>

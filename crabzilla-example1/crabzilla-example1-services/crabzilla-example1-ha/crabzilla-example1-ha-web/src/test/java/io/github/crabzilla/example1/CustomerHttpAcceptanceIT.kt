@@ -10,7 +10,6 @@ import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
-import org.junit.Ignore
 import org.junit.Test
 import java.io.IOException
 import java.util.*

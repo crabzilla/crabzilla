@@ -2,8 +2,8 @@ package io.github.crabzilla.example1.impl
 
 import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.CustomerSummary
-import io.github.crabzilla.example1.CustomerSummaryDao
 import io.github.crabzilla.example1.SampleInternalService
+import org.jdbi.v3.sqlobject.statement.SqlQuery
 import java.time.Instant
 import java.util.*
 import javax.inject.Inject
@@ -27,3 +27,9 @@ class SampleInternalServiceImpl : SampleInternalService {
   }
 
 }
+
+interface CustomerSummaryDao {
+  @SqlQuery("select id, name, is_active from customer_summary")
+  fun getAll(): List<CustomerSummary>
+}
+

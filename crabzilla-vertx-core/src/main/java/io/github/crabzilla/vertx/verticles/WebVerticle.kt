@@ -3,11 +3,11 @@ package io.github.crabzilla.vertx.verticles
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.vertx.CommandExecution
-import io.github.crabzilla.vertx.VerticleRole.REST
 import io.github.crabzilla.vertx.CommandExecution.RESULT
 import io.github.crabzilla.vertx.CommandHandlerService
 import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.UnitOfWorkRepository
+import io.github.crabzilla.vertx.VerticleRole.REST
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
@@ -25,16 +25,16 @@ import java.util.*
 
 // TODO add circuit breakers
 // TODO add endpoints for list/start/stop crabzilla verticles
-class CrabzillaRestVerticle(override val name: String,
-                            private val config: JsonObject,
-                            private val healthCheckHandler : HealthCheckHandler,
-                            private val uowRepository: UnitOfWorkRepository,
-                            private val handlerService: CommandHandlerService)
+class WebVerticle(override val name: String,
+                  private val config: JsonObject,
+                  private val healthCheckHandler : HealthCheckHandler,
+                  private val uowRepository: UnitOfWorkRepository,
+                  private val handlerService: CommandHandlerService)
   : CrabzillaVerticle(name, REST) {
 
 
   companion object {
-    internal var log = getLogger(CrabzillaRestVerticle::class.java)
+    internal var log = getLogger(WebVerticle::class.java)
   }
 
   override fun start() {
@@ -57,9 +57,9 @@ class CrabzillaRestVerticle(override val name: String,
     server.requestHandler({ router.accept(it) })
       .listen(port, { result ->
         if (result.succeeded()) {
-          log.info("*** server on port $port")
+          log.info("*** server $name on port $port")
         } else {
-          log.error("*** server on port $port")
+          log.error("*** server $name on port $port")
         }
       })
 

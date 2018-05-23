@@ -1,7 +1,8 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.example1.impl
 
 
 import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.example1.CustomerSummary
 import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerDeactivated
@@ -19,7 +20,7 @@ class CustomerSummaryProjector(channelId: String, jdbi: Jdbi,
     private val log = LoggerFactory.getLogger(CustomerSummaryProjector::class.java.simpleName)
   }
 
-  // TODO refactor moving this to a function
+  // TODO refactor moving this to a handler
   override fun write(dao: CustomerSummaryProjectorDao, targetId: String, event: DomainEvent) {
 
     log.info("event {} from channel {}", event, eventsChannelId)

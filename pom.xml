@@ -43,7 +43,7 @@
     <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
     <maven-failsafe-plugin.version>2.19.1</maven-failsafe-plugin.version>
-    <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
+    <kotlin.compiler.incremental>false</kotlin.compiler.incremental>
 
     <asciidoctor.maven.plugin.version>1.5.5</asciidoctor.maven.plugin.version>
     <asciidoctorj.pdf.version>1.5.0-alpha.15</asciidoctorj.pdf.version>

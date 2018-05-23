@@ -1,8 +1,11 @@
-package io.github.crabzilla.vertx;
+package io.github.crabzilla.vertx.verticles;
 
 import io.github.crabzilla.core.*;
 import io.github.crabzilla.example1.SampleInternalService;
 import io.github.crabzilla.example1.customer.*;
+import io.github.crabzilla.vertx.CommandExecution;
+import io.github.crabzilla.vertx.DbConcurrencyException;
+import io.github.crabzilla.vertx.UnitOfWorkRepository;
 import io.github.crabzilla.vertx.verticles.CommandVerticle;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Future;

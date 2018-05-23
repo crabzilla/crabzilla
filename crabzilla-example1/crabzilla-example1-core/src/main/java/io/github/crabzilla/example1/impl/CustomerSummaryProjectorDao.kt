@@ -1,5 +1,6 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.example1.impl
 
+import io.github.crabzilla.example1.CustomerSummary
 import org.jdbi.v3.sqlobject.statement.SqlUpdate
 
 interface CustomerSummaryProjectorDao {

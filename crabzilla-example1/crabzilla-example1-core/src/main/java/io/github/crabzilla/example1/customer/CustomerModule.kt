@@ -9,8 +9,8 @@ import io.github.crabzilla.core.SnapshotPromoter
 import io.github.crabzilla.core.StateTransitionsTracker
 import io.github.crabzilla.example1.CommandHandlers
 import io.github.crabzilla.example1.SampleInternalService
-import io.github.crabzilla.vertx.verticles.CommandVerticle
 import io.github.crabzilla.vertx.UnitOfWorkRepository
+import io.github.crabzilla.vertx.verticles.CommandVerticle
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.Vertx
 import net.jodah.expiringmap.ExpiringMap
