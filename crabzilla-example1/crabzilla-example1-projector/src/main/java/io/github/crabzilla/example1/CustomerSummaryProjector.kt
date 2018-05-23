@@ -19,6 +19,7 @@ class CustomerSummaryProjector(channelId: String, jdbi: Jdbi,
     private val log = LoggerFactory.getLogger(CustomerSummaryProjector::class.java.simpleName)
   }
 
+  // TODO refactor moving this to a function
   override fun write(dao: CustomerSummaryProjectorDao, targetId: String, event: DomainEvent) {
 
     log.info("event {} from channel {}", event, eventsChannelId)

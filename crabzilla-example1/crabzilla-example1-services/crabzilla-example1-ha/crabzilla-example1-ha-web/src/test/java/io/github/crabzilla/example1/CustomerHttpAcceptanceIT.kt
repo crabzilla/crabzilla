@@ -36,6 +36,8 @@ class CustomerHttpAcceptanceIT {
       return DockerComposeRule.builder()
         .file("../docker-compose.yml")
         .waitingForService("web", toRespondOverHttp(port) { port -> port.inFormat("http://127.0.0.1:8080/health") })
+        .waitingForService("command-handler", toRespondOverHttp(8081) { port -> port.inFormat("http://127.0.0.1:8081/health") })
+        .waitingForService("events-projector", toRespondOverHttp(8082) { port -> port.inFormat("http://127.0.0.1:8082/health") })
         .saveLogsTo("../target/dockerComposeRuleTest")
         .build()
     }

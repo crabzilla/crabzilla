@@ -1,9 +1,13 @@
-package io.github.crabzilla.vertx
+package io.github.crabzilla.vertx.verticles
 
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.vertx.CommandExecution
 import io.github.crabzilla.vertx.VerticleRole.REST
 import io.github.crabzilla.vertx.CommandExecution.RESULT
+import io.github.crabzilla.vertx.CommandHandlerService
+import io.github.crabzilla.vertx.CrabzillaVerticle
+import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
@@ -30,7 +34,7 @@ class CrabzillaRestVerticle(override val name: String,
 
 
   companion object {
-    internal var log = getLogger(CommandHandlerService::class.java)
+    internal var log = getLogger(CrabzillaRestVerticle::class.java)
   }
 
   override fun start() {

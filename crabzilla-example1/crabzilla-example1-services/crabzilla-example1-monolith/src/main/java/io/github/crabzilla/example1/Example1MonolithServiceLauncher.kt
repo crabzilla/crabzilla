@@ -33,7 +33,6 @@ class Example1MonolithServiceLauncher {
         vertx.executeBlocking<Any>({ future ->
 
           val app = DaggerExample1MonolithServiceComponent.builder()
-            .crabzillaWebModule(CrabzillaWebModule(vertx, config))
             .example1HandlerModule(Example1HandlerModule())
             .example1ProjectorModule(Example1ProjectorModule())
             .example1MonolithServiceModule(Example1MonolithServiceModule(vertx, config))

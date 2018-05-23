@@ -1,7 +1,6 @@
 package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
-import io.github.crabzilla.vertx.CrabzillaWebModule
 import io.github.crabzilla.vertx.configHandler
 import io.github.crabzilla.vertx.deployVerticles
 import io.vertx.core.Vertx
@@ -40,15 +39,14 @@ class RestServiceLauncher {
 
             vertx.executeBlocking<Any>({ future ->
 
-              val app = DaggerRestServiceComponent.builder()
+              val component = DaggerRestServiceComponent.builder()
                 .restServiceModule(RestServiceModule(vertx, config))
-                .crabzillaWebModule(CrabzillaWebModule(vertx, config))
                 .build()
 
-              writeDs = app.writeDatasource()
-              readDs = app.readDatasource()
+              writeDs = component.writeDatasource()
+              readDs = component.readDatasource()
 
-              deployVerticles(vertx, setOf(app.restVerticle()))
+              deployVerticles(vertx, setOf(component.restVerticle()))
 
               future.complete()
 

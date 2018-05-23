@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariDataSource
 import io.github.crabzilla.vertx.CrabzillaVerticleFactory
 import io.github.crabzilla.vertx.VerticleRole.PROJECTOR
 import io.github.crabzilla.vertx.configHandler
+import io.github.crabzilla.vertx.deployVerticles
 import io.github.crabzilla.vertx.deployVerticlesByName
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
@@ -49,6 +50,7 @@ class ProjectorServiceLauncher {
               ds = component.datasource()
 
               val workerDeploymentOptions = DeploymentOptions().setHa(true).setWorker(true)
+              deployVerticles(vertx, setOf(component.healthVerticle()), workerDeploymentOptions)
               vertx.registerVerticleFactory(CrabzillaVerticleFactory(component.projectorVerticles(), PROJECTOR))
               deployVerticlesByName(vertx, setOf(PROJECTOR.verticle(subDomainName())), workerDeploymentOptions)
 

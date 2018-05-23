@@ -23,12 +23,6 @@
       <version>${project.parent.version}</version>
     </dependency>
 
-    <!-- web -->
-    <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-vertx-web</artifactId>
-    </dependency>
-
     <!-- test -->
 
     <dependency>

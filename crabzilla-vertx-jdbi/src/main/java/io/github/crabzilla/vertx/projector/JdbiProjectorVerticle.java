@@ -1,7 +1,6 @@
-package io.github.crabzilla.vertx.verticles;
+package io.github.crabzilla.vertx.projector;
 
 import io.github.crabzilla.vertx.CrabzillaVerticle;
-import io.github.crabzilla.vertx.EventsProjector;
 import io.github.crabzilla.vertx.ProjectionData;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.AsyncResult;
@@ -14,16 +13,16 @@ import static io.github.crabzilla.vertx.VerticleRole.PROJECTOR;
 import static java.util.Collections.singletonList;
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class ProjectionVerticle<DAO> extends CrabzillaVerticle {
+public class JdbiProjectorVerticle<DAO> extends CrabzillaVerticle {
 
-  private static Logger log = getLogger(ProjectionVerticle.class);
+  private static Logger log = getLogger(JdbiProjectorVerticle.class);
 
   private final String eventsSourceEndpoint;
   private final EventsProjector<DAO> eventsProjector;
   private final CircuitBreaker circuitBreaker;
 
-  public ProjectionVerticle(String eventsSourceEndpoint, EventsProjector<DAO> eventsProjector,
-                            CircuitBreaker circuitBreaker) {
+  public JdbiProjectorVerticle(String eventsSourceEndpoint, EventsProjector<DAO> eventsProjector,
+                               CircuitBreaker circuitBreaker) {
     super(eventsSourceEndpoint, PROJECTOR);
     this.eventsSourceEndpoint = eventsSourceEndpoint;
     this.eventsProjector = eventsProjector;
@@ -42,7 +41,7 @@ public class ProjectionVerticle<DAO> extends CrabzillaVerticle {
       log.info("Received ProjectionData {} ", projectionData);
       circuitBreaker.fallback(throwable -> {
         log.error("Fallback for uowHandler ", throwable);
-        return "fallback";
+        return "fallback"; // WHAT TODO in this case?
       })
       .execute(uowHandler(projectionData))
       .setHandler(resultHandler(msg));

@@ -8,7 +8,8 @@ import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
 import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
 import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
 import io.github.crabzilla.vertx.verticles.CommandVerticle
-import io.github.crabzilla.vertx.verticles.ProjectionVerticle
+import io.github.crabzilla.vertx.projector.JdbiProjectorVerticle
+import io.github.crabzilla.vertx.verticles.CrabzillaRestVerticle
 import javax.inject.Singleton
 
 // tag::component[]
@@ -29,7 +30,7 @@ interface Example1MonolithServiceComponent {
   fun projectionRepo(): UnitOfWorkRepository
 
   fun handlerVerticles(): Set<CommandVerticle<out Entity>>
-  fun projectorVerticles(): Set<ProjectionVerticle<out Any>>
+  fun projectorVerticles(): Set<JdbiProjectorVerticle<out Any>>
 
 }
 

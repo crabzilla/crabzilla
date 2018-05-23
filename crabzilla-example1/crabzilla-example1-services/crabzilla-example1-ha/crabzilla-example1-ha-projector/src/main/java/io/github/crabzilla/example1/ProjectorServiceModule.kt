@@ -1,10 +1,22 @@
 package io.github.crabzilla.example1
 
 import dagger.Module
+import dagger.Provides
 import io.github.crabzilla.vertx.modules.CrabzillaModule
 import io.github.crabzilla.vertx.modules.ProjectionDbModule
+import io.github.crabzilla.vertx.verticles.HealthVerticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
+import io.vertx.ext.healthchecks.HealthCheckHandler
+import javax.inject.Singleton
 
 @Module(includes = [(Example1ProjectorModule::class), (ProjectionDbModule::class)])
-class ProjectorServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config)
+class ProjectorServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
+
+  @Provides
+  @Singleton
+  fun healthVerticle(config: JsonObject, healthCheckHandler: HealthCheckHandler): HealthVerticle {
+    return HealthVerticle(subDomainName(), config.getInteger("PROJECTOR_HTTP_PORT")!!, healthCheckHandler)
+  }
+
+}
