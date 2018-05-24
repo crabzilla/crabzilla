@@ -9,11 +9,7 @@ import io.vertx.ext.jdbc.JDBCClient
 import io.vertx.ext.sql.ResultSet
 import io.vertx.ext.sql.SQLRowStream
 import io.vertx.ext.sql.UpdateResult
-import java.lang.annotation.Documented
-import java.lang.annotation.Retention
-import java.lang.annotation.RetentionPolicy
 import java.util.*
-import javax.inject.Qualifier
 
 interface UnitOfWorkRepository {
 

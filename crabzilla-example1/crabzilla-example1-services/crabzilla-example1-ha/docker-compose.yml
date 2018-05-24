@@ -18,6 +18,8 @@ services:
     volumes:
       - ./:/var:z
     command: ["/var/wait-for-port.sh", "db:3306", "--", "java", "-jar", "/var/crabzilla-example1-ha-projector/target/crabzilla-example1-ha-projector.jar"]
+    ports:
+      - 8082:8082
     depends_on:
       - db
     env_file:
@@ -29,6 +31,8 @@ services:
     volumes:
       - ./:/var:z
     command: ["/var/wait-for-port.sh", "db:3306", "--", "java", "-jar", "/var/crabzilla-example1-ha-handler/target/crabzilla-example1-ha-handler.jar"]
+    ports:
+       - 8081:8081
     depends_on:
       - db
     env_file:

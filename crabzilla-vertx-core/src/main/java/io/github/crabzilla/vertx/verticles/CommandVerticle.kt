@@ -2,7 +2,9 @@ package io.github.crabzilla.vertx.verticles
 
 import io.github.crabzilla.core.*
 import io.github.crabzilla.vertx.*
+import io.github.crabzilla.vertx.CommandExecution.*
 import io.github.crabzilla.vertx.helpers.EndpointsHelper
+import io.github.crabzilla.vertx.helpers.EndpointsHelper.*
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
@@ -27,7 +29,7 @@ class CommandVerticle<A : Entity>(override val name: String,
   @Throws(Exception::class)
   override fun start() {
 
-    val consumer = vertx.eventBus().consumer<Command>(EndpointsHelper.cmdHandlerEndpoint(name))
+    val consumer = vertx.eventBus().consumer<Command>(cmdHandlerEndpoint(name))
 
     consumer.handler({ msg ->
 
@@ -35,7 +37,7 @@ class CommandVerticle<A : Entity>(override val name: String,
 
       if (command == null) {
 
-        val cmdExecResult = CommandExecution(commandId = command, result = CommandExecution.RESULT.VALIDATION_ERROR,
+        val cmdExecResult = CommandExecution(commandId = command, result = RESULT.VALIDATION_ERROR,
           constraints = listOf("Command cannot be null. Check if JSON payload is valid."))
         msg.reply(cmdExecResult)
         return@handler
@@ -47,7 +49,7 @@ class CommandVerticle<A : Entity>(override val name: String,
 
       if (!constraints.isEmpty()) {
 
-        val result = CommandExecution(commandId = command.commandId, result = CommandExecution.RESULT.VALIDATION_ERROR,
+        val result = CommandExecution(commandId = command.commandId, result = RESULT.VALIDATION_ERROR,
           constraints = constraints)
         msg.reply(result)
         return@handler
@@ -56,14 +58,14 @@ class CommandVerticle<A : Entity>(override val name: String,
       circuitBreaker.fallback { throwable ->
 
         log.error("Fallback for command $command.commandId", throwable)
-        val cmdExecResult = CommandExecution(commandId = command.commandId, result = CommandExecution.RESULT.FALLBACK)
+        val cmdExecResult = CommandExecution(commandId = command.commandId, result = RESULT.FALLBACK)
         msg.reply(cmdExecResult)
 
       }
 
-        .execute<CommandExecution>(cmdHandler(command))
+      .execute<CommandExecution>(cmdHandler(command))
 
-        .setHandler(resultHandler(msg))
+      .setHandler(resultHandler(msg))
 
     })
 
@@ -75,7 +77,6 @@ class CommandVerticle<A : Entity>(override val name: String,
 
       val targetId = command.targetId.stringValue()
 
-      // get from cache _may_ be blocking if you plug an EntryLoader (from ExpiringMap)
       vertx.executeBlocking<Snapshot<A>>({ fromCacheFuture ->
 
         log.debug("loading {} from cache", targetId)
@@ -84,12 +85,7 @@ class CommandVerticle<A : Entity>(override val name: String,
 
       }, false) { fromCacheResult ->
 
-        if (fromCacheResult.failed()) {
-          future1.fail(fromCacheResult.cause())
-          return@executeBlocking
-        }
-
-        val snapshotFromCache = fromCacheResult.result()
+        val snapshotFromCache = if (fromCacheResult.failed()) null else fromCacheResult.result()
         val emptySnapshot = Snapshot(seedValue, 0)
         val cachedSnapshot = snapshotFromCache ?: emptySnapshot
 
@@ -113,69 +109,57 @@ class CommandVerticle<A : Entity>(override val name: String,
           log.debug("id {} found {} pending events. Last version is now {}", targetId, totalOfNonCachedEvents,
                   nonCached.version)
 
-          // cmd handler _may_ be blocking. Otherwise, aggregate root would need to use reactive API to call
-          // external services
-          vertx.executeBlocking<CommandExecution>({ future2 ->
+          val resultingSnapshot = if (totalOfNonCachedEvents > 0)
+            snapshotPromoter.promote(cachedSnapshot, nonCached.version, nonCached.events)
+          else
+            cachedSnapshot
 
-            val resultingSnapshot = if (totalOfNonCachedEvents > 0)
-              snapshotPromoter.promote(cachedSnapshot, nonCached.version, nonCached.events)
-            else
-              cachedSnapshot
-
-            if (totalOfNonCachedEvents > 0) {
-              cache[targetId] = resultingSnapshot
-            }
-
-            val result = cmdHandler.invoke(command, resultingSnapshot)
-
-            if (result == null) {
-              future2.complete(CommandExecution(result = CommandExecution.RESULT.UNKNOWN_COMMAND, commandId = command.commandId))
-              return@executeBlocking
-            }
-
-            result.inCaseOfSuccess({ uow ->
-
-              val appendFuture = Future.future<Long>()
-              eventJournal.append(uow!!, appendFuture, name)
-
-              appendFuture.setHandler { appendAsyncResult ->
-
-                if (appendAsyncResult.failed()) {
-                  val error = appendAsyncResult.cause()
-                  log.error("appendUnitOfWork for command " + command.commandId, error.message)
-                  if (error is DbConcurrencyException) {
-                    future2.complete(CommandExecution(result = CommandExecution.RESULT.CONCURRENCY_ERROR, commandId = command.commandId,
-                      constraints = listOf(error.message ?: "optimistic locking error")))
-                  } else {
-                    future2.fail(appendAsyncResult.cause())
-                  }
-                  return@setHandler
-                }
-
-                val finalSnapshot = snapshotPromoter.promote(resultingSnapshot, uow.version, uow.events)
-                cache.put(targetId, finalSnapshot)
-                val uowSequence = appendAsyncResult.result()
-                log.debug("uowSequence: {}", uowSequence)
-                future2.complete(CommandExecution(result = CommandExecution.RESULT.SUCCESS, commandId = command.commandId,
-                  unitOfWork = uow, uowSequence = uowSequence))
-              }
-            })
-
-            result.inCaseOfError({ error ->
-              log.error("commandExecution", error.message)
-
-                future2.complete(CommandExecution(result = CommandExecution.RESULT.HANDLING_ERROR, commandId = command.commandId,
-                  constraints = listOf(error.message ?: "entity handling error")))
-            })
-
-          }) { res ->
-            if (res.succeeded()) {
-              future1.complete(res.result())
-            } else {
-              log.error("selectAfterVersion ", res.cause())
-              future1.fail(res.cause())
-            }
+          if (totalOfNonCachedEvents > 0) {
+            cache[targetId] = resultingSnapshot
           }
+
+          val result = cmdHandler.invoke(command, resultingSnapshot)
+
+          if (result == null) {
+            future1.complete(CommandExecution(result = RESULT.UNKNOWN_COMMAND, commandId = command.commandId))
+            return@setHandler
+          }
+
+          result.inCaseOfSuccess({ uow ->
+
+            val appendFuture = Future.future<Long>()
+            eventJournal.append(uow!!, appendFuture, name)
+
+            appendFuture.setHandler { appendAsyncResult ->
+
+              if (appendAsyncResult.failed()) {
+                val error = appendAsyncResult.cause()
+                log.error("appendUnitOfWork for command " + command.commandId, error.message)
+                if (error is DbConcurrencyException) {
+                  future1.complete(CommandExecution(result = RESULT.CONCURRENCY_ERROR, commandId = command.commandId,
+                    constraints = listOf(error.message ?: "optimistic locking error")))
+                } else {
+                  future1.fail(appendAsyncResult.cause())
+                }
+                return@setHandler
+              }
+
+              val finalSnapshot = snapshotPromoter.promote(resultingSnapshot, uow.version, uow.events)
+              cache.put(targetId, finalSnapshot)
+              val uowSequence = appendAsyncResult.result()
+              log.debug("uowSequence: {}", uowSequence)
+              future1.complete(CommandExecution(result = RESULT.SUCCESS, commandId = command.commandId,
+                unitOfWork = uow, uowSequence = uowSequence))
+            }
+          })
+
+          result.inCaseOfError({ error ->
+            log.error("commandExecution", error.message)
+
+              future1.complete(CommandExecution(result = RESULT.HANDLING_ERROR, commandId = command.commandId,
+                constraints = listOf(error.message ?: "entity handling error")))
+          })
+
         }
 
       }

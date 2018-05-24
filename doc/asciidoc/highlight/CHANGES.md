@@ -679,7 +679,7 @@ New languages in this release:
 [Erik Paluka]: https://github.com/paluka
 [Luke Holder]: https://github.com/lukeholder
 [David Mohundro]: https://github.com/drmohundro
-[ps]: https://github.com/OctopusDeploy/Library/blob/master/app/shared/presentation/highlighting/powershell.js
+[ps]: https://github.com/OctopusDeploy/Library/blob/master/component/shared/presentation/highlighting/powershell.js
 [Christophe de Dinechin]: https://github.com/c3d
 [Taneli Vatanen]: https://github.com/Daiz-
 [Jen Evers-Corvina]: https://github.com/sevvie
@@ -696,7 +696,7 @@ and various special cases. This is a very important change that gives us
 confidence in extending language definitions and refactoring library core.
 
 We're going to redesign the old [demo/test suite][demo] into an interactive
-demo web app. If you're confident front-end developer or designer and want to
+demo web component. If you're confident front-end developer or designer and want to
 help us with it, drop a comment into [the issue][#542] on GitHub.
 
 [test]: https://github.com/isagalaev/highlight.js/tree/master/test

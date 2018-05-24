@@ -23,9 +23,8 @@ import io.vertx.core.spi.VerticleFactory
 
 private val log = org.slf4j.LoggerFactory.getLogger("CrabzillaVertx")
 
-fun configHandler(vertx: Vertx, handler: (JsonObject) -> Unit, shutdownHook: () -> Unit) {
+fun configHandler(vertx: Vertx, envOptions: ConfigStoreOptions, handler: (JsonObject) -> Unit, shutdownHook: () -> Unit) {
 
-  val envOptions = ConfigStoreOptions().setType("env")
   val retrieverOptions = ConfigRetrieverOptions().addStore(envOptions)
   val retriever = ConfigRetriever.create(vertx, retrieverOptions)
 

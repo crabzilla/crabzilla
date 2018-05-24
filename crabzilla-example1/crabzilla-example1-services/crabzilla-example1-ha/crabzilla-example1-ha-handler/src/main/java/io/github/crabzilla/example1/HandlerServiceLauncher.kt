@@ -1,10 +1,9 @@
 package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
-import io.github.crabzilla.vertx.CrabzillaVerticleFactory
+import io.github.crabzilla.vertx.*
 import io.github.crabzilla.vertx.VerticleRole.HANDLER
-import io.github.crabzilla.vertx.configHandler
-import io.github.crabzilla.vertx.deployVerticlesByName
+import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx.clusteredVertx
 import io.vertx.core.VertxOptions
@@ -37,7 +36,9 @@ class HandlerServiceLauncher {
 
           log.info("got vertx")
 
-          configHandler(vertx, { config ->
+          val envOptions = ConfigStoreOptions().setType("env")
+
+          configHandler(vertx, envOptions, { config ->
 
             log.info("will initialize...")
 
@@ -45,16 +46,17 @@ class HandlerServiceLauncher {
 
               log.info("will instantiate components...")
 
-              val app = DaggerHandlerServiceComponent.builder()
+              val component = DaggerHandlerServiceComponent.builder()
                 .handlerServiceModule(HandlerServiceModule(vertx, config))
                 .build()
 
-              ds = app.datasource()
+              ds = component.datasource()
 
-              vertx.registerVerticleFactory(CrabzillaVerticleFactory(app.commandVerticles(), HANDLER))
+              vertx.registerVerticleFactory(CrabzillaVerticleFactory(component.commandVerticles(), HANDLER))
 
               val workerDeploymentOptions = DeploymentOptions().setHa(true)
 
+              deployVerticles(vertx, setOf(component.healthVerticle()), workerDeploymentOptions)
               deployVerticlesByName(vertx, setOf(HANDLER.verticle(CommandHandlers.CUSTOMER.name)), workerDeploymentOptions)
 
               future.complete()

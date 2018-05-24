@@ -10,7 +10,6 @@ import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
-import org.junit.Ignore
 import org.junit.Test
 import java.io.IOException
 import java.util.*
@@ -36,6 +35,8 @@ class CustomerHttpAcceptanceIT {
       return DockerComposeRule.builder()
         .file("../docker-compose.yml")
         .waitingForService("web", toRespondOverHttp(port) { port -> port.inFormat("http://127.0.0.1:8080/health") })
+        .waitingForService("command-handler", toRespondOverHttp(8081) { port -> port.inFormat("http://127.0.0.1:8081/health") })
+        .waitingForService("events-projector", toRespondOverHttp(8082) { port -> port.inFormat("http://127.0.0.1:8082/health") })
         .saveLogsTo("../target/dockerComposeRuleTest")
         .build()
     }

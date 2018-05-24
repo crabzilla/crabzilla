@@ -1,6 +1,7 @@
 package io.github.crabzilla.vertx
 
-import io.github.crabzilla.core.*
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.UnitOfWork
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler

@@ -12,8 +12,8 @@ import io.vertx.core.json.JsonObject
 import io.vertx.ext.healthchecks.HealthCheckHandler
 import javax.inject.Singleton
 
-@Module
-class RestServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
+@Module(includes = [Example1Module::class])
+class Example1ServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
 
   @Provides
   @Singleton
