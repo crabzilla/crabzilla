@@ -2,7 +2,7 @@ package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.*
 
-class StateTransitionFn : (DomainEvent, Customer) -> Customer {
+internal class StateTransitionFn : (DomainEvent, Customer) -> Customer {
   override fun invoke(event: DomainEvent, customer: Customer): Customer {
     return when(event) {
       is CustomerCreated -> customer.copy(customerId = event.id, name =  event.name)
@@ -13,7 +13,7 @@ class StateTransitionFn : (DomainEvent, Customer) -> Customer {
   }
 }
 
-class CommandValidatorFn : (Command) -> List<String> {
+internal class CommandValidatorFn : (Command) -> List<String> {
   override fun invoke(command: Command): List<String> {
     return when(command) {
       is CreateCustomer ->
@@ -24,7 +24,7 @@ class CommandValidatorFn : (Command) -> List<String> {
   }
 }
 
-class CommandHandlerFn(
+internal class CommandHandlerFn(
         private val trackerFactory: (Snapshot<Customer>) -> StateTransitionsTracker<Customer>) :
         (Command, Snapshot<Customer>) -> CommandResult? {
 

@@ -133,9 +133,6 @@ public class CommandVerticleTest {
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))
             .thenReturn(CommandResult.Companion.success(expectedUow));
 
-//    when(snapshotPromoterFn.promote(any(Snapshot.class), eq(1), eq(singletonList(expectedEvent))))
-//            .thenReturn(finalSnapshot);
-
     DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
     vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
@@ -143,9 +140,6 @@ public class CommandVerticleTest {
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
-
-//      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
-//              any());
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
@@ -202,9 +196,6 @@ public class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-//      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
-//              any());
-//
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
                                                          any(), eq(ENTITY_NAME));
@@ -257,9 +248,6 @@ public class CommandVerticleTest {
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
-
-//      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
-//              any());
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
                                                          eq(initialSnapshot.getVersion()),
@@ -375,9 +363,6 @@ public class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-//      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
-//              any());
-
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),
               any(), eq(ENTITY_NAME));
@@ -461,9 +446,6 @@ public class CommandVerticleTest {
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
-
-//      inOrder.verify(eventRepository).getUowByCmdId(eq(createCustomerCmd.getCommandId()),
-//              any());
 
       inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
               eq(initialSnapshot.getVersion()),

@@ -2,6 +2,7 @@ package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
 import io.github.crabzilla.vertx.*
+import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.Vertx
 import io.vertx.kotlin.core.DeploymentOptions
 import org.slf4j.LoggerFactory
@@ -26,7 +27,9 @@ class Example1ServiceLauncher {
 
       val vertx = Vertx.vertx()
 
-      configHandler(vertx, { config ->
+      val envOptions = ConfigStoreOptions().setType("env")
+
+      configHandler(vertx, envOptions, { config ->
 
         log.info("config = {}", config.encodePrettily())
 

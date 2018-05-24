@@ -1,11 +1,9 @@
 package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
-import io.github.crabzilla.vertx.CrabzillaVerticleFactory
+import io.github.crabzilla.vertx.*
 import io.github.crabzilla.vertx.VerticleRole.PROJECTOR
-import io.github.crabzilla.vertx.configHandler
-import io.github.crabzilla.vertx.deployVerticles
-import io.github.crabzilla.vertx.deployVerticlesByName
+import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
@@ -37,7 +35,9 @@ class ProjectorServiceLauncher {
 
           val vertx = res.result()
 
-          configHandler(vertx, { config ->
+          val envOptions = ConfigStoreOptions().setType("env")
+
+          configHandler(vertx, envOptions, { config ->
 
             log.info("config = {}", config.encodePrettily())
 

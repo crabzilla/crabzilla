@@ -51,7 +51,6 @@ public class UnitOfWorkRepositoryIT {
 
   static String aggregateId = CommandHandlers.CUSTOMER.name();
 
-
   UnitOfWorkRepository repo;
 
   final CustomerId customerId = new CustomerId("customer#1");
@@ -62,7 +61,6 @@ public class UnitOfWorkRepositoryIT {
   final ActivateCustomer activateCmd = new ActivateCustomer(UUID.randomUUID(), customerId, "I want it");
   final CustomerActivated activated = new CustomerActivated(customerId.stringValue(), Instant.now());
   final UnitOfWork expectedUow2 = new UnitOfWork(UUID.randomUUID(), activateCmd, 2, singletonList(activated));
-
 
   @ClassRule
   public static final DockerComposeRule docker = DockerComposeRule.builder()

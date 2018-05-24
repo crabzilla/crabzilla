@@ -12,9 +12,8 @@ import io.github.crabzilla.vertx.verticles.CommandVerticle
 import io.github.crabzilla.vertx.verticles.WebVerticle
 import javax.inject.Singleton
 
-// tag::component[]
 @Singleton
-@Component(modules = [(Example1ServiceModule::class)])
+@Component(modules = [Example1ServiceModule::class])
 interface Example1ServiceComponent {
 
   @WriteDatabase
@@ -33,5 +32,3 @@ interface Example1ServiceComponent {
   fun projectorVerticles(): Set<JdbiProjectorVerticle<out Any>>
 
 }
-
-// end::component[]

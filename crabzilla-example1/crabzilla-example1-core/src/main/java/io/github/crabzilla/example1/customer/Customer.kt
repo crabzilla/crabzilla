@@ -6,7 +6,7 @@ import io.github.crabzilla.core.EntityId
 import io.github.crabzilla.core.eventsOf
 import io.github.crabzilla.example1.SampleInternalService
 
-data class Customer(val customerId: CustomerId? = null,
+internal data class Customer(val customerId: CustomerId? = null,
                     val name: String? = null,
                     val isActive: Boolean? = false,
                     val reason: String? = null,

@@ -3,6 +3,7 @@ package io.github.crabzilla.example1
 import com.zaxxer.hikari.HikariDataSource
 import io.github.crabzilla.vertx.configHandler
 import io.github.crabzilla.vertx.deployVerticles
+import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
@@ -33,7 +34,9 @@ class RestServiceLauncher {
 
           val vertx = res.result()
 
-          configHandler(vertx, { config ->
+          val envOptions = ConfigStoreOptions().setType("env")
+
+          configHandler(vertx, envOptions, { config ->
 
             log.info("config = {}", config.encodePrettily())
 

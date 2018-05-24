@@ -40,12 +40,11 @@ open class CrabzillaModule(val vertx: Vertx, val config: JsonObject) {
 
   @Provides
   @Singleton
-  fun healthcheck(@WriteDatabase jdbcClientWrite: JDBCClient, @ReadDatabase jdbcClientRead: JDBCClient)
-    : HealthCheckHandler {
+  fun healthcheck(@WriteDatabase jdbcClientWrite: JDBCClient,
+                  @ReadDatabase jdbcClientRead: JDBCClient) : HealthCheckHandler {
 
     val healthCheckHandler = HealthCheckHandler.create(vertx)
 
-    // TODO must be exported as a Set<>
     healthCheckHandler.register("databases:write-database",{ future ->
       jdbcClientWrite.getConnection({ connection ->
         if (connection.failed()) {
