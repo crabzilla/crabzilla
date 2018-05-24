@@ -9,7 +9,7 @@ import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
 import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
 import io.github.crabzilla.vertx.projector.JdbiProjectorVerticle
 import io.github.crabzilla.vertx.verticles.CommandVerticle
-import io.github.crabzilla.vertx.verticles.WebVerticle
+import io.github.crabzilla.vertx.verticles.CrabzillaVerticle
 import javax.inject.Singleton
 
 @Singleton
@@ -25,7 +25,7 @@ interface Example1ServiceComponent {
   @ProjectionDatabase
   fun datasource(): HikariDataSource
 
-  fun restVerticles(): WebVerticle
+  fun restVerticles(): CrabzillaVerticle
   fun projectionRepo(): UnitOfWorkRepository
 
   fun handlerVerticles(): Set<CommandVerticle<out Entity>>

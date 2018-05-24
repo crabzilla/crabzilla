@@ -25,16 +25,16 @@ import java.util.*
 
 // TODO add circuit breakers
 // TODO add endpoints for list/start/stop crabzilla verticles
-class WebVerticle(override val name: String,
-                  private val config: JsonObject,
-                  private val healthCheckHandler : HealthCheckHandler,
-                  private val uowRepository: UnitOfWorkRepository,
-                  private val handlerService: CommandHandlerService)
+class CrabzillaVerticle(override val name: String,
+                        private val config: JsonObject,
+                        private val healthCheckHandler : HealthCheckHandler,
+                        private val uowRepository: UnitOfWorkRepository,
+                        private val handlerService: CommandHandlerService)
   : CrabzillaVerticle(name, REST) {
 
 
   companion object {
-    internal var log = getLogger(WebVerticle::class.java)
+    internal var log = getLogger(CrabzillaVerticle::class.java)
   }
 
   override fun start() {

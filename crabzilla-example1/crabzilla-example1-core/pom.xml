@@ -23,7 +23,7 @@
       <groupId>io.github.crabzilla</groupId>
       <artifactId>crabzilla-vertx-jdbi</artifactId>
     </dependency>
-    
+
   </dependencies>
 
 </project>
