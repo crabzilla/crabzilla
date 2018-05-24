@@ -19,14 +19,11 @@ a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch 
 
 * crabzilla-core            → Command, DomainEvent, Snapshot, etc Your domain will depend on this.
 * crabzilla-vertx-core      → Verticles, Repositories, etc. Your services will depend on this.
-* crabzilla-vertx-web       → CommandRestVerticle. Depends on vertx-web module.
 * crabzilla-example1        → An example using Crabzilla. 
-  * core                    → Commands, Events and other value objects for your domain.
-  * handler                 → Functions like command handler, state transitions and validations. And Aggregates.
-  * projector               → Event projectors (read model builders)
-  * services                → Services (runtime apps) demos using core, handler and projector modules from above.
+  * core                    → Domain code library: Commands, Events, Aggregates, Repositories, Functions, etc.
+  * services                → Services for running the domain.
     * ha                    → High availability example using Hazelcast (3 services of ~25mb)
-    * monolith              → Monolith example (1 service of ~17mb)
+    * monolith              → Monolith example (1 service of ~27mb)
 
 ## Links
 
@@ -91,14 +88,12 @@ curl -X POST \
 ### Random notes
 
 1. Crabzilla tries to provide a chassis for wiring and running your domain by using verticles and other components.
-2. Domain Model code is agnostic about any persistence, fp or reactive frameworks. It's mostly expressed as functions.
-3. If your functions are pure, all side effects will occurrs within UnitOfWorkRepository and EventsProjector components.
-4. As result, you will have a domain service leveraging some Vert.x power: reactive http, jdbc, rpc, distributed HA, etc.
-5. Another result is the domain can be very focused and agnostic about the infrastructure and can use blocking api's.  
-6. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
-7. So far simplicity in order to develop domain code always wins on any trade off.
-8. Another concern is to develop modularized solutions within a monolith and then, eventually and only if needed, to seamless break it into smaller services. See the 2 examples: crabzilla-example1-monolith and crabzilla-example1-ha.
-9. So far it's using "classical" Vertx apis. I do plan to eventually rewrite some code using RxJava or Kotlin corroutines.
+2. If your functions are pure, all side effects will occurrs within UnitOfWorkRepository and EventsProjector components.
+3. As result, you will have a domain service leveraging some Vert.x power: reactive http, jdbc, rpc, distributed HA, etc.
+4. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
+5. So far simplicity in order to develop domain code always wins on any trade off.
+6. Another concern is to develop modularized solutions within a monolith and then, eventually and only if needed, to seamless break it into smaller services. See the 2 examples: crabzilla-example1-monolith and crabzilla-example1-ha.
+7. So far it's using "classical" Vertx apis. I do plan to eventually rewrite some code using RxJava or Kotlin corroutines.
 
 ### Dependencies
 
