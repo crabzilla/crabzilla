@@ -19,6 +19,7 @@ a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch 
 
 * crabzilla-core            → Command, DomainEvent, Snapshot, etc Your domain will depend on this.
 * crabzilla-vertx-core      → Verticles, Repositories, etc. Your services will depend on this.
+* crabzilla-jdbi            → For projections using JDBI.
 * crabzilla-example1        → An example using Crabzilla. 
   * core                    → Domain code library: Commands, Events, Aggregates, Repositories, Functions, etc.
   * services                → Services for running the domain.
