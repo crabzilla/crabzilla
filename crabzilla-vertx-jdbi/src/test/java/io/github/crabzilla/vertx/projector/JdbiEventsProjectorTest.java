@@ -1,7 +1,7 @@
 package io.github.crabzilla.vertx.projector;
 
-import io.github.crabzilla.core.DomainEvent;
-import io.github.crabzilla.core.UnitOfWork;
+import io.github.crabzilla.DomainEvent;
+import io.github.crabzilla.UnitOfWork;
 import io.github.crabzilla.example1.CustomerSummary;
 import io.github.crabzilla.example1.customer.CreateCustomer;
 import io.github.crabzilla.example1.customer.CustomerCreated;
@@ -18,14 +18,13 @@ import org.mockito.Mock;
 
 import java.util.UUID;
 
-import static io.github.crabzilla.core.example1.Example1Kt.subDomainName;
 import static java.util.Collections.singletonList;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class JdbiEventsProjectorTest {
 
-  final static String EVENTS_ENDPOINT = subDomainName();
+  final static String EVENTS_ENDPOINT = "example1";
 
   JdbiEventsProjector<CustomerSummaryProjectionDao> eventsProjector;
   @Mock

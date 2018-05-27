@@ -1,8 +1,8 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.EntityId
+import io.github.crabzilla.Command
+import io.github.crabzilla.DomainEvent
+import io.github.crabzilla.EntityId
 import java.time.Instant
 import java.util.*
 

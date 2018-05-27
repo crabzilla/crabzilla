@@ -1,4 +1,4 @@
-package io.github.crabzilla.core
+package io.github.crabzilla
 
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerCreated

@@ -3,10 +3,7 @@ package io.github.crabzilla.example1.customer
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoSet
-import io.github.crabzilla.core.Entity
-import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.core.SnapshotPromoter
-import io.github.crabzilla.core.StateTransitionsTracker
+import io.github.crabzilla.*
 import io.github.crabzilla.example1.CommandHandlers
 import io.github.crabzilla.example1.SampleInternalService
 import io.github.crabzilla.vertx.UnitOfWorkRepository

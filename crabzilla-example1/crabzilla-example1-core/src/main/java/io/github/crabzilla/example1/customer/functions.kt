@@ -1,6 +1,6 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.*
+import io.github.crabzilla.*
 
 internal class StateTransitionFn : (DomainEvent, Customer) -> Customer {
   override fun invoke(event: DomainEvent, customer: Customer): Customer {

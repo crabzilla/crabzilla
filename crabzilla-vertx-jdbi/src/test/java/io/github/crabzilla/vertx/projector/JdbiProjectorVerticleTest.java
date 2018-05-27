@@ -1,7 +1,7 @@
 package io.github.crabzilla.vertx.projector;
 
-import io.github.crabzilla.core.DomainEvent;
-import io.github.crabzilla.core.UnitOfWork;
+import io.github.crabzilla.DomainEvent;
+import io.github.crabzilla.UnitOfWork;
 import io.github.crabzilla.example1.CustomerSummary;
 import io.github.crabzilla.example1.customer.CreateCustomer;
 import io.github.crabzilla.example1.customer.CustomerCreated;
@@ -26,7 +26,6 @@ import org.mockito.Mock;
 
 import java.util.UUID;
 
-import static io.github.crabzilla.core.example1.Example1Kt.subDomainName;
 import static io.github.crabzilla.vertx.VertxKt.initVertx;
 import static io.github.crabzilla.vertx.helpers.EndpointsHelper.projectorEndpoint;
 import static java.util.Collections.singletonList;
@@ -38,7 +37,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 @RunWith(VertxUnitRunner.class)
 public class JdbiProjectorVerticleTest {
 
-  final static String EVENTS_ENDPOINT = subDomainName();
+  final static String EVENTS_ENDPOINT = "example1";
 
   Vertx vertx;
   CircuitBreaker circuitBreaker;

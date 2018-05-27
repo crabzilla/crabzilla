@@ -1,10 +1,9 @@
 package io.github.crabzilla.vertx.verticles
 
-import io.github.crabzilla.core.*
+import io.github.crabzilla.*
 import io.github.crabzilla.vertx.*
-import io.github.crabzilla.vertx.CommandExecution.*
-import io.github.crabzilla.vertx.helpers.EndpointsHelper
-import io.github.crabzilla.vertx.helpers.EndpointsHelper.*
+import io.github.crabzilla.vertx.CommandExecution.RESULT
+import io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future

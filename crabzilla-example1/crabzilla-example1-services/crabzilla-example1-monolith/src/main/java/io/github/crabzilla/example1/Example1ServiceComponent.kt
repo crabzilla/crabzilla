@@ -2,7 +2,7 @@ package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Component
-import io.github.crabzilla.core.Entity
+import io.github.crabzilla.Entity
 import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
 import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase

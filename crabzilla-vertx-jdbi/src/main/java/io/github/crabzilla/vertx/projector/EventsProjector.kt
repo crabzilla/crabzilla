@@ -1,6 +1,6 @@
 package io.github.crabzilla.vertx.projector
 
-import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.vertx.ProjectionData
 
 interface EventsProjector<DAO> {

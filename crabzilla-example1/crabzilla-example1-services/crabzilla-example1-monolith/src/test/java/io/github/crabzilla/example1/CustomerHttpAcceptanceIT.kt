@@ -2,7 +2,7 @@ package io.github.crabzilla.example1
 
 import com.palantir.docker.compose.DockerComposeRule
 import com.palantir.docker.compose.connection.waiting.HealthChecks.toRespondOverHttp
-import io.github.crabzilla.core.*
+import io.github.crabzilla.*
 import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerCreated

@@ -1,7 +1,7 @@
 package io.github.crabzilla.vertx.verticles
 
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.Command
+import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.vertx.CommandExecution
 import io.github.crabzilla.vertx.CommandExecution.RESULT
 import io.github.crabzilla.vertx.CommandHandlerService

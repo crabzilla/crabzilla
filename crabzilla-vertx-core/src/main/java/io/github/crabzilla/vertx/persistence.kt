@@ -1,6 +1,6 @@
 package io.github.crabzilla.vertx
 
-import io.github.crabzilla.core.*
+import io.github.crabzilla.*
 import io.github.crabzilla.vertx.helpers.VertxSqlHelper
 import io.vertx.core.Future
 import io.vertx.core.json.Json
