@@ -2,7 +2,7 @@ package io.github.crabzilla.example1
 
 import dagger.Module
 import dagger.Provides
-import io.github.crabzilla.vertx.modules.CrabzillaModule
+import io.github.crabzilla.vertx.modules.JdbcModule
 import io.github.crabzilla.vertx.modules.ProjectionDbModule
 import io.github.crabzilla.vertx.verticles.HealthVerticle
 import io.vertx.core.Vertx
@@ -11,7 +11,7 @@ import io.vertx.ext.healthchecks.HealthCheckHandler
 import javax.inject.Singleton
 
 @Module(includes = [Example1Module::class, ProjectionDbModule::class])
-class ProjectorServiceModule(vertx: Vertx, config: JsonObject) : CrabzillaModule(vertx, config) {
+class ProjectorServiceModule(vertx: Vertx, config: JsonObject) : JdbcModule(vertx, config) {
 
   @Provides
   @Singleton

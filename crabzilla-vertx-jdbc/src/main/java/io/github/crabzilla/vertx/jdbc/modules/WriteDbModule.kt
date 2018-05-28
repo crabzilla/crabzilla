@@ -5,7 +5,7 @@ import com.zaxxer.hikari.HikariDataSource
 import dagger.Module
 import dagger.Provides
 import io.github.crabzilla.vertx.UnitOfWorkRepository
-import io.github.crabzilla.vertx.UnitOfWorkRepositoryImpl
+import io.github.crabzilla.vertx.JdbcUnitOfWorkRepository
 import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -47,7 +47,7 @@ class WriteDbModule {
   @Provides
   @Singleton
   fun uowRepository(@WriteDatabase jdbcClient: JDBCClient): UnitOfWorkRepository {
-    return UnitOfWorkRepositoryImpl(jdbcClient)
+    return JdbcUnitOfWorkRepository(jdbcClient)
   }
 
 }

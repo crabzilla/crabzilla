@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx;
+package io.github.crabzilla.vertx.jdbc;
 
 import com.palantir.docker.compose.DockerComposeRule;
 import com.palantir.docker.compose.configuration.ProjectName;
@@ -9,6 +9,10 @@ import io.github.crabzilla.SnapshotData;
 import io.github.crabzilla.UnitOfWork;
 import io.github.crabzilla.example1.CommandHandlers;
 import io.github.crabzilla.example1.customer.*;
+import io.github.crabzilla.vertx.DbConcurrencyException;
+import io.github.crabzilla.vertx.JdbcUnitOfWorkRepository;
+import io.github.crabzilla.vertx.ProjectionData;
+import io.github.crabzilla.vertx.UnitOfWorkRepository;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -169,7 +173,7 @@ public class UnitOfWorkRepositoryIT {
 
   @Before
   public void setup(TestContext context) {
-    this.repo = new UnitOfWorkRepositoryImpl(jdbcClient);
+    this.repo = new JdbcUnitOfWorkRepository(jdbcClient);
   }
 
   @Test

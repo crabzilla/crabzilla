@@ -9,61 +9,29 @@
     <version>0.0.6-SNAPSHOT</version>
   </parent>
 
-  <artifactId>crabzilla-vertx-core</artifactId>
+  <artifactId>crabzilla-vertx-jdbc</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
 
-    <!-- jackson json -->
-
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.module</groupId>
-      <artifactId>jackson-module-parameter-names</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.datatype</groupId>
-      <artifactId>jackson-datatype-jdk8</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.datatype</groupId>
-      <artifactId>jackson-datatype-jsr310</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.module</groupId>
-      <artifactId>jackson-module-kotlin</artifactId>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-vertx-core</artifactId>
     </dependency>
 
-     <!-- cache -->
     <dependency>
-      <groupId>net.jodah</groupId>
-      <artifactId>expiringmap</artifactId>
-      <version>${expiringmap.version}</version>
+      <groupId>com.google.dagger</groupId>
+      <artifactId>dagger</artifactId>
     </dependency>
 
-    <!--Vertx -->
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
     </dependency>
+
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-config</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-circuit-breaker</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-lang-kotlin</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-health-check</artifactId>
+      <artifactId>vertx-jdbc-client</artifactId>
     </dependency>
 
     <!-- test -->
@@ -131,6 +99,33 @@
       <artifactId>docker-compose-rule-junit4</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!-- jdbi -->
+
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-sqlobject</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-kotlin</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-kotlin-sqlobject</artifactId>
+      <scope>test</scope>
+    </dependency>
+
 
   </dependencies>
 
