@@ -37,14 +37,6 @@
       <artifactId>jackson-module-kotlin</artifactId>
     </dependency>
 
-    <!-- dagger -->
-
-    <dependency>
-      <groupId>com.google.dagger</groupId>
-      <artifactId>dagger</artifactId>
-      <version>${dagger.version}</version>
-    </dependency>
-
      <!-- cache -->
     <dependency>
       <groupId>net.jodah</groupId>
