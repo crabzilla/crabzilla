@@ -1,4 +1,4 @@
-package io.github.crabzilla.core
+package io.github.crabzilla
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.io.Serializable

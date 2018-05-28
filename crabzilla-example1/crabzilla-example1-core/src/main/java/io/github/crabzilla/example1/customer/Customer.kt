@@ -1,10 +1,7 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.Entity
-import io.github.crabzilla.core.EntityId
-import io.github.crabzilla.core.eventsOf
 import io.github.crabzilla.example1.SampleInternalService
+import io.github.crabzilla.*
 
 internal data class Customer(val customerId: CustomerId? = null,
                     val name: String? = null,

@@ -39,7 +39,7 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-core</artifactId>
+      <artifactId>crabzilla-vertx-core</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

@@ -1,4 +1,4 @@
-package io.github.crabzilla.core
+package io.github.crabzilla
 
 import java.io.Serializable
 import java.util.*
@@ -39,13 +39,15 @@ class CommandResult private constructor(val unitOfWork: UnitOfWork?,
 
 fun resultOf(f: () -> UnitOfWork?): CommandResult {
   return try {
-    CommandResult.success(f.invoke()) }
+    CommandResult.success(f.invoke())
+  }
   catch (e: Exception) {
-    CommandResult.error(e) }
+    CommandResult.error(e)
+  }
 }
 
 fun uowOf(command: Command, events: List<DomainEvent>, currentVersion: Version): UnitOfWork {
-  return UnitOfWork(UUID.randomUUID(), command, currentVersion +1, events)
+  return UnitOfWork(UUID.randomUUID(), command, currentVersion + 1, events)
 }
 
 fun eventsOf(vararg event: DomainEvent): List<DomainEvent> {

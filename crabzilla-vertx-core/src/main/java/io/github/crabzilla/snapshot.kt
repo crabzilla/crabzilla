@@ -1,4 +1,4 @@
-package io.github.crabzilla.core
+package io.github.crabzilla
 
 import java.util.*
 
@@ -23,7 +23,7 @@ open class SnapshotPromoter<A : Entity>(private val trackerFactory: (Snapshot<A>
 }
 
 class StateTransitionsTracker<A : Entity>(private val originalSnapshot: Snapshot<A>,
-                                                                   private val applyEventsFn: (DomainEvent, A) -> A) {
+                                          private val applyEventsFn: (DomainEvent, A) -> A) {
   private val stateTransitions = ArrayList<StateTransition<A>>()
 
   inline fun applyEvents(aggregateRootMethodFn: (A) -> List<DomainEvent>): StateTransitionsTracker<A> {

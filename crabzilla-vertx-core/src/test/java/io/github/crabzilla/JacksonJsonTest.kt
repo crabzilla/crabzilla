@@ -1,4 +1,4 @@
-package io.github.crabzilla.core
+package io.github.crabzilla
 
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.github.crabzilla.example1.customer.CreateCustomer

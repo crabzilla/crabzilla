@@ -5,10 +5,10 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.EntityId
-import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.Command
+import io.github.crabzilla.DomainEvent
+import io.github.crabzilla.EntityId
+import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.vertx.helpers.JacksonGenericCodec
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions

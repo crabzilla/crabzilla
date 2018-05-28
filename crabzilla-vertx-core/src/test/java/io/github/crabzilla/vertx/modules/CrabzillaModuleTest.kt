@@ -31,7 +31,6 @@ class CrabzillaModuleTest {
           .testModule(TestModule(vertx, config))
           .build()
 
-//        TODO run docker-compose with mysql
         assertNotNull(component.healthCheckHandler())
 
         future.complete()

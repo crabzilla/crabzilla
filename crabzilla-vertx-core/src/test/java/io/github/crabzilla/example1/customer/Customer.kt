@@ -1,9 +1,9 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.Entity
-import io.github.crabzilla.core.EntityId
-import io.github.crabzilla.core.eventsOf
+import io.github.crabzilla.DomainEvent
+import io.github.crabzilla.Entity
+import io.github.crabzilla.EntityId
+import io.github.crabzilla.eventsOf
 import io.github.crabzilla.example1.SampleInternalService
 
 // tag::aggregate[]

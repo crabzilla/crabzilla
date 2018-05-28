@@ -1,4 +1,4 @@
-package io.github.crabzilla.core;
+package io.github.crabzilla;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;

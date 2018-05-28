@@ -1,7 +1,7 @@
 package io.github.crabzilla.example1.impl
 
 
-import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.example1.CustomerSummary
 import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated

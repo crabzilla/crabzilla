@@ -1,8 +1,11 @@
 package io.github.crabzilla.example1
 
 import com.zaxxer.hikari.HikariDataSource
-import io.github.crabzilla.vertx.*
+import io.github.crabzilla.vertx.CrabzillaVerticleFactory
 import io.github.crabzilla.vertx.VerticleRole.HANDLER
+import io.github.crabzilla.vertx.configHandler
+import io.github.crabzilla.vertx.deployVerticles
+import io.github.crabzilla.vertx.deployVerticlesByName
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx.clusteredVertx

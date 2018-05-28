@@ -1,4 +1,4 @@
-package io.github.crabzilla.core.example1
+package io.github.crabzilla.example1
 
 fun subDomainName() = "example1"
 

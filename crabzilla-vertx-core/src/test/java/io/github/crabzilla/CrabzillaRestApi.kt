@@ -1,4 +1,4 @@
-package io.github.crabzilla.core
+package io.github.crabzilla
 
 import retrofit2.Call
 import retrofit2.http.*
