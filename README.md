@@ -88,14 +88,12 @@ curl -X POST \
 ### Random notes
 
 1. Crabzilla tries to provide a chassis for wiring and running your domain by using verticles and other components.
-2. Domain Model code is agnostic about any persistence, fp or reactive frameworks. It's mostly expressed as functions.
-3. If your functions are pure, all side effects will occurrs within UnitOfWorkRepository and EventsProjector components.
-4. As result, you will have a domain service leveraging some Vert.x power: reactive http, jdbc, rpc, distributed HA, etc.
-5. Another result is the domain can be very focused and agnostic about the infrastructure and can use blocking api's.  
-6. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
-7. So far simplicity in order to develop domain code always wins on any trade off.
-8. Another concern is to develop modularized solutions within a monolith and then, eventually and only if needed, to seamless break it into smaller services. See the 2 examples: crabzilla-example1-monolith and crabzilla-example1-ha.
-9. So far it's using "classical" Vertx apis. I do plan to eventually rewrite some code using RxJava or Kotlin corroutines.
+2. If your functions are pure, all side effects will occurrs within UnitOfWorkRepository and EventsProjector components.
+3. As result, you will have a domain service leveraging some Vert.x power: reactive http, jdbc, rpc, distributed HA, etc.
+4. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
+5. So far simplicity in order to develop domain code always wins on any trade off.
+6. Another concern is to develop modularized solutions within a monolith and then, eventually and only if needed, to seamless break it into smaller services. See the 2 examples: crabzilla-example1-monolith and crabzilla-example1-ha.
+7. So far it's using "classical" Vertx apis. I do plan to eventually rewrite some code using RxJava or Kotlin corroutines.
 
 ### Dependencies
 
