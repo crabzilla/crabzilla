@@ -17,16 +17,13 @@ a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch 
 
 ## Modules
 
-* crabzilla-core            → Command, DomainEvent, Snapshot, etc Your domain will depend on this.
-* crabzilla-vertx-core      → Verticles, Repositories, etc. Your services will depend on this.
-* crabzilla-vertx-web       → CommandRestVerticle. Depends on vertx-web module.
+* crabzilla-vertx-core      → Schema, Serialization, Verticles, Repositories, etc. Your model will depend on this.
+* crabzilla-vertx-web       → CommandRestVerticle. Depends on vertx-web module. 
 * crabzilla-example1        → An example using Crabzilla. 
-  * core                    → Commands, Events and other value objects for your domain.
-  * handler                 → Functions like command handler, state transitions and validations. And Aggregates.
-  * projector               → Event projectors (read model builders)
-  * services                → Services (runtime apps) demos using core, handler and projector modules from above.
+  * core                    → Commands, Events, Functions, Repositories and Value Objects for your domain.
+  * services                → Services (runtime apps) demos.
     * ha                    → High availability example using Hazelcast (3 services of ~25mb)
-    * monolith              → Monolith example (1 service of ~17mb)
+    * monolith              → Monolith example (1 service of ~25mb)
 
 ## Links
 

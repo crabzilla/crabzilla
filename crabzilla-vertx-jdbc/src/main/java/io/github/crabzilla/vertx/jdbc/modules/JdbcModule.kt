@@ -15,7 +15,7 @@ import io.vertx.ext.jdbc.JDBCClient
 import javax.inject.Singleton
 
 @Module(includes = [WriteDbModule::class, ReadDbModule::class])
-open class CrabzillaModule(val vertx: Vertx, val config: JsonObject) {
+open class JdbcModule(val vertx: Vertx, val config: JsonObject) {
 
   init {
 

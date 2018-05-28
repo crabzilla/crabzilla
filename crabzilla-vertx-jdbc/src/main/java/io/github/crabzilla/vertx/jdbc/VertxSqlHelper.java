@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.helpers;
+package io.github.crabzilla.vertx.jdbc;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
