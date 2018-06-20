@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.verticles
+package io.github.crabzilla.web
 
 import io.github.crabzilla.vertx.CrabzillaVerticle
 import io.github.crabzilla.vertx.VerticleRole.REST

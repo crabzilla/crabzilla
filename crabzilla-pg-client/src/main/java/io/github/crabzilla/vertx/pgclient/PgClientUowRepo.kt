@@ -115,7 +115,7 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
 
     client.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowSequence)) { ar ->
       if (ar.failed()) {
-        log.error("selectAfterUowSequence", ar.cause())
+        log.error("selectAfterUowSequenceSql", ar.cause())
         selectAfterUowSeq.fail(ar.cause())
         return@preparedQuery
       }

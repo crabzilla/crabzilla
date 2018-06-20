@@ -6,6 +6,7 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -29,12 +30,10 @@ class PgClientModuleIT {
           .pgClientModule(PgClientModule(vertx, config))
           .build()
 
+        assertThat(vertx).isSameAs(component.vertx())
+        assertThat(2).isEqualTo(component.healthHandlers().size)
         assertNotNull(component.readDb())
         assertNotNull(component.writeDb())
-
-        component.readDb().query("select 1", { event -> println("ok read? : " + event.succeeded()) })
-
-        component.writeDb().query("select 1", { event -> println("ok write? : " + event.succeeded()) })
 
         future.complete()
 
