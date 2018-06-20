@@ -256,6 +256,7 @@ open class JdbcUnitOfWorkRepository(private val client: JDBCClient) : UnitOfWork
                 return@setHandler
               }
 
+
               appendFuture.complete(updateResult.keys.getLong(0))
 
               sqlConn.commit {

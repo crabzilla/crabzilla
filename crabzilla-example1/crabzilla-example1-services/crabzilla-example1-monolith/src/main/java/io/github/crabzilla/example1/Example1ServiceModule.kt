@@ -6,7 +6,7 @@ import io.github.crabzilla.vertx.CommandHandlerService
 import io.github.crabzilla.vertx.CommandHandlerServiceImpl
 import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.github.crabzilla.vertx.modules.JdbcModule
-import io.github.crabzilla.vertx.verticles.CrabzillaVerticle
+import io.github.crabzilla.vertx.verticles.RestVerticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.healthchecks.HealthCheckHandler
@@ -25,8 +25,8 @@ class Example1ServiceModule(vertx: Vertx, config: JsonObject) : JdbcModule(vertx
   @Singleton
   fun restVerticle(uowRepository: UnitOfWorkRepository, config: JsonObject,
                    handlerService: CommandHandlerService,
-                   healthCheckHandler: HealthCheckHandler): CrabzillaVerticle {
-    return CrabzillaVerticle(subDomainName(), config, healthCheckHandler, uowRepository, handlerService)
+                   healthCheckHandler: HealthCheckHandler): RestVerticle {
+    return RestVerticle(subDomainName(), config, healthCheckHandler, uowRepository, handlerService)
   }
 
 }

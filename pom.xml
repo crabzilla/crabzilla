@@ -106,8 +106,10 @@
     <module>crabzilla-vertx-core</module>
     <module>crabzilla-vertx-web</module>
     <module>crabzilla-vertx-jdbc</module>
-    <module>crabzilla-vertx-jdbi</module>
-    <module>crabzilla-example1</module>
+    <module>crabzilla-pg-client</module>
+
+    <!--<module>crabzilla-vertx-jdbi</module>-->
+    <!--<module>crabzilla-example1</module>-->
   </modules>
 
   <dependencies>

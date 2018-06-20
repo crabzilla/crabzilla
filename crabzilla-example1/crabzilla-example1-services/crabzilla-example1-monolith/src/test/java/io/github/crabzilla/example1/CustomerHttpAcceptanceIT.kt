@@ -7,6 +7,9 @@ import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerId
+import io.github.crabzilla.retrofit.CrabzillaRestApi
+import io.github.crabzilla.retrofit.ObjectMapperFactory
+import io.github.crabzilla.retrofit.RetrofitClientFactory
 import io.github.crabzilla.vertx.helpers.EndpointsHelper.restEndpoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule

@@ -35,6 +35,14 @@
     </dependency>
 
     <!-- test -->
+
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-vertx-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>com.squareup.retrofit2</groupId>
       <artifactId>retrofit</artifactId>
@@ -59,7 +67,6 @@
       <version>${okhttp.version}</version>
       <scope>test</scope>
     </dependency>
-
 
     <dependency>
       <groupId>io.vertx</groupId>

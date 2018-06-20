@@ -3,8 +3,8 @@ package io.github.crabzilla.vertx.modules
 import com.zaxxer.hikari.HikariDataSource
 import dagger.Module
 import dagger.Provides
-import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
-import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
+import io.github.crabzilla.vertx.qualifiers.ProjectionDatabase
+import io.github.crabzilla.vertx.qualifiers.ReadDatabase
 import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.core.kotlin.KotlinPlugin
 import org.jdbi.v3.sqlobject.SqlObjectPlugin

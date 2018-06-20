@@ -1,6 +1,8 @@
 consolidate crabzilla-core into crabzilla-vertx-core
-domain code can be reactive, to rewrite example1
 https://github.com/reactiverse/reactive-pg-client
+
+http://www.agiledata.org/essays/keys.html
+domain code can be reactive, to rewrite example1
 after this, add crabzilla-vertx-jooq https://github.com/jklingsporn/vertx-jooq
 surrogate keys auto increment instead of uuid
 in memory (Map) implementations of persistence

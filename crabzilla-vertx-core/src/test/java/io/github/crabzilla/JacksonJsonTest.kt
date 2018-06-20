@@ -5,6 +5,7 @@ import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerId
+import io.github.crabzilla.retrofit.ObjectMapperFactory
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test

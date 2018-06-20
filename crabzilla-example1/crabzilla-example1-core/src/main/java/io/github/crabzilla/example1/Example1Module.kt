@@ -9,7 +9,7 @@ import io.github.crabzilla.example1.impl.CustomerSummaryProjectorDao
 import io.github.crabzilla.example1.impl.SampleInternalServiceImpl
 import io.github.crabzilla.vertx.modules.JdbiModule
 import io.github.crabzilla.vertx.modules.ProjectionDbModule
-import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
+import io.github.crabzilla.vertx.qualifiers.ProjectionDatabase
 import io.github.crabzilla.vertx.projector.JdbiProjectorVerticle
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.Vertx

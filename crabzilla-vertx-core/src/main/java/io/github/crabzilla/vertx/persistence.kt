@@ -4,7 +4,7 @@ import io.github.crabzilla.SnapshotData
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.Version
 import io.vertx.core.Future
-import java.util.*
+import java.util.UUID
 
 interface UnitOfWorkRepository {
 

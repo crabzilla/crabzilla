@@ -4,12 +4,12 @@ import com.zaxxer.hikari.HikariDataSource
 import dagger.Component
 import io.github.crabzilla.Entity
 import io.github.crabzilla.vertx.UnitOfWorkRepository
-import io.github.crabzilla.vertx.modules.qualifiers.ProjectionDatabase
-import io.github.crabzilla.vertx.modules.qualifiers.ReadDatabase
-import io.github.crabzilla.vertx.modules.qualifiers.WriteDatabase
+import io.github.crabzilla.vertx.qualifiers.ProjectionDatabase
+import io.github.crabzilla.vertx.qualifiers.ReadDatabase
+import io.github.crabzilla.vertx.qualifiers.WriteDatabase
 import io.github.crabzilla.vertx.projector.JdbiProjectorVerticle
 import io.github.crabzilla.vertx.verticles.CommandVerticle
-import io.github.crabzilla.vertx.verticles.CrabzillaVerticle
+import io.github.crabzilla.vertx.verticles.RestVerticle
 import javax.inject.Singleton
 
 @Singleton
@@ -25,7 +25,7 @@ interface Example1ServiceComponent {
   @ProjectionDatabase
   fun datasource(): HikariDataSource
 
-  fun restVerticles(): CrabzillaVerticle
+  fun restVerticles(): RestVerticle
   fun projectionRepo(): UnitOfWorkRepository
 
   fun handlerVerticles(): Set<CommandVerticle<out Entity>>
