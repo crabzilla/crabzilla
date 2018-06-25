@@ -25,11 +25,12 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
 
     const val SQL_SELECT_UOW_BY_CMD_ID = "select * from units_of_work where cmd_id = $1 "
     const val SQL_SELECT_UOW_BY_UOW_ID = "select * from units_of_work where uow_id = $1 "
-    val SQL_SELECT_AFTER_VERSION = "select uow_events, version from units_of_work " +
+    const val SQL_SELECT_AFTER_VERSION = "select uow_events, version from units_of_work " +
                                           "where ar_id = $1 and ar_name = $2 and version > $3 order by version "
-    val SQL_SELECT_CURRENT_VERSION = "select max(version) as last_version " +
+    const val SQL_SELECT_CURRENT_VERSION = "select max(version) as last_version " +
                                        "from units_of_work where ar_id = $1 and ar_name = $2 "
-    val SQL_INSERT_UOW = "insert into units_of_work (uow_id, uow_events, cmd_id, cmd_data, ar_name, ar_id, version) " +
+    const val SQL_INSERT_UOW = "insert into units_of_work " +
+                                            "(uow_id, uow_events, cmd_id, cmd_data, ar_name, ar_id, version) " +
                                             "values ($1, $2, $3, $4, $5, $6, $7) returning uow_seq_number"
   }
 
@@ -79,7 +80,6 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
           // Fetch 100 rows at a time
           val tuple = Tuple.of( id, aggregateRootName, Numeric.create(version))
           val stream = pq.createStream(100, tuple)
-          println("tuple --> $tuple")
           val list = ArrayList<SnapshotData>() // TODO what is the point of this list?
           // Use the stream
           stream.exceptionHandler({ err -> log.error("Error: " + err.message, err.cause) })

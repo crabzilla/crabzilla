@@ -29,30 +29,28 @@ import java.time.Instant
 import java.util.*
 
 @ExtendWith(VertxExtension::class)
-@DisplayName("a PgClientClientUowRepo")
+@DisplayName("PgClientClientUowRepo")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class PgClientUowRepoIT {
 
-  internal val aggregateName = CommandHandlers.CUSTOMER.name
+  private lateinit var vertx: Vertx
+  internal lateinit var writeDb: PgPool
+  internal lateinit var repo: UnitOfWorkRepository
 
+  internal val aggregateName = CommandHandlers.CUSTOMER.name
   internal val customerId = CustomerId(UUID.randomUUID().toString())
   internal val createCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer")
   internal val created = CustomerCreated(customerId, "customer")
   internal val expectedUow1 = UnitOfWork(UUID.randomUUID(), createCmd, 1, listOf(created))
-
   internal val activateCmd = ActivateCustomer(UUID.randomUUID(), customerId, "I want it")
   internal val activated = CustomerActivated(customerId.stringValue(), Instant.now())
   internal val expectedUow2 = UnitOfWork(UUID.randomUUID(), activateCmd, 2, listOf(activated))
-
-  internal lateinit var vertx: Vertx
-  internal lateinit var writeDb: PgPool
-  internal lateinit var repo: UnitOfWorkRepository
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
 
     val options = VertxOptions()
-    options.blockedThreadCheckInterval = (1000 * 60 * 60).toLong()
+    options.blockedThreadCheckInterval = (1000 * 60 * 60).toLong() // to easier debug
 
     vertx = Vertx.vertx(options)
 

@@ -1,8 +1,5 @@
-consolidate crabzilla-core into crabzilla-vertx-core
-https://github.com/reactiverse/reactive-pg-client
+vertx-junit5 for all tests
+map with entity name -> int
+uowRepo using above map
 
-http://www.agiledata.org/essays/keys.html
-domain code can be reactive, to rewrite example1
-after this, add crabzilla-vertx-jooq https://github.com/jklingsporn/vertx-jooq
-surrogate keys auto increment instead of uuid
-in memory (Map) implementations of persistence
+

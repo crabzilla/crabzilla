@@ -103,9 +103,8 @@
 
   <modules>
 
-    <module>crabzilla-vertx-core</module>
-    <module>crabzilla-vertx-web</module>
-    <module>crabzilla-vertx-jdbc</module>
+    <module>crabzilla-core</module>
+    <module>crabzilla-web</module>
     <module>crabzilla-pg-client</module>
 
     <!--<module>crabzilla-vertx-jdbi</module>-->
@@ -175,25 +174,19 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-vertx-core</artifactId>
+        <artifactId>crabzilla-core</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-vertx-web</artifactId>
+        <artifactId>crabzilla-web</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-vertx-jdbc</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-vertx-jdbi</artifactId>
+        <artifactId>crabzilla-pg-client</artifactId>
         <version>${project.version}</version>
       </dependency>
 
