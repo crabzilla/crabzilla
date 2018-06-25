@@ -79,7 +79,7 @@ class CommandVerticleTest {
   SnapshotPromoter<Customer> snapshotPromoterFn;
 
   @BeforeEach
-  public void setUp(VertxTestContext tc) {
+  void setUp(VertxTestContext tc) throws InterruptedException {
 
     vertx = Vertx.vertx();
 
@@ -100,9 +100,7 @@ class CommandVerticleTest {
     Verticle verticle = new CommandVerticle<Customer>(ENTITY_NAME,
             seedValue, cmdHandlerFn, validatorFn, snapshotPromoterFn, eventRepository, cache, circuitBreaker);
 
-    vertx.deployVerticle(verticle, tc.succeeding());
-
-    tc.completeNow();
+    vertx.deployVerticle(verticle, tc.succeeding(x -> tc.completeNow()));
 
   }
 

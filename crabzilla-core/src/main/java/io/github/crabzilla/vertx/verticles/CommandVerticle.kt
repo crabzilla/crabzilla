@@ -78,7 +78,7 @@ class CommandVerticle<A : Entity>(override val name: String,
 
       vertx.executeBlocking<Snapshot<A>>({ fromCacheFuture ->
 
-        log.debug("loading {} from cache", targetId)
+        log.info("loading {} from cache", targetId)
 
         fromCacheFuture.complete(cache[targetId])
 
@@ -88,7 +88,7 @@ class CommandVerticle<A : Entity>(override val name: String,
         val emptySnapshot = Snapshot(seedValue, 0)
         val cachedSnapshot = snapshotFromCache ?: emptySnapshot
 
-        log.debug("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
+        log.info("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
                 targetId, cachedSnapshot)
 
         val selectAfterVersionFuture = Future.future<SnapshotData>()
@@ -105,7 +105,7 @@ class CommandVerticle<A : Entity>(override val name: String,
 
           val nonCached = fromEventRepoResult.result()
           val totalOfNonCachedEvents = nonCached.events.size
-          log.debug("id {} found {} pending events. Last version is now {}", targetId, totalOfNonCachedEvents,
+          log.info("id {} found {} pending events. Last version is now {}", targetId, totalOfNonCachedEvents,
                   nonCached.version)
 
           val resultingSnapshot = if (totalOfNonCachedEvents > 0)
@@ -146,7 +146,7 @@ class CommandVerticle<A : Entity>(override val name: String,
               val finalSnapshot = snapshotPromoter.promote(resultingSnapshot, uow.version, uow.events)
               cache.put(targetId, finalSnapshot)
               val uowSequence = appendAsyncResult.result()
-              log.debug("uowSequence: {}", uowSequence)
+              log.info("uowSequence: {}", uowSequence)
               future1.complete(CommandExecution(result = RESULT.SUCCESS, commandId = command.commandId,
                 unitOfWork = uow, uowSequence = uowSequence))
             }
