@@ -30,7 +30,9 @@ install: false
 
 script:
   - sleep 3
-  - docker-compose -f crabzilla-pg-client/docker-compose.yml --force-recreate -d up
+  - cd crabzilla-pg-client
+  - docker-compose up -d
+  - cd ..
   - mvn verify
 
 after_success:
