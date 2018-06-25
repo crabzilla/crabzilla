@@ -13,17 +13,13 @@ on [Vert.x](http://vertx.io/) and a relational database of your choice.
 
 Its still in very early development stage. APIs can change. So far Crabzilla has only an Aggregate example. Inspired by 
 [Eventstorming](http://eventstorming.com), the goal is to develop examples and implementations for an ExternalSystem, 
-a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch is very diferent from that. A 1.0.0-SNAPSHOT is under way.
+a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch is very different from that. 
 
 ## Modules
 
-* crabzilla-vertx-core      → Schema, Serialization, Verticles, Repositories, etc. Your model will depend on this.
-* crabzilla-vertx-web       → CommandRestVerticle. Depends on vertx-web module. 
-* crabzilla-example1        → An example using Crabzilla. 
-  * core                    → Commands, Events, Functions, Repositories and Value Objects for your domain.
-  * services                → Services (runtime apps) demos.
-    * ha                    → High availability example using Hazelcast (3 services of ~25mb)
-    * monolith              → Monolith example (1 service of ~25mb)
+* crabzilla-core      → Schema, Serialization, Verticles, Repositories, etc. Your model will depend on this.
+* crabzilla-pg-client → Implementation for an UnitOfWorkRepo and EventsProjector.
+* crabzilla-web       → CommandRestVerticle. Depends on vertx-web module. 
 
 ## Links
 
@@ -54,41 +50,24 @@ git clone https://github.com/crabzilla/crabzilla
 cd crabzilla
 ```
 
-2. Build it, running both unit and integration tests (ports 3306 and 8080 will be used):
+2. Start docker-compose in background running a Postgres database (port 5432 will be used):
+
+```bash
+  - cd crabzilla-pg-client
+  - docker-compose up -d
+  - cd ..
+```
+
+3. Build it, running both unit and integration tests:
 
 ```bash
 mvn clean install
 ```
 
-3. Now you can run the **crabzilla-example1-ha**: 
-
-```bash
-cd crabzilla-example1/crabzilla-example1-services/crabzilla-example1-ha
-docker-compose up
-```
-
-4. Now you can finally submit a command: 
-
-```bash
-curl -X POST \
-  http://localhost:8080/customer/commands \
-  -H 'content-type: application/json' \
-  -d '{
-  "@class" : "io.github.crabzilla.example1.customer.CreateCustomer",
-  "commandId" : "b128066b-64f1-457d-8e35-3f019175468c",
-  "targetId" : {
-    "@class" : "io.github.crabzilla.example1.customer.CustomerId",
-    "id" : "6dec4ef2-1882-4e60-9292-ef4a0cba9b06"
-  },
-  "name" : "6dec4ef2-1882-4e60-9292-ef4a0cba9b06"
-}
-'
-```
-
 ### Random notes
 
 1. Crabzilla tries to provide a chassis for wiring and running your domain by using verticles and other components.
-2. If your functions are pure, all side effects will occurrs within UnitOfWorkRepository and EventsProjector components.
+2. If your functions are pure, all side effects will occurs within UnitOfWorkRepository and EventsProjector components.
 3. As result, you will have a domain service leveraging some Vert.x power: reactive http, jdbc, rpc, distributed HA, etc.
 4. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
 5. So far simplicity in order to develop domain code always wins on any trade off.
@@ -102,5 +81,4 @@ I know any Java library should be very conservative about dependency to other li
 1. [jackson-kotlin-plugin](https://github.com/FasterXML/jackson-module-kotlin) Used to ser/des polymorphic objects (commands, events, etc) 
 2. [ExpiringMap](https://github.com/jhalterman/expiringmap) Used as a mechanism to plug lazy entry loading of Snapshots. This is useful for entities with lot of events.
 
-Except for Jackson, these dependencies are used only in crabzilla-vertx and not in your domain code.
 
