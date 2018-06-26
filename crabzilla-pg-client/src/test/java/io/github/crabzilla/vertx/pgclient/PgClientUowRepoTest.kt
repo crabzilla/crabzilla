@@ -31,7 +31,7 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @DisplayName("PgClientClientUowRepo")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal class PgClientUowRepoIT {
+internal class PgClientUowRepoTest {
 
   private lateinit var vertx: Vertx
   internal lateinit var writeDb: PgPool
