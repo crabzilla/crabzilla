@@ -57,7 +57,7 @@ internal class PgClientUowRepoIT {
     val envOptions = ConfigStoreOptions()
       .setType("file")
       .setFormat("properties")
-      .setConfig(JsonObject().put("path", "example1.env"))
+      .setConfig(JsonObject().put("path", "../example1.env"))
 
     configHandler(vertx, envOptions, { config ->
 
