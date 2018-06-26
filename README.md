@@ -21,18 +21,10 @@ a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch 
 * crabzilla-pg-client → Implementation for an UnitOfWorkRepo and EventsProjector.
 * crabzilla-web       → HealthVerticle or RestVerticle. Depends on vertx-web module. 
 
-## Links
+## Links (deprecated)
 
 * [kotlin-example1-manual](https://crabzilla.github.io/crabzilla/docs/kotlin-example1-manual.html)
 * [Architecture decision records](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
-
-## How to run the example
-
-crabzilla-example1-ha has these three services:
-
-![alt text](https://github.com/crabzilla/crabzilla/blob/master/doc/asciidoc/images/crabzilla-bc-architecture.png "crabzilla-example1-ha")
-
-while crabzilla-example1-monolith has these 3 services embedded within just one service.
 
 ### Requirements
 
@@ -53,7 +45,7 @@ cd crabzilla
 2. Start docker-compose running a Postgres database (port 5432 will be used):
 
 ```bash
-  - docker-compose up
+docker-compose up
 ```
 
 3. Open another terminal and build it, running both unit and integration tests:
