@@ -19,7 +19,7 @@ a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch 
 
 * crabzilla-core      → Schema, Serialization, Verticles, Repositories, etc. Your model will depend on this.
 * crabzilla-pg-client → Implementation for an UnitOfWorkRepo and EventsProjector.
-* crabzilla-web       → CommandRestVerticle. Depends on vertx-web module. 
+* crabzilla-web       → HealthVerticle or RestVerticle. Depends on vertx-web module. 
 
 ## Links
 
@@ -50,15 +50,13 @@ git clone https://github.com/crabzilla/crabzilla
 cd crabzilla
 ```
 
-2. Start docker-compose in background running a Postgres database (port 5432 will be used):
+2. Start docker-compose running a Postgres database (port 5432 will be used):
 
 ```bash
-  - cd crabzilla-pg-client
-  - docker-compose up -d
-  - cd ..
+  - docker-compose up
 ```
 
-3. Build it, running both unit and integration tests:
+3. Open another terminal and build it, running both unit and integration tests:
 
 ```bash
 mvn clean install
