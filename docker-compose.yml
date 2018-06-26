@@ -1,16 +1,23 @@
 version: '3.1'
 
 services:
+  db:
+      image: postgres:11-alpine
+      environment:
+        POSTGRES_USER: user1
+        POSTGRES_PASSWORD: pwd1
+#        PGDATA: /data/postgres
+      volumes:
+#        - /data/postgres:/data/postgres
+        - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      ports:
+        - "5432:5432"
+#      networks:
+#        - postgres
+      restart: unless-stopped
 
-    db:
-        image: mysql:5.7
-        ports:
-               - 3306:3306
-        environment:
-            MYSQL_ROOT_PASSWORD: my-secret-pwd
-        volumes:
-            - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
-            - crabzilla-data-volume1:/var/lib/mysql
-volumes:
-    crabzilla-data-volume1:
-
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8088:8088

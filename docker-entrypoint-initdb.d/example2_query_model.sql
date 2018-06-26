@@ -1,8 +1,6 @@
-create database example1_read ;
+CREATE DATABASE example1_read OWNER user1;
 
-use example1_read ;
-
-DROP TABLE if exists events_channels ;
+\connect example1_read ;
 
 CREATE TABLE events_channels (
     channel_name VARCHAR(36) NOT NULL,

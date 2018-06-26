@@ -1,14 +1,13 @@
-create database example1_write ;
 
-use example1_write ;
+CREATE DATABASE example1_write OWNER user1;
 
-DROP TABLE if exists units_of_work ;
+\connect example1_write ;
 
 CREATE TABLE units_of_work (
-      uow_seq_number BIGINT AUTO_INCREMENT,
-	    uow_id VARCHAR(36) NOT NULL,
+      uow_seq_number BIGSERIAL,
+	    uow_id UUID NOT NULL,
       uow_events JSON NOT NULL,
-      cmd_id VARCHAR(36) NOT NULL,
+      cmd_id UUID NOT NULL,
       cmd_data JSON NOT NULL,
       ar_name VARCHAR(36) NOT NULL,
       ar_id VARCHAR(36) NOT NULL,
@@ -18,7 +17,7 @@ CREATE TABLE units_of_work (
       UNIQUE (uow_id, ar_name),
       UNIQUE (cmd_id, ar_name)
     )
-    PARTITION BY KEY(ar_name)
+--    PARTITION BY hash(ar_name)
     ;
 
 CREATE INDEX idx_cmd_id ON units_of_work (cmd_id);

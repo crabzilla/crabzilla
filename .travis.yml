@@ -20,7 +20,7 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
   - docker-compose rm -f
   - docker-compose down -v
-  - mvn clean
+  - docker-compose up -d
 
 cache:
   directories:
@@ -29,8 +29,9 @@ cache:
 install: false
 
 script:
-  - sleep 3
-  - mvn verify
+  - sleep 1
+  - ls -la
+  - mvn clean verify
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

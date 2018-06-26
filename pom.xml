@@ -74,22 +74,6 @@
     <tag>crabzilla-0.0.5</tag>
   </scm>
 
-  <repositories>
-    <repository>
-      <id>palantir</id>
-      <name>Palantir docker-compose-rule</name>
-      <url>https://dl.bintray.com/palantir/releases</url>
-    </repository>
-  </repositories>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>jcenter</id>
-      <name>JCenter</name>
-      <url>https://jcenter.bintray.com/</url>
-    </pluginRepository>
-  </pluginRepositories>
-
   <distributionManagement>
     <snapshotRepository>
       <id>ossrh</id>
@@ -103,11 +87,12 @@
 
   <modules>
 
-    <module>crabzilla-vertx-core</module>
-    <module>crabzilla-vertx-web</module>
-    <module>crabzilla-vertx-jdbc</module>
-    <module>crabzilla-vertx-jdbi</module>
-    <module>crabzilla-example1</module>
+    <module>crabzilla-core</module>
+    <module>crabzilla-web</module>
+    <module>crabzilla-pg-client</module>
+
+    <!--<module>crabzilla-vertx-jdbi</module>-->
+    <!--<module>crabzilla-example1</module>-->
   </modules>
 
   <dependencies>
@@ -124,12 +109,6 @@
     </dependency>
 
     <!-- test -->
-
-    <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
-      <scope>test</scope>
-    </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -173,25 +152,19 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-vertx-core</artifactId>
+        <artifactId>crabzilla-core</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-vertx-web</artifactId>
+        <artifactId>crabzilla-web</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-vertx-jdbc</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-vertx-jdbi</artifactId>
+        <artifactId>crabzilla-pg-client</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -238,18 +211,6 @@
         <version>${jackson.version}</version>
       </dependency>
 
-      <dependency>
-        <groupId>org.jdbi</groupId>
-        <artifactId>jdbi3-kotlin</artifactId>
-        <version>${jdbi.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.jdbi</groupId>
-        <artifactId>jdbi3-kotlin-sqlobject</artifactId>
-        <version>${jdbi.version}</version>
-      </dependency>
-
       <!-- json -->
       <dependency>
         <groupId>com.fasterxml.jackson.module</groupId>
@@ -272,43 +233,11 @@
         <version>${jackson.version}</version>
       </dependency>
 
-      <!-- jdbi3 -->
-      <dependency>
-        <groupId>org.jdbi</groupId>
-        <artifactId>jdbi3-core</artifactId>
-        <version>${jdbi.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jdbi</groupId>
-        <artifactId>jdbi3-sqlobject</artifactId>
-        <version>${jdbi.version}</version>
-      </dependency>
-
-      <!-- database -->
-      <dependency>
-        <groupId>mysql</groupId>
-        <artifactId>mysql-connector-java</artifactId>
-        <version>${mysql.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.zaxxer</groupId>
-        <artifactId>HikariCP</artifactId>
-        <version>${hikari.version}</version>
-      </dependency>
-
       <!-- test -->
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-api</artifactId>
         <version>${junit.jupiter.version}</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.junit.vintage</groupId>
-        <artifactId>junit-vintage-engine</artifactId>
-        <version>${junit.vintage.version}</version>
         <scope>test</scope>
       </dependency>
 
@@ -323,13 +252,6 @@
         <groupId>org.assertj</groupId>
         <artifactId>assertj-core</artifactId>
         <version>3.8.0</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>com.palantir.docker.compose</groupId>
-        <artifactId>docker-compose-rule-junit4</artifactId>
-        <version>0.33.0</version>
         <scope>test</scope>
       </dependency>
 
