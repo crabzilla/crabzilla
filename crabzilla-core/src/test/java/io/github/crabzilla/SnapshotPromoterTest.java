@@ -31,7 +31,7 @@ public class SnapshotPromoterTest {
 
   final SampleInternalService service = new TestSampleInternalService();
   final Customer customer = new Customer(null, null, false, null, service);
-  final Snapshot<Customer> originalSnapshot = new Snapshot<>(customer, 0L);
+  final Snapshot<Customer> originalSnapshot = new Snapshot<>(customer, 0);
 
   @BeforeEach
   void instantiate() {
@@ -47,7 +47,7 @@ public class SnapshotPromoterTest {
   @DisplayName("When promoting an empty snapshot with single event single event to version 1")
   public class WhenPromotingAnEmptyToV1 {
 
-    final CustomerId id = new CustomerId("c1");
+    final CustomerId id = new CustomerId(1);
     final CustomerCreated customerCreated = new CustomerCreated(id, "customer-1");
     Snapshot<Customer> resultingSnapshot1;
 
@@ -72,7 +72,7 @@ public class SnapshotPromoterTest {
   @DisplayName("When promoting an empty snapshot with single event single event to version 2")
   public class WhenPromotingAnEmptyToV2 {
 
-    final CustomerId id = new CustomerId("c1");
+    final CustomerId id = new CustomerId(1);
     final CustomerCreated customerCreated = new CustomerCreated(id, "customer-1");
     Snapshot<Customer> resultingSnapshot1;
 

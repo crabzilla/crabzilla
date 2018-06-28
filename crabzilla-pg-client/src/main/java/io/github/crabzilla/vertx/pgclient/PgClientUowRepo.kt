@@ -4,7 +4,6 @@ import io.github.crabzilla.*
 import io.github.crabzilla.vertx.DbConcurrencyException
 import io.github.crabzilla.vertx.ProjectionData
 import io.github.crabzilla.vertx.UnitOfWorkRepository
-import io.reactiverse.pgclient.Numeric
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.Future
@@ -58,12 +57,12 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
       val row = rows.first()
       val command = commandFromJson(Json.mapper, row.getJson(CMD_DATA).value().toString())
       val events = listOfEventsFromJson(Json.mapper, row.getJson(UOW_EVENTS).value().toString())
-      val uow = UnitOfWork(row.getUUID(UOW_ID), command, row.getLong(VERSION)!!, events)
+      val uow = UnitOfWork(row.getUUID(UOW_ID), command, row.getInteger(VERSION)!!, events)
       uowFuture.complete(uow)
     }
   }
 
-  override fun selectAfterVersion(id: String, version: Version,
+  override fun selectAfterVersion(id: Int, version: Version,
                                   selectAfterVersionFuture: Future<SnapshotData>,
                                   aggregateRootName: String) {
     log.info("will load id [{}] after version [{}]", id, version)
@@ -78,7 +77,7 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
         if (ar1.succeeded()) {
           val pq = ar1.result()
           // Fetch 100 rows at a time
-          val tuple = Tuple.of( id, aggregateRootName, Numeric.create(version))
+          val tuple = Tuple.of( id, aggregateRootName, version)
           val stream = pq.createStream(100, tuple)
           val list = ArrayList<SnapshotData>() // TODO what is the point of this list?
           // Use the stream
@@ -91,7 +90,7 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
           })
           stream.handler({ row ->
             val events = listOfEventsFromJson(Json.mapper, row.getJson(0).value().toString())
-            val snapshotData = SnapshotData(row.getLong(1)!!, events)
+            val snapshotData = SnapshotData(row.getInteger(1)!!, events)
             list.add(snapshotData)
           })
         }
@@ -113,7 +112,7 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
 
     val list = ArrayList<ProjectionData>()
 
-    client.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowSequence)) { ar ->
+    client.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowSequence.toInt())) { ar ->
       if (ar.failed()) {
         log.error("selectAfterUowSequenceSql", ar.cause())
         selectAfterUowSeq.fail(ar.cause())
@@ -127,7 +126,7 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
       for (row in rows) {
         val uowId = row.getUUID(0)
         val uowSeq = row.getLong(1)
-        val targetId = row.getString(2)
+        val targetId = row.getInteger(2)
         val events = listOfEventsFromJson(Json.mapper, row.getJson(3).toString())
         val projectionData = ProjectionData(uowId, uowSeq, targetId, events)
         list.add(projectionData)
@@ -160,7 +159,7 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
           }
         })
 
-      val params = Tuple.of(unitOfWork.targetId().stringValue(), aggregateRootName)
+      val params = Tuple.of(unitOfWork.targetId().valueAsInt(), aggregateRootName)
 
       sqlConn.preparedQuery(SQL_SELECT_CURRENT_VERSION, params) { ar ->
 
@@ -170,13 +169,13 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
           return@preparedQuery
         }
 
-        val currentVersion = ar.result().first()?.getLong("last_version")?: 0L
+        val currentVersion = ar.result().first()?.getInteger("last_version")?: 0
 
         log.info("Found version  {}", currentVersion)
 
         // version does not match
         if (currentVersion != unitOfWork.version -1) {
-          val error = DbConcurrencyException("ar_id = [${unitOfWork.targetId().stringValue()}], " +
+          val error = DbConcurrencyException("ar_id = [${unitOfWork.targetId().valueAsInt()}], " +
             "current_version = $currentVersion, new_version = ${unitOfWork.version}")
           appendFuture.fail(error)
           return@preparedQuery
@@ -192,8 +191,8 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
           unitOfWork.command.commandId,
           cmdAsJson,
           aggregateRootName,
-          unitOfWork.targetId().stringValue(),
-          Numeric.create(unitOfWork.version))
+          unitOfWork.targetId().valueAsInt(),
+          unitOfWork.version)
 
         sqlConn.preparedQuery(SQL_INSERT_UOW, params2) { insert ->
 

@@ -4,14 +4,14 @@ CREATE DATABASE example1_write OWNER user1;
 \connect example1_write ;
 
 CREATE TABLE units_of_work (
-      uow_seq_number BIGSERIAL,
+      uow_seq_number SERIAL,
 	    uow_id UUID NOT NULL,
       uow_events JSON NOT NULL,
       cmd_id UUID NOT NULL,
       cmd_data JSON NOT NULL,
       ar_name VARCHAR(36) NOT NULL,
-      ar_id VARCHAR(36) NOT NULL,
-      version NUMERIC,
+      ar_id INTEGER NOT NULL,
+      version INTEGER,
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (uow_seq_number, ar_name),
       UNIQUE (uow_id, ar_name),

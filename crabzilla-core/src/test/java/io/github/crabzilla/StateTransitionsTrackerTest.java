@@ -57,7 +57,7 @@ public class StateTransitionsTrackerTest {
     @DisplayName("when adding a create customer event")
     public class WhenAddingNewEvent {
 
-      final CustomerId id = new CustomerId("c1");
+      final CustomerId id = new CustomerId(1);
       private CustomerCreated customerCreated = new CustomerCreated(id, "customer-1");
       private Customer expectedCustomer = new Customer(id, "customer-1", false, null, service);
 
@@ -114,7 +114,7 @@ public class StateTransitionsTrackerTest {
 
     final String IS_OK = "is ok";
 
-    final CustomerId id = new CustomerId("c1");
+    final CustomerId id = new CustomerId(1);
     private CustomerCreated customerCreated = new CustomerCreated(id, "customer-1");
     private CustomerActivated customerActivated = new CustomerActivated(IS_OK, Instant.now());
     private Customer expectedCustomer = new Customer(id, "customer-1", true, IS_OK, service);

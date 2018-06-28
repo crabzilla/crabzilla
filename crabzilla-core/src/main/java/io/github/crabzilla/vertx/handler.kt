@@ -69,7 +69,7 @@ open class CommandHandlerServiceImpl(private val vertx: Vertx, private val proje
       if (uow != null && uowSequence != 0L) {
         val headers = CaseInsensitiveHeaders().add("uowSequence", uowSequence.toString())
         val eventsDeliveryOptions = DeliveryOptions().setCodecName(ProjectionData::class.simpleName).setHeaders(headers)
-        val pd = ProjectionData(uow.unitOfWorkId, uowSequence, uow.targetId().stringValue(), uow.events)
+        val pd = ProjectionData(uow.unitOfWorkId, uowSequence, uow.targetId().valueAsInt(), uow.events)
         vertx.eventBus().publish(projectionEndpoint, pd, eventsDeliveryOptions)
       }
 
