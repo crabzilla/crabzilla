@@ -116,7 +116,7 @@ class CommandVerticleTest {
 
     doAnswer(answerVoid((VoidAnswer3<Integer, Integer, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.valueAsInt()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.value()),
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class), eq(ENTITY_NAME));
 
@@ -135,7 +135,7 @@ class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.valueAsInt()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.value()),
                                                          eq(initialSnapshot.getVersion()),
                                                          any(), eq(ENTITY_NAME));
 
@@ -176,7 +176,7 @@ class CommandVerticleTest {
 
     doAnswer(answerVoid((VoidAnswer3<Integer, Integer, Future<SnapshotData>>) (s, version, future) ->
             future.fail(expectedException)))
-            .when(eventRepository).selectAfterVersion(eq(customerId.valueAsInt()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.value()),
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class), eq(ENTITY_NAME));
 
@@ -188,7 +188,7 @@ class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.valueAsInt()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.value()),
                                                          eq(initialSnapshot.getVersion()),
                                                          any(), eq(ENTITY_NAME));
 
@@ -220,7 +220,7 @@ class CommandVerticleTest {
 
     doAnswer(answerVoid((VoidAnswer3<Integer, Integer, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.valueAsInt()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.value()),
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class), eq(ENTITY_NAME));
 
@@ -239,7 +239,7 @@ class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.valueAsInt()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.value()),
                                                          eq(initialSnapshot.getVersion()),
                                                          any(), eq(ENTITY_NAME));
 
@@ -274,7 +274,7 @@ class CommandVerticleTest {
 
     doAnswer(answerVoid((VoidAnswer3<Integer, Integer, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.valueAsInt()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.value()),
             eq(initialSnapshot.getVersion()),
             any(Future.class), eq(ENTITY_NAME));
 
@@ -293,7 +293,7 @@ class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.valueAsInt()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.value()),
               eq(initialSnapshot.getVersion()),
               any(), eq(ENTITY_NAME));
 
@@ -330,7 +330,7 @@ class CommandVerticleTest {
 
     doAnswer(answerVoid((VoidAnswer3<Integer, Integer, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.valueAsInt()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.value()),
             eq(initialSnapshot.getVersion()),
             any(Future.class), eq(ENTITY_NAME));
 
@@ -349,7 +349,7 @@ class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.valueAsInt()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.value()),
               eq(initialSnapshot.getVersion()),
               any(), eq(ENTITY_NAME));
 
@@ -414,7 +414,7 @@ class CommandVerticleTest {
 
     doAnswer(answerVoid((VoidAnswer3<Integer, Integer, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.valueAsInt()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.value()),
             eq(initialSnapshot.getVersion()),
             any(Future.class), eq(ENTITY_NAME));
 
@@ -429,7 +429,7 @@ class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.valueAsInt()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.value()),
               eq(initialSnapshot.getVersion()),
               any(), eq(ENTITY_NAME));
 

@@ -9,7 +9,7 @@ interface DomainEvent : Serializable
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 interface EntityId : Serializable {
-  fun valueAsInt(): Int
+  fun value(): Int
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")

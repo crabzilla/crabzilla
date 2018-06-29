@@ -7,7 +7,7 @@ import java.time.Instant
 import java.util.*
 
 data class CustomerId(public val id: Int) : EntityId {
-  override fun valueAsInt(): Int {
+  override fun value(): Int {
     return id
   }
 }

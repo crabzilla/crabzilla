@@ -159,7 +159,7 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
           }
         })
 
-      val params = Tuple.of(unitOfWork.targetId().valueAsInt(), aggregateRootName)
+      val params = Tuple.of(unitOfWork.targetId().value(), aggregateRootName)
 
       sqlConn.preparedQuery(SQL_SELECT_CURRENT_VERSION, params) { ar ->
 
@@ -175,7 +175,7 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
 
         // version does not match
         if (currentVersion != unitOfWork.version -1) {
-          val error = DbConcurrencyException("ar_id = [${unitOfWork.targetId().valueAsInt()}], " +
+          val error = DbConcurrencyException("ar_id = [${unitOfWork.targetId().value()}], " +
             "current_version = $currentVersion, new_version = ${unitOfWork.version}")
           appendFuture.fail(error)
           return@preparedQuery
@@ -191,7 +191,7 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
           unitOfWork.command.commandId,
           cmdAsJson,
           aggregateRootName,
-          unitOfWork.targetId().valueAsInt(),
+          unitOfWork.targetId().value(),
           unitOfWork.version)
 
         sqlConn.preparedQuery(SQL_INSERT_UOW, params2) { insert ->

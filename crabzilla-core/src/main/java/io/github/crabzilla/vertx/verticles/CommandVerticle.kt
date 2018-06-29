@@ -74,7 +74,7 @@ class CommandVerticle<A : Entity>(override val name: String,
 
     return { future1 ->
 
-      val targetId = command.targetId.valueAsInt()
+      val targetId = command.targetId.value()
 
       vertx.executeBlocking<Snapshot<A>>({ fromCacheFuture ->
 
