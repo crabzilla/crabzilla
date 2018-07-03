@@ -4,7 +4,7 @@ import java.io.Serializable
 import java.util.*
 
 interface Entity : Serializable {
-  val id: EntityId
+  val id: EntityId?
 }
 
 class CommandResult private constructor(val unitOfWork: UnitOfWork?,

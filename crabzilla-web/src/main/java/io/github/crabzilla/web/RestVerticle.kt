@@ -33,7 +33,7 @@ class RestVerticle(override val name: String,
 
 
   companion object {
-    internal var log = getLogger(CrabzillaVerticle::class.java)
+    internal var log = getLogger(RestVerticle::class.java)
   }
 
   override fun start() {
@@ -72,7 +72,7 @@ class RestVerticle(override val name: String,
     val command = Json.decodeValue(commandStr, Command::class.java)
     val resource = routingContext.request().getParam("resource")
 
-    log.info("command=:\n" + commandStr)
+    log.info("command=:\n$commandStr")
 
     if (command == null) {
       httpResp.setStatusCode(400).headers().add("Content-Type", "application/json")

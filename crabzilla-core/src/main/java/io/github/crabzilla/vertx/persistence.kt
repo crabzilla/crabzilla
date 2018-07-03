@@ -14,7 +14,7 @@ interface UnitOfWorkRepository {
 
   operator fun get(query: String, id: UUID, uowFuture: Future<UnitOfWork>)
 
-  fun selectAfterVersion(id: String, version: Version, selectAfterVersionFuture: Future<SnapshotData>,
+  fun selectAfterVersion(id: Int, version: Version, selectAfterVersionFuture: Future<SnapshotData>,
                          aggregateRootName: String)
 
   fun append(unitOfWork: UnitOfWork, appendFuture: Future<Long>, aggregateRootName: String)

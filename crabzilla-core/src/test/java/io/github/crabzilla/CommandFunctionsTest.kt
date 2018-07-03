@@ -11,11 +11,11 @@ import java.util.*
 @DisplayName("CommandFunctions")
 class CommandFunctionsTest {
 
-  private val customerId = CustomerId("c1")
+  private val customerId = CustomerId(1)
   private val commandId = UUID.randomUUID()
   private val command = CreateCustomer(commandId, customerId, "c1")
   private val event: DomainEvent = CustomerCreated(customerId, "c1")
-  private val uow = UnitOfWork(UUID.randomUUID(), command, 1L, eventsOf(event))
+  private val uow = UnitOfWork(UUID.randomUUID(), command, 1, eventsOf(event))
 
   @Test
   @DisplayName("Success can be instantiated")

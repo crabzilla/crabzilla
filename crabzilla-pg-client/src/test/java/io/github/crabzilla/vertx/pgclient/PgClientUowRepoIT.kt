@@ -11,7 +11,6 @@ import io.github.crabzilla.vertx.ProjectionData
 import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.github.crabzilla.vertx.configHandler
 import io.github.crabzilla.vertx.pgclient.PgClientUowRepo.Companion.SQL_INSERT_UOW
-import io.reactiverse.pgclient.Numeric
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.config.ConfigStoreOptions
@@ -31,20 +30,22 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @DisplayName("PgClientClientUowRepo")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal class PgClientUowRepoIT {
+class PgClientUowRepoIT {
 
   private lateinit var vertx: Vertx
   internal lateinit var writeDb: PgPool
   internal lateinit var repo: UnitOfWorkRepository
 
-  internal val aggregateName = CommandHandlers.CUSTOMER.name
-  internal val customerId = CustomerId(UUID.randomUUID().toString())
-  internal val createCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer")
-  internal val created = CustomerCreated(customerId, "customer")
-  internal val expectedUow1 = UnitOfWork(UUID.randomUUID(), createCmd, 1, listOf(created))
-  internal val activateCmd = ActivateCustomer(UUID.randomUUID(), customerId, "I want it")
-  internal val activated = CustomerActivated(customerId.stringValue(), Instant.now())
-  internal val expectedUow2 = UnitOfWork(UUID.randomUUID(), activateCmd, 2, listOf(activated))
+  companion object {
+    val aggregateName = CommandHandlers.CUSTOMER.name
+    val customerId = CustomerId(1)
+    val createCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer")
+    val created = CustomerCreated(customerId, "customer")
+    val expectedUow1 = UnitOfWork(UUID.randomUUID(), createCmd, 1, listOf(created))
+    val activateCmd = ActivateCustomer(UUID.randomUUID(), customerId, "I want it")
+    val activated = CustomerActivated("a good reason", Instant.now())
+    val expectedUow2 = UnitOfWork(UUID.randomUUID(), activateCmd, 2, listOf(activated))
+  }
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
@@ -106,8 +107,8 @@ internal class PgClientUowRepoIT {
         createCmd.commandId,
         io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
         aggregateName,
-        customerId.stringValue(),
-        Numeric.create(1))
+        customerId.value(),
+        1)
 
       writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar1 ->
 
@@ -162,8 +163,8 @@ internal class PgClientUowRepoIT {
         createCmd.commandId,
         io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
         aggregateName,
-        customerId.stringValue(),
-        Numeric.create(1))
+        customerId.value(),
+        1)
 
       println(tuple)
 
@@ -220,7 +221,7 @@ internal class PgClientUowRepoIT {
         }
 
         val selectFuture = Future.future<List<ProjectionData>>()
-        repo.selectAfterUowSequence(0, 100, selectFuture)
+        repo.selectAfterUowSequence(0L, 100, selectFuture)
 
         selectFuture.setHandler { selectAsyncResult ->
           val snapshotData = selectAsyncResult.result()
@@ -246,8 +247,8 @@ internal class PgClientUowRepoIT {
           createCmd.commandId,
           io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
           aggregateName,
-          customerId.stringValue(),
-          Numeric.create(1))
+          customerId.value(),
+          1)
 
         val selectFuture = Future.future<List<ProjectionData>>()
 
@@ -273,7 +274,7 @@ internal class PgClientUowRepoIT {
             val (_, uowSequence, targetId, events) = snapshotData[0]
 
             assertThat(uowSequence).isGreaterThan(0)
-            assertThat(targetId).isEqualTo(customerId.stringValue())
+            assertThat(targetId).isEqualTo(customerId.value())
             assertThat(events).isEqualTo(listOf(created))
 
             tc.completeNow()
@@ -302,8 +303,8 @@ internal class PgClientUowRepoIT {
           createCmd.commandId,
           io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
           aggregateName,
-          customerId.stringValue(),
-          Numeric.create(1))
+          customerId.value(),
+          1)
 
         val selectFuture1 = Future.future<List<ProjectionData>>()
 
@@ -319,8 +320,8 @@ internal class PgClientUowRepoIT {
             activateCmd.commandId,
             io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, activateCmd)),
             aggregateName,
-            customerId.stringValue(),
-            Numeric.create(2))
+            customerId.value(),
+            2)
 
           writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
 
@@ -340,13 +341,13 @@ internal class PgClientUowRepoIT {
               val (_, uowSequence1, targetId1, events1) = snapshotData[0]
 
               assertThat(uowSequence1).isGreaterThan(0)
-              assertThat(targetId1).isEqualTo(customerId.stringValue())
+              assertThat(targetId1).isEqualTo(customerId.value())
               assertThat(events1).isEqualTo(listOf(created))
 
               val (_, uowSequence2, targetId2, events2) = snapshotData[1]
 
               assertThat(uowSequence2).isEqualTo(uowSequence1+1)
-              assertThat(targetId2).isEqualTo(customerId.stringValue())
+              assertThat(targetId2).isEqualTo(customerId.value())
               assertThat(events2).isEqualTo(listOf(activated))
 
               tc.completeNow()
@@ -376,8 +377,8 @@ internal class PgClientUowRepoIT {
           createCmd.commandId,
           io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
           aggregateName,
-          customerId.stringValue(),
-          Numeric.create(1))
+          customerId.value(),
+          1)
 
         val selectFuture1 = Future.future<List<ProjectionData>>()
 
@@ -395,8 +396,8 @@ internal class PgClientUowRepoIT {
             activateCmd.commandId,
             io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, activateCmd)),
             aggregateName,
-            customerId.stringValue(),
-            Numeric.create(2))
+            customerId.value(),
+            2)
 
           writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
 
@@ -418,7 +419,7 @@ internal class PgClientUowRepoIT {
               val (_, uowSequence, targetId, events) = snapshotData[0]
 
               assertThat(uowSequence).isEqualTo(uowSequence2)
-              assertThat(targetId).isEqualTo(customerId.stringValue())
+              assertThat(targetId).isEqualTo(customerId.value())
               assertThat(events).isEqualTo(listOf(activated))
 
               tc.completeNow()
@@ -455,8 +456,8 @@ internal class PgClientUowRepoIT {
           createCmd.commandId,
           io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
           aggregateName,
-          customerId.stringValue(),
-          Numeric.create(1))
+          customerId.value(),
+          1)
 
         writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar ->
 
@@ -471,13 +472,13 @@ internal class PgClientUowRepoIT {
 
           val selectFuture = Future.future<SnapshotData>()
 
-          repo.selectAfterVersion(customerId.stringValue(), 0L, selectFuture, aggregateName)
+          repo.selectAfterVersion(customerId.value(), 0, selectFuture, aggregateName)
 
           selectFuture.setHandler { selectAsyncResult ->
 
             val snapshotData = selectAsyncResult.result()
 
-            assertThat(1L).isEqualTo(snapshotData.version)
+            assertThat(1).isEqualTo(snapshotData.version)
             assertThat(listOf(created)).isEqualTo(snapshotData.events)
 
             tc.completeNow()
@@ -506,8 +507,8 @@ internal class PgClientUowRepoIT {
           createCmd.commandId,
           io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
           aggregateName,
-          customerId.stringValue(),
-          Numeric.create(1))
+          customerId.value(),
+          1)
 
         writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
 
@@ -521,8 +522,8 @@ internal class PgClientUowRepoIT {
             activateCmd.commandId,
             io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, activateCmd)),
             aggregateName,
-            customerId.stringValue(),
-            Numeric.create(2))
+            customerId.value(),
+            2)
 
           writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
 
@@ -533,13 +534,13 @@ internal class PgClientUowRepoIT {
 
             val selectFuture1 = Future.future<SnapshotData>()
 
-            repo.selectAfterVersion(customerId.stringValue(), 0L, selectFuture1, aggregateName)
+            repo.selectAfterVersion(customerId.value(), 0, selectFuture1, aggregateName)
 
             selectFuture1.setHandler { selectAsyncResult ->
 
               val snapshotData = selectAsyncResult.result()
 
-              assertThat(2L).isEqualTo(snapshotData.version)
+              assertThat(2).isEqualTo(snapshotData.version)
               assertThat(listOf(created, activated)).isEqualTo(snapshotData.events)
 
               tc.completeNow()
@@ -569,8 +570,8 @@ internal class PgClientUowRepoIT {
           createCmd.commandId,
           io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
           aggregateName,
-          customerId.stringValue(),
-          Numeric.create(1))
+          customerId.value(),
+          1)
 
         writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
 
@@ -587,8 +588,8 @@ internal class PgClientUowRepoIT {
             activateCmd.commandId,
             io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, activateCmd)),
             aggregateName,
-            customerId.stringValue(),
-            Numeric.create(2))
+            customerId.value(),
+            2)
 
           writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
 
@@ -602,13 +603,13 @@ internal class PgClientUowRepoIT {
 
             val selectFuture1 = Future.future<SnapshotData>()
 
-            repo.selectAfterVersion(customerId.stringValue(), 1L, selectFuture1, aggregateName)
+            repo.selectAfterVersion(customerId.value(), 1, selectFuture1, aggregateName)
 
             selectFuture1.setHandler { selectAsyncResult ->
 
               val snapshotData = selectAsyncResult.result()
 
-              assertThat(2L).isEqualTo(snapshotData.version)
+              assertThat(2).isEqualTo(snapshotData.version)
               assertThat(listOf(activated)).isEqualTo(snapshotData.events)
 
               tc.completeNow()
@@ -670,7 +671,7 @@ internal class PgClientUowRepoIT {
           val snapshotDataFuture = Future.future<SnapshotData>()
 
           // get only above version 1
-          repo.selectAfterVersion(expectedUow2.targetId().stringValue(), 1, snapshotDataFuture, aggregateName)
+          repo.selectAfterVersion(expectedUow2.targetId().value(), 1, snapshotDataFuture, aggregateName)
 
           snapshotDataFuture.setHandler { ar4 ->
             if (ar4.failed()) {
@@ -745,7 +746,7 @@ internal class PgClientUowRepoIT {
 
             val snapshotDataFuture = Future.future<SnapshotData>()
 
-            repo.selectAfterVersion(expectedUow1.targetId().stringValue(), 0, snapshotDataFuture, aggregateName)
+            repo.selectAfterVersion(expectedUow1.targetId().value(), 0, snapshotDataFuture, aggregateName)
 
             snapshotDataFuture.setHandler { ar3 ->
               if (ar3.failed()) {
@@ -864,7 +865,7 @@ internal class PgClientUowRepoIT {
             val snapshotDataFuture = Future.future<SnapshotData>()
 
             // get all versions for id
-            repo.selectAfterVersion(expectedUow2.targetId().stringValue(), 0, snapshotDataFuture, aggregateName)
+            repo.selectAfterVersion(expectedUow2.targetId().value(), 0, snapshotDataFuture, aggregateName)
 
             snapshotDataFuture.setHandler { ar4 ->
               if (ar4.failed()) {

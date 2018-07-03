@@ -18,7 +18,7 @@ class CommandVerticle<A : Entity>(override val name: String,
                                   private val validatorFn: (Command) -> List<String>,
                                   private val snapshotPromoter: SnapshotPromoter<A>,
                                   private val eventJournal: UnitOfWorkRepository,
-                                  private val cache: ExpiringMap<String, Snapshot<A>>,
+                                  private val cache: ExpiringMap<Int, Snapshot<A>>,
                                   private val circuitBreaker: CircuitBreaker) : CrabzillaVerticle(name, VerticleRole.HANDLER) {
 
   companion object {
@@ -74,7 +74,7 @@ class CommandVerticle<A : Entity>(override val name: String,
 
     return { future1 ->
 
-      val targetId = command.targetId.stringValue()
+      val targetId = command.targetId.value()
 
       vertx.executeBlocking<Snapshot<A>>({ fromCacheFuture ->
 
@@ -113,9 +113,9 @@ class CommandVerticle<A : Entity>(override val name: String,
           else
             cachedSnapshot
 
-          if (totalOfNonCachedEvents > 0) {
-            cache[targetId] = resultingSnapshot
-          }
+//          if (totalOfNonCachedEvents > 0) {
+//            cache[targetId] = resultingSnapshot
+//          }
 
           val result = cmdHandler.invoke(command, resultingSnapshot)
 

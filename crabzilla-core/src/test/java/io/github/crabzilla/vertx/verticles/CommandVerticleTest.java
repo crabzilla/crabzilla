@@ -30,7 +30,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static io.github.crabzilla.vertx.VertxKt.initVertx;
 import static io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint;
@@ -53,7 +52,7 @@ class CommandVerticleTest {
 
   Vertx vertx;
   CircuitBreaker circuitBreaker;
-  ExpiringMap<String, Snapshot<Customer>> cache;
+  ExpiringMap<Integer, Snapshot<Customer>> cache;
 
   final SampleInternalService service =  new SampleInternalService() {
     @Override
@@ -79,7 +78,7 @@ class CommandVerticleTest {
   SnapshotPromoter<Customer> snapshotPromoterFn;
 
   @BeforeEach
-  void setUp(VertxTestContext tc) throws InterruptedException {
+  void setUp(VertxTestContext tc) {
 
     vertx = Vertx.vertx();
 
@@ -107,7 +106,7 @@ class CommandVerticleTest {
   @Test
   public void SUCCESS_scenario(VertxTestContext tc) {
 
-    CustomerId customerId = new CustomerId("customer#1");
+    CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     Snapshot<Customer> initialSnapshot = new Snapshot<>(seedValue, 0);
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
@@ -115,9 +114,9 @@ class CommandVerticleTest {
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Long, Future<SnapshotData>>) (s, version, future) ->
+    doAnswer(answerVoid((VoidAnswer3<Integer, Integer, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.value()),
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class), eq(ENTITY_NAME));
 
@@ -136,7 +135,7 @@ class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.value()),
                                                          eq(initialSnapshot.getVersion()),
                                                          any(), eq(ENTITY_NAME));
 
@@ -168,16 +167,16 @@ class CommandVerticleTest {
   @Test
   public void UNEXPECTED_ERROR_selectAfterVersion_scenario(VertxTestContext tc) {
 
-    CustomerId customerId = new CustomerId("customer#1");
+    CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, 0);
     Throwable expectedException = new Throwable("Expected");
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Long, Future<SnapshotData>>) (s, version, future) ->
+    doAnswer(answerVoid((VoidAnswer3<Integer, Integer, Future<SnapshotData>>) (s, version, future) ->
             future.fail(expectedException)))
-            .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.value()),
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class), eq(ENTITY_NAME));
 
@@ -189,7 +188,7 @@ class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.value()),
                                                          eq(initialSnapshot.getVersion()),
                                                          any(), eq(ENTITY_NAME));
 
@@ -210,7 +209,7 @@ class CommandVerticleTest {
   @Test
   public void UNEXPECTED_ERROR_append_scenario(VertxTestContext tc) {
 
-    CustomerId customerId = new CustomerId("customer#1");
+    CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, 0);
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
@@ -219,9 +218,9 @@ class CommandVerticleTest {
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Long, Future<SnapshotData>>) (s, version, future) ->
+    doAnswer(answerVoid((VoidAnswer3<Integer, Integer, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.value()),
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class), eq(ENTITY_NAME));
 
@@ -240,7 +239,7 @@ class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.value()),
                                                          eq(initialSnapshot.getVersion()),
                                                          any(), eq(ENTITY_NAME));
 
@@ -265,7 +264,7 @@ class CommandVerticleTest {
   @Test
   public void CONCURRENCY_ERROR_scenario(VertxTestContext tc) {
 
-    CustomerId customerId = new CustomerId("customer#1");
+    CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     Snapshot<Customer> initialSnapshot = new Snapshot<>(seedValue, 0);
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
@@ -273,9 +272,9 @@ class CommandVerticleTest {
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Long, Future<SnapshotData>>) (s, version, future) ->
+    doAnswer(answerVoid((VoidAnswer3<Integer, Integer, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.value()),
             eq(initialSnapshot.getVersion()),
             any(Future.class), eq(ENTITY_NAME));
 
@@ -294,7 +293,7 @@ class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.value()),
               eq(initialSnapshot.getVersion()),
               any(), eq(ENTITY_NAME));
 
@@ -321,7 +320,7 @@ class CommandVerticleTest {
   @Test
   public void HANDLING_ERROR_scenario(VertxTestContext tc) {
 
-    CustomerId customerId = new CustomerId("customer#1");
+    CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
     Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, 0);
     CustomerCreated expectedEvent = new CustomerCreated(customerId, "customer");
@@ -329,9 +328,9 @@ class CommandVerticleTest {
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Long, Future<SnapshotData>>) (s, version, future) ->
+    doAnswer(answerVoid((VoidAnswer3<Integer, Integer, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.value()),
             eq(initialSnapshot.getVersion()),
             any(Future.class), eq(ENTITY_NAME));
 
@@ -350,7 +349,7 @@ class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.value()),
               eq(initialSnapshot.getVersion()),
               any(), eq(ENTITY_NAME));
 
@@ -375,7 +374,7 @@ class CommandVerticleTest {
   @Test
   public void VALIDATION_ERROR_scenario(VertxTestContext tc) {
 
-    CustomerId customerId = new CustomerId("customer#1");
+    CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "a bad name");
 
     List<String> errorList = singletonList("Invalid name: a bad name");
@@ -407,15 +406,15 @@ class CommandVerticleTest {
   @Test
   public void UNKNOWN_COMMAND_scenario(VertxTestContext tc) {
 
-    CustomerId customerId = new CustomerId("customer#1");
+    CustomerId customerId = new CustomerId(1);
     UnknownCommand createCustomerCmd = new UnknownCommand(UUID.randomUUID(), customerId);
     Snapshot<Customer> initialSnapshot = new Snapshot<Customer>(seedValue, 0);
 
     when(validatorFn.invoke(eq(createCustomerCmd))).thenReturn(emptyList());
 
-    doAnswer(answerVoid((VoidAnswer3<String, Long, Future<SnapshotData>>) (s, version, future) ->
+    doAnswer(answerVoid((VoidAnswer3<Integer, Integer, Future<SnapshotData>>) (s, version, future) ->
             future.complete(new SnapshotData(initialSnapshot.getVersion(), new ArrayList<>()))))
-            .when(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
+            .when(eventRepository).selectAfterVersion(eq(customerId.value()),
             eq(initialSnapshot.getVersion()),
             any(Future.class), eq(ENTITY_NAME));
 
@@ -430,7 +429,7 @@ class CommandVerticleTest {
 
       inOrder.verify(validatorFn).invoke(eq(createCustomerCmd));
 
-      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.stringValue()),
+      inOrder.verify(eventRepository).selectAfterVersion(eq(customerId.value()),
               eq(initialSnapshot.getVersion()),
               any(), eq(ENTITY_NAME));
 

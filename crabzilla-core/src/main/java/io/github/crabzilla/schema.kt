@@ -9,7 +9,7 @@ interface DomainEvent : Serializable
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 interface EntityId : Serializable {
-  fun stringValue(): String
+  fun value(): Int
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
@@ -18,7 +18,7 @@ interface Command : Serializable {
   val targetId: EntityId
 }
 
-typealias Version = Long
+typealias Version = Int
 
 data class UnitOfWork(val unitOfWorkId: UUID, val command: Command,
                       val version: Version, val events: List<DomainEvent>) : Serializable  {
