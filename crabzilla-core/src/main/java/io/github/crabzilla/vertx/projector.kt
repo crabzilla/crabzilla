@@ -5,3 +5,4 @@ import java.util.*
 
 data class ProjectionData(val uowId: UUID, val uowSequence: Long, val targetId: Int, val events: List<DomainEvent>)
 
+

@@ -38,7 +38,6 @@ class PgClientUowRepoIT {
 
   companion object {
     val aggregateName = CommandHandlers.CUSTOMER.name
-    val x: CustomerId = CustomerId(id=33)
     val customerId = CustomerId(1)
     val createCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer")
     val created = CustomerCreated(customerId, "customer")

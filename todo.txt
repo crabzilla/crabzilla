@@ -1,5 +1,0 @@
-vertx-junit5 for all tests
-map with entity name -> int
-uowRepo using above map
-
-

@@ -6,7 +6,7 @@ import io.github.crabzilla.EntityId
 import java.time.Instant
 import java.util.*
 
-data class CustomerId(public val id: Int) : EntityId {
+data class CustomerId(val id: Int) : EntityId {
   override fun value(): Int {
     return id
   }
