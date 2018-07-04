@@ -4,19 +4,18 @@ import io.github.crabzilla.*
 import io.github.crabzilla.vertx.DbConcurrencyException
 import io.github.crabzilla.vertx.ProjectionData
 import io.github.crabzilla.vertx.UnitOfWorkRepository
-import io.reactiverse.pgclient.PgConnection
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.Future
 import io.vertx.core.json.Json
+import io.vertx.core.logging.LoggerFactory.getLogger
 import java.util.*
-
 
 open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
   companion object {
 
-    internal val log = org.slf4j.LoggerFactory.getLogger(UnitOfWorkRepository::class.java)
+    internal val log = getLogger(UnitOfWorkRepository::class.java)
 
     private const val UOW_ID = "uow_id"
     private const val UOW_EVENTS = "uow_events"
