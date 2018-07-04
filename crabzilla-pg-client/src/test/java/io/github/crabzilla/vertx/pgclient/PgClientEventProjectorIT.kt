@@ -32,8 +32,8 @@ import java.util.*
 class PgClientEventProjectorIT {
 
   private lateinit var vertx: Vertx
-  internal lateinit var readDb: PgPool
-  internal lateinit var eventProjector: PgClientEventProjector
+  private lateinit var readDb: PgPool
+  private lateinit var eventProjector: PgClientEventProjector
 
   companion object {
 
@@ -50,34 +50,19 @@ class PgClientEventProjectorIT {
 
         when (event) {
           is CustomerCreated -> {
-            pgConn.preparedQuery("INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)",
-              Tuple.of(targetId, event.name, false), { ar2 ->
-              if (ar2.failed()) {
-                future.fail(ar2.cause())
-              } else {
-                future.complete()
-              }
-            })
+            val query = "INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)"
+            val tuple = Tuple.of(targetId, event.name, false)
+            pgConn.pQuery(query, tuple, future)
           }
           is CustomerActivated -> {
-            pgConn.preparedQuery("UPDATE customer_summary SET is_active = true WHERE id = $1",
-              Tuple.of(targetId), { ar2 ->
-              if (ar2.failed()) {
-                future.fail(ar2.cause())
-              } else {
-                future.complete()
-              }
-            })
+            val query = "UPDATE customer_summary SET is_active = true WHERE id = $1"
+            val tuple = Tuple.of(targetId)
+            pgConn.pQuery(query, tuple, future)
           }
           is CustomerDeactivated -> {
-            pgConn.preparedQuery("UPDATE customer_summary SET is_active = false WHERE id = $1",
-              Tuple.of(targetId), { ar2 ->
-              if (ar2.failed()) {
-                future.fail(ar2.cause())
-              } else {
-                future.complete()
-              }
-            })
+            val query = "UPDATE customer_summary SET is_active = false WHERE id = $1"
+            val tuple = Tuple.of(targetId)
+            pgConn.pQuery(query, tuple, future)
           }
           else -> log.info("${event.javaClass.simpleName} does not have any event projector handler")
         }
@@ -132,7 +117,7 @@ class PgClientEventProjectorIT {
   }
 
   @Test
-  @DisplayName("can project created and activated events")
+  @DisplayName("can project a couple of events: created and activated")
   fun a1(tc: VertxTestContext) {
 
     readDb.query("DELETE FROM customer_summary", { ar1 ->

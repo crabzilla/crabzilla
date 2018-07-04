@@ -4,6 +4,7 @@ import io.github.crabzilla.*
 import io.github.crabzilla.vertx.DbConcurrencyException
 import io.github.crabzilla.vertx.ProjectionData
 import io.github.crabzilla.vertx.UnitOfWorkRepository
+import io.reactiverse.pgclient.PgConnection
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.Future
