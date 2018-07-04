@@ -10,7 +10,7 @@ CREATE TABLE events_channels (
     ;
 
 CREATE TABLE customer_summary (
-    id VARCHAR(36) NOT NULL,
+    id INTEGER NOT NULL,
     name VARCHAR(36) NOT NULL,
     is_active BOOLEAN NOT NULL,
     PRIMARY KEY (id)

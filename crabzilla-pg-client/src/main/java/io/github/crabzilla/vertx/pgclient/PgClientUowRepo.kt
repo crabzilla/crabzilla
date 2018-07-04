@@ -152,10 +152,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
         .begin()
         .abortHandler({ _ ->
           run {
-            val msg = "Transaction failed =  > rollbacked"
-            appendFuture.fail(msg)
-            log.error(msg)
-            return@abortHandler
+            log.error("Transaction failed =  > rollbacked")
           }
         })
 

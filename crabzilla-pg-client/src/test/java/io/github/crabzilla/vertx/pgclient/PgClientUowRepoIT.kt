@@ -166,8 +166,6 @@ class PgClientUowRepoIT {
         customerId.value(),
         1)
 
-      println(tuple)
-
       writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar1 ->
 
         if (ar1.failed()) {

@@ -43,8 +43,8 @@ class PgClientEventProjectorIT {
     val created = CustomerCreated(customerId, "customer")
     val activated = CustomerActivated("a good reason", Instant.now())
 
-    val projectorFn: (pgConn: PgConnection, targetId: Int, event: DomainEvent) -> Unit =
-      { pgConn: PgConnection, targetId: Int, event: DomainEvent ->
+    val projectorFn: (pgConn: PgConnection, targetId: Int, event: DomainEvent, Future<Void>) -> Unit =
+      { pgConn: PgConnection, targetId: Int, event: DomainEvent, future: Future<Void> ->
 
         log.info("event {} ", event)
 
@@ -53,7 +53,9 @@ class PgClientEventProjectorIT {
             pgConn.preparedQuery("INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)",
               Tuple.of(targetId, event.name, false), { ar2 ->
               if (ar2.failed()) {
-                ar2.cause().printStackTrace()
+                future.fail(ar2.cause())
+              } else {
+                future.complete()
               }
             })
           }
@@ -61,7 +63,9 @@ class PgClientEventProjectorIT {
             pgConn.preparedQuery("UPDATE customer_summary SET is_active = true WHERE id = $1",
               Tuple.of(targetId), { ar2 ->
               if (ar2.failed()) {
-                ar2.cause().printStackTrace()
+                future.fail(ar2.cause())
+              } else {
+                future.complete()
               }
             })
           }
@@ -69,7 +73,9 @@ class PgClientEventProjectorIT {
             pgConn.preparedQuery("UPDATE customer_summary SET is_active = false WHERE id = $1",
               Tuple.of(targetId), { ar2 ->
               if (ar2.failed()) {
-                ar2.cause().printStackTrace()
+                future.fail(ar2.cause())
+              } else {
+                future.complete()
               }
             })
           }
@@ -127,7 +133,7 @@ class PgClientEventProjectorIT {
 
   @Test
   @DisplayName("can project created and activated events")
-  fun a4(tc: VertxTestContext) {
+  fun a1(tc: VertxTestContext) {
 
     readDb.query("DELETE FROM customer_summary", { ar1 ->
 
@@ -136,29 +142,33 @@ class PgClientEventProjectorIT {
         tc.failNow(ar1.cause())
       }
 
-      val projectionData = ProjectionData(UUID.randomUUID(), 1, customerId.id, arrayListOf(created, activated))
+      val projectionData = ProjectionData(UUID.randomUUID(), 2, customerId.id, arrayListOf(created, activated))
 
       val future = Future.future<Boolean>()
 
-      future.setHandler { ar3 ->
+      future.setHandler { ar2 ->
 
-        if (ar3.failed()) {
-          log.error("future", ar3.cause())
-          tc.failNow(ar3.cause())
+        if (ar2.failed()) {
+          log.error("future", ar2.cause())
+          tc.failNow(ar2.cause())
         }
 
-        val ok = ar3.result()
+        val ok = ar2.result()
 
         assertThat(ok).isTrue()
 
-        readDb.preparedQuery("SELECT * FROM customer_summary WHERE id= $1",
-          Tuple.of(customerId), { ar4 ->
-          if (ar4.failed()) {
-            log.error("select", ar4.cause())
-            tc.failNow(ar4.cause())
+        readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
+
+          if (ar3.failed()) {
+            log.error("select", ar3.cause())
+            tc.failNow(ar3.cause())
           }
 
-          val result = ar4.result()
+          val result = ar3.result()
+
+          println("result " + result.toList())
+
+          assertThat(1).isEqualTo(result.size())
           assertThat(created.name).isEqualTo(result.first().getString("name"))
           assertThat(result.first().getBoolean("is_active")).isTrue()
 

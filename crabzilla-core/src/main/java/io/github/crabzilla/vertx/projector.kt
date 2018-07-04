@@ -5,11 +5,3 @@ import io.vertx.core.Future
 import java.util.*
 
 data class ProjectionData(val uowId: UUID, val uowSequence: Long, val targetId: Int, val events: List<DomainEvent>)
-
-interface EventsProjector<DB_CONN_WRAPPER> {
-
-  fun handle(uowList: List<ProjectionData>,
-             projectorFn: (pgConn: DB_CONN_WRAPPER, targetId: Int, event: DomainEvent) -> Unit,
-             future: Future<Boolean>)
-
-}
