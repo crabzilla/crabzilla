@@ -11,7 +11,7 @@ import io.vertx.core.json.Json
 import java.util.*
 
 
-open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
+open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
   companion object {
 
@@ -43,7 +43,7 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
 
   override fun get(query: String, id: UUID, uowFuture: Future<UnitOfWork>) {
     val params = Tuple.of(id)
-    client.preparedQuery(query, params) { ar ->
+    pgPool.preparedQuery(query, params) { ar ->
       if (ar.failed()) {
         log.error("get", ar.cause())
         uowFuture.fail(ar.cause())
@@ -66,7 +66,7 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
                                   selectAfterVersionFuture: Future<SnapshotData>,
                                   aggregateRootName: String) {
     log.info("will load id [{}] after version [{}]", id, version)
-    client.getConnection({ ar0 ->
+    pgPool.getConnection({ ar0 ->
       if (ar0.failed()) {
         log.error("SQL_SELECT_AFTER_VERSION", ar0.cause())
         selectAfterVersionFuture.fail(ar0.cause())
@@ -112,7 +112,7 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
 
     val list = ArrayList<ProjectionData>()
 
-    client.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowSequence.toInt())) { ar ->
+    pgPool.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowSequence.toInt())) { ar ->
       if (ar.failed()) {
         log.error("selectAfterUowSequenceSql", ar.cause())
         selectAfterUowSeq.fail(ar.cause())
@@ -138,7 +138,7 @@ open class PgClientUowRepo(private val client: PgPool) : UnitOfWorkRepository {
 
   override fun append(unitOfWork: UnitOfWork, appendFuture: Future<Long>, aggregateRootName: String) {
 
-    client.getConnection { conn ->
+    pgPool.getConnection { conn ->
 
       if (conn.failed()) {
         appendFuture.fail(conn.cause())
