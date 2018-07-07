@@ -1,7 +1,6 @@
 package io.github.crabzilla.vertx.pgclient
 
 import io.github.crabzilla.DomainEvent
-import io.github.crabzilla.vertx.ProjectionData
 import io.reactiverse.pgclient.PgConnection
 import io.reactiverse.pgclient.PgPool
 import io.vertx.core.CompositeFuture
@@ -13,13 +12,18 @@ class PgClientEventProjector(private val pgPool: PgPool) {
   companion object {
 
     internal val log = getLogger(PgClientEventProjector::class.java)
-    const val numberOfFutures = 6
+    const val NUMBER_OF_FUTURES = 6 // CompositeFuture limit
 
   }
 
-  fun handle(projectionDataList: List<ProjectionData>,
+  fun handle(events: List<Pair<Int, DomainEvent>>,
              projectorFn: (pgConn: PgConnection, targetId: Int, event: DomainEvent, future: Future<Void>) -> Unit,
              future: Future<Boolean>) {
+
+    if (events.size > NUMBER_OF_FUTURES) {
+      future.fail("only $NUMBER_OF_FUTURES events can be projected per transaction")
+      return
+    }
 
     pgPool.getConnection({ ar1 ->
       if (ar1.failed()) {
@@ -34,44 +38,34 @@ class PgClientEventProjector(private val pgPool: PgPool) {
         .begin()
         .abortHandler({ _ ->
           run {
-            log.error("Transaction failed =  > rollbacked")
+            log.error("Transaction failed = > rollbacked")
           }
         })
 
-        val groups = projectionDataList
-          .flatMap { (_, _, targetId, events) -> events.map { Pair(targetId, it) }}
-          .chunked(numberOfFutures)
+      val futures = futures(minOf(NUMBER_OF_FUTURES, events.size))
 
-        log.debug { "group size ${groups.size}"}
+      for ((pairIndex, pair) in events.withIndex()) {
+        // invoke the projection function
+        projectorFn.invoke(conn, pair.first, pair.second, futures[pairIndex])
+      }
 
-        lateinit var futures: List<Future<Void>>
-
-        groups.forEach(  {
-          futures = futures(minOf(numberOfFutures, it.size))
-          log.debug { "futures size ${futures.size}"}
-          for ((i, pair) in it.withIndex()) {
-            // invoke the projection function
-            projectorFn.invoke(conn, pair.first, pair.second, futures[i])
-           }
-        })
-
-        CompositeFuture.join(futures).setHandler { ar2 ->
-          if (ar2.succeeded()) {
-            // Commit the transaction
-            tx.commit { ar3 ->
-              if (ar3.succeeded()) {
-                log.debug { "Transaction succeeded" }
-                future.complete(true)
-              } else {
-                log.error("Transaction failed", ar3.cause())
-                future.fail(ar3.cause())
-              }
+      CompositeFuture.join(futures).setHandler { ar2 ->
+        if (ar2.succeeded()) {
+          // Commit the transaction
+          tx.commit { ar3 ->
+            if (ar3.succeeded()) {
+              log.debug { "Transaction succeeded" }
+              future.complete(true)
+            } else {
+              log.error("Transaction failed", ar3.cause())
+              future.fail(ar3.cause())
             }
-          } else {
-            log.error( "CompositeFuture", ar2.cause())
-            future.fail(ar2.cause())
           }
+        } else {
+          log.error( "CompositeFuture error", ar2.cause())
+          future.fail(ar2.cause())
         }
+      }
 
     })
 
