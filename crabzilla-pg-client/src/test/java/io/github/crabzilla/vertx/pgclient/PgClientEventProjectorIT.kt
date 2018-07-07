@@ -5,7 +5,6 @@ import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerId
-import io.github.crabzilla.vertx.ProjectionData
 import io.github.crabzilla.vertx.configHandler
 import io.reactiverse.pgclient.PgConnection
 import io.reactiverse.pgclient.PgPool
@@ -24,7 +23,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Instant
-import java.util.*
 
 @ExtendWith(VertxExtension::class)
 @DisplayName("PgClientEventProjector")
@@ -37,20 +35,26 @@ class PgClientEventProjectorIT {
 
   companion object {
 
+    // tip on how producers must fold events
+    //      val groups = projectionDataList
+    //        .flatMap { (_, uowSequence, targetId, events) -> events.map { Triple(uowSequence, targetId, it) }}
+    //        .chunked(numberOfFutures)
+    //
+
     internal val log = org.slf4j.LoggerFactory.getLogger(PgClientEventProjectorIT::class.java)
 
     val customerId1 = CustomerId(1)
-    val created1 = CustomerCreated(customerId1, "customer")
+    val created1 = CustomerCreated(customerId1, "customer1")
     val activated1 = CustomerActivated("a good reason", Instant.now())
     val deactivated1 = CustomerDeactivated("a good reason", Instant.now())
 
     val customerId2 = CustomerId(2)
-    val created2 = CustomerCreated(customerId2, "customer")
+    val created2 = CustomerCreated(customerId2, "customer2")
     val activated2 = CustomerActivated("a good reason", Instant.now())
     val deactivated2 = CustomerDeactivated("a good reason", Instant.now())
 
     val customerId3 = CustomerId(3)
-    val created3 = CustomerCreated(customerId3, "customer")
+    val created3 = CustomerCreated(customerId3, "customer3")
     val activated3 = CustomerActivated("a good reason", Instant.now())
     val deactivated3 = CustomerDeactivated("a good reason", Instant.now())
 
@@ -138,8 +142,6 @@ class PgClientEventProjectorIT {
         tc.failNow(ar1.cause())
       }
 
-      val projectionData = ProjectionData(UUID.randomUUID(), 2, customerId1.id, arrayListOf(created1, activated1))
-
       val future = Future.future<Boolean>()
 
       future.setHandler { ar2 ->
@@ -172,7 +174,9 @@ class PgClientEventProjectorIT {
 
       }
 
-      eventProjector.handle(arrayListOf(projectionData), projectorFn, future)
+      val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1))
+
+      eventProjector.handle(events, projectorFn, future)
 
     })
 
@@ -188,9 +192,6 @@ class PgClientEventProjectorIT {
         log.error("delete ", ar1.cause())
         tc.failNow(ar1.cause())
       }
-
-      val projectionData =
-        ProjectionData(UUID.randomUUID(), 2, customerId1.id, arrayListOf(created1, activated1, deactivated1))
 
       val future = Future.future<Boolean>()
 
@@ -224,14 +225,17 @@ class PgClientEventProjectorIT {
 
       }
 
-      eventProjector.handle(arrayListOf(projectionData), projectorFn, future)
+      val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1),
+        Pair(customerId1.id, deactivated1))
+
+      eventProjector.handle(events, projectorFn, future)
 
     })
 
   }
 
   @Test
-  @DisplayName("can project a 3 projectionData with 3 events each")
+  @DisplayName("can project 6 events within one transaction")
   fun a3(tc: VertxTestContext) {
 
     readDb.query("DELETE FROM customer_summary", { ar1 ->
@@ -240,15 +244,6 @@ class PgClientEventProjectorIT {
         log.error("delete ", ar1.cause())
         tc.failNow(ar1.cause())
       }
-
-      val projectionData1 =
-        ProjectionData(UUID.randomUUID(), 1, customerId1.id, arrayListOf(created1, activated1, deactivated1))
-
-      val projectionData2 =
-        ProjectionData(UUID.randomUUID(), 2, customerId2.id, arrayListOf(created2, activated2, deactivated2))
-
-      val projectionData3 =
-        ProjectionData(UUID.randomUUID(), 3, customerId3.id, arrayListOf(created3, activated3, deactivated3))
 
       val future = Future.future<Boolean>()
 
@@ -272,7 +267,7 @@ class PgClientEventProjectorIT {
 
           val result = ar3.result()
 
-          assertThat(3).isEqualTo(result.size())
+          assertThat(2).isEqualTo(result.size())
           assertThat(created1.name).isEqualTo(result.first().getString("name"))
           assertThat(result.first().getBoolean("is_active")).isFalse()
 
@@ -282,7 +277,60 @@ class PgClientEventProjectorIT {
 
       }
 
-      eventProjector.handle(arrayListOf(projectionData1, projectionData2, projectionData3), projectorFn, future)
+      val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1),
+                               Pair(customerId1.id, deactivated1),
+                               Pair(customerId2.id, created2), Pair(customerId2.id, activated2),
+                               Pair(customerId2.id, deactivated2))
+
+      eventProjector.handle(events, projectorFn, future)
+
+    })
+
+  }
+
+  @Test
+  @DisplayName("cannot project more than 6 events within one transaction")
+  fun a4(tc: VertxTestContext) {
+
+    readDb.query("DELETE FROM customer_summary", { ar1 ->
+
+      if (ar1.failed()) {
+        log.error("delete ", ar1.cause())
+        tc.failNow(ar1.cause())
+      }
+
+      val future = Future.future<Boolean>()
+
+      future.setHandler { ar2 ->
+
+        if (ar2.failed()) {
+
+          readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
+
+            if (ar3.failed()) {
+              log.error("select", ar3.cause())
+              tc.failNow(ar3.cause())
+            }
+
+            val result = ar3.result()
+
+            assertThat(0).isEqualTo(result.size())
+
+            tc.completeNow()
+
+          })
+
+        }
+
+      }
+
+      val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1),
+                               Pair(customerId1.id, deactivated1),
+                               Pair(customerId2.id, created2), Pair(customerId2.id, activated2),
+                               Pair(customerId2.id, deactivated2),
+                               Pair(customerId3.id, created3))
+
+      eventProjector.handle(events, projectorFn, future)
 
     })
 
@@ -290,7 +338,7 @@ class PgClientEventProjectorIT {
 
   @Test
   @DisplayName("on any any SQL error it must rollback all events projections")
-  fun a4(tc: VertxTestContext) {
+  fun a5(tc: VertxTestContext) {
 
     val projectorFnErr: (pgConn: PgConnection, targetId: Int, event: DomainEvent, Future<Void>) -> Unit =
       { pgConn: PgConnection, targetId: Int, event: DomainEvent, future: Future<Void> ->
@@ -326,8 +374,6 @@ class PgClientEventProjectorIT {
         tc.failNow(ar1.cause())
       }
 
-      val projectionData = ProjectionData(UUID.randomUUID(), 2, customerId1.id, arrayListOf(created1, activated1))
-
       val future = Future.future<Boolean>()
 
       future.setHandler { ar2 ->
@@ -352,7 +398,9 @@ class PgClientEventProjectorIT {
 
       }
 
-      eventProjector.handle(arrayListOf(projectionData), projectorFnErr, future)
+      val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1))
+
+      eventProjector.handle(events, projectorFnErr, future)
 
     })
 
