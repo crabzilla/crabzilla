@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.pgclient
+package io.github.crabzilla.pgclient
 
 import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.example1.customer.CustomerActivated
@@ -58,7 +58,7 @@ class PgClientEventProjectorIT {
     val activated3 = CustomerActivated("a good reason", Instant.now())
     val deactivated3 = CustomerDeactivated("a good reason", Instant.now())
 
-    val projectorFn: (pgConn: PgConnection, targetId: Int, event: DomainEvent, Future<Void>) -> Unit =
+    val projectorHandler: (pgConn: PgConnection, targetId: Int, event: DomainEvent, Future<Void>) -> Unit =
       { pgConn: PgConnection, targetId: Int, event: DomainEvent, future: Future<Void> ->
 
         log.info("event {} ", event)
@@ -176,7 +176,7 @@ class PgClientEventProjectorIT {
 
       val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1))
 
-      eventProjector.handle(events, projectorFn, future)
+      eventProjector.handle(events, projectorHandler, future)
 
     })
 
@@ -228,7 +228,7 @@ class PgClientEventProjectorIT {
       val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1),
         Pair(customerId1.id, deactivated1))
 
-      eventProjector.handle(events, projectorFn, future)
+      eventProjector.handle(events, projectorHandler, future)
 
     })
 
@@ -282,7 +282,7 @@ class PgClientEventProjectorIT {
                                Pair(customerId2.id, created2), Pair(customerId2.id, activated2),
                                Pair(customerId2.id, deactivated2))
 
-      eventProjector.handle(events, projectorFn, future)
+      eventProjector.handle(events, projectorHandler, future)
 
     })
 
@@ -330,7 +330,7 @@ class PgClientEventProjectorIT {
                                Pair(customerId2.id, deactivated2),
                                Pair(customerId3.id, created3))
 
-      eventProjector.handle(events, projectorFn, future)
+      eventProjector.handle(events, projectorHandler, future)
 
     })
 
@@ -340,7 +340,7 @@ class PgClientEventProjectorIT {
   @DisplayName("on any any SQL error it must rollback all events projections")
   fun a5(tc: VertxTestContext) {
 
-    val projectorFnErr: (pgConn: PgConnection, targetId: Int, event: DomainEvent, Future<Void>) -> Unit =
+    val projectorToFail: (pgConn: PgConnection, targetId: Int, event: DomainEvent, Future<Void>) -> Unit =
       { pgConn: PgConnection, targetId: Int, event: DomainEvent, future: Future<Void> ->
 
         log.info("event {} ", event)
@@ -400,7 +400,7 @@ class PgClientEventProjectorIT {
 
       val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1))
 
-      eventProjector.handle(events, projectorFnErr, future)
+      eventProjector.handle(events, projectorToFail, future)
 
     })
 

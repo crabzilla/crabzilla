@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.pgclient
+package io.github.crabzilla.pgclient
 
 import io.github.crabzilla.vertx.configHandler
 import io.vertx.config.ConfigStoreOptions

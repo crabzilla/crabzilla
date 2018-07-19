@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.pgclient
+package io.github.crabzilla.pgclient
 
 import io.reactiverse.pgclient.PgConnection
 import io.reactiverse.pgclient.Tuple

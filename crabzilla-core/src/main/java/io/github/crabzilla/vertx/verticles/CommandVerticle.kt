@@ -9,8 +9,8 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.Message
+import io.vertx.core.logging.LoggerFactory
 import net.jodah.expiringmap.ExpiringMap
-import org.slf4j.LoggerFactory
 
 class CommandVerticle<A : Entity>(override val name: String,
                                   private val seedValue: A,
@@ -70,7 +70,7 @@ class CommandVerticle<A : Entity>(override val name: String,
 
   }
 
-  internal fun cmdHandler(command: Command): (Future<CommandExecution>) -> Unit {
+  private fun cmdHandler(command: Command): (Future<CommandExecution>) -> Unit {
 
     return { future1 ->
 
@@ -113,10 +113,6 @@ class CommandVerticle<A : Entity>(override val name: String,
           else
             cachedSnapshot
 
-//          if (totalOfNonCachedEvents > 0) {
-//            cache[targetId] = resultingSnapshot
-//          }
-
           val result = cmdHandler.invoke(command, resultingSnapshot)
 
           if (result == null) {
@@ -144,7 +140,7 @@ class CommandVerticle<A : Entity>(override val name: String,
               }
 
               val finalSnapshot = snapshotPromoter.promote(resultingSnapshot, uow.version, uow.events)
-              cache.put(targetId, finalSnapshot)
+              cache[targetId] = finalSnapshot
               val uowSequence = appendAsyncResult.result()
               log.info("uowSequence: {}", uowSequence)
               future1.complete(CommandExecution(result = RESULT.SUCCESS, commandId = command.commandId,
@@ -166,7 +162,7 @@ class CommandVerticle<A : Entity>(override val name: String,
     }
   }
 
-  internal fun resultHandler(msg: Message<Command>): (AsyncResult<CommandExecution>) -> Unit {
+  private fun resultHandler(msg: Message<Command>): (AsyncResult<CommandExecution>) -> Unit {
 
     return { resultHandler: AsyncResult<CommandExecution> ->
       if (!resultHandler.succeeded()) {

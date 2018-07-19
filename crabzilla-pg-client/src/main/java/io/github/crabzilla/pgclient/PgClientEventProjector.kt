@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.pgclient
+package io.github.crabzilla.pgclient
 
 import io.github.crabzilla.DomainEvent
 import io.reactiverse.pgclient.PgConnection
@@ -17,7 +17,7 @@ class PgClientEventProjector(private val pgPool: PgPool) {
   }
 
   fun handle(events: List<Pair<Int, DomainEvent>>,
-             projectorFn: (pgConn: PgConnection, targetId: Int, event: DomainEvent, future: Future<Void>) -> Unit,
+             projectorHandler: (pgConn: PgConnection, targetId: Int, event: DomainEvent, future: Future<Void>) -> Unit,
              future: Future<Boolean>) {
 
     if (events.size > NUMBER_OF_FUTURES) {
@@ -45,8 +45,8 @@ class PgClientEventProjector(private val pgPool: PgPool) {
       val futures = futures(minOf(NUMBER_OF_FUTURES, events.size))
 
       for ((pairIndex, pair) in events.withIndex()) {
-        // invoke the projection function
-        projectorFn.invoke(conn, pair.first, pair.second, futures[pairIndex])
+        // invoke the projection handler
+        projectorHandler.invoke(conn, pair.first, pair.second, futures[pairIndex])
       }
 
       CompositeFuture.join(futures).setHandler { ar2 ->

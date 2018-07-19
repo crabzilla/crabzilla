@@ -23,7 +23,6 @@ import io.vertx.core.spi.VerticleFactory
 
 private val log = org.slf4j.LoggerFactory.getLogger("CrabzillaVertx")
 
-
 fun initVertx(vertx: Vertx) {
 
   Json.mapper.registerModule(ParameterNamesModule())
@@ -83,6 +82,22 @@ fun configHandler(vertx: Vertx, envOptions: ConfigStoreOptions, handler: (JsonOb
 
 }
 
+enum class VerticleRole {
+
+  REST, HANDLER, PROJECTOR, POOLER ;
+
+  fun verticle(verticleName: String): String {
+    return "${prefix()}:${verticleName}"
+  }
+
+  fun prefix(): String {
+    return this.name.toLowerCase()
+  }
+
+}
+
+abstract class CrabzillaVerticle(open val name: String, val role: VerticleRole) : AbstractVerticle()
+
 fun deployVerticles(vertx: Vertx, verticles: Set<CrabzillaVerticle>, deploymentOptions: DeploymentOptions = DeploymentOptions()) {
   // TODO return map of verticle name -> deployment ids
  verticles.forEach({
@@ -108,9 +123,7 @@ fun deployVerticlesByName(vertx: Vertx, verticles: Set<String>, deploymentOption
   })
 }
 
-abstract class CrabzillaVerticle(open val name: String, val role: VerticleRole) : AbstractVerticle()
-
-class CrabzillaVerticleFactory(verticles: Set<CrabzillaVerticle>, val role: VerticleRole) : VerticleFactory {
+class CrabzillaVerticleFactory(verticles: Set<CrabzillaVerticle>, private val role: VerticleRole) : VerticleFactory {
 
   private val map = verticles.associateBy({it.name}, {it})
 
@@ -121,20 +134,6 @@ class CrabzillaVerticleFactory(verticles: Set<CrabzillaVerticle>, val role: Vert
   @Throws(Exception::class)
   override fun createVerticle(name: String, classLoader: ClassLoader): Verticle? {
     return map[name.removePrefix(prefix() + ":")]
-  }
-
-}
-
-enum class VerticleRole {
-
-  REST, HANDLER, PROJECTOR, POOLER ;
-
-  fun verticle(verticleName: String): String {
-    return "${prefix()}:${verticleName}"
-  }
-
-  fun prefix(): String {
-    return this.name.toLowerCase()
   }
 
 }
