@@ -1,7 +1,7 @@
 package io.github.crabzilla.vertx.verticles;
 
 import io.github.crabzilla.*;
-import io.github.crabzilla.example1.SampleInternalService;
+import io.github.crabzilla.example1.PojoService;
 import io.github.crabzilla.example1.customer.*;
 import io.github.crabzilla.vertx.CommandExecution;
 import io.github.crabzilla.vertx.DbConcurrencyException;
@@ -26,7 +26,6 @@ import org.mockito.Mock;
 import org.mockito.stubbing.VoidAnswer2;
 import org.mockito.stubbing.VoidAnswer3;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -54,19 +53,7 @@ class CommandVerticleTest {
   CircuitBreaker circuitBreaker;
   ExpiringMap<Integer, Snapshot<Customer>> cache;
 
-  final SampleInternalService service =  new SampleInternalService() {
-    @Override
-    public UUID uuid() {
-      return UUID.randomUUID();
-    }
-
-    @Override
-    public Instant now() {
-      return Instant.now();
-    }
-  };
-
-  final Customer seedValue =  new Customer(null, null, false, null, service);
+  final Customer seedValue =  new Customer(null, null, false, null, new PojoService());
 
   @Mock
   Function1<Command, List<String>> validatorFn;

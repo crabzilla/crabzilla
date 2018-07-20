@@ -33,9 +33,9 @@
     <!-- test -->
 
     <dependency>
-      <groupId>com.google.dagger</groupId>
-      <artifactId>dagger-compiler</artifactId>
-      <version>${dagger.version}</version>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-core</artifactId>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
 

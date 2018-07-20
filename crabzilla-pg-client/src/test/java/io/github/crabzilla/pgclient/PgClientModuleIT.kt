@@ -33,7 +33,6 @@ class PgClientModuleIT {
           .build()
 
         assertThat(vertx).isSameAs(component.vertx())
-//        assertThat(2).isEqualTo(component.healthHandlers().size)
         assertNotNull(component.readDb())
         assertNotNull(component.writeDb())
 
