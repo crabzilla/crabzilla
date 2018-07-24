@@ -15,7 +15,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
   companion object {
 
-    internal val log = getLogger(UnitOfWorkRepository::class.java)
+    internal val log = getLogger(PgClientUowRepo::class.java)
 
     private const val UOW_ID = "uow_id"
     private const val UOW_EVENTS = "uow_events"

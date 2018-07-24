@@ -186,7 +186,7 @@ class PgClientEventProjectorIT {
   }
 
   @Test
-  @DisplayName("can project a 3 events: created, activated and deactivated")
+  @DisplayName("can project 3 events: created, activated and deactivated")
   fun a2(tc: VertxTestContext) {
 
     readDb.query("DELETE FROM customer_summary", { ar1 ->
