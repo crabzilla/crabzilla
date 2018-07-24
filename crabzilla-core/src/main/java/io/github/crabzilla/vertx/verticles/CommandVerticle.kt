@@ -93,7 +93,7 @@ class CommandVerticle<A : Entity>(override val name: String,
 
         val selectAfterVersionFuture = Future.future<SnapshotData>()
 
-        // command handler function _may_ be blocking if your aggregate are using blocking internal services
+        // command handler function _may_ be blocking if your aggregate is calling blocking services
         eventJournal.selectAfterVersion(targetId, cachedSnapshot.version, selectAfterVersionFuture, name)
 
         selectAfterVersionFuture.setHandler { fromEventRepoResult ->
