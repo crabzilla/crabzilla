@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal class VertxTest {
+internal class CrabzillaVerticleTest {
 
   lateinit var vertx: Vertx
 
