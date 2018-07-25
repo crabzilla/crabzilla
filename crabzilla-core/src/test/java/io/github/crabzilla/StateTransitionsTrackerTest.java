@@ -1,6 +1,6 @@
 package io.github.crabzilla;
 
-import io.github.crabzilla.example1.SampleInternalService;
+import io.github.crabzilla.example1.PojoService;
 import io.github.crabzilla.example1.customer.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +19,7 @@ public class StateTransitionsTrackerTest {
 
   StateTransitionsTracker<Customer> tracker;
 
-  final SampleInternalService service = new TestSampleInternalService();
+  final PojoService service = new PojoService();
   final Customer customer = new Customer(null, null, false, null, service);
   final Snapshot<Customer> originalSnapshot = new Snapshot<>(customer, 0);
 

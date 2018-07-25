@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.pgclient
+package io.github.crabzilla.pgclient
 
 import dagger.Component
 import io.github.crabzilla.vertx.qualifiers.ReadDatabase
@@ -18,7 +18,5 @@ interface PgClientComponent {
 
   @WriteDatabase
   fun writeDb() : PgPool
-
-//  fun healthHandlers() : Map<String, Handler<Future<Status>>>
 
 }

@@ -15,25 +15,25 @@ import io.vertx.core.Handler
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
+import io.vertx.core.logging.LoggerFactory.getLogger
 import io.vertx.ext.healthchecks.HealthCheckHandler
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
-import org.slf4j.LoggerFactory.getLogger
 import java.util.*
 
 
 // TODO add circuit breakers
-class RestVerticle(override val name: String,
-                   private val config: JsonObject,
-                   private val healthCheckHandler : HealthCheckHandler,
-                   private val uowRepository: UnitOfWorkRepository,
-                   private val handlerService: CommandHandlerService)
+class WebVerticle(override val name: String,
+                  private val config: JsonObject,
+                  private val healthCheckHandler : HealthCheckHandler,
+                  private val uowRepository: UnitOfWorkRepository,
+                  private val handlerService: CommandHandlerService)
   : CrabzillaVerticle(name, REST) {
 
 
   companion object {
-    internal var log = getLogger(RestVerticle::class.java)
+    internal var log = getLogger(WebVerticle::class.java)
   }
 
   override fun start() {
@@ -97,13 +97,13 @@ class RestVerticle(override val name: String,
         return@setHandler
       }
 
-      handlerService.postCommand(cmdHandlerEndpoint(resource), command, cmdHandler(routingContext, httpResp))
+      handlerService.postCommand(cmdHandlerEndpoint(resource), command, resultHandler(routingContext, httpResp))
 
     }
 
   }
 
-  private fun cmdHandler(routingContext: RoutingContext, httpResp: HttpServerResponse):
+  private fun resultHandler(routingContext: RoutingContext, httpResp: HttpServerResponse):
     Handler<AsyncResult<CommandExecution>> {
 
     return Handler { response ->

@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.pgclient
+package io.github.crabzilla.pgclient
 
 import io.github.crabzilla.vertx.configHandler
 import io.vertx.config.ConfigStoreOptions
@@ -33,7 +33,6 @@ class PgClientModuleIT {
           .build()
 
         assertThat(vertx).isSameAs(component.vertx())
-//        assertThat(2).isEqualTo(component.healthHandlers().size)
         assertNotNull(component.readDb())
         assertNotNull(component.writeDb())
 

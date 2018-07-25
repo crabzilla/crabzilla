@@ -18,7 +18,7 @@
     <slf4j.version>1.7.25</slf4j.version>
 
     <!-- crabzilla vertx -->
-    <vertx.version>3.5.2</vertx.version>
+    <vertx.version>3.5.3</vertx.version>
     <dagger.version>2.16</dagger.version>
     <expiringmap.version>0.5.8</expiringmap.version>
 
@@ -100,19 +100,13 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
     </dependency>
+
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-lang-kotlin</artifactId>
     </dependency>
 
     <!-- test -->
-
-    <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-vertx-core</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
 
     <dependency>
       <groupId>io.vertx</groupId>
@@ -161,21 +155,14 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-web</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>io.github.crabzilla</groupId>
         <artifactId>crabzilla-pg-client</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-vertx-core</artifactId>
+        <artifactId>crabzilla-web</artifactId>
         <version>${project.version}</version>
-        <type>test-jar</type>
       </dependency>
 
       <!-- vertx -->
@@ -240,10 +227,9 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-vertx-core</artifactId>
+        <artifactId>crabzilla-core</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
-        <scope>test</scope>
       </dependency>
 
       <dependency>

@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.pgclient
+package io.github.crabzilla.pgclient
 
 import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.example1.customer.CustomerActivated
@@ -10,9 +10,7 @@ import io.reactiverse.pgclient.PgConnection
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.config.ConfigStoreOptions
-import io.vertx.core.Future
-import io.vertx.core.Vertx
-import io.vertx.core.VertxOptions
+import io.vertx.core.*
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -23,6 +21,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Instant
+
 
 @ExtendWith(VertxExtension::class)
 @DisplayName("PgClientEventProjector")
@@ -58,10 +57,14 @@ class PgClientEventProjectorIT {
     val activated3 = CustomerActivated("a good reason", Instant.now())
     val deactivated3 = CustomerDeactivated("a good reason", Instant.now())
 
-    val projectorFn: (pgConn: PgConnection, targetId: Int, event: DomainEvent, Future<Void>) -> Unit =
-      { pgConn: PgConnection, targetId: Int, event: DomainEvent, future: Future<Void> ->
+    val projectorHandler: (pgConn: PgConnection, targetId: Int, event: DomainEvent, Handler<AsyncResult<Void>>) -> Unit =
+      { pgConn: PgConnection, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
 
         log.info("event {} ", event)
+
+        // TODO can I compose here? https://vertx.io/docs/vertx-core/java/#_sequential_composition
+        val future: Future<Void> = Future.future<Void>()
+        future.setHandler(handler)
 
         when (event) {
           is CustomerCreated -> {
@@ -176,14 +179,14 @@ class PgClientEventProjectorIT {
 
       val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1))
 
-      eventProjector.handle(events, projectorFn, future)
+      eventProjector.handle(events, projectorHandler, future)
 
     })
 
   }
 
   @Test
-  @DisplayName("can project a 3 events: created, activated and deactivated")
+  @DisplayName("can project 3 events: created, activated and deactivated")
   fun a2(tc: VertxTestContext) {
 
     readDb.query("DELETE FROM customer_summary", { ar1 ->
@@ -228,7 +231,7 @@ class PgClientEventProjectorIT {
       val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1),
         Pair(customerId1.id, deactivated1))
 
-      eventProjector.handle(events, projectorFn, future)
+      eventProjector.handle(events, projectorHandler, future)
 
     })
 
@@ -282,7 +285,7 @@ class PgClientEventProjectorIT {
                                Pair(customerId2.id, created2), Pair(customerId2.id, activated2),
                                Pair(customerId2.id, deactivated2))
 
-      eventProjector.handle(events, projectorFn, future)
+      eventProjector.handle(events, projectorHandler, future)
 
     })
 
@@ -330,7 +333,7 @@ class PgClientEventProjectorIT {
                                Pair(customerId2.id, deactivated2),
                                Pair(customerId3.id, created3))
 
-      eventProjector.handle(events, projectorFn, future)
+      eventProjector.handle(events, projectorHandler, future)
 
     })
 
@@ -340,25 +343,30 @@ class PgClientEventProjectorIT {
   @DisplayName("on any any SQL error it must rollback all events projections")
   fun a5(tc: VertxTestContext) {
 
-    val projectorFnErr: (pgConn: PgConnection, targetId: Int, event: DomainEvent, Future<Void>) -> Unit =
-      { pgConn: PgConnection, targetId: Int, event: DomainEvent, future: Future<Void> ->
+    val projectorToFail: (pgConn: PgConnection, targetId: Int, event: DomainEvent, Handler<AsyncResult<Void>>) -> Unit =
+      { pgConn: PgConnection, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
 
         log.info("event {} ", event)
 
+        // TODO can I use this here? https://vertx.io/docs/vertx-core/java/#_sequential_composition
+        val future: Future<Void> = Future.future<Void>()
+
+        future.setHandler(handler)
+
         when (event) {
           is CustomerCreated -> {
-            val query = "INSERT INTO XXXXXX  (id, name, is_active) VALUES ($1, $2, $3)"
-            val tuple = Tuple.of(targetId, event.name, false)
-            pgConn.pQuery(query, tuple, future)
+              val query = "INSERT INTO XXXXXX (id, name, is_active) VALUES ($1, $2, $3)"
+              val tuple = Tuple.of(targetId, event.name, false)
+              pgConn.pQuery(query, tuple, future)
           }
           is CustomerActivated -> {
-            val query = "INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)"
-            val tuple = Tuple.of(targetId, "name", false)
+            val query = "UPDATE customer_summary SET is_active = true WHERE id = $1"
+            val tuple = Tuple.of(targetId)
             pgConn.pQuery(query, tuple, future)
           }
           is CustomerDeactivated -> {
-            val query = "INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)"
-            val tuple = Tuple.of(targetId, "name", false)
+            val query = "UPDATE customer_summary SET is_active = false WHERE id = $1"
+            val tuple = Tuple.of(targetId)
             pgConn.pQuery(query, tuple, future)
           }
           else -> log.info("${event.javaClass.simpleName} does not have any event projector handler")
@@ -366,6 +374,7 @@ class PgClientEventProjectorIT {
 
         log.info("finished event {} ", event)
       }
+
 
     readDb.query("DELETE FROM customer_summary", { ar1 ->
 
@@ -400,7 +409,7 @@ class PgClientEventProjectorIT {
 
       val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1))
 
-      eventProjector.handle(events, projectorFnErr, future)
+      eventProjector.handle(events, projectorToFail, future)
 
     })
 

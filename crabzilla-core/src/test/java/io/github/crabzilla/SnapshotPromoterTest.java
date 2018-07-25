@@ -1,6 +1,6 @@
 package io.github.crabzilla;
 
-import io.github.crabzilla.example1.SampleInternalService;
+import io.github.crabzilla.example1.PojoService;
 import io.github.crabzilla.example1.customer.Customer;
 import io.github.crabzilla.example1.customer.CustomerCreated;
 import io.github.crabzilla.example1.customer.CustomerId;
@@ -29,7 +29,7 @@ public class SnapshotPromoterTest {
   @Mock
   Function1<Snapshot<? extends Customer>, StateTransitionsTracker<Customer>> factory;
 
-  final SampleInternalService service = new TestSampleInternalService();
+  final PojoService service = new PojoService();
   final Customer customer = new Customer(null, null, false, null, service);
   final Snapshot<Customer> originalSnapshot = new Snapshot<>(customer, 0);
 

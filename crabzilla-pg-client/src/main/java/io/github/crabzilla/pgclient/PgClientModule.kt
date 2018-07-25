@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.pgclient
+package io.github.crabzilla.pgclient
 
 import dagger.Module
 import dagger.Provides
@@ -65,37 +65,5 @@ open class PgClientModule(val vertx: Vertx, val config: JsonObject) {
       .setMaxSize(config.getInteger("READ_DATABASE_POOL_MAX_SIZE"))
     return PgClient.pool(vertx, options)
   }
-
-//  @Provides
-//  @IntoMap
-//  @StringKey("read-database")
-//  fun healthcheck1(@ReadDatabase readPool: PgPool) : Handler<Future<Status>> {
-//    return Handler { future: Future<Status> ->
-//        readPool.query("select 1", { ar ->
-//        if (ar.succeeded()) {
-//          future.succeeded()
-//        } else {
-//          future.fail(ar.cause())
-//        }
-//        readPool.close()
-//      })
-//    }
-//  }
-//
-//  @Provides
-//  @IntoMap
-//  @StringKey("write-database")
-//  fun healthcheck2(@WriteDatabase writePool: PgPool) : Handler<Future<Status>> {
-//    return Handler { future: Future<Status> ->
-//      writePool.query("select 1", { ar ->
-//        if (ar.succeeded()) {
-//          future.succeeded()
-//        } else {
-//          future.fail(ar.cause())
-//        }
-//        writePool.close()
-//      })
-//    }
-//  }
 
 }
