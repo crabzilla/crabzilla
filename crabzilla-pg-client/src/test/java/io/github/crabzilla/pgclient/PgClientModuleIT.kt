@@ -1,12 +1,12 @@
 package io.github.crabzilla.pgclient
 
+import io.github.crabzilla.vertx.CrabzillaMainModule
 import io.github.crabzilla.vertx.configHandler
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -28,11 +28,11 @@ class PgClientModuleIT {
 
       vertx.executeBlocking<Any>({ future ->
 
-        val component = DaggerPgClientComponent.builder()
-          .pgClientModule(PgClientModule(vertx, config))
+        val component = DaggerPgClientTestComponent.builder()
+          .crabzillaMainModule(CrabzillaMainModule(vertx, config))
+          .pgClientModule(PgClientModule())
           .build()
 
-        assertThat(vertx).isSameAs(component.vertx())
         assertNotNull(component.readDb())
         assertNotNull(component.writeDb())
 

@@ -1,8 +1,8 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.example1.customer.CreateCustomer
-import io.github.crabzilla.example1.customer.CustomerCreated
-import io.github.crabzilla.example1.customer.CustomerId
+import io.github.crabzilla.example1.CreateCustomer
+import io.github.crabzilla.example1.CustomerCreated
+import io.github.crabzilla.example1.CustomerId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -20,7 +20,7 @@ class UnitOfWorkTest {
 
   @Test
   fun versionOneCanBeInstantiated() {
-    val command =  CreateCustomer(UUID.randomUUID(), CustomerId(1), "cust#1")
+    val command = CreateCustomer(UUID.randomUUID(), CustomerId(1), "cust#1")
     UnitOfWork(UUID.randomUUID(), command, 1,
       listOf<DomainEvent>(CustomerCreated(CustomerId(1), "cust#1")))
   }
@@ -35,7 +35,7 @@ class UnitOfWorkTest {
 
   @Test
   fun targetIdIsEqualsToCommandTargetId() {
-    val command =  CreateCustomer(UUID.randomUUID(), CustomerId(1), "cust#1")
+    val command = CreateCustomer(UUID.randomUUID(), CustomerId(1), "cust#1")
     val uow = UnitOfWork(UUID.randomUUID(), command, 1,
       listOf<DomainEvent>(CustomerCreated(CustomerId(1), "cust#1")))
     assertThat(uow.command.targetId).isEqualTo(uow.targetId())

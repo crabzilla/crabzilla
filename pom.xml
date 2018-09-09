@@ -106,6 +106,26 @@
       <artifactId>vertx-lang-kotlin</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-rx-java2</artifactId>
+      <version>${vertx.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-service-proxy</artifactId>
+      <classifier>processor</classifier>
+      <version>${vertx.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-codegen</artifactId>
+      <scope>provided</scope>
+      <version>${vertx.version}</version>
+    </dependency>
+
     <!-- test -->
 
     <dependency>
@@ -345,6 +365,9 @@
           <proc>none</proc>
           <source>1.8</source>
           <target>1.8</target>
+          <annotationProcessors>
+            <annotationProcessor>io.vertx.serviceproxy.ServiceProxyProcessor</annotationProcessor>
+          </annotationProcessors>
         </configuration>
         <executions>
           <!-- Replacing default-compile as it is treated specially by maven -->

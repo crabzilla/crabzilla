@@ -122,7 +122,7 @@ class CommandVerticle<A : Entity>(override val name: String,
 
           result.inCaseOfSuccess({ uow ->
 
-            val appendFuture = Future.future<Long>()
+            val appendFuture = Future.future<Int>()
             eventJournal.append(uow!!, appendFuture, name)
 
             appendFuture.setHandler { appendAsyncResult ->
@@ -173,12 +173,6 @@ class CommandVerticle<A : Entity>(override val name: String,
       val resp = resultHandler.result()
       val options = DeliveryOptions().setCodecName("CommandExecution")
       msg.reply(resp, options)
-      //      msg.reply(resp, options, (Handler<AsyncResult<Message<CommandExecution>>>)
-      //              event -> {
-      //        if (!event.succeeded()) {
-      //          log.error("msg.reply ", event.cause());
-      //        }
-      //      });
     }
   }
 

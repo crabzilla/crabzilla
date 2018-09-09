@@ -17,9 +17,9 @@ interface UnitOfWorkRepository {
   fun selectAfterVersion(id: Int, version: Version, selectAfterVersionFuture: Future<SnapshotData>,
                          aggregateRootName: String)
 
-  fun append(unitOfWork: UnitOfWork, appendFuture: Future<Long>, aggregateRootName: String)
+  fun append(unitOfWork: UnitOfWork, appendFuture: Future<Int>, aggregateRootName: String)
 
-  fun selectAfterUowSequence(uowSequence: Long, maxRows: Int,
+  fun selectAfterUowSequence(uowSequence: Int, maxRows: Int,
                              selectAfterUowSeq: Future<List<ProjectionData>>)
 }
 

@@ -2,46 +2,22 @@ package io.github.crabzilla.pgclient
 
 import dagger.Module
 import dagger.Provides
-import io.github.crabzilla.vertx.initVertx
-import io.github.crabzilla.vertx.qualifiers.ReadDatabase
-import io.github.crabzilla.vertx.qualifiers.WriteDatabase
+import io.github.crabzilla.vertx.ReadDatabase
+import io.github.crabzilla.vertx.WriteDatabase
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
-import io.vertx.core.logging.LoggerFactory
-import io.vertx.core.logging.SLF4JLogDelegateFactory
 import javax.inject.Singleton
 
 @Module
-open class PgClientModule(val vertx: Vertx, val config: JsonObject) {
-
-  init {
-
-    System.setProperty(LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory::class.java.name)
-    LoggerFactory.getLogger(LoggerFactory::class.java) // Required for Logback to work in Vertx
-
-    initVertx(vertx)
-
-  }
-
-  @Provides
-  @Singleton
-  fun vertx(): Vertx {
-    return vertx
-  }
-
-  @Provides
-  @Singleton
-  fun config(): JsonObject {
-    return config
-  }
+open class PgClientModule {
 
   @Provides
   @Singleton
   @WriteDatabase
-  fun pgPool1(config: JsonObject): PgPool {
+  fun pgPool1(config: JsonObject, vertx: Vertx): PgPool {
     val options = PgPoolOptions()
       .setPort(5432)
       .setHost(config.getString("WRITE_DATABASE_HOST"))
@@ -55,7 +31,7 @@ open class PgClientModule(val vertx: Vertx, val config: JsonObject) {
   @Provides
   @Singleton
   @ReadDatabase
-  fun pgPool2(config: JsonObject): PgPool {
+  fun pgPool2(config: JsonObject, vertx: Vertx): PgPool {
     val options = PgPoolOptions()
       .setPort(5432)
       .setHost(config.getString("READ_DATABASE_HOST"))

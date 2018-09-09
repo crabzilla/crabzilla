@@ -1,10 +1,10 @@
 package io.github.crabzilla
 
 import com.fasterxml.jackson.databind.SerializationFeature
-import io.github.crabzilla.example1.customer.CreateCustomer
-import io.github.crabzilla.example1.customer.CustomerActivated
-import io.github.crabzilla.example1.customer.CustomerCreated
-import io.github.crabzilla.example1.customer.CustomerId
+import io.github.crabzilla.example1.CreateCustomer
+import io.github.crabzilla.example1.CustomerActivated
+import io.github.crabzilla.example1.CustomerCreated
+import io.github.crabzilla.example1.CustomerId
 import io.github.crabzilla.vertx.initVertx
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json

@@ -1,6 +1,7 @@
 package io.github.crabzilla.web
 
 import io.github.crabzilla.Command
+import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.vertx.CommandExecution
 import io.github.crabzilla.vertx.CommandHandlerService
 import io.github.crabzilla.vertx.ProjectionData
@@ -12,7 +13,8 @@ import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.http.CaseInsensitiveHeaders
 import org.slf4j.LoggerFactory
 
-open class CommandHandlerServiceImpl(private val vertx: Vertx, private val projectionEndpoint: String) : CommandHandlerService {
+open class CommandHandlerServiceImpl(private val vertx: Vertx, private val projectionEndpoint: String)
+  : CommandHandlerService {
 
   companion object {
     internal var log = LoggerFactory.getLogger(CommandHandlerService::class.java)
@@ -39,15 +41,14 @@ open class CommandHandlerServiceImpl(private val vertx: Vertx, private val proje
 
       val result = response.result().body() as CommandExecution
       val uow = result.unitOfWork
-      val uowSequence = result.uowSequence ?: 0L
+      val uowSequence = result.uowSequence ?: 0
 
       log.info("result = {}", result)
 
-      if (uow != null && uowSequence != 0L) {
+      if (uow != null && uowSequence != 0) {
         val headers = CaseInsensitiveHeaders().add("uowSequence", uowSequence.toString())
-        val eventsDeliveryOptions = DeliveryOptions().setCodecName(ProjectionData::class.simpleName).setHeaders(headers)
-        val pd = ProjectionData(uow.unitOfWorkId, uowSequence, uow.targetId().value(), uow.events)
-        vertx.eventBus().publish(projectionEndpoint, pd, eventsDeliveryOptions)
+        val eventsDeliveryOptions = DeliveryOptions().setCodecName(UnitOfWork::class.simpleName).setHeaders(headers)
+        vertx.eventBus().publish(projectionEndpoint, ProjectionData.fromUnitOfWork(uowSequence, uow), eventsDeliveryOptions)
       }
 
       handler.handle(Future.succeededFuture(result))
