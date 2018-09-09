@@ -1,8 +1,7 @@
 package io.github.crabzilla.vertx.verticles;
 
 import io.github.crabzilla.*;
-import io.github.crabzilla.example1.PojoService;
-import io.github.crabzilla.example1.customer.*;
+import io.github.crabzilla.example1.*;
 import io.github.crabzilla.vertx.CommandExecution;
 import io.github.crabzilla.vertx.DbConcurrencyException;
 import io.github.crabzilla.vertx.UnitOfWorkRepository;
@@ -107,8 +106,8 @@ class CommandVerticleTest {
                                                       eq(initialSnapshot.getVersion()),
                                                       any(Future.class), eq(ENTITY_NAME));
 
-    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Future<Long>>) (uow, future) ->
-            future.complete(1L)))
+    doAnswer(answerVoid((VoidAnswer2<UnitOfWork, Future<Integer>>) (uow, future) ->
+            future.complete(1)))
             .when(eventRepository).append(eq(expectedUow), any(Future.class), eq(ENTITY_NAME));
 
     when(cmdHandlerFn.invoke(eq(createCustomerCmd), eq(initialSnapshot)))

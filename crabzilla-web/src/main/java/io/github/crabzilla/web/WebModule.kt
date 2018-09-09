@@ -4,8 +4,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoMap
 import dagger.multibindings.StringKey
-import io.github.crabzilla.vertx.qualifiers.ReadDatabase
-import io.github.crabzilla.vertx.qualifiers.WriteDatabase
+import io.github.crabzilla.vertx.ReadDatabase
+import io.github.crabzilla.vertx.WriteDatabase
 import io.reactiverse.pgclient.PgPool
 import io.vertx.core.Future
 import io.vertx.core.Handler

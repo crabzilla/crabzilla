@@ -1,10 +1,10 @@
 package io.github.crabzilla.pgclient
 
 import io.github.crabzilla.DomainEvent
-import io.github.crabzilla.example1.customer.CustomerActivated
-import io.github.crabzilla.example1.customer.CustomerCreated
-import io.github.crabzilla.example1.customer.CustomerDeactivated
-import io.github.crabzilla.example1.customer.CustomerId
+import io.github.crabzilla.UnitOfWork
+import io.github.crabzilla.example1.*
+import io.github.crabzilla.vertx.CrabzillaMainModule
+import io.github.crabzilla.vertx.ProjectionData.Companion.fromUnitOfWork
 import io.github.crabzilla.vertx.configHandler
 import io.reactiverse.pgclient.PgConnection
 import io.reactiverse.pgclient.PgPool
@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Instant
+import java.util.*
 
 
 @ExtendWith(VertxExtension::class)
@@ -43,6 +44,9 @@ class PgClientEventProjectorIT {
     internal val log = org.slf4j.LoggerFactory.getLogger(PgClientEventProjectorIT::class.java)
 
     val customerId1 = CustomerId(1)
+
+    val command = CreateActivateCustomer(UUID.randomUUID(), customerId1, "customer1", "I need")
+
     val created1 = CustomerCreated(customerId1, "customer1")
     val activated1 = CustomerActivated("a good reason", Instant.now())
     val deactivated1 = CustomerDeactivated("a good reason", Instant.now())
@@ -57,6 +61,8 @@ class PgClientEventProjectorIT {
     val activated3 = CustomerActivated("a good reason", Instant.now())
     val deactivated3 = CustomerDeactivated("a good reason", Instant.now())
 
+    val uowSequence1 = 1
+
     val projectorHandler: (pgConn: PgConnection, targetId: Int, event: DomainEvent, Handler<AsyncResult<Void>>) -> Unit =
       { pgConn: PgConnection, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
 
@@ -70,17 +76,17 @@ class PgClientEventProjectorIT {
           is CustomerCreated -> {
             val query = "INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)"
             val tuple = Tuple.of(targetId, event.name, false)
-            pgConn.pQuery(query, tuple, future)
+            pgConn.runPreparedQuery(query, tuple, future)
           }
           is CustomerActivated -> {
             val query = "UPDATE customer_summary SET is_active = true WHERE id = $1"
             val tuple = Tuple.of(targetId)
-            pgConn.pQuery(query, tuple, future)
+            pgConn.runPreparedQuery(query, tuple, future)
           }
           is CustomerDeactivated -> {
             val query = "UPDATE customer_summary SET is_active = false WHERE id = $1"
             val tuple = Tuple.of(targetId)
-            pgConn.pQuery(query, tuple, future)
+            pgConn.runPreparedQuery(query, tuple, future)
           }
           else -> log.info("${event.javaClass.simpleName} does not have any event projector handler")
         }
@@ -107,15 +113,25 @@ class PgClientEventProjectorIT {
 
       vertx.executeBlocking<Any>({ future ->
 
-        val component = DaggerPgClientComponent.builder()
-          .pgClientModule(PgClientModule(vertx, config))
+        val component = DaggerPgClientTestComponent.builder()
+          .crabzillaMainModule(CrabzillaMainModule(vertx, config))
+          .pgClientModule(PgClientModule())
           .build()
 
         readDb = component.readDb()
 
-        eventProjector = PgClientEventProjector(readDb)
+        eventProjector = PgClientEventProjector(readDb, "customer summary")
 
-        future.complete()
+        readDb.query("DELETE FROM customer_summary", { ar1 ->
+
+          if (ar1.failed()) {
+            log.error("delete ", ar1.cause())
+            tc.failNow(ar1.cause())
+          }
+
+          future.complete()
+
+        })
 
       }, { res ->
 
@@ -138,50 +154,41 @@ class PgClientEventProjectorIT {
   @DisplayName("can project a couple of events: created and activated")
   fun a1(tc: VertxTestContext) {
 
-    readDb.query("DELETE FROM customer_summary", { ar1 ->
+    val future = Future.future<Boolean>()
 
-      if (ar1.failed()) {
-        log.error("delete ", ar1.cause())
-        tc.failNow(ar1.cause())
+    future.setHandler { ar2 ->
+
+      if (ar2.failed()) {
+        log.error("future", ar2.cause())
+        tc.failNow(ar2.cause())
       }
 
-      val future = Future.future<Boolean>()
+      val ok = ar2.result()
 
-      future.setHandler { ar2 ->
+      assertThat(ok).isTrue()
 
-        if (ar2.failed()) {
-          log.error("future", ar2.cause())
-          tc.failNow(ar2.cause())
+      readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
+
+        if (ar3.failed()) {
+          log.error("select", ar3.cause())
+          tc.failNow(ar3.cause())
         }
 
-        val ok = ar2.result()
+        val result = ar3.result()
 
-        assertThat(ok).isTrue()
+        assertThat(1).isEqualTo(result.size())
+        assertThat(created1.name).isEqualTo(result.first().getString("name"))
+        assertThat(result.first().getBoolean("is_active")).isTrue()
 
-        readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
+        tc.completeNow()
 
-          if (ar3.failed()) {
-            log.error("select", ar3.cause())
-            tc.failNow(ar3.cause())
-          }
+      })
 
-          val result = ar3.result()
+    }
 
-          assertThat(1).isEqualTo(result.size())
-          assertThat(created1.name).isEqualTo(result.first().getString("name"))
-          assertThat(result.first().getBoolean("is_active")).isTrue()
+    val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1))
 
-          tc.completeNow()
-
-        })
-
-      }
-
-      val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1))
-
-      eventProjector.handle(events, projectorHandler, future)
-
-    })
+    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), projectorHandler, future)
 
   }
 
@@ -189,105 +196,41 @@ class PgClientEventProjectorIT {
   @DisplayName("can project 3 events: created, activated and deactivated")
   fun a2(tc: VertxTestContext) {
 
-    readDb.query("DELETE FROM customer_summary", { ar1 ->
+    val future = Future.future<Boolean>()
 
-      if (ar1.failed()) {
-        log.error("delete ", ar1.cause())
-        tc.failNow(ar1.cause())
+    future.setHandler { ar2 ->
+
+      if (ar2.failed()) {
+        log.error("future", ar2.cause())
+        tc.failNow(ar2.cause())
       }
 
-      val future = Future.future<Boolean>()
+      val ok = ar2.result()
 
-      future.setHandler { ar2 ->
+      assertThat(ok).isTrue()
 
-        if (ar2.failed()) {
-          log.error("future", ar2.cause())
-          tc.failNow(ar2.cause())
+      readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
+
+        if (ar3.failed()) {
+          log.error("select", ar3.cause())
+          tc.failNow(ar3.cause())
         }
 
-        val ok = ar2.result()
+        val result = ar3.result()
 
-        assertThat(ok).isTrue()
+        assertThat(1).isEqualTo(result.size())
+        assertThat(created1.name).isEqualTo(result.first().getString("name"))
+        assertThat(result.first().getBoolean("is_active")).isFalse()
 
-        readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
+        tc.completeNow()
 
-          if (ar3.failed()) {
-            log.error("select", ar3.cause())
-            tc.failNow(ar3.cause())
-          }
+      })
 
-          val result = ar3.result()
+    }
 
-          assertThat(1).isEqualTo(result.size())
-          assertThat(created1.name).isEqualTo(result.first().getString("name"))
-          assertThat(result.first().getBoolean("is_active")).isFalse()
+    val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1, deactivated1))
 
-          tc.completeNow()
-
-        })
-
-      }
-
-      val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1),
-        Pair(customerId1.id, deactivated1))
-
-      eventProjector.handle(events, projectorHandler, future)
-
-    })
-
-  }
-
-  @Test
-  @DisplayName("can project 6 events within one transaction")
-  fun a3(tc: VertxTestContext) {
-
-    readDb.query("DELETE FROM customer_summary", { ar1 ->
-
-      if (ar1.failed()) {
-        log.error("delete ", ar1.cause())
-        tc.failNow(ar1.cause())
-      }
-
-      val future = Future.future<Boolean>()
-
-      future.setHandler { ar2 ->
-
-        if (ar2.failed()) {
-          log.error("future", ar2.cause())
-          tc.failNow(ar2.cause())
-        }
-
-        val ok = ar2.result()
-
-        assertThat(ok).isTrue()
-
-        readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
-
-          if (ar3.failed()) {
-            log.error("select", ar3.cause())
-            tc.failNow(ar3.cause())
-          }
-
-          val result = ar3.result()
-
-          assertThat(2).isEqualTo(result.size())
-          assertThat(created1.name).isEqualTo(result.first().getString("name"))
-          assertThat(result.first().getBoolean("is_active")).isFalse()
-
-          tc.completeNow()
-
-        })
-
-      }
-
-      val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1),
-                               Pair(customerId1.id, deactivated1),
-                               Pair(customerId2.id, created2), Pair(customerId2.id, activated2),
-                               Pair(customerId2.id, deactivated2))
-
-      eventProjector.handle(events, projectorHandler, future)
-
-    })
+    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), projectorHandler, future)
 
   }
 
@@ -295,47 +238,36 @@ class PgClientEventProjectorIT {
   @DisplayName("cannot project more than 6 events within one transaction")
   fun a4(tc: VertxTestContext) {
 
-    readDb.query("DELETE FROM customer_summary", { ar1 ->
 
-      if (ar1.failed()) {
-        log.error("delete ", ar1.cause())
-        tc.failNow(ar1.cause())
-      }
+    val future = Future.future<Boolean>()
 
-      val future = Future.future<Boolean>()
+    future.setHandler { ar2 ->
 
-      future.setHandler { ar2 ->
+      if (ar2.failed()) {
 
-        if (ar2.failed()) {
+        readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
 
-          readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
+          if (ar3.failed()) {
+            log.error("select", ar3.cause())
+            tc.failNow(ar3.cause())
+          }
 
-            if (ar3.failed()) {
-              log.error("select", ar3.cause())
-              tc.failNow(ar3.cause())
-            }
+          val result = ar3.result()
 
-            val result = ar3.result()
+          assertThat(0).isEqualTo(result.size())
 
-            assertThat(0).isEqualTo(result.size())
+          tc.completeNow()
 
-            tc.completeNow()
-
-          })
-
-        }
+        })
 
       }
 
-      val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1),
-                               Pair(customerId1.id, deactivated1),
-                               Pair(customerId2.id, created2), Pair(customerId2.id, activated2),
-                               Pair(customerId2.id, deactivated2),
-                               Pair(customerId3.id, created3))
+    }
 
-      eventProjector.handle(events, projectorHandler, future)
+    val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1, deactivated1,
+      created2, activated2, deactivated2, created1))
 
-    })
+    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), projectorHandler, future)
 
   }
 
@@ -357,17 +289,17 @@ class PgClientEventProjectorIT {
           is CustomerCreated -> {
               val query = "INSERT INTO XXXXXX (id, name, is_active) VALUES ($1, $2, $3)"
               val tuple = Tuple.of(targetId, event.name, false)
-              pgConn.pQuery(query, tuple, future)
+              pgConn.runPreparedQuery(query, tuple, future)
           }
           is CustomerActivated -> {
-            val query = "UPDATE customer_summary SET is_active = true WHERE id = $1"
+            val query = "UPDATE XXX SET is_active = true WHERE id = $1"
             val tuple = Tuple.of(targetId)
-            pgConn.pQuery(query, tuple, future)
+            pgConn.runPreparedQuery(query, tuple, future)
           }
           is CustomerDeactivated -> {
-            val query = "UPDATE customer_summary SET is_active = false WHERE id = $1"
+            val query = "UPDATE XX SET is_active = false WHERE id = $1"
             val tuple = Tuple.of(targetId)
-            pgConn.pQuery(query, tuple, future)
+            pgConn.runPreparedQuery(query, tuple, future)
           }
           else -> log.info("${event.javaClass.simpleName} does not have any event projector handler")
         }
@@ -376,42 +308,34 @@ class PgClientEventProjectorIT {
       }
 
 
-    readDb.query("DELETE FROM customer_summary", { ar1 ->
+    val future2 = Future.future<Boolean>()
 
-      if (ar1.failed()) {
-        log.error("delete ", ar1.cause())
-        tc.failNow(ar1.cause())
+    future2.setHandler { ar2 ->
+
+      if (ar2.succeeded()) {
+        tc.failNow(IllegalStateException("should fail"))
       }
 
-      val future = Future.future<Boolean>()
+      readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
 
-      future.setHandler { ar2 ->
-
-        if (ar2.failed()) {
-
-          readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
-
-            if (ar3.failed()) {
-              log.error("select", ar3.cause())
-              tc.failNow(ar3.cause())
-            }
-
-            val result = ar3.result()
-
-            assertThat(0).isEqualTo(result.size())
-
-            tc.completeNow()
-
-          })
+        if (ar3.failed()) {
+          log.error("select", ar3.cause())
+          tc.failNow(ar3.cause())
         }
 
-      }
+        val result = ar3.result()
 
-      val events = arrayListOf(Pair(customerId1.id, created1), Pair(customerId1.id, activated1))
+        assertThat(0).isEqualTo(result.size())
 
-      eventProjector.handle(events, projectorToFail, future)
+        tc.completeNow()
 
-    })
+      })
+
+    }
+
+    val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1))
+
+    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), projectorToFail, future2)
 
   }
 

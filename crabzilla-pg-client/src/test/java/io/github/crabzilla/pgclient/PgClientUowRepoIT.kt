@@ -3,14 +3,10 @@ package io.github.crabzilla.pgclient
 import io.github.crabzilla.SnapshotData
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.commandToJson
-import io.github.crabzilla.example1.CommandHandlers
-import io.github.crabzilla.example1.customer.*
+import io.github.crabzilla.example1.*
 import io.github.crabzilla.listOfEventsToJson
 import io.github.crabzilla.pgclient.PgClientUowRepo.Companion.SQL_INSERT_UOW
-import io.github.crabzilla.vertx.DbConcurrencyException
-import io.github.crabzilla.vertx.ProjectionData
-import io.github.crabzilla.vertx.UnitOfWorkRepository
-import io.github.crabzilla.vertx.configHandler
+import io.github.crabzilla.vertx.*
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.config.ConfigStoreOptions
@@ -64,8 +60,9 @@ class PgClientUowRepoIT {
 
       vertx.executeBlocking<Any>({ future ->
 
-        val component = DaggerPgClientComponent.builder()
-          .pgClientModule(PgClientModule(vertx, config))
+        val component = DaggerPgClientTestComponent.builder()
+          .crabzillaMainModule(CrabzillaMainModule(vertx, config))
+          .pgClientModule(PgClientModule())
           .build()
 
         writeDb = component.writeDb()
@@ -219,7 +216,7 @@ class PgClientUowRepoIT {
         }
 
         val selectFuture = Future.future<List<ProjectionData>>()
-        repo.selectAfterUowSequence(0L, 100, selectFuture)
+        repo.selectAfterUowSequence(0, 100, selectFuture)
 
         selectFuture.setHandler { selectAsyncResult ->
           val snapshotData = selectAsyncResult.result()
@@ -261,7 +258,7 @@ class PgClientUowRepoIT {
 
           assertThat(uowSequence).isGreaterThan(0)
 
-          repo.selectAfterUowSequence(0L, 100, selectFuture)
+          repo.selectAfterUowSequence(0, 100, selectFuture)
 
           selectFuture.setHandler { selectAsyncResult ->
 
@@ -328,7 +325,7 @@ class PgClientUowRepoIT {
               tc.failNow(ar2.cause())
             }
 
-            repo.selectAfterUowSequence(0L, 100, selectFuture1)
+            repo.selectAfterUowSequence(0, 100, selectFuture1)
 
             selectFuture1.setHandler { selectAsyncResult ->
 
@@ -387,7 +384,7 @@ class PgClientUowRepoIT {
             tc.failNow(ar1.cause())
           }
 
-          val uowSequence1 = ar1.result().first().getLong("uow_seq_number")
+          val uowSequence1 = ar1.result().first().getInteger("uow_seq_number")
 
           val tuple2 = Tuple.of(UUID.randomUUID(),
             io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, listOf(activated))),
@@ -404,7 +401,7 @@ class PgClientUowRepoIT {
               tc.failNow(ar2.cause())
             }
 
-            val uowSequence2 = ar2.result().first().getLong("uow_seq_number")
+            val uowSequence2 = ar2.result().first().getInteger("uow_seq_number")
 
             repo.selectAfterUowSequence(uowSequence1, 100, selectFuture1)
 
@@ -634,7 +631,7 @@ class PgClientUowRepoIT {
         return@preparedQuery
       }
 
-      val appendFuture1 = Future.future<Long>()
+      val appendFuture1 = Future.future<Int>()
 
       // append uow1
       repo.append(expectedUow1, appendFuture1, aggregateName)
@@ -650,7 +647,7 @@ class PgClientUowRepoIT {
 
         assertThat(uowSequence).isGreaterThan(0)
 
-        val appendFuture2 = Future.future<Long>()
+        val appendFuture2 = Future.future<Int>()
 
         // append uow2
         repo.append(expectedUow2, appendFuture2, aggregateName)
@@ -712,7 +709,7 @@ class PgClientUowRepoIT {
           return@preparedQuery
         }
 
-        val appendFuture = Future.future<Long>()
+        val appendFuture = Future.future<Int>()
 
         repo.append(expectedUow1, appendFuture, aggregateName)
 
@@ -780,7 +777,7 @@ class PgClientUowRepoIT {
           return@preparedQuery
         }
 
-        val appendFuture1 = Future.future<Long>()
+        val appendFuture1 = Future.future<Int>()
 
         // append uow1
         repo.append(expectedUow1, appendFuture1, aggregateName)
@@ -796,7 +793,7 @@ class PgClientUowRepoIT {
 
           assertThat(uowSequence).isGreaterThan(0)
 
-          val appendFuture2 = Future.future<Long>()
+          val appendFuture2 = Future.future<Int>()
 
           // append uow1 again
           repo.append(expectedUow1, appendFuture2, aggregateName)
@@ -828,7 +825,7 @@ class PgClientUowRepoIT {
           return@preparedQuery
         }
 
-        val appendFuture1 = Future.future<Long>()
+        val appendFuture1 = Future.future<Int>()
 
         // append uow1
         repo.append(expectedUow1, appendFuture1, aggregateName)
@@ -844,7 +841,7 @@ class PgClientUowRepoIT {
 
           assertThat(uowSequence).isGreaterThan(0)
 
-          val appendFuture2 = Future.future<Long>()
+          val appendFuture2 = Future.future<Int>()
 
           // append uow2
           repo.append(expectedUow2, appendFuture2, aggregateName)

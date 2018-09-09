@@ -1,7 +1,6 @@
 package io.github.crabzilla;
 
-import io.github.crabzilla.example1.PojoService;
-import io.github.crabzilla.example1.customer.*;
+import io.github.crabzilla.example1.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

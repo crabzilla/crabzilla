@@ -29,4 +29,5 @@ data class UnitOfWork(val unitOfWorkId: UUID, val command: Command,
   fun targetId(): EntityId {
     return command.targetId
   }
+
 }

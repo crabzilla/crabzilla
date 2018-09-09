@@ -99,7 +99,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
   }
 
 
-  override fun selectAfterUowSequence(uowSequence: Long, maxRows: Int,
+  override fun selectAfterUowSequence(uowSequence: Int, maxRows: Int,
                                       selectAfterUowSeq: Future<List<ProjectionData>>) {
 
     log.info("will load after uowSequence [{}]", uowSequence)
@@ -112,7 +112,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
     val list = ArrayList<ProjectionData>()
 
-    pgPool.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowSequence.toInt())) { ar ->
+    pgPool.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowSequence)) { ar ->
       if (ar.failed()) {
         log.error("selectAfterUowSequenceSql", ar.cause())
         selectAfterUowSeq.fail(ar.cause())
@@ -125,7 +125,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
       }
       for (row in rows) {
         val uowId = row.getUUID(0)
-        val uowSeq = row.getLong(1)
+        val uowSeq = row.getInteger(1)
         val targetId = row.getInteger(2)
         val events = listOfEventsFromJson(Json.mapper, row.getJson(3).toString())
         val projectionData = ProjectionData(uowId, uowSeq, targetId, events)
@@ -136,7 +136,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
   }
 
-  override fun append(unitOfWork: UnitOfWork, appendFuture: Future<Long>, aggregateRootName: String) {
+  override fun append(unitOfWork: UnitOfWork, appendFuture: Future<Int>, aggregateRootName: String) {
 
     pgPool.getConnection { conn ->
 
@@ -200,7 +200,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
           }
 
           val insertRows = insert.result().value()
-          val generated = insertRows.first().getLong(0)
+          val generated = insertRows.first().getInteger(0)
 
           // Commit the transaction
           tx.commit { ar ->
