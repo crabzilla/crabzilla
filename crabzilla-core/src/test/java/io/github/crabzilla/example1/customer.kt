@@ -45,9 +45,6 @@ data class Customer(val customerId: CustomerId? = null,
                     val reason: String? = null,
                     val pojoService: PojoService) : Entity {
 
-  override val id: EntityId?
-    get() = customerId
-
   internal fun create(id: CustomerId, name: String): List<DomainEvent> {
     require(this.customerId == null) { "customer already created" }
     return eventsOf(CustomerCreated(id, name))

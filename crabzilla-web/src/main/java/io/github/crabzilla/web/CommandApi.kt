@@ -1,11 +1,10 @@
 package io.github.crabzilla.web
 
 import io.github.crabzilla.Command
+import io.github.crabzilla.CommandExecution
 import io.github.crabzilla.UnitOfWork
-import io.github.crabzilla.vertx.CommandExecution
-import io.github.crabzilla.vertx.CommandHandlerService
-import io.github.crabzilla.vertx.EndpointsHelper
 import io.github.crabzilla.vertx.UnitOfWorkRepository
+import io.github.crabzilla.vertx.cmdHandlerEndpoint
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
@@ -52,8 +51,7 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
       return@setHandler
     }
 
-    handlerService.postCommand(EndpointsHelper.cmdHandlerEndpoint(resource), command,
-                               resultHandler(routingContext, httpResp))
+    handlerService.postCommand(cmdHandlerEndpoint(resource), command, resultHandler(routingContext, httpResp))
 
   }
 

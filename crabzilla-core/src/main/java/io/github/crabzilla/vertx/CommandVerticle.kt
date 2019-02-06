@@ -1,8 +1,7 @@
 package io.github.crabzilla.vertx
 
 import io.github.crabzilla.*
-import io.github.crabzilla.vertx.CommandExecution.RESULT
-import io.github.crabzilla.vertx.EndpointsHelper.cmdHandlerEndpoint
+import io.github.crabzilla.CommandExecution.RESULT
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
@@ -75,6 +74,7 @@ class CommandVerticle<A : Entity>(override val name: String,
 
       val targetId = command.targetId.value()
 
+      // command handler function _may_ be blocking if your aggregate is calling blocking services
       vertx.executeBlocking<Snapshot<A>>({ fromCacheFuture ->
 
         log.info("loading {} from cache", targetId)
@@ -92,7 +92,6 @@ class CommandVerticle<A : Entity>(override val name: String,
 
         val selectAfterVersionFuture = Future.future<SnapshotData>()
 
-        // command handler function _may_ be blocking if your aggregate is calling blocking services
         eventJournal.selectAfterVersion(targetId, cachedSnapshot.version, selectAfterVersionFuture, name)
 
         selectAfterVersionFuture.setHandler { event ->
