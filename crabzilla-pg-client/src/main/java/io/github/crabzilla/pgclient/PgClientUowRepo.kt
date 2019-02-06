@@ -184,9 +184,9 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
         val params2 = Tuple.of(
           unitOfWork.unitOfWorkId,
-          eventsListAsJson,
+          io.reactiverse.pgclient.data.Json.create(eventsListAsJson),
           unitOfWork.command.commandId,
-          cmdAsJson,
+          io.reactiverse.pgclient.data.Json.create(cmdAsJson),
           aggregateRootName,
           unitOfWork.targetId().value(),
           unitOfWork.version)
