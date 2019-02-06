@@ -179,8 +179,8 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
         }
 
         // if version is OK, then insert
-        val cmdAsJson = io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, unitOfWork.command))
-        val eventsListAsJson = io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, unitOfWork.events))
+        val cmdAsJson = commandToJson(Json.mapper, unitOfWork.command)
+        val eventsListAsJson = listOfEventsToJson(Json.mapper, unitOfWork.events)
 
         val params2 = Tuple.of(
           unitOfWork.unitOfWorkId,

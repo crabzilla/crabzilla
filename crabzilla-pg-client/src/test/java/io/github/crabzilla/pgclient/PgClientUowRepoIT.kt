@@ -7,7 +7,9 @@ import io.github.crabzilla.example1.*
 import io.github.crabzilla.listOfEventsToJson
 import io.github.crabzilla.pgclient.PgClientUowRepo.Companion.SQL_INSERT_UOW
 import io.github.crabzilla.vertx.*
+import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
+import io.reactiverse.pgclient.PgPoolOptions
 import io.reactiverse.pgclient.Tuple
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.Future
@@ -51,6 +53,8 @@ class PgClientUowRepoIT {
 
     vertx = Vertx.vertx(options)
 
+    initVertx(vertx)
+
     val envOptions = ConfigStoreOptions()
       .setType("file")
       .setFormat("properties")
@@ -60,12 +64,15 @@ class PgClientUowRepoIT {
 
       vertx.executeBlocking<Any>({ future ->
 
-        val component = DaggerPgClientTestComponent.builder()
-          .crabzillaMainModule(CrabzillaMainModule(vertx, config))
-          .pgClientModule(PgClientModule())
-          .build()
+        val options = PgPoolOptions()
+          .setPort(5432)
+          .setHost(config.getString("WRITE_DATABASE_HOST"))
+          .setDatabase(config.getString("WRITE_DATABASE_NAME"))
+          .setUser(config.getString("WRITE_DATABASE_USER"))
+          .setPassword(config.getString("WRITE_DATABASE_PASSWORD"))
+          .setMaxSize(config.getInteger("WRITE_DATABASE_POOL_MAX_SIZE"))
 
-        writeDb = component.writeDb()
+        writeDb = PgClient.pool(vertx, options)
 
         repo = PgClientUowRepo(writeDb)
 
@@ -92,7 +99,7 @@ class PgClientUowRepoIT {
   @DisplayName("can queries an unit of work row by it's command id")
   fun a4(tc: VertxTestContext) {
 
-    writeDb.query("delete from units_of_work", { ar0 ->
+    writeDb.query("delete from units_of_work") { ar0 ->
 
       if (ar0.failed()) {
         ar0.cause().printStackTrace()
@@ -100,9 +107,9 @@ class PgClientUowRepoIT {
       }
 
       val tuple = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
+        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
         createCmd.commandId,
-        io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
+        io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
         aggregateName,
         customerId.value(),
         1)
@@ -139,7 +146,7 @@ class PgClientUowRepoIT {
 
       }
 
-    })
+    }
 
   }
 
@@ -148,7 +155,7 @@ class PgClientUowRepoIT {
   @DisplayName("can queries an unit of work row by it's uow id")
   fun a5(tc: VertxTestContext) {
 
-    writeDb.query("delete from units_of_work", { ar0 ->
+    writeDb.query("delete from units_of_work") { ar0 ->
 
       if (ar0.failed()) {
         ar0.cause().printStackTrace()
@@ -156,9 +163,9 @@ class PgClientUowRepoIT {
       }
 
       val tuple = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
+        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
         createCmd.commandId,
-        io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
+        io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
         aggregateName,
         customerId.value(),
         1)
@@ -195,7 +202,7 @@ class PgClientUowRepoIT {
 
       }
 
-    })
+    }
 
   }
 
@@ -208,7 +215,7 @@ class PgClientUowRepoIT {
     @DisplayName("can queries an empty repo")
     fun a1(tc: VertxTestContext) {
 
-      writeDb.query("delete from units_of_work", { event ->
+      writeDb.query("delete from units_of_work") { event ->
 
         if (event.failed()) {
           event.cause().printStackTrace()
@@ -223,14 +230,14 @@ class PgClientUowRepoIT {
           assertThat(snapshotData.size).isEqualTo(0)
           tc.completeNow()
         }
-      })
+      }
     }
 
     @Test
     @DisplayName("can queries a single unit of work row")
     fun a2(tc: VertxTestContext) {
 
-      writeDb.query("delete from units_of_work", { event ->
+      writeDb.query("delete from units_of_work") { event ->
 
         if (event.failed()) {
           event.cause().printStackTrace()
@@ -238,9 +245,9 @@ class PgClientUowRepoIT {
         }
 
         val tuple = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
+          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
           createCmd.commandId,
-          io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
+          io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
           aggregateName,
           customerId.value(),
           1)
@@ -278,7 +285,7 @@ class PgClientUowRepoIT {
 
         }
 
-      })
+      }
 
     }
 
@@ -286,7 +293,7 @@ class PgClientUowRepoIT {
     @DisplayName("can queries two unit of work rows")
     fun a3(tc: VertxTestContext) {
 
-      writeDb.query("delete from units_of_work", { deleteResult ->
+      writeDb.query("delete from units_of_work") { deleteResult ->
 
         if (deleteResult.failed()) {
           deleteResult.cause().printStackTrace()
@@ -294,9 +301,9 @@ class PgClientUowRepoIT {
         }
 
         val tuple1 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
+          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
           createCmd.commandId,
-          io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
+          io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
           aggregateName,
           customerId.value(),
           1)
@@ -311,9 +318,9 @@ class PgClientUowRepoIT {
           }
 
           val tuple2 = Tuple.of(UUID.randomUUID(),
-            io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, listOf(activated))),
+            io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(activated))),
             activateCmd.commandId,
-            io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, activateCmd)),
+            io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, activateCmd)),
             aggregateName,
             customerId.value(),
             2)
@@ -352,7 +359,7 @@ class PgClientUowRepoIT {
           }
         }
 
-      })
+      }
 
     }
 
@@ -360,7 +367,7 @@ class PgClientUowRepoIT {
     @DisplayName("can queries by uow sequence")
     fun a4(tc: VertxTestContext) {
 
-      writeDb.query("delete from units_of_work", { deleteResult ->
+      writeDb.query("delete from units_of_work") { deleteResult ->
 
         if (deleteResult.failed()) {
           deleteResult.cause().printStackTrace()
@@ -368,9 +375,9 @@ class PgClientUowRepoIT {
         }
 
         val tuple1 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
+          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
           createCmd.commandId,
-          io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
+          io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
           aggregateName,
           customerId.value(),
           1)
@@ -387,9 +394,9 @@ class PgClientUowRepoIT {
           val uowSequence1 = ar1.result().first().getInteger("uow_seq_number")
 
           val tuple2 = Tuple.of(UUID.randomUUID(),
-            io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, listOf(activated))),
+            io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(activated))),
             activateCmd.commandId,
-            io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, activateCmd)),
+            io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, activateCmd)),
             aggregateName,
             customerId.value(),
             2)
@@ -424,7 +431,7 @@ class PgClientUowRepoIT {
           }
         }
 
-      })
+      }
 
     }
   }
@@ -439,7 +446,7 @@ class PgClientUowRepoIT {
     @DisplayName("can queries a single unit of work row")
     fun a2(tc: VertxTestContext) {
 
-      writeDb.query("delete from units_of_work", { event ->
+      writeDb.query("delete from units_of_work") { event ->
 
         if (event.failed()) {
           event.cause().printStackTrace()
@@ -447,9 +454,9 @@ class PgClientUowRepoIT {
         }
 
         val tuple = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
+          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
           createCmd.commandId,
-          io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
+          io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
           aggregateName,
           customerId.value(),
           1)
@@ -482,7 +489,7 @@ class PgClientUowRepoIT {
 
         }
 
-      })
+      }
 
     }
 
@@ -490,7 +497,7 @@ class PgClientUowRepoIT {
     @DisplayName("can queries two unit of work rows")
     fun a3(tc: VertxTestContext) {
 
-      writeDb.query("delete from units_of_work", { deleteResult ->
+      writeDb.query("delete from units_of_work") { deleteResult ->
 
         if (deleteResult.failed()) {
           deleteResult.cause().printStackTrace()
@@ -498,9 +505,9 @@ class PgClientUowRepoIT {
         }
 
         val tuple1 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
+          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
           createCmd.commandId,
-          io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
+          io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
           aggregateName,
           customerId.value(),
           1)
@@ -513,9 +520,9 @@ class PgClientUowRepoIT {
           }
 
           val tuple2 = Tuple.of(UUID.randomUUID(),
-            io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, listOf(activated))),
+            io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(activated))),
             activateCmd.commandId,
-            io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, activateCmd)),
+            io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, activateCmd)),
             aggregateName,
             customerId.value(),
             2)
@@ -545,7 +552,7 @@ class PgClientUowRepoIT {
           }
         }
 
-      })
+      }
 
     }
 
@@ -553,7 +560,7 @@ class PgClientUowRepoIT {
     @DisplayName("can queries by version")
     fun a4(tc: VertxTestContext) {
 
-      writeDb.query("delete from units_of_work", { deleteResult ->
+      writeDb.query("delete from units_of_work") { deleteResult ->
 
         if (deleteResult.failed()) {
           deleteResult.cause().printStackTrace()
@@ -561,9 +568,9 @@ class PgClientUowRepoIT {
         }
 
         val tuple1 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
+          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
           createCmd.commandId,
-          io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, createCmd)),
+          io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
           aggregateName,
           customerId.value(),
           1)
@@ -579,9 +586,9 @@ class PgClientUowRepoIT {
           val uowSequence1 = ar1.result().first().getLong("uow_seq_number")
 
           val tuple2 = Tuple.of(UUID.randomUUID(),
-            io.reactiverse.pgclient.Json.create(listOfEventsToJson(Json.mapper, listOf(activated))),
+            io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(activated))),
             activateCmd.commandId,
-            io.reactiverse.pgclient.Json.create(commandToJson(Json.mapper, activateCmd)),
+            io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, activateCmd)),
             aggregateName,
             customerId.value(),
             2)
@@ -614,7 +621,7 @@ class PgClientUowRepoIT {
           }
         }
 
-      })
+      }
 
     }
   }

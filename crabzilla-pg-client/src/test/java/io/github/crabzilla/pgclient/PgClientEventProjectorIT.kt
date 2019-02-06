@@ -3,12 +3,10 @@ package io.github.crabzilla.pgclient
 import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.example1.*
-import io.github.crabzilla.vertx.CrabzillaMainModule
 import io.github.crabzilla.vertx.ProjectionData.Companion.fromUnitOfWork
 import io.github.crabzilla.vertx.configHandler
-import io.reactiverse.pgclient.PgConnection
-import io.reactiverse.pgclient.PgPool
-import io.reactiverse.pgclient.Tuple
+import io.github.crabzilla.vertx.initVertx
+import io.reactiverse.pgclient.*
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.*
 import io.vertx.core.json.JsonObject
@@ -104,6 +102,8 @@ class PgClientEventProjectorIT {
 
     vertx = Vertx.vertx(options)
 
+    initVertx(vertx)
+
     val envOptions = ConfigStoreOptions()
       .setType("file")
       .setFormat("properties")
@@ -113,12 +113,15 @@ class PgClientEventProjectorIT {
 
       vertx.executeBlocking<Any>({ future ->
 
-        val component = DaggerPgClientTestComponent.builder()
-          .crabzillaMainModule(CrabzillaMainModule(vertx, config))
-          .pgClientModule(PgClientModule())
-          .build()
+        val options = PgPoolOptions()
+          .setPort(5432)
+          .setHost(config.getString("READ_DATABASE_HOST"))
+          .setDatabase(config.getString("READ_DATABASE_NAME"))
+          .setUser(config.getString("READ_DATABASE_USER"))
+          .setPassword(config.getString("READ_DATABASE_PASSWORD"))
+          .setMaxSize(config.getInteger("READ_DATABASE_POOL_MAX_SIZE"))
 
-        readDb = component.readDb()
+        readDb = PgClient.pool(vertx, options)
 
         eventProjector = PgClientEventProjector(readDb, "customer summary")
 

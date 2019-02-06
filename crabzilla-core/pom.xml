@@ -14,11 +14,6 @@
 
   <dependencies>
 
-    <dependency>
-      <groupId>com.google.dagger</groupId>
-      <artifactId>dagger</artifactId>
-    </dependency>
-
     <!-- jackson json -->
 
     <dependency>

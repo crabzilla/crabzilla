@@ -1,7 +1,8 @@
-package io.github.crabzilla.vertx
+package io.github.crabzilla.web
 
 import dagger.Module
 import dagger.Provides
+import io.github.crabzilla.vertx.initVertx
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
