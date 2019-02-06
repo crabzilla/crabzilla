@@ -39,17 +39,17 @@ data class UnknownCommand(override val commandId: UUID, override val targetId: C
 
 // aggregate root
 
-internal data class Customer(val customerId: CustomerId? = null,
-                             val name: String? = null,
-                             val isActive: Boolean? = false,
-                             val reason: String? = null,
-                             val pojoService: PojoService) : Entity {
+data class Customer(val customerId: CustomerId? = null,
+                    val name: String? = null,
+                    val isActive: Boolean? = false,
+                    val reason: String? = null,
+                    val pojoService: PojoService) : Entity {
 
   override val id: EntityId?
     get() = customerId
 
   internal fun create(id: CustomerId, name: String): List<DomainEvent> {
-    require(this.customerId == null, { "customer already created" })
+    require(this.customerId == null) { "customer already created" }
     return eventsOf(CustomerCreated(id, name))
   }
 
@@ -64,55 +64,44 @@ internal data class Customer(val customerId: CustomerId? = null,
   }
 
   private fun customerMustExist() {
-    require(this.customerId != null, { "customer must exists" })
+    require(this.customerId != null) { "customer must exists" }
   }
 
 }
 
-internal class StateTransitionFn : (DomainEvent, Customer) -> Customer {
-  override fun invoke(event: DomainEvent, customer: Customer): Customer {
-    return when(event) {
-      is CustomerCreated -> customer.copy(customerId = event.id, name =  event.name)
-      is CustomerActivated -> customer.copy(isActive = true, reason = event.reason)
-      is CustomerDeactivated -> customer.copy(isActive = false, reason = event.reason)
-      else -> customer
-    }
-  }
-}
+val stateTransitionFn = { event: DomainEvent, customer: Customer ->
+  when(event) {
+    is CustomerCreated -> customer.copy(customerId = event.id, name =  event.name)
+    is CustomerActivated -> customer.copy(isActive = true, reason = event.reason)
+    is CustomerDeactivated -> customer.copy(isActive = false, reason = event.reason)
+    else -> customer
+}}
 
-internal class CommandValidatorFn : (Command) -> List<String> {
-  override fun invoke(command: Command): List<String> {
-    return when(command) {
+val commandValidatorFn = { command: Command ->
+    when(command) {
       is CreateCustomer ->
         if (command.name.equals("a bad name"))
           listOf("Invalid name: ${command.name}") else listOf()
       else -> listOf() // all other commands are valid
-    }
   }
 }
 
-internal class CommandHandler (private val trackerFactory: (Snapshot<Customer>)-> StateTransitionsTracker<Customer>) :
-  (Command, Snapshot<Customer>) -> CommandResult? {
-
-  override fun invoke(cmd: Command, snapshot: Snapshot<Customer>): CommandResult? {
-
+val commandHandlerFn = { cmd: Command, snapshot: Snapshot<Customer> ->
     val customer = snapshot.instance
-
-    return resultOf {
+    resultOf {
       when (cmd) {
         is CreateCustomer -> uowOf(cmd, customer.create(cmd.targetId, cmd.name), snapshot.version)
         is ActivateCustomer -> uowOf(cmd, customer.activate(cmd.reason), snapshot.version)
         is DeactivateCustomer -> uowOf(cmd, customer.deactivate(cmd.reason), snapshot.version)
         is CreateActivateCustomer -> {
-          val tracker = trackerFactory.invoke(snapshot)
+          val tracker = StateTransitionsTracker(snapshot, stateTransitionFn)
           val events = tracker
-            .applyEvents({ c -> c.create(cmd.targetId, cmd.name) })
-            .applyEvents({ c -> c.activate(cmd.reason) })
+            .applyEvents { c -> c.create(cmd.targetId, cmd.name) }
+            .applyEvents { c -> c.activate(cmd.reason) }
             .collectEvents()
           uowOf(cmd, events, snapshot.version)
         }
         else -> null
       }
     }
-  }
 }

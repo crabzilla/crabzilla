@@ -1,14 +1,10 @@
 package io.github.crabzilla.pgclient
 
-import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.vertx.ProjectionData
-import io.reactiverse.pgclient.PgConnection
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
-import io.vertx.core.AsyncResult
 import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
-import io.vertx.core.Handler
 import io.vertx.core.logging.LoggerFactory.getLogger
 
 class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
@@ -20,20 +16,18 @@ class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
 
   }
 
-  fun handle(uowProjectionData: ProjectionData,
-             projectorHandler:
-             (pgConn: PgConnection, targetId: Int, event: DomainEvent, future: Handler<AsyncResult<Void>>) -> Unit,
-             future: Future<Boolean>) {
+  // TODO http://www.lemnik.com/blog/2018/12/31/Suspend-extensions-for-Vert-x-Database/
+  // TODO coroutines to compose
+  fun handle(uowProjectionData: ProjectionData, projectorHandler: ProjectorHandler, future: Future<Boolean>) {
 
     if (uowProjectionData.events.size > NUMBER_OF_FUTURES) {
       future.fail("only $NUMBER_OF_FUTURES events can be projected per transaction")
       return
     }
 
-    pgPool.getConnection({ ar1 ->
+    pgPool.getConnection { ar1 ->
 
       if (ar1.failed()) {
-        log.error("getConn", ar1.cause())
         future.fail(ar1.cause())
         return@getConnection
       }
@@ -42,11 +36,11 @@ class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
       // Begin the transaction
       val tx = conn
         .begin()
-        .abortHandler({ _ ->
+        .abortHandler { _ ->
           run {
             log.error("Transaction failed = > rollbacked")
           }
-        })
+        }
 
       val futures = listOfutures(minOf(NUMBER_OF_FUTURES, uowProjectionData.events.size))
 
@@ -64,29 +58,29 @@ class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
         }
 
         conn.preparedQuery("update projections set last_uow = $1 where name = $2",
-          Tuple.of(uowProjectionData.uowSequence, name), { ar3 ->
+          Tuple.of(uowProjectionData.uowSequence, name)) { ar3 ->
 
-          if (ar3.failed()) {
-            future.fail(ar3.cause())
-            return@preparedQuery
-          }
-
-          // Commit the transaction
-          tx.commit { ar4 ->
-            if (ar4.succeeded()) {
-              log.debug { "Transaction succeeded" }
-              future.complete(true)
-            } else {
-              log.error("Transaction failed", ar4.cause())
-              future.fail(ar4.cause())
+            if (ar3.failed()) {
+              future.fail(ar3.cause())
+              return@preparedQuery
             }
-          }
 
-        })
+            // Commit the transaction
+            tx.commit { ar4 ->
+              if (ar4.succeeded()) {
+                log.debug { "Transaction succeeded" }
+                future.complete(true)
+              } else {
+                log.error("Transaction failed", ar4.cause())
+                future.fail(ar4.cause())
+              }
+            }
+
+          }
 
       }
 
-    })
+    }
 
   }
 
@@ -99,3 +93,4 @@ class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
   }
 
 }
+

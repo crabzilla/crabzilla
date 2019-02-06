@@ -17,7 +17,7 @@ open class SnapshotPromoter<A : Entity>(private val trackerFactory: (Snapshot<A>
 
     val tracker: StateTransitionsTracker<A> = trackerFactory.invoke(originalSnapshot)
 
-    return Snapshot(tracker.applyEvents({ newEvents }).currentState(), newVersion)
+    return Snapshot(tracker.applyEvents { newEvents }.currentState(), newVersion)
   }
 
 }

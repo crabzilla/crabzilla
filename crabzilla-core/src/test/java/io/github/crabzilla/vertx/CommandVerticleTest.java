@@ -1,10 +1,7 @@
-package io.github.crabzilla.vertx.verticles;
+package io.github.crabzilla.vertx;
 
 import io.github.crabzilla.*;
 import io.github.crabzilla.example1.*;
-import io.github.crabzilla.vertx.CommandExecution;
-import io.github.crabzilla.vertx.DbConcurrencyException;
-import io.github.crabzilla.vertx.UnitOfWorkRepository;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
@@ -29,8 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static io.github.crabzilla.example1.CustomerKt.getStateTransitionFn;
+import static io.github.crabzilla.vertx.EndpointsHelper.cmdHandlerEndpoint;
 import static io.github.crabzilla.vertx.VertxKt.initVertx;
-import static io.github.crabzilla.vertx.helpers.EndpointsHelper.cmdHandlerEndpoint;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -78,7 +76,7 @@ class CommandVerticleTest {
 
     final Function1<? super Snapshot<? extends Customer>, StateTransitionsTracker<Customer>> trackerFactory =
             (Function1<Snapshot<? extends Customer>, StateTransitionsTracker<Customer>>) snapshot
-                    -> new StateTransitionsTracker<>(snapshot, new StateTransitionFn());
+                    -> new StateTransitionsTracker<>(snapshot, getStateTransitionFn());
 
     snapshotPromoterFn = new SnapshotPromoter<Customer>(trackerFactory);
 
@@ -90,7 +88,7 @@ class CommandVerticleTest {
   }
 
   @Test
-  public void SUCCESS_scenario(VertxTestContext tc) {
+  void SUCCESS_scenario(VertxTestContext tc) {
 
     CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
@@ -151,7 +149,7 @@ class CommandVerticleTest {
   }
 
   @Test
-  public void UNEXPECTED_ERROR_selectAfterVersion_scenario(VertxTestContext tc) {
+  void UNEXPECTED_ERROR_selectAfterVersion_scenario(VertxTestContext tc) {
 
     CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
@@ -193,7 +191,7 @@ class CommandVerticleTest {
   }
 
   @Test
-  public void UNEXPECTED_ERROR_append_scenario(VertxTestContext tc) {
+  void UNEXPECTED_ERROR_append_scenario(VertxTestContext tc) {
 
     CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
@@ -248,7 +246,7 @@ class CommandVerticleTest {
   }
 
   @Test
-  public void CONCURRENCY_ERROR_scenario(VertxTestContext tc) {
+  void CONCURRENCY_ERROR_scenario(VertxTestContext tc) {
 
     CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
@@ -304,7 +302,7 @@ class CommandVerticleTest {
 
 
   @Test
-  public void HANDLING_ERROR_scenario(VertxTestContext tc) {
+  void HANDLING_ERROR_scenario(VertxTestContext tc) {
 
     CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
@@ -358,7 +356,7 @@ class CommandVerticleTest {
   }
 
   @Test
-  public void VALIDATION_ERROR_scenario(VertxTestContext tc) {
+  void VALIDATION_ERROR_scenario(VertxTestContext tc) {
 
     CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "a bad name");
@@ -390,7 +388,7 @@ class CommandVerticleTest {
 
 
   @Test
-  public void UNKNOWN_COMMAND_scenario(VertxTestContext tc) {
+  void UNKNOWN_COMMAND_scenario(VertxTestContext tc) {
 
     CustomerId customerId = new CustomerId(1);
     UnknownCommand createCustomerCmd = new UnknownCommand(UUID.randomUUID(), customerId);

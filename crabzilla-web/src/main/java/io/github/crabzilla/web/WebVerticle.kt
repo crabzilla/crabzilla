@@ -33,22 +33,22 @@ class WebVerticle(override val name: String,
     router.route("/health").handler(healthCheckHandler)
 
     router.post("/:resource/commands")
-            .handler({postCommandHandler(it, uowRepository, handlerService)})
+            .handler { postCommandHandler(it, uowRepository, handlerService) }
 
     router.get("/:resource/commands/:cmdID")
-            .handler({getUowByCmdId(it, uowRepository)})
+            .handler {getUowByCmdId(it, uowRepository)}
 
     val server = vertx.createHttpServer()
     val port = config.getInteger("HTTP_PORT")!!
 
-    server.requestHandler({ router.accept(it) })
-      .listen(port, { result ->
+    server.requestHandler { router.accept(it) }
+      .listen(port) { result ->
         if (result.succeeded()) {
           log.info("*** server $name on port $port")
         } else {
           log.error("*** server $name on port $port")
         }
-      })
+      }
 
   }
 

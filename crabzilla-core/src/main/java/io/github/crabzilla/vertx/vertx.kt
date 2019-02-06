@@ -9,7 +9,6 @@ import io.github.crabzilla.Command
 import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.EntityId
 import io.github.crabzilla.UnitOfWork
-import io.github.crabzilla.vertx.helpers.JacksonGenericCodec
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.AbstractVerticle
@@ -57,7 +56,7 @@ enum class VerticleRole {
   REST, HANDLER, PROJECTOR, POOLER ;
 
   fun verticle(verticleName: String): String {
-    return "${prefix()}:${verticleName}"
+    return "${prefix()}:$verticleName"
   }
 
   fun prefix(): String {

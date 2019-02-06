@@ -53,4 +53,3 @@ fun uowOf(command: Command, events: List<DomainEvent>, currentVersion: Version):
 fun eventsOf(vararg event: DomainEvent): List<DomainEvent> {
   return event.asList()
 }
-

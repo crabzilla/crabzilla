@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.helpers;
+package io.github.crabzilla.vertx;
 
 import org.junit.jupiter.api.Test;
 
