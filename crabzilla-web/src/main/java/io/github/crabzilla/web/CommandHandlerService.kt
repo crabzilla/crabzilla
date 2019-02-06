@@ -1,10 +1,9 @@
 package io.github.crabzilla.web
 
 import io.github.crabzilla.Command
+import io.github.crabzilla.CommandExecution
 import io.github.crabzilla.UnitOfWork
-import io.github.crabzilla.vertx.CommandExecution
-import io.github.crabzilla.vertx.CommandHandlerService
-import io.github.crabzilla.vertx.ProjectionData
+import io.github.crabzilla.vertx.ProjectionData.Companion.fromUnitOfWork
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
@@ -13,8 +12,7 @@ import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.http.CaseInsensitiveHeaders
 import org.slf4j.LoggerFactory
 
-open class CommandHandlerServiceImpl(private val vertx: Vertx, private val projectionEndpoint: String)
-  : CommandHandlerService {
+open class CommandHandlerService(private val vertx: Vertx, private val projectionEndpoint: String) {
 
   companion object {
     internal var log = LoggerFactory.getLogger(CommandHandlerService::class.java)
@@ -26,8 +24,7 @@ open class CommandHandlerServiceImpl(private val vertx: Vertx, private val proje
     log.info("will publish resulting events to {}", projectionEndpoint)
   }
 
-  override fun postCommand(handlerEndpoint: String, command: Command,
-                           handler: Handler<AsyncResult<CommandExecution>>) {
+  fun postCommand(handlerEndpoint: String, command: Command, handler: Handler<AsyncResult<CommandExecution>>) {
 
     log.info("posting a command to {}", handlerEndpoint)
 
@@ -48,7 +45,7 @@ open class CommandHandlerServiceImpl(private val vertx: Vertx, private val proje
       if (uow != null && uowSequence != 0) {
         val headers = CaseInsensitiveHeaders().add("uowSequence", uowSequence.toString())
         val eventsDeliveryOptions = DeliveryOptions().setCodecName(UnitOfWork::class.simpleName).setHeaders(headers)
-        vertx.eventBus().publish(projectionEndpoint, ProjectionData.fromUnitOfWork(uowSequence, uow), eventsDeliveryOptions)
+        vertx.eventBus().publish(projectionEndpoint, fromUnitOfWork(uowSequence, uow), eventsDeliveryOptions)
       }
 
       handler.handle(Future.succeededFuture(result))

@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static io.github.crabzilla.example1.CustomerKt.getStateTransitionFn;
-import static io.github.crabzilla.vertx.EndpointsHelper.cmdHandlerEndpoint;
+import static io.github.crabzilla.vertx.EndpointsKt.cmdHandlerEndpoint;
 import static io.github.crabzilla.vertx.VertxKt.initVertx;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
