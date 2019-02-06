@@ -4,8 +4,8 @@ import io.github.crabzilla.Command
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.vertx.CommandExecution
 import io.github.crabzilla.vertx.CommandHandlerService
+import io.github.crabzilla.vertx.EndpointsHelper
 import io.github.crabzilla.vertx.UnitOfWorkRepository
-import io.github.crabzilla.vertx.helpers.EndpointsHelper
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler

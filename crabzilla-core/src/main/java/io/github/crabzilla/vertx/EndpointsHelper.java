@@ -1,4 +1,4 @@
-package io.github.crabzilla.vertx.helpers;
+package io.github.crabzilla.vertx;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

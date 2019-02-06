@@ -1,6 +1,5 @@
-package io.github.crabzilla.vertx.verticles
+package io.github.crabzilla.vertx
 
-import io.github.crabzilla.vertx.configHandler
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -36,6 +35,7 @@ class ConfigHandlerTest {
       }, { res ->
 
         if (res.failed()) {
+          println(res.cause().message)
           tc.failNow(res.cause())
         }
         tc.completeNow()

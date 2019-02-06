@@ -19,14 +19,14 @@ class WebModule {
   @StringKey("read-database")
   fun healthcheck1(@ReadDatabase readPool: PgPool) : Handler<Future<Status>> {
     return Handler { future: Future<Status> ->
-        readPool.query("select 1", { ar ->
-        if (ar.succeeded()) {
-          future.succeeded()
-        } else {
-          future.fail(ar.cause())
+        readPool.query("select 1") { ar ->
+          if (ar.succeeded()) {
+            future.succeeded()
+          } else {
+            future.fail(ar.cause())
+          }
+          readPool.close()
         }
-        readPool.close()
-      })
     }
   }
 
@@ -35,14 +35,14 @@ class WebModule {
   @StringKey("write-database")
   fun healthcheck2(@WriteDatabase writePool: PgPool) : Handler<Future<Status>> {
     return Handler { future: Future<Status> ->
-      writePool.query("select 1", { ar ->
+      writePool.query("select 1") { ar ->
         if (ar.succeeded()) {
           future.succeeded()
         } else {
           future.fail(ar.cause())
         }
         writePool.close()
-      })
+      }
     }
   }
 
