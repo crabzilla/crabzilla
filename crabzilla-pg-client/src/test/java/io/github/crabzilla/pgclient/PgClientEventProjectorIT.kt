@@ -63,7 +63,7 @@ class PgClientEventProjectorIT {
 
     val uowSequence1 = 1
 
-    val projectorHandler: (pgConn: PgConnection, targetId: Int, event: DomainEvent, Handler<AsyncResult<Void>>) -> Unit =
+    val projectorHandler: ProjectorHandler =
       { pgConn: PgConnection, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
 
         log.info("event {} ", event)
@@ -122,7 +122,7 @@ class PgClientEventProjectorIT {
 
         eventProjector = PgClientEventProjector(readDb, "customer summary")
 
-        readDb.query("DELETE FROM customer_summary", { ar1 ->
+        readDb.query("DELETE FROM customer_summary") { ar1 ->
 
           if (ar1.failed()) {
             log.error("delete ", ar1.cause())
@@ -131,7 +131,7 @@ class PgClientEventProjectorIT {
 
           future.complete()
 
-        })
+        }
 
       }, { res ->
 
@@ -167,7 +167,7 @@ class PgClientEventProjectorIT {
 
       assertThat(ok).isTrue()
 
-      readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
+      readDb.preparedQuery("SELECT * FROM customer_summary") { ar3 ->
 
         if (ar3.failed()) {
           log.error("select", ar3.cause())
@@ -182,7 +182,7 @@ class PgClientEventProjectorIT {
 
         tc.completeNow()
 
-      })
+      }
 
     }
 
@@ -209,7 +209,7 @@ class PgClientEventProjectorIT {
 
       assertThat(ok).isTrue()
 
-      readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
+      readDb.preparedQuery("SELECT * FROM customer_summary") { ar3 ->
 
         if (ar3.failed()) {
           log.error("select", ar3.cause())
@@ -224,7 +224,7 @@ class PgClientEventProjectorIT {
 
         tc.completeNow()
 
-      })
+      }
 
     }
 
@@ -245,7 +245,7 @@ class PgClientEventProjectorIT {
 
       if (ar2.failed()) {
 
-        readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
+        readDb.preparedQuery("SELECT * FROM customer_summary") { ar3 ->
 
           if (ar3.failed()) {
             log.error("select", ar3.cause())
@@ -258,7 +258,7 @@ class PgClientEventProjectorIT {
 
           tc.completeNow()
 
-        })
+        }
 
       }
 
@@ -275,7 +275,7 @@ class PgClientEventProjectorIT {
   @DisplayName("on any any SQL error it must rollback all events projections")
   fun a5(tc: VertxTestContext) {
 
-    val projectorToFail: (pgConn: PgConnection, targetId: Int, event: DomainEvent, Handler<AsyncResult<Void>>) -> Unit =
+    val projectorToFail: ProjectorHandler =
       { pgConn: PgConnection, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
 
         log.info("event {} ", event)
@@ -316,7 +316,7 @@ class PgClientEventProjectorIT {
         tc.failNow(IllegalStateException("should fail"))
       }
 
-      readDb.preparedQuery("SELECT * FROM customer_summary", { ar3 ->
+      readDb.preparedQuery("SELECT * FROM customer_summary") { ar3 ->
 
         if (ar3.failed()) {
           log.error("select", ar3.cause())
@@ -329,7 +329,7 @@ class PgClientEventProjectorIT {
 
         tc.completeNow()
 
-      })
+      }
 
     }
 

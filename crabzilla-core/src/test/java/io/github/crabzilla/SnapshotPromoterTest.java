@@ -1,6 +1,9 @@
 package io.github.crabzilla;
 
-import io.github.crabzilla.example1.*;
+import io.github.crabzilla.example1.Customer;
+import io.github.crabzilla.example1.CustomerCreated;
+import io.github.crabzilla.example1.CustomerId;
+import io.github.crabzilla.example1.PojoService;
 import kotlin.jvm.functions.Function1;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -9,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import static io.github.crabzilla.example1.CustomerKt.getStateTransitionFn;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,7 +21,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @DisplayName("A SnapshotPromoter")
-public class SnapshotPromoterTest {
+class SnapshotPromoterTest {
 
   SnapshotPromoter<Customer> promoter;
   StateTransitionsTracker<Customer> tracker;
@@ -41,7 +45,7 @@ public class SnapshotPromoterTest {
 
   @Nested
   @DisplayName("When promoting an empty snapshot with single event single event to version 1")
-  public class WhenPromotingAnEmptyToV1 {
+  class WhenPromotingAnEmptyToV1 {
 
     final CustomerId id = new CustomerId(1);
     final CustomerCreated customerCreated = new CustomerCreated(id, "customer-1");
@@ -49,7 +53,7 @@ public class SnapshotPromoterTest {
 
     @BeforeEach
     void instantiate() {
-      tracker = new StateTransitionsTracker<>(originalSnapshot, new StateTransitionFn());
+      tracker = new StateTransitionsTracker<>(originalSnapshot, getStateTransitionFn());
       when(factory.invoke(eq(originalSnapshot))).thenReturn(tracker);
       promoter = new SnapshotPromoter<Customer>(factory);
     }
@@ -66,7 +70,7 @@ public class SnapshotPromoterTest {
 
   @Nested
   @DisplayName("When promoting an empty snapshot with single event single event to version 2")
-  public class WhenPromotingAnEmptyToV2 {
+  class WhenPromotingAnEmptyToV2 {
 
     final CustomerId id = new CustomerId(1);
     final CustomerCreated customerCreated = new CustomerCreated(id, "customer-1");
@@ -74,7 +78,7 @@ public class SnapshotPromoterTest {
 
     @BeforeEach
     void instantiate() {
-      tracker = new StateTransitionsTracker<>(originalSnapshot, new StateTransitionFn());
+      tracker = new StateTransitionsTracker<>(originalSnapshot, getStateTransitionFn());
       when(factory.invoke(eq(originalSnapshot))).thenReturn(tracker);
       promoter = new SnapshotPromoter<Customer>(factory);
     }

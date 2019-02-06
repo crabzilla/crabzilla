@@ -20,7 +20,7 @@ class CommandFunctionsTest {
   @Test
   @DisplayName("Success can be instantiated")
   fun resultOfSuccess() {
-    val result: CommandResult = resultOf({  uow })
+    val result: CommandResult = resultOf { uow }
     assertThat(uow).isEqualTo(result.unitOfWork)
     assertThat(result.exception).isNull()
   }
@@ -29,7 +29,7 @@ class CommandFunctionsTest {
   @DisplayName("Error can be instantiated")
   fun resultOfError() {
     val exception = RuntimeException("an exception")
-    val result: CommandResult = resultOf({  throw exception })
+    val result: CommandResult = resultOf { throw exception }
     assertThat(exception).isEqualTo(result.exception)
     assertThat(result.unitOfWork).isNull()
   }

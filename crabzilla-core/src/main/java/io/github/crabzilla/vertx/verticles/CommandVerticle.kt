@@ -30,15 +30,15 @@ class CommandVerticle<A : Entity>(override val name: String,
 
     val consumer = vertx.eventBus().consumer<Command>(cmdHandlerEndpoint(name))
 
-    consumer.handler({ msg ->
+    consumer.handler { event ->
 
-      val command = msg.body()
+      val command = event.body()
 
       if (command == null) {
 
         val cmdExecResult = CommandExecution(commandId = command, result = RESULT.VALIDATION_ERROR,
           constraints = listOf("Command cannot be null. Check if JSON payload is valid."))
-        msg.reply(cmdExecResult)
+        event.reply(cmdExecResult)
         return@handler
       }
 
@@ -50,7 +50,7 @@ class CommandVerticle<A : Entity>(override val name: String,
 
         val result = CommandExecution(commandId = command.commandId, result = RESULT.VALIDATION_ERROR,
           constraints = constraints)
-        msg.reply(result)
+        event.reply(result)
         return@handler
       }
 
@@ -58,15 +58,15 @@ class CommandVerticle<A : Entity>(override val name: String,
 
         log.error("Fallback for command $command.commandId", throwable)
         val cmdExecResult = CommandExecution(commandId = command.commandId, result = RESULT.FALLBACK)
-        msg.reply(cmdExecResult)
+        event.reply(cmdExecResult)
 
       }
 
-      .execute<CommandExecution>(cmdHandler(command))
+        .execute<CommandExecution>(cmdHandler(command))
 
-      .setHandler(resultHandler(msg))
+        .setHandler(resultHandler(event))
 
-    })
+    }
 
   }
 
@@ -96,14 +96,14 @@ class CommandVerticle<A : Entity>(override val name: String,
         // command handler function _may_ be blocking if your aggregate is calling blocking services
         eventJournal.selectAfterVersion(targetId, cachedSnapshot.version, selectAfterVersionFuture, name)
 
-        selectAfterVersionFuture.setHandler { fromEventRepoResult ->
+        selectAfterVersionFuture.setHandler { event ->
 
-          if (fromEventRepoResult.failed()) {
-            future1.fail(fromEventRepoResult.cause())
+          if (event.failed()) {
+            future1.fail(event.cause())
             return@setHandler
           }
 
-          val nonCached = fromEventRepoResult.result()
+          val nonCached: SnapshotData = event.result()
           val totalOfNonCachedEvents = nonCached.events.size
           log.info("id {} found {} pending events. Last version is now {}", targetId, totalOfNonCachedEvents,
                   nonCached.version)
@@ -113,14 +113,14 @@ class CommandVerticle<A : Entity>(override val name: String,
           else
             cachedSnapshot
 
-          val result = cmdHandler.invoke(command, resultingSnapshot)
+          val result: CommandResult? = cmdHandler.invoke(command, resultingSnapshot)
 
           if (result == null) {
             future1.complete(CommandExecution(result = RESULT.UNKNOWN_COMMAND, commandId = command.commandId))
             return@setHandler
           }
 
-          result.inCaseOfSuccess({ uow ->
+          result.inCaseOfSuccess { uow ->
 
             val appendFuture = Future.future<Int>()
             eventJournal.append(uow!!, appendFuture, name)
@@ -146,14 +146,14 @@ class CommandVerticle<A : Entity>(override val name: String,
               future1.complete(CommandExecution(result = RESULT.SUCCESS, commandId = command.commandId,
                 unitOfWork = uow, uowSequence = uowSequence))
             }
-          })
+          }
 
-          result.inCaseOfError({ error ->
+          result.inCaseOfError { error ->
             log.error("commandExecution", error.message)
 
-              future1.complete(CommandExecution(result = RESULT.HANDLING_ERROR, commandId = command.commandId,
-                constraints = listOf(error.message ?: "entity handling error")))
-          })
+            future1.complete(CommandExecution(result = RESULT.HANDLING_ERROR, commandId = command.commandId,
+              constraints = listOf(error.message ?: "entity handling error")))
+          }
 
         }
 

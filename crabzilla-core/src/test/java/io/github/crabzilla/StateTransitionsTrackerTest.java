@@ -9,6 +9,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.time.Instant;
 
+import static io.github.crabzilla.example1.CustomerKt.getStateTransitionFn;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +30,7 @@ public class StateTransitionsTrackerTest {
 
   @Test
   public void can_be_instantiated() {
-    new StateTransitionsTracker<>(originalSnapshot, new StateTransitionFn());
+    new StateTransitionsTracker<>(originalSnapshot, getStateTransitionFn());
   }
 
   @Nested
@@ -38,8 +39,7 @@ public class StateTransitionsTrackerTest {
 
     @BeforeEach
     void instantiate() {
-      tracker = new StateTransitionsTracker<>(originalSnapshot,
-              new StateTransitionFn());
+      tracker = new StateTransitionsTracker<>(originalSnapshot, getStateTransitionFn());
     }
 
     @Test
@@ -121,7 +121,7 @@ public class StateTransitionsTrackerTest {
     @BeforeEach
     void instantiate() {
       // given
-      tracker = new StateTransitionsTracker<>(originalSnapshot, new StateTransitionFn());
+      tracker = new StateTransitionsTracker<>(originalSnapshot, getStateTransitionFn());
       // when
       tracker.applyEvents(c -> asList(customerCreated, customerActivated));
     }

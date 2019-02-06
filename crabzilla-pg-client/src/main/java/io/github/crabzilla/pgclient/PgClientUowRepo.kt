@@ -33,47 +33,47 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
                                             "values ($1, $2, $3, $4, $5, $6, $7) returning uow_seq_number"
   }
 
-  override fun getUowByCmdId(cmdId: UUID, uowFuture: Future<UnitOfWork>) {
-    get(SQL_SELECT_UOW_BY_CMD_ID, cmdId, uowFuture)
+  override fun getUowByCmdId(cmdId: UUID, future: Future<UnitOfWork>) {
+    get(SQL_SELECT_UOW_BY_CMD_ID, cmdId, future)
   }
 
-  override fun getUowByUowId(uowId: UUID, uowFuture: Future<UnitOfWork>) {
-    get(SQL_SELECT_UOW_BY_UOW_ID, uowId, uowFuture)
+  override fun getUowByUowId(uowId: UUID, future: Future<UnitOfWork>) {
+    get(SQL_SELECT_UOW_BY_UOW_ID, uowId, future)
   }
 
-  override fun get(query: String, id: UUID, uowFuture: Future<UnitOfWork>) {
+  override fun get(query: String, id: UUID, future: Future<UnitOfWork>) {
     val params = Tuple.of(id)
     pgPool.preparedQuery(query, params) { ar ->
       if (ar.failed()) {
         log.error("get", ar.cause())
-        uowFuture.fail(ar.cause())
+        future.fail(ar.cause())
         return@preparedQuery
       }
       val rows = ar.result()
       if (rows.size() == 0) {
-        uowFuture.complete(null)
+        future.complete(null)
         return@preparedQuery
       }
       val row = rows.first()
       val command = commandFromJson(Json.mapper, row.getJson(CMD_DATA).value().toString())
       val events = listOfEventsFromJson(Json.mapper, row.getJson(UOW_EVENTS).value().toString())
       val uow = UnitOfWork(row.getUUID(UOW_ID), command, row.getInteger(VERSION)!!, events)
-      uowFuture.complete(uow)
+      future.complete(uow)
     }
   }
 
   override fun selectAfterVersion(id: Int, version: Version,
-                                  selectAfterVersionFuture: Future<SnapshotData>,
+                                  future: Future<SnapshotData>,
                                   aggregateRootName: String) {
     log.info("will load id [{}] after version [{}]", id, version)
-    pgPool.getConnection({ ar0 ->
+    pgPool.getConnection { ar0 ->
       if (ar0.failed()) {
         log.error("SQL_SELECT_AFTER_VERSION", ar0.cause())
-        selectAfterVersionFuture.fail(ar0.cause())
+        future.fail(ar0.cause())
         return@getConnection
       }
       val conn = ar0.result()
-      conn.prepare(SQL_SELECT_AFTER_VERSION, { ar1 ->
+      conn.prepare(SQL_SELECT_AFTER_VERSION) { ar1 ->
         if (ar1.succeeded()) {
           val pq = ar1.result()
           // Fetch 100 rows at a time
@@ -81,26 +81,26 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
           val stream = pq.createStream(100, tuple)
           val list = ArrayList<SnapshotData>() // TODO what is the point of this list?
           // Use the stream
-          stream.exceptionHandler({ err -> log.error("Error: " + err.message, err.cause) })
-          stream.endHandler({ _ ->
+          stream.exceptionHandler { err -> log.error("Error: " + err.message, err.cause) }
+          stream.endHandler {
             log.info("found {} units of work for id {} and version > {}", list.size, id, version)
             val finalVersion = if (list.size == 0) 0 else list[list.size - 1].version
             val flatMappedToEvents = list.flatMap { sd -> sd.events }
-            selectAfterVersionFuture.complete(SnapshotData(finalVersion, flatMappedToEvents))
-          })
-          stream.handler({ row ->
+            future.complete(SnapshotData(finalVersion, flatMappedToEvents))
+          }
+          stream.handler { row ->
             val events = listOfEventsFromJson(Json.mapper, row.getJson(0).value().toString())
             val snapshotData = SnapshotData(row.getInteger(1)!!, events)
             list.add(snapshotData)
-          })
+          }
         }
-      })
-    })
+      }
+    }
   }
 
 
   override fun selectAfterUowSequence(uowSequence: Int, maxRows: Int,
-                                      selectAfterUowSeq: Future<List<ProjectionData>>) {
+                                      future: Future<List<ProjectionData>>) {
 
     log.info("will load after uowSequence [{}]", uowSequence)
 
@@ -115,12 +115,12 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
     pgPool.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowSequence)) { ar ->
       if (ar.failed()) {
         log.error("selectAfterUowSequenceSql", ar.cause())
-        selectAfterUowSeq.fail(ar.cause())
+        future.fail(ar.cause())
         return@preparedQuery
       }
       val rows = ar.result()
       if (rows.size() == 0) {
-        selectAfterUowSeq.complete(list)
+        future.complete(list)
         return@preparedQuery
       }
       for (row in rows) {
@@ -131,17 +131,17 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
         val projectionData = ProjectionData(uowId, uowSeq, targetId, events)
         list.add(projectionData)
       }
-      selectAfterUowSeq.complete(list)
+      future.complete(list)
     }
 
   }
 
-  override fun append(unitOfWork: UnitOfWork, appendFuture: Future<Int>, aggregateRootName: String) {
+  override fun append(unitOfWork: UnitOfWork, future: Future<Int>, aggregateRootName: String) {
 
     pgPool.getConnection { conn ->
 
       if (conn.failed()) {
-        appendFuture.fail(conn.cause())
+        future.fail(conn.cause())
         return@getConnection
       }
 
@@ -150,11 +150,11 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
       // Begin the transaction
       val tx = sqlConn
         .begin()
-        .abortHandler({ _ ->
+        .abortHandler { _ ->
           run {
             log.error("Transaction failed =  > rollbacked")
           }
-        })
+        }
 
       val params = Tuple.of(unitOfWork.targetId().value(), aggregateRootName)
 
@@ -162,7 +162,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
         if (ar.failed()) {
           log.error("SQL_SELECT_CURRENT_VERSION", ar.cause())
-          appendFuture.fail(ar.cause())
+          future.fail(ar.cause())
           return@preparedQuery
         }
 
@@ -174,7 +174,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
         if (currentVersion != unitOfWork.version -1) {
           val error = DbConcurrencyException("ar_id = [${unitOfWork.targetId().value()}], " +
             "current_version = $currentVersion, new_version = ${unitOfWork.version}")
-          appendFuture.fail(error)
+          future.fail(error)
           return@preparedQuery
         }
 
@@ -195,7 +195,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
           if (insert.failed()) {
             log.error("SQL_INSERT_UOW", insert.cause())
-            appendFuture.fail(insert.cause())
+            future.fail(insert.cause())
             return@preparedQuery
           }
 
@@ -206,10 +206,10 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
           tx.commit { ar ->
             if (ar.succeeded()) {
               log.info("Transaction succeeded")
-              appendFuture.complete(generated)
+              future.complete(generated)
             } else {
               log.error("Transaction failed " + ar.cause().message)
-              appendFuture.fail(ar.cause().message)
+              future.fail(ar.cause().message)
             }
           }
 
