@@ -1,7 +1,6 @@
-package io.github.crabzilla.pgclient
+package io.github.crabzilla.web
 
 import dagger.Component
-import io.github.crabzilla.vertx.CrabzillaMainModule
 import io.github.crabzilla.vertx.ReadDatabase
 import io.github.crabzilla.vertx.WriteDatabase
 import io.reactiverse.pgclient.PgPool

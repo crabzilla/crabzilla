@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgclient
+package io.github.crabzilla.web
 
 import dagger.Module
 import dagger.Provides

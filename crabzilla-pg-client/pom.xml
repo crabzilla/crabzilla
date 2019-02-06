@@ -20,14 +20,9 @@
     </dependency>
 
     <dependency>
-      <groupId>com.google.dagger</groupId>
-      <artifactId>dagger</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>io.reactiverse</groupId>
       <artifactId>reactive-pg-client</artifactId>
-      <version>0.9.0</version>
+      <version>0.11.2</version>
     </dependency>
 
     <!-- test -->
