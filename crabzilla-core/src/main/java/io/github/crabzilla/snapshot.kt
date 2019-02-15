@@ -2,25 +2,23 @@ package io.github.crabzilla
 
 import java.util.*
 
-data class Snapshot<out A : Entity>(val instance: A, val version: Version)
+data class Snapshot<A : Entity>(val instance: A, val version: Version) {
 
-data class SnapshotData(val version: Version, val events: List<DomainEvent>)
+  fun upgradeTo(newVersion: Version, newEvents: List<DomainEvent>,
+              trackerFactory: (Snapshot<A>) -> StateTransitionsTracker<A>) : Snapshot<A> {
 
-open class SnapshotPromoter<A : Entity>(private val trackerFactory: (Snapshot<A>) -> StateTransitionsTracker<A>) {
-
-  fun promote(originalSnapshot: Snapshot<A>, newVersion: Version, newEvents: List<DomainEvent>): Snapshot<A> {
-
-    if (originalSnapshot.version != newVersion-1) {
+    if (version != newVersion-1) {
       throw RuntimeException(String.format("Cannot upgrade to version %s since current version is %s",
-              newVersion, originalSnapshot.version))
+        newVersion, version))
     }
 
-    val tracker: StateTransitionsTracker<A> = trackerFactory.invoke(originalSnapshot)
+    val tracker: StateTransitionsTracker<A> = trackerFactory.invoke(this)
 
     return Snapshot(tracker.applyEvents { newEvents }.currentState(), newVersion)
   }
-
 }
+
+data class SnapshotData(val version: Version, val events: List<DomainEvent>)
 
 class StateTransitionsTracker<A : Entity>(private val originalSnapshot: Snapshot<A>,
                                           private val applyEventsFn: (DomainEvent, A) -> A) {

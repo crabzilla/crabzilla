@@ -1,12 +1,8 @@
 package io.github.crabzilla.web
 
-import io.github.crabzilla.example1.CUSTOMER_CMD_HANDLER
-import io.github.crabzilla.example1.CUSTOMER_STATE_BUILDER
-import io.github.crabzilla.example1.CUSTOMER_CMD_VALIDATOR
-import io.github.crabzilla.SnapshotPromoter
+import io.github.crabzilla.Snapshot
 import io.github.crabzilla.StateTransitionsTracker
-import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.PojoService
+import io.github.crabzilla.example1.*
 import io.github.crabzilla.pgclient.PgClientEventProjector
 import io.github.crabzilla.pgclient.PgClientUowRepo
 import io.github.crabzilla.vertx.CommandVerticle
@@ -81,9 +77,9 @@ class TestServer(override val name: String = "testServer") : CrabzillaVerticle(n
       val eventProjector = PgClientEventProjector(readDb, "customer summary")
 
       val seedValue = Customer(null, null, false, null, PojoService())
-      val promoter = SnapshotPromoter<Customer> { snapshot -> StateTransitionsTracker(snapshot, CUSTOMER_STATE_BUILDER)}
-      val commandVerticle = CommandVerticle("Customer", seedValue, CUSTOMER_CMD_HANDLER, CUSTOMER_CMD_VALIDATOR, promoter,
-        uowRepository, ExpiringMap.create(), CircuitBreaker.create("cb1", vertx))
+      val trackerFactory = { snapshot: Snapshot<Customer> -> StateTransitionsTracker(snapshot, CUSTOMER_STATE_BUILDER)}
+      val commandVerticle = CommandVerticle("Customer", seedValue, CUSTOMER_CMD_HANDLER, CUSTOMER_CMD_VALIDATOR,
+        trackerFactory, uowRepository, ExpiringMap.create(), CircuitBreaker.create("cb1", vertx))
 
       vertx.deployVerticle(commandVerticle)
 
