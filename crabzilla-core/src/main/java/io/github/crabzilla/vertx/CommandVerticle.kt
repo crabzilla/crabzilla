@@ -14,11 +14,13 @@ class CommandVerticle<A : Entity>(override val name: String,
                                   private val seedValue: A,
                                   private val cmdHandler: (Command, Snapshot<A>) -> CommandResult?,
                                   private val validatorFn: (Command) -> List<String>,
-                                  private val trackerFactory: (Snapshot<A>) -> StateTransitionsTracker<A>,
+                                  private val applyEventsFn: (DomainEvent, A) -> A,
                                   private val eventJournal: UnitOfWorkRepository,
                                   private val cache: ExpiringMap<Int, Snapshot<A>>,
                                   private val circuitBreaker: CircuitBreaker)
   : CrabzillaVerticle(name, VerticleRole.HANDLER) {
+
+  // event: DomainEvent, customer: Customer -> Customer
 
   companion object {
     internal var log = LoggerFactory.getLogger(CommandVerticle::class.java)
@@ -110,7 +112,7 @@ class CommandVerticle<A : Entity>(override val name: String,
                   nonCached.version)
 
           val resultingSnapshot = if (totalOfNonCachedEvents > 0)
-            cachedSnapshot.upgradeTo(nonCached.version, nonCached.events, trackerFactory)
+            cachedSnapshot.upgradeTo(nonCached.version, nonCached.events, applyEventsFn)
           else
             cachedSnapshot
 
@@ -140,7 +142,7 @@ class CommandVerticle<A : Entity>(override val name: String,
                 return@setHandler
               }
 
-              val finalSnapshot = resultingSnapshot.upgradeTo(uow.version, uow.events, trackerFactory)
+              val finalSnapshot = resultingSnapshot.upgradeTo(uow.version, uow.events, applyEventsFn)
               cache[targetId] = finalSnapshot
               val uowSequence = appendAsyncResult.result()
               log.info("uowSequence: {}", uowSequence)
@@ -168,7 +170,6 @@ class CommandVerticle<A : Entity>(override val name: String,
     return { resultHandler: AsyncResult<CommandExecution> ->
       if (!resultHandler.succeeded()) {
         log.error("resultHandler", resultHandler.cause())
-        // TODO customize
         msg.fail(400, resultHandler.cause().message)
       }
       val resp = resultHandler.result()

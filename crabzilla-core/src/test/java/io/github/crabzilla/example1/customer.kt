@@ -35,7 +35,8 @@ data class CreateActivateCustomer(override val commandId: UUID, override val tar
 
 // just for test
 
-data class UnknownCommand(override val commandId: UUID, override val targetId: CustomerId) : Command
+data class
+UnknownCommand(override val commandId: UUID, override val targetId: CustomerId) : Command
 
 // aggregate root
 

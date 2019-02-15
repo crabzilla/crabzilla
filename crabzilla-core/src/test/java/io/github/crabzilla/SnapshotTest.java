@@ -53,7 +53,7 @@ class SnapshotTest {
 
     @Test
     void it_has_expected_snapshot() {
-      resultingSnapshot1 = originalSnapshot.upgradeTo(1, singletonList(customerCreated), factory);
+      resultingSnapshot1 = originalSnapshot.upgradeTo(1, singletonList(customerCreated), getCUSTOMER_STATE_BUILDER());
       final Customer expectedCustomer1 = new Customer(id, "customer-1", false, null, service);
       final Snapshot<Customer> expectedSnapshot1 = new Snapshot<>(expectedCustomer1, 1);
       assertThat(resultingSnapshot1).isEqualTo(expectedSnapshot1);
@@ -78,7 +78,7 @@ class SnapshotTest {
     @Test
     void it_should_throw_an_exception() {
       Throwable exception = assertThrows(RuntimeException.class, () ->
-        resultingSnapshot1 = originalSnapshot.upgradeTo(2, singletonList(customerCreated), factory));
+        resultingSnapshot1 = originalSnapshot.upgradeTo(2, singletonList(customerCreated), getCUSTOMER_STATE_BUILDER()));
       assertEquals("Cannot upgrade to version 2 since current version is 0",
               exception.getMessage());
     }

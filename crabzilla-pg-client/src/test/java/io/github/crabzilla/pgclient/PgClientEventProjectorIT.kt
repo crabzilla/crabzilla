@@ -3,6 +3,7 @@ package io.github.crabzilla.pgclient
 import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.example1.*
+import io.github.crabzilla.pgclient.example1.EXAMPLE1_PROJECTOR_HANDLER
 import io.github.crabzilla.vertx.ProjectionData.Companion.fromUnitOfWork
 import io.github.crabzilla.vertx.initVertx
 import io.reactiverse.pgclient.*
@@ -62,37 +63,6 @@ class PgClientEventProjectorIT {
     val deactivated3 = CustomerDeactivated("a good reason", Instant.now())
 
     val uowSequence1 = 1
-
-    val projectorHandler: ProjectorHandler =
-      { pgConn: PgConnection, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
-
-        log.info("event {} ", event)
-
-        // TODO can I compose here? https://vertx.io/docs/vertx-core/java/#_sequential_composition
-        val future: Future<Void> = Future.future<Void>()
-        future.setHandler(handler)
-
-        when (event) {
-          is CustomerCreated -> {
-            val query = "INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)"
-            val tuple = Tuple.of(targetId, event.name, false)
-            pgConn.runPreparedQuery(query, tuple, future)
-          }
-          is CustomerActivated -> {
-            val query = "UPDATE customer_summary SET is_active = true WHERE id = $1"
-            val tuple = Tuple.of(targetId)
-            pgConn.runPreparedQuery(query, tuple, future)
-          }
-          is CustomerDeactivated -> {
-            val query = "UPDATE customer_summary SET is_active = false WHERE id = $1"
-            val tuple = Tuple.of(targetId)
-            pgConn.runPreparedQuery(query, tuple, future)
-          }
-          else -> log.info("${event.javaClass.simpleName} does not have any event projector handler")
-        }
-
-        log.info("finished event {} ", event)
-      }
 
   }
 
@@ -191,7 +161,7 @@ class PgClientEventProjectorIT {
 
     val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1))
 
-    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), projectorHandler, future)
+    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), EXAMPLE1_PROJECTOR_HANDLER, future)
 
   }
 
@@ -233,7 +203,7 @@ class PgClientEventProjectorIT {
 
     val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1, deactivated1))
 
-    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), projectorHandler, future)
+    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), EXAMPLE1_PROJECTOR_HANDLER, future)
 
   }
 
@@ -270,7 +240,7 @@ class PgClientEventProjectorIT {
     val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1, deactivated1,
       created2, activated2, deactivated2, created1))
 
-    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), projectorHandler, future)
+    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), EXAMPLE1_PROJECTOR_HANDLER, future)
 
   }
 
