@@ -3,6 +3,7 @@ package io.github.crabzilla.web
 import io.github.crabzilla.Command
 import io.github.crabzilla.CommandExecution
 import io.github.crabzilla.UnitOfWork
+import io.github.crabzilla.commandFromJson
 import io.github.crabzilla.vertx.ProjectionData
 import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.github.crabzilla.vertx.cmdHandlerEndpoint
@@ -25,7 +26,7 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
   val uowFuture = Future.future<UnitOfWork>()
   val httpResp = routingContext.response()
   val commandStr = routingContext.bodyAsString
-  val command = Json.decodeValue(commandStr, Command::class.java)
+  val command = commandFromJson(Json.mapper, commandStr)
   val resource = routingContext.request().getParam("resource")
 
   log.info("command=:\n$commandStr")
