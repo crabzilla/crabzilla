@@ -8,7 +8,7 @@ import io.vertx.core.Vertx
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [CrabzillaMainModule::class, PgClientModule::class])
+@Component(modules = [CrabzillaModule::class, PgClientModule::class])
 interface PgClientTestComponent {
 
   fun vertx(): Vertx

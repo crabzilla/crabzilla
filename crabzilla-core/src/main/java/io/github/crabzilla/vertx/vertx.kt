@@ -6,15 +6,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import io.github.crabzilla.*
-import io.vertx.config.ConfigRetriever
-import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
-import io.vertx.core.json.JsonObject
 import io.vertx.core.spi.VerticleFactory
-import io.vertx.kotlin.config.ConfigRetrieverOptions
 
 private val log = org.slf4j.LoggerFactory.getLogger("CrabzillaVertx")
 
@@ -75,36 +71,6 @@ class CrabzillaVerticleFactory(verticles: Set<CrabzillaVerticle>, private val ro
   @Throws(Exception::class)
   override fun createVerticle(name: String, classLoader: ClassLoader): Verticle? {
     return map[name.removePrefix(prefix() + ":")]
-  }
-
-}
-
-
-fun configHandler(vertx: Vertx, envOptions: ConfigStoreOptions, handler: (JsonObject) -> Unit, shutdownHook: () -> Unit) {
-
-  val retrieverOptions = ConfigRetrieverOptions().addStore(envOptions)
-  val retriever = ConfigRetriever.create(vertx, retrieverOptions)
-
-  retriever.getConfig { ar ->
-
-    if (ar.failed()) {
-      log.error("failed to load configuration", ar.cause())
-      return@getConfig
-    }
-
-    val config = ar.result()
-
-    log.info("config = {}", config.encodePrettily())
-
-    Runtime.getRuntime().addShutdownHook(object : Thread() {
-      override fun run() {
-        shutdownHook.invoke()
-        vertx.close()
-      }
-    })
-
-    handler.invoke(config)
-
   }
 
 }

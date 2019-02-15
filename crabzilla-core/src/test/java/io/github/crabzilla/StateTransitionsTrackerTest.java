@@ -9,13 +9,13 @@ import org.mockito.MockitoAnnotations;
 
 import java.time.Instant;
 
-import static io.github.crabzilla.example1.CustomerKt.getStateTransitionFn;
+import static io.github.crabzilla.example1.CustomerKt.getCUSTOMER_STATE_BUILDER;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("A StateTransitionsTracker")
-public class StateTransitionsTrackerTest {
+class StateTransitionsTrackerTest {
 
   StateTransitionsTracker<Customer> tracker;
 
@@ -29,17 +29,17 @@ public class StateTransitionsTrackerTest {
   }
 
   @Test
-  public void can_be_instantiated() {
-    new StateTransitionsTracker<>(originalSnapshot, getStateTransitionFn());
+  void can_be_instantiated() {
+    new StateTransitionsTracker<>(originalSnapshot, getCUSTOMER_STATE_BUILDER());
   }
 
   @Nested
   @DisplayName("when new")
-  public class WhenIsNew {
+  class WhenIsNew {
 
     @BeforeEach
     void instantiate() {
-      tracker = new StateTransitionsTracker<>(originalSnapshot, getStateTransitionFn());
+      tracker = new StateTransitionsTracker<>(originalSnapshot, getCUSTOMER_STATE_BUILDER());
     }
 
     @Test
@@ -54,7 +54,7 @@ public class StateTransitionsTrackerTest {
 
     @Nested
     @DisplayName("when adding a create customer event")
-    public class WhenAddingNewEvent {
+    class WhenAddingNewEvent {
 
       final CustomerId id = new CustomerId(1);
       private CustomerCreated customerCreated = new CustomerCreated(id, "customer-1");
@@ -78,7 +78,7 @@ public class StateTransitionsTrackerTest {
 
       @Nested
       @DisplayName("when adding an activate customer event")
-      public class WhenAddingActivateEvent {
+      class WhenAddingActivateEvent {
 
         private CustomerActivated customerActivated = new CustomerActivated("is ok", Instant.now());
         private Customer expectedCustomer = new Customer(id, "customer-1", true,
@@ -121,7 +121,7 @@ public class StateTransitionsTrackerTest {
     @BeforeEach
     void instantiate() {
       // given
-      tracker = new StateTransitionsTracker<>(originalSnapshot, getStateTransitionFn());
+      tracker = new StateTransitionsTracker<>(originalSnapshot, getCUSTOMER_STATE_BUILDER());
       // when
       tracker.applyEvents(c -> asList(customerCreated, customerActivated));
     }

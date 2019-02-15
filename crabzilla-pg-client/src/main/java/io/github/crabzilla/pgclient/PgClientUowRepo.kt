@@ -8,14 +8,14 @@ import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.Future
 import io.vertx.core.json.Json
-import io.vertx.core.logging.LoggerFactory.getLogger
+import org.slf4j.LoggerFactory
 import java.util.*
 
 open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
   companion object {
 
-    internal val log = getLogger(PgClientUowRepo::class.java)
+    internal val log = LoggerFactory.getLogger(PgClientUowRepo::class.java)
 
     private const val UOW_ID = "uow_id"
     private const val UOW_EVENTS = "uow_events"

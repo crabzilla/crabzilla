@@ -11,8 +11,11 @@ import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
 import io.reactiverse.pgclient.Tuple
+import io.vertx.config.ConfigRetriever
+import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.Future
+import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.core.json.Json
@@ -48,10 +51,10 @@ class PgClientUowRepoIT {
   @BeforeEach
   fun setup(tc: VertxTestContext) {
 
-    val options = VertxOptions()
-    options.blockedThreadCheckInterval = (1000 * 60 * 60).toLong() // to easier debug
+    val vertxOptions = VertxOptions()
+    vertxOptions.blockedThreadCheckInterval = (1000 * 60 * 60).toLong() // to easier debug
 
-    vertx = Vertx.vertx(options)
+    vertx = Vertx.vertx(vertxOptions)
 
     initVertx(vertx)
 
@@ -60,36 +63,35 @@ class PgClientUowRepoIT {
       .setFormat("properties")
       .setConfig(JsonObject().put("path", "../example1.env"))
 
-    configHandler(vertx, envOptions, { config ->
+    val options = ConfigRetrieverOptions().addStore(envOptions)
 
-      vertx.executeBlocking<Any>({ future ->
+    val retriever = ConfigRetriever.create(vertx, options)
 
-        val options = PgPoolOptions()
-          .setPort(5432)
-          .setHost(config.getString("WRITE_DATABASE_HOST"))
-          .setDatabase(config.getString("WRITE_DATABASE_NAME"))
-          .setUser(config.getString("WRITE_DATABASE_USER"))
-          .setPassword(config.getString("WRITE_DATABASE_PASSWORD"))
-          .setMaxSize(config.getInteger("WRITE_DATABASE_POOL_MAX_SIZE"))
+    retriever.getConfig(Handler { configFuture ->
 
-        writeDb = PgClient.pool(vertx, options)
+      if (configFuture.failed()) {
+        println("Failed to get configuration")
+        tc.failNow(configFuture.cause())
+        return@Handler
+      }
 
-        repo = PgClientUowRepo(writeDb)
+      val config = configFuture.result()
 
-        future.complete()
+      // println(config.encodePrettily())
 
-      }, { res ->
+      val options = PgPoolOptions()
+        .setPort(5432)
+        .setHost(config.getString("WRITE_DATABASE_HOST"))
+        .setDatabase(config.getString("WRITE_DATABASE_NAME"))
+        .setUser(config.getString("WRITE_DATABASE_USER"))
+        .setPassword(config.getString("WRITE_DATABASE_PASSWORD"))
+        .setMaxSize(config.getInteger("WRITE_DATABASE_POOL_MAX_SIZE"))
 
-        if (res.failed()) {
-          tc.failNow(res.cause())
-        }
-        tc.completeNow()
+      writeDb = PgClient.pool(vertx, options)
 
-      })
+      repo = PgClientUowRepo(writeDb)
 
-    }, {
-
-      writeDb.close()
+      tc.completeNow()
 
     })
 
