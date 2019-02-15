@@ -115,7 +115,7 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
 
 }
 
-fun getUowByCmdId(routingContext: RoutingContext, uowRepository: UnitOfWorkRepository) {
+fun getUowByCmdIdHandler(routingContext: RoutingContext, uowRepository: UnitOfWorkRepository) {
 
   val httpResp = routingContext.response()
   val cmdID = routingContext.request().getParam("cmdID")

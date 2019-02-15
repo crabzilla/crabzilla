@@ -42,7 +42,7 @@ class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
           }
         }
 
-      val futures = listOfutures(minOf(NUMBER_OF_FUTURES, uowProjectionData.events.size))
+      val futures = listOfFutures(minOf(NUMBER_OF_FUTURES, uowProjectionData.events.size))
 
       for ((pairIndex, event) in uowProjectionData.events.withIndex()) {
         // invoke the projection handler
@@ -84,7 +84,7 @@ class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
 
   }
 
-  private fun listOfutures(size: Int): List<Future<Void>> {
+  private fun listOfFutures(size: Int): List<Future<Void>> {
     val list = arrayListOf<Future<Void>>()
     for (i in 0 until size) {
       list.add(Future.future())

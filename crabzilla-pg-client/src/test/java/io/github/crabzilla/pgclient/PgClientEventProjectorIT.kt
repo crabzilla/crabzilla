@@ -4,9 +4,10 @@ import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.vertx.ProjectionData.Companion.fromUnitOfWork
-import io.github.crabzilla.vertx.configHandler
 import io.github.crabzilla.vertx.initVertx
 import io.reactiverse.pgclient.*
+import io.vertx.config.ConfigRetriever
+import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.*
 import io.vertx.core.json.JsonObject
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
+import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.*
 
@@ -39,7 +41,7 @@ class PgClientEventProjectorIT {
     //        .chunked(numberOfFutures)
     //
 
-    internal val log = org.slf4j.LoggerFactory.getLogger(PgClientEventProjectorIT::class.java)
+    internal val log = LoggerFactory.getLogger(PgClientEventProjectorIT::class.java)
 
     val customerId1 = CustomerId(1)
 
@@ -97,10 +99,10 @@ class PgClientEventProjectorIT {
   @BeforeEach
   fun setup(tc: VertxTestContext) {
 
-    val options = VertxOptions()
-    options.blockedThreadCheckInterval = (1000 * 60 * 60).toLong() // to easier debug
+    val vertOption = VertxOptions()
+    vertOption.blockedThreadCheckInterval = (1000 * 60 * 60).toLong() // to easier debug
 
-    vertx = Vertx.vertx(options)
+    vertx = Vertx.vertx(vertOption)
 
     initVertx(vertx)
 
@@ -109,46 +111,44 @@ class PgClientEventProjectorIT {
       .setFormat("properties")
       .setConfig(JsonObject().put("path", "../example1.env"))
 
-    configHandler(vertx, envOptions, { config ->
+    val options = ConfigRetrieverOptions().addStore(envOptions)
 
-      vertx.executeBlocking<Any>({ future ->
+    val retriever = ConfigRetriever.create(vertx, options)
 
-        val options = PgPoolOptions()
-          .setPort(5432)
-          .setHost(config.getString("READ_DATABASE_HOST"))
-          .setDatabase(config.getString("READ_DATABASE_NAME"))
-          .setUser(config.getString("READ_DATABASE_USER"))
-          .setPassword(config.getString("READ_DATABASE_PASSWORD"))
-          .setMaxSize(config.getInteger("READ_DATABASE_POOL_MAX_SIZE"))
+    retriever.getConfig(Handler { configFuture ->
 
-        readDb = PgClient.pool(vertx, options)
+      if (configFuture.failed()) {
+        println("Failed to get configuration")
+        tc.failNow(configFuture.cause())
+        return@Handler
+      }
 
-        eventProjector = PgClientEventProjector(readDb, "customer summary")
+      val config = configFuture.result()
 
-        readDb.query("DELETE FROM customer_summary") { ar1 ->
+      // println(config.encodePrettily())
 
-          if (ar1.failed()) {
-            log.error("delete ", ar1.cause())
-            tc.failNow(ar1.cause())
-          }
+      val options = PgPoolOptions()
+        .setPort(5432)
+        .setHost(config.getString("READ_DATABASE_HOST"))
+        .setDatabase(config.getString("READ_DATABASE_NAME"))
+        .setUser(config.getString("READ_DATABASE_USER"))
+        .setPassword(config.getString("READ_DATABASE_PASSWORD"))
+        .setMaxSize(config.getInteger("READ_DATABASE_POOL_MAX_SIZE"))
 
-          future.complete()
+      readDb = PgClient.pool(vertx, options)
 
+      eventProjector = PgClientEventProjector(readDb, "customer summary")
+
+      readDb.query("DELETE FROM customer_summary") { ar1 ->
+
+        if (ar1.failed()) {
+          log.error("delete ", ar1.cause())
+          tc.failNow(ar1.cause())
         }
 
-      }, { res ->
+      }
 
-        if (res.failed()) {
-          tc.failNow(res.cause())
-        }
-        tc.completeNow()
-
-      })
-
-    }, {
-
-      readDb.close()
-
+      tc.completeNow()
     })
 
   }

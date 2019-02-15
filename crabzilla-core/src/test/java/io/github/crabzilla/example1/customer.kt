@@ -66,7 +66,7 @@ data class Customer(val customerId: CustomerId? = null,
 
 }
 
-val stateTransitionFn = { event: DomainEvent, customer: Customer ->
+val CUSTOMER_STATE_BUILDER = { event: DomainEvent, customer: Customer ->
   when(event) {
     is CustomerCreated -> customer.copy(customerId = event.id, name =  event.name)
     is CustomerActivated -> customer.copy(isActive = true, reason = event.reason)
@@ -74,7 +74,7 @@ val stateTransitionFn = { event: DomainEvent, customer: Customer ->
     else -> customer
 }}
 
-val commandValidatorFn = { command: Command ->
+val CUSTOMER_CMD_VALIDATOR = { command: Command ->
     when(command) {
       is CreateCustomer ->
         if (command.name.equals("a bad name"))
@@ -83,7 +83,7 @@ val commandValidatorFn = { command: Command ->
   }
 }
 
-val commandHandlerFn = { cmd: Command, snapshot: Snapshot<Customer> ->
+val CUSTOMER_CMD_HANDLER = { cmd: Command, snapshot: Snapshot<Customer> ->
     val customer = snapshot.instance
     resultOf {
       when (cmd) {
@@ -91,7 +91,7 @@ val commandHandlerFn = { cmd: Command, snapshot: Snapshot<Customer> ->
         is ActivateCustomer -> uowOf(cmd, customer.activate(cmd.reason), snapshot.version)
         is DeactivateCustomer -> uowOf(cmd, customer.deactivate(cmd.reason), snapshot.version)
         is CreateActivateCustomer -> {
-          val tracker = StateTransitionsTracker(snapshot, stateTransitionFn)
+          val tracker = StateTransitionsTracker(snapshot, CUSTOMER_STATE_BUILDER)
           val events = tracker
             .applyEvents { c -> c.create(cmd.targetId, cmd.name) }
             .applyEvents { c -> c.activate(cmd.reason) }

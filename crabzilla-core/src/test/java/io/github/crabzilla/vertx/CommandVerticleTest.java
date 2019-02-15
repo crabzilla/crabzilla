@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static io.github.crabzilla.example1.CustomerKt.getStateTransitionFn;
+import static io.github.crabzilla.example1.CustomerKt.getCUSTOMER_STATE_BUILDER;
 import static io.github.crabzilla.vertx.EndpointsKt.cmdHandlerEndpoint;
 import static io.github.crabzilla.vertx.VertxKt.initVertx;
 import static java.util.Arrays.asList;
@@ -76,7 +76,7 @@ class CommandVerticleTest {
 
     final Function1<? super Snapshot<? extends Customer>, StateTransitionsTracker<Customer>> trackerFactory =
             (Function1<Snapshot<? extends Customer>, StateTransitionsTracker<Customer>>) snapshot
-                    -> new StateTransitionsTracker<>(snapshot, getStateTransitionFn());
+                    -> new StateTransitionsTracker<>(snapshot, getCUSTOMER_STATE_BUILDER());
 
     snapshotPromoterFn = new SnapshotPromoter<Customer>(trackerFactory);
 

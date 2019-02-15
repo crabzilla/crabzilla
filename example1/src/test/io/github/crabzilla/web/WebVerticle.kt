@@ -18,7 +18,6 @@ class WebVerticle(override val name: String,
                   private val projectionEndpoint: String)
   : CrabzillaVerticle(name, REST) {
 
-
   companion object {
     internal var log = getLogger(WebVerticle::class.java)
   }
@@ -31,11 +30,9 @@ class WebVerticle(override val name: String,
 
     router.route("/health").handler(healthCheckHandler)
 
-    router.post("/:resource/commands")
-            .handler { postCommandHandler(it, uowRepository, projectionEndpoint) }
+    router.post("/:resource/commands").handler { postCommandHandler(it, uowRepository, projectionEndpoint) }
 
-    router.get("/:resource/commands/:cmdID")
-            .handler { getUowByCmdId(it, uowRepository) }
+    router.get("/:resource/commands/:cmdID").handler { getUowByCmdIdHandler(it, uowRepository) }
 
     val port = config.getInteger("HTTP_PORT")!!
     val server = vertx.createHttpServer(HttpServerOptions().setPort(port).setHost("0.0.0.0"))
@@ -51,6 +48,3 @@ class WebVerticle(override val name: String,
   }
 
 }
-
-
-

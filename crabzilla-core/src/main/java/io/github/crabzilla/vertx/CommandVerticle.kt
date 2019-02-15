@@ -7,8 +7,8 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.Message
-import io.vertx.core.logging.LoggerFactory
 import net.jodah.expiringmap.ExpiringMap
+import org.slf4j.LoggerFactory
 
 class CommandVerticle<A : Entity>(override val name: String,
                                   private val seedValue: A,
@@ -65,6 +65,8 @@ class CommandVerticle<A : Entity>(override val name: String,
         .setHandler(resultHandler(event))
 
     }
+
+    log.info("started command verticle for $name")
 
   }
 

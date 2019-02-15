@@ -10,7 +10,7 @@ import io.vertx.core.logging.SLF4JLogDelegateFactory
 import javax.inject.Singleton
 
 @Module
-class CrabzillaMainModule(val vertx: Vertx, val config: JsonObject) {
+class CrabzillaModule(val vertx: Vertx, val config: JsonObject) {
 
   init {
 

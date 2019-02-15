@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static io.github.crabzilla.example1.CustomerKt.getStateTransitionFn;
+import static io.github.crabzilla.example1.CustomerKt.getCUSTOMER_STATE_BUILDER;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,7 +53,7 @@ class SnapshotPromoterTest {
 
     @BeforeEach
     void instantiate() {
-      tracker = new StateTransitionsTracker<>(originalSnapshot, getStateTransitionFn());
+      tracker = new StateTransitionsTracker<>(originalSnapshot, getCUSTOMER_STATE_BUILDER());
       when(factory.invoke(eq(originalSnapshot))).thenReturn(tracker);
       promoter = new SnapshotPromoter<Customer>(factory);
     }
@@ -78,7 +78,7 @@ class SnapshotPromoterTest {
 
     @BeforeEach
     void instantiate() {
-      tracker = new StateTransitionsTracker<>(originalSnapshot, getStateTransitionFn());
+      tracker = new StateTransitionsTracker<>(originalSnapshot, getCUSTOMER_STATE_BUILDER());
       when(factory.invoke(eq(originalSnapshot))).thenReturn(tracker);
       promoter = new SnapshotPromoter<Customer>(factory);
     }
