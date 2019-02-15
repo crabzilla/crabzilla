@@ -59,8 +59,6 @@ class CommandVerticleTest {
   @Mock
   UnitOfWorkRepository eventRepository;
 
-  SnapshotPromoter<Customer> snapshotPromoterFn;
-
   @BeforeEach
   void setUp(VertxTestContext tc) {
 
@@ -74,14 +72,11 @@ class CommandVerticleTest {
 
     cache = ExpiringMap.create();
 
-    final Function1<? super Snapshot<? extends Customer>, StateTransitionsTracker<Customer>> trackerFactory =
-            (Function1<Snapshot<? extends Customer>, StateTransitionsTracker<Customer>>) snapshot
-                    -> new StateTransitionsTracker<>(snapshot, getCUSTOMER_STATE_BUILDER());
+    final Function1<Snapshot<Customer>, StateTransitionsTracker<Customer>> trackerFactory =
+      snapshot -> new StateTransitionsTracker<>(snapshot, getCUSTOMER_STATE_BUILDER());
 
-    snapshotPromoterFn = new SnapshotPromoter<Customer>(trackerFactory);
-
-    Verticle verticle = new CommandVerticle<Customer>(ENTITY_NAME,
-            seedValue, cmdHandlerFn, validatorFn, snapshotPromoterFn, eventRepository, cache, circuitBreaker);
+    Verticle verticle = new CommandVerticle<>(ENTITY_NAME,
+            seedValue, cmdHandlerFn, validatorFn, trackerFactory, eventRepository, cache, circuitBreaker);
 
     vertx.deployVerticle(verticle, tc.succeeding(x -> tc.completeNow()));
 

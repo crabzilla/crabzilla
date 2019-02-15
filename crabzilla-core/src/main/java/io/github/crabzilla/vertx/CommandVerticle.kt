@@ -14,10 +14,11 @@ class CommandVerticle<A : Entity>(override val name: String,
                                   private val seedValue: A,
                                   private val cmdHandler: (Command, Snapshot<A>) -> CommandResult?,
                                   private val validatorFn: (Command) -> List<String>,
-                                  private val snapshotPromoter: SnapshotPromoter<A>,
+                                  private val trackerFactory: (Snapshot<A>) -> StateTransitionsTracker<A>,
                                   private val eventJournal: UnitOfWorkRepository,
                                   private val cache: ExpiringMap<Int, Snapshot<A>>,
-                                  private val circuitBreaker: CircuitBreaker) : CrabzillaVerticle(name, VerticleRole.HANDLER) {
+                                  private val circuitBreaker: CircuitBreaker)
+  : CrabzillaVerticle(name, VerticleRole.HANDLER) {
 
   companion object {
     internal var log = LoggerFactory.getLogger(CommandVerticle::class.java)
@@ -109,7 +110,7 @@ class CommandVerticle<A : Entity>(override val name: String,
                   nonCached.version)
 
           val resultingSnapshot = if (totalOfNonCachedEvents > 0)
-            snapshotPromoter.promote(cachedSnapshot, nonCached.version, nonCached.events)
+            cachedSnapshot.upgradeTo(nonCached.version, nonCached.events, trackerFactory)
           else
             cachedSnapshot
 
@@ -139,7 +140,7 @@ class CommandVerticle<A : Entity>(override val name: String,
                 return@setHandler
               }
 
-              val finalSnapshot = snapshotPromoter.promote(resultingSnapshot, uow.version, uow.events)
+              val finalSnapshot = resultingSnapshot.upgradeTo(uow.version, uow.events, trackerFactory)
               cache[targetId] = finalSnapshot
               val uowSequence = appendAsyncResult.result()
               log.info("uowSequence: {}", uowSequence)
