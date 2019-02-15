@@ -87,9 +87,7 @@ class TestServer(override val name: String = "testServer") : CrabzillaVerticle(n
       router.route().handler(LoggerHandler.create())
       router.route().handler(BodyHandler.create())
 
-
       router.post("/:resource/commands").handler { postCommandHandler(it, uowRepository, EXAMPLE1_PROJECTION_ENDPOINT) }
-
       router.get("/:resource/commands/:cmdID").handler { getUowByCmdIdHandler(it, uowRepository) }
 
       server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))

@@ -1,7 +1,5 @@
 package io.github.crabzilla.web.example1
 
-import io.github.crabzilla.Snapshot
-import io.github.crabzilla.StateTransitionsTracker
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.pgclient.PgClientEventProjector
 import io.github.crabzilla.pgclient.PgClientUowRepo
@@ -19,9 +17,8 @@ const val EXAMPLE1_PROJECTION_ENDPOINT: String = "example1_projection_endpoint"
 fun customerCmdVerticle(vertx: Vertx, uowRepository: PgClientUowRepo): CommandVerticle<Customer> {
 
   val seedValue = Customer(null, null, false, null, PojoService())
-  val trackerFactory = { snapshot: Snapshot<Customer> -> StateTransitionsTracker(snapshot, CUSTOMER_STATE_BUILDER) }
   return CommandVerticle("Customer", seedValue, CUSTOMER_CMD_HANDLER, CUSTOMER_CMD_VALIDATOR,
-    trackerFactory, uowRepository, ExpiringMap.create(), CircuitBreaker.create("cb1", vertx))
+    CUSTOMER_STATE_BUILDER, uowRepository, ExpiringMap.create(), CircuitBreaker.create("cb1", vertx))
 
 }
 
