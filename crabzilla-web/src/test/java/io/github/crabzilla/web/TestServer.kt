@@ -68,20 +68,25 @@ class TestServer(override val name: String = "testServer") : CrabzillaVerticle(n
       initVertx(vertx)
 
       val readDb = pgPool("READ", config)
-      setupEventHandler(vertx, readDb)
       readDbHandle = readDb
 
       val writeDb = pgPool("WRITE", config)
       writeDbHandle = writeDb
+
+      // example1
+
+      setupEventHandler(vertx, readDb)
       val uowRepository = PgClientUowRepo(writeDb)
       val customerCmdVerticle = customerCmdVerticle(vertx, uowRepository)
-
       vertx.deployVerticle(customerCmdVerticle)
+
+      // web
 
       val router = Router.router(vertx)
 
       router.route().handler(LoggerHandler.create())
       router.route().handler(BodyHandler.create())
+
 
       router.post("/:resource/commands").handler { postCommandHandler(it, uowRepository, EXAMPLE1_PROJECTION_ENDPOINT) }
 
@@ -110,7 +115,7 @@ class TestServer(override val name: String = "testServer") : CrabzillaVerticle(n
     server?.close()
   }
 
-  fun pgPool(id: String, config: JsonObject) : PgPool {
+  private fun pgPool(id: String, config: JsonObject) : PgPool {
     val writeOptions = PgPoolOptions()
       .setPort(5432)
       .setHost(config.getString("${id}_DATABASE_HOST"))
