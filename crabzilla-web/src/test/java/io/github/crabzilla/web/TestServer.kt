@@ -73,59 +73,16 @@ class TestServer(override val name: String = "testServer") : CrabzillaVerticle(n
 
       initVertx(vertx)
 
+      val readDb = pgPool("READ", config)
+      setupEventHandler(readDb)
+      readDbHandle = readDb
+
       val writeDb = pgPool("WRITE", config)
       writeDbHandle = writeDb
       val uowRepository = PgClientUowRepo(writeDb)
+      val customerCmdVerticle = customerCmdVerticle(uowRepository)
 
-      val readDb = pgPool("READ", config)
-      readDbHandle = readDb
-      val eventProjector = PgClientEventProjector(readDb, "customer summary")
-
-      val projectorHandler: ProjectorHandler =
-        { pgConn: PgConnection, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
-
-          log.info("event {} ", event)
-
-          // TODO can I compose here? https://vertx.io/docs/vertx-core/java/#_sequential_composition
-          val future: Future<Void> = Future.future<Void>()
-          future.setHandler(handler)
-
-          when (event) {
-            is CustomerCreated -> {
-              val query = "INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)"
-              val tuple = Tuple.of(targetId, event.name, false)
-              pgConn.runPreparedQuery(query, tuple, future)
-            }
-            is CustomerActivated -> {
-              val query = "UPDATE customer_summary SET is_active = true WHERE id = $1"
-              val tuple = Tuple.of(targetId)
-              pgConn.runPreparedQuery(query, tuple, future)
-            }
-            is CustomerDeactivated -> {
-              val query = "UPDATE customer_summary SET is_active = false WHERE id = $1"
-              val tuple = Tuple.of(targetId)
-              pgConn.runPreparedQuery(query, tuple, future)
-            }
-            else -> log.info("${event.javaClass.simpleName} does not have any event projector handler")
-          }
-
-          log.info("finished event {} ", event)
-        }
-
-      vertx.eventBus().consumer<ProjectionData>(PROJECTION_ENDPOINT) { message ->
-
-        println("received events: " + message.body())
-
-        eventProjector.handle(message.body(), projectorHandler, Future.future())
-
-      }
-
-      val seedValue = Customer(null, null, false, null, PojoService())
-      val trackerFactory = { snapshot: Snapshot<Customer> -> StateTransitionsTracker(snapshot, CUSTOMER_STATE_BUILDER)}
-      val commandVerticle = CommandVerticle("Customer", seedValue, CUSTOMER_CMD_HANDLER, CUSTOMER_CMD_VALIDATOR,
-        trackerFactory, uowRepository, ExpiringMap.create(), CircuitBreaker.create("cb1", vertx))
-
-      vertx.deployVerticle(commandVerticle)
+      vertx.deployVerticle(customerCmdVerticle)
 
       val router = Router.router(vertx)
 
@@ -168,4 +125,59 @@ class TestServer(override val name: String = "testServer") : CrabzillaVerticle(n
     return PgClient.pool(vertx, writeOptions)
   }
 
+  // related to example1
+
+  fun customerCmdVerticle(uowRepository: PgClientUowRepo): CommandVerticle<Customer> {
+
+    val seedValue = Customer(null, null, false, null, PojoService())
+    val trackerFactory = { snapshot: Snapshot<Customer> -> StateTransitionsTracker(snapshot, CUSTOMER_STATE_BUILDER)}
+    return CommandVerticle("Customer", seedValue, CUSTOMER_CMD_HANDLER, CUSTOMER_CMD_VALIDATOR,
+      trackerFactory, uowRepository, ExpiringMap.create(), CircuitBreaker.create("cb1", vertx))
+
+  }
+
+  fun setupEventHandler(readDb: PgPool) {
+
+    val eventProjector = PgClientEventProjector(readDb, "customer summary")
+
+    val projectorHandler: ProjectorHandler =
+      { pgConn: PgConnection, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
+
+        log.info("event {} ", event)
+
+        // TODO can I compose here? https://vertx.io/docs/vertx-core/java/#_sequential_composition
+        val future: Future<Void> = Future.future<Void>()
+        future.setHandler(handler)
+
+        when (event) {
+          is CustomerCreated -> {
+            val query = "INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)"
+            val tuple = Tuple.of(targetId, event.name, false)
+            pgConn.runPreparedQuery(query, tuple, future)
+          }
+          is CustomerActivated -> {
+            val query = "UPDATE customer_summary SET is_active = true WHERE id = $1"
+            val tuple = Tuple.of(targetId)
+            pgConn.runPreparedQuery(query, tuple, future)
+          }
+          is CustomerDeactivated -> {
+            val query = "UPDATE customer_summary SET is_active = false WHERE id = $1"
+            val tuple = Tuple.of(targetId)
+            pgConn.runPreparedQuery(query, tuple, future)
+          }
+          else -> log.info("${event.javaClass.simpleName} does not have any event projector handler")
+        }
+
+        log.info("finished event {} ", event)
+    }
+
+    vertx.eventBus().consumer<ProjectionData>(PROJECTION_ENDPOINT) { message ->
+
+      println("received events: " + message.body())
+
+      eventProjector.handle(message.body(), projectorHandler, Future.future())
+
+    }
+
+  }
 }

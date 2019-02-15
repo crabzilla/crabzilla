@@ -168,7 +168,6 @@ class CommandVerticle<A : Entity>(override val name: String,
     return { resultHandler: AsyncResult<CommandExecution> ->
       if (!resultHandler.succeeded()) {
         log.error("resultHandler", resultHandler.cause())
-        // TODO customize
         msg.fail(400, resultHandler.cause().message)
       }
       val resp = resultHandler.result()
