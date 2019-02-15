@@ -26,7 +26,7 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
   val uowFuture = Future.future<UnitOfWork>()
   val httpResp = routingContext.response()
   val commandStr = routingContext.bodyAsString
-  val command = commandFromJson(Json.mapper, commandStr)
+  val command = Json.decodeValue(commandStr, Command::class.java)
   val resource = routingContext.request().getParam("resource")
 
   log.info("command=:\n$commandStr")

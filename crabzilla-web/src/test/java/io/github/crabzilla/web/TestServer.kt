@@ -48,7 +48,7 @@ class TestServer(override val name: String = "testServer") : CrabzillaVerticle(n
 
   }
 
-  override fun start() {
+  override fun start(startFuture: Future<Void>) {
 
     log.info("*** starting using HTTP_PORT $httpPort")
 
@@ -61,10 +61,11 @@ class TestServer(override val name: String = "testServer") : CrabzillaVerticle(n
 
     val retriever = ConfigRetriever.create(vertx, options)
 
-    retriever.getConfig(Handler { configFuture ->
+    retriever.getConfig { configFuture ->
       if (configFuture.failed()) {
         log.error("Failed to get configuration", configFuture.cause())
-        return@Handler
+        startFuture.fail(configFuture.cause())
+        return@getConfig
       }
 
       val config = configFuture.result()
@@ -95,15 +96,17 @@ class TestServer(override val name: String = "testServer") : CrabzillaVerticle(n
 
       server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
 
-      server!!.requestHandler(router).listen { ar ->
-        if (ar.succeeded()) {
-          log.info("Server started on port " + ar.result().actualPort())
+      server!!.requestHandler(router).listen { startedFuture ->
+        if (startedFuture.succeeded()) {
+          log.info("Server started on port " + startedFuture.result().actualPort())
+          startFuture.complete()
         } else {
-          log.error("oops, something went wrong during server initialization", ar.cause())
+          log.error("oops, something went wrong during server initialization", startedFuture.cause())
+          startFuture.fail(startedFuture.cause())
         }
       }
 
-    })
+    }
 
   }
 
