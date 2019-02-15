@@ -102,25 +102,25 @@
       <artifactId>vertx-lang-kotlin</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-rx-java2</artifactId>
-      <version>${vertx.version}</version>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>io.vertx</groupId>-->
+      <!--<artifactId>vertx-rx-java2</artifactId>-->
+      <!--<version>${vertx.version}</version>-->
+    <!--</dependency>-->
 
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-service-proxy</artifactId>
-      <classifier>processor</classifier>
-      <version>${vertx.version}</version>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>io.vertx</groupId>-->
+      <!--<artifactId>vertx-service-proxy</artifactId>-->
+      <!--<classifier>processor</classifier>-->
+      <!--<version>${vertx.version}</version>-->
+    <!--</dependency>-->
 
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-codegen</artifactId>
-      <scope>provided</scope>
-      <version>${vertx.version}</version>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>io.vertx</groupId>-->
+      <!--<artifactId>vertx-codegen</artifactId>-->
+      <!--<scope>provided</scope>-->
+      <!--<version>${vertx.version}</version>-->
+    <!--</dependency>-->
 
     <!-- test -->
 
@@ -244,6 +244,13 @@
       <dependency>
         <groupId>io.github.crabzilla</groupId>
         <artifactId>crabzilla-core</artifactId>
+        <version>${project.version}</version>
+        <type>test-jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>io.github.crabzilla</groupId>
+        <artifactId>crabzilla-pg-client</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
       </dependency>

@@ -39,6 +39,13 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-pg-client</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
 </project>
