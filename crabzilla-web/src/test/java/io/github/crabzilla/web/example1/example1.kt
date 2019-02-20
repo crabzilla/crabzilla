@@ -8,7 +8,7 @@ import io.github.crabzilla.vertx.CommandVerticle
 import io.github.crabzilla.vertx.ProjectionData
 import io.reactiverse.pgclient.PgPool
 import io.vertx.circuitbreaker.CircuitBreaker
-import io.vertx.core.Future
+import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import net.jodah.expiringmap.ExpiringMap
 
@@ -27,19 +27,13 @@ fun setupEventHandler(vertx: Vertx, readDb: PgPool) {
   val eventProjector = PgClientEventProjector(readDb, "customer summary")
 
   vertx.eventBus().consumer<ProjectionData>(EXAMPLE1_PROJECTION_ENDPOINT) { message ->
-
     println("received events: " + message.body())
-
-    val projectFuture : Future<Boolean> = Future.future()
-
-    projectFuture.setHandler { result ->
+    eventProjector.handle(message.body(), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
       if (result.failed()) {
         println("Projection failed: " + result.cause().message)
+        return@Handler
       }
-    }
-
-    eventProjector.handle(message.body(), EXAMPLE1_PROJECTOR_HANDLER, projectFuture)
-
+    })
   }
 
 }

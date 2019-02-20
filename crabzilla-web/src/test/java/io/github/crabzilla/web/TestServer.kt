@@ -1,8 +1,6 @@
 package io.github.crabzilla.web
 
 import io.github.crabzilla.pgclient.PgClientUowRepo
-import io.github.crabzilla.vertx.CrabzillaVerticle
-import io.github.crabzilla.vertx.VerticleRole.REST
 import io.github.crabzilla.vertx.initVertx
 import io.github.crabzilla.web.example1.EXAMPLE1_PROJECTION_ENDPOINT
 import io.github.crabzilla.web.example1.customerCmdVerticle
@@ -13,6 +11,7 @@ import io.reactiverse.pgclient.PgPoolOptions
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
+import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.Launcher
 import io.vertx.core.http.HttpServer
@@ -28,7 +27,7 @@ fun main(args: Array<String>) {
   Launcher.executeCommand("run", TestServer::class.java.name)
 }
 
-class TestServer(override val name: String = "testServer") : CrabzillaVerticle(name, REST) {
+class TestServer() : AbstractVerticle() {
 
   companion object {
 

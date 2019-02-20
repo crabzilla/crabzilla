@@ -31,4 +31,4 @@ CREATE TABLE units_of_work_2 PARTITION OF units_of_work
 
 CREATE INDEX idx_cmd_id ON units_of_work (cmd_id);
 CREATE INDEX idx_uow_id ON units_of_work (uow_id);
-CREATE INDEX idx_ar_id ON units_of_work (ar_id);
+CREATE INDEX idx_ar ON units_of_work (ar_id, ar_name);

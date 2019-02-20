@@ -109,16 +109,18 @@ class PgClientEventProjectorIT {
 
       eventProjector = PgClientEventProjector(readDb, "customer summary")
 
-      readDb.query("DELETE FROM customer_summary") { ar1 ->
+      readDb.query("DELETE FROM customer_summary") { deleted ->
 
-        if (ar1.failed()) {
-          log.error("delete ", ar1.cause())
-          tc.failNow(ar1.cause())
+        if (deleted.failed()) {
+          log.error("delete ", deleted.cause())
+          tc.failNow(deleted.cause())
+          return@query
         }
+
+        tc.completeNow()
 
       }
 
-      tc.completeNow()
     })
 
   }
@@ -127,24 +129,20 @@ class PgClientEventProjectorIT {
   @DisplayName("can project a couple of events: created and activated")
   fun a1(tc: VertxTestContext) {
 
-    val future = Future.future<Boolean>()
+    val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1))
 
-    future.setHandler { ar2 ->
+    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
 
-      if (ar2.failed()) {
-        log.error("future", ar2.cause())
-        tc.failNow(ar2.cause())
+      if (result.failed()) {
+        tc.failNow(result.cause())
+        return@Handler
       }
-
-      val ok = ar2.result()
-
-      assertThat(ok).isTrue()
 
       readDb.preparedQuery("SELECT * FROM customer_summary") { ar3 ->
 
         if (ar3.failed()) {
-          log.error("select", ar3.cause())
           tc.failNow(ar3.cause())
+          return@preparedQuery
         }
 
         val result = ar3.result()
@@ -156,12 +154,7 @@ class PgClientEventProjectorIT {
         tc.completeNow()
 
       }
-
-    }
-
-    val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1))
-
-    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), EXAMPLE1_PROJECTOR_HANDLER, future)
+    })
 
   }
 
@@ -169,24 +162,21 @@ class PgClientEventProjectorIT {
   @DisplayName("can project 3 events: created, activated and deactivated")
   fun a2(tc: VertxTestContext) {
 
-    val future = Future.future<Boolean>()
+    val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1, deactivated1))
 
-    future.setHandler { ar2 ->
+    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
 
-      if (ar2.failed()) {
-        log.error("future", ar2.cause())
-        tc.failNow(ar2.cause())
+      if (result.failed()) {
+        tc.failNow(result.cause())
+        return@Handler
       }
-
-      val ok = ar2.result()
-
-      assertThat(ok).isTrue()
 
       readDb.preparedQuery("SELECT * FROM customer_summary") { ar3 ->
 
         if (ar3.failed()) {
           log.error("select", ar3.cause())
           tc.failNow(ar3.cause())
+          return@preparedQuery
         }
 
         val result = ar3.result()
@@ -198,12 +188,8 @@ class PgClientEventProjectorIT {
         tc.completeNow()
 
       }
+    })
 
-    }
-
-    val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1, deactivated1))
-
-    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), EXAMPLE1_PROJECTOR_HANDLER, future)
 
   }
 
@@ -211,36 +197,16 @@ class PgClientEventProjectorIT {
   @DisplayName("cannot project more than 6 events within one transaction")
   fun a4(tc: VertxTestContext) {
 
-
-    val future = Future.future<Boolean>()
-
-    future.setHandler { ar2 ->
-
-      if (ar2.failed()) {
-
-        readDb.preparedQuery("SELECT * FROM customer_summary") { ar3 ->
-
-          if (ar3.failed()) {
-            log.error("select", ar3.cause())
-            tc.failNow(ar3.cause())
-          }
-
-          val result = ar3.result()
-
-          assertThat(0).isEqualTo(result.size())
-
-          tc.completeNow()
-
-        }
-
-      }
-
-    }
-
     val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1, deactivated1,
       created2, activated2, deactivated2, created1))
 
-    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), EXAMPLE1_PROJECTOR_HANDLER, future)
+    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
+      if (result.failed()) {
+        tc.completeNow()
+        return@Handler
+      }
+      tc.failNow(IllegalArgumentException())
+    })
 
   }
 
@@ -281,12 +247,13 @@ class PgClientEventProjectorIT {
       }
 
 
-    val future2 = Future.future<Boolean>()
+    val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1))
 
-    future2.setHandler { ar2 ->
+    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), projectorToFail, Handler { result ->
 
-      if (ar2.succeeded()) {
-        tc.failNow(IllegalStateException("should fail"))
+      if (result.succeeded()) {
+        tc.failNow(result.cause())
+        return@Handler
       }
 
       readDb.preparedQuery("SELECT * FROM customer_summary") { ar3 ->
@@ -294,6 +261,7 @@ class PgClientEventProjectorIT {
         if (ar3.failed()) {
           log.error("select", ar3.cause())
           tc.failNow(ar3.cause())
+          return@preparedQuery
         }
 
         val result = ar3.result()
@@ -304,11 +272,7 @@ class PgClientEventProjectorIT {
 
       }
 
-    }
-
-    val uow = UnitOfWork(UUID.randomUUID(), command, 1, arrayListOf(created1, activated1))
-
-    eventProjector.handle(fromUnitOfWork(uowSequence1, uow), projectorToFail, future2)
+    })
 
   }
 

@@ -55,7 +55,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
         return@preparedQuery
       }
       val row = rows.first()
-      val command = commandFromJson(Json.mapper, row.getJson(CMD_DATA).value().toString())
+      val command = Json.decodeValue(row.getJson(CMD_DATA).value().toString(), Command::class.java)
       val events = listOfEventsFromJson(Json.mapper, row.getJson(UOW_EVENTS).value().toString())
       val uow = UnitOfWork(row.getUUID(UOW_ID), command, row.getInteger(VERSION)!!, events)
       future.complete(uow)
@@ -68,7 +68,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
     log.info("will load id [{}] after version [{}]", id, version)
     pgPool.getConnection { ar0 ->
       if (ar0.failed()) {
-        log.error("SQL_SELECT_AFTER_VERSION", ar0.cause())
+        log.error("get connection", ar0.cause())
         future.fail(ar0.cause())
         return@getConnection
       }
@@ -81,17 +81,21 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
           val stream = pq.createStream(100, tuple)
           val list = ArrayList<SnapshotData>() // TODO what is the point of this list?
           // Use the stream
-          stream.exceptionHandler { err -> log.error("Error: " + err.message, err.cause) }
+          stream.handler { row ->
+            val events = listOfEventsFromJson(Json.mapper, row.getJson(0).value().toString())
+            val snapshotData = SnapshotData(row.getInteger(1)!!, events)
+            list.add(snapshotData)
+          }
           stream.endHandler {
             log.info("found {} units of work for id {} and version > {}", list.size, id, version)
             val finalVersion = if (list.size == 0) 0 else list[list.size - 1].version
             val flatMappedToEvents = list.flatMap { sd -> sd.events }
             future.complete(SnapshotData(finalVersion, flatMappedToEvents))
           }
-          stream.handler { row ->
-            val events = listOfEventsFromJson(Json.mapper, row.getJson(0).value().toString())
-            val snapshotData = SnapshotData(row.getInteger(1)!!, events)
-            list.add(snapshotData)
+          stream.exceptionHandler { err ->
+            log.error("SQL_SELECT_AFTER_VERSION: " + err.message)
+            future.fail(err.cause)
+            return@exceptionHandler
           }
         }
       }

@@ -3,7 +3,6 @@ package io.github.crabzilla.web
 import io.github.crabzilla.Command
 import io.github.crabzilla.CommandExecution
 import io.github.crabzilla.UnitOfWork
-import io.github.crabzilla.commandFromJson
 import io.github.crabzilla.vertx.ProjectionData
 import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.github.crabzilla.vertx.cmdHandlerEndpoint

@@ -19,6 +19,7 @@ interface UnitOfWorkRepository {
   fun append(unitOfWork: UnitOfWork, future: Future<Int>, aggregateRootName: String)
 
   fun selectAfterUowSequence(uowSequence: Int, maxRows: Int, future: Future<List<ProjectionData>>)
+
 }
 
 class DbConcurrencyException(s: String) : RuntimeException(s)
