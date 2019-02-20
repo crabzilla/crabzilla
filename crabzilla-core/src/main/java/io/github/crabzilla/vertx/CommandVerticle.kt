@@ -3,6 +3,7 @@ package io.github.crabzilla.vertx
 import io.github.crabzilla.*
 import io.github.crabzilla.CommandExecution.RESULT
 import io.vertx.circuitbreaker.CircuitBreaker
+import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
@@ -10,7 +11,7 @@ import io.vertx.core.eventbus.Message
 import net.jodah.expiringmap.ExpiringMap
 import org.slf4j.LoggerFactory
 
-class CommandVerticle<A : Entity>(override val name: String,
+class CommandVerticle<A : Entity>(val name: String,
                                   private val seedValue: A,
                                   private val cmdHandler: (Command, Snapshot<A>) -> CommandResult?,
                                   private val validatorFn: (Command) -> List<String>,
@@ -18,7 +19,9 @@ class CommandVerticle<A : Entity>(override val name: String,
                                   private val eventJournal: UnitOfWorkRepository,
                                   private val cache: ExpiringMap<Int, Snapshot<A>>,
                                   private val circuitBreaker: CircuitBreaker)
-  : CrabzillaVerticle(name, VerticleRole.HANDLER) {
+  : AbstractVerticle() {
+
+  // event: DomainEvent, customer: Customer -> Customer
 
   // event: DomainEvent, customer: Customer -> Customer
 

@@ -6,13 +6,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import io.github.crabzilla.*
-import io.vertx.core.AbstractVerticle
-import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
-import io.vertx.core.spi.VerticleFactory
-
-private val log = org.slf4j.LoggerFactory.getLogger("CrabzillaVertx")
 
 fun initVertx(vertx: Vertx) {
 
@@ -44,33 +39,3 @@ fun initVertx(vertx: Vertx) {
 
 }
 
-enum class VerticleRole {
-
-  REST, HANDLER, PROJECTOR, POOLER ;
-
-  fun verticle(verticleName: String): String {
-    return "${prefix()}:$verticleName"
-  }
-
-  fun prefix(): String {
-    return this.name.toLowerCase()
-  }
-
-}
-
-abstract class CrabzillaVerticle(open val name: String, open val role: VerticleRole) : AbstractVerticle()
-
-class CrabzillaVerticleFactory(verticles: Set<CrabzillaVerticle>, private val role: VerticleRole) : VerticleFactory {
-
-  private val map = verticles.associateBy({it.name}, {it})
-
-  override fun prefix(): String {
-    return role.prefix()
-  }
-
-  @Throws(Exception::class)
-  override fun createVerticle(name: String, classLoader: ClassLoader): Verticle? {
-    return map[name.removePrefix(prefix() + ":")]
-  }
-
-}

@@ -3,8 +3,10 @@ package io.github.crabzilla.pgclient
 import io.github.crabzilla.vertx.ProjectionData
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
+import io.vertx.core.AsyncResult
 import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
+import io.vertx.core.Handler
 import io.vertx.core.logging.LoggerFactory.getLogger
 
 class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
@@ -18,17 +20,17 @@ class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
 
   // TODO http://www.lemnik.com/blog/2018/12/31/Suspend-extensions-for-Vert-x-Database/
   // TODO coroutines to compose
-  fun handle(uowProjectionData: ProjectionData, projectorHandler: ProjectorHandler, future: Future<Boolean>) {
+  fun handle(uowProjectionData: ProjectionData, projectorHandler: ProjectorHandler, handler: Handler<AsyncResult<Void>>) {
 
     if (uowProjectionData.events.size > NUMBER_OF_FUTURES) {
-      future.fail("only $NUMBER_OF_FUTURES events can be projected per transaction")
+      handler.handle(Future.failedFuture("only $NUMBER_OF_FUTURES events can be projected per transaction"))
       return
     }
 
     pgPool.getConnection { ar1 ->
 
       if (ar1.failed()) {
-        future.fail(ar1.cause())
+        handler.handle(Future.failedFuture(ar1.cause()))
         return@getConnection
       }
       val conn = ar1.result()
@@ -38,7 +40,7 @@ class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
         .begin()
         .abortHandler { _ ->
           run {
-            log.error("Transaction failed = > rollbacked")
+            log.error("Transaction failed = > rollback")
           }
         }
 
@@ -52,8 +54,7 @@ class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
       CompositeFuture.join(futures).setHandler { ar2 ->
 
         if (ar2.failed()) {
-          log.error("*** here ", ar2.cause())
-          future.fail(ar2.cause())
+          handler.handle(Future.failedFuture(ar2.cause()))
           return@setHandler
         }
 
@@ -61,7 +62,7 @@ class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
           Tuple.of(uowProjectionData.uowSequence, name)) { ar3 ->
 
             if (ar3.failed()) {
-              future.fail(ar3.cause())
+              handler.handle(Future.failedFuture(ar3.cause()))
               return@preparedQuery
             }
 
@@ -69,10 +70,10 @@ class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
             tx.commit { ar4 ->
               if (ar4.succeeded()) {
                 log.debug { "Transaction succeeded" }
-                future.complete(true)
+                handler.handle(Future.succeededFuture())
               } else {
                 log.error("Transaction failed", ar4.cause())
-                future.fail(ar4.cause())
+                handler.handle(Future.failedFuture(ar4.cause()))
               }
             }
 
