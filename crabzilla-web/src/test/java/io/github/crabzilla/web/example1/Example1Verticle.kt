@@ -16,11 +16,10 @@ import io.vertx.core.Launcher
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.JsonObject
-import io.vertx.core.logging.LoggerFactory.getLogger
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.LoggerHandler
-
+import org.slf4j.LoggerFactory.getLogger
 
 // Convenience method so you can run it in your IDE
 fun main(args: Array<String>) {
@@ -28,8 +27,6 @@ fun main(args: Array<String>) {
 }
 
 class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
-
-
 
   companion object {
 

@@ -10,8 +10,8 @@ import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.http.CaseInsensitiveHeaders
 import io.vertx.core.json.Json
-import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.web.RoutingContext
+import org.slf4j.LoggerFactory
 import java.util.*
 
 
@@ -66,7 +66,7 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
 
     val handlerEndpoint = cmdHandlerEndpoint(resource)
 
-    log.info("posting a command to {}", handlerEndpoint)
+    log.info("posting a command to $handlerEndpoint")
 
     routingContext.vertx().eventBus().send<Command>(handlerEndpoint, command, commandDeliveryOptions) { response ->
 
