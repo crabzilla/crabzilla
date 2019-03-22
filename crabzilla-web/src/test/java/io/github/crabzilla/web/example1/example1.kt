@@ -11,6 +11,9 @@ import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import net.jodah.expiringmap.ExpiringMap
+import org.slf4j.LoggerFactory
+
+val log = LoggerFactory.getLogger("example1")
 
 const val EXAMPLE1_PROJECTION_ENDPOINT: String = "example1_projection_endpoint"
 
@@ -27,7 +30,7 @@ fun setupEventHandler(vertx: Vertx, readDb: PgPool) {
   val eventProjector = PgClientEventProjector(readDb, "customer summary")
 
   vertx.eventBus().consumer<ProjectionData>(EXAMPLE1_PROJECTION_ENDPOINT) { message ->
-    println("received events: " + message.body())
+    log.info("received events: " + message.body())
     eventProjector.handle(message.body(), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
       if (result.failed()) {
         println("Projection failed: " + result.cause().message)
