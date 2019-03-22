@@ -1,10 +1,9 @@
-package io.github.crabzilla.web
+package io.github.crabzilla.web.example1
 
 import io.github.crabzilla.pgclient.PgClientUowRepo
 import io.github.crabzilla.vertx.initVertx
-import io.github.crabzilla.web.example1.EXAMPLE1_PROJECTION_ENDPOINT
-import io.github.crabzilla.web.example1.customerCmdVerticle
-import io.github.crabzilla.web.example1.setupEventHandler
+import io.github.crabzilla.web.getUowByCmdIdHandler
+import io.github.crabzilla.web.postCommandHandler
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -22,21 +21,23 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.LoggerHandler
 
+
 // Convenience method so you can run it in your IDE
 fun main(args: Array<String>) {
-  Launcher.executeCommand("run", TestServer::class.java.name)
+  Launcher.executeCommand("run", Example1Verticle::class.java.name)
 }
 
-class TestServer() : AbstractVerticle() {
+class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
+
+
 
   companion object {
 
-    internal var httpPort: Int = 8081
     internal var server: HttpServer? = null
     internal var writeDbHandle: PgPool? = null
     internal var readDbHandle: PgPool? = null
 
-    internal var log = getLogger(TestServer::class.java)
+    internal var log = getLogger(Example1Verticle::class.java)
 
   }
 
@@ -47,7 +48,7 @@ class TestServer() : AbstractVerticle() {
     val envOptions = ConfigStoreOptions()
       .setType("file")
       .setFormat("properties")
-      .setConfig(JsonObject().put("path", "example1.env"))
+      .setConfig(JsonObject().put("path", "../example1.env"))
 
     val options = ConfigRetrieverOptions().addStore(envOptions)
 
@@ -77,6 +78,7 @@ class TestServer() : AbstractVerticle() {
       setupEventHandler(vertx, readDb)
       val uowRepository = PgClientUowRepo(writeDb)
       val customerCmdVerticle = customerCmdVerticle(vertx, uowRepository)
+
       vertx.deployVerticle(customerCmdVerticle)
 
       // web

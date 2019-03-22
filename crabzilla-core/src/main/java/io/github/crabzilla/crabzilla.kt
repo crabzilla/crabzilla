@@ -1,26 +1,8 @@
 package io.github.crabzilla
 
-import java.io.Serializable
 import java.util.*
 
 interface Entity
-
-data class CommandExecution(val result: RESULT,
-                            val commandId: UUID?,
-                            val constraints: List<String> = listOf(),
-                            val uowSequence: Int? = 0,
-                            val unitOfWork: UnitOfWork? = null) : Serializable {
-
-  enum class RESULT {
-    FALLBACK,
-    VALIDATION_ERROR,
-    HANDLING_ERROR,
-    CONCURRENCY_ERROR,
-    UNKNOWN_COMMAND,
-    SUCCESS
-  }
-
-}
 
 class CommandResult private constructor(val unitOfWork: UnitOfWork?,
                                         val exception: Exception?) {
@@ -52,7 +34,7 @@ class CommandResult private constructor(val unitOfWork: UnitOfWork?,
 
 // command handling helper functions
 
-fun resultOf(f: () -> UnitOfWork?): CommandResult {
+fun commandResultOf(f: () -> UnitOfWork?): CommandResult {
   return try {
     CommandResult.success(f.invoke())
   }
@@ -61,7 +43,7 @@ fun resultOf(f: () -> UnitOfWork?): CommandResult {
   }
 }
 
-fun uowOf(command: Command, events: List<DomainEvent>, currentVersion: Version): UnitOfWork {
+fun unitOfWorkOf(command: Command, events: List<DomainEvent>, currentVersion: Version): UnitOfWork {
   return UnitOfWork(UUID.randomUUID(), command, currentVersion + 1, events)
 }
 

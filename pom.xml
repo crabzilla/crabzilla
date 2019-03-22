@@ -104,6 +104,11 @@
 
     <!--<dependency>-->
       <!--<groupId>io.vertx</groupId>-->
+      <!--<artifactId>vertx-lang-kotlin-coroutines</artifactId>-->
+    <!--</dependency>-->
+
+    <!--<dependency>-->
+      <!--<groupId>io.vertx</groupId>-->
       <!--<artifactId>vertx-rx-java2</artifactId>-->
     <!--</dependency>-->
 
@@ -126,6 +131,12 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web-client</artifactId>
       <scope>test</scope>
     </dependency>
 

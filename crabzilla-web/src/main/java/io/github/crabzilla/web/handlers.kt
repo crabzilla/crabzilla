@@ -1,9 +1,8 @@
 package io.github.crabzilla.web
 
 import io.github.crabzilla.Command
-import io.github.crabzilla.CommandExecution
 import io.github.crabzilla.UnitOfWork
-import io.github.crabzilla.commandFromJson
+import io.github.crabzilla.vertx.CommandExecution
 import io.github.crabzilla.vertx.ProjectionData
 import io.github.crabzilla.vertx.UnitOfWorkRepository
 import io.github.crabzilla.vertx.cmdHandlerEndpoint
@@ -34,8 +33,10 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
   httpResp.headers().add("Content-Type", "application/json")
 
   if (command == null) {
-    httpResp.statusCode = 400
-    httpResp.end(Json.encode(listOf("invalid command")))
+    httpResp
+      .setStatusCode(400)
+      .setStatusMessage("invalid command")
+      .end()
     return
   }
 
@@ -45,14 +46,21 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
 
   uowFuture.setHandler { uowResult ->
     if (uowResult.failed()) {
-      httpResp.setStatusCode(500).end(Json.encode(listOf("server error")))
+      httpResp
+        .setStatusCode(500)
+        .setStatusMessage("server error")
+        .end()
       return@setHandler
     }
 
+    val location = (routingContext.request().absoluteURI() + "/" + command.commandId.toString())
+
     if (uowResult.result() != null) {
-      val location = (routingContext.request().absoluteURI() + "/" + uowResult.result().command.commandId.toString())
-      httpResp.setStatusCode(201).headers().add("Location", location)
-      httpResp.end(Json.encode(listOf<String>()))
+      httpResp
+        .putHeader("accept", routingContext.request().getHeader("accept"))
+        .putHeader("Location", location)
+        .setStatusCode(303)
+        .end()
       return@setHandler
     }
 
@@ -64,7 +72,10 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
 
       if (!response.succeeded()) {
         log.error("postCommand", response.cause())
-        httpResp.setStatusCode(500).end(Json.encode(listOf("server error")))
+        httpResp
+          .setStatusCode(500)
+          .setStatusMessage("server error")
+          .end()
         return@send
       }
 
@@ -86,26 +97,35 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
 
       when (result.result) {
         CommandExecution.RESULT.SUCCESS -> {
-          val location = routingContext.request().absoluteURI() + "/" + result.unitOfWork!!
-            .command.commandId.toString()
-          httpResp.setStatusCode(201).headers().add("Location", location)
-          httpResp.end(Json.encode(listOf<String>()))
+          httpResp
+            .putHeader("accept", routingContext.request().getHeader("accept"))
+            .putHeader("Location", location)
+            .setStatusCode(303)
+            .end()
         }
         CommandExecution.RESULT.VALIDATION_ERROR -> {
-          httpResp.statusCode = 400
-          httpResp.end(Json.encode(result.constraints))
+          httpResp
+            .setStatusCode(400)
+            .setStatusMessage(result.constraints[0])
+            .end()
         }
         CommandExecution.RESULT.HANDLING_ERROR -> {
-          httpResp.statusCode = 400
-          httpResp.end(Json.encode(result.constraints))
+          httpResp
+            .setStatusCode(400)
+            .setStatusMessage(result.constraints[0])
+            .end()
         }
         CommandExecution.RESULT.UNKNOWN_COMMAND -> {
-          httpResp.statusCode = 400
-          httpResp.end(Json.encode(listOf("unknown command")))
+          httpResp
+            .setStatusCode(400)
+            .setStatusMessage("unknown command")
+            .end()
         }
         else -> {
-          httpResp.statusCode = 500
-          httpResp.end(Json.encode(listOf("server error")))
+          httpResp
+            .setStatusCode(500)
+            .setStatusMessage(result.constraints[0])
+            .end()
         }
 
       }

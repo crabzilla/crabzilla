@@ -109,7 +109,7 @@ class StateTransitionsTrackerTest {
 
   @Nested
   @DisplayName("when adding both create and activate events")
-  public class WhenAddingCreateActivateEvent {
+  class WhenAddingCreateActivateEvent {
 
     final String IS_OK = "is ok";
 

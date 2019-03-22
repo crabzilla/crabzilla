@@ -1,7 +1,7 @@
 package io.github.crabzilla.vertx
 
 import io.github.crabzilla.*
-import io.github.crabzilla.CommandExecution.RESULT
+import io.github.crabzilla.vertx.CommandExecution.RESULT
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
@@ -20,10 +20,6 @@ class CommandVerticle<A : Entity>(val name: String,
                                   private val cache: ExpiringMap<Int, Snapshot<A>>,
                                   private val circuitBreaker: CircuitBreaker)
   : AbstractVerticle() {
-
-  // event: DomainEvent, customer: Customer -> Customer
-
-  // event: DomainEvent, customer: Customer -> Customer
 
   companion object {
     internal var log = LoggerFactory.getLogger(CommandVerticle::class.java)

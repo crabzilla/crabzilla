@@ -264,9 +264,9 @@ class PgClientEventProjectorIT {
           return@preparedQuery
         }
 
-        val result = ar3.result()
+        val pgRowSet = ar3.result()
 
-        assertThat(0).isEqualTo(result.size())
+        assertThat(0).isEqualTo(pgRowSet.size())
 
         tc.completeNow()
 

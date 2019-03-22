@@ -5,7 +5,7 @@ import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerId
-import io.github.crabzilla.vertx.initVertx
+import io.github.crabzilla.vertx.*
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import org.assertj.core.api.Assertions.assertThat

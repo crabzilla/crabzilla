@@ -78,26 +78,25 @@ val CUSTOMER_STATE_BUILDER = { event: DomainEvent, customer: Customer ->
 val CUSTOMER_CMD_VALIDATOR = { command: Command ->
     when(command) {
       is CreateCustomer ->
-        if (command.name.equals("a bad name"))
-          listOf("Invalid name: ${command.name}") else listOf()
+        if (command.name.equals("a bad name")) listOf("Invalid name: ${command.name}") else listOf()
       else -> listOf() // all other commands are valid
   }
 }
 
 val CUSTOMER_CMD_HANDLER = { cmd: Command, snapshot: Snapshot<Customer> ->
     val customer = snapshot.instance
-    resultOf {
+    commandResultOf {
       when (cmd) {
-        is CreateCustomer -> uowOf(cmd, customer.create(cmd.targetId, cmd.name), snapshot.version)
-        is ActivateCustomer -> uowOf(cmd, customer.activate(cmd.reason), snapshot.version)
-        is DeactivateCustomer -> uowOf(cmd, customer.deactivate(cmd.reason), snapshot.version)
+        is CreateCustomer -> unitOfWorkOf(cmd, customer.create(cmd.targetId, cmd.name), snapshot.version)
+        is ActivateCustomer -> unitOfWorkOf(cmd, customer.activate(cmd.reason), snapshot.version)
+        is DeactivateCustomer -> unitOfWorkOf(cmd, customer.deactivate(cmd.reason), snapshot.version)
         is CreateActivateCustomer -> {
           val tracker = StateTransitionsTracker(snapshot, CUSTOMER_STATE_BUILDER)
           val events = tracker
             .applyEvents { c -> c.create(cmd.targetId, cmd.name) }
             .applyEvents { c -> c.activate(cmd.reason) }
             .collectEvents()
-          uowOf(cmd, events, snapshot.version)
+          unitOfWorkOf(cmd, events, snapshot.version)
         }
         else -> null
       }

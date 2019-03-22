@@ -1,7 +1,9 @@
-package io.github.crabzilla
+package io.github.crabzilla.vertx
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.crabzilla.Command
+import io.github.crabzilla.DomainEvent
 
 // json serialization functions
 
