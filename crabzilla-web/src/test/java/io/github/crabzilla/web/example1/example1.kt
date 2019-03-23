@@ -1,11 +1,11 @@
 package io.github.crabzilla.web.example1
 
+import io.github.crabzilla.CommandVerticle
+import io.github.crabzilla.ProjectionData
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.pgclient.PgClientEventProjector
 import io.github.crabzilla.pgclient.PgClientUowRepo
 import io.github.crabzilla.pgclient.example1.EXAMPLE1_PROJECTOR_HANDLER
-import io.github.crabzilla.vertx.CommandVerticle
-import io.github.crabzilla.vertx.ProjectionData
 import io.reactiverse.pgclient.PgPool
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.Handler
@@ -13,7 +13,7 @@ import io.vertx.core.Vertx
 import net.jodah.expiringmap.ExpiringMap
 import org.slf4j.LoggerFactory
 
-val log = LoggerFactory.getLogger("example1")
+private val log = LoggerFactory.getLogger("example1")
 
 const val EXAMPLE1_PROJECTION_ENDPOINT: String = "example1_projection_endpoint"
 
@@ -33,7 +33,7 @@ fun setupEventHandler(vertx: Vertx, readDb: PgPool) {
     log.info("received events: " + message.body())
     eventProjector.handle(message.body(), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
       if (result.failed()) {
-        println("Projection failed: " + result.cause().message)
+        log.error("Projection failed: " + result.cause().message)
         return@Handler
       }
     })

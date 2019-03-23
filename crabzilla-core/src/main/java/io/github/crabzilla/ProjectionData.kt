@@ -1,7 +1,5 @@
-package io.github.crabzilla.vertx
+package io.github.crabzilla
 
-import io.github.crabzilla.DomainEvent
-import io.github.crabzilla.UnitOfWork
 import java.util.*
 
 data class ProjectionData(val uowId: UUID, val uowSequence: Int, val targetId: Int, val events: List<DomainEvent>) {

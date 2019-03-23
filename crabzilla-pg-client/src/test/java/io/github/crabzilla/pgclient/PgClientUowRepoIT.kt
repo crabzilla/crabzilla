@@ -1,15 +1,8 @@
 package io.github.crabzilla.pgclient
 
-import io.github.crabzilla.SnapshotData
-import io.github.crabzilla.UnitOfWork
-import io.github.crabzilla.vertx.commandToJson
+import io.github.crabzilla.*
 import io.github.crabzilla.example1.*
-import io.github.crabzilla.vertx.listOfEventsToJson
 import io.github.crabzilla.pgclient.PgClientUowRepo.Companion.SQL_INSERT_UOW
-import io.github.crabzilla.vertx.DbConcurrencyException
-import io.github.crabzilla.vertx.ProjectionData
-import io.github.crabzilla.vertx.UnitOfWorkRepository
-import io.github.crabzilla.vertx.initVertx
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions

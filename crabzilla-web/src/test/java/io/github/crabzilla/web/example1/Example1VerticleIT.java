@@ -72,11 +72,12 @@ class Example1VerticleIT {
     });
 
   }
+
   @Test
   @DisplayName("When sending a valid CreateCommand, it should work")
   void a1(VertxTestContext tc, Vertx vertx) {
     int nextInt = random.nextInt();
-    CreateCustomer cmd =  new CreateCustomer(UUID.randomUUID(), new CustomerId(nextInt), "customer#" + nextInt);
+    CreateCustomer cmd = new CreateCustomer(UUID.randomUUID(), new CustomerId(nextInt), "customer#" + nextInt);
     JsonObject jo = JsonObject.mapFrom(cmd);
     client.post(port, "0.0.0.0", "/customer/commands")
       .as(BodyCodec.jsonObject())

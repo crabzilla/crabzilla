@@ -85,18 +85,18 @@ val CUSTOMER_CMD_VALIDATOR = { command: Command ->
 
 val CUSTOMER_CMD_HANDLER = { cmd: Command, snapshot: Snapshot<Customer> ->
     val customer = snapshot.instance
-    commandResultOf {
+    cmdResultOf {
       when (cmd) {
-        is CreateCustomer -> unitOfWorkOf(cmd, customer.create(cmd.targetId, cmd.name), snapshot.version)
-        is ActivateCustomer -> unitOfWorkOf(cmd, customer.activate(cmd.reason), snapshot.version)
-        is DeactivateCustomer -> unitOfWorkOf(cmd, customer.deactivate(cmd.reason), snapshot.version)
+        is CreateCustomer -> uowOf(cmd, customer.create(cmd.targetId, cmd.name), snapshot.version)
+        is ActivateCustomer -> uowOf(cmd, customer.activate(cmd.reason), snapshot.version)
+        is DeactivateCustomer -> uowOf(cmd, customer.deactivate(cmd.reason), snapshot.version)
         is CreateActivateCustomer -> {
           val tracker = StateTransitionsTracker(snapshot, CUSTOMER_STATE_BUILDER)
           val events = tracker
             .applyEvents { c -> c.create(cmd.targetId, cmd.name) }
             .applyEvents { c -> c.activate(cmd.reason) }
             .collectEvents()
-          unitOfWorkOf(cmd, events, snapshot.version)
+          uowOf(cmd, events, snapshot.version)
         }
         else -> null
       }

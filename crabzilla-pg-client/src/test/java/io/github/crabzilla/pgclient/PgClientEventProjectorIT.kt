@@ -1,11 +1,11 @@
 package io.github.crabzilla.pgclient
 
 import io.github.crabzilla.DomainEvent
+import io.github.crabzilla.ProjectionData.Companion.fromUnitOfWork
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.example1.*
+import io.github.crabzilla.initVertx
 import io.github.crabzilla.pgclient.example1.EXAMPLE1_PROJECTOR_HANDLER
-import io.github.crabzilla.vertx.ProjectionData.Companion.fromUnitOfWork
-import io.github.crabzilla.vertx.initVertx
 import io.reactiverse.pgclient.*
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions

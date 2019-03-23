@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgclient
 
-import io.github.crabzilla.vertx.ProjectionData
+import io.github.crabzilla.ProjectionData
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult

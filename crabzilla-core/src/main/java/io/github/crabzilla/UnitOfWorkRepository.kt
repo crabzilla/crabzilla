@@ -1,8 +1,5 @@
-package io.github.crabzilla.vertx
+package io.github.crabzilla
 
-import io.github.crabzilla.SnapshotData
-import io.github.crabzilla.UnitOfWork
-import io.github.crabzilla.Version
 import io.vertx.core.Future
 import java.util.*
 
@@ -21,5 +18,3 @@ interface UnitOfWorkRepository {
   fun selectAfterUowSequence(uowSequence: Int, maxRows: Int, future: Future<List<ProjectionData>>)
 
 }
-
-class DbConcurrencyException(s: String) : RuntimeException(s)

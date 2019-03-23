@@ -4,7 +4,6 @@ import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerDeactivated
-import io.github.crabzilla.pgclient.PgClientEventProjectorIT
 import io.github.crabzilla.pgclient.ProjectorHandler
 import io.github.crabzilla.pgclient.runPreparedQuery
 import io.reactiverse.pgclient.PgConnection
@@ -12,11 +11,14 @@ import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
+import org.slf4j.LoggerFactory
+
+private val log = LoggerFactory.getLogger("example1")
 
 val EXAMPLE1_PROJECTOR_HANDLER: ProjectorHandler =
   { pgConn: PgConnection, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
 
-    PgClientEventProjectorIT.log.info("event {} ", event)
+    log.info("event {} ", event)
 
     // TODO can I compose here? https://vertx.io/docs/vertx-core/java/#_sequential_composition
     val future: Future<Void> = Future.future<Void>()
@@ -38,8 +40,8 @@ val EXAMPLE1_PROJECTOR_HANDLER: ProjectorHandler =
         val tuple = Tuple.of(targetId)
         pgConn.runPreparedQuery(query, tuple, future)
       }
-      else -> PgClientEventProjectorIT.log.info("${event.javaClass.simpleName} does not have any event projector handler")
+      else -> log.info("${event.javaClass.simpleName} does not have any event projector handler")
     }
 
-    PgClientEventProjectorIT.log.info("finished event {} ", event)
+    log.info("finished event {} ", event)
   }

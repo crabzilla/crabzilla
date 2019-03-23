@@ -1,7 +1,6 @@
-package io.github.crabzilla.vertx
+package io.github.crabzilla
 
-import io.github.crabzilla.*
-import io.github.crabzilla.vertx.CommandExecution.RESULT
+import io.github.crabzilla.CommandExecution.RESULT
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult

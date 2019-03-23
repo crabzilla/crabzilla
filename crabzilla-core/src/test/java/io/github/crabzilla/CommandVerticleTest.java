@@ -1,6 +1,5 @@
-package io.github.crabzilla.vertx;
+package io.github.crabzilla;
 
-import io.github.crabzilla.*;
 import io.github.crabzilla.example1.*;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.Future;
@@ -26,9 +25,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static io.github.crabzilla.CrabzillaKt.cmdHandlerEndpoint;
+import static io.github.crabzilla.CrabzillaKt.initVertx;
 import static io.github.crabzilla.example1.CustomerKt.getCUSTOMER_STATE_BUILDER;
-import static io.github.crabzilla.vertx.EndpointsKt.cmdHandlerEndpoint;
-import static io.github.crabzilla.vertx.VertxKt.initVertx;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
