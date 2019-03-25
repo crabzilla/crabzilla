@@ -70,7 +70,6 @@ class Example1VerticleIT {
         tc.failNow(deploy.cause());
       }
     });
-
   }
 
   @Test

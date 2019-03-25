@@ -18,7 +18,7 @@ public class JacksonGenericCodec<T> implements MessageCodec<T, T> {
   @Override
   public void encodeToWire(Buffer buffer, T obj) {
 
-    final byte barray[];
+    final byte[] barray;
     try {
       barray = mapper.writerFor(clazz).writeValueAsBytes(obj);
       // Write data into given buffer

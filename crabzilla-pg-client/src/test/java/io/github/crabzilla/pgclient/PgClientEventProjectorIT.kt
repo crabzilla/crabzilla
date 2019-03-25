@@ -219,7 +219,6 @@ class PgClientEventProjectorIT {
 
         log.info("event {} ", event)
 
-        // TODO can I use this here? https://vertx.io/docs/vertx-core/java/#_sequential_composition
         val future: Future<Void> = Future.future<Void>()
 
         future.setHandler(handler)

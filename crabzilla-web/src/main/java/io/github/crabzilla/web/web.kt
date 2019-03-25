@@ -5,10 +5,10 @@ import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.http.CaseInsensitiveHeaders
 import io.vertx.core.json.Json
+import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.RoutingContext
 import org.slf4j.LoggerFactory
 import java.util.*
-
 
 private val log = LoggerFactory.getLogger("WebExtensions")
 
@@ -85,10 +85,7 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
         val eventsDeliveryOptions = DeliveryOptions().setCodecName(UnitOfWork::class.simpleName).setHeaders(headers)
         routingContext.vertx().eventBus()
           .publish(projectionEndpoint, ProjectionData.fromUnitOfWork(uowSequence, uow), eventsDeliveryOptions)
-
       }
-
-      log.info("*** result = {}", result)
 
       when (result.result) {
         CommandExecution.RESULT.SUCCESS -> {
@@ -99,12 +96,6 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
             .end()
         }
         CommandExecution.RESULT.VALIDATION_ERROR -> {
-          httpResp
-            .setStatusCode(400)
-            .setStatusMessage(result.constraints[0])
-            .end()
-        }
-        CommandExecution.RESULT.HANDLING_ERROR -> {
           httpResp
             .setStatusCode(400)
             .setStatusMessage(result.constraints[0])

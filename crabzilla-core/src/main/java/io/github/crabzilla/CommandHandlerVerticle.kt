@@ -10,18 +10,18 @@ import io.vertx.core.eventbus.Message
 import net.jodah.expiringmap.ExpiringMap
 import org.slf4j.LoggerFactory
 
-class CommandVerticle<A : Entity>(val name: String,
-                                  private val seedValue: A,
-                                  private val cmdHandler: (Command, Snapshot<A>) -> CommandResult?,
-                                  private val validatorFn: (Command) -> List<String>,
-                                  private val applyEventsFn: (DomainEvent, A) -> A,
-                                  private val eventJournal: UnitOfWorkRepository,
-                                  private val cache: ExpiringMap<Int, Snapshot<A>>,
-                                  private val circuitBreaker: CircuitBreaker)
+class CommandHandlerVerticle<A : Entity>(val name: String,
+                                         private val seedValue: A,
+                                         private val cmdHandler: (Command, Snapshot<A>) -> CommandResult?,
+                                         private val validatorFn: (Command) -> List<String>,
+                                         private val applyEventsFn: (DomainEvent, A) -> A,
+                                         private val eventJournal: UnitOfWorkRepository,
+                                         private val cache: ExpiringMap<Int, Snapshot<A>>,
+                                         private val circuitBreaker: CircuitBreaker)
   : AbstractVerticle() {
 
   companion object {
-    internal var log = LoggerFactory.getLogger(CommandVerticle::class.java)
+    internal var log = LoggerFactory.getLogger(CommandHandlerVerticle::class.java)
   }
 
   @Throws(Exception::class)

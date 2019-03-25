@@ -15,12 +15,13 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("example1")
 
-val EXAMPLE1_PROJECTOR_HANDLER: ProjectorHandler =
-  { pgConn: PgConnection, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
+val EXAMPLE1_PROJECTOR_HANDLER: ProjectorHandler = {
+
+  pgConn: PgConnection, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
 
     log.info("event {} ", event)
 
-    // TODO can I compose here? https://vertx.io/docs/vertx-core/java/#_sequential_composition
+    // TODO how can I compose here (1 event -> n writes) ?
     val future: Future<Void> = Future.future<Void>()
     future.setHandler(handler)
 
@@ -44,4 +45,4 @@ val EXAMPLE1_PROJECTOR_HANDLER: ProjectorHandler =
     }
 
     log.info("finished event {} ", event)
-  }
+}
