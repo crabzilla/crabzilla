@@ -4,6 +4,7 @@ import io.github.crabzilla.*
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.http.CaseInsensitiveHeaders
+import io.vertx.core.json.DecodeException
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
@@ -25,7 +26,7 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
   val httpResp = routingContext.response()
   val commandStr = routingContext.bodyAsString
 
-  val command = try { Json.decodeValue(commandStr, Command::class.java) } catch (e:  Throwable) {null}
+  val command = try { Json.decodeValue(commandStr, Command::class.java) } catch (e:  DecodeException) {null}
 
   if (command == null) {
     httpResp
@@ -47,21 +48,17 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
 
   uowFuture.setHandler { uowResult ->
     if (uowResult.failed()) {
-      httpResp
-        .setStatusCode(500)
-        .setStatusMessage("server error")
-        .end()
+      httpResp.setStatusCode(500).setStatusMessage("server error").end()
       return@setHandler
     }
 
     val location = (routingContext.request().absoluteURI() + "/" + command.commandId.toString())
 
     if (uowResult.result() != null) {
-      httpResp
-        .putHeader("accept", routingContext.request().getHeader("accept"))
-        .putHeader("Location", location)
-        .setStatusCode(303)
-        .end()
+      httpResp.putHeader("accept", routingContext.request().getHeader("accept"))
+              .putHeader("Location", location)
+              .setStatusCode(303)
+              .end()
       return@setHandler
     }
 
@@ -72,16 +69,15 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
     routingContext.vertx().eventBus().send<Command>(handlerEndpoint, command, commandDeliveryOptions) { response ->
 
       if (!response.succeeded()) {
-        httpResp
-          .setStatusCode(500)
-          .setStatusMessage("server error")
-          .end()
+        httpResp.setStatusCode(500).setStatusMessage("server error").end()
         return@send
       }
 
       val result = response.result().body() as CommandExecution
 
       log.info("result = {}", result)
+
+      val errorResult = if (result.constraints.isEmpty()) JsonObject().encode() else JsonArray(result.constraints).encode()
 
       when (result.result) {
         CommandExecution.RESULT.SUCCESS -> {
@@ -100,24 +96,13 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
             .end()
         }
         CommandExecution.RESULT.VALIDATION_ERROR -> {
-          val result = if (result.constraints.isEmpty()) JsonObject().encode() else JsonArray(result.constraints).encode()
-          httpResp
-            .setStatusCode(400)
-            .setStatusMessage(result)
-            .end()
+          httpResp.setStatusCode(400).setStatusMessage(errorResult).end()
         }
         CommandExecution.RESULT.UNKNOWN_COMMAND -> {
-          httpResp
-            .setStatusCode(400)
-            .setStatusMessage("unknown command")
-            .end()
+          httpResp.setStatusCode(400).setStatusMessage("unknown command").end()
         }
         else -> {
-          val result = if (result.constraints.isEmpty()) JsonObject().encode() else JsonArray(result.constraints).encode()
-          httpResp
-            .setStatusCode(500)
-            .setStatusMessage(result)
-            .end()
+          httpResp.setStatusCode(500).setStatusMessage(errorResult).end()
         }
 
       }
