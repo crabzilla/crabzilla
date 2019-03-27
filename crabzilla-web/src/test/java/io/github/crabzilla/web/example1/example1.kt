@@ -7,7 +7,6 @@ import io.github.crabzilla.pgclient.PgClientEventProjector
 import io.github.crabzilla.pgclient.PgClientUowRepo
 import io.github.crabzilla.pgclient.example1.EXAMPLE1_PROJECTOR_HANDLER
 import io.reactiverse.pgclient.PgPool
-import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import net.jodah.expiringmap.ExpiringMap
@@ -17,10 +16,10 @@ private val log = LoggerFactory.getLogger("example1")
 
 const val EXAMPLE1_PROJECTION_ENDPOINT: String = "example1_projection_endpoint"
 
-fun customerCmdVerticle(vertx: Vertx, uowRepository: PgClientUowRepo): CommandHandlerVerticle<Customer> {
+fun customerCmdVerticle(uowRepository: PgClientUowRepo): CommandHandlerVerticle<Customer> {
   val seedValue = Customer(null, null, false, null, PojoService())
   return CommandHandlerVerticle("Customer", seedValue, CUSTOMER_CMD_HANDLER, CUSTOMER_CMD_VALIDATOR,
-    CUSTOMER_STATE_BUILDER, uowRepository, ExpiringMap.create(), CircuitBreaker.create("cb1", vertx))
+    CUSTOMER_STATE_BUILDER, uowRepository, ExpiringMap.create())
 }
 
 fun setupEventHandler(vertx: Vertx, readDb: PgPool) {

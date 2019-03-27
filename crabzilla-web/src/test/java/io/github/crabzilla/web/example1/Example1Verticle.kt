@@ -77,7 +77,7 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
 
       // command handlers verticles
 
-      vertx.deployVerticle(customerCmdVerticle(vertx, uowRepository))
+      vertx.deployVerticle(customerCmdVerticle(uowRepository))
 
       // web
 

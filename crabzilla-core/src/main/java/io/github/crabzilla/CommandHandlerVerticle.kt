@@ -1,12 +1,10 @@
 package io.github.crabzilla
 
 import io.github.crabzilla.CommandExecution.RESULT
-import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.core.AbstractVerticle
-import io.vertx.core.AsyncResult
 import io.vertx.core.Future
+import io.vertx.core.Handler
 import io.vertx.core.eventbus.DeliveryOptions
-import io.vertx.core.eventbus.Message
 import net.jodah.expiringmap.ExpiringMap
 import org.slf4j.LoggerFactory
 
@@ -16,64 +14,32 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
                                          private val validatorFn: (Command) -> List<String>,
                                          private val applyEventsFn: (DomainEvent, A) -> A,
                                          private val eventJournal: UnitOfWorkRepository,
-                                         private val cache: ExpiringMap<Int, Snapshot<A>>,
-                                         private val circuitBreaker: CircuitBreaker)
+                                         private val cache: ExpiringMap<Int, Snapshot<A>>)
   : AbstractVerticle() {
 
   companion object {
-    internal var log = LoggerFactory.getLogger(CommandHandlerVerticle::class.java)
+    internal val log = LoggerFactory.getLogger(CommandHandlerVerticle::class.java)
+    internal val options = DeliveryOptions().setCodecName("CommandExecution")
   }
 
   @Throws(Exception::class)
   override fun start() {
 
-    val consumer = vertx.eventBus().consumer<Command>(cmdHandlerEndpoint(name))
+    log.info("starting command verticle for $name")
 
-    consumer.handler { event ->
+    vertx.eventBus().consumer<Command>(cmdHandlerEndpoint(name), Handler { commandMsg ->
 
-      val command = event.body()
-
-      if (command == null) {
-
-        val cmdExecResult = CommandExecution(commandId = command, result = RESULT.VALIDATION_ERROR,
-          constraints = listOf("Command cannot be null. Check if JSON payload is valid."))
-        event.reply(cmdExecResult)
-        return@handler
-      }
+      val command = commandMsg.body()
 
       log.info("received a command $command")
-
       val constraints = validatorFn.invoke(command)
 
       if (!constraints.isEmpty()) {
-
         val result = CommandExecution(commandId = command.commandId, result = RESULT.VALIDATION_ERROR,
           constraints = constraints)
-        event.reply(result)
-        return@handler
+        commandMsg.reply(result)
+        return@Handler
       }
-
-      circuitBreaker.fallback { throwable ->
-
-        log.error("Fallback for command $command.commandId", throwable)
-        val cmdExecResult = CommandExecution(commandId = command.commandId, result = RESULT.FALLBACK)
-        event.reply(cmdExecResult)
-
-      }
-
-        .execute<CommandExecution>(cmdHandler(command))
-
-        .setHandler(resultHandler(event))
-
-    }
-
-    log.info("started command verticle for $name")
-
-  }
-
-  private fun cmdHandler(command: Command): (Future<CommandExecution>) -> Unit {
-
-    return { future1 ->
 
       val targetId = command.targetId.value()
 
@@ -81,7 +47,6 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
       vertx.executeBlocking<Snapshot<A>>({ fromCacheFuture ->
 
         log.info("loading {} from cache", targetId)
-
         fromCacheFuture.complete(cache[targetId])
 
       }, false) { fromCacheResult ->
@@ -91,7 +56,7 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
         val cachedSnapshot = snapshotFromCache ?: emptySnapshot
 
         log.info("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
-                targetId, cachedSnapshot)
+          targetId, cachedSnapshot)
 
         val selectAfterVersionFuture = Future.future<SnapshotData>()
 
@@ -100,28 +65,32 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
         selectAfterVersionFuture.setHandler { event ->
 
           if (event.failed()) {
-            future1.fail(event.cause())
+            val result = CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR,
+              constraints = constraints)
+            commandMsg.reply(result)
             return@setHandler
           }
 
           val nonCached: SnapshotData = event.result()
           val totalOfNonCachedEvents = nonCached.events.size
           log.info("id {} found {} pending events. Last version is now {}", targetId, totalOfNonCachedEvents,
-                  nonCached.version)
+            nonCached.version)
 
           val resultingSnapshot = if (totalOfNonCachedEvents > 0)
             cachedSnapshot.upgradeTo(nonCached.version, nonCached.events, applyEventsFn)
           else
             cachedSnapshot
 
-          val result: CommandResult? = cmdHandler.invoke(command, resultingSnapshot)
+          val commandResult: CommandResult? = cmdHandler.invoke(command, resultingSnapshot)
 
-          if (result == null) {
-            future1.complete(CommandExecution(result = RESULT.UNKNOWN_COMMAND, commandId = command.commandId))
+          if (commandResult?.unitOfWork == null) {
+            val result = CommandExecution(commandId = command.commandId, result = RESULT.VALIDATION_ERROR,
+              constraints = constraints)
+            commandMsg.reply(result)
             return@setHandler
           }
 
-          result.inCaseOfSuccess { uow ->
+          commandResult.inCaseOfSuccess { uow ->
 
             val appendFuture = Future.future<Int>()
             eventJournal.append(uow!!, appendFuture, name)
@@ -131,12 +100,14 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
               if (appendAsyncResult.failed()) {
                 val error = appendAsyncResult.cause()
                 log.error("appendUnitOfWork for command " + command.commandId, error.message)
-                if (error is DbConcurrencyException) {
-                  future1.complete(CommandExecution(result = RESULT.CONCURRENCY_ERROR, commandId = command.commandId,
-                    constraints = listOf(error.message ?: "optimistic locking error")))
+                val result = if (error is DbConcurrencyException) {
+                  CommandExecution(commandId = command.commandId, result = RESULT.CONCURRENCY_ERROR,
+                    constraints = constraints)
                 } else {
-                  future1.fail(appendAsyncResult.cause())
+                  CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR,
+                    constraints = constraints)
                 }
+                commandMsg.reply(result)
                 return@setHandler
               }
 
@@ -144,36 +115,24 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
               cache[targetId] = finalSnapshot
               val uowSequence = appendAsyncResult.result()
               log.info("uowSequence: {}", uowSequence)
-              future1.complete(CommandExecution(result = RESULT.SUCCESS, commandId = command.commandId,
-                unitOfWork = uow, uowSequence = uowSequence))
+              commandMsg.reply(CommandExecution(result = RESULT.SUCCESS, commandId = command.commandId,
+                unitOfWork = uow, uowSequence = uowSequence), options)
             }
+
           }
 
-          result.inCaseOfError { error ->
-            log.error("commandExecution", error.message)
-
-            future1.complete(CommandExecution(result = RESULT.HANDLING_ERROR, commandId = command.commandId,
-              constraints = listOf(error.message ?: "entity handling error")))
+          commandResult.inCaseOfError { error ->
+            log.info("error: {}", error)
+            commandMsg.reply(CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR))
+            return@inCaseOfError
           }
 
         }
 
       }
 
-    }
-  }
+    })
 
-  private fun resultHandler(msg: Message<Command>): (AsyncResult<CommandExecution>) -> Unit {
-
-    return { resultHandler: AsyncResult<CommandExecution> ->
-      if (!resultHandler.succeeded()) {
-        log.error("resultHandler", resultHandler.cause())
-        msg.fail(400, resultHandler.cause().message)
-      }
-      val resp = resultHandler.result()
-      val options = DeliveryOptions().setCodecName("CommandExecution")
-      msg.reply(resp, options)
-    }
   }
 
 }

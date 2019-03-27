@@ -6,7 +6,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.eventbus.ReplyException;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import kotlin.jvm.functions.Function1;
@@ -31,6 +30,7 @@ import static io.github.crabzilla.example1.CustomerKt.getCUSTOMER_STATE_BUILDER;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.AdditionalAnswers.answerVoid;
@@ -67,12 +67,10 @@ class CommandHandlerVerticleTest {
 
     initMocks(this);
 
-    circuitBreaker = CircuitBreaker.create("cmd-handler-circuit-breaker", vertx);
-
     cache = ExpiringMap.create();
 
     Verticle verticle = new CommandHandlerVerticle<>(ENTITY_NAME, seedValue, cmdHandlerFn, validatorFn,
-      getCUSTOMER_STATE_BUILDER(), eventRepository, cache, circuitBreaker);
+      getCUSTOMER_STATE_BUILDER(), eventRepository, cache);
 
     vertx.deployVerticle(verticle, tc.succeeding(x -> tc.completeNow()));
 
@@ -140,7 +138,7 @@ class CommandHandlerVerticleTest {
   }
 
   @Test
-  void UNEXPECTED_ERROR_selectAfterVersion_scenario(VertxTestContext tc) {
+  void HANDLING_ERROR_selectAfterVersion_scenario(VertxTestContext tc) {
 
     CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
@@ -157,7 +155,7 @@ class CommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
-    vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().<CommandExecution>send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository);
 
@@ -169,11 +167,11 @@ class CommandHandlerVerticleTest {
 
       verifyNoMoreInteractions(validatorFn, eventRepository);
 
-      assertTrue(asyncResult.failed());
+      assertTrue(asyncResult.succeeded());
 
-      ReplyException replyException = (ReplyException) asyncResult.cause();
-      assertEquals(replyException.failureCode(), 400);
-      assertEquals(replyException.getMessage(), expectedException.getMessage());
+      CommandExecution result = asyncResult.result().body();
+
+      assertThat(result.getResult()).isEqualTo(CommandExecution.RESULT.HANDLING_ERROR);
 
       tc.completeNow();
 
@@ -182,7 +180,7 @@ class CommandHandlerVerticleTest {
   }
 
   @Test
-  void UNEXPECTED_ERROR_append_scenario(VertxTestContext tc) {
+  void HANDLING_ERROR_append_scenario(VertxTestContext tc) {
 
     CustomerId customerId = new CustomerId(1);
     CreateCustomer createCustomerCmd = new CreateCustomer(UUID.randomUUID(), customerId, "customer");
@@ -208,7 +206,7 @@ class CommandHandlerVerticleTest {
 
     DeliveryOptions options = new DeliveryOptions().setCodecName("Command");
 
-    vertx.eventBus().send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
+    vertx.eventBus().<CommandExecution>send(cmdHandlerEndpoint(ENTITY_NAME), createCustomerCmd, options, asyncResult -> {
 
       InOrder inOrder = inOrder(validatorFn, eventRepository, cmdHandlerFn);
 
@@ -224,11 +222,11 @@ class CommandHandlerVerticleTest {
 
       verifyNoMoreInteractions(validatorFn, eventRepository, cmdHandlerFn);
 
-      assertTrue(asyncResult.failed());
+      assertTrue(asyncResult.succeeded());
 
-      ReplyException replyException = (ReplyException) asyncResult.cause();
-      assertEquals(replyException.failureCode(), 400);
-      assertEquals(replyException.getMessage(), expectedException.getMessage());
+      CommandExecution result = asyncResult.result().body();
+
+      assertThat(result.getResult()).isEqualTo(CommandExecution.RESULT.HANDLING_ERROR);
 
       tc.completeNow();
 
@@ -283,7 +281,6 @@ class CommandHandlerVerticleTest {
       CommandExecution response = (CommandExecution) asyncResult.result().body();
 
       assertEquals(CommandExecution.RESULT.CONCURRENCY_ERROR, response.getResult());
-      assertEquals(singletonList(FORCED_CONCURRENCY_EXCEPTION), response.getConstraints());
 
       tc.completeNow();
 
@@ -336,9 +333,7 @@ class CommandHandlerVerticleTest {
 
       CommandExecution response = (CommandExecution) asyncResult.result().body();
 
-      assertEquals(CommandExecution.RESULT.HANDLING_ERROR, response.getResult());
-      //  TODO inform exception message
-      // tc.assertEquals(singletonList(FORCED_CONCURRENCY_EXCEPTION), response.getConstraints().get());
+      assertEquals(CommandExecution.RESULT.VALIDATION_ERROR, response.getResult());
 
       tc.completeNow();
 
@@ -416,7 +411,7 @@ class CommandHandlerVerticleTest {
 
       CommandExecution response = (CommandExecution) asyncResult.result().body();
 
-      assertEquals(CommandExecution.RESULT.UNKNOWN_COMMAND, response.getResult());
+      assertEquals(CommandExecution.RESULT.VALIDATION_ERROR, response.getResult());
 
       tc.completeNow();
 

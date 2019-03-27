@@ -2,6 +2,7 @@ package io.github.crabzilla.web.example1;
 
 import io.github.crabzilla.example1.CreateCustomer;
 import io.github.crabzilla.example1.CustomerId;
+import io.github.crabzilla.example1.UnknownCommand;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.SLF4JLogDelegateFactory;
@@ -22,6 +23,8 @@ import java.net.ServerSocket;
 import java.util.Random;
 import java.util.UUID;
 
+import static io.github.crabzilla.web.WebKt.getCONTENT_TYPE_UNIT_OF_WORK_BODY;
+import static io.github.crabzilla.web.WebKt.getCONTENT_TYPE_UNIT_OF_WORK_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -73,18 +76,87 @@ class Example1VerticleIT {
   }
 
   @Test
-  @DisplayName("When sending a valid CreateCommand, it should work")
-  void a1(VertxTestContext tc, Vertx vertx) {
+  @DisplayName("When sending a valid CreateCommand expecting uow id, it should work")
+  void a1(VertxTestContext tc) {
     int nextInt = random.nextInt();
     CreateCustomer cmd = new CreateCustomer(UUID.randomUUID(), new CustomerId(nextInt), "customer#" + nextInt);
     JsonObject jo = JsonObject.mapFrom(cmd);
     client.post(port, "0.0.0.0", "/customer/commands")
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_SUCCESS)
-      .expect(ResponsePredicate.JSON)
-      .putHeader("accept", "application/json")
+      .expect(ResponsePredicate.contentType(getCONTENT_TYPE_UNIT_OF_WORK_ID()))
+      .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
-          assertThat(jo).isEqualTo(response.body().getJsonObject("command"));
+          assertThat(response.body().getString("unitOfWorkId")).isNotNull();
+          tc.completeNow();
+      }))
+    );
+  }
+
+  @Test
+  @DisplayName("When sending a valid CreateCommand expecting uow body, it should work")
+  void a2(VertxTestContext tc) {
+    int nextInt = random.nextInt();
+    CreateCustomer cmd = new CreateCustomer(UUID.randomUUID(), new CustomerId(nextInt), "customer#" + nextInt);
+    JsonObject jo = JsonObject.mapFrom(cmd);
+    client.post(port, "0.0.0.0", "/customer/commands")
+      .as(BodyCodec.jsonObject())
+      .expect(ResponsePredicate.SC_SUCCESS)
+      .expect(ResponsePredicate.contentType(getCONTENT_TYPE_UNIT_OF_WORK_BODY()))
+      .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_BODY())
+      .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
+          assertThat(response.body().getString("unitOfWorkId")).isNotNull();
+          assertThat(response.body().getJsonObject("command")).isEqualTo(jo);
+          // TODO
+          tc.completeNow();
+      }))
+    );
+  }
+
+  @Test
+  @DisplayName("When sending an invalid CreateCommand, it should work")
+  void a3(VertxTestContext tc) {
+    JsonObject invalidCommand = new JsonObject();
+    client.post(port, "0.0.0.0", "/customer/commands")
+      .as(BodyCodec.none())
+      .expect(ResponsePredicate.SC_BAD_REQUEST)
+      .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())
+      .sendJson(invalidCommand, tc.succeeding(response -> tc.verify(() -> {
+          tc.completeNow();
+        }))
+      );
+  }
+
+  @Test
+  @DisplayName("When sending an invalid CreateCommand expecting uow id, it should work")
+  void a4(VertxTestContext tc) {
+    int nextInt = random.nextInt();
+    CreateCustomer cmd = new CreateCustomer(UUID.randomUUID(), new CustomerId(nextInt), "a bad name");
+    JsonObject jo = JsonObject.mapFrom(cmd);
+    client.post(port, "0.0.0.0", "/customer/commands")
+//      .as(BodyCodec.jsonArray())
+      .expect(ResponsePredicate.SC_BAD_REQUEST)
+      .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())
+      .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
+//          assertThat(response.body()).isNullOrEmpty();
+          tc.completeNow();
+        }))
+      );
+  }
+
+  @Test
+  @DisplayName("When sending an UnknownCommand, it should work")
+  void a5(VertxTestContext tc) {
+    int nextInt = random.nextInt();
+    UnknownCommand cmd = new UnknownCommand(UUID.randomUUID(), new CustomerId(nextInt));
+    JsonObject jo = JsonObject.mapFrom(cmd);
+    client.post(port, "0.0.0.0", "/customer/commands")
+      .as(BodyCodec.jsonObject())
+      .expect(ResponsePredicate.SC_BAD_REQUEST)
+//      .expect(ResponsePredicate.JSON)
+      .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())
+      .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
+          assertThat(response.body()).isNullOrEmpty();
           tc.completeNow();
         }))
       );
