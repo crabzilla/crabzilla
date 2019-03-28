@@ -1,6 +1,5 @@
 package io.github.crabzilla
 
-import com.fasterxml.jackson.databind.SerializationFeature
 import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCreated
@@ -22,7 +21,6 @@ class JacksonJsonTest {
   fun setUp() {
     vertx = Vertx.vertx()
     initVertx(vertx)
-    Json.mapper.enable(SerializationFeature.INDENT_OUTPUT)
   }
 
   @Test
