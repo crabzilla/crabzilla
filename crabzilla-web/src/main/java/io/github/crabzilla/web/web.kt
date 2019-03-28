@@ -134,7 +134,7 @@ fun getUowByCmdIdHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository) {
       return@setHandler
     }
     val contentType = rc.request().getHeader("accept")
-    httpResp.setStatusCode(200).headers().add("Content-Type", contentType)
+    httpResp.setStatusCode(200).headers().add("Content-Type", contentType?: CONTENT_TYPE_UNIT_OF_WORK_ID)
     val result: JsonObject = when (contentType) {
       CONTENT_TYPE_UNIT_OF_WORK_ID -> JsonObject().put("unitOfWorkId", uowResult.result().unitOfWorkId.toString())
       CONTENT_TYPE_UNIT_OF_WORK_BODY -> JsonObject.mapFrom(uowResult.result())
