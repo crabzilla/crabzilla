@@ -58,8 +58,8 @@ class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
           return@setHandler
         }
 
-        conn.preparedQuery("update projections set last_uow = $1 where name = $2",
-          Tuple.of(uowProjectionData.uowSequence, name)) { ar3 ->
+        conn.preparedQuery("insert into projections (name, last_uow) values ($1, $2) on conflict (name) do update set last_uow = $2",
+          Tuple.of(name, uowProjectionData.uowSequence)) { ar3 ->
 
             if (ar3.failed()) {
               handler.handle(Future.failedFuture(ar3.cause()))
