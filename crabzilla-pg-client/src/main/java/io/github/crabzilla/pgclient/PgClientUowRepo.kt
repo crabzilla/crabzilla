@@ -76,7 +76,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
           // Fetch 100 rows at a time
           val tuple = Tuple.of( id, aggregateRootName, version)
           val stream = pq.createStream(100, tuple)
-          val list = ArrayList<SnapshotData>() // TODO what is the point of this list?
+          val list = ArrayList<SnapshotData>()
           // Use the stream
           stream.handler { row ->
             val events = listOfEventsFromJson(Json.mapper, row.getJson(0).value().toString())

@@ -65,8 +65,7 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
         selectAfterVersionFuture.setHandler { event ->
 
           if (event.failed()) {
-            val result = CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR,
-              constraints = constraints)
+            val result = CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR)
             commandMsg.reply(result)
             return@setHandler
           }
@@ -84,8 +83,7 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
           val commandResult: CommandResult? = cmdHandler.invoke(command, resultingSnapshot)
 
           if (commandResult?.unitOfWork == null) {
-            val result = CommandExecution(commandId = command.commandId, result = RESULT.VALIDATION_ERROR,
-              constraints = constraints)
+            val result = CommandExecution(commandId = command.commandId, result = RESULT.VALIDATION_ERROR)
             commandMsg.reply(result)
             return@setHandler
           }
@@ -101,11 +99,9 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
                 val error = appendAsyncResult.cause()
                 log.error("appendUnitOfWork for command " + command.commandId, error.message)
                 val result = if (error is DbConcurrencyException) {
-                  CommandExecution(commandId = command.commandId, result = RESULT.CONCURRENCY_ERROR,
-                    constraints = constraints)
+                  CommandExecution(commandId = command.commandId, result = RESULT.CONCURRENCY_ERROR)
                 } else {
-                  CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR,
-                    constraints = constraints)
+                  CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR)
                 }
                 commandMsg.reply(result)
                 return@setHandler
