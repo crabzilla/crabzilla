@@ -77,7 +77,8 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
 
       log.info("result = {}", result)
 
-      val errorResult = if (result.constraints.isEmpty()) JsonObject().encode() else JsonArray(result.constraints).encode()
+      val errorResult = if (result.constraints.isEmpty()) JsonObject().encode()
+                        else JsonArray(result.constraints).encode()
 
       when (result.result) {
         CommandExecution.RESULT.SUCCESS -> {
@@ -104,7 +105,6 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
         else -> {
           httpResp.setStatusCode(500).setStatusMessage(errorResult).end()
         }
-
       }
 
     }
@@ -134,13 +134,14 @@ fun getUowByCmdIdHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository) {
       return@setHandler
     }
     val contentType = rc.request().getHeader("accept")
-    httpResp.setStatusCode(200).headers().add("Content-Type", contentType?: CONTENT_TYPE_UNIT_OF_WORK_ID)
-    val result: JsonObject = when (contentType) {
-      CONTENT_TYPE_UNIT_OF_WORK_ID -> JsonObject().put("unitOfWorkId", uowResult.result().unitOfWorkId.toString())
+    httpResp.setStatusCode(200).setChunked(true).
+      headers().add("Content-Type", contentType?: CONTENT_TYPE_UNIT_OF_WORK_ID)
+    val defaultResult = JsonObject().put("unitOfWorkId", uowResult.result().unitOfWorkId.toString())
+    val effectiveResult: JsonObject = when (contentType) {
       CONTENT_TYPE_UNIT_OF_WORK_BODY -> JsonObject.mapFrom(uowResult.result())
-      else -> JsonObject().put("unitOfWorkId", uowResult.result().unitOfWorkId.toString())
+      else -> defaultResult
     }
-    httpResp.end(result.encode())
+    httpResp.end(effectiveResult.encode())
   }
 
 }
