@@ -15,16 +15,11 @@ Its still in very early development stage. APIs can change. So far Crabzilla has
 [Eventstorming](http://eventstorming.com), the goal is to develop examples and implementations for an ExternalSystem, 
 a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch is very different from that. 
 
-## Modules
+## Links 
 
-* crabzilla-core      → Schema, Serialization, Verticles, Repositories, etc. Your model will depend on this.
-* crabzilla-pg-client → Implementation for an UnitOfWorkRepo and EventsProjector.
-* crabzilla-web       → HealthVerticle or RestVerticle. Depends on vertx-web module. 
-
-## Links (deprecated)
-
-* [kotlin-example1-manual](https://crabzilla.github.io/crabzilla/docs/kotlin-example1-manual.html)
-* [Architecture decision records](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
+* [example1](https://github.com/crabzilla/crabzilla-examples)
+* [kotlin-example1-manual **deprecated**](https://crabzilla.github.io/crabzilla/docs/kotlin-example1-manual.html)
+* [Architecture decision records **deprecated**](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
 
 ### Requirements
 
@@ -58,11 +53,8 @@ mvn clean install
 
 1. Crabzilla tries to provide a chassis for wiring and running your domain by using verticles and other components.
 2. If your functions are pure, all side effects will occurs within UnitOfWorkRepository and EventsProjector components.
-3. As result, you will have a domain service leveraging some Vert.x power: reactive http, jdbc, rpc, distributed HA, etc.
-4. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
-5. So far simplicity in order to develop domain code always wins on any trade off.
-6. Another concern is to develop modularized solutions within a monolith and then, eventually and only if needed, to seamless break it into smaller services. See the 2 examples: crabzilla-example1-monolith and crabzilla-example1-ha.
-7. So far it's using "classical" Vertx apis. I do plan to eventually rewrite some code using RxJava or Kotlin corroutines.
+3. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
+4. So far it's using "classical" Vertx apis. I do plan to eventually improve some code using RxJava or Kotlin coroutines.
 
 ### Dependencies
 
@@ -70,5 +62,6 @@ I know any Java library should be very conservative about dependency to other li
 
 1. [jackson-kotlin-plugin](https://github.com/FasterXML/jackson-module-kotlin) Used to ser/des polymorphic objects (commands, events, etc) 
 2. [ExpiringMap](https://github.com/jhalterman/expiringmap) Used as a mechanism to plug lazy entry loading of Snapshots. This is useful for entities with lot of events.
+
 
 
