@@ -196,8 +196,8 @@
 
       <dependency>
         <groupId>io.vertx</groupId>
-        <artifactId>vertx-dependencies</artifactId>
-        <version>${vertx.version}</version>
+        <artifactId>vertx-stack-depchain</artifactId>
+        <version>3.6.3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -208,12 +208,6 @@
         <groupId>javax.inject</groupId>
         <artifactId>javax.inject</artifactId>
         <version>1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.google.dagger</groupId>
-        <artifactId>dagger</artifactId>
-        <version>${dagger.version}</version>
       </dependency>
 
       <dependency>

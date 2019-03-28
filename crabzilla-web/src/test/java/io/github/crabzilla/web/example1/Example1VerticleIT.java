@@ -76,7 +76,7 @@ class Example1VerticleIT {
   }
 
   @Test
-  @DisplayName("When sending a valid CreateCommand expecting uow id, it should work")
+  @DisplayName("When sending a valid CreateCommand expecting uow id")
   void a1(VertxTestContext tc) {
     int nextInt = random.nextInt();
     CreateCustomer cmd = new CreateCustomer(UUID.randomUUID(), new CustomerId(nextInt), "customer#" + nextInt);
@@ -94,7 +94,7 @@ class Example1VerticleIT {
   }
 
   @Test
-  @DisplayName("When sending a valid CreateCommand expecting uow body, it should work")
+  @DisplayName("When sending a valid CreateCommand expecting uow body")
   void a2(VertxTestContext tc) {
     int nextInt = random.nextInt();
     CreateCustomer cmd = new CreateCustomer(UUID.randomUUID(), new CustomerId(nextInt), "customer#" + nextInt);
@@ -114,7 +114,7 @@ class Example1VerticleIT {
   }
 
   @Test
-  @DisplayName("When sending an invalid CreateCommand, it should work")
+  @DisplayName("When sending an invalid CreateCommand")
   void a3(VertxTestContext tc) {
     JsonObject invalidCommand = new JsonObject();
     client.post(port, "0.0.0.0", "/customer/commands")
@@ -128,35 +128,32 @@ class Example1VerticleIT {
   }
 
   @Test
-  @DisplayName("When sending an invalid CreateCommand expecting uow id, it should work")
+  @DisplayName("When sending an invalid CreateCommand expecting uow id")
   void a4(VertxTestContext tc) {
     int nextInt = random.nextInt();
     CreateCustomer cmd = new CreateCustomer(UUID.randomUUID(), new CustomerId(nextInt), "a bad name");
     JsonObject jo = JsonObject.mapFrom(cmd);
     client.post(port, "0.0.0.0", "/customer/commands")
-//      .as(BodyCodec.jsonArray())
+      .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
-//          assertThat(response.body()).isNullOrEmpty();
           tc.completeNow();
         }))
       );
   }
 
   @Test
-  @DisplayName("When sending an UnknownCommand, it should work")
+  @DisplayName("When sending an UnknownCommand")
   void a5(VertxTestContext tc) {
     int nextInt = random.nextInt();
     UnknownCommand cmd = new UnknownCommand(UUID.randomUUID(), new CustomerId(nextInt));
     JsonObject jo = JsonObject.mapFrom(cmd);
     client.post(port, "0.0.0.0", "/customer/commands")
-      .as(BodyCodec.jsonObject())
+      .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-//      .expect(ResponsePredicate.JSON)
       .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
-          assertThat(response.body()).isNullOrEmpty();
           tc.completeNow();
         }))
       );

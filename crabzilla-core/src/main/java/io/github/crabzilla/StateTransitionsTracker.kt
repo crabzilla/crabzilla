@@ -3,7 +3,7 @@ package io.github.crabzilla
 import java.util.*
 
 class StateTransitionsTracker<A : Entity>(private val originalSnapshot: Snapshot<A>,
-                                                              private val applyEventsFn: (DomainEvent, A) -> A) {
+                                          private val applyEventsFn: (DomainEvent, A) -> A) {
   private val stateTransitions = ArrayList<StateTransition<A>>()
 
   inline fun applyEvents(aggregateRootMethodFn: (A) -> List<DomainEvent>): StateTransitionsTracker<A> {
