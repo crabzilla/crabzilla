@@ -1,7 +1,6 @@
 package io.github.crabzilla.example1
 
 import io.github.crabzilla.*
-
 import java.time.Instant
 import java.util.*
 
@@ -66,6 +65,7 @@ data class Customer(val customerId: CustomerId? = null,
   }
 
 }
+
 
 val CUSTOMER_STATE_BUILDER = { event: DomainEvent, customer: Customer ->
   when(event) {
