@@ -1,10 +1,10 @@
 package io.github.crabzilla
 
-import java.util.*
-
+// TODO remove stateTransitions collection (optimizing memory)
 class StateTransitionsTracker<A : Entity>(private val originalSnapshot: Snapshot<A>,
                                           private val applyEventsFn: (DomainEvent, A) -> A) {
-  private val stateTransitions = ArrayList<StateTransition<A>>()
+
+  private val stateTransitions = mutableListOf<StateTransition<A>>()
 
   inline fun applyEvents(aggregateRootMethodFn: (A) -> List<DomainEvent>): StateTransitionsTracker<A> {
     val newEvents = aggregateRootMethodFn.invoke(currentState())

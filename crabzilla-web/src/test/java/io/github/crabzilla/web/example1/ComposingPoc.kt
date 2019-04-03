@@ -30,7 +30,7 @@ class ComposingVerticle: AbstractVerticle() {
     println("before create: " + tracker.currentState())
 
     val createFuture: Future<List<DomainEvent>> = Future.future()
-    cust0.create(CustomerId(1), "cust-1", createFuture)
+    tracker.currentState().create(CustomerId(1), "cust-1", createFuture)
 
     createFuture
         .compose { v ->

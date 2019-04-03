@@ -53,7 +53,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
       }
       val row = rows.first()
       val command = Json.decodeValue(row.getJson(CMD_DATA).value().toString(), Command::class.java)
-      val events = listOfEventsFromJson(Json.mapper, row.getJson(UOW_EVENTS).value().toString())
+      val events = listOfEventsFromJson(row.getJson(UOW_EVENTS).value().toString())
       val uow = UnitOfWork(row.getUUID(UOW_ID), command, row.getInteger(VERSION)!!, events)
       future.complete(uow)
     }
@@ -79,7 +79,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
           val list = ArrayList<SnapshotData>()
           // Use the stream
           stream.handler { row ->
-            val events = listOfEventsFromJson(Json.mapper, row.getJson(0).value().toString())
+            val events = listOfEventsFromJson(row.getJson(0).value().toString())
             val snapshotData = SnapshotData(row.getInteger(1)!!, events)
             list.add(snapshotData)
           }
@@ -128,7 +128,7 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
         val uowId = row.getUUID(0)
         val uowSeq = row.getInteger(1)
         val targetId = row.getInteger(2)
-        val events = listOfEventsFromJson(Json.mapper, row.getJson(3).toString())
+        val events = listOfEventsFromJson(row.getJson(3).toString())
         val projectionData = ProjectionData(uowId, uowSeq, targetId, events)
         list.add(projectionData)
       }
@@ -180,8 +180,8 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
         }
 
         // if version is OK, then insert
-        val cmdAsJson = commandToJson(Json.mapper, unitOfWork.command)
-        val eventsListAsJson = listOfEventsToJson(Json.mapper, unitOfWork.events)
+        val cmdAsJson = commandToJson(unitOfWork.command)
+        val eventsListAsJson = listOfEventsToJson(unitOfWork.events)
 
         val params2 = Tuple.of(
           unitOfWork.unitOfWorkId,

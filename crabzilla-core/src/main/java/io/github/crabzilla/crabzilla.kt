@@ -69,20 +69,20 @@ fun eventsOf(vararg event: DomainEvent): List<DomainEvent> {
 
 val eventsListType = object : TypeReference<List<DomainEvent>>() {}
 
-fun listOfEventsFromJson(mapper: ObjectMapper, eventsAsJson: String): List<DomainEvent> {
-  return mapper.readerFor(eventsListType).readValue(eventsAsJson)
+fun listOfEventsFromJson(eventsAsJson: String): List<DomainEvent> {
+  return Json.mapper.readerFor(eventsListType).readValue(eventsAsJson)
 }
 
-fun listOfEventsToJson(mapper: ObjectMapper, events: List<DomainEvent>): String {
-  return mapper.writerFor(eventsListType).writeValueAsString(events)
+fun listOfEventsToJson(events: List<DomainEvent>): String {
+  return Json.mapper.writerFor(eventsListType).writeValueAsString(events)
 }
 
-fun commandFromJson(mapper: ObjectMapper, command: String): Command {
-  return mapper.readerFor(Command::class.java).readValue(command)
+fun commandFromJson(command: String): Command {
+  return Json.mapper.readerFor(Command::class.java).readValue(command)
 }
 
-fun commandToJson(mapper: ObjectMapper, command: Command): String {
-  return mapper.writerFor(Command::class.java).writeValueAsString(command)
+fun commandToJson(command: Command): String {
+  return Json.mapper.writerFor(Command::class.java).writeValueAsString(command)
 }
 
 // vertx

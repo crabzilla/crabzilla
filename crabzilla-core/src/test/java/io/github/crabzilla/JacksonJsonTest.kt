@@ -29,7 +29,7 @@ class JacksonJsonTest {
     val id = CustomerId(1)
     val command = CreateCustomer(UUID.randomUUID(), id, "cust-1")
 
-    val cmdAsJson = commandToJson(Json.mapper, command)
+    val cmdAsJson = commandToJson(command)
 
     assertThat(Json.mapper.readValue(cmdAsJson, CreateCustomer::class.java)).isEqualTo(command)
 
@@ -41,8 +41,8 @@ class JacksonJsonTest {
     val id = CustomerId(1)
     val command = CreateCustomer(UUID.randomUUID(), id, "cust-1")
 
-    val cmdAsJson = commandToJson(Json.mapper, command)
-    val commandFromJson = commandFromJson(Json.mapper, cmdAsJson)
+    val cmdAsJson = commandToJson(command)
+    val commandFromJson = commandFromJson(cmdAsJson)
 
     assertThat(command).isEqualTo(commandFromJson)
 
@@ -60,7 +60,7 @@ class JacksonJsonTest {
 
     val eventsList = asList(event1, event2)
 
-    val asJson = listOfEventsToJson(Json.mapper, eventsList)
+    val asJson = listOfEventsToJson(eventsList)
 
     assertThat(Json.mapper.readerFor(eventsListType).readValue<List<DomainEvent>>(asJson)).isEqualTo(eventsList)
 
@@ -77,9 +77,9 @@ class JacksonJsonTest {
 
     val eventsList = asList(event1, event2)
 
-    val asJson = listOfEventsToJson(Json.mapper, eventsList)
+    val asJson = listOfEventsToJson(eventsList)
 
-    assertThat(listOfEventsFromJson(Json.mapper, asJson)).isEqualTo(eventsList)
+    assertThat(listOfEventsFromJson(asJson)).isEqualTo(eventsList)
 
   }
 

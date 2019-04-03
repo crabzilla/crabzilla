@@ -14,7 +14,6 @@ import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
-import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -87,7 +86,14 @@ class PgClientUowRepoIT {
 
       repo = PgClientUowRepo(writeDb)
 
-      tc.completeNow()
+      writeDb.query("delete from units_of_work") { deleteResult ->
+        if (deleteResult.failed()) {
+          deleteResult.cause().printStackTrace()
+          tc.failNow(deleteResult.cause())
+          return@query
+        }
+        tc.completeNow()
+      }
 
     })
 
@@ -97,109 +103,66 @@ class PgClientUowRepoIT {
   @DisplayName("can queries an unit of work row by it's command id")
   fun a4(tc: VertxTestContext) {
 
-    writeDb.query("delete from units_of_work") { ar0 ->
+    val tuple = Tuple.of(UUID.randomUUID(),
+      io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
+      createCmd.commandId,
+      io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+      aggregateName,
+      customerId.value(),
+      1)
 
-      if (ar0.failed()) {
-        ar0.cause().printStackTrace()
-        tc.failNow(ar0.cause())
+    writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar1 ->
+      if (ar1.failed()) {
+        ar1.cause().printStackTrace()
+        tc.failNow(ar1.cause())
       }
-
-      val tuple = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
-        createCmd.commandId,
-        io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
-        aggregateName,
-        customerId.value(),
-        1)
-
-      writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar1 ->
-
-        if (ar1.failed()) {
-          ar1.cause().printStackTrace()
-          tc.failNow(ar1.cause())
+      val uowSequence = ar1.result().first().getLong(0)
+      assertThat(uowSequence).isGreaterThan(0)
+      val selectFuture = Future.future<UnitOfWork>()
+      selectFuture.setHandler { ar2 ->
+        if (ar2.failed()) {
+          ar2.cause().printStackTrace()
+          tc.failNow(ar2.cause())
         }
-
-        val uowSequence = ar1.result().first().getLong(0)
-
-        assertThat(uowSequence).isGreaterThan(0)
-
-        val selectFuture = Future.future<UnitOfWork>()
-
-        selectFuture.setHandler { ar2 ->
-
-          if (ar2.failed()) {
-            ar2.cause().printStackTrace()
-            tc.failNow(ar2.cause())
-          }
-
-          val uow = ar2.result()
-
-          assertThat(expectedUow1).isEqualToIgnoringGivenFields(uow, "unitOfWorkId")
-
-          tc.completeNow()
-
-        }
-
-        repo.getUowByCmdId(createCmd.commandId, selectFuture)
-
+        val uow = ar2.result()
+        assertThat(expectedUow1).isEqualToIgnoringGivenFields(uow, "unitOfWorkId")
+        tc.completeNow()
       }
-
+      repo.getUowByCmdId(createCmd.commandId, selectFuture)
     }
 
   }
-
 
   @Test
   @DisplayName("can queries an unit of work row by it's uow id")
   fun a5(tc: VertxTestContext) {
 
-    writeDb.query("delete from units_of_work") { ar0 ->
+    val tuple = Tuple.of(UUID.randomUUID(),
+      io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
+      createCmd.commandId,
+      io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+      aggregateName,
+      customerId.value(),
+      1)
 
-      if (ar0.failed()) {
-        ar0.cause().printStackTrace()
-        tc.failNow(ar0.cause())
+    writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar1 ->
+      if (ar1.failed()) {
+        ar1.cause().printStackTrace()
+        tc.failNow(ar1.cause())
       }
-
-      val tuple = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
-        createCmd.commandId,
-        io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
-        aggregateName,
-        customerId.value(),
-        1)
-
-      writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar1 ->
-
-        if (ar1.failed()) {
-          ar1.cause().printStackTrace()
-          tc.failNow(ar1.cause())
+      val uowSequence = ar1.result().first().getLong(0)
+      assertThat(uowSequence).isGreaterThan(0)
+      val selectFuture = Future.future<UnitOfWork>()
+      selectFuture.setHandler { ar2 ->
+        if (ar2.failed()) {
+          ar2.cause().printStackTrace()
+          tc.failNow(ar2.cause())
         }
-
-        val uowSequence = ar1.result().first().getLong(0)
-
-        assertThat(uowSequence).isGreaterThan(0)
-
-        val selectFuture = Future.future<UnitOfWork>()
-
-        selectFuture.setHandler { ar2 ->
-
-          if (ar2.failed()) {
-            ar2.cause().printStackTrace()
-            tc.failNow(ar2.cause())
-          }
-
-          val uow = ar2.result()
-
-          assertThat(expectedUow1).isEqualToIgnoringGivenFields(uow, "unitOfWorkId")
-
-          tc.completeNow()
-
-        }
-
-        repo.getUowByUowId(tuple.getUUID(0), selectFuture)
-
+        val uow = ar2.result()
+        assertThat(expectedUow1).isEqualToIgnoringGivenFields(uow, "unitOfWorkId")
+        tc.completeNow()
       }
-
+      repo.getUowByUowId(tuple.getUUID(0), selectFuture)
     }
 
   }
@@ -212,22 +175,12 @@ class PgClientUowRepoIT {
     @Test
     @DisplayName("can queries an empty repo")
     fun a1(tc: VertxTestContext) {
-
-      writeDb.query("delete from units_of_work") { event ->
-
-        if (event.failed()) {
-          event.cause().printStackTrace()
-          tc.failNow(event.cause())
-        }
-
-        val selectFuture = Future.future<List<ProjectionData>>()
-        repo.selectAfterUowSequence(0, 100, selectFuture)
-
-        selectFuture.setHandler { selectAsyncResult ->
-          val snapshotData = selectAsyncResult.result()
-          assertThat(snapshotData.size).isEqualTo(0)
-          tc.completeNow()
-        }
+      val selectFuture = Future.future<List<ProjectionData>>()
+      repo.selectAfterUowSequence(0, 100, selectFuture)
+      selectFuture.setHandler { selectAsyncResult ->
+        val snapshotData = selectAsyncResult.result()
+        assertThat(snapshotData.size).isEqualTo(0)
+        tc.completeNow()
       }
     }
 
@@ -235,205 +188,136 @@ class PgClientUowRepoIT {
     @DisplayName("can queries a single unit of work row")
     fun a2(tc: VertxTestContext) {
 
-      writeDb.query("delete from units_of_work") { event ->
+      val tuple = Tuple.of(UUID.randomUUID(),
+        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
+        createCmd.commandId,
+        io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+        aggregateName,
+        customerId.value(),
+        1)
 
-        if (event.failed()) {
-          event.cause().printStackTrace()
-          tc.failNow(event.cause())
+      val selectFuture = Future.future<List<ProjectionData>>()
+
+      writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar ->
+        if (ar.failed()) {
+          ar.cause().printStackTrace()
+          tc.failNow(ar.cause())
         }
-
-        val tuple = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
-          createCmd.commandId,
-          io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
-          aggregateName,
-          customerId.value(),
-          1)
-
-        val selectFuture = Future.future<List<ProjectionData>>()
-
-        writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar ->
-
-          if (ar.failed()) {
-            ar.cause().printStackTrace()
-            tc.failNow(ar.cause())
-          }
-
-          val uowSequence = ar.result().first().getLong(0)
-
+        val uowSequence = ar.result().first().getLong(0)
+        assertThat(uowSequence).isGreaterThan(0)
+        repo.selectAfterUowSequence(0, 100, selectFuture)
+        selectFuture.setHandler { selectAsyncResult ->
+          val snapshotData = selectAsyncResult.result()
+          assertThat(snapshotData.size).isEqualTo(1)
+          val (_, uowSequence, targetId, events) = snapshotData[0]
           assertThat(uowSequence).isGreaterThan(0)
-
-          repo.selectAfterUowSequence(0, 100, selectFuture)
-
-          selectFuture.setHandler { selectAsyncResult ->
-
-            val snapshotData = selectAsyncResult.result()
-
-            assertThat(snapshotData.size).isEqualTo(1)
-
-            val (_, uowSequence, targetId, events) = snapshotData[0]
-
-            assertThat(uowSequence).isGreaterThan(0)
-            assertThat(targetId).isEqualTo(customerId.value())
-            assertThat(events).isEqualTo(listOf(created))
-
-            tc.completeNow()
-
-          }
-
+          assertThat(targetId).isEqualTo(customerId.value())
+          assertThat(events).isEqualTo(listOf(created))
+          tc.completeNow()
         }
-
       }
-
     }
 
     @Test
     @DisplayName("can queries two unit of work rows")
     fun a3(tc: VertxTestContext) {
 
-      writeDb.query("delete from units_of_work") { deleteResult ->
+      val tuple1 = Tuple.of(UUID.randomUUID(),
+        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
+        createCmd.commandId,
+        io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+        aggregateName,
+        customerId.value(),
+        1)
 
-        if (deleteResult.failed()) {
-          deleteResult.cause().printStackTrace()
-          tc.failNow(deleteResult.cause())
+      val selectFuture1 = Future.future<List<ProjectionData>>()
+
+      writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
+
+        if (ar1.failed()) {
+          ar1.cause().printStackTrace()
+          tc.failNow(ar1.cause())
         }
 
-        val tuple1 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
-          createCmd.commandId,
-          io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
+        val tuple2 = Tuple.of(UUID.randomUUID(),
+          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(activated))),
+          activateCmd.commandId,
+          io.reactiverse.pgclient.data.Json.create(commandToJson(activateCmd)),
           aggregateName,
           customerId.value(),
-          1)
+          2)
 
-        val selectFuture1 = Future.future<List<ProjectionData>>()
-
-        writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
-
-          if (ar1.failed()) {
-            ar1.cause().printStackTrace()
-            tc.failNow(ar1.cause())
+        writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
+          if (ar2.failed()) {
+            ar2.cause().printStackTrace()
+            tc.failNow(ar2.cause())
           }
-
-          val tuple2 = Tuple.of(UUID.randomUUID(),
-            io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(activated))),
-            activateCmd.commandId,
-            io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, activateCmd)),
-            aggregateName,
-            customerId.value(),
-            2)
-
-          writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
-
-            if (ar2.failed()) {
-              ar2.cause().printStackTrace()
-              tc.failNow(ar2.cause())
-            }
-
-            repo.selectAfterUowSequence(0, 100, selectFuture1)
-
-            selectFuture1.setHandler { selectAsyncResult ->
-
-              val snapshotData = selectAsyncResult.result()
-
-              assertThat(snapshotData.size).isEqualTo(2)
-
-              val (_, uowSequence1, targetId1, events1) = snapshotData[0]
-
-              assertThat(uowSequence1).isGreaterThan(0)
-              assertThat(targetId1).isEqualTo(customerId.value())
-              assertThat(events1).isEqualTo(listOf(created))
-
-              val (_, uowSequence2, targetId2, events2) = snapshotData[1]
-
-              assertThat(uowSequence2).isEqualTo(uowSequence1+1)
-              assertThat(targetId2).isEqualTo(customerId.value())
-              assertThat(events2).isEqualTo(listOf(activated))
-
-              tc.completeNow()
-
-            }
-
+          repo.selectAfterUowSequence(0, 100, selectFuture1)
+          selectFuture1.setHandler { selectAsyncResult ->
+            val snapshotData = selectAsyncResult.result()
+            assertThat(snapshotData.size).isEqualTo(2)
+            val (_, uowSequence1, targetId1, events1) = snapshotData[0]
+            assertThat(uowSequence1).isGreaterThan(0)
+            assertThat(targetId1).isEqualTo(customerId.value())
+            assertThat(events1).isEqualTo(listOf(created))
+            val (_, uowSequence2, targetId2, events2) = snapshotData[1]
+            assertThat(uowSequence2).isEqualTo(uowSequence1 + 1)
+            assertThat(targetId2).isEqualTo(customerId.value())
+            assertThat(events2).isEqualTo(listOf(activated))
+            tc.completeNow()
           }
         }
 
       }
-
     }
 
     @Test
     @DisplayName("can queries by uow sequence")
     fun a4(tc: VertxTestContext) {
 
-      writeDb.query("delete from units_of_work") { deleteResult ->
+      val tuple1 = Tuple.of(UUID.randomUUID(),
+        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
+        createCmd.commandId,
+        io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+        aggregateName,
+        customerId.value(),
+        1)
 
-        if (deleteResult.failed()) {
-          deleteResult.cause().printStackTrace()
-          tc.failNow(deleteResult.cause())
+      val selectFuture1 = Future.future<List<ProjectionData>>()
+
+      writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
+        if (ar1.failed()) {
+          ar1.cause().printStackTrace()
+          tc.failNow(ar1.cause())
         }
-
-        val tuple1 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
-          createCmd.commandId,
-          io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
+        val uowSequence1 = ar1.result().first().getInteger("uow_seq_number")
+        val tuple2 = Tuple.of(UUID.randomUUID(),
+          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(activated))),
+          activateCmd.commandId,
+          io.reactiverse.pgclient.data.Json.create(commandToJson(activateCmd)),
           aggregateName,
           customerId.value(),
-          1)
-
-        val selectFuture1 = Future.future<List<ProjectionData>>()
-
-        writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
-
-          if (ar1.failed()) {
-            ar1.cause().printStackTrace()
-            tc.failNow(ar1.cause())
+          2)
+        writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
+          if (ar2.failed()) {
+            ar2.cause().printStackTrace()
+            tc.failNow(ar2.cause())
           }
-
-          val uowSequence1 = ar1.result().first().getInteger("uow_seq_number")
-
-          val tuple2 = Tuple.of(UUID.randomUUID(),
-            io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(activated))),
-            activateCmd.commandId,
-            io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, activateCmd)),
-            aggregateName,
-            customerId.value(),
-            2)
-
-          writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
-
-            if (ar2.failed()) {
-              ar2.cause().printStackTrace()
-              tc.failNow(ar2.cause())
-            }
-
-            val uowSequence2 = ar2.result().first().getInteger("uow_seq_number")
-
-            repo.selectAfterUowSequence(uowSequence1, 100, selectFuture1)
-
-            selectFuture1.setHandler { selectAsyncResult ->
-
-              val snapshotData = selectAsyncResult.result()
-
-              assertThat(snapshotData.size).isEqualTo(1)
-
-              val (_, uowSequence, targetId, events) = snapshotData[0]
-
-              assertThat(uowSequence).isEqualTo(uowSequence2)
-              assertThat(targetId).isEqualTo(customerId.value())
-              assertThat(events).isEqualTo(listOf(activated))
-
-              tc.completeNow()
-
-            }
-
+          val uowSequence2 = ar2.result().first().getInteger("uow_seq_number")
+          repo.selectAfterUowSequence(uowSequence1, 100, selectFuture1)
+          selectFuture1.setHandler { selectAsyncResult ->
+            val snapshotData = selectAsyncResult.result()
+            assertThat(snapshotData.size).isEqualTo(1)
+            val (_, uowSequence, targetId, events) = snapshotData[0]
+            assertThat(uowSequence).isEqualTo(uowSequence2)
+            assertThat(targetId).isEqualTo(customerId.value())
+            assertThat(events).isEqualTo(listOf(activated))
+            tc.completeNow()
           }
         }
-
       }
-
     }
   }
-
 
   @Nested
   @DisplayName("When selecting by version")
@@ -444,49 +328,29 @@ class PgClientUowRepoIT {
     @DisplayName("can queries a single unit of work row")
     fun a2(tc: VertxTestContext) {
 
-      writeDb.query("delete from units_of_work") { event ->
+      val tuple = Tuple.of(UUID.randomUUID(),
+        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
+        createCmd.commandId,
+        io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+        aggregateName,
+        customerId.value(),
+        1)
 
-        if (event.failed()) {
-          event.cause().printStackTrace()
-          tc.failNow(event.cause())
+      writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar ->
+        if (ar.failed()) {
+          ar.cause().printStackTrace()
+          tc.failNow(ar.cause())
         }
-
-        val tuple = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
-          createCmd.commandId,
-          io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
-          aggregateName,
-          customerId.value(),
-          1)
-
-        writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar ->
-
-          if (ar.failed()) {
-            ar.cause().printStackTrace()
-            tc.failNow(ar.cause())
-          }
-
-          val uowSequence = ar.result().first().getLong(0)
-
-          assertThat(uowSequence).isGreaterThan(0)
-
-          val selectFuture = Future.future<SnapshotData>()
-
-          repo.selectAfterVersion(customerId.value(), 0, selectFuture, aggregateName)
-
-          selectFuture.setHandler { selectAsyncResult ->
-
-            val snapshotData = selectAsyncResult.result()
-
-            assertThat(1).isEqualTo(snapshotData.version)
-            assertThat(listOf(created)).isEqualTo(snapshotData.events)
-
-            tc.completeNow()
-
-          }
-
+        val uowSequence = ar.result().first().getLong(0)
+        assertThat(uowSequence).isGreaterThan(0)
+        val selectFuture = Future.future<SnapshotData>()
+        repo.selectAfterVersion(customerId.value(), 0, selectFuture, aggregateName)
+        selectFuture.setHandler { selectAsyncResult ->
+          val snapshotData = selectAsyncResult.result()
+          assertThat(1).isEqualTo(snapshotData.version)
+          assertThat(listOf(created)).isEqualTo(snapshotData.events)
+          tc.completeNow()
         }
-
       }
 
     }
@@ -495,61 +359,43 @@ class PgClientUowRepoIT {
     @DisplayName("can queries two unit of work rows")
     fun a3(tc: VertxTestContext) {
 
-      writeDb.query("delete from units_of_work") { deleteResult ->
+      val tuple1 = Tuple.of(UUID.randomUUID(),
+        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
+        createCmd.commandId,
+        io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+        aggregateName,
+        customerId.value(),
+        1)
 
-        if (deleteResult.failed()) {
-          deleteResult.cause().printStackTrace()
-          tc.failNow(deleteResult.cause())
+      writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
+
+        if (ar1.failed()) {
+          ar1.cause().printStackTrace()
+          tc.failNow(ar1.cause())
         }
 
-        val tuple1 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
-          createCmd.commandId,
-          io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
+        val tuple2 = Tuple.of(UUID.randomUUID(),
+          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(activated))),
+          activateCmd.commandId,
+          io.reactiverse.pgclient.data.Json.create(commandToJson(activateCmd)),
           aggregateName,
           customerId.value(),
-          1)
+          2)
 
-        writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
-
-          if (ar1.failed()) {
-            ar1.cause().printStackTrace()
-            tc.failNow(ar1.cause())
+        writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
+          if (ar2.failed()) {
+            ar2.cause().printStackTrace()
+            tc.failNow(ar2.cause())
           }
-
-          val tuple2 = Tuple.of(UUID.randomUUID(),
-            io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(activated))),
-            activateCmd.commandId,
-            io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, activateCmd)),
-            aggregateName,
-            customerId.value(),
-            2)
-
-          writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
-
-            if (ar2.failed()) {
-              ar2.cause().printStackTrace()
-              tc.failNow(ar2.cause())
-            }
-
-            val selectFuture1 = Future.future<SnapshotData>()
-
-            repo.selectAfterVersion(customerId.value(), 0, selectFuture1, aggregateName)
-
-            selectFuture1.setHandler { selectAsyncResult ->
-
-              val snapshotData = selectAsyncResult.result()
-
-              assertThat(2).isEqualTo(snapshotData.version)
-              assertThat(listOf(created, activated)).isEqualTo(snapshotData.events)
-
-              tc.completeNow()
-
-            }
-
+          val selectFuture1 = Future.future<SnapshotData>()
+          repo.selectAfterVersion(customerId.value(), 0, selectFuture1, aggregateName)
+          selectFuture1.setHandler { selectAsyncResult ->
+            val snapshotData = selectAsyncResult.result()
+            assertThat(2).isEqualTo(snapshotData.version)
+            assertThat(listOf(created, activated)).isEqualTo(snapshotData.events)
+            tc.completeNow()
           }
         }
-
       }
 
     }
@@ -558,69 +404,45 @@ class PgClientUowRepoIT {
     @DisplayName("can queries by version")
     fun a4(tc: VertxTestContext) {
 
-      writeDb.query("delete from units_of_work") { deleteResult ->
+      val tuple1 = Tuple.of(UUID.randomUUID(),
+        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
+        createCmd.commandId,
+        io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+        aggregateName,
+        customerId.value(),
+        1)
 
-        if (deleteResult.failed()) {
-          deleteResult.cause().printStackTrace()
-          tc.failNow(deleteResult.cause())
+      writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
+        if (ar1.failed()) {
+          ar1.cause().printStackTrace()
+          tc.failNow(ar1.cause())
+          return@preparedQuery
         }
-
-        val tuple1 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(created))),
-          createCmd.commandId,
-          io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, createCmd)),
+        val uowSequence1 = ar1.result().first().getLong("uow_seq_number")
+        val tuple2 = Tuple.of(UUID.randomUUID(),
+          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(activated))),
+          activateCmd.commandId,
+          io.reactiverse.pgclient.data.Json.create(commandToJson(activateCmd)),
           aggregateName,
           customerId.value(),
-          1)
-
-        writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
-
-          if (ar1.failed()) {
-            ar1.cause().printStackTrace()
-            tc.failNow(ar1.cause())
+          2)
+        writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
+          if (ar2.failed()) {
+            ar2.cause().printStackTrace()
+            tc.failNow(ar2.cause())
             return@preparedQuery
           }
-
-          val uowSequence1 = ar1.result().first().getLong("uow_seq_number")
-
-          val tuple2 = Tuple.of(UUID.randomUUID(),
-            io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(Json.mapper, listOf(activated))),
-            activateCmd.commandId,
-            io.reactiverse.pgclient.data.Json.create(commandToJson(Json.mapper, activateCmd)),
-            aggregateName,
-            customerId.value(),
-            2)
-
-          writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
-
-            if (ar2.failed()) {
-              ar2.cause().printStackTrace()
-              tc.failNow(ar2.cause())
-              return@preparedQuery
-            }
-
-            val uowSequence2 = ar2.result().first().getLong("uow_seq_number")
-
-            val selectFuture1 = Future.future<SnapshotData>()
-
-            repo.selectAfterVersion(customerId.value(), 1, selectFuture1, aggregateName)
-
-            selectFuture1.setHandler { selectAsyncResult ->
-
-              val snapshotData = selectAsyncResult.result()
-
-              assertThat(2).isEqualTo(snapshotData.version)
-              assertThat(listOf(activated)).isEqualTo(snapshotData.events)
-
-              tc.completeNow()
-
-            }
-
+          val uowSequence2 = ar2.result().first().getLong("uow_seq_number")
+          val selectFuture1 = Future.future<SnapshotData>()
+          repo.selectAfterVersion(customerId.value(), 1, selectFuture1, aggregateName)
+          selectFuture1.setHandler { selectAsyncResult ->
+            val snapshotData = selectAsyncResult.result()
+            assertThat(2).isEqualTo(snapshotData.version)
+            assertThat(listOf(activated)).isEqualTo(snapshotData.events)
+            tc.completeNow()
           }
         }
-
       }
-
     }
   }
 
@@ -628,13 +450,153 @@ class PgClientUowRepoIT {
   @DisplayName("can queries only above version 1")
   fun s4(tc: VertxTestContext) {
 
-    writeDb.preparedQuery("DELETE FROM units_of_work") { ar0 ->
+    val appendFuture1 = Future.future<Int>()
 
-      if (ar0.failed()) {
-        ar0.cause().printStackTrace()
-        tc.failNow(ar0.cause())
-        return@preparedQuery
+    // append uow1
+    repo.append(expectedUow1, appendFuture1, aggregateName)
+
+    appendFuture1.setHandler { ar1 ->
+      if (ar1.failed()) {
+        ar1.cause().printStackTrace()
+        tc.failNow(ar1.cause())
+        return@setHandler
       }
+      val uowSequence = ar1.result()
+      assertThat(uowSequence).isGreaterThan(0)
+      val appendFuture2 = Future.future<Int>()
+      // append uow2
+      repo.append(expectedUow2, appendFuture2, aggregateName)
+      appendFuture2.setHandler { ar2 ->
+        if (ar2.failed()) {
+          ar2.cause().printStackTrace()
+          tc.failNow(ar2.cause())
+          return@setHandler
+        }
+        val uowSequence = ar2.result()
+        assertThat(uowSequence).isGreaterThan(2)
+        val snapshotDataFuture = Future.future<SnapshotData>()
+        // get only above version 1
+        repo.selectAfterVersion(expectedUow2.targetId().value(), 1, snapshotDataFuture, aggregateName)
+        snapshotDataFuture.setHandler { ar4 ->
+          if (ar4.failed()) {
+            ar4.cause().printStackTrace()
+            tc.failNow(ar4.cause())
+            return@setHandler
+          }
+          val (version, events) = ar4.result()
+          assertThat(version).isEqualTo(expectedUow2.version)
+          assertThat(events).isEqualTo(listOf(activated))
+          tc.completeNow()
+        }
+      }
+    }
+
+  }
+
+  @Nested
+  @DisplayName("When appending")
+  @ExtendWith(VertxExtension::class)
+  inner class WhenAppending {
+
+    @Test
+    @DisplayName("can append version 1")
+    fun s1(tc: VertxTestContext) {
+
+      val appendFuture = Future.future<Int>()
+
+      repo.append(expectedUow1, appendFuture, aggregateName)
+
+      appendFuture.setHandler { ar1 ->
+        if (ar1.failed()) {
+          ar1.cause().printStackTrace()
+          tc.failNow(ar1.cause())
+          return@setHandler
+        }
+
+        val uowSequence = ar1.result()
+
+        assertThat(uowSequence).isGreaterThan(0)
+
+        val uowFuture = Future.future<UnitOfWork>()
+
+        repo.getUowByUowId(expectedUow1.unitOfWorkId, uowFuture)
+
+        uowFuture.setHandler { ar2 ->
+          if (ar2.failed()) {
+            ar2.cause().printStackTrace()
+            tc.failNow(ar2.cause())
+            return@setHandler
+          }
+
+          val uow = ar2.result()
+
+          assertThat(uow).isEqualTo(expectedUow1)
+
+          val snapshotDataFuture = Future.future<SnapshotData>()
+
+          repo.selectAfterVersion(expectedUow1.targetId().value(), 0, snapshotDataFuture, aggregateName)
+
+          snapshotDataFuture.setHandler { ar3 ->
+            if (ar3.failed()) {
+              ar3.cause().printStackTrace()
+              tc.failNow(ar3.cause())
+              return@setHandler
+            }
+
+            val (version, events) = ar3.result()
+
+            assertThat(version).isEqualTo(expectedUow1.version)
+            assertThat(events).isEqualTo(expectedUow1.events)
+
+            tc.completeNow()
+
+          }
+        }
+      }
+
+    }
+
+    @Test
+    @DisplayName("cannot append version 1 twice")
+    fun s2(tc: VertxTestContext) {
+
+      val appendFuture1 = Future.future<Int>()
+
+      // append uow1
+      repo.append(expectedUow1, appendFuture1, aggregateName)
+
+      appendFuture1.setHandler { ar1 ->
+        if (ar1.failed()) {
+          ar1.cause().printStackTrace()
+          tc.failNow(ar1.cause())
+          return@setHandler
+        }
+
+        val uowSequence = ar1.result()
+
+        assertThat(uowSequence).isGreaterThan(0)
+
+        val appendFuture2 = Future.future<Int>()
+
+        // append uow1 again
+        repo.append(expectedUow1, appendFuture2, aggregateName)
+
+        appendFuture2.setHandler { ar2 ->
+          if (ar2.failed()) {
+            assertThat(ar2.cause()).isInstanceOf(DbConcurrencyException::class.java)
+            tc.completeNow()
+            return@setHandler
+          }
+
+        }
+
+      }
+
+    }
+
+    @Test
+    @DisplayName("can append version 1 and version 2")
+    fun s3(tc: VertxTestContext) {
 
       val appendFuture1 = Future.future<Int>()
 
@@ -670,8 +632,8 @@ class PgClientUowRepoIT {
 
           val snapshotDataFuture = Future.future<SnapshotData>()
 
-          // get only above version 1
-          repo.selectAfterVersion(expectedUow2.targetId().value(), 1, snapshotDataFuture, aggregateName)
+          // get all versions for id
+          repo.selectAfterVersion(expectedUow2.targetId().value(), 0, snapshotDataFuture, aggregateName)
 
           snapshotDataFuture.setHandler { ar4 ->
             if (ar4.failed()) {
@@ -683,205 +645,9 @@ class PgClientUowRepoIT {
             val (version, events) = ar4.result()
 
             assertThat(version).isEqualTo(expectedUow2.version)
-            assertThat(events).isEqualTo(listOf(activated))
+            assertThat(events).isEqualTo(listOf(created, activated))
 
             tc.completeNow()
-
-          }
-
-        }
-
-      }
-
-    }
-
-  }
-
-  @Nested
-  @DisplayName("When appending")
-  @ExtendWith(VertxExtension::class)
-  inner class WhenAppending {
-
-    @Test
-    @DisplayName("can append version 1")
-    fun s1(tc: VertxTestContext) {
-
-      writeDb.preparedQuery("DELETE FROM units_of_work") { ar0 ->
-
-        if (ar0.failed()) {
-          ar0.cause().printStackTrace()
-          tc.failNow(ar0.cause())
-          return@preparedQuery
-        }
-
-        val appendFuture = Future.future<Int>()
-
-        repo.append(expectedUow1, appendFuture, aggregateName)
-
-        appendFuture.setHandler { ar1 ->
-          if (ar1.failed()) {
-            ar1.cause().printStackTrace()
-            tc.failNow(ar1.cause())
-            return@setHandler
-          }
-
-          val uowSequence = ar1.result()
-
-          assertThat(uowSequence).isGreaterThan(0)
-
-          val uowFuture = Future.future<UnitOfWork>()
-
-          repo.getUowByUowId(expectedUow1.unitOfWorkId, uowFuture)
-
-          uowFuture.setHandler { ar2 ->
-            if (ar2.failed()) {
-              ar2.cause().printStackTrace()
-              tc.failNow(ar2.cause())
-              return@setHandler
-            }
-
-            val uow = ar2.result()
-
-            assertThat(uow).isEqualTo(expectedUow1)
-
-            val snapshotDataFuture = Future.future<SnapshotData>()
-
-            repo.selectAfterVersion(expectedUow1.targetId().value(), 0, snapshotDataFuture, aggregateName)
-
-            snapshotDataFuture.setHandler { ar3 ->
-              if (ar3.failed()) {
-                ar3.cause().printStackTrace()
-                tc.failNow(ar3.cause())
-                return@setHandler
-              }
-
-              val (version, events) = ar3.result()
-
-              assertThat(version).isEqualTo(expectedUow1.version)
-              assertThat(events).isEqualTo(expectedUow1.events)
-
-              tc.completeNow()
-
-            }
-          }
-        }
-
-      }
-
-    }
-
-    @Test
-    @DisplayName("cannot append version 1 twice")
-    fun s2(tc: VertxTestContext) {
-
-      writeDb.preparedQuery("DELETE FROM units_of_work") { ar0 ->
-
-        if (ar0.failed()) {
-          ar0.cause().printStackTrace()
-          tc.failNow(ar0.cause())
-          return@preparedQuery
-        }
-
-        val appendFuture1 = Future.future<Int>()
-
-        // append uow1
-        repo.append(expectedUow1, appendFuture1, aggregateName)
-
-        appendFuture1.setHandler { ar1 ->
-          if (ar1.failed()) {
-            ar1.cause().printStackTrace()
-            tc.failNow(ar1.cause())
-            return@setHandler
-          }
-
-          val uowSequence = ar1.result()
-
-          assertThat(uowSequence).isGreaterThan(0)
-
-          val appendFuture2 = Future.future<Int>()
-
-          // append uow1 again
-          repo.append(expectedUow1, appendFuture2, aggregateName)
-
-          appendFuture2.setHandler { ar2 ->
-            if (ar2.failed()) {
-              assertThat(ar2.cause()).isInstanceOf(DbConcurrencyException::class.java)
-              tc.completeNow()
-              return@setHandler
-            }
-
-          }
-
-        }
-
-      }
-
-    }
-
-    @Test
-    @DisplayName("can append version 1 and version 2")
-    fun s3(tc: VertxTestContext) {
-
-      writeDb.preparedQuery("DELETE FROM units_of_work") { ar0 ->
-
-        if (ar0.failed()) {
-          ar0.cause().printStackTrace()
-          tc.failNow(ar0.cause())
-          return@preparedQuery
-        }
-
-        val appendFuture1 = Future.future<Int>()
-
-        // append uow1
-        repo.append(expectedUow1, appendFuture1, aggregateName)
-
-        appendFuture1.setHandler { ar1 ->
-          if (ar1.failed()) {
-            ar1.cause().printStackTrace()
-            tc.failNow(ar1.cause())
-            return@setHandler
-          }
-
-          val uowSequence = ar1.result()
-
-          assertThat(uowSequence).isGreaterThan(0)
-
-          val appendFuture2 = Future.future<Int>()
-
-          // append uow2
-          repo.append(expectedUow2, appendFuture2, aggregateName)
-
-          appendFuture2.setHandler { ar2 ->
-            if (ar2.failed()) {
-              ar2.cause().printStackTrace()
-              tc.failNow(ar2.cause())
-              return@setHandler
-            }
-
-            val uowSequence = ar2.result()
-
-            assertThat(uowSequence).isGreaterThan(2)
-
-            val snapshotDataFuture = Future.future<SnapshotData>()
-
-            // get all versions for id
-            repo.selectAfterVersion(expectedUow2.targetId().value(), 0, snapshotDataFuture, aggregateName)
-
-            snapshotDataFuture.setHandler { ar4 ->
-              if (ar4.failed()) {
-                ar4.cause().printStackTrace()
-                tc.failNow(ar4.cause())
-                return@setHandler
-              }
-
-              val (version, events) = ar4.result()
-
-              assertThat(version).isEqualTo(expectedUow2.version)
-              assertThat(events).isEqualTo(listOf(created, activated))
-
-              tc.completeNow()
-
-            }
 
           }
 
