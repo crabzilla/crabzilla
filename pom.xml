@@ -75,7 +75,7 @@
     <module>crabzilla-core</module>
     <module>crabzilla-pg-client</module>
     <module>crabzilla-web</module>
-    <!--<module>coverage-report</module>-->
+    <module>coverage-report</module>
   </modules>
 
   <dependencies>
