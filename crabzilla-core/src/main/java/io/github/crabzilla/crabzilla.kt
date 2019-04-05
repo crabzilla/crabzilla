@@ -45,6 +45,20 @@ data class UnitOfWork(val unitOfWorkId: UUID, val command: Command,
 
 }
 
+// runtime
+
+data class Snapshot<A : Entity>(val instance: A, val version: Version)
+
+data class SnapshotData(val version: Version, val events: List<DomainEvent>)
+
+data class ProjectionData(val uowId: UUID, val uowSequence: Int, val targetId: Int, val events: List<DomainEvent>) {
+  companion object {
+    fun fromUnitOfWork(uowSequence: Int, uow: UnitOfWork) : ProjectionData {
+      return ProjectionData(UUID.randomUUID(), uowSequence, uow.targetId().value(), uow.events)
+    }
+  }
+}
+
 // command handling helper functions
 
 fun cmdResultOf(f: () -> UnitOfWork): CommandResult {
@@ -142,4 +156,3 @@ private fun camelCaseToSpinalCase(start: String): String {
   m.appendTail(sb)
   return sb.toString().toLowerCase()
 }
-
