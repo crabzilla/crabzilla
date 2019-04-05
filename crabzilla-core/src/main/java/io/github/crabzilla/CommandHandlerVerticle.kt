@@ -8,11 +8,11 @@ import io.vertx.core.eventbus.DeliveryOptions
 import org.slf4j.LoggerFactory
 
 class CommandHandlerVerticle<A : Entity>(val name: String,
-                                                             private val seedValue: A,
-                                                             private val cmdHandler: (Command, Snapshot<A>) -> CommandResult?,
-                                                             private val validatorFn: (Command) -> List<String>,
-                                                             private val eventJournal: UnitOfWorkRepository,
-                                                             private val snapshotRepo: SnapshotRepository<A>)
+                                         private val seedValue: A,
+                                         private val cmdHandler: (Command, Snapshot<A>) -> CommandResult?,
+                                         private val validatorFn: (Command) -> List<String>,
+                                         private val eventJournal: UnitOfWorkRepository,
+                                         private val snapshotRepo: SnapshotRepository<A>)
   : AbstractVerticle() {
 
   companion object {
@@ -99,5 +99,7 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
     })
 
   }
+
+  class DbConcurrencyException(s: String) : RuntimeException(s)
 
 }

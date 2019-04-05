@@ -1,6 +1,7 @@
 package io.github.crabzilla.pgclient
 
 import io.github.crabzilla.*
+import io.github.crabzilla.CommandHandlerVerticle.DbConcurrencyException
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.Future

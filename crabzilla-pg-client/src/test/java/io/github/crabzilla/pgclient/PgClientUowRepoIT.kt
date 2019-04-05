@@ -1,6 +1,7 @@
 package io.github.crabzilla.pgclient
 
 import io.github.crabzilla.*
+import io.github.crabzilla.CommandHandlerVerticle.DbConcurrencyException
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.pgclient.PgClientUowRepo.Companion.SQL_INSERT_UOW
 import io.reactiverse.pgclient.PgClient
@@ -577,7 +578,7 @@ class PgClientUowRepoIT {
 
         val appendFuture2 = Future.future<Int>()
 
-        // append uow1 again
+        // try to append uow1 again
         repo.append(expectedUow1, appendFuture2, aggregateName)
 
         appendFuture2.setHandler { ar2 ->
