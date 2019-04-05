@@ -20,7 +20,7 @@ private val log = LoggerFactory.getLogger("example1")
 const val EXAMPLE1_PROJECTION_ENDPOINT: String = "example1_projection_endpoint"
 
 fun customerCmdVerticle(uowRepository: PgClientUowRepo, snapshotRepo: SnapshotRepository<Customer>) :
-                                                                            CommandHandlerVerticle<Customer> {
+  CommandHandlerVerticle<Customer> {
   val seedValue = Customer(null, null, false, null, PojoService())
   return CommandHandlerVerticle("Customer", seedValue, CUSTOMER_CMD_HANDLER, CUSTOMER_CMD_VALIDATOR,
     uowRepository, snapshotRepo)

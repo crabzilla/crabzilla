@@ -35,7 +35,7 @@
     <asciidoctorj.pdf.version>1.5.0-alpha.15</asciidoctorj.pdf.version>
     <asciidoctorj.version>1.5.5</asciidoctorj.version>
 
-    <maven.jacoco.plugin.version>0.8.1</maven.jacoco.plugin.version>
+    <maven.jacoco.plugin.version>0.8.3</maven.jacoco.plugin.version>
     <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
     <sonar.jacoco.reportPath>${project.build.directory}/coverage-reports/jacoco.exec</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${project.build.directory}/coverage-reports/jacoco-it.exec</sonar.jacoco.itReportPath>

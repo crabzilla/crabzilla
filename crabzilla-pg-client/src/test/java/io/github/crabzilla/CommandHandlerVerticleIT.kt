@@ -89,7 +89,7 @@ class CommandHandlerVerticleIT {
       val snapshotRepo = PgClientSnapshotRepo(writeDb, seedValue, CUSTOMER_STATE_BUILDER, Customer::class.java)
 
       verticle = CommandHandlerVerticle(aggregateName, seedValue, CUSTOMER_CMD_HANDLER, CUSTOMER_CMD_VALIDATOR,
-                                        uowRepo, snapshotRepo)
+        uowRepo, snapshotRepo)
 
       writeDb.query("delete from units_of_work") { deleteResult ->
         if (deleteResult.failed()) {
