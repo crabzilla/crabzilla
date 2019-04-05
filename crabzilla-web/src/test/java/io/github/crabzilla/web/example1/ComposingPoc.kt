@@ -1,6 +1,9 @@
 package io.github.crabzilla.web.example1
 
-import io.github.crabzilla.*
+import io.github.crabzilla.DomainEvent
+import io.github.crabzilla.Entity
+import io.github.crabzilla.Snapshot
+import io.github.crabzilla.eventsOf
 import io.github.crabzilla.example1.*
 import io.vertx.core.*
 

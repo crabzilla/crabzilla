@@ -151,7 +151,7 @@ class Example1VerticleIT {
     JsonObject jo = JsonObject.mapFrom(cmd);
     client.post(port, "0.0.0.0", "/customer/commands")
       .as(BodyCodec.none())
-      .expect(ResponsePredicate.SC_BAD_REQUEST)
+      .expect(ResponsePredicate.SC_SERVER_ERRORS)
       .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
           tc.completeNow();

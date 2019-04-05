@@ -11,9 +11,9 @@ CREATE TABLE units_of_work (
       cmd_data JSON NOT NULL,
       ar_name VARCHAR(36) NOT NULL,
       ar_id INTEGER NOT NULL,
-      version INTEGER,
+      version INTEGER NOT NULL,
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (ar_id, uow_seq_number),
+      PRIMARY KEY (ar_id, ar_name, version),
       UNIQUE (ar_id, uow_id),
       UNIQUE (ar_id, cmd_id)
     )
@@ -32,3 +32,13 @@ CREATE TABLE units_of_work_2 PARTITION OF units_of_work
 CREATE INDEX idx_cmd_id ON units_of_work (cmd_id);
 CREATE INDEX idx_uow_id ON units_of_work (uow_id);
 CREATE INDEX idx_ar ON units_of_work (ar_id, ar_name);
+
+CREATE TABLE snapshot (
+      uow_seq_number INTEGER NOT NULL,
+      ar_name VARCHAR(36) NOT NULL,
+      ar_id INTEGER NOT NULL,
+      version INTEGER,
+      json_content JSON NOT NULL,
+      PRIMARY KEY (ar_id, ar_name, version),
+      UNIQUE (uow_seq_number)
+    );

@@ -64,6 +64,8 @@ class JacksonJsonTest {
 
     assertThat(Json.mapper.readerFor(eventsListType).readValue<List<DomainEvent>>(asJson)).isEqualTo(eventsList)
 
+    println()
+
   }
 
   @Test

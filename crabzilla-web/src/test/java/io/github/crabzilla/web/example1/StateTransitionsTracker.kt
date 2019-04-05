@@ -1,8 +1,12 @@
-package io.github.crabzilla
+package io.github.crabzilla.web.example1
+
+import io.github.crabzilla.DomainEvent
+import io.github.crabzilla.Entity
+import io.github.crabzilla.Snapshot
 
 // TODO remove stateTransitions collection (optimizing memory)
 class StateTransitionsTracker<A : Entity>(private val originalSnapshot: Snapshot<A>,
-                                          private val applyEventsFn: (DomainEvent, A) -> A) {
+                                                              private val applyEventsFn: (DomainEvent, A) -> A) {
 
   private val stateTransitions = mutableListOf<StateTransition<A>>()
 

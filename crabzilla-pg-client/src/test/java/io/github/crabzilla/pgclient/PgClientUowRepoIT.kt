@@ -24,7 +24,6 @@ import java.time.Instant
 import java.util.*
 
 @ExtendWith(VertxExtension::class)
-@DisplayName("PgClientClientUowRepo")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgClientUowRepoIT {
 

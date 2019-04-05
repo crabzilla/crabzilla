@@ -1,8 +1,7 @@
 package io.github.crabzilla
 
-import org.junit.jupiter.api.Test
-
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
 internal class EndpointsTest {
 

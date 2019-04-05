@@ -2,7 +2,6 @@ package io.github.crabzilla
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
@@ -48,7 +47,7 @@ data class UnitOfWork(val unitOfWorkId: UUID, val command: Command,
 
 // command handling helper functions
 
-fun cmdResultOf(f: () -> UnitOfWork?): CommandResult {
+fun cmdResultOf(f: () -> UnitOfWork): CommandResult {
   return try {
     CommandResult.success(f.invoke())
   }

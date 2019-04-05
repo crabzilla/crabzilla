@@ -5,16 +5,14 @@ import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.eventbus.DeliveryOptions
-import net.jodah.expiringmap.ExpiringMap
 import org.slf4j.LoggerFactory
 
 class CommandHandlerVerticle<A : Entity>(val name: String,
                                          private val seedValue: A,
                                          private val cmdHandler: (Command, Snapshot<A>) -> CommandResult?,
                                          private val validatorFn: (Command) -> List<String>,
-                                         private val applyEventsFn: (DomainEvent, A) -> A,
                                          private val eventJournal: UnitOfWorkRepository,
-                                         private val cache: ExpiringMap<Int, Snapshot<A>>)
+                                         private val snapshotRepo: SnapshotRepository<A>)
   : AbstractVerticle() {
 
   companion object {
@@ -43,89 +41,60 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
 
       val targetId = command.targetId.value()
 
-      // command handler function _may_ be blocking if your aggregate is calling blocking services
-      vertx.executeBlocking<Snapshot<A>>({ fromCacheFuture ->
+      snapshotRepo.retrieve(targetId, name, Handler { fromCacheResult ->
 
-        log.info("loading {} from cache", targetId)
-        fromCacheFuture.complete(cache[targetId])
-
-      }, false) { fromCacheResult ->
+        if (fromCacheResult.failed()) {
+          val result = CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR)
+          commandMsg.reply(result)
+          return@Handler
+        }
 
         val snapshotFromCache = if (fromCacheResult.failed()) null else fromCacheResult.result()
-        val emptySnapshot = Snapshot(seedValue, 0)
-        val cachedSnapshot = snapshotFromCache ?: emptySnapshot
+        val cachedSnapshot = snapshotFromCache ?: Snapshot(seedValue, 0)
 
-        log.info("id {} cached lastSnapshotData has version {}. Will check if there any version beyond it",
-          targetId, cachedSnapshot)
+        val commandResult: CommandResult? = cmdHandler.invoke(command, cachedSnapshot)
 
-        val selectAfterVersionFuture = Future.future<SnapshotData>()
+        if (commandResult?.unitOfWork == null) {
+          val result = CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR)
+          commandMsg.reply(result)
+          return@Handler
+        }
 
-        eventJournal.selectAfterVersion(targetId, cachedSnapshot.version, selectAfterVersionFuture, name)
+        commandResult.inCaseOfSuccess { uow ->
 
-        selectAfterVersionFuture.setHandler { event ->
+          val appendFuture = Future.future<Int>()
 
-          if (event.failed()) {
-            val result = CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR)
-            commandMsg.reply(result)
-            return@setHandler
-          }
+          eventJournal.append(uow!!, appendFuture, name)
 
-          val nonCached: SnapshotData = event.result()
-          val totalOfNonCachedEvents = nonCached.events.size
-          log.info("id {} found {} pending events. Last version is now {}", targetId, totalOfNonCachedEvents,
-            nonCached.version)
+          appendFuture.setHandler { appendAsyncResult ->
 
-          val resultingSnapshot = if (totalOfNonCachedEvents > 0)
-            cachedSnapshot.upgradeTo(nonCached.version, nonCached.events, applyEventsFn)
-          else
-            cachedSnapshot
-
-          val commandResult: CommandResult? = cmdHandler.invoke(command, resultingSnapshot)
-
-          if (commandResult?.unitOfWork == null) {
-            val result = CommandExecution(commandId = command.commandId, result = RESULT.VALIDATION_ERROR)
-            commandMsg.reply(result)
-            return@setHandler
-          }
-
-          commandResult.inCaseOfSuccess { uow ->
-
-            val appendFuture = Future.future<Int>()
-            eventJournal.append(uow!!, appendFuture, name)
-
-            appendFuture.setHandler { appendAsyncResult ->
-
-              if (appendAsyncResult.failed()) {
-                val error = appendAsyncResult.cause()
-                log.error("appendUnitOfWork for command " + command.commandId, error.message)
-                val result = if (error is DbConcurrencyException) {
-                  CommandExecution(commandId = command.commandId, result = RESULT.CONCURRENCY_ERROR)
-                } else {
-                  CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR)
-                }
-                commandMsg.reply(result)
-                return@setHandler
+            if (appendAsyncResult.failed()) {
+              val error = appendAsyncResult.cause()
+              log.error("appendUnitOfWork for command " + command.commandId, error.message)
+              val result = if (error is DbConcurrencyException) {
+                CommandExecution(commandId = command.commandId, result = RESULT.CONCURRENCY_ERROR)
+              } else {
+                CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR)
               }
-
-              val finalSnapshot = resultingSnapshot.upgradeTo(uow.version, uow.events, applyEventsFn)
-              cache[targetId] = finalSnapshot
-              val uowSequence = appendAsyncResult.result()
-              log.info("uowSequence: {}", uowSequence)
-              commandMsg.reply(CommandExecution(result = RESULT.SUCCESS, commandId = command.commandId,
-                unitOfWork = uow, uowSequence = uowSequence), options)
+              commandMsg.reply(result)
+              return@setHandler
             }
 
-          }
-
-          commandResult.inCaseOfError { error ->
-            log.info("error: {}", error)
-            commandMsg.reply(CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR))
-            return@inCaseOfError
+            val uowSequence = appendAsyncResult.result()
+            log.info("uowSequence: {}", uowSequence)
+            commandMsg.reply(CommandExecution(result = RESULT.SUCCESS, commandId = command.commandId,
+              unitOfWork = uow, uowSequence = uowSequence), options)
           }
 
         }
 
-      }
+        commandResult.inCaseOfError { error ->
+          log.info("error: {}", error)
+          commandMsg.reply(CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR))
+          return@inCaseOfError
+        }
+
+      })
 
     })
 

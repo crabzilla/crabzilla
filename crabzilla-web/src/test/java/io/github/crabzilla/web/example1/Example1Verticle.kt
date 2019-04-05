@@ -1,6 +1,10 @@
 package io.github.crabzilla.web.example1
 
+import io.github.crabzilla.CommandHandlerVerticleIT.Companion.seedValue
+import io.github.crabzilla.example1.CUSTOMER_STATE_BUILDER
+import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.initVertx
+import io.github.crabzilla.pgclient.PgClientSnapshotRepo
 import io.github.crabzilla.pgclient.PgClientUowRepo
 import io.github.crabzilla.web.getUowByCmdIdHandler
 import io.github.crabzilla.web.postCommandHandler
@@ -75,9 +79,11 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
       setupEventHandler(vertx, readDb)
       val uowRepository = PgClientUowRepo(writeDb)
 
+      val snapshotRepo = PgClientSnapshotRepo(writeDb, seedValue, CUSTOMER_STATE_BUILDER, Customer::class.java)
+
       // command handlers verticles
 
-      vertx.deployVerticle(customerCmdVerticle(uowRepository))
+      vertx.deployVerticle(customerCmdVerticle(uowRepository, snapshotRepo))
 
       // web
 

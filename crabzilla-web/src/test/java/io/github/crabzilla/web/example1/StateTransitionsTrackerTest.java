@@ -1,5 +1,6 @@
-package io.github.crabzilla;
+package io.github.crabzilla.web.example1;
 
+import io.github.crabzilla.Snapshot;
 import io.github.crabzilla.example1.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

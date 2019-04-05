@@ -20,7 +20,6 @@
     <!-- crabzilla vertx -->
     <vertx.version>3.7.0</vertx.version>
     <dagger.version>2.16</dagger.version>
-    <expiringmap.version>0.5.8</expiringmap.version>
 
     <!-- tests-->
     <skipTests>false</skipTests>
@@ -208,12 +207,6 @@
         <groupId>javax.inject</groupId>
         <artifactId>javax.inject</artifactId>
         <version>1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>net.jodah</groupId>
-        <artifactId>expiringmap</artifactId>
-        <version>${expiringmap.version}</version>
       </dependency>
 
       <!-- json -->

@@ -40,13 +40,6 @@
       <artifactId>jackson-module-kotlin</artifactId>
     </dependency>
 
-     <!-- cache -->
-    <dependency>
-      <groupId>net.jodah</groupId>
-      <artifactId>expiringmap</artifactId>
-      <version>${expiringmap.version}</version>
-    </dependency>
-
     <!--Vertx -->
     <dependency>
       <groupId>io.vertx</groupId>

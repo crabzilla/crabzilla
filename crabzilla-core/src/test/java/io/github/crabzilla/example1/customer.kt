@@ -66,6 +66,7 @@ data class Customer(val customerId: CustomerId? = null,
 
 }
 
+val CUSTOMER_SEED_VALUE = Customer(null,null, null, null, PojoService())
 
 val CUSTOMER_STATE_BUILDER = { event: DomainEvent, customer: Customer ->
   when(event) {
@@ -91,14 +92,13 @@ val CUSTOMER_CMD_HANDLER = { cmd: Command, snapshot: Snapshot<Customer> ->
         is ActivateCustomer -> uowOf(cmd, customer.activate(cmd.reason), snapshot.version)
         is DeactivateCustomer -> uowOf(cmd, customer.deactivate(cmd.reason), snapshot.version)
         is CreateActivateCustomer -> {
-          val tracker = StateTransitionsTracker(snapshot, CUSTOMER_STATE_BUILDER)
-          val events = tracker
-            .applyEvents { c -> c.create(cmd.targetId, cmd.name) }
-            .applyEvents { c -> c.activate(cmd.reason) }
-            .collectEvents()
-          uowOf(cmd, events, snapshot.version)
+          val events1 = snapshot.instance.create(cmd.targetId, cmd.name)
+          var currInstance = events1.fold(snapshot.instance)
+                                      {state, event -> CUSTOMER_STATE_BUILDER.invoke(event, state)}
+          val events2 = currInstance.activate(cmd.reason)
+          uowOf(cmd, events1.plus(events2), snapshot.version)
         }
-        else -> null
+        else -> throw IllegalArgumentException("$cmd.javaClass.name is a unknown command")
       }
     }
 }

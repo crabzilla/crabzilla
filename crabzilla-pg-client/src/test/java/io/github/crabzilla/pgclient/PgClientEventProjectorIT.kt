@@ -26,7 +26,6 @@ import java.util.*
 
 
 @ExtendWith(VertxExtension::class)
-@DisplayName("PgClientEventProjector")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgClientEventProjectorIT {
 
