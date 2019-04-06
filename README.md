@@ -7,7 +7,7 @@
 ## Goal for version 1.0.0
 
 To help you write your domain model with very little framework overhead and smoothly put it to work using a stack based
-on [Vert.x](http://vertx.io/) and a relational database of your choice.
+on [Vert.x](http://vertx.io/) and a relational database of your choice. 
 
 ## Status
 
@@ -55,13 +55,6 @@ mvn clean install
 2. If your functions are pure, all side effects will occurs within UnitOfWorkRepository and EventsProjector components.
 3. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
 4. So far it's using "classical" Vertx apis. I do plan to eventually improve some code using RxJava or Kotlin coroutines.
-
-### Dependencies
-
-I know any Java library should be very conservative about dependency to other libraries. But these are helping a lot in Crabzilla: 
-
-1. [jackson-kotlin-plugin](https://github.com/FasterXML/jackson-module-kotlin) Used to ser/des polymorphic objects (commands, events, etc) 
-2. [ExpiringMap](https://github.com/jhalterman/expiringmap) Used as a mechanism to plug lazy entry loading of Snapshots. This is useful for entities with lot of events.
 
 
 

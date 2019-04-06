@@ -84,7 +84,6 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
         } catch (e: Exception) {
           val result = CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR)
           commandMsg.reply(result)
-          return@Handler
         }
 
       })

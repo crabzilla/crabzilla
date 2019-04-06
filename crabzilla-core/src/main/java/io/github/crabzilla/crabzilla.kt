@@ -13,8 +13,6 @@ import java.io.Serializable
 import java.util.*
 import java.util.regex.Pattern
 
-interface Entity
-
 // schema
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
@@ -53,6 +51,12 @@ data class UnitOfWork(val unitOfWorkId: UUID, val command: Command,
 
 // runtime
 
+interface Entity {
+  fun eventsOf(vararg event: DomainEvent): List<DomainEvent> {
+    return event.asList()
+  }
+}
+
 data class Snapshot<A : Entity>(val instance: A, val version: Version)
 
 data class SnapshotData(val version: Version, val events: List<DomainEvent>)
@@ -63,12 +67,6 @@ data class ProjectionData(val uowId: UUID, val uowSequence: Int, val targetId: I
       return ProjectionData(UUID.randomUUID(), uowSequence, uow.targetId().value(), uow.events)
     }
   }
-}
-
-// command handling helper functions
-
-fun eventsOf(vararg event: DomainEvent): List<DomainEvent> {
-  return event.asList()
 }
 
 // json serialization functions
