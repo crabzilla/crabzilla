@@ -5,8 +5,8 @@ import io.github.crabzilla.ProjectionData
 import io.github.crabzilla.SnapshotRepository
 import io.github.crabzilla.example1.CUSTOMER_CMD_HANDLER
 import io.github.crabzilla.example1.CUSTOMER_CMD_VALIDATOR
+import io.github.crabzilla.example1.CUSTOMER_SEED_VALUE
 import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.PojoService
 import io.github.crabzilla.pgclient.PgClientEventProjector
 import io.github.crabzilla.pgclient.PgClientUowRepo
 import io.github.crabzilla.pgclient.example1.EXAMPLE1_PROJECTOR_HANDLER
@@ -21,8 +21,7 @@ const val EXAMPLE1_PROJECTION_ENDPOINT: String = "example1_projection_endpoint"
 
 fun customerCmdVerticle(uowRepository: PgClientUowRepo, snapshotRepo: SnapshotRepository<Customer>) :
   CommandHandlerVerticle<Customer> {
-  val seedValue = Customer(null, null, false, null, PojoService())
-  return CommandHandlerVerticle("Customer", seedValue, CUSTOMER_CMD_HANDLER, CUSTOMER_CMD_VALIDATOR,
+  return CommandHandlerVerticle("Customer", CUSTOMER_SEED_VALUE, CUSTOMER_CMD_HANDLER, CUSTOMER_CMD_VALIDATOR,
     uowRepository, snapshotRepo)
 }
 

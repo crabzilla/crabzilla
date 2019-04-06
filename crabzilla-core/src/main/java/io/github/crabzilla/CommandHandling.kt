@@ -11,7 +11,7 @@ import java.util.*
 
 class CommandHandlerVerticle<A : Entity>(val name: String,
                                          private val seedValue: A,
-                                         private val cmdHandler: (Command, Snapshot<A>) -> CommandResult?,
+                                         private val cmdHandler: (Command, Snapshot<A>) -> UnitOfWork,
                                          private val validatorFn: (Command) -> List<String>,
                                          private val eventJournal: UnitOfWorkRepository,
                                          private val snapshotRepo: SnapshotRepository<A>)
@@ -54,19 +54,12 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
         val snapshotFromCache = if (fromCacheResult.failed()) null else fromCacheResult.result()
         val cachedSnapshot = snapshotFromCache ?: Snapshot(seedValue, 0)
 
-        val commandResult: CommandResult? = cmdHandler.invoke(command, cachedSnapshot)
+        try {
 
-        if (commandResult?.unitOfWork == null) {
-          val result = CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR)
-          commandMsg.reply(result)
-          return@Handler
-        }
-
-        commandResult.inCaseOfSuccess { uow ->
-
+          val unitOfWork = cmdHandler.invoke(command, cachedSnapshot)
           val appendFuture = Future.future<Int>()
 
-          eventJournal.append(uow!!, appendFuture, name)
+          eventJournal.append(unitOfWork, appendFuture, name)
 
           appendFuture.setHandler { appendAsyncResult ->
 
@@ -85,15 +78,13 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
             val uowSequence = appendAsyncResult.result()
             log.info("uowSequence: {}", uowSequence)
             commandMsg.reply(CommandExecution(result = RESULT.SUCCESS, commandId = command.commandId,
-              unitOfWork = uow, uowSequence = uowSequence), options)
+              unitOfWork = unitOfWork, uowSequence = uowSequence), options)
           }
 
-        }
-
-        commandResult.inCaseOfError { error ->
-          log.info("error: {}", error)
-          commandMsg.reply(CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR))
-          return@inCaseOfError
+        } catch (e: Exception) {
+          val result = CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR)
+          commandMsg.reply(result)
+          return@Handler
         }
 
       })
@@ -119,34 +110,6 @@ data class CommandExecution(val result: RESULT,
     CONCURRENCY_ERROR,
     UNKNOWN_COMMAND,
     SUCCESS
-  }
-
-}
-
-class CommandResult private constructor(val unitOfWork: UnitOfWork?,
-                                        val exception: Exception?) {
-
-  fun inCaseOfSuccess(uowFn: (UnitOfWork?) -> Unit) {
-    if (unitOfWork != null) {
-      uowFn.invoke(unitOfWork)
-    }
-  }
-
-  fun inCaseOfError(uowFn: (Exception) -> Unit) {
-    if (exception != null) {
-      uowFn.invoke(exception)
-    }
-  }
-
-  companion object {
-
-    fun success(uow: UnitOfWork?): CommandResult {
-      return CommandResult(uow, null)
-    }
-
-    fun error(e: Exception): CommandResult {
-      return CommandResult(null, e)
-    }
   }
 
 }

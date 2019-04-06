@@ -39,6 +39,12 @@ data class UnitOfWork(val unitOfWorkId: UUID, val command: Command,
     require(this.version >= 1) { "version must be >= 1" }
   }
 
+  companion object {
+    fun of(command: Command, events: List<DomainEvent>, currentVersion: Version): UnitOfWork {
+      return UnitOfWork(UUID.randomUUID(), command, currentVersion + 1, events)
+    }
+  }
+
   fun targetId(): EntityId {
     return command.targetId
   }
@@ -60,19 +66,6 @@ data class ProjectionData(val uowId: UUID, val uowSequence: Int, val targetId: I
 }
 
 // command handling helper functions
-
-fun cmdResultOf(f: () -> UnitOfWork): CommandResult {
-  return try {
-    CommandResult.success(f.invoke())
-  }
-  catch (e: Exception) {
-    CommandResult.error(e)
-  }
-}
-
-fun uowOf(command: Command, events: List<DomainEvent>, currentVersion: Version): UnitOfWork {
-  return UnitOfWork(UUID.randomUUID(), command, currentVersion + 1, events)
-}
 
 fun eventsOf(vararg event: DomainEvent): List<DomainEvent> {
   return event.asList()

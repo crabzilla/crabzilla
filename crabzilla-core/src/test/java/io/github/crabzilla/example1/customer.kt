@@ -86,19 +86,17 @@ val CUSTOMER_CMD_VALIDATOR = { command: Command ->
 
 val CUSTOMER_CMD_HANDLER = { cmd: Command, snapshot: Snapshot<Customer> ->
     val customer = snapshot.instance
-    cmdResultOf {
-      when (cmd) {
-        is CreateCustomer -> uowOf(cmd, customer.create(cmd.targetId, cmd.name), snapshot.version)
-        is ActivateCustomer -> uowOf(cmd, customer.activate(cmd.reason), snapshot.version)
-        is DeactivateCustomer -> uowOf(cmd, customer.deactivate(cmd.reason), snapshot.version)
-        is CreateActivateCustomer -> {
-          val events1 = snapshot.instance.create(cmd.targetId, cmd.name)
-          var currInstance = events1.fold(snapshot.instance)
-                                      {state, event -> CUSTOMER_STATE_BUILDER.invoke(event, state)}
-          val events2 = currInstance.activate(cmd.reason)
-          uowOf(cmd, events1.plus(events2), snapshot.version)
-        }
-        else -> throw IllegalArgumentException("$cmd.javaClass.name is a unknown command")
+    when (cmd) {
+      is CreateCustomer -> UnitOfWork.of(cmd, customer.create(cmd.targetId, cmd.name), snapshot.version)
+      is ActivateCustomer -> UnitOfWork.of(cmd, customer.activate(cmd.reason), snapshot.version)
+      is DeactivateCustomer -> UnitOfWork.of(cmd, customer.deactivate(cmd.reason), snapshot.version)
+      is CreateActivateCustomer -> {
+        val events1 = snapshot.instance.create(cmd.targetId, cmd.name)
+        val currInstance = events1.fold(snapshot.instance)
+                                    {state, event -> CUSTOMER_STATE_BUILDER.invoke(event, state)}
+        val events2 = currInstance.activate(cmd.reason)
+        UnitOfWork.of(cmd, events1.plus(events2), snapshot.version)
       }
+      else -> throw IllegalArgumentException("$cmd.javaClass.name is a unknown command")
     }
 }

@@ -7,9 +7,6 @@ enum class CommandHandlers {
   CUSTOMER
 }
 
-
-data class CustomerSummary(val id: String, val name: String, val isActive: Boolean)
-
 // https://streamdata.io/blog/vert-x-and-the-async-calls-chain/ TODO consider to support async services
 
 class PojoService {
