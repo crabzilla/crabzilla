@@ -2,7 +2,7 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
 import io.github.crabzilla.example1.*
-import io.github.crabzilla.pgc.PgcUowRepo.Companion.SQL_INSERT_UOW
+import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_INSERT_UOW
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions

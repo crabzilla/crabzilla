@@ -2,7 +2,7 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
 import io.github.crabzilla.example1.*
-import io.github.crabzilla.pgc.PgcUowRepo.Companion.SQL_INSERT_UOW
+import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_INSERT_UOW
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -30,6 +30,7 @@ class PgcUowRepoIT {
   private lateinit var vertx: Vertx
   internal lateinit var writeDb: PgPool
   internal lateinit var repo: UnitOfWorkRepository
+  internal lateinit var journal: UnitOfWorkJournal
 
   companion object {
     const val aggregateName = "Customer"
@@ -84,6 +85,7 @@ class PgcUowRepoIT {
       writeDb = PgClient.pool(vertx, options)
 
       repo = PgcUowRepo(writeDb)
+      journal = PgcUowJournal(writeDb)
 
       writeDb.query("delete from units_of_work") { deleteResult ->
         if (deleteResult.failed()) {
@@ -452,7 +454,7 @@ class PgcUowRepoIT {
     val appendFuture1 = Future.future<Int>()
 
     // append uow1
-    repo.append(expectedUow1, aggregateName, appendFuture1)
+    journal.append(expectedUow1, aggregateName, appendFuture1)
 
     appendFuture1.setHandler { ar1 ->
       if (ar1.failed()) {
@@ -464,7 +466,7 @@ class PgcUowRepoIT {
       assertThat(uowSequence).isGreaterThan(0)
       val appendFuture2 = Future.future<Int>()
       // append uow2
-      repo.append(expectedUow2, aggregateName, appendFuture2)
+      journal.append(expectedUow2, aggregateName, appendFuture2)
       appendFuture2.setHandler { ar2 ->
         if (ar2.failed()) {
           ar2.cause().printStackTrace()
@@ -503,7 +505,7 @@ class PgcUowRepoIT {
 
       val appendFuture = Future.future<Int>()
 
-      repo.append(expectedUow1, aggregateName, appendFuture)
+      journal.append(expectedUow1, aggregateName, appendFuture)
 
       appendFuture.setHandler { ar1 ->
         if (ar1.failed()) {
@@ -562,7 +564,7 @@ class PgcUowRepoIT {
       val appendFuture1 = Future.future<Int>()
 
       // append uow1
-      repo.append(expectedUow1, aggregateName, appendFuture1.completer())
+      journal.append(expectedUow1, aggregateName, appendFuture1.completer())
 
       appendFuture1.setHandler { ar1 ->
         if (ar1.failed()) {
@@ -578,7 +580,7 @@ class PgcUowRepoIT {
         val appendFuture2 = Future.future<Int>()
 
         // try to append uow1 again
-        repo.append(expectedUow1, aggregateName, appendFuture2.completer())
+        journal.append(expectedUow1, aggregateName, appendFuture2.completer())
 
         appendFuture2.setHandler { ar2 ->
           if (ar2.failed()) {
@@ -600,7 +602,7 @@ class PgcUowRepoIT {
       val appendFuture1 = Future.future<Int>()
 
       // append uow1
-      repo.append(expectedUow1, aggregateName, appendFuture1)
+      journal.append(expectedUow1, aggregateName, appendFuture1)
 
       appendFuture1.setHandler { ar1 ->
 
@@ -614,7 +616,7 @@ class PgcUowRepoIT {
           val appendFuture2 = Future.future<Int>()
 
           // append uow2
-          repo.append(expectedUow2, aggregateName, appendFuture2)
+          journal.append(expectedUow2, aggregateName, appendFuture2)
 
           appendFuture2.setHandler { ar2 ->
 

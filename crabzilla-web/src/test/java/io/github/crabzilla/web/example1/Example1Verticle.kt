@@ -5,6 +5,7 @@ import io.github.crabzilla.example1.CUSTOMER_STATE_BUILDER
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.initVertx
 import io.github.crabzilla.pgc.PgcSnapshotRepo
+import io.github.crabzilla.pgc.PgcUowJournal
 import io.github.crabzilla.pgc.PgcUowRepo
 import io.github.crabzilla.web.getUowByCmdIdHandler
 import io.github.crabzilla.web.postCommandHandler
@@ -78,12 +79,13 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
 
       setupEventHandler(vertx, readDb)
       val uowRepository = PgcUowRepo(writeDb)
+      val uowJournal = PgcUowJournal(writeDb)
 
       val snapshotRepo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, Customer::class.java)
 
       // command handlers verticles
 
-      vertx.deployVerticle(customerCmdVerticle(uowRepository, snapshotRepo))
+      vertx.deployVerticle(customerCmdVerticle(uowJournal, snapshotRepo))
 
       // web
 

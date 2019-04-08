@@ -2,7 +2,7 @@ package io.github.crabzilla
 
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.pgc.PgcSnapshotRepo
-import io.github.crabzilla.pgc.PgcUowRepo
+import io.github.crabzilla.pgc.PgcUowJournal
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -86,7 +86,7 @@ class CommandHandlerVerticleIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      val uowRepo = PgcUowRepo(writeDb)
+      val uowRepo = PgcUowJournal                                                                                                                                                                                                                     (writeDb)
 
       val snapshotRepo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, Customer::class.java)
 

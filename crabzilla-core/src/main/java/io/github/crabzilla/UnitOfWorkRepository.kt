@@ -15,8 +15,6 @@ interface UnitOfWorkRepository {
 
   fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String, aHandler: Handler<AsyncResult<SnapshotData>>)
 
-  fun append(unitOfWork: UnitOfWork, aggregateRootName: String, aHandler: Handler<AsyncResult<Int>>)
-
   fun selectAfterUowSequence(uowSequence: Int, maxRows: Int, future: Future<List<ProjectionData>>)
 
 }

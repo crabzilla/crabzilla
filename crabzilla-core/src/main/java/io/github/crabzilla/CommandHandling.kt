@@ -13,7 +13,7 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
                                          private val seedValue: A,
                                          private val cmdHandlerFactory: CommandHandlerFactory<A>,
                                          private val validatorFn: (Command) -> List<String>,
-                                         private val eventJournal: UnitOfWorkRepository,
+                                         private val eventJournal: UnitOfWorkJournal,
                                          private val snapshotRepo: SnapshotRepository<A>)
   : AbstractVerticle() {
 
@@ -25,7 +25,7 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
   @Throws(Exception::class)
   override fun start() {
 
-    log.info("starting command verticle for $name")
+    log.info("starting command handler verticle for $name")
 
     vertx.eventBus().consumer<Command>(cmdHandlerEndpoint(name), Handler { commandEvent ->
 
