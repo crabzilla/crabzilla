@@ -86,7 +86,7 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
 
 abstract class CommandHandler<E: Entity>(val command: Command, val snapshot: Snapshot<E>,
                                          val stateFn: (DomainEvent, E) -> E,
-                                         val uowHandler: Handler<AsyncResult<UnitOfWork>>) {
+                                         uowHandler: Handler<AsyncResult<UnitOfWork>>) {
 
   val uowFuture: Future<UnitOfWork> = Future.future()
   val eventsFuture: Future<List<DomainEvent>> = Future.future()

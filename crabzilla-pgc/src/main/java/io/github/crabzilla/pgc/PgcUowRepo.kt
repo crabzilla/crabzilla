@@ -42,16 +42,15 @@ open class PgcUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
   override fun get(query: String, id: UUID, future: Future<UnitOfWork>) {
     val params = Tuple.of(id)
+
     pgPool.preparedQuery(query, params) { ar ->
       if (ar.failed()) {
-        log.error("get", ar.cause())
-        future.fail(ar.cause())
-        return@preparedQuery
+        log.error("get", ar.cause()); future.fail(ar.cause()); return@preparedQuery
       }
+
       val rows = ar.result()
       if (rows.size() == 0) {
-        future.complete(null)
-        return@preparedQuery
+        future.complete(null); return@preparedQuery
       }
       val row = rows.first()
       val command = Json.decodeValue(row.getJson(CMD_DATA).value().toString(), Command::class.java)
