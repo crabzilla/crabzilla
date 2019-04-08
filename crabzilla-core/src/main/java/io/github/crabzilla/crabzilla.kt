@@ -38,8 +38,8 @@ data class UnitOfWork(val unitOfWorkId: UUID, val command: Command,
   }
 
   companion object {
-    fun of(command: Command, events: List<DomainEvent>, currentVersion: Version): UnitOfWork {
-      return UnitOfWork(UUID.randomUUID(), command, currentVersion + 1, events)
+    fun of(command: Command, events: List<DomainEvent>, resultingVersion: Version): UnitOfWork {
+      return UnitOfWork(UUID.randomUUID(), command, resultingVersion, events)
     }
   }
 
@@ -104,8 +104,8 @@ fun initVertx(vertx: Vertx) {
   vertx.eventBus().registerDefaultCodec(ProjectionData::class.java,
     JacksonGenericCodec(Json.mapper, ProjectionData::class.java))
 
-  vertx.eventBus().registerDefaultCodec(CommandExecution::class.java,
-    JacksonGenericCodec(Json.mapper, CommandExecution::class.java))
+  vertx.eventBus().registerDefaultCodec(Pair::class.java,
+    JacksonGenericCodec(Json.mapper, Pair::class.java))
 
   vertx.eventBus().registerDefaultCodec(EntityId::class.java,
     JacksonGenericCodec(Json.mapper, EntityId::class.java))

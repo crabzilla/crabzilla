@@ -4,7 +4,6 @@ import io.github.crabzilla.*
 import io.github.crabzilla.example1.*
 import io.vertx.core.*
 import java.time.Instant
-import java.time.LocalDateTime
 import java.util.*
 
 fun main() {
@@ -26,11 +25,83 @@ class ComposingVerticle: AbstractVerticle() {
 //    cmdHandlerAsync(activateCmd, Snapshot(seedValue2, 0), PrintResultHandler())
 
     val createActivateCmd = CreateActivateCustomer(UUID.randomUUID(), CustomerId(1),"c1", "I want it")
-    cmdHandlerAsync(createActivateCmd, Snapshot(seedValue1, 0), PrintResultHandler())
+    // cmdHandlerAsync(createActivateCmd, Snapshot(seedValue1, 0), PrintResultHandler())
+
+    val h = CustomerCmdHandler(createActivateCmd, Snapshot(seedValue1, 0), CUSTOMER_STATE_BUILDER_ASYNC, PrintResultHandler())
+
+    h.handle()
 
     stop()
 
 
+  }
+
+  val CUSTOMER_STATE_BUILDER_ASYNC = { event: DomainEvent, customer: CustomerAsync ->
+    when(event) {
+      is CustomerCreated -> customer.copy(customerId = event.id, name =  event.name)
+      is CustomerActivated -> customer.copy(isActive = true, reason = event.reason)
+      is CustomerDeactivated -> customer.copy(isActive = false, reason = event.reason)
+      else -> customer
+    }}
+
+  abstract class CommandHandler<E: Entity>(val command: Command, val snapshot: Snapshot<E>,
+                                           val stateFn: (DomainEvent, E) -> E,
+                                           uowHandler: Handler<AsyncResult<UnitOfWork>>) {
+    val uowFuture: Future<UnitOfWork> = Future.future()
+    val eventsFuture: Future<List<DomainEvent>> = Future.future()
+    init {
+      uowFuture.setHandler(uowHandler)
+      eventsFuture.setHandler { event ->
+        if (event.succeeded()) {
+          uowFuture.complete(UnitOfWork.of(command, event.result(), snapshot.version))
+        } else {
+          uowFuture.fail(event.cause())
+        }
+      }
+    }
+    abstract fun handle()
+  }
+
+  class CustomerCmdHandler(command: Command, snapshot: Snapshot<CustomerAsync>,
+                           stateFn: (DomainEvent, CustomerAsync) -> CustomerAsync,
+                           uowHandler: Handler<AsyncResult<UnitOfWork>>) :
+    CommandHandler<CustomerAsync>(command, snapshot, stateFn, uowHandler) {
+
+    override fun handle() {
+      val customer = snapshot.instance
+      when (command) {
+        is CreateCustomer -> customer.create(command.targetId, command.name, eventsFuture)
+        is ActivateCustomer -> eventsFuture.complete(customer.activate(command.reason))
+        is DeactivateCustomer -> customer.deactivate(command.reason, eventsFuture)
+        is CreateActivateCustomer -> {
+          val createFuture: Future<List<DomainEvent>> = Future.future()
+          val tracker = StateTransitionsTracker(snapshot, stateFn)
+          tracker.currentState().create(command.targetId, command.name, createFuture)
+          createFuture
+            .compose { v ->
+              println("after create")
+              println("  events $v")
+              tracker.applyEvents(v)
+              println("  state " + tracker.currentState())
+              val activateFuture: Future<List<DomainEvent>> = Future.future()
+              tracker.currentState().activate("I can", activateFuture.completer())
+              activateFuture
+            }
+            .compose { v ->
+              println("after activate")
+              println("  events $v")
+              tracker.applyEvents(v)
+              println("  state " + tracker.currentState())
+              Future.succeededFuture(tracker.collectEvents())
+            }
+            .compose({ v ->
+              println("after collect all events")
+              println("  events $v")
+            }, eventsFuture)
+        }
+        else -> uowFuture.fail("$command.javaClass.name is a unknown command")
+      }
+    }
   }
 
   fun cmdHandlerAsync(cmd: Command, s: Snapshot<CustomerAsync>, aHandler: Handler<AsyncResult<UnitOfWork>>) {
@@ -78,7 +149,7 @@ class ComposingVerticle: AbstractVerticle() {
             println("  events $v")
           }, eventsFuture)
      }
-      else -> uowFuture.fail(IllegalArgumentException("$cmd.javaClass.name is a unknown command"))
+      else -> uowFuture.fail("$cmd.javaClass.name is a unknown command")
     }
 
   }
@@ -120,14 +191,6 @@ class ComposingVerticle: AbstractVerticle() {
           tracker.applyEvents(v).collectEvents()
          }, future)
     }
-
-  val CUSTOMER_STATE_BUILDER_ASYNC = { event: DomainEvent, customer: CustomerAsync ->
-    when(event) {
-      is CustomerCreated -> customer.copy(customerId = event.id, name =  event.name)
-      is CustomerActivated -> customer.copy(isActive = true, reason = event.reason)
-      is CustomerDeactivated -> customer.copy(isActive = false, reason = event.reason)
-      else -> customer
-    }}
 
   data class CustomerAsync(val customerId: CustomerId? = null,
                            val name: String? = null,

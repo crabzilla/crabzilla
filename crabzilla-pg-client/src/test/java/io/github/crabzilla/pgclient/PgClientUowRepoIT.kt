@@ -343,7 +343,7 @@ class PgClientUowRepoIT {
         val uowSequence = ar.result().first().getLong(0)
         assertThat(uowSequence).isGreaterThan(0)
         val selectFuture = Future.future<SnapshotData>()
-        repo.selectAfterVersion(customerId.value(), 0, selectFuture, aggregateName)
+        repo.selectAfterVersion(customerId.value(), 0, aggregateName, selectFuture.completer())
         selectFuture.setHandler { selectAsyncResult ->
           val snapshotData = selectAsyncResult.result()
           assertThat(1).isEqualTo(snapshotData.version)
@@ -387,7 +387,7 @@ class PgClientUowRepoIT {
             tc.failNow(ar2.cause())
           }
           val selectFuture1 = Future.future<SnapshotData>()
-          repo.selectAfterVersion(customerId.value(), 0, selectFuture1, aggregateName)
+          repo.selectAfterVersion(customerId.value(), 0, aggregateName, selectFuture1.completer())
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             assertThat(2).isEqualTo(snapshotData.version)
@@ -433,7 +433,7 @@ class PgClientUowRepoIT {
           }
           val uowSequence2 = ar2.result().first().getLong("uow_seq_number")
           val selectFuture1 = Future.future<SnapshotData>()
-          repo.selectAfterVersion(customerId.value(), 1, selectFuture1, aggregateName)
+          repo.selectAfterVersion(customerId.value(), 1, aggregateName, selectFuture1.completer())
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             assertThat(2).isEqualTo(snapshotData.version)
@@ -452,7 +452,7 @@ class PgClientUowRepoIT {
     val appendFuture1 = Future.future<Int>()
 
     // append uow1
-    repo.append(expectedUow1, appendFuture1, aggregateName)
+    repo.append(expectedUow1, aggregateName, appendFuture1)
 
     appendFuture1.setHandler { ar1 ->
       if (ar1.failed()) {
@@ -464,7 +464,7 @@ class PgClientUowRepoIT {
       assertThat(uowSequence).isGreaterThan(0)
       val appendFuture2 = Future.future<Int>()
       // append uow2
-      repo.append(expectedUow2, appendFuture2, aggregateName)
+      repo.append(expectedUow2, aggregateName, appendFuture2)
       appendFuture2.setHandler { ar2 ->
         if (ar2.failed()) {
           ar2.cause().printStackTrace()
@@ -475,7 +475,7 @@ class PgClientUowRepoIT {
         assertThat(uowSequence).isGreaterThan(2)
         val snapshotDataFuture = Future.future<SnapshotData>()
         // get only above version 1
-        repo.selectAfterVersion(expectedUow2.targetId().value(), 1, snapshotDataFuture, aggregateName)
+        repo.selectAfterVersion(expectedUow2.targetId().value(), 1, aggregateName, snapshotDataFuture.completer())
         snapshotDataFuture.setHandler { ar4 ->
           if (ar4.failed()) {
             ar4.cause().printStackTrace()
@@ -503,7 +503,7 @@ class PgClientUowRepoIT {
 
       val appendFuture = Future.future<Int>()
 
-      repo.append(expectedUow1, appendFuture, aggregateName)
+      repo.append(expectedUow1, aggregateName, appendFuture)
 
       appendFuture.setHandler { ar1 ->
         if (ar1.failed()) {
@@ -533,7 +533,7 @@ class PgClientUowRepoIT {
 
           val snapshotDataFuture = Future.future<SnapshotData>()
 
-          repo.selectAfterVersion(expectedUow1.targetId().value(), 0, snapshotDataFuture, aggregateName)
+          repo.selectAfterVersion(expectedUow1.targetId().value(), 0, aggregateName, snapshotDataFuture.completer())
 
           snapshotDataFuture.setHandler { ar3 ->
             if (ar3.failed()) {
@@ -562,7 +562,7 @@ class PgClientUowRepoIT {
       val appendFuture1 = Future.future<Int>()
 
       // append uow1
-      repo.append(expectedUow1, appendFuture1, aggregateName)
+      repo.append(expectedUow1, aggregateName, appendFuture1.completer())
 
       appendFuture1.setHandler { ar1 ->
         if (ar1.failed()) {
@@ -578,7 +578,7 @@ class PgClientUowRepoIT {
         val appendFuture2 = Future.future<Int>()
 
         // try to append uow1 again
-        repo.append(expectedUow1, appendFuture2, aggregateName)
+        repo.append(expectedUow1, aggregateName, appendFuture2.completer())
 
         appendFuture2.setHandler { ar2 ->
           if (ar2.failed()) {
@@ -600,62 +600,55 @@ class PgClientUowRepoIT {
       val appendFuture1 = Future.future<Int>()
 
       // append uow1
-      repo.append(expectedUow1, appendFuture1, aggregateName)
+      repo.append(expectedUow1, aggregateName, appendFuture1)
 
       appendFuture1.setHandler { ar1 ->
+
         if (ar1.failed()) {
           ar1.cause().printStackTrace()
           tc.failNow(ar1.cause())
-          return@setHandler
-        }
+        } else {
 
-        val uowSequence = ar1.result()
+          val uowSequence = ar1.result()
+          assertThat(uowSequence).isGreaterThan(0)
+          val appendFuture2 = Future.future<Int>()
 
-        assertThat(uowSequence).isGreaterThan(0)
+          // append uow2
+          repo.append(expectedUow2, aggregateName, appendFuture2)
 
-        val appendFuture2 = Future.future<Int>()
+          appendFuture2.setHandler { ar2 ->
 
-        // append uow2
-        repo.append(expectedUow2, appendFuture2, aggregateName)
+            if (ar2.failed()) {
+              ar2.cause().printStackTrace()
+              tc.failNow(ar2.cause())
 
-        appendFuture2.setHandler { ar2 ->
-          if (ar2.failed()) {
-            ar2.cause().printStackTrace()
-            tc.failNow(ar2.cause())
-            return@setHandler
-          }
+            } else {
+              val uowSequence = ar2.result()
+              assertThat(uowSequence).isGreaterThan(2)
+              val snapshotDataFuture = Future.future<SnapshotData>()
 
-          val uowSequence = ar2.result()
+              // get all versions for id
+              repo.selectAfterVersion(expectedUow2.targetId().value(), 0, aggregateName, snapshotDataFuture.completer())
 
-          assertThat(uowSequence).isGreaterThan(2)
+              snapshotDataFuture.setHandler { ar4 ->
 
-          val snapshotDataFuture = Future.future<SnapshotData>()
+                if (ar4.failed()) {
+                  ar4.cause().printStackTrace()
+                  tc.failNow(ar4.cause())
 
-          // get all versions for id
-          repo.selectAfterVersion(expectedUow2.targetId().value(), 0, snapshotDataFuture, aggregateName)
+                } else {
+                  val (version, events) = ar4.result()
+                  assertThat(version).isEqualTo(expectedUow2.version)
+                  assertThat(events).isEqualTo(listOf(created, activated))
+                  tc.completeNow()
+                }
 
-          snapshotDataFuture.setHandler { ar4 ->
-            if (ar4.failed()) {
-              ar4.cause().printStackTrace()
-              tc.failNow(ar4.cause())
-              return@setHandler
+              }
             }
-
-            val (version, events) = ar4.result()
-
-            assertThat(version).isEqualTo(expectedUow2.version)
-            assertThat(events).isEqualTo(listOf(created, activated))
-
-            tc.completeNow()
-
           }
-
         }
-
       }
-
     }
-
   }
 
 }

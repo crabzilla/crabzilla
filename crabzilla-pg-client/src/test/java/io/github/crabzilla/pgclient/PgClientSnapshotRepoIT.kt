@@ -40,14 +40,12 @@ class PgClientSnapshotRepoIT {
     val created = CustomerCreated(customerId, "customer")
     val activateCmd = ActivateCustomer(UUID.randomUUID(), customerId, "I want it")
     val activated = CustomerActivated("a good reason", Instant.now())
-    val seedValue = Customer(null, null, false, null, PojoService())
   }
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
 
     val vertxOptions = VertxOptions()
-    vertxOptions.blockedThreadCheckInterval = (1000 * 60 * 60).toLong() // to easier debug
 
     vertx = Vertx.vertx(vertxOptions)
 
@@ -84,7 +82,7 @@ class PgClientSnapshotRepoIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      repo = PgClientSnapshotRepo(writeDb, seedValue, CUSTOMER_STATE_BUILDER, Customer::class.java)
+      repo = PgClientSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, Customer::class.java)
 
       writeDb.query("delete from units_of_work") { deleteResult ->
         if (deleteResult.failed()) {
@@ -99,8 +97,26 @@ class PgClientSnapshotRepoIT {
 
   }
 
+
   @Test
-  @DisplayName("given a created event, it can retrieve correct snapshot")
+  @DisplayName("given none snapshot or event, it can retrieve correct snapshot")
+  fun a0(tc: VertxTestContext) {
+
+      repo.retrieve(createCmd.targetId.id, aggregateName, Handler { event ->
+        if (event.failed()) {
+          event.cause().printStackTrace()
+          tc.failNow(event.cause())
+        }
+        val snapshot: Snapshot<Customer> = event.result()
+        assertThat(snapshot.version).isEqualTo(0)
+        assertThat(snapshot.instance).isEqualTo(CUSTOMER_SEED_VALUE)
+        tc.completeNow()
+      })
+
+  }
+
+  @Test
+  @DisplayName("given none snapshot and a created event, it can retrieve correct snapshot")
   fun a1(tc: VertxTestContext) {
 
     val tuple = Tuple.of(UUID.randomUUID(),
@@ -125,8 +141,7 @@ class PgClientSnapshotRepoIT {
           }
           val snapshot: Snapshot<Customer> = event.result()
           assertThat(snapshot.version).isEqualTo(1)
-          assertThat(snapshot.instance).isEqualToIgnoringGivenFields(
-            Customer(customerId, createCmd.name, false, null, PojoService()), "pojoService")
+          assertThat(snapshot.instance).isEqualTo(Customer(customerId, createCmd.name, false, null))
           tc.completeNow()
       })
     }
@@ -134,7 +149,7 @@ class PgClientSnapshotRepoIT {
   }
 
   @Test
-  @DisplayName("given a created and an activated events, it can retrieve correct snapshot")
+  @DisplayName("given none snapshot and both created and an activated events, it can retrieve correct snapshot")
   fun a2(tc: VertxTestContext) {
 
     val tuple1 = Tuple.of(UUID.randomUUID(),

@@ -1,6 +1,8 @@
 package io.github.crabzilla
 
+import io.vertx.core.AsyncResult
 import io.vertx.core.Future
+import io.vertx.core.Handler
 import java.util.*
 
 interface UnitOfWorkRepository {
@@ -11,9 +13,9 @@ interface UnitOfWorkRepository {
 
   operator fun get(query: String, id: UUID, future: Future<UnitOfWork>)
 
-  fun selectAfterVersion(id: Int, version: Version, future: Future<SnapshotData>, aggregateRootName: String)
+  fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String, aHandler: Handler<AsyncResult<SnapshotData>>)
 
-  fun append(unitOfWork: UnitOfWork, future: Future<Int>, aggregateRootName: String)
+  fun append(unitOfWork: UnitOfWork, aggregateRootName: String, aHandler: Handler<AsyncResult<Int>>)
 
   fun selectAfterUowSequence(uowSequence: Int, maxRows: Int, future: Future<List<ProjectionData>>)
 

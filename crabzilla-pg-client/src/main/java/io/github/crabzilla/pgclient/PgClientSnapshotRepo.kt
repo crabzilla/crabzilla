@@ -22,10 +22,13 @@ class PgClientSnapshotRepo<A : Entity>(private val pgPool: PgPool,
 
   override fun retrieve(id: Int, entityName: String, aHandler: Handler<AsyncResult<Snapshot<A>>>) {
 
+    val future = Future.future<Snapshot<A>>()
+    future.setHandler(aHandler)
+
     pgPool.getConnection { res ->
 
       if (!res.succeeded()) {
-        aHandler.handle(Future.failedFuture("when getting db connection"))
+        future.fail("when getting db connection")
         return@getConnection
       }
 
@@ -45,7 +48,7 @@ class PgClientSnapshotRepo<A : Entity>(private val pgPool: PgPool,
         if (event1.failed()) {
           tx.rollback()
           conn.close()
-          aHandler.handle(Future.failedFuture(event1.cause()))
+          future.fail(event1.cause())
           return@preparedQuery
         }
 
@@ -68,7 +71,7 @@ class PgClientSnapshotRepo<A : Entity>(private val pgPool: PgPool,
           if (!event2.succeeded()) {
             tx.rollback()
             conn.close()
-            aHandler.handle(Future.failedFuture(event2.cause()))
+            future.fail(event2.cause())
             return@prepare
           }
 
@@ -84,7 +87,7 @@ class PgClientSnapshotRepo<A : Entity>(private val pgPool: PgPool,
             println("Error: ${err.message}")
             tx.rollback()
             conn.close()
-            aHandler.handle(Future.failedFuture(err))
+            future.fail(err)
           }
 
           stream.endHandler {
@@ -95,9 +98,10 @@ class PgClientSnapshotRepo<A : Entity>(private val pgPool: PgPool,
               conn.close()
               // But transaction abortion fails it
               if (ar.failed()) {
-                aHandler.handle(Future.failedFuture(ar.cause()))
+                future.fail(ar.cause())
               } else {
-                aHandler.handle(Future.succeededFuture(Snapshot(currentInstance, currentVersion)))
+                val result = Snapshot(currentInstance, currentVersion)
+                future.complete(result)
               }
             }
           }

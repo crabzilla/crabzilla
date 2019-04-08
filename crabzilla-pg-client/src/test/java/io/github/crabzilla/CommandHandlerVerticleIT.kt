@@ -13,6 +13,7 @@ import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.core.eventbus.DeliveryOptions
+import io.vertx.core.eventbus.ReplyException
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -25,13 +26,17 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Instant
 import java.util.*
 
+
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CommandHandlerVerticleIT {
 
+  // https://slinkydeveloper.com/Assertions-With-Vertx-Futures-And-JUnit5/
   private lateinit var vertx: Vertx
   private lateinit var writeDb: PgPool
   private lateinit var verticle: CommandHandlerVerticle<Customer>
+
+  private val options = DeliveryOptions().setCodecName("Command")
 
   companion object {
     val aggregateName = CommandHandlers.CUSTOMER.name
@@ -40,7 +45,6 @@ class CommandHandlerVerticleIT {
     val created = CustomerCreated(customerId, "customer")
     val activateCmd = ActivateCustomer(UUID.randomUUID(), customerId, "I want it")
     val activated = CustomerActivated("a good reason", Instant.now())
-    val seedValue = Customer(null, null, false, null, PojoService())
   }
 
   @BeforeEach
@@ -58,9 +62,7 @@ class CommandHandlerVerticleIT {
       .setFormat("properties")
       .setConfig(JsonObject().put("path", "../example1.env"))
 
-    val options = ConfigRetrieverOptions().addStore(envOptions)
-
-    val retriever = ConfigRetriever.create(vertx, options)
+    val retriever = ConfigRetriever.create(vertx, ConfigRetrieverOptions().addStore(envOptions))
 
     retriever.getConfig(Handler { configFuture ->
 
@@ -86,9 +88,9 @@ class CommandHandlerVerticleIT {
 
       val uowRepo = PgClientUowRepo(writeDb)
 
-      val snapshotRepo = PgClientSnapshotRepo(writeDb, seedValue, CUSTOMER_STATE_BUILDER, Customer::class.java)
+      val snapshotRepo = PgClientSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, Customer::class.java)
 
-      verticle = CommandHandlerVerticle(aggregateName, seedValue, CUSTOMER_CMD_HANDLER, CUSTOMER_CMD_VALIDATOR,
+      verticle = CommandHandlerVerticle(aggregateName, CUSTOMER_SEED_VALUE, CUSTOMER_CMD_HANDLER_FACTORY, CUSTOMER_CMD_VALIDATOR,
         uowRepo, snapshotRepo)
 
       writeDb.query("delete from units_of_work") { deleteResult ->
@@ -114,29 +116,19 @@ class CommandHandlerVerticleIT {
   fun a1(tc: VertxTestContext) {
 
     val customerId = CustomerId(1)
-    val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer")
-    val expectedEvent = CustomerCreated(customerId, "customer")
-    val expectedUow = UnitOfWork(UUID.randomUUID(), createCustomerCmd, 1, listOf(expectedEvent))
+    val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer1")
 
-    val options = DeliveryOptions().setCodecName("Command")
-
-    vertx.eventBus().send<Any>(cmdHandlerEndpoint(aggregateName), createCustomerCmd, options) { asyncResult ->
+    vertx.eventBus()
+      .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(aggregateName), createCustomerCmd, options) { asyncResult ->
 
       if (asyncResult.failed()) {
         tc.failNow(asyncResult.cause())
         return@send
       }
 
-      assertThat(asyncResult.succeeded()).isTrue()
+      val result = asyncResult.result().body() as Pair<UnitOfWork, Int>
 
-      val (result, _, _, uowSequence, uow) = asyncResult.result().body() as CommandExecution
-
-      assertThat(result).isEqualTo(CommandExecution.RESULT.SUCCESS)
-      assertThat(uowSequence!!.toLong()).isGreaterThan(0)
-
-      assertThat(expectedUow.command).isEqualTo(uow!!.command)
-      assertThat(expectedUow.events).isEqualTo(uow.events)
-      assertThat(expectedUow.version).isEqualTo(uow.version)
+      println(result)
 
       tc.completeNow()
 
@@ -151,20 +143,14 @@ class CommandHandlerVerticleIT {
     val customerId = CustomerId(1)
     val createCustomerCmd = CreateCustomer(UUID.randomUUID(), customerId, "a bad name")
 
-    val options = DeliveryOptions().setCodecName("Command")
+    vertx.eventBus()
+      .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(aggregateName), createCustomerCmd, options) { asyncResult ->
 
-    vertx.eventBus().send<Any>(cmdHandlerEndpoint(aggregateName), createCustomerCmd, options) { asyncResult ->
+      assertThat(asyncResult.succeeded()).isFalse()
 
-      if (asyncResult.failed()) {
-        tc.failNow(asyncResult.cause())
-        return@send
-      }
-
-      assertThat(asyncResult.succeeded()).isTrue()
-
-      val (result, _, _, uowSequence, uow) = asyncResult.result().body() as CommandExecution
-
-      assertThat(result).isEqualTo(CommandExecution.RESULT.VALIDATION_ERROR)
+      val cause = asyncResult.cause() as ReplyException
+      assertThat(cause.message).isEqualTo("[Invalid name: a bad name]")
+      assertThat(cause.failureCode()).isEqualTo(400)
 
       tc.completeNow()
 
@@ -173,32 +159,24 @@ class CommandHandlerVerticleIT {
   }
 
   @Test
-  @DisplayName("given an invalid command it will be HANDLING_ERROR")
+  @DisplayName("given an execution error it will be HANDLING_ERROR")
   fun a3(tc: VertxTestContext) {
 
     val customerId = CustomerId(1)
     val createCustomerCmd = UnknownCommand(UUID.randomUUID(), customerId)
 
-    val options = DeliveryOptions().setCodecName("Command")
+    vertx.eventBus()
+      .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(aggregateName), createCustomerCmd, options) { asyncResult ->
 
-    vertx.eventBus().send<Any>(cmdHandlerEndpoint(aggregateName), createCustomerCmd, options) { asyncResult ->
-
-      if (asyncResult.failed()) {
-        tc.failNow(asyncResult.cause())
-        return@send
-      }
-
-      assertThat(asyncResult.succeeded()).isTrue()
-
-      val (result, _, _, uowSequence, uow) = asyncResult.result().body() as CommandExecution
-
-      assertThat(result).isEqualTo(CommandExecution.RESULT.HANDLING_ERROR)
+      assertThat(asyncResult.succeeded()).isFalse()
+      val cause = asyncResult.cause() as ReplyException
+      assertThat(cause.message).isEqualTo("UnknownCommand is a unknown command")
+      assertThat(cause.failureCode()).isEqualTo(400)
 
       tc.completeNow()
 
     }
 
   }
-  // TODO CommandExecution.RESULT
 
 }

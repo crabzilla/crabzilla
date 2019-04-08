@@ -3,7 +3,9 @@ package io.github.crabzilla.pgclient
 import io.github.crabzilla.*
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
+import io.vertx.core.AsyncResult
 import io.vertx.core.Future
+import io.vertx.core.Handler
 import io.vertx.core.json.Json
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -60,18 +62,23 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
   }
 
   override fun selectAfterVersion(id: Int, version: Version,
-                                  future: Future<SnapshotData>,
-                                  aggregateRootName: String) {
+                                  aggregateRootName: String,
+                                  aHandler: Handler<AsyncResult<SnapshotData>>
+                                  ) {
     log.info("will load id [{}] after version [{}]", id, version)
     pgPool.getConnection { ar0 ->
       if (ar0.failed()) {
         log.error("get connection", ar0.cause())
-        future.fail(ar0.cause())
+        aHandler.handle(Future.failedFuture(ar0.cause()))
         return@getConnection
       }
       val conn = ar0.result()
       conn.prepare(SQL_SELECT_AFTER_VERSION) { ar1 ->
-        if (ar1.succeeded()) {
+
+        if (ar1.failed()) {
+          aHandler.handle(Future.failedFuture(ar1.cause()))
+
+        } else {
           val pq = ar1.result()
           // Fetch 100 rows at a time
           val tuple = Tuple.of( id, aggregateRootName, version)
@@ -87,12 +94,11 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
             log.info("found {} units of work for id {} and version > {}", list.size, id, version)
             val finalVersion = if (list.size == 0) 0 else list[list.size - 1].version
             val flatMappedToEvents = list.flatMap { sd -> sd.events }
-            future.complete(SnapshotData(finalVersion, flatMappedToEvents))
+            aHandler.handle(Future.succeededFuture(SnapshotData(finalVersion, flatMappedToEvents)))
           }
           stream.exceptionHandler { err ->
             log.error("SQL_SELECT_AFTER_VERSION: " + err.message)
-            future.fail(err.cause)
-            return@exceptionHandler
+            aHandler.handle(Future.failedFuture(err))
           }
         }
       }
@@ -137,12 +143,12 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
   }
 
-  override fun append(unitOfWork: UnitOfWork, future: Future<Int>, aggregateRootName: String) {
+  override fun append(unitOfWork: UnitOfWork, aggregateRootName: String, aHandler: Handler<AsyncResult<Int>>) {
 
     pgPool.getConnection { conn ->
 
       if (conn.failed()) {
-        future.fail(conn.cause())
+        aHandler.handle(Future.failedFuture(conn.cause()))
         return@getConnection
       }
 
@@ -162,56 +168,59 @@ open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
       sqlConn.preparedQuery(SQL_SELECT_CURRENT_VERSION, params) { ar ->
 
         if (ar.failed()) {
-          log.error("SQL_SELECT_CURRENT_VERSION", ar.cause())
-          future.fail(ar.cause())
-          return@preparedQuery
-        }
+          aHandler.handle(Future.failedFuture(ar.cause()))
 
-        val currentVersion = ar.result().first()?.getInteger("last_version")?: 0
+        } else {
 
-        log.info("Found version  {}", currentVersion)
+          val currentVersion = ar.result().first()?.getInteger("last_version")?: 0
 
-        // version does not match
-        if (currentVersion != unitOfWork.version -1) {
-          val error = DbConcurrencyException("ar_id = [${unitOfWork.targetId().value()}], " +
-            "current_version = $currentVersion, new_version = ${unitOfWork.version}")
-          future.fail(error)
-          return@preparedQuery
-        }
+          log.info("Found version  {}", currentVersion)
 
-        // if version is OK, then insert
-        val cmdAsJson = commandToJson(unitOfWork.command)
-        val eventsListAsJson = listOfEventsToJson(unitOfWork.events)
+          // version does not match
+          if (currentVersion != unitOfWork.version -1) {
+            val error =
+              DbConcurrencyException("expected version is ${unitOfWork.version} but current version is $currentVersion")
+            aHandler.handle(Future.failedFuture(error))
 
-        val params2 = Tuple.of(
-          unitOfWork.unitOfWorkId,
-          io.reactiverse.pgclient.data.Json.create(eventsListAsJson),
-          unitOfWork.command.commandId,
-          io.reactiverse.pgclient.data.Json.create(cmdAsJson),
-          aggregateRootName,
-          unitOfWork.targetId().value(),
-          unitOfWork.version)
+          } else {
 
-        sqlConn.preparedQuery(SQL_INSERT_UOW, params2) { insert ->
+            // if version is OK, then insert
+            val cmdAsJson = commandToJson(unitOfWork.command)
+            val eventsListAsJson = listOfEventsToJson(unitOfWork.events)
 
-          if (insert.failed()) {
-            log.error("SQL_INSERT_UOW", insert.cause())
-            future.fail(insert.cause())
-            return@preparedQuery
-          }
+            val params2 = Tuple.of(
+              unitOfWork.unitOfWorkId,
+              io.reactiverse.pgclient.data.Json.create(eventsListAsJson),
+              unitOfWork.command.commandId,
+              io.reactiverse.pgclient.data.Json.create(cmdAsJson),
+              aggregateRootName,
+              unitOfWork.targetId().value(),
+              unitOfWork.version)
 
-          val insertRows = insert.result().value()
-          val generated = insertRows.first().getInteger(0)
+            sqlConn.preparedQuery(SQL_INSERT_UOW, params2) { insert ->
 
-          // Commit the transaction
-          tx.commit { ar ->
-            if (ar.succeeded()) {
-              log.info("Transaction succeeded")
-              future.complete(generated)
-            } else {
-              log.error("Transaction failed " + ar.cause().message)
-              future.fail(ar.cause().message)
+              if (insert.failed()) {
+                log.error("SQL_INSERT_UOW", insert.cause())
+                aHandler.handle(Future.failedFuture(insert.cause()))
+
+              } else {
+                val insertRows = insert.result().value()
+                val generated = insertRows.first().getInteger(0)
+
+                // Commit the transaction
+                tx.commit { ar ->
+                  if (ar.failed()) {
+                    log.error("Transaction failed " + ar.cause().message)
+                    aHandler.handle(Future.failedFuture(ar.cause()))
+                  } else {
+                    log.info("Transaction succeeded")
+                    aHandler.handle(Future.succeededFuture(generated))
+                  }
+                }
+              }
+
             }
+
           }
 
         }

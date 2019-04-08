@@ -1,6 +1,5 @@
-package io.github.crabzilla.web.example1;
+package io.github.crabzilla;
 
-import io.github.crabzilla.Snapshot;
 import io.github.crabzilla.example1.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,12 +44,12 @@ class StateTransitionsTrackerTest {
 
     @Test
     void is_empty() {
-      assertThat(tracker.isEmpty()).isTrue();
+      assertThat(tracker.getAppliedEvents().size()).isEqualTo(0);
     }
 
     @Test
     void has_empty_state() {
-      assertThat(tracker.currentState()).isEqualTo(originalSnapshot.getInstance());
+      assertThat(tracker.getCurrentState()).isEqualTo(originalSnapshot.getInstance());
     }
 
     @Nested
@@ -68,13 +67,13 @@ class StateTransitionsTrackerTest {
 
       @Test
       void has_new_state() {
-        assertThat(tracker.currentState()).isEqualTo(expectedCustomer);
+        assertThat(tracker.getCurrentState()).isEqualTo(expectedCustomer);
       }
 
       @Test
       void has_only_create_event() {
-        assertThat(tracker.collectEvents()).contains(customerCreated);
-        assertThat(tracker.collectEvents().size()).isEqualTo(1);
+        assertThat(tracker.getAppliedEvents()).contains(customerCreated);
+        assertThat(tracker.getAppliedEvents().size()).isEqualTo(1);
       }
 
       @Nested
@@ -92,14 +91,14 @@ class StateTransitionsTrackerTest {
 
         @Test
         void has_new_state() {
-          assertThat(tracker.currentState()).isEqualTo(expectedCustomer);
+          assertThat(tracker.getCurrentState()).isEqualTo(expectedCustomer);
         }
 
         @Test
         void has_both_create_and_activated_evenst() {
-          assertThat(tracker.collectEvents().get(0)).isEqualTo(customerCreated);
-          assertThat(tracker.collectEvents().get(1)).isEqualTo(customerActivated);
-          assertThat(tracker.collectEvents().size()).isEqualTo(2);
+          assertThat(tracker.getAppliedEvents().get(0)).isEqualTo(customerCreated);
+          assertThat(tracker.getAppliedEvents().get(1)).isEqualTo(customerActivated);
+          assertThat(tracker.getAppliedEvents().size()).isEqualTo(2);
         }
 
       }
@@ -131,14 +130,14 @@ class StateTransitionsTrackerTest {
 
     @Test
     void has_new_state() {
-      assertThat(tracker.currentState()).isEqualTo(expectedCustomer);
+      assertThat(tracker.getCurrentState()).isEqualTo(expectedCustomer);
     }
 
     @Test
     void has_both_event() {
-      assertThat(tracker.collectEvents()).contains(customerCreated);
-      assertThat(tracker.collectEvents()).contains(customerActivated);
-      assertThat(tracker.collectEvents().size()).isEqualTo(2);
+      assertThat(tracker.getAppliedEvents()).contains(customerCreated);
+      assertThat(tracker.getAppliedEvents()).contains(customerActivated);
+      assertThat(tracker.getAppliedEvents().size()).isEqualTo(2);
     }
 
   }

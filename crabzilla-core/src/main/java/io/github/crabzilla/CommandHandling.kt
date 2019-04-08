@@ -1,17 +1,15 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.CommandExecution.RESULT
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.eventbus.DeliveryOptions
 import org.slf4j.LoggerFactory
-import java.io.Serializable
-import java.util.*
 
 class CommandHandlerVerticle<A : Entity>(val name: String,
                                          private val seedValue: A,
-                                         private val cmdHandler: (Command, Snapshot<A>) -> UnitOfWork,
+                                         private val cmdHandlerFactory: (Command, Snapshot<A>, Handler<AsyncResult<UnitOfWork>>) -> CommandHandler<A>,
                                          private val validatorFn: (Command) -> List<String>,
                                          private val eventJournal: UnitOfWorkRepository,
                                          private val snapshotRepo: SnapshotRepository<A>)
@@ -27,66 +25,56 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
 
     log.info("starting command verticle for $name")
 
-    vertx.eventBus().consumer<Command>(cmdHandlerEndpoint(name), Handler { commandMsg ->
+    vertx.eventBus().consumer<Command>(cmdHandlerEndpoint(name), Handler { commandEvent ->
 
-      val command = commandMsg.body()
+      val command = commandEvent.body()
 
       log.info("received a command $command")
       val constraints = validatorFn.invoke(command)
 
       if (!constraints.isEmpty()) {
-        val result = CommandExecution(commandId = command.commandId, result = RESULT.VALIDATION_ERROR,
-          constraints = constraints)
-        commandMsg.reply(result)
+        commandEvent.fail(400, constraints.toString())
         return@Handler
       }
 
       val targetId = command.targetId.value()
 
-      snapshotRepo.retrieve(targetId, name, Handler { fromCacheResult ->
+      val resultFuture : Future<Pair<UnitOfWork, Int>> = Future.future()
 
-        if (fromCacheResult.failed()) {
-          val result = CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR)
-          commandMsg.reply(result)
-          return@Handler
+      resultFuture.setHandler { event ->
+        if (event.failed()) {
+          commandEvent.fail(400, event.cause().message)
+        } else {
+          commandEvent.reply(event.result())
+        }
+      }
+
+      val snapshotFuture: Future<Snapshot<A>> = Future.future()
+      snapshotRepo.retrieve(targetId, name, snapshotFuture.completer())
+
+      var resultingUow : UnitOfWork? = null
+
+      snapshotFuture
+
+        .compose { snapshot ->
+          val commandHandlerFuture = Future.future<UnitOfWork>()
+          val cachedSnapshot = snapshot ?: Snapshot(seedValue, 0)
+          val cmdHandler = cmdHandlerFactory.invoke(command, cachedSnapshot, commandHandlerFuture.completer())
+          cmdHandler.handleCommand()
+          commandHandlerFuture
         }
 
-        val snapshotFromCache = if (fromCacheResult.failed()) null else fromCacheResult.result()
-        val cachedSnapshot = snapshotFromCache ?: Snapshot(seedValue, 0)
-
-        try {
-
-          val unitOfWork = cmdHandler.invoke(command, cachedSnapshot)
+        .compose { unitOfWork ->
+          resultingUow = unitOfWork
           val appendFuture = Future.future<Int>()
-
-          eventJournal.append(unitOfWork, appendFuture, name)
-
-          appendFuture.setHandler { appendAsyncResult ->
-
-            if (appendAsyncResult.failed()) {
-              val error = appendAsyncResult.cause()
-              log.error("appendUnitOfWork for command " + command.commandId, error.message)
-              val result = if (error is DbConcurrencyException) {
-                CommandExecution(commandId = command.commandId, result = RESULT.CONCURRENCY_ERROR)
-              } else {
-                CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR)
-              }
-              commandMsg.reply(result)
-              return@setHandler
-            }
-
-            val uowSequence = appendAsyncResult.result()
-            log.info("uowSequence: {}", uowSequence)
-            commandMsg.reply(CommandExecution(result = RESULT.SUCCESS, commandId = command.commandId,
-              unitOfWork = unitOfWork, uowSequence = uowSequence), options)
-          }
-
-        } catch (e: Exception) {
-          val result = CommandExecution(commandId = command.commandId, result = RESULT.HANDLING_ERROR)
-          commandMsg.reply(result)
+          eventJournal.append(unitOfWork, name, appendFuture.completer())
+          appendFuture
         }
 
-      })
+        .compose({ uowSequence ->
+          val pair: Pair<UnitOfWork, Int> = Pair<UnitOfWork, Int>(resultingUow!!, uowSequence)
+          resultFuture.complete(pair)
+        }, resultFuture)
 
     })
 
@@ -94,21 +82,22 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
 
 }
 
-class DbConcurrencyException(s: String) : RuntimeException(s)
-
-data class CommandExecution(val result: RESULT,
-                            val commandId: UUID?,
-                            val constraints: List<String> = listOf(),
-                            val uowSequence: Int? = 0,
-                            val unitOfWork: UnitOfWork? = null) : Serializable {
-
-  enum class RESULT {
-    FALLBACK,
-    VALIDATION_ERROR,
-    HANDLING_ERROR,
-    CONCURRENCY_ERROR,
-    UNKNOWN_COMMAND,
-    SUCCESS
-  }
-
+abstract class CommandHandler<E: Entity>(val command: Command, val snapshot: Snapshot<E>,
+                                         val stateFn: (DomainEvent, E) -> E,
+                                         val uowHandler: Handler<AsyncResult<UnitOfWork>>) {
+//  val uowFuture: Future<UnitOfWork> = Future.future()
+//  val eventsFuture: Future<List<DomainEvent>> = Future.future()
+//  init {
+//    uowFuture.setHandler(uowHandler)
+//    eventsFuture.setHandler { event ->
+//      if (event.succeeded()) {
+//        uowFuture.complete(UnitOfWork.of(command, event.result(), snapshot.version+1))
+//      } else {
+//        uowFuture.fail(event.cause())
+//      }
+//    }
+//  }
+  abstract fun handleCommand()
 }
+
+class DbConcurrencyException(s: String) : RuntimeException(s)

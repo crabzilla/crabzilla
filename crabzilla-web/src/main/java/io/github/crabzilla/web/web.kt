@@ -3,10 +3,10 @@ package io.github.crabzilla.web
 import io.github.crabzilla.*
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
+import io.vertx.core.eventbus.ReplyException
 import io.vertx.core.http.CaseInsensitiveHeaders
 import io.vertx.core.json.DecodeException
 import io.vertx.core.json.Json
-import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.RoutingContext
 import org.slf4j.LoggerFactory
@@ -66,46 +66,30 @@ fun postCommandHandler(routingContext: RoutingContext, uowRepository: UnitOfWork
 
     log.info("posting a command to $handlerEndpoint")
 
-    routingContext.vertx().eventBus().send<Command>(handlerEndpoint, command, commandDeliveryOptions) { response ->
+    routingContext.vertx().eventBus()
+      .send<Pair<UnitOfWork, Int>>(handlerEndpoint, command, commandDeliveryOptions) { response ->
 
       if (!response.succeeded()) {
-        httpResp.setStatusCode(500).setStatusMessage("server error").end()
+        val cause = response.cause() as ReplyException
+        httpResp.setStatusCode(cause.failureCode()).setStatusMessage(cause.message).end()
         return@send
       }
 
-      val result = response.result().body() as CommandExecution
+      val result = response.result().body() as Pair<UnitOfWork, Int>
 
       log.info("result = {}", result)
 
-      val errorResult = if (result.constraints.isEmpty()) JsonObject().encode()
-                        else JsonArray(result.constraints).encode()
+      val headers = CaseInsensitiveHeaders().add("uowSequence", result.second.toString())
+      val eventsDeliveryOptions = DeliveryOptions().setCodecName(UnitOfWork::class.simpleName).setHeaders(headers)
 
-      when (result.result) {
-        CommandExecution.RESULT.SUCCESS -> {
-          val uow = result.unitOfWork
-          val uowSequence = result.uowSequence ?: 0
-          if (uow != null && uowSequence != 0) {
-            val headers = CaseInsensitiveHeaders().add("uowSequence", uowSequence.toString())
-            val eventsDeliveryOptions = DeliveryOptions().setCodecName(UnitOfWork::class.simpleName).setHeaders(headers)
-            routingContext.vertx().eventBus()
-              .publish(projectionEndpoint, ProjectionData.fromUnitOfWork(uowSequence, uow), eventsDeliveryOptions)
-          }
-          httpResp
-            .putHeader("accept", routingContext.request().getHeader("accept"))
-            .putHeader("Location", location)
-            .setStatusCode(303)
-            .end()
-        }
-        CommandExecution.RESULT.VALIDATION_ERROR -> {
-          httpResp.setStatusCode(400).setStatusMessage(errorResult).end()
-        }
-        CommandExecution.RESULT.UNKNOWN_COMMAND -> {
-          httpResp.setStatusCode(400).setStatusMessage("unknown command").end()
-        }
-        else -> {
-          httpResp.setStatusCode(500).setStatusMessage(errorResult).end()
-        }
-      }
+      routingContext.vertx().eventBus()
+      .publish(projectionEndpoint, ProjectionData.fromUnitOfWork(result.second, result.first), eventsDeliveryOptions)
+
+      httpResp
+        .putHeader("accept", routingContext.request().getHeader("accept"))
+        .putHeader("Location", location)
+        .setStatusCode(303)
+        .end()
 
     }
 
