@@ -18,8 +18,6 @@ class PgcEventProjector(private val pgPool: PgPool, val name: String) {
 
   }
 
-  // TODO http://www.lemnik.com/blog/2018/12/31/Suspend-extensions-for-Vert-x-Database/
-  // TODO coroutines to compose
   fun handle(uowProjectionData: ProjectionData, projectorHandler: ProjectorHandler, handler: Handler<AsyncResult<Void>>) {
 
     if (uowProjectionData.events.size > NUMBER_OF_FUTURES) {

@@ -7,6 +7,7 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.json.Json
+import io.vertx.core.logging.LoggerFactory
 
 class PgcSnapshotRepo<A : Entity>(private val pgPool: PgPool,
                                   private val seedValue: A,
@@ -14,6 +15,7 @@ class PgcSnapshotRepo<A : Entity>(private val pgPool: PgPool,
                                   private val clazz: Class<A>) : SnapshotRepository<A> {
   companion object {
 
+    internal val log = LoggerFactory.getLogger(PgcEventProjector::class.java)
     const val SELECT_SNAPSHOT_VERSION = "select version, json_content from snapshot where ar_id = $1 and ar_name = $2"
     const val SELECT_EVENTS_VERSION_AFTER_VERSION = "select uow_events, version from units_of_work " +
       "where ar_id = $1 and ar_name = $2 and version > $3 order by version "
@@ -36,13 +38,9 @@ class PgcSnapshotRepo<A : Entity>(private val pgPool: PgPool,
         val conn = res.result()
 
         // Begin the transaction
-        val tx = conn.begin().abortHandler {
-          println("Transaction failed")
-        }
+        val tx = conn.begin().abortHandler { log.warn("Transaction failed") }
 
         val params = Tuple.of(id, entityName)
-
-
 
         // get current snapshot
         conn.preparedQuery(SELECT_SNAPSHOT_VERSION, params) { event1 ->
@@ -68,7 +66,7 @@ class PgcSnapshotRepo<A : Entity>(private val pgPool: PgPool,
             conn.prepare(SELECT_EVENTS_VERSION_AFTER_VERSION) { event2 ->
 
               if (!event2.succeeded()) {
-                tx.rollback();  conn.close(); future.fail(event2.cause())
+                tx.rollback(); conn.close(); future.fail(event2.cause())
 
               } else {
                 var currentInstance = cachedInstance
@@ -79,15 +77,12 @@ class PgcSnapshotRepo<A : Entity>(private val pgPool: PgPool,
                 // Fetch 100 rows at a time
                 val stream = pq.createStream(100, Tuple.of(id, entityName, cachedVersion))
 
-                stream.exceptionHandler { err ->
-                  println("Error: ${err.message}")
-                  tx.rollback()
-                  conn.close()
-                  future.fail(err)
+                stream.exceptionHandler { err -> log.error("Error: ${err.message}", err)
+                  tx.rollback(); conn.close(); future.fail(err)
                 }
 
                 stream.endHandler {
-                  println("End of stream")
+                  log.info("End of stream")
                   // Attempt to commit the transaction
                   tx.commit { ar ->
                     // Return the connection to the pool
@@ -106,7 +101,7 @@ class PgcSnapshotRepo<A : Entity>(private val pgPool: PgPool,
                   currentVersion = row.getInteger(1)
                   val events = listOfEventsFromJson(row.getJson(0).value().toString())
                   currentInstance = events.fold(currentInstance) {state, event -> applyEventsFn(event, state)}
-                  println("Events: $events \n version: $currentVersion \n instance $currentInstance")
+                  log.info("Events: $events \n version: $currentVersion \n instance $currentInstance")
                 }
 
               }

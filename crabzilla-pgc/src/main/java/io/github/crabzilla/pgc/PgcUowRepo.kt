@@ -148,8 +148,7 @@ open class PgcUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
     pgPool.getConnection { conn ->
 
       if (conn.failed()) {
-        aHandler.handle(Future.failedFuture(conn.cause()))
-        return@getConnection
+        aHandler.handle(Future.failedFuture(conn.cause())); return@getConnection
       }
 
       val sqlConn = conn.result()
@@ -157,10 +156,7 @@ open class PgcUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
       // Begin the transaction
       val tx = sqlConn
         .begin()
-        .abortHandler { _ ->
-          run {
-            log.error("Transaction failed =  > rollbacked")
-          }
+        .abortHandler { run { log.error("Transaction failed => rollback") }
         }
 
       val params = Tuple.of(unitOfWork.targetId().value(), aggregateRootName)
