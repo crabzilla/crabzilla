@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgclient
+package io.github.crabzilla.pgc
 
 import io.github.crabzilla.DomainEvent
 import io.reactiverse.pgclient.PgConnection

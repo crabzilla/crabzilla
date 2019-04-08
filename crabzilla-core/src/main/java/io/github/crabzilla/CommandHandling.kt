@@ -7,9 +7,11 @@ import io.vertx.core.Handler
 import io.vertx.core.eventbus.DeliveryOptions
 import org.slf4j.LoggerFactory
 
+typealias CommandHandlerFactory<A> = (Command, Snapshot<A>, Handler<AsyncResult<UnitOfWork>>) -> CommandHandler<A>
+
 class CommandHandlerVerticle<A : Entity>(val name: String,
                                          private val seedValue: A,
-                                         private val cmdHandlerFactory: (Command, Snapshot<A>, Handler<AsyncResult<UnitOfWork>>) -> CommandHandler<A>,
+                                         private val cmdHandlerFactory: CommandHandlerFactory<A>,
                                          private val validatorFn: (Command) -> List<String>,
                                          private val eventJournal: UnitOfWorkRepository,
                                          private val snapshotRepo: SnapshotRepository<A>)
@@ -85,18 +87,21 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
 abstract class CommandHandler<E: Entity>(val command: Command, val snapshot: Snapshot<E>,
                                          val stateFn: (DomainEvent, E) -> E,
                                          val uowHandler: Handler<AsyncResult<UnitOfWork>>) {
-//  val uowFuture: Future<UnitOfWork> = Future.future()
-//  val eventsFuture: Future<List<DomainEvent>> = Future.future()
-//  init {
-//    uowFuture.setHandler(uowHandler)
-//    eventsFuture.setHandler { event ->
-//      if (event.succeeded()) {
-//        uowFuture.complete(UnitOfWork.of(command, event.result(), snapshot.version+1))
-//      } else {
-//        uowFuture.fail(event.cause())
-//      }
-//    }
-//  }
+
+  val uowFuture: Future<UnitOfWork> = Future.future()
+  val eventsFuture: Future<List<DomainEvent>> = Future.future()
+
+  init {
+    uowFuture.setHandler(uowHandler)
+    eventsFuture.setHandler { event ->
+      if (event.succeeded()) {
+        uowFuture.complete(UnitOfWork.of(command, event.result(), snapshot.version + 1))
+      } else {
+        uowFuture.fail(event.cause())
+      }
+    }
+  }
+
   abstract fun handleCommand()
 }
 

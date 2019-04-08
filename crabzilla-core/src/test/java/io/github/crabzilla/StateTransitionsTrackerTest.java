@@ -1,6 +1,9 @@
 package io.github.crabzilla;
 
-import io.github.crabzilla.example1.*;
+import io.github.crabzilla.example1.Customer;
+import io.github.crabzilla.example1.CustomerActivated;
+import io.github.crabzilla.example1.CustomerCreated;
+import io.github.crabzilla.example1.CustomerId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,7 +22,6 @@ class StateTransitionsTrackerTest {
 
   StateTransitionsTracker<Customer> tracker;
 
-  final PojoService service = new PojoService();
   final Customer customer = new Customer();
   final Snapshot<Customer> originalSnapshot = new Snapshot<>(customer, 0);
 
@@ -32,6 +34,13 @@ class StateTransitionsTrackerTest {
   void can_be_instantiated() {
     new StateTransitionsTracker<>(originalSnapshot, getCUSTOMER_STATE_BUILDER());
   }
+
+  // TODO test
+  //  val events = tracker
+  //    .applyEvents { c -> c.create(cmd.targetId, cmd.name) }
+  //    .applyEvents { c -> c.activate(cmd.reason) }
+  //    .collectEvents()
+  //
 
   @Nested
   @DisplayName("when new")

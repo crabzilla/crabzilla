@@ -24,7 +24,7 @@
     <!-- tests-->
     <skipTests>false</skipTests>
 
-    <junit.jupiter.version>5.4.0</junit.jupiter.version>
+    <junit.jupiter.version>5.4.1</junit.jupiter.version>
 
     <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
@@ -73,99 +73,10 @@
 
   <modules>
     <module>crabzilla-core</module>
-    <module>crabzilla-pg-client</module>
+    <module>crabzilla-pgc</module>
     <module>crabzilla-web</module>
     <module>coverage-report</module>
   </modules>
-
-  <dependencies>
-
-    <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-lang-kotlin</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-lang-kotlin-coroutines</artifactId>
-    </dependency>
-
-    <!--<dependency>-->
-      <!--<groupId>io.vertx</groupId>-->
-      <!--<artifactId>vertx-rx-java2</artifactId>-->
-    <!--</dependency>-->
-
-    <!--<dependency>-->
-      <!--<groupId>io.vertx</groupId>-->
-      <!--<artifactId>vertx-service-proxy</artifactId>-->
-      <!--<classifier>processor</classifier>-->
-      <!--<version>${vertx.version}</version>-->
-    <!--</dependency>-->
-
-    <!--<dependency>-->
-      <!--<groupId>io.vertx</groupId>-->
-      <!--<artifactId>vertx-codegen</artifactId>-->
-      <!--<scope>provided</scope>-->
-      <!--<version>${vertx.version}</version>-->
-    <!--</dependency>-->
-
-    <!-- test -->
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-junit5</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-client</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <version>${junit.jupiter.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <version>1.2.3</version>
-      <scope>test</scope>
-    </dependency>
-
-  </dependencies>
 
   <dependencyManagement>
 
@@ -181,7 +92,7 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-pg-client</artifactId>
+        <artifactId>crabzilla-pgc</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -196,7 +107,7 @@
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-stack-depchain</artifactId>
-        <version>3.6.3</version>
+        <version>${vertx.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -239,6 +150,14 @@
       <!-- test -->
 
       <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit.jupiter.version}</version>
+        <type>pom</type>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
         <groupId>io.github.crabzilla</groupId>
         <artifactId>crabzilla-core</artifactId>
         <version>${project.version}</version>
@@ -247,16 +166,9 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-pg-client</artifactId>
+        <artifactId>crabzilla-pgc</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.junit</groupId>
-        <artifactId>junit-bom</artifactId>
-        <version>5.4.0</version>
-        <type>pom</type>
       </dependency>
 
       <dependency>
@@ -275,6 +187,71 @@
 
     </dependencies>
   </dependencyManagement>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-kotlin</artifactId>
+    </dependency>
+
+    <!-- test -->
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.2.3</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
 
   <build>
 
@@ -426,16 +403,16 @@
           </properties>
         </configuration>
         <!--<dependencies>-->
-          <!--<dependency>-->
-            <!--<groupId>org.junit.platform</groupId>-->
-            <!--<artifactId>junit-platform-surefire-provider</artifactId>-->
-            <!--<version>${junit.platform.version}</version>-->
-          <!--</dependency>-->
-          <!--<dependency>-->
-            <!--<groupId>org.junit.jupiter</groupId>-->
-            <!--<artifactId>junit-jupiter-engine</artifactId>-->
-            <!--<version>${junit.jupiter.version}</version>-->
-          <!--</dependency>-->
+        <!--<dependency>-->
+        <!--<groupId>org.junit.platform</groupId>-->
+        <!--<artifactId>junit-platform-surefire-provider</artifactId>-->
+        <!--<version>${junit.platform.version}</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+        <!--<groupId>org.junit.jupiter</groupId>-->
+        <!--<artifactId>junit-jupiter-engine</artifactId>-->
+        <!--<version>${junit.jupiter.version}</version>-->
+        <!--</dependency>-->
         <!--</dependencies>-->
       </plugin>
 
@@ -466,11 +443,11 @@
           </execution>
         </executions>
         <!--<dependencies>-->
-          <!--<dependency>-->
-            <!--<groupId>org.junit.platform</groupId>-->
-            <!--<artifactId>junit-platform-surefire-provider</artifactId>-->
-            <!--<version>${junit.platform.version}</version>-->
-          <!--</dependency>-->
+        <!--<dependency>-->
+        <!--<groupId>org.junit.platform</groupId>-->
+        <!--<artifactId>junit-platform-surefire-provider</artifactId>-->
+        <!--<version>${junit.platform.version}</version>-->
+        <!--</dependency>-->
         <!--</dependencies>-->
       </plugin>
 

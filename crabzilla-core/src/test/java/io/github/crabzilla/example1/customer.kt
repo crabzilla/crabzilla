@@ -102,25 +102,7 @@ class CustomerCmdHandler(command: Command, snapshot: Snapshot<Customer>,
                          uowHandler: Handler<AsyncResult<UnitOfWork>>) :
   CommandHandler<Customer>(command, snapshot, stateFn, uowHandler) {
 
-  //  val events = tracker
-//    .applyEvents { c -> c.create(cmd.targetId, cmd.name) }
-//    .applyEvents { c -> c.activate(cmd.reason) }
-//    .collectEvents()
-//
   override fun handleCommand() {
-
-    val uowFuture: Future<UnitOfWork> = Future.future()
-    uowFuture.setHandler(uowHandler)
-
-    val eventsFuture: Future<List<DomainEvent>> = Future.future()
-
-    eventsFuture.setHandler { event ->
-      if (event.succeeded()) {
-        uowFuture.complete(UnitOfWork.of(command, event.result(), snapshot.version + 1))
-      } else {
-        uowFuture.fail(event.cause())
-      }
-    }
 
     val customer = snapshot.instance
 

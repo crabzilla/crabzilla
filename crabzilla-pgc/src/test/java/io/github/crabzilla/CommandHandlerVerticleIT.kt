@@ -1,8 +1,8 @@
 package io.github.crabzilla
 
 import io.github.crabzilla.example1.*
-import io.github.crabzilla.pgclient.PgClientSnapshotRepo
-import io.github.crabzilla.pgclient.PgClientUowRepo
+import io.github.crabzilla.pgc.PgcSnapshotRepo
+import io.github.crabzilla.pgc.PgcUowRepo
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -39,7 +39,7 @@ class CommandHandlerVerticleIT {
   private val options = DeliveryOptions().setCodecName("Command")
 
   companion object {
-    val aggregateName = CommandHandlers.CUSTOMER.name
+    const val aggregateName = "Customer"
     val customerId = CustomerId(1)
     val createCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer")
     val created = CustomerCreated(customerId, "customer")
@@ -86,9 +86,9 @@ class CommandHandlerVerticleIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      val uowRepo = PgClientUowRepo(writeDb)
+      val uowRepo = PgcUowRepo(writeDb)
 
-      val snapshotRepo = PgClientSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, Customer::class.java)
+      val snapshotRepo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, Customer::class.java)
 
       verticle = CommandHandlerVerticle(aggregateName, CUSTOMER_SEED_VALUE, CUSTOMER_CMD_HANDLER_FACTORY, CUSTOMER_CMD_VALIDATOR,
         uowRepo, snapshotRepo)

@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgclient
+package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
 import io.reactiverse.pgclient.PgPool
@@ -10,11 +10,11 @@ import io.vertx.core.json.Json
 import org.slf4j.LoggerFactory
 import java.util.*
 
-open class PgClientUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
+open class PgcUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
   companion object {
 
-    internal val log = LoggerFactory.getLogger(PgClientUowRepo::class.java)
+    internal val log = LoggerFactory.getLogger(PgcUowRepo::class.java)
 
     private const val UOW_ID = "uow_id"
     private const val UOW_EVENTS = "uow_events"

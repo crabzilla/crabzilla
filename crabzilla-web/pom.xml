@@ -24,6 +24,7 @@
       <artifactId>vertx-web</artifactId>
     </dependency>
 
+
     <!-- test -->
 
     <dependency>
@@ -35,13 +36,13 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-pg-client</artifactId>
+      <artifactId>crabzilla-pgc</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-pg-client</artifactId>
+      <artifactId>crabzilla-pgc</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

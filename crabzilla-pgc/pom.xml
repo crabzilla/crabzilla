@@ -9,7 +9,7 @@
     <version>0.0.6-SNAPSHOT</version>
   </parent>
 
-  <artifactId>crabzilla-pg-client</artifactId>
+  <artifactId>crabzilla-pgc</artifactId>
   <packaging>jar</packaging>
 
   <properties>

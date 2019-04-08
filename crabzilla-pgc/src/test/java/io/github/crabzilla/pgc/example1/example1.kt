@@ -1,11 +1,11 @@
-package io.github.crabzilla.pgclient.example1
+package io.github.crabzilla.pgc.example1
 
 import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerDeactivated
-import io.github.crabzilla.pgclient.ProjectorHandler
-import io.github.crabzilla.pgclient.runPreparedQuery
+import io.github.crabzilla.pgc.ProjectorHandler
+import io.github.crabzilla.pgc.runPreparedQuery
 import io.reactiverse.pgclient.PgConnection
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult

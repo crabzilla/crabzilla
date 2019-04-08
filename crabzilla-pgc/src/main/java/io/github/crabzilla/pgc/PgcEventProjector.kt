@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgclient
+package io.github.crabzilla.pgc
 
 import io.github.crabzilla.ProjectionData
 import io.reactiverse.pgclient.PgPool
@@ -9,11 +9,11 @@ import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.logging.LoggerFactory.getLogger
 
-class PgClientEventProjector(private val pgPool: PgPool, val name: String) {
+class PgcEventProjector(private val pgPool: PgPool, val name: String) {
 
   companion object {
 
-    internal val log = getLogger(PgClientEventProjector::class.java)
+    internal val log = getLogger(PgcEventProjector::class.java)
     const val NUMBER_OF_FUTURES = 6 // CompositeFuture limit
 
   }

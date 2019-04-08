@@ -1,11 +1,11 @@
-package io.github.crabzilla.pgclient
+package io.github.crabzilla.pgc
 
 import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.ProjectionData.Companion.fromUnitOfWork
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.initVertx
-import io.github.crabzilla.pgclient.example1.EXAMPLE1_PROJECTOR_HANDLER
+import io.github.crabzilla.pgc.example1.EXAMPLE1_PROJECTOR_HANDLER
 import io.reactiverse.pgclient.*
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
@@ -27,11 +27,11 @@ import java.util.*
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PgClientEventProjectorIT {
+class PgcEventProjectorIT {
 
   private lateinit var vertx: Vertx
   private lateinit var readDb: PgPool
-  private lateinit var eventProjector: PgClientEventProjector
+  private lateinit var eventProjector: PgcEventProjector
 
   companion object {
 
@@ -41,7 +41,7 @@ class PgClientEventProjectorIT {
     //        .chunked(numberOfFutures)
     //
 
-    internal val log = LoggerFactory.getLogger(PgClientEventProjectorIT::class.java)
+    internal val log = LoggerFactory.getLogger(PgcEventProjectorIT::class.java)
 
     val customerId1 = CustomerId(1)
 
@@ -106,7 +106,7 @@ class PgClientEventProjectorIT {
 
       readDb = PgClient.pool(vertx, options)
 
-      eventProjector = PgClientEventProjector(readDb, "customer summary")
+      eventProjector = PgcEventProjector(readDb, "customer summary")
 
       readDb.query("DELETE FROM customer_summary") { deleted ->
 

@@ -1,8 +1,8 @@
-package io.github.crabzilla.pgclient
+package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
 import io.github.crabzilla.example1.*
-import io.github.crabzilla.pgclient.PgClientUowRepo.Companion.SQL_INSERT_UOW
+import io.github.crabzilla.pgc.PgcUowRepo.Companion.SQL_INSERT_UOW
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -27,14 +27,14 @@ import java.util.*
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PgClientSnapshotRepoIT {
+class PgcSnapshotRepoIT {
 
   private lateinit var vertx: Vertx
   internal lateinit var writeDb: PgPool
   internal lateinit var repo: SnapshotRepository<Customer>
 
   companion object {
-    val aggregateName = CommandHandlers.CUSTOMER.name
+    const val aggregateName = "Customer"
     val customerId = CustomerId(1)
     val createCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer")
     val created = CustomerCreated(customerId, "customer")
@@ -82,7 +82,7 @@ class PgClientSnapshotRepoIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      repo = PgClientSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, Customer::class.java)
+      repo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, Customer::class.java)
 
       writeDb.query("delete from units_of_work") { deleteResult ->
         if (deleteResult.failed()) {

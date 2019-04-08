@@ -1,7 +1,10 @@
 package io.github.crabzilla.web.example1;
 
 import io.github.crabzilla.Snapshot;
-import io.github.crabzilla.example1.*;
+import io.github.crabzilla.example1.Customer;
+import io.github.crabzilla.example1.CustomerActivated;
+import io.github.crabzilla.example1.CustomerCreated;
+import io.github.crabzilla.example1.CustomerId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,7 +23,6 @@ class StateTransitionsTrackerTest {
 
   StateTransitionsTracker<Customer> tracker;
 
-  final PojoService service = new PojoService();
   final Customer customer = new Customer();
   final Snapshot<Customer> originalSnapshot = new Snapshot<>(customer, 0);
 
