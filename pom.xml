@@ -13,7 +13,7 @@
     <java.version>1.8</java.version>
 
     <!-- crabzilla core -->
-    <kotlin.version>1.3.21</kotlin.version>
+    <kotlin.version>1.3.20</kotlin.version>
     <jackson.version>2.9.8</jackson.version>
     <slf4j.version>1.7.25</slf4j.version>
 

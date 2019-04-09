@@ -2,7 +2,6 @@ package io.github.crabzilla
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -96,8 +95,8 @@ fun initVertx(vertx: Vertx) {
   Json.mapper.registerModule(ParameterNamesModule())
     .registerModule(Jdk8Module())
     .registerModule(JavaTimeModule())
-    .registerModule(KotlinModule())
-    .enable(SerializationFeature.INDENT_OUTPUT)
+    .registerModule(KotlinModule());
+//    .enable(SerializationFeature.INDENT_OUTPUT)
 
   //    Json.mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
 
