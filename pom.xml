@@ -19,7 +19,6 @@
 
     <!-- crabzilla vertx -->
     <vertx.version>3.7.0</vertx.version>
-    <dagger.version>2.16</dagger.version>
 
     <!-- tests-->
     <skipTests>false</skipTests>
@@ -290,13 +289,13 @@
               <sourceDirs>
                 <sourceDir>src/main/java</sourceDir>
               </sourceDirs>
-              <annotationProcessorPaths>
-                <annotationProcessorPath>
-                  <groupId>com.google.dagger</groupId>
-                  <artifactId>dagger-compiler</artifactId>
-                  <version>${dagger.version}</version>
-                </annotationProcessorPath>
-              </annotationProcessorPaths>
+<!--              <annotationProcessorPaths>-->
+<!--                <annotationProcessorPath>-->
+<!--                  <groupId>com.google.dagger</groupId>-->
+<!--                  <artifactId>dagger-compiler</artifactId>-->
+<!--                  <version>${dagger.version}</version>-->
+<!--                </annotationProcessorPath>-->
+<!--              </annotationProcessorPaths>-->
             </configuration>
           </execution>
           <execution>
@@ -315,13 +314,13 @@
               <sourceDirs>
                 <sourceDir>src/test/java</sourceDir>
               </sourceDirs>
-              <annotationProcessorPaths>
-                <annotationProcessorPath>
-                  <groupId>com.google.dagger</groupId>
-                  <artifactId>dagger-compiler</artifactId>
-                  <version>${dagger.version}</version>
-                </annotationProcessorPath>
-              </annotationProcessorPaths>
+<!--              <annotationProcessorPaths>-->
+<!--                <annotationProcessorPath>-->
+<!--                  <groupId>com.google.dagger</groupId>-->
+<!--                  <artifactId>dagger-compiler</artifactId>-->
+<!--                  <version>${dagger.version}</version>-->
+<!--                </annotationProcessorPath>-->
+<!--              </annotationProcessorPaths>-->
             </configuration>
           </execution>
           <execution>
