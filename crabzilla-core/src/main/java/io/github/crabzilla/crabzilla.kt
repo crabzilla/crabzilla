@@ -8,22 +8,21 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
-import java.io.Serializable
 import java.util.*
 import java.util.regex.Pattern
 
 // schema
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
-interface DomainEvent : Serializable
+interface DomainEvent
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
-interface EntityId : Serializable {
+interface EntityId {
   fun value(): Int
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
-interface Command : Serializable {
+interface Command {
   val commandId: UUID
   val targetId: EntityId
 }
@@ -31,21 +30,18 @@ interface Command : Serializable {
 typealias Version = Int
 
 data class UnitOfWork(val unitOfWorkId: UUID, val command: Command,
-                      val version: Version, val events: List<DomainEvent>) : Serializable {
+                      val version: Version, val events: List<DomainEvent>) {
   init {
     require(this.version >= 1) { "version must be >= 1" }
   }
-
   companion object {
     fun of(command: Command, events: List<DomainEvent>, resultingVersion: Version): UnitOfWork {
       return UnitOfWork(UUID.randomUUID(), command, resultingVersion, events)
     }
   }
-
   fun targetId(): EntityId {
     return command.targetId
   }
-
 }
 
 // runtime
@@ -95,7 +91,8 @@ fun initVertx(vertx: Vertx) {
   Json.mapper.registerModule(ParameterNamesModule())
     .registerModule(Jdk8Module())
     .registerModule(JavaTimeModule())
-    .registerModule(KotlinModule());
+    .registerModule(KotlinModule())
+
 //    .enable(SerializationFeature.INDENT_OUTPUT)
 
   //    Json.mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
