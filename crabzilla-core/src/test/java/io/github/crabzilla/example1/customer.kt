@@ -72,7 +72,7 @@ data class Customer(val customerId: CustomerId? = null,
 
 }
 
-val CUSTOMER_SEED_VALUE = Customer(null, null, null, null)
+val CUSTOMER_SEED_VALUE = Customer()
 
 val CUSTOMER_STATE_BUILDER = { event: DomainEvent, customer: Customer ->
   when (event) {
