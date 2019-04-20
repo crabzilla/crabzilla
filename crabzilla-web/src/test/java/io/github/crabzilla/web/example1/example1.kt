@@ -3,10 +3,7 @@ package io.github.crabzilla.web.example1
 import io.github.crabzilla.CommandHandlerVerticle
 import io.github.crabzilla.ProjectionData
 import io.github.crabzilla.SnapshotRepository
-import io.github.crabzilla.example1.CUSTOMER_CMD_HANDLER_FACTORY
-import io.github.crabzilla.example1.CUSTOMER_CMD_VALIDATOR
-import io.github.crabzilla.example1.CUSTOMER_SEED_VALUE
-import io.github.crabzilla.example1.Customer
+import io.github.crabzilla.example1.*
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.PgcUowJournal
 import io.github.crabzilla.pgc.example1.EXAMPLE1_PROJECTOR_HANDLER
@@ -21,8 +18,8 @@ const val EXAMPLE1_PROJECTION_ENDPOINT: String = "example1_projection_endpoint"
 
 fun customerCmdVerticle(uowJournal: PgcUowJournal, snapshotRepo: SnapshotRepository<Customer>) :
   CommandHandlerVerticle<Customer> {
-  return CommandHandlerVerticle("Customer", CUSTOMER_SEED_VALUE, CUSTOMER_CMD_HANDLER_FACTORY, CUSTOMER_CMD_VALIDATOR,
-    uowJournal, snapshotRepo)
+  return CommandHandlerVerticle("Customer", CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE, CUSTOMER_CMD_HANDLER_FACTORY,
+    CUSTOMER_CMD_VALIDATOR, uowJournal, snapshotRepo)
 }
 
 fun setupEventHandler(vertx: Vertx, readDb: PgPool) {

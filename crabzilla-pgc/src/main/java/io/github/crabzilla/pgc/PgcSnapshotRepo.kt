@@ -1,18 +1,26 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.*
+import io.github.crabzilla.DomainEvent
+import io.github.crabzilla.Entity
+import io.github.crabzilla.JsonMetadata.EVENTS_JSON_CONTENT
+import io.github.crabzilla.JsonMetadata.EVENT_NAME
+import io.github.crabzilla.Snapshot
+import io.github.crabzilla.SnapshotRepository
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
-import io.vertx.core.json.Json
+import io.vertx.core.json.JsonArray
+import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 
 class PgcSnapshotRepo<A : Entity>(private val pgPool: PgPool,
                                   private val seedValue: A,
                                   private val applyEventsFn: (DomainEvent, A) -> A,
-                                  private val clazz: Class<A>) : SnapshotRepository<A> {
+                                  private val writeModelFromJson: (JsonObject) -> A,
+                                  private val eventFromJson: (String, JsonObject) -> DomainEvent)
+                                                                          : SnapshotRepository<A> {
   companion object {
 
     internal val log = LoggerFactory.getLogger(PgcEventProjector::class.java)
@@ -58,7 +66,7 @@ class PgcSnapshotRepo<A : Entity>(private val pgPool: PgPool,
               cachedInstance = seedValue
               cachedVersion = 0
             } else {
-              cachedInstance = Json.decodeValue(pgRow.first().getJson("json_content").toString(), clazz)
+              cachedInstance = writeModelFromJson.invoke(JsonObject(pgRow.first().getJson("json_content").toString()))
               cachedVersion = pgRow.first().getInteger("version")
             }
 
@@ -99,11 +107,26 @@ class PgcSnapshotRepo<A : Entity>(private val pgPool: PgPool,
 
                 stream.handler { row ->
                   currentVersion = row.getInteger(1)
-                  val events = listOfEventsFromJson(row.getJson(0).value().toString())
-                  currentInstance = events.fold(currentInstance) {state, event -> applyEventsFn(event, state)}
-                  log.info("Events: $events \n version: $currentVersion \n instance $currentInstance")
-                }
+                  val eventsArray = JsonArray(row.getJson(0).value().toString())
+                  val jsonToEvent: (Int) -> DomainEvent = { index ->
+                    val jsonObject = eventsArray.getJsonObject(index)
+                    val eventName = jsonObject.getString(EVENT_NAME)
+                    val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
+                    if (eventName == null || eventJson ==  null) {
+                      throw IllegalStateException("invalid json for event $eventName : $eventJson")
+                    }
+                    eventFromJson.invoke(eventName, eventJson)
+                  }
 
+                  try {
+                    val events: List<DomainEvent> = List(eventsArray.size(), jsonToEvent)
+                    currentInstance = events.fold(currentInstance) {state, event -> applyEventsFn(event, state)}
+                    log.info("Events: $events \n version: $currentVersion \n instance $currentInstance")
+                  } catch (e: Exception) {
+                    throw e
+                  }
+
+                }
               }
             }
           }

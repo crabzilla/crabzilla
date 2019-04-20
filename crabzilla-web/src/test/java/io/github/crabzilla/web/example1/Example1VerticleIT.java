@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.ServerSocket;
 import java.util.Random;
-import java.util.UUID;
 
 import static io.github.crabzilla.web.WebKt.getCONTENT_TYPE_UNIT_OF_WORK_BODY;
 import static io.github.crabzilla.web.WebKt.getCONTENT_TYPE_UNIT_OF_WORK_ID;
@@ -79,14 +78,14 @@ class Example1VerticleIT {
   @DisplayName("When sending a valid CreateCommand expecting uow id")
   void a1(VertxTestContext tc) {
     int nextInt = random.nextInt();
-    CreateCustomer cmd = new CreateCustomer(UUID.randomUUID(), new CustomerId(nextInt), "customer#" + nextInt);
+    CreateCustomer cmd = new CreateCustomer(new CustomerId(nextInt), "customer#" + nextInt);
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.post(port, "0.0.0.0", "/customer/commands")
+    client.put(port, "0.0.0.0", "/customer/" + nextInt + "/commands/create")
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_SUCCESS)
       .expect(ResponsePredicate.contentType(getCONTENT_TYPE_UNIT_OF_WORK_ID()))
       .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())
-      .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
+      .sendJsonObject(jo, tc.succeeding(response -> tc.verify(() -> {
           assertThat(response.body().getString("unitOfWorkId")).isNotNull();
           tc.completeNow();
       }))
@@ -97,9 +96,9 @@ class Example1VerticleIT {
   @DisplayName("When sending a valid CreateCommand expecting uow body")
   void a2(VertxTestContext tc) {
     int nextInt = random.nextInt();
-    CreateCustomer cmd = new CreateCustomer(UUID.randomUUID(), new CustomerId(nextInt), "customer#" + nextInt);
+    CreateCustomer cmd = new CreateCustomer(new CustomerId(nextInt), "customer#" + nextInt);
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.post(port, "0.0.0.0", "/customer/commands")
+    client.put(port, "0.0.0.0", "/customer/" + nextInt + "/commands/create")
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_SUCCESS)
       .expect(ResponsePredicate.contentType(getCONTENT_TYPE_UNIT_OF_WORK_BODY()))
@@ -117,7 +116,7 @@ class Example1VerticleIT {
   @DisplayName("When sending an invalid CreateCommand")
   void a3(VertxTestContext tc) {
     JsonObject invalidCommand = new JsonObject();
-    client.post(port, "0.0.0.0", "/customer/commands")
+    client.put(port, "0.0.0.0", "/customer/1/commands/create")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())
@@ -131,9 +130,9 @@ class Example1VerticleIT {
   @DisplayName("When sending an invalid CreateCommand expecting uow id")
   void a4(VertxTestContext tc) {
     int nextInt = random.nextInt();
-    CreateCustomer cmd = new CreateCustomer(UUID.randomUUID(), new CustomerId(nextInt), "a bad name");
+    CreateCustomer cmd = new CreateCustomer(new CustomerId(nextInt), "a bad name");
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.post(port, "0.0.0.0", "/customer/commands")
+    client.put(port, "0.0.0.0", "/customer/" + nextInt + "/commands/create")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())
@@ -147,9 +146,9 @@ class Example1VerticleIT {
   @DisplayName("When sending an UnknownCommand")
   void a5(VertxTestContext tc) {
     int nextInt = random.nextInt();
-    UnknownCommand cmd = new UnknownCommand(UUID.randomUUID(), new CustomerId(nextInt));
+    UnknownCommand cmd = new UnknownCommand(new CustomerId(nextInt));
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.post(port, "0.0.0.0", "/customer/commands")
+    client.put(port, "0.0.0.0", "/customer/" + nextInt + "/commands/unknown")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())

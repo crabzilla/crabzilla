@@ -1,15 +1,22 @@
 package io.github.crabzilla
 
+import io.github.crabzilla.JsonMetadata.COMMAND_ID
+import io.github.crabzilla.JsonMetadata.COMMAND_JSON_CONTENT
+import io.github.crabzilla.JsonMetadata.COMMAND_NAME
+import io.github.crabzilla.JsonMetadata.COMMAND_TARGET_ID
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
-import io.vertx.core.eventbus.DeliveryOptions
+import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
+import java.util.*
 
-typealias CommandHandlerFactory<A> = (Command, Snapshot<A>, Handler<AsyncResult<UnitOfWork>>) -> CommandHandler<A>
+typealias CommandHandlerFactory<A> =
+  (Int, String, UUID, String, Command, Snapshot<A>, Handler<AsyncResult<UnitOfWork>>) -> CommandHandler<A>
 
 class CommandHandlerVerticle<A : Entity>(val name: String,
+                                         private val jsonToCommand: (String, JsonObject) -> Command,
                                          private val seedValue: A,
                                          private val cmdHandlerFactory: CommandHandlerFactory<A>,
                                          private val validatorFn: (Command) -> List<String>,
@@ -19,7 +26,6 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
 
   companion object {
     internal val log = LoggerFactory.getLogger(CommandHandlerVerticle::class.java)
-    internal val options = DeliveryOptions().setCodecName("CommandExecution")
   }
 
   @Throws(Exception::class)
@@ -27,19 +33,35 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
 
     log.info("starting command handler verticle for $name")
 
-    vertx.eventBus().consumer<Command>(cmdHandlerEndpoint(name), Handler { commandEvent ->
+    vertx.eventBus().consumer<JsonObject>(cmdHandlerEndpoint(name), Handler { commandEvent ->
 
-      val command = commandEvent.body()
+      val cmdJsonMetadata = commandEvent.body()
+      log.info("received a command $cmdJsonMetadata")
 
-      log.info("received a command $command")
-      val constraints = validatorFn.invoke(command)
+      val targetId: Int? = cmdJsonMetadata.getInteger(COMMAND_TARGET_ID)
 
-      if (!constraints.isEmpty()) {
-        commandEvent.fail(400, constraints.toString())
+      if (targetId == null) {
+        commandEvent.fail(400, "Put command handler must receive a COMMAND_TARGET_ID")
         return@Handler
       }
 
-      val targetId = command.targetId.value()
+      val commandId = UUID.fromString(cmdJsonMetadata.getString(COMMAND_ID))
+      val commandName = cmdJsonMetadata.getString(COMMAND_NAME)
+      val commandJson = cmdJsonMetadata.getJsonObject(COMMAND_JSON_CONTENT)
+
+      val command: Command? = try { jsonToCommand.invoke(commandName, commandJson) } catch (e: Exception) { null }
+
+      if (command == null) {
+        commandEvent.fail(400, "Command cannot be deserialized")
+        return@Handler
+      }
+
+      val constraints = validatorFn.invoke(command)
+
+      if (constraints.isNotEmpty()) {
+        commandEvent.fail(400, constraints.toString())
+        return@Handler
+      }
 
       val resultFuture : Future<Pair<UnitOfWork, Int>> = Future.future()
 
@@ -52,7 +74,8 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
       }
 
       val snapshotFuture: Future<Snapshot<A>> = Future.future()
-      snapshotRepo.retrieve(targetId, name, snapshotFuture.completer())
+
+      snapshotRepo.retrieve(targetId, name, snapshotFuture)
 
       var resultingUow : UnitOfWork? = null
 
@@ -61,7 +84,8 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
         .compose { snapshot ->
           val commandHandlerFuture = Future.future<UnitOfWork>()
           val cachedSnapshot = snapshot ?: Snapshot(seedValue, 0)
-          val cmdHandler = cmdHandlerFactory.invoke(command, cachedSnapshot, commandHandlerFuture.completer())
+          val cmdHandler =
+            cmdHandlerFactory.invoke(targetId, name, commandId, commandName, command, cachedSnapshot, commandHandlerFuture)
           cmdHandler.handleCommand()
           commandHandlerFuture
         }
@@ -69,7 +93,7 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
         .compose { unitOfWork ->
           resultingUow = unitOfWork
           val appendFuture = Future.future<Int>()
-          eventJournal.append(unitOfWork, name, appendFuture.completer())
+          eventJournal.append(unitOfWork, appendFuture.completer())
           appendFuture
         }
 
@@ -84,24 +108,27 @@ class CommandHandlerVerticle<A : Entity>(val name: String,
 
 }
 
-abstract class CommandHandler<E: Entity>(val command: Command, val snapshot: Snapshot<E>,
+abstract class CommandHandler<E: Entity>(val targetId: Int,
+                                         val targetName: String,
+                                         val commandId: UUID,
+                                         val commandName: String,
+                                         val command: Command,
+                                         val snapshot: Snapshot<E>,
                                          val stateFn: (DomainEvent, E) -> E,
                                          uowHandler: Handler<AsyncResult<UnitOfWork>>) {
-
   val uowFuture: Future<UnitOfWork> = Future.future()
   val eventsFuture: Future<List<DomainEvent>> = Future.future()
-
   init {
     uowFuture.setHandler(uowHandler)
     eventsFuture.setHandler { event ->
       if (event.succeeded()) {
-        uowFuture.complete(UnitOfWork.of(command, event.result(), snapshot.version + 1))
+        uowFuture.complete(
+          UnitOfWork.of(targetId, targetName, commandId, commandName, command, event.result(), snapshot.version + 1))
       } else {
         uowFuture.fail(event.cause())
       }
     }
   }
-
   abstract fun handleCommand()
 }
 
