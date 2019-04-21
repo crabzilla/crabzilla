@@ -24,9 +24,7 @@
       <artifactId>vertx-web</artifactId>
     </dependency>
 
-
     <!-- test -->
-
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>

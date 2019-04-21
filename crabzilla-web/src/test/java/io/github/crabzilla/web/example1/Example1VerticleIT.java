@@ -83,7 +83,7 @@ class Example1VerticleIT {
     client.put(port, "0.0.0.0", "/customer/" + nextInt + "/commands/create")
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_SUCCESS)
-      .expect(ResponsePredicate.contentType(getCONTENT_TYPE_UNIT_OF_WORK_ID()))
+      .expect(ResponsePredicate.JSON)
       .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())
       .sendJsonObject(jo, tc.succeeding(response -> tc.verify(() -> {
           assertThat(response.body().getString("unitOfWorkId")).isNotNull();
@@ -101,7 +101,7 @@ class Example1VerticleIT {
     client.put(port, "0.0.0.0", "/customer/" + nextInt + "/commands/create")
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_SUCCESS)
-      .expect(ResponsePredicate.contentType(getCONTENT_TYPE_UNIT_OF_WORK_BODY()))
+      .expect(ResponsePredicate.JSON)
       .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_BODY())
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
           assertThat(response.body().getString("unitOfWorkId")).isNotNull();

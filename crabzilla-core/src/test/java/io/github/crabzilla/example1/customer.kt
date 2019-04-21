@@ -182,7 +182,7 @@ class CustomerCmdHandler(targetId: Int,
             println("  events $v")
           }, eventsFuture)
       }
-      else -> uowFuture.fail("${commandName} is a unknown command")
+      else -> uowFuture.fail("$commandName is a unknown command")
     }
   }
 }
@@ -194,6 +194,6 @@ enum class CustomerCommandEnum {
   }
 }
 
-// TODO considerar
-//  memoized methods (devolvendo functions em vez de valores)
-//  Try monad (wrap function execution)
+// TODO
+//  Memoized methods (devolvendo functions em vez de valores)
+//  Try or either  (wrap function execution)
