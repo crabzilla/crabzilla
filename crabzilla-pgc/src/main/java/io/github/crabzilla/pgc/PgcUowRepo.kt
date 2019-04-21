@@ -1,16 +1,21 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
+import io.github.crabzilla.JsonMetadata.EVENTS_JSON_CONTENT
+import io.github.crabzilla.JsonMetadata.EVENT_NAME
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
-import io.vertx.core.json.Json
+import io.vertx.core.json.JsonArray
+import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 import java.util.*
 
-open class PgcUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
+open class PgcUowRepo(private val pgPool: PgPool,
+                      private val cmdFromJson: (String, JsonObject) -> Command,
+                      private val eventFromJson: (String, JsonObject) -> DomainEvent) : UnitOfWorkRepository {
 
   companion object {
 
@@ -18,12 +23,17 @@ open class PgcUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
     private const val UOW_ID = "uow_id"
     private const val UOW_EVENTS = "uow_events"
+    private const val CMD_ID = "cmd_id"
     private const val CMD_DATA = "cmd_data"
+    private const val CMD_NAME = "cmd_name"
+    private const val TARGET_ID = "ar_id"
+    private const val TARGET_NAME = "ar_name"
     private const val VERSION = "version"
 
     const val SQL_SELECT_UOW_BY_CMD_ID = "select * from units_of_work where cmd_id = $1 "
-    const val SQL_SELECT_UOW_BY_UOW_ID = "select * from units_of_work where uow_id = $1 "
-    const val SQL_SELECT_AFTER_VERSION = "select uow_events, version from units_of_work " +
+    const val SQL_SELECT_UOW_BY_UOW_ID = "select $UOW_ID,$UOW_EVENTS,$CMD_ID,$CMD_DATA,$CMD_NAME,$TARGET_ID," +
+                                              "$TARGET_NAME, $VERSION from units_of_work where uow_id = $1 "
+    const val SQL_SELECT_AFTER_VERSION =  "select $UOW_EVENTS,$VERSION from units_of_work " +
                                           "where ar_id = $1 and ar_name = $2 and version > $3 order by version "
   }
 
@@ -40,7 +50,7 @@ open class PgcUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
 
     pgPool.preparedQuery(query, params) { ar ->
       if (ar.failed()) {
-        log.error("get", ar.cause()); future.fail(ar.cause()); return@preparedQuery
+        future.fail(ar.cause()); return@preparedQuery
       }
 
       val rows = ar.result()
@@ -48,10 +58,31 @@ open class PgcUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
         future.complete(null); return@preparedQuery
       }
       val row = rows.first()
-      val command = Json.decodeValue(row.getJson(CMD_DATA).value().toString(), Command::class.java)
-      val events = listOfEventsFromJson(row.getJson(UOW_EVENTS).value().toString())
-      val uow = UnitOfWork(row.getUUID(UOW_ID), command, row.getInteger(VERSION)!!, events)
-      future.complete(uow)
+      val commandName = row.getString(CMD_NAME)
+      val commandAsJson = row.getJson(CMD_DATA).value().toString()
+      val command = try { cmdFromJson.invoke(commandName, JsonObject(commandAsJson)) } catch (e: Exception) { null }
+
+      if (command == null) {
+        future.fail("error when getting command $commandName from json "); return@preparedQuery
+      }
+
+      val jsonArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
+
+      val jsonToEventPair: (Int) -> DomainEvent = { index ->
+        val jsonObject = jsonArray.getJsonObject(index)
+        val eventName = jsonObject.getString(EVENT_NAME)
+        val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
+        val domainEvent = eventFromJson.invoke(eventName, eventJson)
+        domainEvent
+      }
+      try {
+        val events: List<DomainEvent> = List(jsonArray.size(), jsonToEventPair)
+        val uow = UnitOfWork(row.getUUID(UOW_ID), row.getString(TARGET_NAME), row.getInteger(TARGET_ID),
+          row.getUUID(CMD_ID), row.getString(CMD_NAME), command, row.getInteger(VERSION)!!, events)
+        future.complete(uow)
+      } catch (e:  Exception) {
+        future.fail(e)
+      }
     }
   }
 
@@ -80,7 +111,21 @@ open class PgcUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
           val list = ArrayList<SnapshotData>()
           // Use the stream
           stream.handler { row ->
-            val events = listOfEventsFromJson(row.getJson(0).value().toString())
+            val eventsArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
+            val jsonToEventPair: (Int) -> DomainEvent = { index ->
+              val jsonObject = eventsArray.getJsonObject(index)
+              val eventName = jsonObject.getString(EVENT_NAME)
+              val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
+              eventFromJson.invoke(eventName, eventJson)
+            }
+
+            val events: List<DomainEvent>? =
+              try { List(eventsArray.size(), jsonToEventPair)} catch (e: Exception) { null }
+
+            if (events == null) {
+              throw IllegalStateException("when instantiating event from json")
+            }
+
             val snapshotData = SnapshotData(row.getInteger(1)!!, events)
             list.add(snapshotData)
           }
@@ -128,7 +173,14 @@ open class PgcUowRepo(private val pgPool: PgPool) : UnitOfWorkRepository {
         val uowId = row.getUUID(0)
         val uowSeq = row.getInteger(1)
         val targetId = row.getInteger(2)
-        val events = listOfEventsFromJson(row.getJson(3).toString())
+        val eventsArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
+        val jsonToEventPair: (Int) -> DomainEvent = { index ->
+          val jsonObject = eventsArray.getJsonObject(index)
+          val eventName = jsonObject.getString(EVENT_NAME)
+          val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
+          eventFromJson.invoke(eventName, eventJson)
+        }
+        val events: List<DomainEvent> = List(eventsArray.size(), jsonToEventPair)
         val projectionData = ProjectionData(uowId, uowSeq, targetId, events)
         list.add(projectionData)
       }

@@ -1,51 +1,45 @@
 package io.github.crabzilla
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
+import io.github.crabzilla.JsonMetadata.EVENTS_JSON_CONTENT
+import io.github.crabzilla.JsonMetadata.EVENT_NAME
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
-import java.io.Serializable
+import io.vertx.core.json.JsonArray
+import io.vertx.core.json.JsonObject
 import java.util.*
 import java.util.regex.Pattern
 
 // schema
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
-interface DomainEvent : Serializable
+interface DomainEvent
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
-interface EntityId : Serializable {
-  fun value(): Int
-}
-
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
-interface Command : Serializable {
-  val commandId: UUID
-  val targetId: EntityId
-}
+interface Command
 
 typealias Version = Int
 
-data class UnitOfWork(val unitOfWorkId: UUID, val command: Command,
-                      val version: Version, val events: List<DomainEvent>) : Serializable {
-  init {
-    require(this.version >= 1) { "version must be >= 1" }
-  }
+data class UnitOfWork(val unitOfWorkId: UUID,
+                      val targetName: String,
+                      val targetId: Int,
+                      val commandId: UUID,
+                      val commandName: String,
+                      val command: Command,
+                      val version: Version,
+                      val events: List<DomainEvent>) {
+
+  init { require(this.version >= 1) { "version must be >= 1" } }
 
   companion object {
-    fun of(command: Command, events: List<DomainEvent>, resultingVersion: Version): UnitOfWork {
-      return UnitOfWork(UUID.randomUUID(), command, resultingVersion, events)
+
+    fun of(targetId: Int, targetName: String, commandId: UUID, commandName: String, command: Command,
+           events: List<DomainEvent>, resultingVersion: Version): UnitOfWork {
+
+      return UnitOfWork(UUID.randomUUID(), targetName, targetId, commandId, commandName, command, resultingVersion,
+              events)
     }
   }
-
-  fun targetId(): EntityId {
-    return command.targetId
-  }
-
 }
 
 // runtime
@@ -61,53 +55,31 @@ data class Snapshot<A : Entity>(val instance: A, val version: Version)
 data class SnapshotData(val version: Version, val events: List<DomainEvent>)
 
 data class ProjectionData(val uowId: UUID, val uowSequence: Int, val targetId: Int, val events: List<DomainEvent>) {
+
   companion object {
+
     fun fromUnitOfWork(uowSequence: Int, uow: UnitOfWork) : ProjectionData {
-      return ProjectionData(UUID.randomUUID(), uowSequence, uow.targetId().value(), uow.events)
+
+      return ProjectionData(UUID.randomUUID(), uowSequence, uow.targetId, uow.events)
     }
   }
-}
-
-// json serialization functions
-
-val eventsListType = object : TypeReference<List<DomainEvent>>() {}
-
-fun listOfEventsFromJson(eventsAsJson: String): List<DomainEvent> {
-  return Json.mapper.readerFor(eventsListType).readValue(eventsAsJson)
-}
-
-fun listOfEventsToJson(events: List<DomainEvent>): String {
-  return Json.mapper.writerFor(eventsListType).writeValueAsString(events)
-}
-
-fun commandFromJson(command: String): Command {
-  return Json.mapper.readerFor(Command::class.java).readValue(command)
-}
-
-fun commandToJson(command: Command): String {
-  return Json.mapper.writerFor(Command::class.java).writeValueAsString(command)
 }
 
 // vertx
 
 fun initVertx(vertx: Vertx) {
 
-  Json.mapper.registerModule(ParameterNamesModule())
+  Json.mapper
     .registerModule(Jdk8Module())
-    .registerModule(JavaTimeModule())
-    .registerModule(KotlinModule());
-//    .enable(SerializationFeature.INDENT_OUTPUT)
-
-  //    Json.mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
+//    .registerModule(JavaTimeModule())
+    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
   vertx.eventBus().registerDefaultCodec(ProjectionData::class.java,
     JacksonGenericCodec(Json.mapper, ProjectionData::class.java))
 
   vertx.eventBus().registerDefaultCodec(Pair::class.java,
     JacksonGenericCodec(Json.mapper, Pair::class.java))
-
-  vertx.eventBus().registerDefaultCodec(EntityId::class.java,
-    JacksonGenericCodec(Json.mapper, EntityId::class.java))
 
   vertx.eventBus().registerDefaultCodec(Command::class.java,
     JacksonGenericCodec(Json.mapper, Command::class.java))
@@ -137,12 +109,23 @@ fun projectorEndpoint(bcName: String): String {
   return camelCaseToSpinalCase(bcName) + EVENTS_HANDLER
 }
 
-private fun camelCaseToSpinalCase(start: String): String {
-  val m = Pattern.compile("(?<=[a-z])[A-Z]").matcher(start)
+private fun camelCaseToSpinalCase(text: String): String {
+  val m = Pattern.compile("(?<=[a-z])[A-Z]").matcher(text)
   val sb = StringBuffer()
-  while (m.find()) {
-    m.appendReplacement(sb, "-" + m.group())
-  }
+  while (m.find()) { m.appendReplacement(sb, "-" + m.group()) }
   m.appendTail(sb)
   return sb.toString().toLowerCase()
 }
+
+// extensions
+
+fun List<DomainEvent>.toJsonArray(eventToJson: (DomainEvent) -> String): JsonArray {
+  val eventsJsonArray = JsonArray()
+  this.map { event -> Pair(event.javaClass.simpleName, event) }
+    .map { pair -> Pair(pair.first, eventToJson.invoke(pair.second)) }
+//    .map { pair -> println(pair.first); println(pair.second); pair}
+    .map { pair -> JsonObject().put(EVENT_NAME, pair.first).put(EVENTS_JSON_CONTENT, JsonObject(pair.second))}
+    .forEach { jo -> eventsJsonArray.add(jo) }
+  return eventsJsonArray
+}
+

@@ -4,19 +4,16 @@ import io.github.crabzilla.*
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
+import io.vertx.core.json.Json
+import io.vertx.core.json.JsonObject
 import java.time.Instant
 import java.util.*
 
-// TODO replace with inline classes
-data class CustomerId(val id: Int) : EntityId {
-  override fun value(): Int {
-    return id
-  }
-}
+data class CustomerId(val value: Int)
 
 // events
 
-data class CustomerCreated(val id: CustomerId, val name: String) : DomainEvent
+data class CustomerCreated(val customerId: CustomerId, val name: String) : DomainEvent
 
 data class CustomerActivated(val reason: String, val _when: Instant) : DomainEvent
 
@@ -24,21 +21,17 @@ data class CustomerDeactivated(val reason: String, val _when: Instant) : DomainE
 
 // commands
 
-data class CreateCustomer(override val commandId: UUID, override val targetId: CustomerId, val name: String) : Command
+data class CreateCustomer(val customerId: CustomerId, val name: String) : Command
 
-data class ActivateCustomer(override val commandId: UUID, override val targetId: CustomerId, val reason: String)
-  : Command
+data class ActivateCustomer(val customerId: CustomerId, val reason: String) : Command
 
-data class DeactivateCustomer(override val commandId: UUID, override val targetId: CustomerId, val reason: String)
-  : Command
+data class DeactivateCustomer(val customerId: CustomerId, val reason: String) : Command
 
-data class CreateActivateCustomer(override val commandId: UUID, override val targetId: CustomerId, val name: String,
-                                  val reason: String) : Command
+data class CreateActivateCustomer(val customerId: CustomerId, val name: String, val reason: String) : Command
 
 // just for test
 
-data class
-UnknownCommand(override val commandId: UUID, override val targetId: CustomerId) : Command
+data class UnknownCommand(val id: CustomerId) : Command
 
 // aggregate root
 
@@ -74,15 +67,61 @@ data class Customer(val customerId: CustomerId? = null,
 
 val CUSTOMER_SEED_VALUE = Customer()
 
+val CUSTOMER_FROM_JSON = { json: JsonObject ->
+  Customer(CustomerId(json.getInteger("customerId")), json.getString("name"), json.getBoolean("isActive"),
+    json.getString("reason"))
+}
+
 val CUSTOMER_STATE_BUILDER = { event: DomainEvent, customer: Customer ->
   when (event) {
-    is CustomerCreated -> customer.copy(customerId = event.id, name = event.name, isActive = false)
+    is CustomerCreated -> customer.copy(customerId = event.customerId, name = event.name, isActive = false)
     is CustomerActivated -> customer.copy(isActive = true, reason = event.reason)
     is CustomerDeactivated -> customer.copy(isActive = false, reason = event.reason)
     else -> customer
   }
 }
 
+val CUSTOMER_EVENT_FROM_JSON = { eventName: String, jo: JsonObject ->
+  when (eventName) {
+    "CustomerCreated" -> CustomerCreated(CustomerId(jo.getJsonObject("customerId").getInteger("value")),
+      jo.getString("name"))
+    "CustomerActivated" -> CustomerActivated(jo.getString("reason"), jo.getInstant("_when"))
+    "CustomerDeactivated" -> CustomerDeactivated(jo.getString("reason"), jo.getInstant("_when"))
+    else -> throw java.lang.IllegalArgumentException("$eventName is unknown")
+  }
+}
+
+val CUSTOMER_CMD_FROM_JSON = { cmdName: String, jo: JsonObject ->
+  when (cmdName) {
+    "create" -> CreateCustomer(CustomerId(jo.getJsonObject("customerId").getInteger("value")), jo.getString("name"))
+    "activate" -> ActivateCustomer(CustomerId(jo.getInteger("customerId")), jo.getString("reason"))
+    "deactivate" -> DeactivateCustomer(CustomerId(jo.getInteger("customerId")), jo.getString("reason"))
+    "create-activate" -> CreateActivateCustomer(CustomerId(jo.getInteger("customerId")), jo.getString("name"),
+      jo.getString("reason"))
+    else -> throw IllegalArgumentException("$cmdName is unknown")
+  }
+}
+
+val CUSTOMER_EVENT_TO_JSON = { event: DomainEvent ->
+  when (event) {
+    is CustomerCreated -> Json.encode(event)
+    is CustomerActivated -> Json.encode(event)
+    is CustomerDeactivated -> Json.encode(event)
+    else -> throw java.lang.IllegalArgumentException("$event is unknown")
+  }
+}
+
+val CUSTOMER_CMD_TO_JSON = { cmd: Command ->
+  when (cmd) {
+    is CreateCustomer -> Json.encode(cmd)
+    is ActivateCustomer -> Json.encode(cmd)
+    is DeactivateCustomer -> Json.encode(cmd)
+    is CreateActivateCustomer -> Json.encode(cmd)
+    else -> throw IllegalArgumentException("$cmd is unknown")
+  }
+}
+
+// https://github.com/konform-kt/konform
 val CUSTOMER_CMD_VALIDATOR = { command: Command ->
   when (command) {
     is CreateCustomer ->
@@ -91,29 +130,38 @@ val CUSTOMER_CMD_VALIDATOR = { command: Command ->
   }
 }
 
-val CUSTOMER_CMD_HANDLER_FACTORY = { command: Command,
-                                     snapshot: Snapshot<Customer>,
-                                     uowHandler: Handler<AsyncResult<UnitOfWork>> ->
-  CustomerCmdHandler(command, snapshot, CUSTOMER_STATE_BUILDER, uowHandler)
+val CUSTOMER_CMD_HANDLER_FACTORY: CommandHandlerFactory<Customer> = { targetId: Int,
+                                                                      targetName: String,
+                                                                      commandId: UUID,
+                                                                      commandName: String,
+                                                                      command: Command,
+                                                                      snapshot: Snapshot<Customer>,
+                                                                      uowHandler: Handler<AsyncResult<UnitOfWork>> ->
+  CustomerCmdHandler(targetId, targetName, commandId, commandName, command, snapshot, CUSTOMER_STATE_BUILDER, uowHandler)
 }
 
-class CustomerCmdHandler(command: Command, snapshot: Snapshot<Customer>,
+class CustomerCmdHandler(targetId: Int,
+                         targetName: String,
+                         commandId: UUID,
+                         commandName: String,
+                         command: Command,
+                         snapshot: Snapshot<Customer>,
                          stateFn: (DomainEvent, Customer) -> Customer,
                          uowHandler: Handler<AsyncResult<UnitOfWork>>) :
-  CommandHandler<Customer>(command, snapshot, stateFn, uowHandler) {
+  CommandHandler<Customer>(targetId, targetName, commandId, commandName, command, snapshot, stateFn, uowHandler) {
 
   override fun handleCommand() {
 
     val customer = snapshot.instance
 
     when (command) {
-      is CreateCustomer -> customer.create(command.targetId, command.name, eventsFuture.completer())
+      is CreateCustomer -> customer.create(command.customerId, command.name, eventsFuture.completer())
       is ActivateCustomer -> eventsFuture.complete(customer.activate(command.reason))
       is DeactivateCustomer -> customer.deactivate(command.reason, eventsFuture.completer())
       is CreateActivateCustomer -> {
         val createFuture: Future<List<DomainEvent>> = Future.future()
         val tracker = StateTransitionsTracker(snapshot, stateFn)
-        tracker.currentState.create(command.targetId, command.name, createFuture)
+        tracker.currentState.create(command.customerId, command.name, createFuture)
         createFuture
           .compose { v ->
             println("after create")
@@ -134,7 +182,18 @@ class CustomerCmdHandler(command: Command, snapshot: Snapshot<Customer>,
             println("  events $v")
           }, eventsFuture)
       }
-      else -> uowFuture.fail("${command.javaClass.simpleName} is a unknown command")
+      else -> uowFuture.fail("$commandName is a unknown command")
     }
   }
 }
+
+enum class CustomerCommandEnum {
+  CREATE, ACTIVATE, DEACTIVATE, CREATE_ACTIVATE;
+  fun asPathParam() : String {
+    return this.name.toLowerCase().replace('_', '-')
+  }
+}
+
+// TODO
+//  Memoized methods (devolvendo functions em vez de valores)
+//  Try or either  (wrap function execution)
