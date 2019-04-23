@@ -40,9 +40,13 @@ abstract class CommandHandler<E: Entity>(val entityId: Int,
   abstract fun handleCommand()
 }
 
-class DbConcurrencyException(s: String) : RuntimeException(s)
+class CommandHandlerEndpoint(val entityName : String) {
+  fun endpoint() : String {
+    return "$entityName-command-handler"
+  }
+}
 
-class CommandHandlerVerticle<E : Entity>(val name: String,
+class CommandHandlerVerticle<E : Entity>(val endpoint: CommandHandlerEndpoint,
                                          private val jsonToCommand: (String, JsonObject) -> Command,
                                          private val seedValue: E,
                                          private val cmdHandlerFactory: CommandHandlerFactory<E>,
@@ -58,9 +62,9 @@ class CommandHandlerVerticle<E : Entity>(val name: String,
   @Throws(Exception::class)
   override fun start() {
 
-    log.info("starting command handler verticle for endpoint: $name")
+    log.info("starting command handler verticle for endpoint: $endpoint")
 
-    vertx.eventBus().consumer<JsonObject>(name, Handler { commandEvent ->
+    vertx.eventBus().consumer<JsonObject>(endpoint.endpoint(), Handler { commandEvent ->
 
       val cmdJsonMetadata = commandEvent.body()
       log.info("received a command $cmdJsonMetadata")
@@ -102,7 +106,7 @@ class CommandHandlerVerticle<E : Entity>(val name: String,
 
       val snapshotFuture: Future<Snapshot<E>> = Future.future()
 
-      snapshotRepo.retrieve(targetId, name, snapshotFuture)
+      snapshotRepo.retrieve(targetId, endpoint.endpoint(), snapshotFuture)
 
       var resultingUow : UnitOfWork? = null
 
@@ -111,8 +115,8 @@ class CommandHandlerVerticle<E : Entity>(val name: String,
         .compose { snapshot ->
           val commandHandlerFuture = Future.future<UnitOfWork>()
           val cachedSnapshot = snapshot ?: Snapshot(seedValue, 0)
-          val cmdHandler = cmdHandlerFactory.invoke(targetId, name, commandId, commandName, command, cachedSnapshot,
-            commandHandlerFuture)
+          val cmdHandler = cmdHandlerFactory.invoke(targetId, endpoint.entityName, commandId, commandName, command,
+            cachedSnapshot, commandHandlerFuture)
           cmdHandler.handleCommand()
           commandHandlerFuture
         }

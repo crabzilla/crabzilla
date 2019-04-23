@@ -19,7 +19,6 @@ a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch 
 
 * [example1](https://github.com/crabzilla/crabzilla-examples)
 * [kotlin-example1-manual **deprecated**](https://crabzilla.github.io/crabzilla/docs/kotlin-example1-manual.html)
-* [Architecture decision records **deprecated**](https://github.com/crabzilla/crabzilla/tree/master/doc/architecture/decisions)
 
 ### Requirements
 

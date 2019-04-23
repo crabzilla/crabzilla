@@ -39,7 +39,7 @@ class CommandHandlerVerticleIT {
   private val options = DeliveryOptions()
 
   companion object {
-    const val entityName = "customer"
+    val handlerEndpoint = CommandHandlerEndpoint("customer")
     val customerId = CustomerId(1)
     val createCmd = CreateCustomer(customerId, "customer")
     val created = CustomerCreated(customerId, "customer")
@@ -88,7 +88,7 @@ class CommandHandlerVerticleIT {
       val snapshotRepo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER,
         CUSTOMER_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
 
-      verticle = CommandHandlerVerticle(entityName, CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE,
+      verticle = CommandHandlerVerticle(handlerEndpoint, CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE,
                         CUSTOMER_CMD_HANDLER_FACTORY, CUSTOMER_CMD_VALIDATOR, journal, snapshotRepo)
 
       writeDb.query("delete from units_of_work") { deleteResult ->
@@ -123,7 +123,7 @@ class CommandHandlerVerticleIT {
     jo.put(JsonMetadata.COMMAND_JSON_CONTENT, JsonObject(CUSTOMER_CMD_TO_JSON(createCustomerCmd)))
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(entityName, jo, options) { asyncResult ->
+      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), jo, options) { asyncResult ->
 
       if (asyncResult.failed()) {
         tc.failNow(asyncResult.cause())
@@ -154,7 +154,7 @@ class CommandHandlerVerticleIT {
     jo.put(JsonMetadata.COMMAND_JSON_CONTENT, JsonObject(CUSTOMER_CMD_TO_JSON(createCustomerCmd)))
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(entityName, jo, options) { asyncResult ->
+      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), jo, options) { asyncResult ->
 
       assertThat(asyncResult.succeeded()).isFalse()
 
@@ -181,7 +181,7 @@ class CommandHandlerVerticleIT {
     jo.put(JsonMetadata.COMMAND_JSON_CONTENT, JsonObject())
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(entityName, jo, options) { asyncResult ->
+      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), jo, options) { asyncResult ->
         tc.verify {
           assertThat(asyncResult.succeeded()).isFalse()
           val cause = asyncResult.cause() as ReplyException

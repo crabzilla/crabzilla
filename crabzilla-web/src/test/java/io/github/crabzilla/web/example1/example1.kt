@@ -1,5 +1,6 @@
 package io.github.crabzilla.web.example1
 
+import io.github.crabzilla.CommandHandlerEndpoint
 import io.github.crabzilla.CommandHandlerVerticle
 import io.github.crabzilla.ProjectionData
 import io.github.crabzilla.SnapshotRepository
@@ -25,8 +26,8 @@ val EXAMPLE1_RESOURCE_TO_ENTITY = { resourceName: String ->
 
 fun customerCmdVerticle(uowJournal: PgcUowJournal, snapshotRepo: SnapshotRepository<Customer>) :
   CommandHandlerVerticle<Customer> {
-  return CommandHandlerVerticle("customer", CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE, CUSTOMER_CMD_HANDLER_FACTORY,
-    CUSTOMER_CMD_VALIDATOR, uowJournal, snapshotRepo)
+  return CommandHandlerVerticle(CommandHandlerEndpoint("customer"), CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE,
+    CUSTOMER_CMD_HANDLER_FACTORY, CUSTOMER_CMD_VALIDATOR, uowJournal, snapshotRepo)
 }
 
 fun setupEventHandler(vertx: Vertx, readDb: PgPool) {

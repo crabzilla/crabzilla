@@ -1,5 +1,6 @@
 package io.github.crabzilla.web
 
+import io.github.crabzilla.CommandHandlerEndpoint
 import io.github.crabzilla.JsonMetadata.COMMAND_ID
 import io.github.crabzilla.JsonMetadata.COMMAND_JSON_CONTENT
 import io.github.crabzilla.JsonMetadata.COMMAND_NAME
@@ -18,7 +19,6 @@ import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.RoutingContext
 import org.slf4j.LoggerFactory
 import java.util.*
-import io.github.crabzilla.JsonMetadata as JsonMetadata1
 
 const val CONTENT_TYPE_UNIT_OF_WORK_ID = "application/vnd.crabzilla.unit_of_work_id+json"
 const val CONTENT_TYPE_UNIT_OF_WORK_BODY = "application/vnd.crabzilla.unit_of_work+json"
@@ -52,8 +52,10 @@ fun postCommandHandler(routingCtx: RoutingContext, resourceToEntity: (String) ->
 
   log.info("posting a command to ${jo.encodePrettily()}")
 
+  val handlerEndpoint = CommandHandlerEndpoint(jo.getString(COMMAND_ENTITY_NAME)).endpoint()
+
   routingCtx.vertx().eventBus()
-    .send<Pair<UnitOfWork, Int>>(jo.getString(COMMAND_ENTITY_NAME), jo) { response ->
+    .send<Pair<UnitOfWork, Int>>(handlerEndpoint, jo) { response ->
 
     if (!response.succeeded()) {
       val cause = response.cause() as ReplyException
