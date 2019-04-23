@@ -20,15 +20,13 @@ import org.slf4j.LoggerFactory
 import java.util.*
 import io.github.crabzilla.JsonMetadata as JsonMetadata1
 
-val CONTENT_TYPE_UNIT_OF_WORK_ID = "application/vnd.crabzilla.unit_of_work_id+json"
-val CONTENT_TYPE_UNIT_OF_WORK_BODY = "application/vnd.crabzilla.unit_of_work+json"
+const val CONTENT_TYPE_UNIT_OF_WORK_ID = "application/vnd.crabzilla.unit_of_work_id+json"
+const val CONTENT_TYPE_UNIT_OF_WORK_BODY = "application/vnd.crabzilla.unit_of_work+json"
 
 private val log = LoggerFactory.getLogger("crabzilla.web")
 
-fun postCommandHandler(routingCtx: RoutingContext, resourceToEntity: (String) -> String,
-                       uowRepository: UnitOfWorkRepository, projectionEndpoint: String) {
+fun postCommandHandler(routingCtx: RoutingContext, resourceToEntity: (String) -> String, projectionEndpoint: String) {
 
-  val uowFuture = Future.future<UnitOfWork>()
   val httpResp = routingCtx.response()
 
   val commandJson = routingCtx.bodyAsJson
@@ -43,70 +41,44 @@ fun postCommandHandler(routingCtx: RoutingContext, resourceToEntity: (String) ->
 
   log.info("command=:\n${commandJson.encode()}")
 
-  val cmdID = UUID.randomUUID().toString()
-
   val jo = JsonObject()
+  jo.put(COMMAND_ID, UUID.randomUUID().toString())
   jo.put(COMMAND_ENTITY_NAME, resourceToEntity(routingCtx.pathParam(COMMAND_ENTITY_RESOURCE)))
   jo.put(COMMAND_ENTITY_ID, Integer(routingCtx.pathParam(COMMAND_ENTITY_ID)))
-  jo.put(COMMAND_ID, cmdID)
   jo.put(COMMAND_NAME, routingCtx.pathParam(COMMAND_NAME))
   jo.put(COMMAND_JSON_CONTENT, commandJson)
 
   httpResp.headers().add("Content-Type", "application/json")
 
-  uowRepository.getUowByCmdId(UUID.fromString(cmdID), uowFuture)
+  log.info("posting a command to ${jo.encodePrettily()}")
 
-  uowFuture.setHandler { uowResult ->
-    if (uowResult.failed()) {
-      httpResp.setStatusCode(500).setStatusMessage("server error").end()
-      return@setHandler
+  routingCtx.vertx().eventBus()
+    .send<Pair<UnitOfWork, Int>>(jo.getString(COMMAND_ENTITY_NAME), jo) { response ->
+
+    if (!response.succeeded()) {
+      val cause = response.cause() as ReplyException
+      httpResp.setStatusCode(cause.failureCode()).setStatusMessage(cause.message).end()
+      return@send
     }
 
-    val unitOfWork = uowResult.result()
+    val result = response.result().body() as Pair<UnitOfWork, Int>
 
-    if (uowResult.result() != null) {
+    log.info("result = {}", result)
 
-      val location = routingCtx.request().absoluteURI().split('/').subList(0, 3)
-        .reduce { acc, s ->  acc.plus("/$s")} + "/units_of_work/${unitOfWork.unitOfWorkId}"
-
-      httpResp.putHeader("accept", routingCtx.request().getHeader("accept"))
-              .putHeader("Location", location)
-              .setStatusCode(303)
-              .end()
-      return@setHandler
-    }
-
-    log.info("posting a command to ${jo.encodePrettily()}")
+    val headers = CaseInsensitiveHeaders().add("uowSequence", result.second.toString())
+    val eventsDeliveryOptions = DeliveryOptions().setCodecName("UnitOfWork").setHeaders(headers)
 
     routingCtx.vertx().eventBus()
-      .send<Pair<UnitOfWork, Int>>(jo.getString(COMMAND_ENTITY_NAME), jo) { response ->
+    .publish(projectionEndpoint, ProjectionData.fromUnitOfWork(result.second, result.first), eventsDeliveryOptions)
 
-      if (!response.succeeded()) {
-        val cause = response.cause() as ReplyException
-        httpResp.setStatusCode(cause.failureCode()).setStatusMessage(cause.message).end()
-        return@send
-      }
+    val location = routingCtx.request().absoluteURI().split('/').subList(0, 3)
+      .reduce { acc, s ->  acc.plus("/$s")} + "/units-of-work/${result.first.unitOfWorkId}"
 
-      val result = response.result().body() as Pair<UnitOfWork, Int>
-
-      log.info("result = {}", result)
-
-      val headers = CaseInsensitiveHeaders().add("uowSequence", result.second.toString())
-      val eventsDeliveryOptions = DeliveryOptions().setCodecName("UnitOfWork").setHeaders(headers)
-
-      routingCtx.vertx().eventBus()
-      .publish(projectionEndpoint, ProjectionData.fromUnitOfWork(result.second, result.first), eventsDeliveryOptions)
-
-      val location = routingCtx.request().absoluteURI().split('/').subList(0, 3)
-        .reduce { acc, s ->  acc.plus("/$s")} + "/units-of-work/${result.first.unitOfWorkId}"
-
-      httpResp
-        .putHeader("accept", routingCtx.request().getHeader("accept"))
-        .putHeader("Location", location)
-        .setStatusCode(303)
-        .end()
-
-    }
+    httpResp
+      .putHeader("accept", routingCtx.request().getHeader("accept"))
+      .putHeader("Location", location)
+      .setStatusCode(303)
+      .end()
 
   }
 
@@ -128,21 +100,18 @@ fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository) {
 
   uowFuture.setHandler { uowResult ->
     if (uowResult.failed() || uowResult.result() == null) {
-      httpResp.statusCode = if (uowResult.result() == null) 404 else 500
-      httpResp.end()
-      return@setHandler
+      httpResp.statusCode = if (uowResult.result() == null) 404 else 500; httpResp.end()
+    } else {
+      val contentType = rc.request().getHeader("accept")
+      httpResp.setStatusCode(200).setChunked(true).
+        headers().add("Content-Type", "application/json")
+      val defaultResult = JsonObject().put("unitOfWorkId", uowResult.result().unitOfWorkId.toString())
+      val effectiveResult: JsonObject = when (contentType) {
+        CONTENT_TYPE_UNIT_OF_WORK_BODY -> JsonObject.mapFrom(uowResult.result())
+        else -> defaultResult
+      }
+      httpResp.end(effectiveResult.encode())
     }
-    val contentType = rc.request().getHeader("accept")
-    httpResp.setStatusCode(200).setChunked(true).
-      headers().add("Content-Type", "application/json")
-    val defaultResult = JsonObject().put("unitOfWorkId", uowResult.result().unitOfWorkId.toString())
-    val effectiveResult: JsonObject = when (contentType) {
-      CONTENT_TYPE_UNIT_OF_WORK_BODY -> JsonObject.mapFrom(uowResult.result())
-      else -> defaultResult
-    }
-    httpResp.end(effectiveResult.encode())
   }
 
 }
-
-

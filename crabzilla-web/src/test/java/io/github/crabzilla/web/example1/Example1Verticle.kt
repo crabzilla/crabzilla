@@ -68,7 +68,7 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
       initVertx(vertx)
 
       val readDb = pgPool("READ", config)
-      readModelDb = readDb
+      readModelDb = pgPool("READ", config)
 
       val writeDb = pgPool("WRITE", config)
       writeModelDb = writeDb
@@ -94,7 +94,7 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
       router.route().handler(BodyHandler.create())
 
       router.put("/:entityResource/:entityId/commands/:commandName").handler {
-        postCommandHandler(it, EXAMPLE1_RESOURCE_TO_ENTITY, uowRepository, EXAMPLE1_PROJECTION_ENDPOINT) }
+        postCommandHandler(it, EXAMPLE1_RESOURCE_TO_ENTITY, EXAMPLE1_PROJECTION_ENDPOINT) }
 
       router.get("/units-of-work/:unitOfWorkId").handler {
         getUowHandler(it, uowRepository) }
