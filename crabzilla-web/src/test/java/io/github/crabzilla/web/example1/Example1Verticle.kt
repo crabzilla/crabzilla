@@ -93,7 +93,7 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
       router.route().handler(LoggerHandler.create())
       router.route().handler(BodyHandler.create())
 
-      router.put("/:entityResource/:entityId/commands/:commandName").handler {
+      router.post("/:entityResource/:entityId/commands/:commandName").handler {
         postCommandHandler(it, EXAMPLE1_RESOURCE_TO_ENTITY, EXAMPLE1_PROJECTION_ENDPOINT) }
 
       router.get("/units-of-work/:unitOfWorkId").handler {

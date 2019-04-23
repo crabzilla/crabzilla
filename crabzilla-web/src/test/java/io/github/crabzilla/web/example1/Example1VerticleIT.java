@@ -23,6 +23,7 @@ import java.net.ServerSocket;
 import java.util.Random;
 
 import static io.github.crabzilla.example1.CustomerCommandEnum.CREATE;
+import static io.github.crabzilla.web.WebKt.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -79,11 +80,11 @@ class Example1VerticleIT {
     int nextInt = random.nextInt();
     CreateCustomer cmd = new CreateCustomer(new CustomerId(nextInt), "customer#" + nextInt);
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.put(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
+    client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_SUCCESS)
       .expect(ResponsePredicate.JSON)
-      .putHeader("accept", io.github.crabzilla.web.WebKt.CONTENT_TYPE_UNIT_OF_WORK_ID)
+      .putHeader("accept", CONTENT_TYPE_UNIT_OF_WORK_ID)
       .sendJsonObject(jo, tc.succeeding(response -> tc.verify(() -> {
           assertThat(response.body().getString("unitOfWorkId")).isNotNull();
           tc.completeNow();
@@ -97,11 +98,11 @@ class Example1VerticleIT {
     int nextInt = random.nextInt();
     CreateCustomer cmd = new CreateCustomer(new CustomerId(nextInt), "customer#" + nextInt);
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.put(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
+    client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_SUCCESS)
       .expect(ResponsePredicate.JSON)
-      .putHeader("accept", io.github.crabzilla.web.WebKt.CONTENT_TYPE_UNIT_OF_WORK_BODY)
+      .putHeader("accept", CONTENT_TYPE_UNIT_OF_WORK_BODY)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
           assertThat(response.body().getString("unitOfWorkId")).isNotNull();
           assertThat(response.body().getJsonObject("command")).isEqualTo(jo);
@@ -115,10 +116,10 @@ class Example1VerticleIT {
   @DisplayName("When sending an invalid CreateCommand")
   void a3(VertxTestContext tc) {
     JsonObject invalidCommand = new JsonObject();
-    client.put(port, "0.0.0.0", "/customers/1/commands/" + CREATE.urlFriendly())
+    client.post(port, "0.0.0.0", "/customers/1/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .putHeader("accept", io.github.crabzilla.web.WebKt.CONTENT_TYPE_UNIT_OF_WORK_ID)
+      .putHeader("accept", CONTENT_TYPE_UNIT_OF_WORK_ID)
       .sendJson(invalidCommand, tc.succeeding(response -> tc.verify(() -> {
           tc.completeNow();
         }))
@@ -131,10 +132,10 @@ class Example1VerticleIT {
     int nextInt = random.nextInt();
     CreateCustomer cmd = new CreateCustomer(new CustomerId(nextInt), "a bad name");
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.put(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
+    client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .putHeader("accept", io.github.crabzilla.web.WebKt.CONTENT_TYPE_UNIT_OF_WORK_ID)
+      .putHeader("accept", CONTENT_TYPE_UNIT_OF_WORK_ID)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
           tc.completeNow();
         }))
@@ -147,10 +148,10 @@ class Example1VerticleIT {
     int nextInt = random.nextInt();
     UnknownCommand cmd = new UnknownCommand(new CustomerId(nextInt));
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.put(port, "0.0.0.0", "/customers/" + nextInt + "/commands/unknown")
+    client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/unknown")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .putHeader("accept", io.github.crabzilla.web.WebKt.CONTENT_TYPE_UNIT_OF_WORK_ID)
+      .putHeader("accept", CONTENT_TYPE_UNIT_OF_WORK_ID)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
           tc.completeNow();
         }))
