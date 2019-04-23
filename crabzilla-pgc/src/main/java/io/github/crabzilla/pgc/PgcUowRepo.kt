@@ -109,6 +109,7 @@ open class PgcUowRepo(private val pgPool: PgPool,
           val tuple = Tuple.of( id, aggregateRootName, version)
           val stream = pq.createStream(100, tuple)
           val list = ArrayList<SnapshotData>()
+
           // Use the stream
           stream.handler { row ->
             val eventsArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
@@ -119,22 +120,18 @@ open class PgcUowRepo(private val pgPool: PgPool,
               eventFromJson.invoke(eventName, eventJson)
             }
 
-            val events: List<DomainEvent>? =
-              try { List(eventsArray.size(), jsonToEventPair)} catch (e: Exception) { null }
-
-            if (events == null) {
-              throw IllegalStateException("when instantiating event from json")
-            }
-
+            val events: List<DomainEvent> = List(eventsArray.size(), jsonToEventPair)
             val snapshotData = SnapshotData(row.getInteger(1)!!, events)
             list.add(snapshotData)
           }
+
           stream.endHandler {
             log.info("found {} units of work for id {} and version > {}", list.size, id, version)
             val finalVersion = if (list.size == 0) 0 else list[list.size - 1].version
             val flatMappedToEvents = list.flatMap { sd -> sd.events }
             aHandler.handle(Future.succeededFuture(SnapshotData(finalVersion, flatMappedToEvents)))
           }
+
           stream.exceptionHandler { err ->
             log.error("SQL_SELECT_AFTER_VERSION: " + err.message)
             aHandler.handle(Future.failedFuture(err))

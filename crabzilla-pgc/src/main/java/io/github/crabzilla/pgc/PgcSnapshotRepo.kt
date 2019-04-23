@@ -112,19 +112,12 @@ class PgcSnapshotRepo<A : Entity>(private val pgPool: PgPool,
                     val jsonObject = eventsArray.getJsonObject(index)
                     val eventName = jsonObject.getString(EVENT_NAME)
                     val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
-                    if (eventName == null || eventJson ==  null) {
-                      throw IllegalStateException("invalid json for event $eventName : $eventJson")
-                    }
                     eventFromJson.invoke(eventName, eventJson)
                   }
 
-                  try {
-                    val events: List<DomainEvent> = List(eventsArray.size(), jsonToEvent)
-                    currentInstance = events.fold(currentInstance) {state, event -> applyEventsFn(event, state)}
-                    log.info("Events: $events \n version: $currentVersion \n instance $currentInstance")
-                  } catch (e: Exception) {
-                    throw e
-                  }
+                  val events: List<DomainEvent> = List(eventsArray.size(), jsonToEvent)
+                  currentInstance = events.fold(currentInstance) {state, event -> applyEventsFn(event, state)}
+                  log.info("Events: $events \n version: $currentVersion \n instance $currentInstance")
 
                 }
               }
