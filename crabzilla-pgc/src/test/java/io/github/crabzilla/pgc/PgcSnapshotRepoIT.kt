@@ -1,8 +1,13 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.*
+import io.github.crabzilla.Snapshot
+import io.github.crabzilla.SnapshotRepository
 import io.github.crabzilla.example1.*
-import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_INSERT_UOW
+import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
+import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
+import io.github.crabzilla.initVertx
+import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
+import io.github.crabzilla.toJsonArray
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -36,9 +41,9 @@ class PgcSnapshotRepoIT {
   companion object {
     const val aggregateName = "Customer"
     val customerId = CustomerId(1)
-    val createCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer")
+    val createCmd = CreateCustomer(customerId, "customer")
     val created = CustomerCreated(customerId, "customer")
-    val activateCmd = ActivateCustomer(UUID.randomUUID(), customerId, "I want it")
+    val activateCmd = ActivateCustomer(customerId, "I want it")
     val activated = CustomerActivated("a good reason", Instant.now())
   }
 
@@ -82,7 +87,8 @@ class PgcSnapshotRepoIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      repo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, Customer::class.java)
+      repo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, CUSTOMER_FROM_JSON,
+        CUSTOMER_EVENT_FROM_JSON)
 
       writeDb.query("delete from units_of_work") { deleteResult ->
         if (deleteResult.failed()) {
@@ -102,7 +108,7 @@ class PgcSnapshotRepoIT {
   @DisplayName("given none snapshot or event, it can retrieve correct snapshot")
   fun a0(tc: VertxTestContext) {
 
-      repo.retrieve(createCmd.targetId.id, aggregateName, Handler { event ->
+      repo.retrieve(createCmd.customerId.value, aggregateName, Handler { event ->
         if (event.failed()) {
           event.cause().printStackTrace()
           tc.failNow(event.cause())
@@ -119,27 +125,31 @@ class PgcSnapshotRepoIT {
   @DisplayName("given none snapshot and a created event, it can retrieve correct snapshot")
   fun a1(tc: VertxTestContext) {
 
+    val eventsAsJson = (listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))
+
     val tuple = Tuple.of(UUID.randomUUID(),
-      io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
-      createCmd.commandId,
-      io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+      io.reactiverse.pgclient.data.Json.create(eventsAsJson),
+      UUID.randomUUID(),
+      CREATE.asPathParam(),
+      io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
       aggregateName,
-      customerId.value(),
+      customerId.value,
       1)
 
-    writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar1 ->
-      if (ar1.failed()) {
-        ar1.cause().printStackTrace()
-        tc.failNow(ar1.cause())
+    writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { event1 ->
+      if (event1.failed()) {
+        event1.cause().printStackTrace()
+        tc.failNow(event1.cause())
       }
-      val uowSequence = ar1.result().first().getLong(0)
+      val uowSequence = event1.result().first().getLong(0)
       assertThat(uowSequence).isGreaterThan(0)
-      repo.retrieve(createCmd.targetId.id, aggregateName, Handler { event ->
-          if (event.failed()) {
-            event.cause().printStackTrace()
-            tc.failNow(event.cause())
+
+      repo.retrieve(createCmd.customerId.value, aggregateName, Handler { event2 ->
+          if (event2.failed()) {
+            event2.cause().printStackTrace()
+            tc.failNow(event2.cause())
           }
-          val snapshot: Snapshot<Customer> = event.result()
+          val snapshot: Snapshot<Customer> = event2.result()
           assertThat(snapshot.version).isEqualTo(1)
           assertThat(snapshot.instance).isEqualTo(Customer(customerId, createCmd.name, false, null))
           tc.completeNow()
@@ -152,15 +162,18 @@ class PgcSnapshotRepoIT {
   @DisplayName("given none snapshot and both created and an activated events, it can retrieve correct snapshot")
   fun a2(tc: VertxTestContext) {
 
+    val eventsAsJson = (listOf(created, activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))
+
     val tuple1 = Tuple.of(UUID.randomUUID(),
-      io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
-      createCmd.commandId,
-      io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+      io.reactiverse.pgclient.data.Json.create(eventsAsJson),
+      UUID.randomUUID(),
+      CREATE.asPathParam(),
+      io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
       aggregateName,
-      customerId.value(),
+      customerId.value,
       1)
 
-    writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
+    writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
 
       if (ar1.failed()) {
         ar1.cause().printStackTrace()
@@ -168,14 +181,15 @@ class PgcSnapshotRepoIT {
       }
 
       val tuple2 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(activated))),
-        activateCmd.commandId,
-        io.reactiverse.pgclient.data.Json.create(commandToJson(activateCmd)),
+        io.reactiverse.pgclient.data.Json.create((listOf(activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        UUID.randomUUID(),
+        ACTIVATE.asPathParam(),
+        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd)),
         aggregateName,
-        customerId.value(),
+        customerId.value,
         2)
 
-      writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
+      writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
 
         if (ar2.failed()) {
           ar2.cause().printStackTrace()
@@ -184,7 +198,7 @@ class PgcSnapshotRepoIT {
         val uowSequence = ar1.result().first().getLong(0)
         assertThat(uowSequence).isGreaterThan(0)
 
-        repo.retrieve(createCmd.targetId.id, aggregateName, Handler { event ->
+        repo.retrieve(createCmd.customerId.value, aggregateName, Handler { event ->
           if (event.failed()) {
             event.cause().printStackTrace()
             tc.failNow(event.cause())

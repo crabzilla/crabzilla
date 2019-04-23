@@ -2,7 +2,9 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
 import io.github.crabzilla.example1.*
-import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_INSERT_UOW
+import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
+import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
+import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -23,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Instant
 import java.util.*
 
+
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgcUowRepoIT {
@@ -35,12 +38,14 @@ class PgcUowRepoIT {
   companion object {
     const val aggregateName = "Customer"
     val customerId = CustomerId(1)
-    val createCmd = CreateCustomer(UUID.randomUUID(), customerId, "customer")
+    val createCmd = CreateCustomer(customerId, "customer")
     val created = CustomerCreated(customerId, "customer")
-    val expectedUow1 = UnitOfWork(UUID.randomUUID(), createCmd, 1, listOf(created))
-    val activateCmd = ActivateCustomer(UUID.randomUUID(), customerId, "I want it")
+    val expectedUow1 = UnitOfWork(UUID.randomUUID(), "Customer", 1, UUID.randomUUID(), CREATE.asPathParam(), createCmd,
+      1, (listOf(created)))
+    val activateCmd = ActivateCustomer(customerId, "I want it")
     val activated = CustomerActivated("a good reason", Instant.now())
-    val expectedUow2 = UnitOfWork(UUID.randomUUID(), activateCmd, 2, listOf(activated))
+    val expectedUow2 = UnitOfWork(UUID.randomUUID(), "Customer", 1, UUID.randomUUID(), ACTIVATE.asPathParam(),
+      activateCmd, 2, (listOf(activated)))
   }
 
   @BeforeEach
@@ -84,8 +89,9 @@ class PgcUowRepoIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      repo = PgcUowRepo(writeDb)
-      journal = PgcUowJournal(writeDb)
+      repo = PgcUowRepo(writeDb, CUSTOMER_CMD_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
+
+      journal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
 
       writeDb.query("delete from units_of_work") { deleteResult ->
         if (deleteResult.failed()) {
@@ -105,14 +111,15 @@ class PgcUowRepoIT {
   fun a4(tc: VertxTestContext) {
 
     val tuple = Tuple.of(UUID.randomUUID(),
-      io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
-      createCmd.commandId,
-      io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+      io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+      expectedUow1.commandId,
+      CREATE.asPathParam(),
+      io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
       aggregateName,
-      customerId.value(),
+      customerId.value,
       1)
 
-    writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar1 ->
+    writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar1 ->
       if (ar1.failed()) {
         ar1.cause().printStackTrace()
         tc.failNow(ar1.cause())
@@ -129,7 +136,7 @@ class PgcUowRepoIT {
         assertThat(expectedUow1).isEqualToIgnoringGivenFields(uow, "unitOfWorkId")
         tc.completeNow()
       }
-      repo.getUowByCmdId(createCmd.commandId, selectFuture)
+      repo.getUowByCmdId(expectedUow1.commandId, selectFuture)
     }
 
   }
@@ -139,14 +146,15 @@ class PgcUowRepoIT {
   fun a5(tc: VertxTestContext) {
 
     val tuple = Tuple.of(UUID.randomUUID(),
-      io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
-      createCmd.commandId,
-      io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+      io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+      expectedUow1.commandId,
+      CREATE.asPathParam(),
+      io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
       aggregateName,
-      customerId.value(),
+      customerId.value,
       1)
 
-    writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar1 ->
+    writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar1 ->
       if (ar1.failed()) {
         ar1.cause().printStackTrace()
         tc.failNow(ar1.cause())
@@ -190,16 +198,17 @@ class PgcUowRepoIT {
     fun a2(tc: VertxTestContext) {
 
       val tuple = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
-        createCmd.commandId,
-        io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+        io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        expectedUow1.commandId,
+        CREATE.asPathParam(),
+        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
         aggregateName,
-        customerId.value(),
+        customerId.value,
         1)
 
       val selectFuture = Future.future<List<ProjectionData>>()
 
-      writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar ->
+      writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar ->
         if (ar.failed()) {
           ar.cause().printStackTrace()
           tc.failNow(ar.cause())
@@ -212,7 +221,7 @@ class PgcUowRepoIT {
           assertThat(snapshotData.size).isEqualTo(1)
           val (_, uowSequence, targetId, events) = snapshotData[0]
           assertThat(uowSequence).isGreaterThan(0)
-          assertThat(targetId).isEqualTo(customerId.value())
+          assertThat(targetId).isEqualTo(customerId.value)
           assertThat(events).isEqualTo(listOf(created))
           tc.completeNow()
         }
@@ -224,16 +233,17 @@ class PgcUowRepoIT {
     fun a3(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
-        createCmd.commandId,
-        io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+        io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        expectedUow1.commandId,
+        CREATE.asPathParam(),
+        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
         aggregateName,
-        customerId.value(),
+        customerId.value,
         1)
 
       val selectFuture1 = Future.future<List<ProjectionData>>()
 
-      writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
+      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
 
         if (ar1.failed()) {
           ar1.cause().printStackTrace()
@@ -241,14 +251,15 @@ class PgcUowRepoIT {
         }
 
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(activated))),
-          activateCmd.commandId,
-          io.reactiverse.pgclient.data.Json.create(commandToJson(activateCmd)),
+          io.reactiverse.pgclient.data.Json.create((listOf(activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+          expectedUow2.commandId,
+          ACTIVATE.asPathParam(),
+          io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd)),
           aggregateName,
-          customerId.value(),
+          customerId.value,
           2)
 
-        writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
+        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
           if (ar2.failed()) {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
@@ -259,11 +270,11 @@ class PgcUowRepoIT {
             assertThat(snapshotData.size).isEqualTo(2)
             val (_, uowSequence1, targetId1, events1) = snapshotData[0]
             assertThat(uowSequence1).isGreaterThan(0)
-            assertThat(targetId1).isEqualTo(customerId.value())
+            assertThat(targetId1).isEqualTo(customerId.value)
             assertThat(events1).isEqualTo(listOf(created))
             val (_, uowSequence2, targetId2, events2) = snapshotData[1]
             assertThat(uowSequence2).isEqualTo(uowSequence1 + 1)
-            assertThat(targetId2).isEqualTo(customerId.value())
+            assertThat(targetId2).isEqualTo(customerId.value)
             assertThat(events2).isEqualTo(listOf(activated))
             tc.completeNow()
           }
@@ -277,29 +288,31 @@ class PgcUowRepoIT {
     fun a4(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
-        createCmd.commandId,
-        io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+        io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        expectedUow1.commandId,
+        CREATE.asPathParam(),
+        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
         aggregateName,
-        customerId.value(),
+        customerId.value,
         1)
 
       val selectFuture1 = Future.future<List<ProjectionData>>()
 
-      writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
+      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
         if (ar1.failed()) {
           ar1.cause().printStackTrace()
           tc.failNow(ar1.cause())
         }
         val uowSequence1 = ar1.result().first().getInteger("uow_seq_number")
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(activated))),
-          activateCmd.commandId,
-          io.reactiverse.pgclient.data.Json.create(commandToJson(activateCmd)),
+          io.reactiverse.pgclient.data.Json.create((listOf(activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+          expectedUow2.commandId,
+          ACTIVATE.asPathParam(),
+          io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd)),
           aggregateName,
-          customerId.value(),
+          customerId.value,
           2)
-        writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
+        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
           if (ar2.failed()) {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
@@ -311,7 +324,7 @@ class PgcUowRepoIT {
             assertThat(snapshotData.size).isEqualTo(1)
             val (_, uowSequence, targetId, events) = snapshotData[0]
             assertThat(uowSequence).isEqualTo(uowSequence2)
-            assertThat(targetId).isEqualTo(customerId.value())
+            assertThat(targetId).isEqualTo(customerId.value)
             assertThat(events).isEqualTo(listOf(activated))
             tc.completeNow()
           }
@@ -330,14 +343,15 @@ class PgcUowRepoIT {
     fun a2(tc: VertxTestContext) {
 
       val tuple = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
-        createCmd.commandId,
-        io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+        io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        expectedUow1.commandId,
+        CREATE.asPathParam(),
+        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
         aggregateName,
-        customerId.value(),
+        customerId.value,
         1)
 
-      writeDb.preparedQuery(SQL_INSERT_UOW, tuple) { ar ->
+      writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar ->
         if (ar.failed()) {
           ar.cause().printStackTrace()
           tc.failNow(ar.cause())
@@ -345,7 +359,7 @@ class PgcUowRepoIT {
         val uowSequence = ar.result().first().getLong(0)
         assertThat(uowSequence).isGreaterThan(0)
         val selectFuture = Future.future<SnapshotData>()
-        repo.selectAfterVersion(customerId.value(), 0, aggregateName, selectFuture.completer())
+        repo.selectAfterVersion(customerId.value, 0, aggregateName, selectFuture.completer())
         selectFuture.setHandler { selectAsyncResult ->
           val snapshotData = selectAsyncResult.result()
           assertThat(1).isEqualTo(snapshotData.version)
@@ -361,14 +375,15 @@ class PgcUowRepoIT {
     fun a3(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
-        createCmd.commandId,
-        io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+        io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        expectedUow1.commandId,
+        CREATE.asPathParam(),
+        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
         aggregateName,
-        customerId.value(),
+        customerId.value,
         1)
 
-      writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
+      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
 
         if (ar1.failed()) {
           ar1.cause().printStackTrace()
@@ -376,20 +391,21 @@ class PgcUowRepoIT {
         }
 
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(activated))),
-          activateCmd.commandId,
-          io.reactiverse.pgclient.data.Json.create(commandToJson(activateCmd)),
+          io.reactiverse.pgclient.data.Json.create((listOf(activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+          expectedUow2.commandId,
+          ACTIVATE.asPathParam(),
+          io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd)),
           aggregateName,
-          customerId.value(),
+          customerId.value,
           2)
 
-        writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
+        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
           if (ar2.failed()) {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
           }
           val selectFuture1 = Future.future<SnapshotData>()
-          repo.selectAfterVersion(customerId.value(), 0, aggregateName, selectFuture1.completer())
+          repo.selectAfterVersion(customerId.value, 0, aggregateName, selectFuture1.completer())
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             assertThat(2).isEqualTo(snapshotData.version)
@@ -406,14 +422,15 @@ class PgcUowRepoIT {
     fun a4(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(created))),
-        createCmd.commandId,
-        io.reactiverse.pgclient.data.Json.create(commandToJson(createCmd)),
+        io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        expectedUow1.commandId,
+        CREATE.asPathParam(),
+        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
         aggregateName,
-        customerId.value(),
+        customerId.value,
         1)
 
-      writeDb.preparedQuery(SQL_INSERT_UOW, tuple1) { ar1 ->
+      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
         if (ar1.failed()) {
           ar1.cause().printStackTrace()
           tc.failNow(ar1.cause())
@@ -421,13 +438,14 @@ class PgcUowRepoIT {
         }
         val uowSequence1 = ar1.result().first().getLong("uow_seq_number")
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(listOfEventsToJson(listOf(activated))),
-          activateCmd.commandId,
-          io.reactiverse.pgclient.data.Json.create(commandToJson(activateCmd)),
+          io.reactiverse.pgclient.data.Json.create((listOf(activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+          expectedUow2.commandId,
+          ACTIVATE.asPathParam(),
+          io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd)),
           aggregateName,
-          customerId.value(),
+          customerId.value,
           2)
-        writeDb.preparedQuery(SQL_INSERT_UOW, tuple2) { ar2 ->
+        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
           if (ar2.failed()) {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
@@ -435,7 +453,7 @@ class PgcUowRepoIT {
           }
           val uowSequence2 = ar2.result().first().getLong("uow_seq_number")
           val selectFuture1 = Future.future<SnapshotData>()
-          repo.selectAfterVersion(customerId.value(), 1, aggregateName, selectFuture1.completer())
+          repo.selectAfterVersion(customerId.value, 1, aggregateName, selectFuture1.completer())
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             assertThat(2).isEqualTo(snapshotData.version)
@@ -454,7 +472,7 @@ class PgcUowRepoIT {
     val appendFuture1 = Future.future<Int>()
 
     // append uow1
-    journal.append(expectedUow1, aggregateName, appendFuture1)
+    journal.append(expectedUow1, appendFuture1)
 
     appendFuture1.setHandler { ar1 ->
       if (ar1.failed()) {
@@ -466,7 +484,7 @@ class PgcUowRepoIT {
       assertThat(uowSequence).isGreaterThan(0)
       val appendFuture2 = Future.future<Int>()
       // append uow2
-      journal.append(expectedUow2, aggregateName, appendFuture2)
+      journal.append(expectedUow2, appendFuture2)
       appendFuture2.setHandler { ar2 ->
         if (ar2.failed()) {
           ar2.cause().printStackTrace()
@@ -477,7 +495,7 @@ class PgcUowRepoIT {
         assertThat(uowSequence).isGreaterThan(2)
         val snapshotDataFuture = Future.future<SnapshotData>()
         // get only above version 1
-        repo.selectAfterVersion(expectedUow2.targetId().value(), 1, aggregateName, snapshotDataFuture.completer())
+        repo.selectAfterVersion(expectedUow2.targetId, 1, aggregateName, snapshotDataFuture.completer())
         snapshotDataFuture.setHandler { ar4 ->
           if (ar4.failed()) {
             ar4.cause().printStackTrace()
@@ -505,7 +523,7 @@ class PgcUowRepoIT {
 
       val appendFuture = Future.future<Int>()
 
-      journal.append(expectedUow1, aggregateName, appendFuture)
+      journal.append(expectedUow1, appendFuture)
 
       appendFuture.setHandler { ar1 ->
         if (ar1.failed()) {
@@ -535,7 +553,7 @@ class PgcUowRepoIT {
 
           val snapshotDataFuture = Future.future<SnapshotData>()
 
-          repo.selectAfterVersion(expectedUow1.targetId().value(), 0, aggregateName, snapshotDataFuture.completer())
+          repo.selectAfterVersion(expectedUow1.targetId, 0, aggregateName, snapshotDataFuture.completer())
 
           snapshotDataFuture.setHandler { ar3 ->
             if (ar3.failed()) {
@@ -564,7 +582,7 @@ class PgcUowRepoIT {
       val appendFuture1 = Future.future<Int>()
 
       // append uow1
-      journal.append(expectedUow1, aggregateName, appendFuture1.completer())
+      journal.append(expectedUow1, appendFuture1.completer())
 
       appendFuture1.setHandler { ar1 ->
         if (ar1.failed()) {
@@ -580,7 +598,7 @@ class PgcUowRepoIT {
         val appendFuture2 = Future.future<Int>()
 
         // try to append uow1 again
-        journal.append(expectedUow1, aggregateName, appendFuture2.completer())
+        journal.append(expectedUow1, appendFuture2.completer())
 
         appendFuture2.setHandler { ar2 ->
           if (ar2.failed()) {
@@ -602,7 +620,7 @@ class PgcUowRepoIT {
       val appendFuture1 = Future.future<Int>()
 
       // append uow1
-      journal.append(expectedUow1, aggregateName, appendFuture1)
+      journal.append(expectedUow1, appendFuture1)
 
       appendFuture1.setHandler { ar1 ->
 
@@ -616,7 +634,7 @@ class PgcUowRepoIT {
           val appendFuture2 = Future.future<Int>()
 
           // append uow2
-          journal.append(expectedUow2, aggregateName, appendFuture2)
+          journal.append(expectedUow2, appendFuture2)
 
           appendFuture2.setHandler { ar2 ->
 
@@ -630,7 +648,7 @@ class PgcUowRepoIT {
               val snapshotDataFuture = Future.future<SnapshotData>()
 
               // get all versions for id
-              repo.selectAfterVersion(expectedUow2.targetId().value(), 0, aggregateName, snapshotDataFuture.completer())
+              repo.selectAfterVersion(expectedUow2.targetId, 0, aggregateName, snapshotDataFuture.completer())
 
               snapshotDataFuture.setHandler { ar4 ->
 

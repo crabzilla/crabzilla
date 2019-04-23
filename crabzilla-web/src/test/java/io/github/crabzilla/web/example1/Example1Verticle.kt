@@ -1,8 +1,6 @@
 package io.github.crabzilla.web.example1
 
-import io.github.crabzilla.example1.CUSTOMER_SEED_VALUE
-import io.github.crabzilla.example1.CUSTOMER_STATE_BUILDER
-import io.github.crabzilla.example1.Customer
+import io.github.crabzilla.example1.*
 import io.github.crabzilla.initVertx
 import io.github.crabzilla.pgc.PgcSnapshotRepo
 import io.github.crabzilla.pgc.PgcUowJournal
@@ -78,10 +76,11 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
       // example1
 
       setupEventHandler(vertx, readDb)
-      val uowRepository = PgcUowRepo(writeDb)
-      val uowJournal = PgcUowJournal(writeDb)
+      val uowRepository = PgcUowRepo(writeDb, CUSTOMER_CMD_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
+      val uowJournal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
 
-      val snapshotRepo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, Customer::class.java)
+      val snapshotRepo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, CUSTOMER_FROM_JSON,
+        CUSTOMER_EVENT_FROM_JSON)
 
       // command handlers verticles
 
@@ -94,8 +93,11 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
       router.route().handler(LoggerHandler.create())
       router.route().handler(BodyHandler.create())
 
-      router.post("/:resource/commands").handler { postCommandHandler(it, uowRepository, EXAMPLE1_PROJECTION_ENDPOINT) }
-      router.get("/:resource/commands/:cmdID").handler { getUowByCmdIdHandler(it, uowRepository) }
+      router.put("/:resource/:targetId/commands/:commandName").handler {
+                        postCommandHandler(it, uowRepository, EXAMPLE1_PROJECTION_ENDPOINT) }
+
+      router.get("/commands/:commandId").handler {
+                        getUowByCmdIdHandler(it, uowRepository) }
 
       server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
 

@@ -5,5 +5,5 @@ import io.vertx.core.Handler
 
 interface UnitOfWorkJournal {
 
-  fun append(unitOfWork: UnitOfWork, aggregateRootName: String, aHandler: Handler<AsyncResult<Int>>)
+  fun append(unitOfWork: UnitOfWork, aHandler: Handler<AsyncResult<Int>>)
 }
