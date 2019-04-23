@@ -52,9 +52,8 @@ mvn clean install
 ### Random notes
 
 1. Crabzilla tries to provide a chassis for wiring and running your domain by using verticles and other components.
-2. If your functions are pure, all side effects will occurs within UnitOfWorkRepository and EventsProjector components.
+2. If your functions are pure, all side effects will occurs within UnitOfWorkJournal and EventsProjector components.
 3. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
-4. So far it's using "classical" Vertx apis. I do plan to eventually improve some code using RxJava or Kotlin coroutines.
 
 
 

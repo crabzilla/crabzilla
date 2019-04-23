@@ -40,11 +40,11 @@ class PgcUowRepoIT {
     val customerId = CustomerId(1)
     val createCmd = CreateCustomer(customerId, "customer")
     val created = CustomerCreated(customerId, "customer")
-    val expectedUow1 = UnitOfWork(UUID.randomUUID(), "Customer", 1, UUID.randomUUID(), CREATE.asPathParam(), createCmd,
+    val expectedUow1 = UnitOfWork(UUID.randomUUID(), "Customer", 1, UUID.randomUUID(), CREATE.urlFriendly(), createCmd,
       1, (listOf(created)))
     val activateCmd = ActivateCustomer(customerId, "I want it")
     val activated = CustomerActivated("a good reason", Instant.now())
-    val expectedUow2 = UnitOfWork(UUID.randomUUID(), "Customer", 1, UUID.randomUUID(), ACTIVATE.asPathParam(),
+    val expectedUow2 = UnitOfWork(UUID.randomUUID(), "Customer", 1, UUID.randomUUID(), ACTIVATE.urlFriendly(),
       activateCmd, 2, (listOf(activated)))
   }
 
@@ -113,7 +113,7 @@ class PgcUowRepoIT {
     val tuple = Tuple.of(UUID.randomUUID(),
       io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
       expectedUow1.commandId,
-      CREATE.asPathParam(),
+      CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
       aggregateName,
       customerId.value,
@@ -148,7 +148,7 @@ class PgcUowRepoIT {
     val tuple = Tuple.of(UUID.randomUUID(),
       io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
       expectedUow1.commandId,
-      CREATE.asPathParam(),
+      CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
       aggregateName,
       customerId.value,
@@ -200,7 +200,7 @@ class PgcUowRepoIT {
       val tuple = Tuple.of(UUID.randomUUID(),
         io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
         expectedUow1.commandId,
-        CREATE.asPathParam(),
+        CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
         aggregateName,
         customerId.value,
@@ -235,7 +235,7 @@ class PgcUowRepoIT {
       val tuple1 = Tuple.of(UUID.randomUUID(),
         io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
         expectedUow1.commandId,
-        CREATE.asPathParam(),
+        CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
         aggregateName,
         customerId.value,
@@ -253,7 +253,7 @@ class PgcUowRepoIT {
         val tuple2 = Tuple.of(UUID.randomUUID(),
           io.reactiverse.pgclient.data.Json.create((listOf(activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
           expectedUow2.commandId,
-          ACTIVATE.asPathParam(),
+          ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd)),
           aggregateName,
           customerId.value,
@@ -290,7 +290,7 @@ class PgcUowRepoIT {
       val tuple1 = Tuple.of(UUID.randomUUID(),
         io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
         expectedUow1.commandId,
-        CREATE.asPathParam(),
+        CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
         aggregateName,
         customerId.value,
@@ -307,7 +307,7 @@ class PgcUowRepoIT {
         val tuple2 = Tuple.of(UUID.randomUUID(),
           io.reactiverse.pgclient.data.Json.create((listOf(activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
           expectedUow2.commandId,
-          ACTIVATE.asPathParam(),
+          ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd)),
           aggregateName,
           customerId.value,
@@ -345,7 +345,7 @@ class PgcUowRepoIT {
       val tuple = Tuple.of(UUID.randomUUID(),
         io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
         expectedUow1.commandId,
-        CREATE.asPathParam(),
+        CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
         aggregateName,
         customerId.value,
@@ -377,7 +377,7 @@ class PgcUowRepoIT {
       val tuple1 = Tuple.of(UUID.randomUUID(),
         io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
         expectedUow1.commandId,
-        CREATE.asPathParam(),
+        CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
         aggregateName,
         customerId.value,
@@ -393,7 +393,7 @@ class PgcUowRepoIT {
         val tuple2 = Tuple.of(UUID.randomUUID(),
           io.reactiverse.pgclient.data.Json.create((listOf(activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
           expectedUow2.commandId,
-          ACTIVATE.asPathParam(),
+          ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd)),
           aggregateName,
           customerId.value,
@@ -424,7 +424,7 @@ class PgcUowRepoIT {
       val tuple1 = Tuple.of(UUID.randomUUID(),
         io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
         expectedUow1.commandId,
-        CREATE.asPathParam(),
+        CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
         aggregateName,
         customerId.value,
@@ -440,7 +440,7 @@ class PgcUowRepoIT {
         val tuple2 = Tuple.of(UUID.randomUUID(),
           io.reactiverse.pgclient.data.Json.create((listOf(activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
           expectedUow2.commandId,
-          ACTIVATE.asPathParam(),
+          ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd)),
           aggregateName,
           customerId.value,
@@ -495,7 +495,7 @@ class PgcUowRepoIT {
         assertThat(uowSequence).isGreaterThan(2)
         val snapshotDataFuture = Future.future<SnapshotData>()
         // get only above version 1
-        repo.selectAfterVersion(expectedUow2.targetId, 1, aggregateName, snapshotDataFuture.completer())
+        repo.selectAfterVersion(expectedUow2.entityId, 1, aggregateName, snapshotDataFuture.completer())
         snapshotDataFuture.setHandler { ar4 ->
           if (ar4.failed()) {
             ar4.cause().printStackTrace()
@@ -553,7 +553,7 @@ class PgcUowRepoIT {
 
           val snapshotDataFuture = Future.future<SnapshotData>()
 
-          repo.selectAfterVersion(expectedUow1.targetId, 0, aggregateName, snapshotDataFuture.completer())
+          repo.selectAfterVersion(expectedUow1.entityId, 0, aggregateName, snapshotDataFuture.completer())
 
           snapshotDataFuture.setHandler { ar3 ->
             if (ar3.failed()) {
@@ -648,7 +648,7 @@ class PgcUowRepoIT {
               val snapshotDataFuture = Future.future<SnapshotData>()
 
               // get all versions for id
-              repo.selectAfterVersion(expectedUow2.targetId, 0, aggregateName, snapshotDataFuture.completer())
+              repo.selectAfterVersion(expectedUow2.entityId, 0, aggregateName, snapshotDataFuture.completer())
 
               snapshotDataFuture.setHandler { ar4 ->
 

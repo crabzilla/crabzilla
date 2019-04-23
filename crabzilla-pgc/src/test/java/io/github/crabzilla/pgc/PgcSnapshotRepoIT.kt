@@ -115,7 +115,7 @@ class PgcSnapshotRepoIT {
         }
         val snapshot: Snapshot<Customer> = event.result()
         assertThat(snapshot.version).isEqualTo(0)
-        assertThat(snapshot.instance).isEqualTo(CUSTOMER_SEED_VALUE)
+        assertThat(snapshot.state).isEqualTo(CUSTOMER_SEED_VALUE)
         tc.completeNow()
       })
 
@@ -130,7 +130,7 @@ class PgcSnapshotRepoIT {
     val tuple = Tuple.of(UUID.randomUUID(),
       io.reactiverse.pgclient.data.Json.create(eventsAsJson),
       UUID.randomUUID(),
-      CREATE.asPathParam(),
+      CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
       aggregateName,
       customerId.value,
@@ -151,7 +151,7 @@ class PgcSnapshotRepoIT {
           }
           val snapshot: Snapshot<Customer> = event2.result()
           assertThat(snapshot.version).isEqualTo(1)
-          assertThat(snapshot.instance).isEqualTo(Customer(customerId, createCmd.name, false, null))
+          assertThat(snapshot.state).isEqualTo(Customer(customerId, createCmd.name, false, null))
           tc.completeNow()
       })
     }
@@ -167,7 +167,7 @@ class PgcSnapshotRepoIT {
     val tuple1 = Tuple.of(UUID.randomUUID(),
       io.reactiverse.pgclient.data.Json.create(eventsAsJson),
       UUID.randomUUID(),
-      CREATE.asPathParam(),
+      CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
       aggregateName,
       customerId.value,
@@ -183,7 +183,7 @@ class PgcSnapshotRepoIT {
       val tuple2 = Tuple.of(UUID.randomUUID(),
         io.reactiverse.pgclient.data.Json.create((listOf(activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
         UUID.randomUUID(),
-        ACTIVATE.asPathParam(),
+        ACTIVATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd)),
         aggregateName,
         customerId.value,
@@ -205,9 +205,9 @@ class PgcSnapshotRepoIT {
           }
           val snapshot: Snapshot<Customer> = event.result()
           assertThat(snapshot.version).isEqualTo(2)
-          assertThat(snapshot.instance.customerId).isEqualTo(customerId)
-          assertThat(snapshot.instance.name).isEqualTo(createCmd.name)
-          assertThat(snapshot.instance.isActive).isEqualTo(true)
+          assertThat(snapshot.state.customerId).isEqualTo(customerId)
+          assertThat(snapshot.state.name).isEqualTo(createCmd.name)
+          assertThat(snapshot.state.isActive).isEqualTo(true)
           tc.completeNow()
         })
       }

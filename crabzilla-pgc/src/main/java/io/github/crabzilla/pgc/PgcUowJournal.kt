@@ -40,7 +40,7 @@ class PgcUowJournal(private val pgPool: PgPool,
         .abortHandler { run { log.error("Transaction failed => rollback") }
         }
 
-      val params = Tuple.of(unitOfWork.targetId, unitOfWork.targetName)
+      val params = Tuple.of(unitOfWork.entityId, unitOfWork.entityName)
 
       sqlConn.preparedQuery(SQL_SELECT_CURRENT_VERSION, params) { ar ->
 
@@ -72,8 +72,8 @@ class PgcUowJournal(private val pgPool: PgPool,
               unitOfWork.commandId,
               unitOfWork.commandName,
               io.reactiverse.pgclient.data.Json.create(cmdAsJson),
-              unitOfWork.targetName,
-              unitOfWork.targetId,
+              unitOfWork.entityName,
+              unitOfWork.entityId,
               unitOfWork.version)
 
             sqlConn.preparedQuery(SQL_APPEND_UOW, params2) { insert ->

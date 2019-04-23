@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.net.ServerSocket;
 import java.util.Random;
 
+import static io.github.crabzilla.example1.CustomerCommandEnum.CREATE;
 import static io.github.crabzilla.web.WebKt.getCONTENT_TYPE_UNIT_OF_WORK_BODY;
 import static io.github.crabzilla.web.WebKt.getCONTENT_TYPE_UNIT_OF_WORK_ID;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -80,7 +81,7 @@ class Example1VerticleIT {
     int nextInt = random.nextInt();
     CreateCustomer cmd = new CreateCustomer(new CustomerId(nextInt), "customer#" + nextInt);
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.put(port, "0.0.0.0", "/customer/" + nextInt + "/commands/create")
+    client.put(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_SUCCESS)
       .expect(ResponsePredicate.JSON)
@@ -98,7 +99,7 @@ class Example1VerticleIT {
     int nextInt = random.nextInt();
     CreateCustomer cmd = new CreateCustomer(new CustomerId(nextInt), "customer#" + nextInt);
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.put(port, "0.0.0.0", "/customer/" + nextInt + "/commands/create")
+    client.put(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_SUCCESS)
       .expect(ResponsePredicate.JSON)
@@ -116,7 +117,7 @@ class Example1VerticleIT {
   @DisplayName("When sending an invalid CreateCommand")
   void a3(VertxTestContext tc) {
     JsonObject invalidCommand = new JsonObject();
-    client.put(port, "0.0.0.0", "/customer/1/commands/create")
+    client.put(port, "0.0.0.0", "/customers/1/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())
@@ -132,7 +133,7 @@ class Example1VerticleIT {
     int nextInt = random.nextInt();
     CreateCustomer cmd = new CreateCustomer(new CustomerId(nextInt), "a bad name");
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.put(port, "0.0.0.0", "/customer/" + nextInt + "/commands/create")
+    client.put(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())
@@ -148,7 +149,7 @@ class Example1VerticleIT {
     int nextInt = random.nextInt();
     UnknownCommand cmd = new UnknownCommand(new CustomerId(nextInt));
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.put(port, "0.0.0.0", "/customer/" + nextInt + "/commands/unknown")
+    client.put(port, "0.0.0.0", "/customers/" + nextInt + "/commands/unknown")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .putHeader("accept", getCONTENT_TYPE_UNIT_OF_WORK_ID())

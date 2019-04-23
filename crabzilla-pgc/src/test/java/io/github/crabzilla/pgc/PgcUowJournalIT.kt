@@ -36,15 +36,15 @@ class PgcUowJournalIT {
   internal lateinit var journal: UnitOfWorkJournal
 
   companion object {
-    const val aggregateName = "Customer"
+    const val entityName = "customer"
     val customerId = CustomerId(1)
     val createCmd = CreateCustomer(customerId, "customer")
     val created = CustomerCreated(customerId, "customer")
-    val expectedUow1 = UnitOfWork(UUID.randomUUID(), "Customer", 1, UUID.randomUUID(), CREATE.asPathParam(),
+    val expectedUow1 = UnitOfWork(UUID.randomUUID(), entityName, 1, UUID.randomUUID(), CREATE.urlFriendly(),
       createCmd, 1, (listOf(created)))
     val activateCmd = ActivateCustomer(customerId, "I want it")
     val activated = CustomerActivated("a good reason", Instant.now())
-    val expectedUow2 = UnitOfWork(UUID.randomUUID(), "Customer", 1, UUID.randomUUID(), ACTIVATE.asPathParam(),
+    val expectedUow2 = UnitOfWork(UUID.randomUUID(), entityName, 1, UUID.randomUUID(), ACTIVATE.urlFriendly(),
       activateCmd, 2, (listOf(activated)))
   }
 
@@ -136,7 +136,7 @@ class PgcUowJournalIT {
 
         val snapshotDataFuture = Future.future<SnapshotData>()
 
-        repo.selectAfterVersion(expectedUow1.targetId, 0, aggregateName, snapshotDataFuture.completer())
+        repo.selectAfterVersion(expectedUow1.entityId, 0, entityName, snapshotDataFuture.completer())
 
         snapshotDataFuture.setHandler { ar3 ->
           if (ar3.failed()) {
@@ -231,7 +231,7 @@ class PgcUowJournalIT {
             val snapshotDataFuture = Future.future<SnapshotData>()
 
             // get all versions for id
-            repo.selectAfterVersion(expectedUow2.targetId, 0, aggregateName, snapshotDataFuture.completer())
+            repo.selectAfterVersion(expectedUow2.entityId, 0, entityName, snapshotDataFuture.completer())
 
             snapshotDataFuture.setHandler { ar4 ->
 

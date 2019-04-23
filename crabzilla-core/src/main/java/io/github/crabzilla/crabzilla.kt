@@ -10,7 +10,6 @@ import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import java.util.*
-import java.util.regex.Pattern
 
 // schema
 
@@ -21,8 +20,8 @@ interface Command
 typealias Version = Int
 
 data class UnitOfWork(val unitOfWorkId: UUID,
-                      val targetName: String,
-                      val targetId: Int,
+                      val entityName: String,
+                      val entityId: Int,
                       val commandId: UUID,
                       val commandName: String,
                       val command: Command,
@@ -33,10 +32,10 @@ data class UnitOfWork(val unitOfWorkId: UUID,
 
   companion object {
 
-    fun of(targetId: Int, targetName: String, commandId: UUID, commandName: String, command: Command,
+    fun of(entityId: Int, entityName: String, commandId: UUID, commandName: String, command: Command,
            events: List<DomainEvent>, resultingVersion: Version): UnitOfWork {
 
-      return UnitOfWork(UUID.randomUUID(), targetName, targetId, commandId, commandName, command, resultingVersion,
+      return UnitOfWork(UUID.randomUUID(), entityName, entityId, commandId, commandName, command, resultingVersion,
               events)
     }
   }
@@ -50,17 +49,17 @@ interface Entity {
   }
 }
 
-data class Snapshot<A : Entity>(val instance: A, val version: Version)
+data class Snapshot<A : Entity>(val state: A, val version: Version)
 
 data class SnapshotData(val version: Version, val events: List<DomainEvent>)
 
-data class ProjectionData(val uowId: UUID, val uowSequence: Int, val targetId: Int, val events: List<DomainEvent>) {
+data class ProjectionData(val uowId: UUID, val uowSequence: Int, val entityId: Int, val events: List<DomainEvent>) {
 
   companion object {
 
     fun fromUnitOfWork(uowSequence: Int, uow: UnitOfWork) : ProjectionData {
 
-      return ProjectionData(UUID.randomUUID(), uowSequence, uow.targetId, uow.events)
+      return ProjectionData(UUID.randomUUID(), uowSequence, uow.entityId, uow.events)
     }
   }
 }
@@ -71,9 +70,8 @@ fun initVertx(vertx: Vertx) {
 
   Json.mapper
     .registerModule(Jdk8Module())
-//    .registerModule(JavaTimeModule())
     .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 
   vertx.eventBus().registerDefaultCodec(ProjectionData::class.java,
     JacksonGenericCodec(Json.mapper, ProjectionData::class.java))
@@ -90,31 +88,6 @@ fun initVertx(vertx: Vertx) {
   vertx.eventBus().registerDefaultCodec(UnitOfWork::class.java,
     JacksonGenericCodec(Json.mapper, UnitOfWork::class.java))
 
-}
-
-// endpoints
-
-internal const val COMMAND_HANDLER = "-cmd-handler"
-internal const val EVENTS_HANDLER = "-events-handler"
-
-fun restEndpoint(name: String): String {
-  return camelCaseToSpinalCase(name)
-}
-
-fun cmdHandlerEndpoint(name: String): String {
-  return camelCaseToSpinalCase(name) + COMMAND_HANDLER
-}
-
-fun projectorEndpoint(bcName: String): String {
-  return camelCaseToSpinalCase(bcName) + EVENTS_HANDLER
-}
-
-private fun camelCaseToSpinalCase(text: String): String {
-  val m = Pattern.compile("(?<=[a-z])[A-Z]").matcher(text)
-  val sb = StringBuffer()
-  while (m.find()) { m.appendReplacement(sb, "-" + m.group()) }
-  m.appendTail(sb)
-  return sb.toString().toLowerCase()
 }
 
 // extensions

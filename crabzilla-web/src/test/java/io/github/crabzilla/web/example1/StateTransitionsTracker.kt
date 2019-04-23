@@ -20,7 +20,7 @@ class StateTransitionsTracker<A : Entity>(private val originalSnapshot: Snapshot
   }
 
   fun currentState(): A {
-    return if (isEmpty) originalSnapshot.instance else stateTransitions[stateTransitions.size - 1].newInstance
+    return if (isEmpty) originalSnapshot.state else stateTransitions[stateTransitions.size - 1].newInstance
   }
 
   val isEmpty: Boolean

@@ -4,7 +4,7 @@ class StateTransitionsTracker<A : Entity>(originalSnapshot: Snapshot<A>,
                                           private val applyEventsFn: (DomainEvent, A) -> A) {
 
   val appliedEvents = mutableListOf<DomainEvent>()
-  var currentState: A = originalSnapshot.instance
+  var currentState: A = originalSnapshot.state
 
   fun applyEvents(events: List<DomainEvent>): StateTransitionsTracker<A> {
     events.forEach { domainEvent ->
