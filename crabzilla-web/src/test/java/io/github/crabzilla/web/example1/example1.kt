@@ -16,9 +16,16 @@ private val log = LoggerFactory.getLogger("example1")
 
 const val EXAMPLE1_PROJECTION_ENDPOINT: String = "example1_projection_endpoint"
 
+val EXAMPLE1_RESOURCE_TO_ENTITY = { resourceName: String ->
+  when (resourceName) {
+    "customers" -> "customer"
+    else -> throw IllegalArgumentException("resource $resourceName is unknown")
+  }
+}
+
 fun customerCmdVerticle(uowJournal: PgcUowJournal, snapshotRepo: SnapshotRepository<Customer>) :
   CommandHandlerVerticle<Customer> {
-  return CommandHandlerVerticle("Customer", CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE, CUSTOMER_CMD_HANDLER_FACTORY,
+  return CommandHandlerVerticle("customer", CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE, CUSTOMER_CMD_HANDLER_FACTORY,
     CUSTOMER_CMD_VALIDATOR, uowJournal, snapshotRepo)
 }
 
@@ -29,7 +36,6 @@ fun setupEventHandler(vertx: Vertx, readDb: PgPool) {
     eventProjector.handle(message.body(), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
       if (result.failed()) {
         log.error("Projection failed: " + result.cause().message)
-        return@Handler
       }
     })
   }

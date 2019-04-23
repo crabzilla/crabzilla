@@ -130,29 +130,29 @@ val CUSTOMER_CMD_VALIDATOR = { command: Command ->
   }
 }
 
-val CUSTOMER_CMD_HANDLER_FACTORY: CommandHandlerFactory<Customer> = { targetId: Int,
-                                                                      targetName: String,
+val CUSTOMER_CMD_HANDLER_FACTORY: CommandHandlerFactory<Customer> = { entityId: Int,
+                                                                      entityName: String,
                                                                       commandId: UUID,
                                                                       commandName: String,
                                                                       command: Command,
                                                                       snapshot: Snapshot<Customer>,
                                                                       uowHandler: Handler<AsyncResult<UnitOfWork>> ->
-  CustomerCmdHandler(targetId, targetName, commandId, commandName, command, snapshot, CUSTOMER_STATE_BUILDER, uowHandler)
+  CustomerCmdHandler(entityId, entityName, commandId, commandName, command, snapshot, CUSTOMER_STATE_BUILDER, uowHandler)
 }
 
-class CustomerCmdHandler(targetId: Int,
-                         targetName: String,
+class CustomerCmdHandler(entityId: Int,
+                         entityName: String,
                          commandId: UUID,
                          commandName: String,
                          command: Command,
                          snapshot: Snapshot<Customer>,
                          stateFn: (DomainEvent, Customer) -> Customer,
                          uowHandler: Handler<AsyncResult<UnitOfWork>>) :
-  CommandHandler<Customer>(targetId, targetName, commandId, commandName, command, snapshot, stateFn, uowHandler) {
+  CommandHandler<Customer>(entityId, entityName, commandId, commandName, command, snapshot, stateFn, uowHandler) {
 
   override fun handleCommand() {
 
-    val customer = snapshot.instance
+    val customer = snapshot.state
 
     when (command) {
       is CreateCustomer -> customer.create(command.customerId, command.name, eventsFuture.completer())
@@ -189,7 +189,7 @@ class CustomerCmdHandler(targetId: Int,
 
 enum class CustomerCommandEnum {
   CREATE, ACTIVATE, DEACTIVATE, CREATE_ACTIVATE;
-  fun asPathParam() : String {
+  fun urlFriendly() : String {
     return this.name.toLowerCase().replace('_', '-')
   }
 }

@@ -5,7 +5,7 @@ import io.github.crabzilla.initVertx
 import io.github.crabzilla.pgc.PgcSnapshotRepo
 import io.github.crabzilla.pgc.PgcUowJournal
 import io.github.crabzilla.pgc.PgcUowRepo
-import io.github.crabzilla.web.getUowByCmdIdHandler
+import io.github.crabzilla.web.getUowHandler
 import io.github.crabzilla.web.postCommandHandler
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
@@ -34,8 +34,8 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
   companion object {
 
     internal var server: HttpServer? = null
-    internal var writeDbHandle: PgPool? = null
-    internal var readDbHandle: PgPool? = null
+    internal var writeModelDb: PgPool? = null
+    internal var readModelDb: PgPool? = null
 
     internal var log = getLogger(Example1Verticle::class.java)
 
@@ -68,17 +68,17 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
       initVertx(vertx)
 
       val readDb = pgPool("READ", config)
-      readDbHandle = readDb
+      readModelDb = readDb
 
       val writeDb = pgPool("WRITE", config)
-      writeDbHandle = writeDb
+      writeModelDb = writeDb
 
       // example1
 
       setupEventHandler(vertx, readDb)
+
       val uowRepository = PgcUowRepo(writeDb, CUSTOMER_CMD_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
       val uowJournal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
-
       val snapshotRepo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, CUSTOMER_FROM_JSON,
         CUSTOMER_EVENT_FROM_JSON)
 
@@ -93,11 +93,11 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
       router.route().handler(LoggerHandler.create())
       router.route().handler(BodyHandler.create())
 
-      router.put("/:resource/:targetId/commands/:commandName").handler {
-                        postCommandHandler(it, uowRepository, EXAMPLE1_PROJECTION_ENDPOINT) }
+      router.put("/:entityResource/:entityId/commands/:commandName").handler {
+        postCommandHandler(it, EXAMPLE1_RESOURCE_TO_ENTITY, uowRepository, EXAMPLE1_PROJECTION_ENDPOINT) }
 
-      router.get("/commands/:commandId").handler {
-                        getUowByCmdIdHandler(it, uowRepository) }
+      router.get("/units-of-work/:unitOfWorkId").handler {
+        getUowHandler(it, uowRepository) }
 
       server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
 
@@ -117,8 +117,8 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
 
   override fun stop() {
     log.info("*** closing resources")
-    writeDbHandle?.close()
-    readDbHandle?.close()
+    writeModelDb?.close()
+    readModelDb?.close()
     server?.close()
   }
 

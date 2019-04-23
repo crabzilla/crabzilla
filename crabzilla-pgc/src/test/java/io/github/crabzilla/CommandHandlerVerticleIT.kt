@@ -12,7 +12,6 @@ import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
-import io.vertx.core.VertxOptions
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.ReplyException
 import io.vertx.core.json.JsonObject
@@ -37,10 +36,10 @@ class CommandHandlerVerticleIT {
   private lateinit var writeDb: PgPool
   private lateinit var verticle: CommandHandlerVerticle<Customer>
 
-  private val options = DeliveryOptions().setCodecName("Command")
+  private val options = DeliveryOptions()
 
   companion object {
-    const val aggregateName = "Customer"
+    const val entityName = "customer"
     val customerId = CustomerId(1)
     val createCmd = CreateCustomer(customerId, "customer")
     val created = CustomerCreated(customerId, "customer")
@@ -51,10 +50,7 @@ class CommandHandlerVerticleIT {
   @BeforeEach
   fun setup(tc: VertxTestContext) {
 
-    val vertxOptions = VertxOptions()
-    vertxOptions.blockedThreadCheckInterval = (1000 * 60 * 60).toLong() // to easier debug
-
-    vertx = Vertx.vertx(vertxOptions)
+    vertx = Vertx.vertx()
 
     initVertx(vertx)
 
@@ -92,7 +88,7 @@ class CommandHandlerVerticleIT {
       val snapshotRepo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER,
         CUSTOMER_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
 
-      verticle = CommandHandlerVerticle(aggregateName, CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE,
+      verticle = CommandHandlerVerticle(entityName, CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE,
                         CUSTOMER_CMD_HANDLER_FACTORY, CUSTOMER_CMD_VALIDATOR, journal, snapshotRepo)
 
       writeDb.query("delete from units_of_work") { deleteResult ->
@@ -101,12 +97,12 @@ class CommandHandlerVerticleIT {
           tc.failNow(deleteResult.cause())
           return@query
         }
-        vertx.deployVerticle(verticle, Handler { event ->
+        vertx.deployVerticle(verticle) { event ->
           if (event.failed()) {
             tc.failNow(event.cause())
           }
           tc.completeNow()
-        })
+        }
       }
 
     })
@@ -121,13 +117,13 @@ class CommandHandlerVerticleIT {
     val createCustomerCmd = CreateCustomer(customerId, "customer1")
 
     val jo = JsonObject()
-    jo.put(JsonMetadata.COMMAND_TARGET_ID, customerId.value)
+    jo.put(JsonMetadata.COMMAND_ENTITY_ID, customerId.value)
     jo.put(JsonMetadata.COMMAND_ID, UUID.randomUUID().toString())
-    jo.put(JsonMetadata.COMMAND_NAME, CREATE.asPathParam())
+    jo.put(JsonMetadata.COMMAND_NAME, CREATE.urlFriendly())
     jo.put(JsonMetadata.COMMAND_JSON_CONTENT, JsonObject(CUSTOMER_CMD_TO_JSON(createCustomerCmd)))
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(aggregateName), jo, options) { asyncResult ->
+      .send<Pair<UnitOfWork, Int>>(entityName, jo, options) { asyncResult ->
 
       if (asyncResult.failed()) {
         tc.failNow(asyncResult.cause())
@@ -152,13 +148,13 @@ class CommandHandlerVerticleIT {
     val createCustomerCmd = CreateCustomer(customerId, "a bad name")
 
     val jo = JsonObject()
-    jo.put(JsonMetadata.COMMAND_TARGET_ID, customerId.value)
+    jo.put(JsonMetadata.COMMAND_ENTITY_ID, customerId.value)
     jo.put(JsonMetadata.COMMAND_ID, UUID.randomUUID().toString())
-    jo.put(JsonMetadata.COMMAND_NAME, CREATE.asPathParam())
+    jo.put(JsonMetadata.COMMAND_NAME, CREATE.urlFriendly())
     jo.put(JsonMetadata.COMMAND_JSON_CONTENT, JsonObject(CUSTOMER_CMD_TO_JSON(createCustomerCmd)))
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(aggregateName), jo, options) { asyncResult ->
+      .send<Pair<UnitOfWork, Int>>(entityName, jo, options) { asyncResult ->
 
       assertThat(asyncResult.succeeded()).isFalse()
 
@@ -179,13 +175,13 @@ class CommandHandlerVerticleIT {
     val customerId = CustomerId(1)
 
     val jo = JsonObject()
-    jo.put(JsonMetadata.COMMAND_TARGET_ID, customerId.value)
+    jo.put(JsonMetadata.COMMAND_ENTITY_ID, customerId.value)
     jo.put(JsonMetadata.COMMAND_ID, UUID.randomUUID().toString())
     jo.put(JsonMetadata.COMMAND_NAME, "unknown")
     jo.put(JsonMetadata.COMMAND_JSON_CONTENT, JsonObject())
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(aggregateName), jo, options) { asyncResult ->
+      .send<Pair<UnitOfWork, Int>>(entityName, jo, options) { asyncResult ->
         tc.verify {
           assertThat(asyncResult.succeeded()).isFalse()
           val cause = asyncResult.cause() as ReplyException

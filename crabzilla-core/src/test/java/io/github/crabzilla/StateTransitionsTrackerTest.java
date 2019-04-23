@@ -58,7 +58,7 @@ class StateTransitionsTrackerTest {
 
     @Test
     void has_empty_state() {
-      assertThat(tracker.getCurrentState()).isEqualTo(originalSnapshot.getInstance());
+      assertThat(tracker.getCurrentState()).isEqualTo(originalSnapshot.getState());
     }
 
     @Nested

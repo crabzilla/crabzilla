@@ -46,7 +46,7 @@ class PgcEventProjector(private val pgPool: PgPool, val name: String) {
 
       for ((pairIndex, event) in uowProjectionData.events.withIndex()) {
         // invoke the projection handler
-        projectorHandler.invoke(conn, uowProjectionData.targetId, event, futures[pairIndex])
+        projectorHandler.invoke(conn, uowProjectionData.entityId, event, futures[pairIndex])
       }
 
       CompositeFuture.join(futures).setHandler { ar2 ->
