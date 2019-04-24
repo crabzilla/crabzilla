@@ -3,8 +3,6 @@ package io.github.crabzilla
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
-import io.github.crabzilla.JsonMetadata.EVENTS_JSON_CONTENT
-import io.github.crabzilla.JsonMetadata.EVENT_NAME
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
@@ -91,6 +89,9 @@ fun initVertx(vertx: Vertx) {
 }
 
 // extensions
+
+const val EVENT_NAME = "eventName"
+const val EVENTS_JSON_CONTENT = "eventJson"
 
 fun List<DomainEvent>.toJsonArray(eventToJson: (DomainEvent) -> String): JsonArray {
   val eventsJsonArray = JsonArray()

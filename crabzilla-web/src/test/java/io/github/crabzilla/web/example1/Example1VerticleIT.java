@@ -23,7 +23,8 @@ import java.net.ServerSocket;
 import java.util.Random;
 
 import static io.github.crabzilla.example1.CustomerCommandEnum.CREATE;
-import static io.github.crabzilla.web.WebKt.*;
+import static io.github.crabzilla.web.WebKt.CONTENT_TYPE_UNIT_OF_WORK_BODY;
+import static io.github.crabzilla.web.WebKt.CONTENT_TYPE_UNIT_OF_WORK_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -78,7 +79,7 @@ class Example1VerticleIT {
   @DisplayName("When sending a valid CreateCommand expecting uow id")
   void a1(VertxTestContext tc) {
     int nextInt = random.nextInt();
-    CreateCustomer cmd = new CreateCustomer(new CustomerId(nextInt), "customer#" + nextInt);
+    CreateCustomer cmd = new CreateCustomer("customer#" + nextInt);
     JsonObject jo = JsonObject.mapFrom(cmd);
     client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.jsonObject())
@@ -96,7 +97,7 @@ class Example1VerticleIT {
   @DisplayName("When sending a valid CreateCommand expecting uow body")
   void a2(VertxTestContext tc) {
     int nextInt = random.nextInt();
-    CreateCustomer cmd = new CreateCustomer(new CustomerId(nextInt), "customer#" + nextInt);
+    CreateCustomer cmd = new CreateCustomer("customer#" + nextInt);
     JsonObject jo = JsonObject.mapFrom(cmd);
     client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.jsonObject())
@@ -130,7 +131,7 @@ class Example1VerticleIT {
   @DisplayName("When sending an invalid CreateCommand expecting uow id")
   void a4(VertxTestContext tc) {
     int nextInt = random.nextInt();
-    CreateCustomer cmd = new CreateCustomer(new CustomerId(nextInt), "a bad name");
+    CreateCustomer cmd = new CreateCustomer("a bad name");
     JsonObject jo = JsonObject.mapFrom(cmd);
     client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.none())

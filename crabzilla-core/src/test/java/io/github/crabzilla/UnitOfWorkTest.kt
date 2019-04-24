@@ -1,7 +1,9 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.example1.*
-import io.github.crabzilla.example1.CustomerCommandEnum.*
+import io.github.crabzilla.example1.CreateCustomer
+import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
+import io.github.crabzilla.example1.CustomerCreated
+import io.github.crabzilla.example1.CustomerId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -13,13 +15,13 @@ class UnitOfWorkTest {
   fun versionZeroCannotBeInstantiated() {
     assertThrows(RuntimeException::class.java, {
       UnitOfWork(UUID.randomUUID(), "customer", 1, UUID.randomUUID(), CREATE.urlFriendly(),
-        CreateCustomer(CustomerId(1), "cust#1"), 0, listOf<DomainEvent>(CustomerCreated(CustomerId(1), "cust#1")))
+        CreateCustomer("cust#1"), 0, listOf<DomainEvent>(CustomerCreated(CustomerId(1), "cust#1")))
     }, "version should be >= 1")
   }
 
   @Test
   fun versionOneCanBeInstantiated() {
-    val command = CreateCustomer(CustomerId(1), "cust#1")
+    val command = CreateCustomer("cust#1")
     UnitOfWork(UUID.randomUUID(), "customer", 1, UUID.randomUUID(), CREATE.urlFriendly(),
       command, 1, listOf<DomainEvent>(CustomerCreated(CustomerId(1), "cust#1")))
   }
@@ -28,14 +30,14 @@ class UnitOfWorkTest {
   fun versionLessThanZeroCannotBeInstantiated() {
     assertThrows(RuntimeException::class.java, {
       UnitOfWork(UUID.randomUUID(), "customer", 1, UUID.randomUUID(),
-        CREATE.urlFriendly(), CreateCustomer(CustomerId(1), "cust#1"), -1,
+        CREATE.urlFriendly(), CreateCustomer("cust#1"), -1,
         listOf<DomainEvent>(CustomerCreated(CustomerId(1), "cust#1")))
     }, "version should be >= 1")
   }
 
   @Test
   fun targetIdIsEqualsToCommandTargetId() {
-    val command = CreateCustomer(CustomerId(1), "cust#1")
+    val command = CreateCustomer("cust#1")
     val uow = UnitOfWork(UUID.randomUUID(), "customer", 1, UUID.randomUUID(),
       CREATE.urlFriendly(), command, 1, listOf<DomainEvent>(CustomerCreated(CustomerId(1), "cust#1")))
     assertThat(uow.entityId).isEqualTo(uow.entityId)

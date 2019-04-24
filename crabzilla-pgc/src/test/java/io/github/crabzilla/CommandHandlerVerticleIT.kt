@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Instant
-import java.util.*
 
 
 @ExtendWith(VertxExtension::class)
@@ -41,9 +40,9 @@ class CommandHandlerVerticleIT {
   companion object {
     val handlerEndpoint = CommandHandlerEndpoint("customer")
     val customerId = CustomerId(1)
-    val createCmd = CreateCustomer(customerId, "customer")
+    val createCmd = CreateCustomer("customer")
     val created = CustomerCreated(customerId, "customer")
-    val activateCmd = ActivateCustomer(customerId, "I want it")
+    val activateCmd = ActivateCustomer("I want it")
     val activated = CustomerActivated("a good reason", Instant.now())
   }
 
@@ -114,16 +113,16 @@ class CommandHandlerVerticleIT {
   fun a1(tc: VertxTestContext) {
 
     val customerId = CustomerId(1)
-    val createCustomerCmd = CreateCustomer(customerId, "customer1")
+    val createCustomerCmd = CreateCustomer("customer1")
 
-    val jo = JsonObject()
-    jo.put(JsonMetadata.COMMAND_ENTITY_ID, customerId.value)
-    jo.put(JsonMetadata.COMMAND_ID, UUID.randomUUID().toString())
-    jo.put(JsonMetadata.COMMAND_NAME, CREATE.urlFriendly())
-    jo.put(JsonMetadata.COMMAND_JSON_CONTENT, JsonObject(CUSTOMER_CMD_TO_JSON(createCustomerCmd)))
+    val postCmd = CommandMetadata(handlerEndpoint.entityName,
+                                      customerId.value,
+                                      CREATE.urlFriendly())
+
+    val command = JsonObject(CUSTOMER_CMD_TO_JSON(createCustomerCmd))
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), jo, options) { asyncResult ->
+      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(postCmd, command), options) { asyncResult ->
 
       if (asyncResult.failed()) {
         tc.failNow(asyncResult.cause())
@@ -145,16 +144,16 @@ class CommandHandlerVerticleIT {
   fun a2(tc: VertxTestContext) {
 
     val customerId = CustomerId(1)
-    val createCustomerCmd = CreateCustomer(customerId, "a bad name")
+    val createCustomerCmd = CreateCustomer("a bad name")
 
-    val jo = JsonObject()
-    jo.put(JsonMetadata.COMMAND_ENTITY_ID, customerId.value)
-    jo.put(JsonMetadata.COMMAND_ID, UUID.randomUUID().toString())
-    jo.put(JsonMetadata.COMMAND_NAME, CREATE.urlFriendly())
-    jo.put(JsonMetadata.COMMAND_JSON_CONTENT, JsonObject(CUSTOMER_CMD_TO_JSON(createCustomerCmd)))
+    val postCmd = CommandMetadata(handlerEndpoint.entityName,
+      customerId.value,
+      CREATE.urlFriendly())
+
+    val command = JsonObject(CUSTOMER_CMD_TO_JSON(createCustomerCmd))
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), jo, options) { asyncResult ->
+      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(postCmd, command), options) { asyncResult ->
 
       assertThat(asyncResult.succeeded()).isFalse()
 
@@ -174,14 +173,12 @@ class CommandHandlerVerticleIT {
 
     val customerId = CustomerId(1)
 
-    val jo = JsonObject()
-    jo.put(JsonMetadata.COMMAND_ENTITY_ID, customerId.value)
-    jo.put(JsonMetadata.COMMAND_ID, UUID.randomUUID().toString())
-    jo.put(JsonMetadata.COMMAND_NAME, "unknown")
-    jo.put(JsonMetadata.COMMAND_JSON_CONTENT, JsonObject())
+    val postCmd = CommandMetadata(handlerEndpoint.entityName, customerId.value, "unknown")
+
+    val command = JsonObject()
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), jo, options) { asyncResult ->
+      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(postCmd, command), options) { asyncResult ->
         tc.verify {
           assertThat(asyncResult.succeeded()).isFalse()
           val cause = asyncResult.cause() as ReplyException

@@ -41,9 +41,9 @@ class PgcSnapshotRepoIT {
   companion object {
     const val aggregateName = "Customer"
     val customerId = CustomerId(1)
-    val createCmd = CreateCustomer(customerId, "customer")
+    val createCmd = CreateCustomer("customer")
     val created = CustomerCreated(customerId, "customer")
-    val activateCmd = ActivateCustomer(customerId, "I want it")
+    val activateCmd = ActivateCustomer("I want it")
     val activated = CustomerActivated("a good reason", Instant.now())
   }
 
@@ -108,7 +108,7 @@ class PgcSnapshotRepoIT {
   @DisplayName("given none snapshot or event, it can retrieve correct snapshot")
   fun a0(tc: VertxTestContext) {
 
-      repo.retrieve(createCmd.customerId.value, aggregateName, Handler { event ->
+      repo.retrieve(customerId.value, aggregateName, Handler { event ->
         if (event.failed()) {
           event.cause().printStackTrace()
           tc.failNow(event.cause())
@@ -144,7 +144,7 @@ class PgcSnapshotRepoIT {
       val uowSequence = event1.result().first().getLong(0)
       assertThat(uowSequence).isGreaterThan(0)
 
-      repo.retrieve(createCmd.customerId.value, aggregateName, Handler { event2 ->
+      repo.retrieve(customerId.value, aggregateName, Handler { event2 ->
           if (event2.failed()) {
             event2.cause().printStackTrace()
             tc.failNow(event2.cause())
@@ -198,7 +198,7 @@ class PgcSnapshotRepoIT {
         val uowSequence = ar1.result().first().getLong(0)
         assertThat(uowSequence).isGreaterThan(0)
 
-        repo.retrieve(createCmd.customerId.value, aggregateName, Handler { event ->
+        repo.retrieve(customerId.value, aggregateName, Handler { event ->
           if (event.failed()) {
             event.cause().printStackTrace()
             tc.failNow(event.cause())

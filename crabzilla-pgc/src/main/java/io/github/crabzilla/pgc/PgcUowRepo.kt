@@ -1,8 +1,6 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
-import io.github.crabzilla.JsonMetadata.EVENTS_JSON_CONTENT
-import io.github.crabzilla.JsonMetadata.EVENT_NAME
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult

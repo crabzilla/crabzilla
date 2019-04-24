@@ -7,7 +7,6 @@ import io.vertx.core.Handler
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import java.time.Instant
-import java.util.*
 
 data class CustomerId(val value: Int)
 
@@ -21,13 +20,13 @@ data class CustomerDeactivated(val reason: String, val _when: Instant) : DomainE
 
 // commands
 
-data class CreateCustomer(val customerId: CustomerId, val name: String) : Command
+data class CreateCustomer(val name: String) : Command
 
-data class ActivateCustomer(val customerId: CustomerId, val reason: String) : Command
+data class ActivateCustomer(val reason: String) : Command
 
-data class DeactivateCustomer(val customerId: CustomerId, val reason: String) : Command
+data class DeactivateCustomer(val reason: String) : Command
 
-data class CreateActivateCustomer(val customerId: CustomerId, val name: String, val reason: String) : Command
+data class CreateActivateCustomer(val name: String, val reason: String) : Command
 
 // just for test
 
@@ -93,11 +92,10 @@ val CUSTOMER_EVENT_FROM_JSON = { eventName: String, jo: JsonObject ->
 
 val CUSTOMER_CMD_FROM_JSON = { cmdName: String, jo: JsonObject ->
   when (cmdName) {
-    "create" -> CreateCustomer(CustomerId(jo.getJsonObject("customerId").getInteger("value")), jo.getString("name"))
-    "activate" -> ActivateCustomer(CustomerId(jo.getInteger("customerId")), jo.getString("reason"))
-    "deactivate" -> DeactivateCustomer(CustomerId(jo.getInteger("customerId")), jo.getString("reason"))
-    "create-activate" -> CreateActivateCustomer(CustomerId(jo.getInteger("customerId")), jo.getString("name"),
-      jo.getString("reason"))
+    "create" -> CreateCustomer(jo.getString("name"))
+    "activate" -> ActivateCustomer(jo.getString("reason"))
+    "deactivate" -> DeactivateCustomer(jo.getString("reason"))
+    "create-activate" -> CreateActivateCustomer(jo.getString("name"), jo.getString("reason"))
     else -> throw IllegalArgumentException("$cmdName is unknown")
   }
 }
@@ -130,38 +128,32 @@ val CUSTOMER_CMD_VALIDATOR = { command: Command ->
   }
 }
 
-val CUSTOMER_CMD_HANDLER_FACTORY: CommandHandlerFactory<Customer> = { entityId: Int,
-                                                                      entityName: String,
-                                                                      commandId: UUID,
-                                                                      commandName: String,
+val CUSTOMER_CMD_HANDLER_FACTORY: CommandHandlerFactory<Customer> = { cmdMetadata: CommandMetadata,
                                                                       command: Command,
                                                                       snapshot: Snapshot<Customer>,
                                                                       uowHandler: Handler<AsyncResult<UnitOfWork>> ->
-  CustomerCmdHandler(entityId, entityName, commandId, commandName, command, snapshot, CUSTOMER_STATE_BUILDER, uowHandler)
+  CustomerCmdHandler(cmdMetadata, command, snapshot, CUSTOMER_STATE_BUILDER, uowHandler)
 }
 
-class CustomerCmdHandler(entityId: Int,
-                         entityName: String,
-                         commandId: UUID,
-                         commandName: String,
+class CustomerCmdHandler(cmdMetadata: CommandMetadata,
                          command: Command,
                          snapshot: Snapshot<Customer>,
                          stateFn: (DomainEvent, Customer) -> Customer,
                          uowHandler: Handler<AsyncResult<UnitOfWork>>) :
-  CommandHandler<Customer>(entityId, entityName, commandId, commandName, command, snapshot, stateFn, uowHandler) {
+  CommandHandler<Customer>(cmdMetadata, command, snapshot, stateFn, uowHandler) {
 
   override fun handleCommand() {
 
     val customer = snapshot.state
 
     when (command) {
-      is CreateCustomer -> customer.create(command.customerId, command.name, eventsFuture.completer())
+      is CreateCustomer -> customer.create(CustomerId(cmdMetadata.entityId), command.name, eventsFuture.completer())
       is ActivateCustomer -> eventsFuture.complete(customer.activate(command.reason))
       is DeactivateCustomer -> customer.deactivate(command.reason, eventsFuture.completer())
       is CreateActivateCustomer -> {
         val createFuture: Future<List<DomainEvent>> = Future.future()
         val tracker = StateTransitionsTracker(snapshot, stateFn)
-        tracker.currentState.create(command.customerId, command.name, createFuture)
+        tracker.currentState.create(CustomerId(cmdMetadata.entityId), command.name, createFuture)
         createFuture
           .compose { v ->
             println("after create")
@@ -182,7 +174,7 @@ class CustomerCmdHandler(entityId: Int,
             println("  events $v")
           }, eventsFuture)
       }
-      else -> uowFuture.fail("$commandName is a unknown command")
+      else -> uowFuture.fail("${cmdMetadata.commandName} is a unknown command")
     }
   }
 }

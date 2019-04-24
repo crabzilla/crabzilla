@@ -38,11 +38,11 @@ class PgcUowRepoIT {
   companion object {
     const val aggregateName = "Customer"
     val customerId = CustomerId(1)
-    val createCmd = CreateCustomer(customerId, "customer")
+    val createCmd = CreateCustomer("customer")
     val created = CustomerCreated(customerId, "customer")
     val expectedUow1 = UnitOfWork(UUID.randomUUID(), "Customer", 1, UUID.randomUUID(), CREATE.urlFriendly(), createCmd,
       1, (listOf(created)))
-    val activateCmd = ActivateCustomer(customerId, "I want it")
+    val activateCmd = ActivateCustomer("I want it")
     val activated = CustomerActivated("a good reason", Instant.now())
     val expectedUow2 = UnitOfWork(UUID.randomUUID(), "Customer", 1, UUID.randomUUID(), ACTIVATE.urlFriendly(),
       activateCmd, 2, (listOf(activated)))

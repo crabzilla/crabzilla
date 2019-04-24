@@ -1,16 +1,6 @@
 package io.github.crabzilla.web
 
-import io.github.crabzilla.CommandHandlerEndpoint
-import io.github.crabzilla.JsonMetadata.COMMAND_ID
-import io.github.crabzilla.JsonMetadata.COMMAND_JSON_CONTENT
-import io.github.crabzilla.JsonMetadata.COMMAND_NAME
-import io.github.crabzilla.JsonMetadata.COMMAND_ENTITY_ID
-import io.github.crabzilla.JsonMetadata.COMMAND_ENTITY_NAME
-import io.github.crabzilla.JsonMetadata.COMMAND_ENTITY_RESOURCE
-import io.github.crabzilla.JsonMetadata.UNIT_OF_WORK_ID
-import io.github.crabzilla.ProjectionData
-import io.github.crabzilla.UnitOfWork
-import io.github.crabzilla.UnitOfWorkRepository
+import io.github.crabzilla.*
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.ReplyException
@@ -22,6 +12,11 @@ import java.util.*
 
 const val CONTENT_TYPE_UNIT_OF_WORK_ID = "application/vnd.crabzilla.unit_of_work_id+json"
 const val CONTENT_TYPE_UNIT_OF_WORK_BODY = "application/vnd.crabzilla.unit_of_work+json"
+
+const val COMMAND_NAME = "commandName"
+const val COMMAND_ENTITY_ID = "entityId"
+const val COMMAND_ENTITY_RESOURCE = "entityResource"
+const val UNIT_OF_WORK_ID = "unitOfWorkId"
 
 private val log = LoggerFactory.getLogger("crabzilla.web")
 
@@ -41,21 +36,17 @@ fun postCommandHandler(routingCtx: RoutingContext, resourceToEntity: (String) ->
 
   log.info("command=:\n${commandJson.encode()}")
 
-  val jo = JsonObject()
-  jo.put(COMMAND_ID, UUID.randomUUID().toString())
-  jo.put(COMMAND_ENTITY_NAME, resourceToEntity(routingCtx.pathParam(COMMAND_ENTITY_RESOURCE)))
-  jo.put(COMMAND_ENTITY_ID, Integer(routingCtx.pathParam(COMMAND_ENTITY_ID)))
-  jo.put(COMMAND_NAME, routingCtx.pathParam(COMMAND_NAME))
-  jo.put(COMMAND_JSON_CONTENT, commandJson)
+  val postCmd = CommandMetadata(resourceToEntity(routingCtx.pathParam(COMMAND_ENTITY_RESOURCE)),
+    routingCtx.pathParam(COMMAND_ENTITY_ID).toInt(), routingCtx.pathParam(COMMAND_NAME))
 
   httpResp.headers().add("Content-Type", "application/json")
 
-  log.info("posting a command to ${jo.encodePrettily()}")
+  log.info("posting a command to $postCmd")
 
-  val handlerEndpoint = CommandHandlerEndpoint(jo.getString(COMMAND_ENTITY_NAME)).endpoint()
+  val handlerEndpoint = CommandHandlerEndpoint(postCmd.entityName).endpoint()
 
   routingCtx.vertx().eventBus()
-    .send<Pair<UnitOfWork, Int>>(handlerEndpoint, jo) { response ->
+    .send<Pair<UnitOfWork, Int>>(handlerEndpoint, Pair(postCmd, commandJson)) { response ->
 
     if (!response.succeeded()) {
       val cause = response.cause() as ReplyException
