@@ -27,11 +27,7 @@ fun postCommandHandler(routingCtx: RoutingContext, resourceToEntity: (String) ->
   val commandJson = routingCtx.bodyAsJson
 
   if (commandJson == null) {
-    httpResp
-      .setStatusCode(400)
-      .setStatusMessage("invalid command")
-      .end()
-    return
+    httpResp.setStatusCode(400).setStatusMessage("invalid command").end(); return
   }
 
   log.info("command=:\n${commandJson.encode()}")
@@ -50,7 +46,7 @@ fun postCommandHandler(routingCtx: RoutingContext, resourceToEntity: (String) ->
 
     if (!response.succeeded()) {
       val cause = response.cause() as ReplyException
-      httpResp.setStatusCode(cause.failureCode()).setStatusMessage(cause.message).end()
+      httpResp.setStatusCode(cause.failureCode()).setStatusMessage(cause.message).end() ;
       return@send
     }
 
@@ -83,8 +79,7 @@ fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository) {
   val unitOfWorkId = rc.request().getParam(UNIT_OF_WORK_ID)
 
   if (unitOfWorkId == null) {
-    httpResp.setStatusCode(400).end()
-    return
+    httpResp.setStatusCode(400).end(); return
   }
 
   val uowFuture = Future.future<UnitOfWork>()

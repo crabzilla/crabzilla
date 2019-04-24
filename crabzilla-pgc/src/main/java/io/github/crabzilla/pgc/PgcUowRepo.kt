@@ -73,6 +73,7 @@ open class PgcUowRepo(private val pgPool: PgPool,
         val domainEvent = eventFromJson.invoke(eventName, eventJson)
         domainEvent
       }
+
       try {
         val events: List<DomainEvent> = List(jsonArray.size(), jsonToEventPair)
         val uow = UnitOfWork(row.getUUID(UOW_ID), row.getString(TARGET_NAME), row.getInteger(TARGET_ID),
@@ -91,9 +92,7 @@ open class PgcUowRepo(private val pgPool: PgPool,
     log.info("will load id [{}] after version [{}]", id, version)
     pgPool.getConnection { ar0 ->
       if (ar0.failed()) {
-        log.error("get connection", ar0.cause())
-        aHandler.handle(Future.failedFuture(ar0.cause()))
-        return@getConnection
+        aHandler.handle(Future.failedFuture(ar0.cause())); return@getConnection
       }
       val conn = ar0.result()
       conn.prepare(SQL_SELECT_AFTER_VERSION) { ar1 ->
@@ -155,9 +154,7 @@ open class PgcUowRepo(private val pgPool: PgPool,
 
     pgPool.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowSequence)) { ar ->
       if (ar.failed()) {
-        log.error("selectAfterUowSequenceSql", ar.cause())
-        future.fail(ar.cause())
-        return@preparedQuery
+        future.fail(ar.cause()); return@preparedQuery
       }
       val rows = ar.result()
       if (rows.size() == 0) {
