@@ -42,7 +42,7 @@ abstract class CommandHandler<E: Entity>(val cmdMetadata: CommandMetadata,
   abstract fun handleCommand()
 }
 
-class CommandHandlerVerticle<E : Entity>(val endpoint: CommandHandlerEndpoint,
+class CommandHandlerVerticle<E : Entity>(private val endpoint: CommandHandlerEndpoint,
                                          private val jsonToCommand: (String, JsonObject) -> Command,
                                          private val seedValue: E,
                                          private val cmdHandlerFactory: CommandHandlerFactory<E>,
@@ -93,7 +93,7 @@ class CommandHandlerVerticle<E : Entity>(val endpoint: CommandHandlerEndpoint,
 
       val snapshotFuture: Future<Snapshot<E>> = Future.future()
 
-      snapshotRepo.retrieve(commandPair.first.entityId, endpoint.endpoint(), snapshotFuture)
+      snapshotRepo.retrieve(commandPair.first.entityId, snapshotFuture)
 
       var resultingUow : UnitOfWork? = null
 

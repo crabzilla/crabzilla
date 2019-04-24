@@ -10,7 +10,8 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 
-class PgcSnapshotRepo<A : Entity>(private val pgPool: PgPool,
+class PgcSnapshotRepo<A : Entity>(private val entityName: String,
+                                  private val pgPool: PgPool,
                                   private val seedValue: A,
                                   private val applyEventsFn: (DomainEvent, A) -> A,
                                   private val writeModelFromJson: (JsonObject) -> A,
@@ -25,7 +26,7 @@ class PgcSnapshotRepo<A : Entity>(private val pgPool: PgPool,
 
   }
 
-  override fun retrieve(id: Int, entityName: String, aHandler: Handler<AsyncResult<Snapshot<A>>>) {
+  override fun retrieve(id: Int, aHandler: Handler<AsyncResult<Snapshot<A>>>) {
 
     val future = Future.future<Snapshot<A>>()
     future.setHandler(aHandler)

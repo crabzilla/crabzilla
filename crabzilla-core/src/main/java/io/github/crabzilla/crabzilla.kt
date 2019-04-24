@@ -69,7 +69,7 @@ fun initVertx(vertx: Vertx) {
   Json.mapper
     .registerModule(Jdk8Module())
     .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES) // TODO test this
 
   vertx.eventBus().registerDefaultCodec(ProjectionData::class.java,
     JacksonGenericCodec(Json.mapper, ProjectionData::class.java))

@@ -1,6 +1,9 @@
 package io.github.crabzilla.web
 
 import io.github.crabzilla.*
+import io.github.crabzilla.web.PathParamsNames.COMMAND_ENTITY_ID
+import io.github.crabzilla.web.PathParamsNames.COMMAND_ENTITY_RESOURCE
+import io.github.crabzilla.web.PathParamsNames.COMMAND_NAME
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.ReplyException
@@ -13,12 +16,15 @@ import java.util.*
 const val CONTENT_TYPE_UNIT_OF_WORK_ID = "application/vnd.crabzilla.unit_of_work_id+json"
 const val CONTENT_TYPE_UNIT_OF_WORK_BODY = "application/vnd.crabzilla.unit_of_work+json"
 
-const val COMMAND_NAME = "commandName"
-const val COMMAND_ENTITY_ID = "entityId"
-const val COMMAND_ENTITY_RESOURCE = "entityResource"
-const val UNIT_OF_WORK_ID = "unitOfWorkId"
+private const val UNIT_OF_WORK_ID = "unitOfWorkId"
 
 private val log = LoggerFactory.getLogger("crabzilla.web")
+
+object PathParamsNames {
+  const val COMMAND_NAME = "commandName"
+  const val COMMAND_ENTITY_ID = "entityId"
+  const val COMMAND_ENTITY_RESOURCE = "entityResource"
+}
 
 fun postCommandHandler(routingCtx: RoutingContext, resourceToEntity: (String) -> String, projectionEndpoint: String) {
 
@@ -83,7 +89,6 @@ fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository) {
   }
 
   val uowFuture = Future.future<UnitOfWork>()
-
   uowRepo.getUowByUowId(UUID.fromString(unitOfWorkId), uowFuture)
 
   uowFuture.setHandler { uowResult ->
@@ -93,7 +98,7 @@ fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository) {
       val contentType = rc.request().getHeader("accept")
       httpResp.setStatusCode(200).setChunked(true).
         headers().add("Content-Type", "application/json")
-      val defaultResult = JsonObject().put("unitOfWorkId", uowResult.result().unitOfWorkId.toString())
+      val defaultResult = JsonObject().put(UNIT_OF_WORK_ID, uowResult.result().unitOfWorkId.toString())
       val effectiveResult: JsonObject = when (contentType) {
         CONTENT_TYPE_UNIT_OF_WORK_BODY -> JsonObject.mapFrom(uowResult.result())
         else -> defaultResult

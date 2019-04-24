@@ -79,8 +79,8 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
 
       val uowRepository = PgcUowRepo(writeDb, CUSTOMER_CMD_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
       val uowJournal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
-      val snapshotRepo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, CUSTOMER_FROM_JSON,
-        CUSTOMER_EVENT_FROM_JSON)
+      val snapshotRepo = PgcSnapshotRepo("customer", writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER,
+        CUSTOMER_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
 
       // command handlers verticles
 

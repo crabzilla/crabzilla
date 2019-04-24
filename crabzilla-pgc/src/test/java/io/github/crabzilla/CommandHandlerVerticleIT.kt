@@ -84,8 +84,8 @@ class CommandHandlerVerticleIT {
 
       val journal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
 
-      val snapshotRepo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER,
-        CUSTOMER_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
+      val snapshotRepo = PgcSnapshotRepo(handlerEndpoint.entityName, writeDb, CUSTOMER_SEED_VALUE,
+        CUSTOMER_STATE_BUILDER, CUSTOMER_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
 
       verticle = CommandHandlerVerticle(handlerEndpoint, CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE,
                         CUSTOMER_CMD_HANDLER_FACTORY, CUSTOMER_CMD_VALIDATOR, journal, snapshotRepo)

@@ -39,7 +39,7 @@ class PgcSnapshotRepoIT {
   internal lateinit var repo: SnapshotRepository<Customer>
 
   companion object {
-    const val aggregateName = "Customer"
+    const val entityName = "customer"
     val customerId = CustomerId(1)
     val createCmd = CreateCustomer("customer")
     val created = CustomerCreated(customerId, "customer")
@@ -87,7 +87,7 @@ class PgcSnapshotRepoIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      repo = PgcSnapshotRepo(writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, CUSTOMER_FROM_JSON,
+      repo = PgcSnapshotRepo(entityName, writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, CUSTOMER_FROM_JSON,
         CUSTOMER_EVENT_FROM_JSON)
 
       writeDb.query("delete from units_of_work") { deleteResult ->
@@ -108,7 +108,7 @@ class PgcSnapshotRepoIT {
   @DisplayName("given none snapshot or event, it can retrieve correct snapshot")
   fun a0(tc: VertxTestContext) {
 
-      repo.retrieve(customerId.value, aggregateName, Handler { event ->
+      repo.retrieve(customerId.value, Handler { event ->
         if (event.failed()) {
           event.cause().printStackTrace()
           tc.failNow(event.cause())
@@ -132,7 +132,7 @@ class PgcSnapshotRepoIT {
       UUID.randomUUID(),
       CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
-      aggregateName,
+      entityName,
       customerId.value,
       1)
 
@@ -144,7 +144,7 @@ class PgcSnapshotRepoIT {
       val uowSequence = event1.result().first().getLong(0)
       assertThat(uowSequence).isGreaterThan(0)
 
-      repo.retrieve(customerId.value, aggregateName, Handler { event2 ->
+      repo.retrieve(customerId.value, Handler { event2 ->
           if (event2.failed()) {
             event2.cause().printStackTrace()
             tc.failNow(event2.cause())
@@ -169,7 +169,7 @@ class PgcSnapshotRepoIT {
       UUID.randomUUID(),
       CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
-      aggregateName,
+      entityName,
       customerId.value,
       1)
 
@@ -185,7 +185,7 @@ class PgcSnapshotRepoIT {
         UUID.randomUUID(),
         ACTIVATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd)),
-        aggregateName,
+        entityName,
         customerId.value,
         2)
 
@@ -198,7 +198,7 @@ class PgcSnapshotRepoIT {
         val uowSequence = ar1.result().first().getLong(0)
         assertThat(uowSequence).isGreaterThan(0)
 
-        repo.retrieve(customerId.value, aggregateName, Handler { event ->
+        repo.retrieve(customerId.value, Handler { event ->
           if (event.failed()) {
             event.cause().printStackTrace()
             tc.failNow(event.cause())
