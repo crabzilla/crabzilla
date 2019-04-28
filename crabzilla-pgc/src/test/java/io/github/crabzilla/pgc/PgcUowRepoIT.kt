@@ -586,7 +586,6 @@ class PgcUowRepoIT {
 
       appendFuture1.setHandler { ar1 ->
         if (ar1.failed()) {
-          ar1.cause().printStackTrace()
           tc.failNow(ar1.cause())
           return@setHandler
         }
@@ -602,7 +601,7 @@ class PgcUowRepoIT {
 
         appendFuture2.setHandler { ar2 ->
           if (ar2.failed()) {
-            assertThat(ar2.cause()).isInstanceOf(DbConcurrencyException::class.java)
+            assertThat(ar2.cause().message).isEqualTo("expected version is 0 but current version is 1")
             tc.completeNow()
             return@setHandler
           }

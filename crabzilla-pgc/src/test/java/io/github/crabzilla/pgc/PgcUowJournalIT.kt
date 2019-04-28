@@ -187,7 +187,7 @@ class PgcUowJournalIT {
 
       appendFuture2.setHandler { ar2 ->
         if (ar2.failed()) {
-          assertThat(ar2.cause()).isInstanceOf(DbConcurrencyException::class.java)
+          assertThat(ar2.cause().message).isEqualTo("expected version is 0 but current version is 1")
           tc.completeNow()
           return@setHandler
         }

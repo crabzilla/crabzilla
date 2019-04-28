@@ -55,10 +55,8 @@ class PgcUowJournal(private val pgPool: PgPool,
 
           // version does not match
           if (currentVersion != unitOfWork.version -1) {
-            val error =
-              DbConcurrencyException("expected version is ${unitOfWork.version} but current version is $currentVersion")
+            val error = "expected version is ${unitOfWork.version-1} but current version is $currentVersion"
             aHandler.handle(Future.failedFuture(error))
-
           } else {
 
             // if version is OK, then insert
