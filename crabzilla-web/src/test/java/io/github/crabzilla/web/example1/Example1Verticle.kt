@@ -1,7 +1,8 @@
 package io.github.crabzilla.web.example1
 
+import io.github.crabzilla.*
 import io.github.crabzilla.example1.*
-import io.github.crabzilla.initVertx
+import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.PgcSnapshotRepo
 import io.github.crabzilla.pgc.PgcUowJournal
 import io.github.crabzilla.pgc.PgcUowRepo
@@ -16,6 +17,7 @@ import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.Launcher
+import io.vertx.core.Vertx
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.JsonObject
@@ -29,7 +31,8 @@ fun main(args: Array<String>) {
   Launcher.executeCommand("run", Example1Verticle::class.java.name)
 }
 
-class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
+class Example1Verticle(val httpPort: Int = 8081, val resourceToEntity: (String) -> String)
+  : AbstractVerticle() {
 
   companion object {
 
@@ -94,10 +97,14 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
       router.route().handler(BodyHandler.create())
 
       router.post("/:entityResource/:entityId/commands/:commandName").handler {
-        postCommandHandler(it, EXAMPLE1_RESOURCE_TO_ENTITY, EXAMPLE1_PROJECTION_ENDPOINT) }
+        val commandMetadata = CommandMetadata(resourceToEntity(
+            it.pathParam(PathParamsNames.COMMAND_ENTITY_RESOURCE)),
+            it.pathParam(PathParamsNames.COMMAND_ENTITY_ID).toInt(),
+            it.pathParam(PathParamsNames.COMMAND_NAME))
+        postCommandHandler(it, commandMetadata, EXAMPLE1_PROJECTION_ENDPOINT)
+      }
 
-      router.get("/units-of-work/:unitOfWorkId").handler {
-        getUowHandler(it, uowRepository) }
+      router.get("/units-of-work/:unitOfWorkId").handler { getUowHandler(it, uowRepository) }
 
       server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
 
@@ -134,3 +141,4 @@ class Example1Verticle(val httpPort: Int = 8081) : AbstractVerticle() {
   }
 
 }
+

@@ -25,6 +25,7 @@ import java.util.Random;
 import static io.github.crabzilla.example1.CustomerCommandEnum.CREATE;
 import static io.github.crabzilla.web.WebKt.CONTENT_TYPE_UNIT_OF_WORK_BODY;
 import static io.github.crabzilla.web.WebKt.CONTENT_TYPE_UNIT_OF_WORK_ID;
+import static io.github.crabzilla.web.example1.Example1Kt.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -61,7 +62,7 @@ class Example1VerticleIT {
   @BeforeAll
   static void setup(VertxTestContext tc, Vertx vertx) {
     port = httpPort();
-    verticle = new Example1Verticle(port);
+    verticle = new Example1Verticle(port, getEXAMPLE1_RESOURCE_TO_ENTITY());
     log.info("will try to deploy MainVerticle using HTTP_PORT = " + port);
     WebClientOptions wco = new WebClientOptions();
     client = WebClient.create(vertx, wco);

@@ -1,9 +1,6 @@
 package io.github.crabzilla.web
 
 import io.github.crabzilla.*
-import io.github.crabzilla.web.PathParamsNames.COMMAND_ENTITY_ID
-import io.github.crabzilla.web.PathParamsNames.COMMAND_ENTITY_RESOURCE
-import io.github.crabzilla.web.PathParamsNames.COMMAND_NAME
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.ReplyException
@@ -20,13 +17,9 @@ private const val UNIT_OF_WORK_ID = "unitOfWorkId"
 
 private val log = LoggerFactory.getLogger("crabzilla.web")
 
-object PathParamsNames {
-  const val COMMAND_NAME = "commandName"
-  const val COMMAND_ENTITY_ID = "entityId"
-  const val COMMAND_ENTITY_RESOURCE = "entityResource"
-}
 
-fun postCommandHandler(routingCtx: RoutingContext, resourceToEntity: (String) -> String, projectionEndpoint: String) {
+fun postCommandHandler(routingCtx: RoutingContext, commandMetadata: CommandMetadata,
+                       projectionEndpoint: String) {
 
   val httpResp = routingCtx.response()
 
@@ -38,17 +31,14 @@ fun postCommandHandler(routingCtx: RoutingContext, resourceToEntity: (String) ->
 
   log.info("command=:\n${commandJson.encode()}")
 
-  val postCmd = CommandMetadata(resourceToEntity(routingCtx.pathParam(COMMAND_ENTITY_RESOURCE)),
-    routingCtx.pathParam(COMMAND_ENTITY_ID).toInt(), routingCtx.pathParam(COMMAND_NAME))
-
   httpResp.headers().add("Content-Type", "application/json")
 
-  log.info("posting a command to $postCmd")
+  log.info("posting a command to $commandMetadata")
 
-  val handlerEndpoint = CommandHandlerEndpoint(postCmd.entityName).endpoint()
+  val handlerEndpoint = CommandHandlerEndpoint(commandMetadata.entityName).endpoint()
 
   routingCtx.vertx().eventBus()
-    .send<Pair<UnitOfWork, Int>>(handlerEndpoint, Pair(postCmd, commandJson)) { response ->
+    .send<Pair<UnitOfWork, Int>>(handlerEndpoint, Pair(commandMetadata, commandJson)) { response ->
 
     if (!response.succeeded()) {
       val cause = response.cause() as ReplyException

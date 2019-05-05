@@ -10,13 +10,13 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 
-class PgcSnapshotRepo<A : Entity>(private val entityName: String,
+class PgcSnapshotRepo<E : Entity>(private val entityName: String,
                                   private val pgPool: PgPool,
-                                  private val seedValue: A,
-                                  private val applyEventsFn: (DomainEvent, A) -> A,
-                                  private val writeModelFromJson: (JsonObject) -> A,
+                                  private val seedValue: E,
+                                  private val applyEventsFn: (DomainEvent, E) -> E,
+                                  private val writeModelFromJson: (JsonObject) -> E,
                                   private val eventFromJson: (String, JsonObject) -> DomainEvent)
-                                                                          : SnapshotRepository<A> {
+                                                                          : SnapshotRepository<E> {
   companion object {
 
     internal val log = LoggerFactory.getLogger(PgcEventProjector::class.java)
@@ -26,9 +26,9 @@ class PgcSnapshotRepo<A : Entity>(private val entityName: String,
 
   }
 
-  override fun retrieve(id: Int, aHandler: Handler<AsyncResult<Snapshot<A>>>) {
+  override fun retrieve(id: Int, aHandler: Handler<AsyncResult<Snapshot<E>>>) {
 
-    val future = Future.future<Snapshot<A>>()
+    val future = Future.future<Snapshot<E>>()
     future.setHandler(aHandler)
 
     pgPool.getConnection { res ->
@@ -41,6 +41,7 @@ class PgcSnapshotRepo<A : Entity>(private val entityName: String,
         // Transaction must use a connection
         val conn = res.result()
 
+        // TODO how to specify transaction isolation level?
         // Begin the transaction
         val tx = conn.begin().abortHandler { log.warn("Transaction failed") }
 
@@ -55,7 +56,7 @@ class PgcSnapshotRepo<A : Entity>(private val entityName: String,
           } else {
             val pgRow = event1.result()
 
-            val cachedInstance : A
+            val cachedInstance : E
             val cachedVersion : Int
 
             if (pgRow == null || pgRow.size() == 0) {
