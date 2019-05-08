@@ -7,14 +7,16 @@ import java.util.*
 
 interface UnitOfWorkRepository {
 
-  fun getUowByCmdId(cmdId: UUID, future: Future<UnitOfWork>)
+  fun getUowByCmdId(cmdId: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>)
 
-  fun getUowByUowId(uowId: UUID, future: Future<UnitOfWork>)
+  fun getUowByUowId(uowId: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>)
 
-  operator fun get(query: String, id: UUID, future: Future<UnitOfWork>)
+  operator fun get(query: String, id: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>)
 
-  fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String, aHandler: Handler<AsyncResult<SnapshotData>>)
+  fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String,
+                         aHandler: Handler<AsyncResult<SnapshotData>>)
 
-  fun selectAfterUowSequence(uowSequence: Int, maxRows: Int, future: Future<List<ProjectionData>>)
+  fun selectAfterUowSequence(uowSequence: Int, maxRows: Int,
+                             aHandler: Handler<AsyncResult<List<ProjectionData>>>)
 
 }

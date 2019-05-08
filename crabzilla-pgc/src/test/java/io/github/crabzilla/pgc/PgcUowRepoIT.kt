@@ -31,9 +31,9 @@ import java.util.*
 class PgcUowRepoIT {
 
   private lateinit var vertx: Vertx
-  internal lateinit var writeDb: PgPool
-  internal lateinit var repo: UnitOfWorkRepository
-  internal lateinit var journal: UnitOfWorkJournal
+  private lateinit var writeDb: PgPool
+  private lateinit var repo: UnitOfWorkRepository
+  private lateinit var journal: UnitOfWorkJournal
 
   companion object {
     const val aggregateName = "Customer"
@@ -51,10 +51,7 @@ class PgcUowRepoIT {
   @BeforeEach
   fun setup(tc: VertxTestContext) {
 
-    val vertxOptions = VertxOptions()
-    vertxOptions.blockedThreadCheckInterval = (1000 * 60 * 60).toLong() // to easier debug
-
-    vertx = Vertx.vertx(vertxOptions)
+    vertx = Vertx.vertx()
 
     initVertx(vertx)
 
@@ -88,9 +85,7 @@ class PgcUowRepoIT {
         .setMaxSize(config.getInteger("WRITE_DATABASE_POOL_MAX_SIZE"))
 
       writeDb = PgClient.pool(vertx, options)
-
       repo = PgcUowRepo(writeDb, CUSTOMER_CMD_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
-
       journal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
 
       writeDb.query("delete from units_of_work") { deleteResult ->
@@ -510,164 +505,6 @@ class PgcUowRepoIT {
       }
     }
 
-  }
-
-  @Nested
-  @DisplayName("When appending")
-  @ExtendWith(VertxExtension::class)
-  inner class WhenAppending {
-
-    @Test
-    @DisplayName("can append version 1")
-    fun s1(tc: VertxTestContext) {
-
-      val appendFuture = Future.future<Int>()
-
-      journal.append(expectedUow1, appendFuture)
-
-      appendFuture.setHandler { ar1 ->
-        if (ar1.failed()) {
-          ar1.cause().printStackTrace()
-          tc.failNow(ar1.cause())
-          return@setHandler
-        }
-
-        val uowSequence = ar1.result()
-
-        assertThat(uowSequence).isGreaterThan(0)
-
-        val uowFuture = Future.future<UnitOfWork>()
-
-        repo.getUowByUowId(expectedUow1.unitOfWorkId, uowFuture)
-
-        uowFuture.setHandler { ar2 ->
-          if (ar2.failed()) {
-            ar2.cause().printStackTrace()
-            tc.failNow(ar2.cause())
-            return@setHandler
-          }
-
-          val uow = ar2.result()
-
-          assertThat(uow).isEqualTo(expectedUow1)
-
-          val snapshotDataFuture = Future.future<SnapshotData>()
-
-          repo.selectAfterVersion(expectedUow1.entityId, 0, aggregateName, snapshotDataFuture.completer())
-
-          snapshotDataFuture.setHandler { ar3 ->
-            if (ar3.failed()) {
-              ar3.cause().printStackTrace()
-              tc.failNow(ar3.cause())
-              return@setHandler
-            }
-
-            val (version, events) = ar3.result()
-
-            assertThat(version).isEqualTo(expectedUow1.version)
-            assertThat(events).isEqualTo(expectedUow1.events)
-
-            tc.completeNow()
-
-          }
-        }
-      }
-
-    }
-
-    @Test
-    @DisplayName("cannot append version 1 twice")
-    fun s2(tc: VertxTestContext) {
-
-      val appendFuture1 = Future.future<Int>()
-
-      // append uow1
-      journal.append(expectedUow1, appendFuture1.completer())
-
-      appendFuture1.setHandler { ar1 ->
-        if (ar1.failed()) {
-          tc.failNow(ar1.cause())
-          return@setHandler
-        }
-
-        val uowSequence = ar1.result()
-
-        assertThat(uowSequence).isGreaterThan(0)
-
-        val appendFuture2 = Future.future<Int>()
-
-        // try to append uow1 again
-        journal.append(expectedUow1, appendFuture2.completer())
-
-        appendFuture2.setHandler { ar2 ->
-          if (ar2.failed()) {
-            assertThat(ar2.cause().message).isEqualTo("expected version is 0 but current version is 1")
-            tc.completeNow()
-            return@setHandler
-          }
-
-        }
-
-      }
-
-    }
-
-    @Test
-    @DisplayName("can append version 1 and version 2")
-    fun s3(tc: VertxTestContext) {
-
-      val appendFuture1 = Future.future<Int>()
-
-      // append uow1
-      journal.append(expectedUow1, appendFuture1)
-
-      appendFuture1.setHandler { ar1 ->
-
-        if (ar1.failed()) {
-          ar1.cause().printStackTrace()
-          tc.failNow(ar1.cause())
-        } else {
-
-          val uowSequence = ar1.result()
-          assertThat(uowSequence).isGreaterThan(0)
-          val appendFuture2 = Future.future<Int>()
-
-          // append uow2
-          journal.append(expectedUow2, appendFuture2)
-
-          appendFuture2.setHandler { ar2 ->
-
-            if (ar2.failed()) {
-              ar2.cause().printStackTrace()
-              tc.failNow(ar2.cause())
-
-            } else {
-              val uowSequence = ar2.result()
-              assertThat(uowSequence).isGreaterThan(2)
-              val snapshotDataFuture = Future.future<SnapshotData>()
-
-              // get all versions for id
-              repo.selectAfterVersion(expectedUow2.entityId, 0, aggregateName, snapshotDataFuture.completer())
-
-              snapshotDataFuture.setHandler { ar4 ->
-
-                if (ar4.failed()) {
-                  ar4.cause().printStackTrace()
-                  tc.failNow(ar4.cause())
-
-                } else {
-                  val (version, events) = ar4.result()
-                  assertThat(version).isEqualTo(expectedUow2.version)
-                  assertThat(events).isEqualTo(listOf(created, activated))
-                  tc.completeNow()
-                }
-
-              }
-            }
-          }
-        }
-      }
-    }
   }
 
 }

@@ -35,33 +35,37 @@ open class PgcUowRepo(private val pgPool: PgPool,
                                           "where ar_id = $1 and ar_name = $2 and version > $3 order by version "
   }
 
-  override fun getUowByCmdId(cmdId: UUID, future: Future<UnitOfWork>) {
-    get(SQL_SELECT_UOW_BY_CMD_ID, cmdId, future)
+  override fun getUowByCmdId(cmdId: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>) {
+    get(SQL_SELECT_UOW_BY_CMD_ID, cmdId, aHandler)
   }
 
-  override fun getUowByUowId(uowId: UUID, future: Future<UnitOfWork>) {
-    get(SQL_SELECT_UOW_BY_UOW_ID, uowId, future)
+  override fun getUowByUowId(uowId: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>) {
+    get(SQL_SELECT_UOW_BY_UOW_ID, uowId, aHandler)
   }
 
-  override fun get(query: String, id: UUID, future: Future<UnitOfWork>) {
+  override fun get(query: String, id: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>) {
     val params = Tuple.of(id)
 
     pgPool.preparedQuery(query, params) { ar ->
       if (ar.failed()) {
-        future.fail(ar.cause()); return@preparedQuery
+        aHandler.handle(Future.failedFuture(ar.cause()))
+        return@preparedQuery
       }
 
       val rows = ar.result()
       if (rows.size() == 0) {
-        future.complete(null); return@preparedQuery
+        aHandler.handle(Future.succeededFuture(null))
+        return@preparedQuery
       }
+
       val row = rows.first()
       val commandName = row.getString(CMD_NAME)
       val commandAsJson = row.getJson(CMD_DATA).value().toString()
       val command = try { cmdFromJson.invoke(commandName, JsonObject(commandAsJson)) } catch (e: Exception) { null }
 
       if (command == null) {
-        future.fail("error when getting command $commandName from json "); return@preparedQuery
+        aHandler.handle(Future.failedFuture("error when getting command $commandName from json "))
+        return@preparedQuery
       }
 
       val jsonArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
@@ -74,25 +78,21 @@ open class PgcUowRepo(private val pgPool: PgPool,
         domainEvent
       }
 
-      try {
-        val events: List<DomainEvent> = List(jsonArray.size(), jsonToEventPair)
-        val uow = UnitOfWork(row.getUUID(UOW_ID), row.getString(TARGET_NAME), row.getInteger(TARGET_ID),
-          row.getUUID(CMD_ID), row.getString(CMD_NAME), command, row.getInteger(VERSION)!!, events)
-        future.complete(uow)
-      } catch (e:  Exception) {
-        future.fail(e)
-      }
+      val events: List<DomainEvent> = List(jsonArray.size(), jsonToEventPair)
+      val uow = UnitOfWork(row.getUUID(UOW_ID), row.getString(TARGET_NAME), row.getInteger(TARGET_ID),
+        row.getUUID(CMD_ID), row.getString(CMD_NAME), command, row.getInteger(VERSION)!!, events)
+      aHandler.handle(Future.succeededFuture(uow))
     }
   }
 
   override fun selectAfterVersion(id: Int, version: Version,
                                   aggregateRootName: String,
-                                  aHandler: Handler<AsyncResult<SnapshotData>>
-                                  ) {
+                                  aHandler: Handler<AsyncResult<SnapshotData>>) {
     log.info("will load id [{}] after version [{}]", id, version)
     pgPool.getConnection { ar0 ->
       if (ar0.failed()) {
-        aHandler.handle(Future.failedFuture(ar0.cause())); return@getConnection
+        aHandler.handle(Future.failedFuture(ar0.cause()));
+        return@getConnection
       }
       val conn = ar0.result()
       conn.prepare(SQL_SELECT_AFTER_VERSION) { ar1 ->
@@ -116,7 +116,6 @@ open class PgcUowRepo(private val pgPool: PgPool,
               val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
               eventFromJson.invoke(eventName, eventJson)
             }
-
             val events: List<DomainEvent> = List(eventsArray.size(), jsonToEventPair)
             val snapshotData = SnapshotData(row.getInteger(1)!!, events)
             list.add(snapshotData)
@@ -130,8 +129,7 @@ open class PgcUowRepo(private val pgPool: PgPool,
           }
 
           stream.exceptionHandler { err ->
-            log.error("SQL_SELECT_AFTER_VERSION: " + err.message)
-            aHandler.handle(Future.failedFuture(err))
+            log.error(err.message); aHandler.handle(Future.failedFuture(err))
           }
         }
       }
@@ -140,7 +138,7 @@ open class PgcUowRepo(private val pgPool: PgPool,
 
 
   override fun selectAfterUowSequence(uowSequence: Int, maxRows: Int,
-                                      future: Future<List<ProjectionData>>) {
+                                      aHandler: Handler<AsyncResult<List<ProjectionData>>>) {
 
     log.info("will load after uowSequence [{}]", uowSequence)
 
@@ -154,11 +152,12 @@ open class PgcUowRepo(private val pgPool: PgPool,
 
     pgPool.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowSequence)) { ar ->
       if (ar.failed()) {
-        future.fail(ar.cause()); return@preparedQuery
+        aHandler.handle(Future.failedFuture(ar.cause().message))
+        return@preparedQuery
       }
       val rows = ar.result()
       if (rows.size() == 0) {
-        future.complete(list)
+        aHandler.handle(Future.succeededFuture(list))
         return@preparedQuery
       }
       for (row in rows) {
@@ -176,7 +175,7 @@ open class PgcUowRepo(private val pgPool: PgPool,
         val projectionData = ProjectionData(uowId, uowSeq, targetId, events)
         list.add(projectionData)
       }
-      future.complete(list)
+      aHandler.handle(Future.succeededFuture(list))
     }
 
   }

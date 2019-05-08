@@ -6,6 +6,7 @@ import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.PgcSnapshotRepo
 import io.github.crabzilla.pgc.PgcUowJournal
 import io.github.crabzilla.pgc.PgcUowRepo
+import io.github.crabzilla.pgc.example1.EXAMPLE1_PROJECTOR_HANDLER
 import io.github.crabzilla.web.getUowHandler
 import io.github.crabzilla.web.postCommandHandler
 import io.reactiverse.pgclient.PgClient
@@ -16,8 +17,8 @@ import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
+import io.vertx.core.Handler
 import io.vertx.core.Launcher
-import io.vertx.core.Vertx
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.JsonObject
@@ -25,14 +26,14 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.LoggerHandler
 import org.slf4j.LoggerFactory.getLogger
+import java.util.*
 
 // Convenience method so you can run it in your IDE
-fun main(args: Array<String>) {
+fun main() {
   Launcher.executeCommand("run", Example1Verticle::class.java.name)
 }
 
-class Example1Verticle(val httpPort: Int = 8081, val resourceToEntity: (String) -> String)
-  : AbstractVerticle() {
+class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./example1.env") : AbstractVerticle() {
 
   companion object {
 
@@ -42,6 +43,11 @@ class Example1Verticle(val httpPort: Int = 8081, val resourceToEntity: (String) 
 
     internal var log = getLogger(Example1Verticle::class.java)
 
+    const val CUSTOMER_AGGREGATE_ROOT = "customer"
+    const val EXAMPLE1_PROJECTION_ENDPOINT: String = "example1_projection_endpoint"
+
+    const val COMMAND_NAME_PARAMETER = "commandName"
+    const val COMMAND_ENTITY_ID_PARAMETER = "entityId"
   }
 
   override fun start(startFuture: Future<Void>) {
@@ -51,7 +57,7 @@ class Example1Verticle(val httpPort: Int = 8081, val resourceToEntity: (String) 
     val envOptions = ConfigStoreOptions()
       .setType("file")
       .setFormat("properties")
-      .setConfig(JsonObject().put("path", "../example1.env"))
+      .setConfig(JsonObject().put("path", configFile))
 
     val options = ConfigRetrieverOptions().addStore(envOptions)
 
@@ -76,18 +82,30 @@ class Example1Verticle(val httpPort: Int = 8081, val resourceToEntity: (String) 
       val writeDb = pgPool("WRITE", config)
       writeModelDb = writeDb
 
-      // example1
+      // read model
 
-      setupEventHandler(vertx, readDb)
+      val eventProjector = PgcEventProjector(readDb, "customer summary")
+      vertx.eventBus().consumer<ProjectionData>(EXAMPLE1_PROJECTION_ENDPOINT) { message ->
+        log.info("received events: " + message.body())
+        eventProjector.handle(message.body(), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
+          if (result.failed()) {
+            log.error("Projection failed: " + result.cause().message)
+          }
+        })
+      }
+
+      // write model
 
       val uowRepository = PgcUowRepo(writeDb, CUSTOMER_CMD_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
       val uowJournal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
-      val snapshotRepo = PgcSnapshotRepo("customer", writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER,
+      val snapshotRepo = PgcSnapshotRepo(CUSTOMER_AGGREGATE_ROOT, writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER,
         CUSTOMER_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
 
-      // command handlers verticles
+      val commandVerticle = CommandHandlerVerticle(CommandHandlerEndpoint(CUSTOMER_AGGREGATE_ROOT),
+        CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE, CUSTOMER_CMD_HANDLER_FACTORY, CUSTOMER_CMD_VALIDATOR,
+        uowJournal, snapshotRepo)
 
-      vertx.deployVerticle(customerCmdVerticle(uowJournal, snapshotRepo))
+      vertx.deployVerticle(commandVerticle)
 
       // web
 
@@ -96,15 +114,16 @@ class Example1Verticle(val httpPort: Int = 8081, val resourceToEntity: (String) 
       router.route().handler(LoggerHandler.create())
       router.route().handler(BodyHandler.create())
 
-      router.post("/:entityResource/:entityId/commands/:commandName").handler {
-        val commandMetadata = CommandMetadata(resourceToEntity(
-            it.pathParam(PathParamsNames.COMMAND_ENTITY_RESOURCE)),
-            it.pathParam(PathParamsNames.COMMAND_ENTITY_ID).toInt(),
-            it.pathParam(PathParamsNames.COMMAND_NAME))
+      router.post("/customers/:entityId/commands/:commandName").handler {
+        val commandMetadata = CommandMetadata(CUSTOMER_AGGREGATE_ROOT,
+            it.pathParam(COMMAND_ENTITY_ID_PARAMETER).toInt(),
+            it.pathParam(COMMAND_NAME_PARAMETER))
         postCommandHandler(it, commandMetadata, EXAMPLE1_PROJECTION_ENDPOINT)
       }
 
-      router.get("/units-of-work/:unitOfWorkId").handler { getUowHandler(it, uowRepository) }
+      router.get("/units-of-work/:unitOfWorkId").handler {
+        val uowId = UUID.fromString(it.pathParam("unitOfWorkId"))
+        getUowHandler(it, uowRepository, uowId) }
 
       server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
 
@@ -142,3 +161,23 @@ class Example1Verticle(val httpPort: Int = 8081, val resourceToEntity: (String) 
 
 }
 
+/**
+ *
+
+abstract class CrabzillaDeployment(vertx: Vertx,
+  readModelDb: PgPool,
+  writeModelDb: PgPool,
+  projectionEndpoint: String,
+  persistSnapshots: Boolean,
+  components: List<AggregateRootDeployment<Entity>>) {
+  abstract fun projector(): PgcEventProjector
+}
+
+abstract class AggregateRootDeployment<E: Entity> {
+  abstract fun uowJournal(): UnitOfWorkJournal
+  abstract fun uowRepo() : UnitOfWorkRepository
+  abstract fun snapshotRepo(): SnapshotRepository<E>
+  abstract fun commandHandler(): CommandHandlerVerticle<E>
+}
+
+*/

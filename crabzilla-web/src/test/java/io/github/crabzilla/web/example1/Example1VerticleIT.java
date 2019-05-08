@@ -22,10 +22,11 @@ import org.slf4j.LoggerFactory;
 import java.net.ServerSocket;
 import java.util.Random;
 
+import static io.github.crabzilla.UnitOfWork.JsonMetadata.*;
+import static io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS;
 import static io.github.crabzilla.example1.CustomerCommandEnum.CREATE;
 import static io.github.crabzilla.web.WebKt.CONTENT_TYPE_UNIT_OF_WORK_BODY;
 import static io.github.crabzilla.web.WebKt.CONTENT_TYPE_UNIT_OF_WORK_ID;
-import static io.github.crabzilla.web.example1.Example1Kt.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -62,7 +63,7 @@ class Example1VerticleIT {
   @BeforeAll
   static void setup(VertxTestContext tc, Vertx vertx) {
     port = httpPort();
-    verticle = new Example1Verticle(port, getEXAMPLE1_RESOURCE_TO_ENTITY());
+    verticle = new Example1Verticle(port, "../example1.env");
     log.info("will try to deploy MainVerticle using HTTP_PORT = " + port);
     WebClientOptions wco = new WebClientOptions();
     client = WebClient.create(vertx, wco);
@@ -99,17 +100,23 @@ class Example1VerticleIT {
   void a2(VertxTestContext tc) {
     int nextInt = random.nextInt();
     CreateCustomer cmd = new CreateCustomer("customer#" + nextInt);
-    JsonObject jo = JsonObject.mapFrom(cmd);
+    JsonObject cmdAsJson = JsonObject.mapFrom(cmd);
     client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_SUCCESS)
       .expect(ResponsePredicate.JSON)
       .putHeader("accept", CONTENT_TYPE_UNIT_OF_WORK_BODY)
-      .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
-          assertThat(response.body().getString("unitOfWorkId")).isNotNull();
-          assertThat(response.body().getJsonObject("command")).isEqualTo(jo);
-          // TODO
-          tc.completeNow();
+      .sendJson(cmdAsJson, tc.succeeding(response -> tc.verify(() -> {
+        JsonObject result = response.body();
+        assertThat(result.getString(UOW_ID)).isNotNull();
+        assertThat(result.getString(ENTITY_NAME)).isEqualTo("customer");
+        assertThat(result.getInteger(ENTITY_ID)).isEqualTo(nextInt);
+        assertThat(result.getString(COMMAND_ID)).isNotNull();
+        assertThat(result.getString(COMMAND_NAME)).isEqualTo("create");
+        assertThat(result.getJsonObject(COMMAND)).isEqualTo(cmdAsJson);
+        assertThat(result.getInteger(VERSION)).isEqualTo(1);
+        assertThat(result.getJsonArray(EVENTS).size()).isEqualTo(1);
+        tc.completeNow();
       }))
     );
   }

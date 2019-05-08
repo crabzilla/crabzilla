@@ -29,13 +29,22 @@ data class UnitOfWork(val unitOfWorkId: UUID,
   init { require(this.version >= 1) { "version must be >= 1" } }
 
   companion object {
-
     fun of(entityId: Int, entityName: String, commandId: UUID, commandName: String, command: Command,
            events: List<DomainEvent>, resultingVersion: Version): UnitOfWork {
-
       return UnitOfWork(UUID.randomUUID(), entityName, entityId, commandId, commandName, command, resultingVersion,
               events)
     }
+  }
+
+  object JsonMetadata {
+    const val UOW_ID = "unitOfWorkId"
+    const val ENTITY_NAME = "entityName"
+    const val ENTITY_ID = "entityId"
+    const val COMMAND_ID = "commandId"
+    const val COMMAND_NAME = "commandName"
+    const val COMMAND = "command"
+    const val VERSION = "version"
+    const val EVENTS = "events"
   }
 }
 
@@ -52,12 +61,9 @@ data class Snapshot<A : Entity>(val state: A, val version: Version)
 data class SnapshotData(val version: Version, val events: List<DomainEvent>)
 
 data class ProjectionData(val uowId: UUID, val uowSequence: Int, val entityId: Int, val events: List<DomainEvent>) {
-
   companion object {
-
     fun fromUnitOfWork(uowSequence: Int, uow: UnitOfWork) : ProjectionData {
-
-      return ProjectionData(UUID.randomUUID(), uowSequence, uow.entityId, uow.events)
+      return ProjectionData(uow.unitOfWorkId, uowSequence, uow.entityId, uow.events)
     }
   }
 }

@@ -30,7 +30,7 @@ import java.time.Instant
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CommandHandlerVerticleIT {
 
-  // https://slinkydeveloper.com/Assertions-With-Vertx-Futures-And-JUnit5/
+  // TODO https://slinkydeveloper.com/Assertions-With-Vertx-Futures-And-JUnit5/
   private lateinit var vertx: Vertx
   private lateinit var writeDb: PgPool
   private lateinit var verticle: CommandHandlerVerticle<Customer>
@@ -114,29 +114,23 @@ class CommandHandlerVerticleIT {
 
     val customerId = CustomerId(1)
     val createCustomerCmd = CreateCustomer("customer1")
-
-    val postCmd = CommandMetadata(handlerEndpoint.entityName,
+    val commandMetadata = CommandMetadata(handlerEndpoint.entityName,
                                       customerId.value,
                                       CREATE.urlFriendly())
-
     val command = JsonObject(CUSTOMER_CMD_TO_JSON(createCustomerCmd))
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(postCmd, command), options) { asyncResult ->
-
-      if (asyncResult.failed()) {
-        tc.failNow(asyncResult.cause())
-        return@send
-      }
-
-      val result = asyncResult.result().body() as Pair<UnitOfWork, Int>
-
-//      println(result)
-
-      tc.completeNow()
-
+      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(commandMetadata, command), options) { asyncResult ->
+        if (asyncResult.failed()) {
+          tc.failNow(asyncResult.cause())
+          return@send
+        }
+        tc.verify {
+          val result = asyncResult.result().body() as Pair<UnitOfWork, Int>
+          assertThat(result.first.events.size).isEqualTo(1)
+          tc.completeNow()
+        }
     }
-
   }
 
   @Test
@@ -145,24 +139,20 @@ class CommandHandlerVerticleIT {
 
     val customerId = CustomerId(1)
     val createCustomerCmd = CreateCustomer("a bad name")
-
-    val postCmd = CommandMetadata(handlerEndpoint.entityName,
+    val commandMetadata = CommandMetadata(handlerEndpoint.entityName,
       customerId.value,
       CREATE.urlFriendly())
-
     val command = JsonObject(CUSTOMER_CMD_TO_JSON(createCustomerCmd))
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(postCmd, command), options) { asyncResult ->
-
-      assertThat(asyncResult.succeeded()).isFalse()
-
-      val cause = asyncResult.cause() as ReplyException
-      assertThat(cause.message).isEqualTo("[Invalid name: a bad name]")
-      assertThat(cause.failureCode()).isEqualTo(400)
-
-      tc.completeNow()
-
+      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(commandMetadata, command), options) { asyncResult ->
+        tc.verify {
+          assertThat(asyncResult.succeeded()).isFalse()
+          val cause = asyncResult.cause() as ReplyException
+          assertThat(cause.message).isEqualTo("[Invalid name: a bad name]")
+          assertThat(cause.failureCode()).isEqualTo(400)
+          tc.completeNow()
+        }
     }
 
   }
@@ -170,15 +160,11 @@ class CommandHandlerVerticleIT {
   @Test
   @DisplayName("given an execution error it will be HANDLING_ERROR")
   fun a3(tc: VertxTestContext) {
-
     val customerId = CustomerId(1)
-
-    val postCmd = CommandMetadata(handlerEndpoint.entityName, customerId.value, "unknown")
-
+    val commandMetadata = CommandMetadata(handlerEndpoint.entityName, customerId.value, "unknown")
     val command = JsonObject()
-
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(postCmd, command), options) { asyncResult ->
+      .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(commandMetadata, command), options) { asyncResult ->
         tc.verify {
           assertThat(asyncResult.succeeded()).isFalse()
           val cause = asyncResult.cause() as ReplyException

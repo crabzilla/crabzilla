@@ -58,7 +58,7 @@ class CommandHandlerVerticle<E : Entity>(private val endpoint: CommandHandlerEnd
   @Throws(Exception::class)
   override fun start() {
 
-    log.info("starting command handler verticle for endpoint: $endpoint")
+    log.info("starting command handler verticle for : ${endpoint.entityName}")
 
     vertx.eventBus().consumer<Pair<CommandMetadata, JsonObject>>(endpoint.endpoint(), Handler { commandEvent ->
 

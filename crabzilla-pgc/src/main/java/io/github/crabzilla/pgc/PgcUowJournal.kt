@@ -61,7 +61,6 @@ class PgcUowJournal(private val pgPool: PgPool,
 
             // if version is OK, then insert
             val cmdAsJson = cmdToJson.invoke(unitOfWork.command)
-
             val eventsListAsJson = unitOfWork.events.toJsonArray(eventToJson).encode()
 
             val params2 = Tuple.of(
@@ -77,8 +76,7 @@ class PgcUowJournal(private val pgPool: PgPool,
             sqlConn.preparedQuery(SQL_APPEND_UOW, params2) { insert ->
 
               if (insert.failed()) {
-                log.error("SQL_APPEND_UOW", insert.cause())
-                aHandler.handle(Future.failedFuture(insert.cause()))
+                log.error("SQL_APPEND_UOW", insert.cause()); aHandler.handle(Future.failedFuture(insert.cause()))
 
               } else {
                 val insertRows = insert.result().value()
@@ -87,10 +85,9 @@ class PgcUowJournal(private val pgPool: PgPool,
                 // Commit the transaction
                 tx.commit { ar ->
                   if (ar.failed()) {
-                    log.error("Transaction failed " + ar.cause().message)
-                    aHandler.handle(Future.failedFuture(ar.cause()))
+                    log.error("Transaction failed", ar.cause()); aHandler.handle(Future.failedFuture(ar.cause()))
                   } else {
-                    log.info("Transaction succeeded")
+                    log.info("Transaction succeeded for ${unitOfWork.unitOfWorkId}")
                     aHandler.handle(Future.succeededFuture(generated))
                   }
                 }

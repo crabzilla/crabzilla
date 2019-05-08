@@ -17,7 +17,6 @@ private const val UNIT_OF_WORK_ID = "unitOfWorkId"
 
 private val log = LoggerFactory.getLogger("crabzilla.web")
 
-
 fun postCommandHandler(routingCtx: RoutingContext, commandMetadata: CommandMetadata,
                        projectionEndpoint: String) {
 
@@ -50,36 +49,35 @@ fun postCommandHandler(routingCtx: RoutingContext, commandMetadata: CommandMetad
 
     log.info("result = {}", result)
 
-    val headers = CaseInsensitiveHeaders().add("uowSequence", result.second.toString())
-    val eventsDeliveryOptions = DeliveryOptions().setCodecName("UnitOfWork").setHeaders(headers)
+    with(result) {
 
-    routingCtx.vertx().eventBus()
-    .publish(projectionEndpoint, ProjectionData.fromUnitOfWork(result.second, result.first), eventsDeliveryOptions)
+      val headers = CaseInsensitiveHeaders().add("uowSequence", second.toString())
+      val eventsDeliveryOptions = DeliveryOptions().setHeaders(headers)
 
-    val location = routingCtx.request().absoluteURI().split('/').subList(0, 3)
-      .reduce { acc, s ->  acc.plus("/$s")} + "/units-of-work/${result.first.unitOfWorkId}"
+      routingCtx.vertx().eventBus()
+        .publish(projectionEndpoint, ProjectionData.fromUnitOfWork(second, first), eventsDeliveryOptions)
 
-    httpResp
-      .putHeader("accept", routingCtx.request().getHeader("accept"))
-      .putHeader("Location", location)
-      .setStatusCode(303)
-      .end()
+      val location = routingCtx.request().absoluteURI().split('/').subList(0, 3)
+        .reduce { acc, s ->  acc.plus("/$s")} + "/units-of-work/${first.unitOfWorkId}"
+
+      httpResp
+        .putHeader("accept", routingCtx.request().getHeader("accept"))
+        .putHeader("Location", location)
+        .setStatusCode(303)
+        .end()
+
+    }
 
   }
 
 }
 
-fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository) {
+fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository, unitOfWorkId: UUID) {
 
   val httpResp = rc.response()
-  val unitOfWorkId = rc.request().getParam(UNIT_OF_WORK_ID)
-
-  if (unitOfWorkId == null) {
-    httpResp.setStatusCode(400).end(); return
-  }
 
   val uowFuture = Future.future<UnitOfWork>()
-  uowRepo.getUowByUowId(UUID.fromString(unitOfWorkId), uowFuture)
+  uowRepo.getUowByUowId(unitOfWorkId, uowFuture)
 
   uowFuture.setHandler { uowResult ->
     if (uowResult.failed() || uowResult.result() == null) {
