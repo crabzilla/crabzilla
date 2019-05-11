@@ -35,8 +35,8 @@ import java.util.*
 class PgcSnapshotRepoIT {
 
   private lateinit var vertx: Vertx
-  internal lateinit var writeDb: PgPool
-  internal lateinit var repo: SnapshotRepository<Customer>
+  private lateinit var writeDb: PgPool
+  private lateinit var repo: SnapshotRepository<Customer>
 
   companion object {
     const val entityName = "customer"
@@ -87,17 +87,25 @@ class PgcSnapshotRepoIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      repo = PgcSnapshotRepo(entityName, writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, CUSTOMER_FROM_JSON,
-        CUSTOMER_EVENT_FROM_JSON)
+      repo = PgcSnapshotRepo(entityName, writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER,
+        CUSTOMER_FROM_JSON, CUSTOMER_TO_JSON, CUSTOMER_EVENT_FROM_JSON)
 
-      writeDb.query("delete from units_of_work") { deleteResult ->
-        if (deleteResult.failed()) {
-          deleteResult.cause().printStackTrace()
-          tc.failNow(deleteResult.cause())
+      writeDb.query("delete from units_of_work") { deleteResult1 ->
+        if (deleteResult1.failed()) {
+          deleteResult1.cause().printStackTrace()
+          tc.failNow(deleteResult1.cause())
           return@query
         }
-        tc.completeNow()
+        writeDb.query("delete from customer_snapshots") { deleteResult2 ->
+          if (deleteResult2.failed()) {
+            deleteResult2.cause().printStackTrace()
+            tc.failNow(deleteResult2.cause())
+            return@query
+          }
+          tc.completeNow()
+        }
       }
+
 
     })
 

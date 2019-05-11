@@ -1,6 +1,11 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.*
+import io.github.crabzilla.DomainEvent
+import io.github.crabzilla.Entity
+import io.github.crabzilla.Snapshot
+import io.github.crabzilla.SnapshotRepository
+import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
+import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENT_NAME
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
@@ -15,18 +20,72 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
                                   private val seedValue: E,
                                   private val applyEventsFn: (DomainEvent, E) -> E,
                                   private val writeModelFromJson: (JsonObject) -> E,
+                                  private val writeModelToJson: (E) -> JsonObject,
                                   private val eventFromJson: (String, JsonObject) -> DomainEvent)
                                                                           : SnapshotRepository<E> {
+
+
   companion object {
 
     internal val log = LoggerFactory.getLogger(PgcEventProjector::class.java)
-    const val SELECT_SNAPSHOT_VERSION = "select version, json_content from snapshot where ar_id = $1 and ar_name = $2"
-    const val SELECT_EVENTS_VERSION_AFTER_VERSION = "select uow_events, version from units_of_work " +
-      "where ar_id = $1 and ar_name = $2 and version > $3 order by version "
+    const val SELECT_EVENTS_VERSION_AFTER_VERSION = "SELECT uow_events, version FROM units_of_work " +
+      "WHERE ar_id = $1 and ar_name = $2 and version > $3 ORDER BY version "
 
   }
 
-  override fun retrieve(id: Int, aHandler: Handler<AsyncResult<Snapshot<E>>>) {
+
+  private fun selectSnapshot(): String {
+    return "SELECT version, json_content FROM ${entityName}_snapshots WHERE ar_id = $1"
+  }
+
+  private fun upsertSnapshot(): String {
+    return "INSERT INTO ${entityName}_snapshots (ar_id, version, json_content) " +
+      " VALUES ($1, $2, $3) " +
+      " ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"
+  }
+
+  override fun upsert(entityId: Int, snapshot: Snapshot<E>, aHandler: Handler<AsyncResult<Void>>) {
+
+    pgPool.getConnection { conn ->
+
+      if (conn.failed()) {
+        aHandler.handle(Future.failedFuture(conn.cause())); return@getConnection
+      }
+
+      val sqlConn = conn.result()
+
+      // Begin the transaction
+      val tx = sqlConn
+        .begin()
+        .abortHandler { run { log.error("Transaction failed => rollback") }
+        }
+
+      val json = io.reactiverse.pgclient.data.Json.create(writeModelToJson.invoke(snapshot.state))
+
+      sqlConn.preparedQuery(upsertSnapshot(), Tuple.of(entityId, snapshot.version, json)) { insert ->
+
+        if (insert.failed()) {
+          log.error(insert.cause().message); aHandler.handle(Future.failedFuture(insert.cause()))
+
+        } else {
+
+          // Commit the transaction
+          tx.commit { ar ->
+            if (ar.failed()) {
+              log.error("Transaction failed", ar.cause()); aHandler.handle(Future.failedFuture(ar.cause()))
+            } else {
+              aHandler.handle(Future.succeededFuture())
+            }
+          }
+        }
+
+      }
+
+    }
+
+  }
+
+  override fun retrieve(entityId: Int, aHandler: Handler<AsyncResult<Snapshot<E>>>) {
 
     val future = Future.future<Snapshot<E>>()
     future.setHandler(aHandler)
@@ -34,7 +93,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
     pgPool.getConnection { res ->
 
       if (!res.succeeded()) {
-        future.fail("when getting db connection")
+        future.fail("when getting db connection"); return@getConnection
 
       } else {
 
@@ -45,13 +104,11 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
         // Begin the transaction
         val tx = conn.begin().abortHandler { log.warn("Transaction failed") }
 
-        val params = Tuple.of(id, entityName)
-
         // get current snapshot
-        conn.preparedQuery(SELECT_SNAPSHOT_VERSION, params) { event1 ->
+        conn.preparedQuery(selectSnapshot(), Tuple.of(entityId)) { event1 ->
 
           if (event1.failed()) {
-            tx.rollback(); conn.close(); future.fail(event1.cause())
+            tx.rollback(); conn.close(); future.fail(event1.cause()); return@preparedQuery
 
           } else {
             val pgRow = event1.result()
@@ -71,7 +128,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
             conn.prepare(SELECT_EVENTS_VERSION_AFTER_VERSION) { event2 ->
 
               if (!event2.succeeded()) {
-                tx.rollback(); conn.close(); future.fail(event2.cause())
+                tx.rollback(); conn.close(); future.fail(event2.cause()); return@prepare
 
               } else {
                 var currentInstance = cachedInstance
@@ -80,7 +137,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
                 val pq = event2.result()
 
                 // Fetch 100 rows at a time
-                val stream = pq.createStream(100, Tuple.of(id, entityName, cachedVersion))
+                val stream = pq.createStream(100, Tuple.of(entityId, entityName, cachedVersion))
 
                 stream.exceptionHandler { err -> log.error("Error: ${err.message}", err)
                   tx.rollback(); conn.close(); future.fail(err)

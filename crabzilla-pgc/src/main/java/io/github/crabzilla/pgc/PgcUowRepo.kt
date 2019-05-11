@@ -1,6 +1,8 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
+import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
+import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENT_NAME
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
@@ -33,6 +35,8 @@ open class PgcUowRepo(private val pgPool: PgPool,
                                               "$TARGET_NAME, $VERSION from units_of_work where uow_id = $1 "
     const val SQL_SELECT_AFTER_VERSION =  "select $UOW_EVENTS,$VERSION from units_of_work " +
                                           "where ar_id = $1 and ar_name = $2 and version > $3 order by version "
+    const val SQL_SELECT_UOW_BY_ENTITY_ID = "select * from units_of_work where ar_id = $1 order by version "
+
   }
 
   override fun getUowByCmdId(cmdId: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>) {
@@ -41,6 +45,53 @@ open class PgcUowRepo(private val pgPool: PgPool,
 
   override fun getUowByUowId(uowId: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>) {
     get(SQL_SELECT_UOW_BY_UOW_ID, uowId, aHandler)
+  }
+
+  override fun getAllUowByEntityId(id: Int, aHandler: Handler<AsyncResult<List<UnitOfWork>>>) {
+
+    val params = Tuple.of(id)
+
+    pgPool.preparedQuery(SQL_SELECT_UOW_BY_ENTITY_ID, params) { ar ->
+      if (ar.failed()) {
+        aHandler.handle(Future.failedFuture(ar.cause()))
+        return@preparedQuery
+      }
+
+      val result = ArrayList<UnitOfWork>()
+
+      val rows = ar.result()
+
+      for (row in rows) {
+
+        val commandName = row.getString(CMD_NAME)
+        val commandAsJson = row.getJson(CMD_DATA).value().toString()
+        val command = try { cmdFromJson.invoke(commandName, JsonObject(commandAsJson)) } catch (e: Exception) { null }
+
+        if (command == null) {
+          aHandler.handle(Future.failedFuture("error when getting command $commandName from json "))
+          return@preparedQuery
+        }
+
+        val jsonArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
+
+        val jsonToEventPair: (Int) -> DomainEvent = { index ->
+          val jsonObject = jsonArray.getJsonObject(index)
+          val eventName = jsonObject.getString(EVENT_NAME)
+          val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
+          val domainEvent = eventFromJson.invoke(eventName, eventJson)
+          domainEvent
+        }
+
+        val events: List<DomainEvent> = List(jsonArray.size(), jsonToEventPair)
+        val uow = UnitOfWork(row.getUUID(UOW_ID), row.getString(TARGET_NAME), row.getInteger(TARGET_ID),
+          row.getUUID(CMD_ID), row.getString(CMD_NAME), command, row.getInteger(VERSION)!!, events)
+
+        result.add(uow)
+
+      }
+
+      aHandler.handle(Future.succeededFuture(result))
+    }
   }
 
   override fun get(query: String, id: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>) {

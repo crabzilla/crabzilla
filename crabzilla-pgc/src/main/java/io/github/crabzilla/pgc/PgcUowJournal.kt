@@ -6,11 +6,12 @@ import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
+import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 
 class PgcUowJournal(private val pgPool: PgPool,
-                    private val cmdToJson: (Command) -> String,
-                    private val eventToJson: (DomainEvent) -> String) : UnitOfWorkJournal {
+                    private val cmdToJson: (Command) -> JsonObject,
+                    private val eventToJson: (DomainEvent) -> JsonObject) : UnitOfWorkJournal {
 
   companion object {
 
@@ -60,15 +61,15 @@ class PgcUowJournal(private val pgPool: PgPool,
           } else {
 
             // if version is OK, then insert
-            val cmdAsJson = cmdToJson.invoke(unitOfWork.command)
-            val eventsListAsJson = unitOfWork.events.toJsonArray(eventToJson).encode()
+            val cmdAsJsonObject = cmdToJson.invoke(unitOfWork.command)
+            val eventsListAsJsonObject = unitOfWork.events.toJsonArray(eventToJson)
 
             val params2 = Tuple.of(
               unitOfWork.unitOfWorkId,
-              io.reactiverse.pgclient.data.Json.create(eventsListAsJson),
+              io.reactiverse.pgclient.data.Json.create(eventsListAsJsonObject),
               unitOfWork.commandId,
               unitOfWork.commandName,
-              io.reactiverse.pgclient.data.Json.create(cmdAsJson),
+              io.reactiverse.pgclient.data.Json.create(cmdAsJsonObject),
               unitOfWork.entityName,
               unitOfWork.entityId,
               unitOfWork.version)

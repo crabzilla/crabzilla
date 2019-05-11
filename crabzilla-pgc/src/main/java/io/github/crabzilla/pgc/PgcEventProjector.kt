@@ -12,10 +12,12 @@ import io.vertx.core.logging.LoggerFactory.getLogger
 class PgcEventProjector(private val pgPool: PgPool, val name: String) {
 
   companion object {
-
     internal val log = getLogger(PgcEventProjector::class.java)
     const val NUMBER_OF_FUTURES = 6 // CompositeFuture limit
+  }
 
+  init {
+    log.info("starting events projector for $name")
   }
 
   fun handle(uowProjectionData: ProjectionData, projectorHandler: ProjectorHandler, handler: Handler<AsyncResult<Void>>) {

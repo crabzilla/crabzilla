@@ -1,17 +1,23 @@
 package io.github.crabzilla.web
 
 import io.github.crabzilla.*
+import io.github.crabzilla.web.ContentTypes.UNIT_OF_WORK_BODY
+import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.ReplyException
 import io.vertx.core.http.CaseInsensitiveHeaders
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.RoutingContext
 import org.slf4j.LoggerFactory
 import java.util.*
 
-const val CONTENT_TYPE_UNIT_OF_WORK_ID = "application/vnd.crabzilla.unit_of_work_id+json"
-const val CONTENT_TYPE_UNIT_OF_WORK_BODY = "application/vnd.crabzilla.unit_of_work+json"
+object ContentTypes {
+  const val UNIT_OF_WORK_ID = "application/vnd.crabzilla.unit-of-work-id+json"
+  const val UNIT_OF_WORK_BODY = "application/vnd.crabzilla.unit-of-work+json"
+  const val ENTITY_TRACKING = "application/vnd.crabzilla.entity-tracking+json"
+}
 
 private const val UNIT_OF_WORK_ID = "unitOfWorkId"
 
@@ -62,6 +68,7 @@ fun postCommandHandler(routingCtx: RoutingContext, commandMetadata: CommandMetad
 
       httpResp
         .putHeader("accept", routingCtx.request().getHeader("accept"))
+        .putHeader("Content-Type", "application/json")
         .putHeader("Location", location)
         .setStatusCode(303)
         .end()
@@ -88,11 +95,47 @@ fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository, unitOfWorkI
         headers().add("Content-Type", "application/json")
       val defaultResult = JsonObject().put(UNIT_OF_WORK_ID, uowResult.result().unitOfWorkId.toString())
       val effectiveResult: JsonObject = when (contentType) {
-        CONTENT_TYPE_UNIT_OF_WORK_BODY -> JsonObject.mapFrom(uowResult.result())
+        UNIT_OF_WORK_BODY -> JsonObject.mapFrom(uowResult.result())
         else -> defaultResult
       }
       httpResp.end(effectiveResult.encode())
     }
+  }
+
+}
+
+fun <E : Entity> entityTrackingHandler(rc: RoutingContext,
+                                       entityId: Int,
+                                       uowRepo: UnitOfWorkRepository,
+                                       snapshotRepo: SnapshotRepository<E>,
+                                       entityToJson: (E) -> JsonObject) {
+
+  val httpResp = rc.response()
+
+  val snapshotFuture = Future.future<Snapshot<E>>()
+  snapshotRepo.retrieve(entityId, snapshotFuture)
+
+  val uowListFuture = Future.future<List<UnitOfWork>>()
+  uowRepo.getAllUowByEntityId(entityId, uowListFuture)
+
+  CompositeFuture.all(snapshotFuture, uowListFuture).setHandler { event ->
+    if (event.failed()) {
+      httpResp.setStatusCode(500).end("Server error")
+      return@setHandler
+    }
+
+    val result = JsonObject()
+    val snapshot = snapshotFuture.result()
+    val snapshotJson = JsonObject().put("version", snapshot.version).put("state", entityToJson.invoke(snapshot.state))
+    if (snapshot.version > 0) result.put("snapshot", snapshotJson)
+    val uowList = uowListFuture.result()
+    if (uowList.isNotEmpty()) result.put("units_of_work", JsonArray(uowListFuture.result()))
+    if (result.isEmpty) {
+      httpResp.setStatusCode(404).end("Entity not found")
+    }
+    val response = httpResp.setStatusCode(200).setChunked(true)
+    response.headers().add("Content-Type", "application/json")
+    response.end(result.encode())
   }
 
 }

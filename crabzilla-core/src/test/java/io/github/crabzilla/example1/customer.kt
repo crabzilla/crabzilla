@@ -4,7 +4,6 @@ import io.github.crabzilla.*
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
-import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import java.time.Instant
 
@@ -71,6 +70,11 @@ val CUSTOMER_FROM_JSON = { json: JsonObject ->
     json.getString("reason"))
 }
 
+val CUSTOMER_TO_JSON = { customer: Customer ->
+  JsonObject().put("customerId", customer.customerId?.value).put("name", customer.name)
+    .put("isActive", customer.isActive).put("reason", customer.reason)
+}
+
 val CUSTOMER_STATE_BUILDER = { event: DomainEvent, customer: Customer ->
   when (event) {
     is CustomerCreated -> customer.copy(customerId = event.customerId, name = event.name, isActive = false)
@@ -102,19 +106,19 @@ val CUSTOMER_CMD_FROM_JSON = { cmdName: String, jo: JsonObject ->
 
 val CUSTOMER_EVENT_TO_JSON = { event: DomainEvent ->
   when (event) {
-    is CustomerCreated -> Json.encode(event)
-    is CustomerActivated -> Json.encode(event)
-    is CustomerDeactivated -> Json.encode(event)
+    is CustomerCreated -> JsonObject.mapFrom(event)
+    is CustomerActivated -> JsonObject.mapFrom(event)
+    is CustomerDeactivated -> JsonObject.mapFrom(event)
     else -> throw java.lang.IllegalArgumentException("$event is unknown")
   }
 }
 
 val CUSTOMER_CMD_TO_JSON = { cmd: Command ->
   when (cmd) {
-    is CreateCustomer -> Json.encode(cmd)
-    is ActivateCustomer -> Json.encode(cmd)
-    is DeactivateCustomer -> Json.encode(cmd)
-    is CreateActivateCustomer -> Json.encode(cmd)
+    is CreateCustomer -> JsonObject.mapFrom(cmd)
+    is ActivateCustomer -> JsonObject.mapFrom(cmd)
+    is DeactivateCustomer -> JsonObject.mapFrom(cmd)
+    is CreateActivateCustomer -> JsonObject.mapFrom(cmd)
     else -> throw IllegalArgumentException("$cmd is unknown")
   }
 }
@@ -123,7 +127,7 @@ val CUSTOMER_CMD_TO_JSON = { cmd: Command ->
 val CUSTOMER_CMD_VALIDATOR = { command: Command ->
   when (command) {
     is CreateCustomer ->
-      if (command.name.equals("a bad name")) listOf("Invalid name: ${command.name}") else listOf()
+      if (command.name == "a bad name") listOf("Invalid name: ${command.name}") else listOf()
     else -> listOf() // all other commands are valid
   }
 }
@@ -149,7 +153,7 @@ class CustomerCmdHandler(cmdMetadata: CommandMetadata,
     when (command) {
       is CreateCustomer -> customer.create(CustomerId(cmdMetadata.entityId), command.name, eventsFuture.completer())
       is ActivateCustomer -> eventsFuture.complete(customer.activate(command.reason))
-      is DeactivateCustomer -> customer.deactivate(command.reason, eventsFuture.completer())
+      is DeactivateCustomer -> customer.deactivate(command.reason, eventsFuture)
       is CreateActivateCustomer -> {
         val createFuture: Future<List<DomainEvent>> = Future.future()
         val tracker = StateTransitionsTracker(snapshot, stateFn)
@@ -174,7 +178,7 @@ class CustomerCmdHandler(cmdMetadata: CommandMetadata,
             println("  events $v")
           }, eventsFuture)
       }
-      else -> uowFuture.fail("${cmdMetadata.commandName} is a unknown command")
+      else -> eventsFuture.fail("${cmdMetadata.commandName} is a unknown command")
     }
   }
 }

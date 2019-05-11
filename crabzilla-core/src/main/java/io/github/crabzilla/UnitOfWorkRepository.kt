@@ -1,7 +1,6 @@
 package io.github.crabzilla
 
 import io.vertx.core.AsyncResult
-import io.vertx.core.Future
 import io.vertx.core.Handler
 import java.util.*
 
@@ -19,4 +18,5 @@ interface UnitOfWorkRepository {
   fun selectAfterUowSequence(uowSequence: Int, maxRows: Int,
                              aHandler: Handler<AsyncResult<List<ProjectionData>>>)
 
+  fun getAllUowByEntityId(id: Int, aHandler: Handler<AsyncResult<List<UnitOfWork>>>)
 }

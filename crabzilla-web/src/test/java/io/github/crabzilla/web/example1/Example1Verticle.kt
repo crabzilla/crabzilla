@@ -99,11 +99,11 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
       val uowRepository = PgcUowRepo(writeDb, CUSTOMER_CMD_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
       val uowJournal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
       val snapshotRepo = PgcSnapshotRepo(CUSTOMER_AGGREGATE_ROOT, writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER,
-        CUSTOMER_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
+        CUSTOMER_FROM_JSON, CUSTOMER_TO_JSON, CUSTOMER_EVENT_FROM_JSON)
 
       val commandVerticle = CommandHandlerVerticle(CommandHandlerEndpoint(CUSTOMER_AGGREGATE_ROOT),
-        CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE, CUSTOMER_CMD_HANDLER_FACTORY, CUSTOMER_CMD_VALIDATOR,
-        uowJournal, snapshotRepo)
+        CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, CUSTOMER_CMD_HANDLER_FACTORY,
+        CUSTOMER_CMD_VALIDATOR, uowJournal, snapshotRepo)
 
       vertx.deployVerticle(commandVerticle)
 
@@ -124,6 +124,10 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
       router.get("/units-of-work/:unitOfWorkId").handler {
         val uowId = UUID.fromString(it.pathParam("unitOfWorkId"))
         getUowHandler(it, uowRepository, uowId) }
+
+      router.get("/customers/:entityId").handler {
+
+      }
 
       server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
 

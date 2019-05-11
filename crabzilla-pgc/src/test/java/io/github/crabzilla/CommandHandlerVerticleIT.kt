@@ -85,22 +85,29 @@ class CommandHandlerVerticleIT {
       val journal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
 
       val snapshotRepo = PgcSnapshotRepo(handlerEndpoint.entityName, writeDb, CUSTOMER_SEED_VALUE,
-        CUSTOMER_STATE_BUILDER, CUSTOMER_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
+        CUSTOMER_STATE_BUILDER, CUSTOMER_FROM_JSON, CUSTOMER_TO_JSON, CUSTOMER_EVENT_FROM_JSON)
 
       verticle = CommandHandlerVerticle(handlerEndpoint, CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE,
-                        CUSTOMER_CMD_HANDLER_FACTORY, CUSTOMER_CMD_VALIDATOR, journal, snapshotRepo)
+                        CUSTOMER_STATE_BUILDER, CUSTOMER_CMD_HANDLER_FACTORY, CUSTOMER_CMD_VALIDATOR, journal, snapshotRepo)
 
-      writeDb.query("delete from units_of_work") { deleteResult ->
-        if (deleteResult.failed()) {
-          deleteResult.cause().printStackTrace()
-          tc.failNow(deleteResult.cause())
+      writeDb.query("delete from units_of_work") { deleteResult1 ->
+        if (deleteResult1.failed()) {
+          deleteResult1.cause().printStackTrace()
+          tc.failNow(deleteResult1.cause())
           return@query
         }
-        vertx.deployVerticle(verticle) { event ->
-          if (event.failed()) {
-            tc.failNow(event.cause())
+        writeDb.query("delete from customer_snapshots") { deleteResult2 ->
+          if (deleteResult2.failed()) {
+            deleteResult2.cause().printStackTrace()
+            tc.failNow(deleteResult2.cause())
+            return@query
           }
-          tc.completeNow()
+          vertx.deployVerticle(verticle) { event ->
+            if (event.failed()) {
+              tc.failNow(event.cause())
+            }
+            tc.completeNow()
+          }
         }
       }
 
@@ -117,7 +124,7 @@ class CommandHandlerVerticleIT {
     val commandMetadata = CommandMetadata(handlerEndpoint.entityName,
                                       customerId.value,
                                       CREATE.urlFriendly())
-    val command = JsonObject(CUSTOMER_CMD_TO_JSON(createCustomerCmd))
+    val command = CUSTOMER_CMD_TO_JSON(createCustomerCmd)
 
     vertx.eventBus()
       .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(commandMetadata, command), options) { asyncResult ->
@@ -141,8 +148,8 @@ class CommandHandlerVerticleIT {
     val createCustomerCmd = CreateCustomer("a bad name")
     val commandMetadata = CommandMetadata(handlerEndpoint.entityName,
       customerId.value,
-      CREATE.urlFriendly())
-    val command = JsonObject(CUSTOMER_CMD_TO_JSON(createCustomerCmd))
+        CREATE.urlFriendly())
+    val command = CUSTOMER_CMD_TO_JSON(createCustomerCmd)
 
     vertx.eventBus()
       .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(commandMetadata, command), options) { asyncResult ->

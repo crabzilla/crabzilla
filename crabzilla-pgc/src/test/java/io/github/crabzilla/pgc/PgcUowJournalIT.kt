@@ -92,14 +92,22 @@ class PgcUowJournalIT {
 
       journal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
 
-      writeDb.query("delete from units_of_work") { deleteResult ->
-        if (deleteResult.failed()) {
-          deleteResult.cause().printStackTrace()
-          tc.failNow(deleteResult.cause())
+      writeDb.query("delete from units_of_work") { deleteResult1 ->
+        if (deleteResult1.failed()) {
+          deleteResult1.cause().printStackTrace()
+          tc.failNow(deleteResult1.cause())
           return@query
         }
-        tc.completeNow()
+        writeDb.query("delete from customer_snapshots") { deleteResult2 ->
+          if (deleteResult2.failed()) {
+            deleteResult2.cause().printStackTrace()
+            tc.failNow(deleteResult2.cause())
+            return@query
+          }
+          tc.completeNow()
+        }
       }
+
 
     })
 

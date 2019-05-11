@@ -3,6 +3,8 @@ package io.github.crabzilla
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
+import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
+import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENT_NAME
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
@@ -45,6 +47,9 @@ data class UnitOfWork(val unitOfWorkId: UUID,
     const val COMMAND = "command"
     const val VERSION = "version"
     const val EVENTS = "events"
+
+    const val EVENT_NAME = "eventName"
+    const val EVENTS_JSON_CONTENT = "eventJson"
   }
 }
 
@@ -96,15 +101,13 @@ fun initVertx(vertx: Vertx) {
 
 // extensions
 
-const val EVENT_NAME = "eventName"
-const val EVENTS_JSON_CONTENT = "eventJson"
 
-fun List<DomainEvent>.toJsonArray(eventToJson: (DomainEvent) -> String): JsonArray {
+fun List<DomainEvent>.toJsonArray(eventToJson: (DomainEvent) -> JsonObject): JsonArray {
   val eventsJsonArray = JsonArray()
   this.map { event -> Pair(event.javaClass.simpleName, event) }
     .map { pair -> Pair(pair.first, eventToJson.invoke(pair.second)) }
 //    .map { pair -> println(pair.first); println(pair.second); pair}
-    .map { pair -> JsonObject().put(EVENT_NAME, pair.first).put(EVENTS_JSON_CONTENT, JsonObject(pair.second))}
+    .map { pair -> JsonObject().put(EVENT_NAME, pair.first).put(EVENTS_JSON_CONTENT, pair.second)}
     .forEach { jo -> eventsJsonArray.add(jo) }
   return eventsJsonArray
 }

@@ -23,10 +23,9 @@ import java.net.ServerSocket;
 import java.util.Random;
 
 import static io.github.crabzilla.UnitOfWork.JsonMetadata.*;
-import static io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS;
 import static io.github.crabzilla.example1.CustomerCommandEnum.CREATE;
-import static io.github.crabzilla.web.WebKt.CONTENT_TYPE_UNIT_OF_WORK_BODY;
-import static io.github.crabzilla.web.WebKt.CONTENT_TYPE_UNIT_OF_WORK_ID;
+import static io.github.crabzilla.web.ContentTypes.UNIT_OF_WORK_BODY;
+import static io.github.crabzilla.web.ContentTypes.UNIT_OF_WORK_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -87,7 +86,7 @@ class Example1VerticleIT {
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_SUCCESS)
       .expect(ResponsePredicate.JSON)
-      .putHeader("accept", CONTENT_TYPE_UNIT_OF_WORK_ID)
+      .putHeader("accept", UNIT_OF_WORK_ID)
       .sendJsonObject(jo, tc.succeeding(response -> tc.verify(() -> {
           assertThat(response.body().getString("unitOfWorkId")).isNotNull();
           tc.completeNow();
@@ -105,7 +104,7 @@ class Example1VerticleIT {
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_SUCCESS)
       .expect(ResponsePredicate.JSON)
-      .putHeader("accept", CONTENT_TYPE_UNIT_OF_WORK_BODY)
+      .putHeader("accept", UNIT_OF_WORK_BODY)
       .sendJson(cmdAsJson, tc.succeeding(response -> tc.verify(() -> {
         JsonObject result = response.body();
         assertThat(result.getString(UOW_ID)).isNotNull();
@@ -128,7 +127,7 @@ class Example1VerticleIT {
     client.post(port, "0.0.0.0", "/customers/1/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .putHeader("accept", CONTENT_TYPE_UNIT_OF_WORK_ID)
+      .putHeader("accept", UNIT_OF_WORK_ID)
       .sendJson(invalidCommand, tc.succeeding(response -> tc.verify(() -> {
           tc.completeNow();
         }))
@@ -144,7 +143,7 @@ class Example1VerticleIT {
     client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .putHeader("accept", CONTENT_TYPE_UNIT_OF_WORK_ID)
+      .putHeader("accept", UNIT_OF_WORK_ID)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
           tc.completeNow();
         }))
@@ -160,7 +159,7 @@ class Example1VerticleIT {
     client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/unknown")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .putHeader("accept", CONTENT_TYPE_UNIT_OF_WORK_ID)
+      .putHeader("accept", UNIT_OF_WORK_ID)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
           tc.completeNow();
         }))

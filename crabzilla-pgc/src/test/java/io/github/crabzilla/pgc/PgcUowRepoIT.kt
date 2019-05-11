@@ -15,7 +15,6 @@ import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
-import io.vertx.core.VertxOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -88,14 +87,22 @@ class PgcUowRepoIT {
       repo = PgcUowRepo(writeDb, CUSTOMER_CMD_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
       journal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
 
-      writeDb.query("delete from units_of_work") { deleteResult ->
-        if (deleteResult.failed()) {
-          deleteResult.cause().printStackTrace()
-          tc.failNow(deleteResult.cause())
+      writeDb.query("delete from units_of_work") { deleteResult1 ->
+        if (deleteResult1.failed()) {
+          deleteResult1.cause().printStackTrace()
+          tc.failNow(deleteResult1.cause())
           return@query
         }
-        tc.completeNow()
+        writeDb.query("delete from customer_snapshots") { deleteResult2 ->
+          if (deleteResult2.failed()) {
+            deleteResult2.cause().printStackTrace()
+            tc.failNow(deleteResult2.cause())
+            return@query
+          }
+          tc.completeNow()
+        }
       }
+
 
     })
 
@@ -271,6 +278,59 @@ class PgcUowRepoIT {
             assertThat(uowSequence2).isEqualTo(uowSequence1 + 1)
             assertThat(targetId2).isEqualTo(customerId.value)
             assertThat(events2).isEqualTo(listOf(activated))
+            tc.completeNow()
+          }
+        }
+
+      }
+    }
+
+    @Test
+    @DisplayName("can query units of work for a given entity ID")
+    fun a33(tc: VertxTestContext) {
+
+      val tuple1 = Tuple.of(UUID.randomUUID(),
+        io.reactiverse.pgclient.data.Json.create((listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        expectedUow1.commandId,
+        CREATE.urlFriendly(),
+        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
+        aggregateName,
+        customerId.value,
+        1)
+
+      val selectFuture1 = Future.future<List<UnitOfWork>>()
+
+      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
+
+        if (ar1.failed()) {
+          ar1.cause().printStackTrace()
+          tc.failNow(ar1.cause())
+        }
+
+        val tuple2 = Tuple.of(UUID.randomUUID(),
+          io.reactiverse.pgclient.data.Json.create((listOf(activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+          expectedUow2.commandId,
+          ACTIVATE.urlFriendly(),
+          io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd)),
+          aggregateName,
+          customerId.value,
+          2)
+
+        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
+          if (ar2.failed()) {
+            ar2.cause().printStackTrace()
+            tc.failNow(ar2.cause())
+          }
+          repo.getAllUowByEntityId(customerId.value, selectFuture1)
+
+          selectFuture1.setHandler { selectAsyncResult ->
+            val uowList = selectAsyncResult.result()
+            println(uowList)
+            assertThat(uowList.size).isEqualTo(2)
+            val uow1 = uowList[0]
+            val uow2 = uowList[1]
+            assertThat(uow1).isEqualToIgnoringGivenFields(expectedUow1, "unitOfWorkId")
+            assertThat(uow2).isEqualToIgnoringGivenFields(expectedUow2, "unitOfWorkId")
             tc.completeNow()
           }
         }
