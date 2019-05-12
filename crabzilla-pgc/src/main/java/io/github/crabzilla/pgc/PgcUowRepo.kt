@@ -19,7 +19,7 @@ open class PgcUowRepo(private val pgPool: PgPool,
 
   companion object {
 
-    internal val log = LoggerFactory.getLogger(PgcUowRepo::class.java)
+    internal val log = LoggerFactory.getLogger(PgcUowRepo::class.java.simpleName)
 
     private const val UOW_ID = "uow_id"
     private const val UOW_EVENTS = "uow_events"

@@ -55,7 +55,7 @@ class CommandHandlerVerticle<E : Entity>(private val endpoint: CommandHandlerEnd
   : AbstractVerticle() {
 
   companion object {
-    internal val log = LoggerFactory.getLogger(CommandHandlerVerticle::class.java)
+    internal val log = LoggerFactory.getLogger(CommandHandlerVerticle::class.java.simpleName)
   }
 
   @Throws(Exception::class)
@@ -138,7 +138,9 @@ class CommandHandlerVerticle<E : Entity>(private val endpoint: CommandHandlerEnd
           { state, event -> applyEventsFn(event, state) }
           val newSnapshot = Snapshot(newInstance, uowValue.get().version)
 
-          log.info("now will store new snapshot $newSnapshot")
+          log.info("new snapshot: $newSnapshot")
+
+          log.info("now will store snapshot ")
           snapshotRepo.upsert(commandPair.first.entityId, newSnapshot, updateSnapshotFuture)
           updateSnapshotFuture
         }

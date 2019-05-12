@@ -27,7 +27,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
 
   companion object {
 
-    internal val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
+    internal val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java.simpleName)
     const val SELECT_EVENTS_VERSION_AFTER_VERSION = "SELECT uow_events, version FROM units_of_work " +
       "WHERE ar_id = $1 and ar_name = $2 and version > $3 ORDER BY version "
 
@@ -46,43 +46,16 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
 
   override fun upsert(entityId: Int, snapshot: Snapshot<E>, aHandler: Handler<AsyncResult<Void>>) {
 
-    pgPool.getConnection { conn ->
+    val json = io.reactiverse.pgclient.data.Json.create(writeModelToJson.invoke(snapshot.state))
 
-      if (conn.failed()) {
-        log.error("upsert.getConnection", conn.cause())
-        aHandler.handle(Future.failedFuture(conn.cause())); return@getConnection
+    pgPool.preparedQuery(upsertSnapshot(), Tuple.of(entityId, snapshot.version, json)) { insert ->
+      if (insert.failed()) {
+        log.error("upsert snapshot query error")
+        aHandler.handle(Future.failedFuture(insert.cause()))
+      } else {
+        log.info("upsert snapshot success")
+        aHandler.handle(Future.succeededFuture())
       }
-
-      val sqlConn = conn.result()
-
-      // Begin the transaction
-      val tx = sqlConn
-        .begin()
-        .abortHandler { run { log.error("Transaction failed => rollback") }
-        }
-
-      val json = io.reactiverse.pgclient.data.Json.create(writeModelToJson.invoke(snapshot.state))
-
-      sqlConn.preparedQuery(upsertSnapshot(), Tuple.of(entityId, snapshot.version, json)) { insert ->
-
-        if (insert.failed()) {
-          log.error("upsert snapshot query error"); aHandler.handle(Future.failedFuture(insert.cause()))
-
-        } else {
-
-          // Commit the transaction
-          tx.commit { ar ->
-            if (ar.failed()) {
-              log.error("upsert snapshot transaction failed", ar.cause()); aHandler.handle(Future.failedFuture(ar.cause()))
-            } else {
-              log.info("upsert snapshot transaction success")
-              aHandler.handle(Future.succeededFuture())
-            }
-          }
-        }
-
-      }
-
     }
 
   }

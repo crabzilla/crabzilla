@@ -22,7 +22,7 @@ object ContentTypes {
 
 private const val UNIT_OF_WORK_ID_PATH_PARAMETER = "unitOfWorkId"
 
-private val log = LoggerFactory.getLogger("crabzilla.web")
+private val log = LoggerFactory.getLogger("CrabzillaWebHandlers")
 
 fun postCommandHandler(rc: RoutingContext, commandMetadata: CommandMetadata,
                        projectionEndpoint: String) {
@@ -41,10 +41,15 @@ fun postCommandHandler(rc: RoutingContext, commandMetadata: CommandMetadata,
 
   val handlerEndpoint = CommandHandlerEndpoint(commandMetadata.entityName).endpoint()
 
+  val begin = System.currentTimeMillis()
+
   rc.vertx().eventBus()
     .send<Pair<UnitOfWork, Int>>(handlerEndpoint, Pair(commandMetadata, commandJson)) { response ->
 
-    if (response.failed() || response.result().body() == null) {
+      val end = System.currentTimeMillis()
+      log.info("received response in " + (end - begin) + " ms")
+
+      if (response.failed() || response.result().body() == null) {
       val cause = response.cause() as ReplyException
       log.error("when sending command to handler via event bus", cause)
       httpResp.setStatusCode(cause.failureCode()).setStatusMessage(cause.message).end()
@@ -61,15 +66,11 @@ fun postCommandHandler(rc: RoutingContext, commandMetadata: CommandMetadata,
       rc.vertx().eventBus()
         .publish(projectionEndpoint, ProjectionData.fromUnitOfWork(second, first), eventsDeliveryOptions)
 
-      val contentType = rc.request().getHeader("accept")
-      val resultJson = when (contentType) {
+      val resultJson = when (rc.request().getHeader("accept")) {
         UNIT_OF_WORK_BODY -> JsonObject.mapFrom(result.first)
         UNIT_OF_WORK_ID -> JsonObject().put(UNIT_OF_WORK_ID_PATH_PARAMETER, result.first.unitOfWorkId.toString())
         else -> JsonObject()
       }
-
-      log.info("content-type: ${rc.request().getHeader("accept")}")
-      log.info("result: ${resultJson}")
 
       httpResp
         .putHeader("accept", rc.request().getHeader("accept"))

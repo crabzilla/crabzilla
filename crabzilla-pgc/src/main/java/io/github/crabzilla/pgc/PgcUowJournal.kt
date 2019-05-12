@@ -15,7 +15,7 @@ class PgcUowJournal(private val pgPool: PgPool,
 
   companion object {
 
-    internal val log = LoggerFactory.getLogger(PgcUowJournal::class.java)
+    internal val log = LoggerFactory.getLogger(PgcUowJournal::class.java.simpleName)
 
     const val SQL_SELECT_CURRENT_VERSION = "select max(version) as last_version " +
                                        "from units_of_work where ar_id = $1 and ar_name = $2 "
@@ -27,83 +27,60 @@ class PgcUowJournal(private val pgPool: PgPool,
 
   override fun append(unitOfWork: UnitOfWork, aHandler: Handler<AsyncResult<Int>>) {
 
-    pgPool.getConnection { conn ->
-
-      if (conn.failed()) {
-        aHandler.handle(Future.failedFuture(conn.cause())); return@getConnection
-      }
-
-      val sqlConn = conn.result()
-
-      // Begin the transaction
-      val tx = sqlConn
-        .begin()
-        .abortHandler { run { log.error("Transaction failed => rollback") }
-        }
-
-      val params = Tuple.of(unitOfWork.entityId, unitOfWork.entityName)
-
-      sqlConn.preparedQuery(SQL_SELECT_CURRENT_VERSION, params) { ar ->
-
-        if (ar.failed()) {
-          aHandler.handle(Future.failedFuture(ar.cause()))
-
-        } else {
-
-          val currentVersion = ar.result().first()?.getInteger("last_version")?: 0
-
-          log.trace("Found version {}", currentVersion)
-
-          // version does not match
-          if (currentVersion != unitOfWork.version -1) {
-            val error = "expected version is ${unitOfWork.version-1} but current version is $currentVersion"
-            aHandler.handle(Future.failedFuture(error))
-          } else {
-
-            // if version is OK, then insert
-            val cmdAsJsonObject = cmdToJson.invoke(unitOfWork.command)
-            val eventsListAsJsonObject = unitOfWork.events.toJsonArray(eventToJson)
-
-            val params2 = Tuple.of(
-              unitOfWork.unitOfWorkId,
-              io.reactiverse.pgclient.data.Json.create(eventsListAsJsonObject),
-              unitOfWork.commandId,
-              unitOfWork.commandName,
-              io.reactiverse.pgclient.data.Json.create(cmdAsJsonObject),
-              unitOfWork.entityName,
-              unitOfWork.entityId,
-              unitOfWork.version)
-
-            sqlConn.preparedQuery(SQL_APPEND_UOW, params2) { insert ->
-
-              if (insert.failed()) {
-                log.error("SQL_APPEND_UOW", insert.cause()); aHandler.handle(Future.failedFuture(insert.cause()))
-
-              } else {
-                val insertRows = insert.result().value()
-                val generated = insertRows.first().getInteger(0)
-
-                // Commit the transaction
-                tx.commit { ar ->
-                  if (ar.failed()) {
-                    log.error("Transaction failed", ar.cause()); aHandler.handle(Future.failedFuture(ar.cause()))
-                  } else {
-                    log.info("Transaction succeeded for ${unitOfWork.unitOfWorkId}")
-                    aHandler.handle(Future.succeededFuture(generated))
+    pgPool.begin { res ->
+      if (res.succeeded()) {
+        val tx = res.result()
+        val params1 = Tuple.of(unitOfWork.entityId, unitOfWork.entityName)
+        tx.preparedQuery(SQL_SELECT_CURRENT_VERSION, params1) { event1 ->
+          if (event1.succeeded()) {
+            val currentVersion = event1.result().first()?.getInteger("last_version") ?: 0
+            if (currentVersion == unitOfWork.version - 1) {
+              // if version is OK, then insert
+              val cmdAsJsonObject = cmdToJson.invoke(unitOfWork.command)
+              val eventsListAsJsonObject = unitOfWork.events.toJsonArray(eventToJson)
+              val params2 = Tuple.of(
+                unitOfWork.unitOfWorkId,
+                io.reactiverse.pgclient.data.Json.create(eventsListAsJsonObject),
+                unitOfWork.commandId,
+                unitOfWork.commandName,
+                io.reactiverse.pgclient.data.Json.create(cmdAsJsonObject),
+                unitOfWork.entityName,
+                unitOfWork.entityId,
+                unitOfWork.version)
+              tx.preparedQuery(SQL_APPEND_UOW, params2) { event2 ->
+                if (event2.succeeded()) {
+                  val insertRows = event2.result().value()
+                  val generated = insertRows.first().getInteger(0)
+                  // Commit the transaction
+                  tx.commit { event3 ->
+                    if (event3.failed()) {
+                      log.error("Transaction failed", event3.cause());
+                      aHandler.handle(Future.failedFuture(event3.cause()))
+                    } else {
+                      log.info("Transaction succeeded for ${unitOfWork.unitOfWorkId}")
+                      aHandler.handle(Future.succeededFuture(generated))
+                    }
                   }
+                } else {
+                  log.error("Transaction failed", event2.cause());
+                  aHandler.handle(Future.failedFuture(event2.cause()))
                 }
               }
-
+            } else {
+              val error = "expected version is ${unitOfWork.version - 1} but current version is $currentVersion"
+              log.error(error)
+              aHandler.handle(Future.failedFuture(error))
             }
-
+          } else {
+            log.error("when selecting current version")
+            aHandler.handle(Future.failedFuture(event1.cause()))
           }
-
         }
-
+      } else {
+        log.error("when starting transaction")
+        aHandler.handle(Future.failedFuture(res.cause()))
       }
-
     }
-
   }
 
 }
