@@ -27,7 +27,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
 
   companion object {
 
-    internal val log = LoggerFactory.getLogger(PgcEventProjector::class.java)
+    internal val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
     const val SELECT_EVENTS_VERSION_AFTER_VERSION = "SELECT uow_events, version FROM units_of_work " +
       "WHERE ar_id = $1 and ar_name = $2 and version > $3 ORDER BY version "
 
@@ -49,6 +49,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
     pgPool.getConnection { conn ->
 
       if (conn.failed()) {
+        log.error("upsert.getConnection", conn.cause())
         aHandler.handle(Future.failedFuture(conn.cause())); return@getConnection
       }
 
@@ -65,15 +66,16 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
       sqlConn.preparedQuery(upsertSnapshot(), Tuple.of(entityId, snapshot.version, json)) { insert ->
 
         if (insert.failed()) {
-          log.error(insert.cause().message); aHandler.handle(Future.failedFuture(insert.cause()))
+          log.error("upsert snapshot query error"); aHandler.handle(Future.failedFuture(insert.cause()))
 
         } else {
 
           // Commit the transaction
           tx.commit { ar ->
             if (ar.failed()) {
-              log.error("Transaction failed", ar.cause()); aHandler.handle(Future.failedFuture(ar.cause()))
+              log.error("upsert snapshot transaction failed", ar.cause()); aHandler.handle(Future.failedFuture(ar.cause()))
             } else {
+              log.info("upsert snapshot transaction success")
               aHandler.handle(Future.succeededFuture())
             }
           }
@@ -93,7 +95,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
     pgPool.getConnection { res ->
 
       if (!res.succeeded()) {
-        future.fail("when getting db connection"); return@getConnection
+        future.fail("retrieve.getConnection"); return@getConnection
 
       } else {
 
@@ -102,7 +104,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
 
         // TODO how to specify transaction isolation level?
         // Begin the transaction
-        val tx = conn.begin().abortHandler { log.warn("Transaction failed") }
+        val tx = conn.begin().abortHandler { log.error("Transaction failed") }
 
         // get current snapshot
         conn.preparedQuery(selectSnapshot(), Tuple.of(entityId)) { event1 ->
@@ -139,20 +141,22 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
                 // Fetch 100 rows at a time
                 val stream = pq.createStream(100, Tuple.of(entityId, entityName, cachedVersion))
 
-                stream.exceptionHandler { err -> log.error("Error: ${err.message}", err)
+                stream.exceptionHandler { err -> log.error("Retrieve: ${err.message}", err)
                   tx.rollback(); conn.close(); future.fail(err)
                 }
 
                 stream.endHandler {
-                  log.info("End of stream")
+                  log.trace("End of stream")
                   // Attempt to commit the transaction
                   tx.commit { ar ->
                     // Return the connection to the pool
                     conn.close()
                     // But transaction abortion fails it
                     if (ar.failed()) {
+                      log.error("endHandler.closeConnection")
                       future.fail(ar.cause())
                     } else {
+                      log.info("success: endHandler.closeConnection")
                       val result = Snapshot(currentInstance, currentVersion)
                       future.complete(result)
                     }
@@ -171,7 +175,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
 
                   val events: List<DomainEvent> = List(eventsArray.size(), jsonToEvent)
                   currentInstance = events.fold(currentInstance) {state, event -> applyEventsFn(event, state)}
-                  log.info("Events: $events \n version: $currentVersion \n instance $currentInstance")
+                  log.trace("Events: $events \n version: $currentVersion \n instance $currentInstance")
 
                 }
               }

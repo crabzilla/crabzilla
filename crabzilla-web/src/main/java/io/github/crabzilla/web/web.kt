@@ -2,6 +2,7 @@ package io.github.crabzilla.web
 
 import io.github.crabzilla.*
 import io.github.crabzilla.web.ContentTypes.UNIT_OF_WORK_BODY
+import io.github.crabzilla.web.ContentTypes.UNIT_OF_WORK_ID
 import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
 import io.vertx.core.eventbus.DeliveryOptions
@@ -19,59 +20,62 @@ object ContentTypes {
   const val ENTITY_TRACKING = "application/vnd.crabzilla.entity-tracking+json"
 }
 
-private const val UNIT_OF_WORK_ID = "unitOfWorkId"
+private const val UNIT_OF_WORK_ID_PATH_PARAMETER = "unitOfWorkId"
 
 private val log = LoggerFactory.getLogger("crabzilla.web")
 
-fun postCommandHandler(routingCtx: RoutingContext, commandMetadata: CommandMetadata,
+fun postCommandHandler(rc: RoutingContext, commandMetadata: CommandMetadata,
                        projectionEndpoint: String) {
 
-  val httpResp = routingCtx.response()
+  val httpResp = rc.response()
 
-  val commandJson = routingCtx.bodyAsJson
+  val commandJson = rc.bodyAsJson
 
   if (commandJson == null) {
     httpResp.setStatusCode(400).setStatusMessage("invalid command").end(); return
   }
 
-  log.info("command=:\n${commandJson.encode()}")
+  log.trace("command/metadata=:\n${commandJson.encode()}\n$commandMetadata")
 
   httpResp.headers().add("Content-Type", "application/json")
 
-  log.info("posting a command to $commandMetadata")
-
   val handlerEndpoint = CommandHandlerEndpoint(commandMetadata.entityName).endpoint()
 
-  routingCtx.vertx().eventBus()
+  rc.vertx().eventBus()
     .send<Pair<UnitOfWork, Int>>(handlerEndpoint, Pair(commandMetadata, commandJson)) { response ->
 
-    if (!response.succeeded()) {
+    if (response.failed() || response.result().body() == null) {
       val cause = response.cause() as ReplyException
-      httpResp.setStatusCode(cause.failureCode()).setStatusMessage(cause.message).end() ;
+      log.error("when sending command to handler via event bus", cause)
+      httpResp.setStatusCode(cause.failureCode()).setStatusMessage(cause.message).end()
       return@send
     }
 
     val result = response.result().body() as Pair<UnitOfWork, Int>
-
-    log.info("result = {}", result)
 
     with(result) {
 
       val headers = CaseInsensitiveHeaders().add("uowSequence", second.toString())
       val eventsDeliveryOptions = DeliveryOptions().setHeaders(headers)
 
-      routingCtx.vertx().eventBus()
+      rc.vertx().eventBus()
         .publish(projectionEndpoint, ProjectionData.fromUnitOfWork(second, first), eventsDeliveryOptions)
 
-      val location = routingCtx.request().absoluteURI().split('/').subList(0, 3)
-        .reduce { acc, s ->  acc.plus("/$s")} + "/units-of-work/${first.unitOfWorkId}"
+      val contentType = rc.request().getHeader("accept")
+      val resultJson = when (contentType) {
+        UNIT_OF_WORK_BODY -> JsonObject.mapFrom(result.first)
+        UNIT_OF_WORK_ID -> JsonObject().put(UNIT_OF_WORK_ID_PATH_PARAMETER, result.first.unitOfWorkId.toString())
+        else -> JsonObject()
+      }
+
+      log.info("content-type: ${rc.request().getHeader("accept")}")
+      log.info("result: ${resultJson}")
 
       httpResp
-        .putHeader("accept", routingCtx.request().getHeader("accept"))
+        .putHeader("accept", rc.request().getHeader("accept"))
         .putHeader("Content-Type", "application/json")
-        .putHeader("Location", location)
-        .setStatusCode(303)
-        .end()
+        .setStatusCode(201)
+        .end(resultJson.encode())
 
     }
 
@@ -93,10 +97,10 @@ fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository, unitOfWorkI
       val contentType = rc.request().getHeader("accept")
       httpResp.setStatusCode(200).setChunked(true).
         headers().add("Content-Type", "application/json")
-      val defaultResult = JsonObject().put(UNIT_OF_WORK_ID, uowResult.result().unitOfWorkId.toString())
       val effectiveResult: JsonObject = when (contentType) {
         UNIT_OF_WORK_BODY -> JsonObject.mapFrom(uowResult.result())
-        else -> defaultResult
+        UNIT_OF_WORK_ID -> JsonObject().put(UNIT_OF_WORK_ID_PATH_PARAMETER, uowResult.result().unitOfWorkId.toString())
+        else -> JsonObject()
       }
       httpResp.end(effectiveResult.encode())
     }

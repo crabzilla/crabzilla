@@ -61,7 +61,7 @@ interface Entity {
   }
 }
 
-data class Snapshot<A : Entity>(val state: A, val version: Version)
+data class Snapshot<E : Entity>(val state: E, val version: Version)
 
 data class SnapshotData(val version: Version, val events: List<DomainEvent>)
 

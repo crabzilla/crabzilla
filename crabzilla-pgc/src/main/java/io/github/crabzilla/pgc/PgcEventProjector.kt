@@ -20,7 +20,8 @@ class PgcEventProjector(private val pgPool: PgPool, val name: String) {
     log.info("starting events projector for $name")
   }
 
-  fun handle(uowProjectionData: ProjectionData, projectorHandler: ProjectorHandler, handler: Handler<AsyncResult<Void>>) {
+  fun handle(uowProjectionData: ProjectionData, projectorHandler: ProjectorHandler,
+             handler: Handler<AsyncResult<Void>>) {
 
     if (uowProjectionData.events.size > NUMBER_OF_FUTURES) {
       handler.handle(Future.failedFuture("only $NUMBER_OF_FUTURES events can be projected per transaction"))
@@ -58,7 +59,8 @@ class PgcEventProjector(private val pgPool: PgPool, val name: String) {
           return@setHandler
         }
 
-        conn.preparedQuery("insert into projections (name, last_uow) values ($1, $2) on conflict (name) do update set last_uow = $2",
+        conn.preparedQuery("insert into projections (name, last_uow) " +
+          "values ($1, $2) on conflict (name) do update set last_uow = $2",
           Tuple.of(name, uowProjectionData.uowSequence)) { ar3 ->
 
             if (ar3.failed()) {
@@ -69,7 +71,7 @@ class PgcEventProjector(private val pgPool: PgPool, val name: String) {
             // Commit the transaction
             tx.commit { ar4 ->
               if (ar4.succeeded()) {
-                log.debug { "Transaction succeeded" }
+                log.trace { "Transaction succeeded" }
                 handler.handle(Future.succeededFuture())
               } else {
                 log.error("Transaction failed", ar4.cause())

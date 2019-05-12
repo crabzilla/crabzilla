@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
+internal val log = LoggerFactory.getLogger("CommandHandler")
+
 data class CommandHandlerEndpoint(val entityName : String) {
   fun endpoint() : String {
     return "$entityName-command-handler"
@@ -34,6 +36,7 @@ abstract class CommandHandler<E: Entity>(val cmdMetadata: CommandMetadata, val c
           cmdMetadata.commandId?: UUID.randomUUID(),
           cmdMetadata.commandName, command, event.result(), snapshot.version + 1))
       } else {
+        log.error("on CommandHandler", event.cause())
         uowFuture.fail(event.cause())
       }
     }
@@ -70,6 +73,7 @@ class CommandHandlerVerticle<E : Entity>(private val endpoint: CommandHandlerEnd
                               catch (e: Exception) { null }
 
       if (command == null) {
+        log.error("Invalid Command json")
         commandEvent.fail(400, "Command cannot be deserialized")
         return@Handler
       }
@@ -77,6 +81,7 @@ class CommandHandlerVerticle<E : Entity>(private val endpoint: CommandHandlerEnd
       val constraints = validatorFn.invoke(command)
 
       if (constraints.isNotEmpty()) {
+        log.error("Command is invalid: $constraints")
         commandEvent.fail(400, constraints.toString())
         return@Handler
       }
@@ -85,8 +90,10 @@ class CommandHandlerVerticle<E : Entity>(private val endpoint: CommandHandlerEnd
 
       resultFuture.setHandler { event ->
         if (event.failed()) {
+          log.error("command handler error", event.cause())
           commandEvent.fail(400, event.cause().message)
         } else {
+          log.info("command handler success")
           commandEvent.reply(event.result())
         }
       }
@@ -96,11 +103,13 @@ class CommandHandlerVerticle<E : Entity>(private val endpoint: CommandHandlerEnd
       snapshotRepo.retrieve(commandPair.first.entityId, snapshotFuture)
 
       val snapshotValue: AtomicReference<Snapshot<E>> = AtomicReference()
-      val unitOfWorkValue: AtomicReference<UnitOfWork> = AtomicReference()
+      val uowValue: AtomicReference<UnitOfWork> = AtomicReference()
+      val uowSeqValue: AtomicReference<Int> = AtomicReference()
 
       snapshotFuture
 
         .compose { snapshot ->
+          log.info("got snapshot $snapshot")
           val commandHandlerFuture = Future.future<UnitOfWork>()
           val cachedSnapshot = snapshot ?: Snapshot(seedValue, 0)
           val cmdHandler = cmdHandlerFactory.invoke(commandPair.first, command, cachedSnapshot, commandHandlerFuture)
@@ -110,25 +119,36 @@ class CommandHandlerVerticle<E : Entity>(private val endpoint: CommandHandlerEnd
         }
 
         .compose { unitOfWork ->
+          log.info("got unitOfWork $unitOfWork")
           val appendFuture = Future.future<Int>()
           // append to journal
           eventJournal.append(unitOfWork, appendFuture)
-          unitOfWorkValue.set(unitOfWork)
-          // compute and store new snapshot
-          val newInstance = unitOfWork.events.fold(snapshotValue.get().state)
-                                                    {state, event -> applyEventsFn(event, state)}
-          val newSnapshot = Snapshot(newInstance, unitOfWork.version)
-          snapshotRepo.upsert(commandPair.first.entityId, newSnapshot, Handler { event ->
-            if (event.failed()) {
-              log.error("When saving a snapshot", event.cause())
-            }
-          })
+          uowValue.set(unitOfWork)
           appendFuture
         }
 
-        .compose({ uowSequence ->
-          val pair: Pair<UnitOfWork, Int> = Pair<UnitOfWork, Int>(unitOfWorkValue.get(), uowSequence)
+        .compose { uowSequence ->
+          log.info("got uowSequence $uowSequence")
+          uowSeqValue.set(uowSequence)
+          val updateSnapshotFuture = Future.future<Void>()
+
+          // compute new snapshot
+          log.info("computing new snapshot")
+          val newInstance = uowValue.get().events.fold(snapshotValue.get().state)
+          { state, event -> applyEventsFn(event, state) }
+          val newSnapshot = Snapshot(newInstance, uowValue.get().version)
+
+          log.info("now will store new snapshot $newSnapshot")
+          snapshotRepo.upsert(commandPair.first.entityId, newSnapshot, updateSnapshotFuture)
+          updateSnapshotFuture
+        }
+
+        .compose( {
+          // set result
+          val pair: Pair<UnitOfWork, Int> = Pair<UnitOfWork, Int>(uowValue.get(), uowSeqValue.get())
+          log.info("command handling success: $pair")
           resultFuture.complete(pair)
+
         }, resultFuture)
 
     })

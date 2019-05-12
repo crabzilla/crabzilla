@@ -52,7 +52,7 @@ class PgcUowJournal(private val pgPool: PgPool,
 
           val currentVersion = ar.result().first()?.getInteger("last_version")?: 0
 
-          log.info("Found version  {}", currentVersion)
+          log.trace("Found version {}", currentVersion)
 
           // version does not match
           if (currentVersion != unitOfWork.version -1) {
