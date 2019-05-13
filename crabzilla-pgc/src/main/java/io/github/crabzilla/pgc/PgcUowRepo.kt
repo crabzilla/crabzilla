@@ -19,7 +19,7 @@ open class PgcUowRepo(private val pgPool: PgPool,
 
   companion object {
 
-    internal val log = LoggerFactory.getLogger(PgcUowRepo::class.java.simpleName)
+    internal val log = LoggerFactory.getLogger(PgcUowRepo::class.java)
 
     private const val UOW_ID = "uow_id"
     private const val UOW_EVENTS = "uow_events"
@@ -139,7 +139,9 @@ open class PgcUowRepo(private val pgPool: PgPool,
   override fun selectAfterVersion(id: Int, version: Version,
                                   aggregateRootName: String,
                                   aHandler: Handler<AsyncResult<SnapshotData>>) {
-    log.info("will load id [{}] after version [{}]", id, version)
+
+    log.trace("will load id [{}] after version [{}]", id, version)
+
     pgPool.getConnection { ar0 ->
       if (ar0.failed()) {
         aHandler.handle(Future.failedFuture(ar0.cause()));
@@ -173,7 +175,7 @@ open class PgcUowRepo(private val pgPool: PgPool,
           }
 
           stream.endHandler {
-            log.info("found {} units of work for id {} and version > {}", list.size, id, version)
+            log.trace("found {} units of work for id {} and version > {}", list.size, id, version)
             val finalVersion = if (list.size == 0) 0 else list[list.size - 1].version
             val flatMappedToEvents = list.flatMap { sd -> sd.events }
             aHandler.handle(Future.succeededFuture(SnapshotData(finalVersion, flatMappedToEvents)))
@@ -191,7 +193,7 @@ open class PgcUowRepo(private val pgPool: PgPool,
   override fun selectAfterUowSequence(uowSequence: Int, maxRows: Int,
                                       aHandler: Handler<AsyncResult<List<ProjectionData>>>) {
 
-    log.info("will load after uowSequence [{}]", uowSequence)
+    log.trace("will load after uowSequence [{}]", uowSequence)
 
     val selectAfterUowSequenceSql = "select uow_id, uow_seq_number, ar_id as target_id, uow_events " +
       "  from units_of_work " +

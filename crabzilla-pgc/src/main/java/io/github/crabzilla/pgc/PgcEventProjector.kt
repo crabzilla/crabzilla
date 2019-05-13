@@ -28,61 +28,69 @@ class PgcEventProjector(private val pgPool: PgPool, val name: String) {
       return
     }
 
-    pgPool.getConnection { ar1 ->
+    pgPool.begin { event1 ->
+      if (event1.succeeded()) {
 
-      if (ar1.failed()) {
-        handler.handle(Future.failedFuture(ar1.cause()))
-        return@getConnection
-      }
-      val conn = ar1.result()
+        val tx = event1.result()
 
-      // Begin the transaction
-      val tx = conn
-        .begin()
-        .abortHandler { _ ->
-          run {
-            log.error("Transaction failed = > rollback")
+        val futures = listOfFutures(minOf(NUMBER_OF_FUTURES, uowProjectionData.events.size))
+        for ((pairIndex, event) in uowProjectionData.events.withIndex()) {
+          // invoke the projection handler
+          projectorHandler.invoke(tx, uowProjectionData.entityId, event, futures[pairIndex])
+        }
+
+        CompositeFuture.join(futures).setHandler { event2 ->
+
+          if (event2.failed()) {
+            handler.handle(Future.failedFuture(event2.cause()))
+            // Rollback the transaction
+            tx.rollback { event4 ->
+              if (event4.succeeded()) {
+                log.trace { "Transaction succeeded" }
+                handler.handle(Future.succeededFuture())
+              } else {
+                log.error("Transaction failed", event4.cause())
+                handler.handle(Future.failedFuture(event4.cause()))
+              }
+            }
+            return@setHandler
           }
-        }
 
-      val futures = listOfFutures(minOf(NUMBER_OF_FUTURES, uowProjectionData.events.size))
+          tx.preparedQuery("insert into projections (name, last_uow) " +
+            "values ($1, $2) on conflict (name) do update set last_uow = $2",
+            Tuple.of(name, uowProjectionData.uowSequence)) { event3 ->
 
-      for ((pairIndex, event) in uowProjectionData.events.withIndex()) {
-        // invoke the projection handler
-        projectorHandler.invoke(conn, uowProjectionData.entityId, event, futures[pairIndex])
-      }
-
-      CompositeFuture.join(futures).setHandler { ar2 ->
-
-        if (ar2.failed()) {
-          handler.handle(Future.failedFuture(ar2.cause()))
-          return@setHandler
-        }
-
-        conn.preparedQuery("insert into projections (name, last_uow) " +
-          "values ($1, $2) on conflict (name) do update set last_uow = $2",
-          Tuple.of(name, uowProjectionData.uowSequence)) { ar3 ->
-
-            if (ar3.failed()) {
-              handler.handle(Future.failedFuture(ar3.cause()))
+            if (event3.failed()) {
+              handler.handle(Future.failedFuture(event3.cause()))
+              // Rollback the transaction
+              tx.rollback { event4 ->
+                if (event4.succeeded()) {
+                  log.trace { "Transaction succeeded" }
+                  handler.handle(Future.succeededFuture())
+                } else {
+                  log.error("Transaction failed", event4.cause())
+                  handler.handle(Future.failedFuture(event4.cause()))
+                }
+              }
               return@preparedQuery
             }
 
             // Commit the transaction
-            tx.commit { ar4 ->
-              if (ar4.succeeded()) {
+            tx.commit { event4 ->
+              if (event4.succeeded()) {
                 log.trace { "Transaction succeeded" }
                 handler.handle(Future.succeededFuture())
               } else {
-                log.error("Transaction failed", ar4.cause())
-                handler.handle(Future.failedFuture(ar4.cause()))
+                log.error("Transaction failed", event4.cause())
+                handler.handle(Future.failedFuture(event4.cause()))
               }
             }
 
           }
 
-      }
+        }
 
+      }
     }
 
   }

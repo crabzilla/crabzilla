@@ -15,7 +15,7 @@ class PgcUowJournal(private val pgPool: PgPool,
 
   companion object {
 
-    internal val log = LoggerFactory.getLogger(PgcUowJournal::class.java.simpleName)
+    internal val log = LoggerFactory.getLogger(PgcUowJournal::class.java)
 
     const val SQL_SELECT_CURRENT_VERSION = "select max(version) as last_version " +
                                        "from units_of_work where ar_id = $1 and ar_name = $2 "

@@ -6,7 +6,7 @@ import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerDeactivated
 import io.github.crabzilla.pgc.ProjectorHandler
 import io.github.crabzilla.pgc.runPreparedQuery
-import io.reactiverse.pgclient.PgConnection
+import io.reactiverse.pgclient.PgTransaction
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
@@ -17,7 +17,7 @@ private val log = LoggerFactory.getLogger("example1")
 
 val EXAMPLE1_PROJECTOR_HANDLER: ProjectorHandler = {
 
-  pgConn: PgConnection, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
+  pgConn: PgTransaction, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
 
     log.info("event {} ", event)
 

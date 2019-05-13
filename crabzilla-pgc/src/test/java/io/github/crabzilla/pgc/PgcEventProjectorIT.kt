@@ -218,7 +218,7 @@ class PgcEventProjectorIT {
   fun a5(tc: VertxTestContext) {
 
     val projectorToFail: ProjectorHandler =
-      { pgConn: PgConnection, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
+      { pgConn: PgTransaction, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
 
         log.info("event {} ", event)
 

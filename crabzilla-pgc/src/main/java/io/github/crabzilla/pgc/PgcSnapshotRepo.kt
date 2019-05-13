@@ -7,6 +7,7 @@ import io.github.crabzilla.SnapshotRepository
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENT_NAME
 import io.reactiverse.pgclient.PgPool
+import io.reactiverse.pgclient.PgTransaction
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
@@ -27,7 +28,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
 
   companion object {
 
-    internal val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java.simpleName)
+    internal val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
     const val SELECT_EVENTS_VERSION_AFTER_VERSION = "SELECT uow_events, version FROM units_of_work " +
       "WHERE ar_id = $1 and ar_name = $2 and version > $3 ORDER BY version "
 
@@ -53,7 +54,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
         log.error("upsert snapshot query error")
         aHandler.handle(Future.failedFuture(insert.cause()))
       } else {
-        log.info("upsert snapshot success")
+        log.trace("upsert snapshot success")
         aHandler.handle(Future.succeededFuture())
       }
     }
@@ -68,7 +69,8 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
     pgPool.getConnection { res ->
 
       if (!res.succeeded()) {
-        future.fail("retrieve.getConnection"); return@getConnection
+        future.fail("retrieve.getConnection");
+        return@getConnection
 
       } else {
 
@@ -77,13 +79,14 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
 
         // TODO how to specify transaction isolation level?
         // Begin the transaction
-        val tx = conn.begin().abortHandler { log.error("Transaction failed") }
+        val tx: PgTransaction = conn.begin().abortHandler { log.error("Transaction failed") }
 
         // get current snapshot
         conn.preparedQuery(selectSnapshot(), Tuple.of(entityId)) { event1 ->
 
           if (event1.failed()) {
-            tx.rollback(); conn.close(); future.fail(event1.cause()); return@preparedQuery
+            tx.rollback(); conn.close(); future.fail(event1.cause());
+            return@preparedQuery
 
           } else {
             val pgRow = event1.result()
@@ -129,7 +132,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
                       log.error("endHandler.closeConnection")
                       future.fail(ar.cause())
                     } else {
-                      log.info("success: endHandler.closeConnection")
+                      log.trace("success: endHandler.closeConnection")
                       val result = Snapshot(currentInstance, currentVersion)
                       future.complete(result)
                     }

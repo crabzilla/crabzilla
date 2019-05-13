@@ -5,6 +5,7 @@ import io.github.crabzilla.web.ContentTypes.UNIT_OF_WORK_BODY
 import io.github.crabzilla.web.ContentTypes.UNIT_OF_WORK_ID
 import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
+import io.vertx.core.Handler
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.ReplyException
 import io.vertx.core.http.CaseInsensitiveHeaders
@@ -17,6 +18,7 @@ import java.util.*
 object ContentTypes {
   const val UNIT_OF_WORK_ID = "application/vnd.crabzilla.unit-of-work-id+json"
   const val UNIT_OF_WORK_BODY = "application/vnd.crabzilla.unit-of-work+json"
+  const val ENTITY_WRITE_MODEL = "application/vnd.crabzilla.entity-write-model+json"
   const val ENTITY_TRACKING = "application/vnd.crabzilla.entity-tracking+json"
 }
 
@@ -109,6 +111,33 @@ fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository, unitOfWorkI
 
 }
 
+fun <E : Entity> entityWriteModelHandler(rc: RoutingContext,
+                                         entityId: Int,
+                                         snapshotRepo: SnapshotRepository<E>,
+                                         entityToJson: (E) -> JsonObject) {
+
+  val httpResp = rc.response().setChunked(true)
+  val snapshotFuture = Future.future<Snapshot<E>>()
+
+  snapshotRepo.retrieve(entityId, Handler { event ->
+    if (event.failed()) {
+      httpResp.setStatusCode(500).end("Server error")
+      return@Handler
+    }
+
+    val snapshot = snapshotFuture.result()
+    val snapshotJson = JsonObject().put("state", entityToJson.invoke(snapshot.state)).put("version", snapshot.version)
+    if (snapshot.version > 0) {
+      httpResp.headers().add("Content-Type", "application/json")
+      httpResp.end(snapshotJson.encode())
+    } else {
+      httpResp.setStatusCode(404).end("Entity not found")
+    }
+
+  })
+
+}
+
 fun <E : Entity> entityTrackingHandler(rc: RoutingContext,
                                        entityId: Int,
                                        uowRepo: UnitOfWorkRepository,
@@ -131,7 +160,7 @@ fun <E : Entity> entityTrackingHandler(rc: RoutingContext,
 
     val result = JsonObject()
     val snapshot = snapshotFuture.result()
-    val snapshotJson = JsonObject().put("version", snapshot.version).put("state", entityToJson.invoke(snapshot.state))
+    val snapshotJson = JsonObject().put("state", entityToJson.invoke(snapshot.state)).put("version", snapshot.version)
     if (snapshot.version > 0) result.put("snapshot", snapshotJson)
     val uowList = uowListFuture.result()
     if (uowList.isNotEmpty()) result.put("units_of_work", JsonArray(uowListFuture.result()))
