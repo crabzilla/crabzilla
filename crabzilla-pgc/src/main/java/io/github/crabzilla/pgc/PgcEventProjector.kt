@@ -43,16 +43,6 @@ class PgcEventProjector(private val pgPool: PgPool, val name: String) {
 
           if (event2.failed()) {
             handler.handle(Future.failedFuture(event2.cause()))
-            // Rollback the transaction
-            tx.rollback { event4 ->
-              if (event4.succeeded()) {
-                log.trace { "Transaction succeeded" }
-                handler.handle(Future.succeededFuture())
-              } else {
-                log.error("Transaction failed", event4.cause())
-                handler.handle(Future.failedFuture(event4.cause()))
-              }
-            }
             return@setHandler
           }
 
@@ -62,16 +52,6 @@ class PgcEventProjector(private val pgPool: PgPool, val name: String) {
 
             if (event3.failed()) {
               handler.handle(Future.failedFuture(event3.cause()))
-              // Rollback the transaction
-              tx.rollback { event4 ->
-                if (event4.succeeded()) {
-                  log.trace { "Transaction succeeded" }
-                  handler.handle(Future.succeededFuture())
-                } else {
-                  log.error("Transaction failed", event4.cause())
-                  handler.handle(Future.failedFuture(event4.cause()))
-                }
-              }
               return@preparedQuery
             }
 
