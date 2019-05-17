@@ -135,9 +135,9 @@ class PgcEventProjectorIT {
 
         val result = ar3.result()
 
-        assertThat(1).isEqualTo(result.size())
-        assertThat(created1.name).isEqualTo(result.first().getString("name"))
-        assertThat(result.first().getBoolean("is_active")).isTrue()
+        tc.verify { assertThat(1).isEqualTo(result.size()) }
+        tc.verify { assertThat(created1.name).isEqualTo(result.first().getString("name")) }
+        tc.verify { assertThat(result.first().getBoolean("is_active")).isTrue() }
 
         tc.completeNow()
 
@@ -170,9 +170,9 @@ class PgcEventProjectorIT {
 
         val result = ar3.result()
 
-        assertThat(1).isEqualTo(result.size())
-        assertThat(created1.name).isEqualTo(result.first().getString("name"))
-        assertThat(result.first().getBoolean("is_active")).isFalse()
+        tc.verify { assertThat(1).isEqualTo(result.size()) }
+        tc.verify { assertThat(created1.name).isEqualTo(result.first().getString("name")) }
+        tc.verify { assertThat(result.first().getBoolean("is_active")).isFalse() }
 
         tc.completeNow()
 
@@ -186,9 +186,9 @@ class PgcEventProjectorIT {
   @DisplayName("cannot project more than 6 events within one transaction")
   fun a4(tc: VertxTestContext) {
 
-    val uow = UnitOfWork(UUID.randomUUID(), "Customer", created1.customerId.value, UUID.randomUUID(), "Whatsoever", createCmd1,
-      1, (
-      arrayListOf(created1, activated1, deactivated1, created1, activated1, deactivated1, created1, activated1, deactivated1)))
+    val uow = UnitOfWork(UUID.randomUUID(), "Customer", created1.customerId.value, UUID.randomUUID(),
+      "Whatsoever", createCmd1, 1, (arrayListOf(created1, activated1, deactivated1, created1, activated1,
+      deactivated1, created1, activated1, deactivated1)))
 
     eventProjector.handle(fromUnitOfWork(1, uow), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
       if (result.failed()) {
@@ -259,7 +259,7 @@ class PgcEventProjectorIT {
 
         val pgRowSet = ar3.result()
 
-        assertThat(0).isEqualTo(pgRowSet.size())
+        tc.verify { assertThat(0).isEqualTo(pgRowSet.size()) }
 
         tc.completeNow()
 
