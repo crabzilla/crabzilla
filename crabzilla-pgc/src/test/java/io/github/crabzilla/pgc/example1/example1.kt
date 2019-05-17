@@ -21,7 +21,6 @@ val EXAMPLE1_PROJECTOR_HANDLER: ProjectorHandler = {
 
     log.info("event {} ", event)
 
-    // TODO how can I compose here (1 event -> n writes) ?
     val future: Future<Void> = Future.future<Void>()
     future.setHandler(handler)
 
@@ -41,7 +40,11 @@ val EXAMPLE1_PROJECTOR_HANDLER: ProjectorHandler = {
         val tuple = Tuple.of(targetId)
         pgConn.runPreparedQuery(query, tuple, future)
       }
-      else -> log.info("${event.javaClass.simpleName} does not have any event projector handler")
+      else -> {
+        val error = "${event.javaClass.simpleName} does not have any event projector handler"
+        log.info(error)
+        future.fail(error)
+      }
     }
 
     log.info("finished event {} ", event)

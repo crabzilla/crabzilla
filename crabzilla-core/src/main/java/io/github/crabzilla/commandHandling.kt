@@ -135,9 +135,7 @@ class CommandHandlerVerticle<E : Entity>(private val endpoint: CommandHandlerEnd
           { state, event -> applyEventsFn(event, state) }
           val newSnapshot = Snapshot(newInstance, uowValue.get().version)
 
-          log.trace("new snapshot: $newSnapshot")
-
-          log.trace("now will store snapshot ")
+          log.trace("now will store snapshot $newSnapshot")
           snapshotRepo.upsert(commandPair.first.entityId, newSnapshot, updateSnapshotFuture)
           updateSnapshotFuture
         }

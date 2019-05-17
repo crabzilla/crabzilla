@@ -242,7 +242,10 @@ class PgcEventProjectorIT {
             val tuple = Tuple.of(targetId)
             pgConn.runPreparedQuery(query, tuple, future)
           }
-          else -> log.info("${event.javaClass.simpleName} does not have any event projector handler")
+          else -> {
+            future.fail("${event.javaClass.simpleName} does not have any event projector handler")
+            log.info("${event.javaClass.simpleName} does not have any event projector handler")
+          }
         }
 
         log.info("finished event {} ", event)

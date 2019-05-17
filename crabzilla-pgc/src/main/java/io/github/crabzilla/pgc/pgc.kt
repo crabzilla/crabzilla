@@ -12,6 +12,9 @@ typealias ProjectorHandler =
 
 // extension function with helper for pgConn
 
+/**
+ * https://dzone.com/articles/three-paradigms-of-asynchronous-programming-in-ver
+ */
 fun PgTransaction.runPreparedQuery(query: String, tuple: Tuple, future: Future<Void>) {
   this.preparedQuery(query, tuple) { ar2 ->
     //    println("running $query with $tuple")

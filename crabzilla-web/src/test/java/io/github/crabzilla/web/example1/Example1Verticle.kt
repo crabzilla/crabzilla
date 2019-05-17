@@ -1,7 +1,16 @@
 package io.github.crabzilla.web.example1
 
 import io.github.crabzilla.*
-import io.github.crabzilla.example1.*
+import io.github.crabzilla.example1.CUSTOMER_CMD_HANDLER_FACTORY
+import io.github.crabzilla.example1.CUSTOMER_CMD_VALIDATOR
+import io.github.crabzilla.example1.CUSTOMER_SEED_VALUE
+import io.github.crabzilla.example1.CUSTOMER_STATE_BUILDER
+import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_FROM_JSON
+import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_TO_JSON
+import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_FROM_JSON
+import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_TO_JSON
+import io.github.crabzilla.example1.CustomerJson.CUSTOMER_FROM_JSON
+import io.github.crabzilla.example1.CustomerJson.CUSTOMER_TO_JSON
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.PgcSnapshotRepo
 import io.github.crabzilla.pgc.PgcUowJournal

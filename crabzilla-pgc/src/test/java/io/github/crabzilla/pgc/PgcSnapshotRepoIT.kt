@@ -5,6 +5,11 @@ import io.github.crabzilla.SnapshotRepository
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
+import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_TO_JSON
+import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_FROM_JSON
+import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_TO_JSON
+import io.github.crabzilla.example1.CustomerJson.CUSTOMER_FROM_JSON
+import io.github.crabzilla.example1.CustomerJson.CUSTOMER_TO_JSON
 import io.github.crabzilla.initVertx
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
 import io.github.crabzilla.toJsonArray

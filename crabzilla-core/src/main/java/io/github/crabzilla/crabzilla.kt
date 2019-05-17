@@ -19,6 +19,12 @@ interface Command
 
 typealias Version = Int
 
+interface Entity {
+  fun eventsOf(vararg event: DomainEvent): List<DomainEvent> {
+    return event.asList()
+  }
+}
+
 data class UnitOfWork(val unitOfWorkId: UUID,
                       val entityName: String,
                       val entityId: Int,
@@ -54,12 +60,6 @@ data class UnitOfWork(val unitOfWorkId: UUID,
 }
 
 // runtime
-
-interface Entity {
-  fun eventsOf(vararg event: DomainEvent): List<DomainEvent> {
-    return event.asList()
-  }
-}
 
 data class Snapshot<E : Entity>(val state: E, val version: Version)
 
@@ -112,3 +112,6 @@ fun List<DomainEvent>.toJsonArray(eventToJson: (DomainEvent) -> JsonObject): Jso
   return eventsJsonArray
 }
 
+// exploring
+
+interface EntitySerDer
