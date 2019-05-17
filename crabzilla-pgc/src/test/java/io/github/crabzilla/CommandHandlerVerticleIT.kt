@@ -29,7 +29,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
-import java.time.Instant
 
 
 @ExtendWith(VertxExtension::class)
@@ -45,11 +44,6 @@ class CommandHandlerVerticleIT {
 
   companion object {
     val handlerEndpoint = CommandHandlerEndpoint("customer")
-    val customerId = CustomerId(1)
-    val createCmd = CreateCustomer("customer")
-    val created = CustomerCreated(customerId, "customer")
-    val activateCmd = ActivateCustomer("I want it")
-    val activated = CustomerActivated("a good reason", Instant.now())
   }
 
   @BeforeEach
@@ -140,7 +134,7 @@ class CommandHandlerVerticleIT {
         }
         tc.verify {
           val result = asyncResult.result().body() as Pair<UnitOfWork, Int>
-          assertThat(result.first.events.size).isEqualTo(1)
+          tc.verify { assertThat(result.first.events.size).isEqualTo(1) }
           tc.completeNow()
         }
     }
@@ -160,10 +154,10 @@ class CommandHandlerVerticleIT {
     vertx.eventBus()
       .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(commandMetadata, command), options) { asyncResult ->
         tc.verify {
-          assertThat(asyncResult.succeeded()).isFalse()
+          tc.verify { assertThat(asyncResult.succeeded()).isFalse() }
           val cause = asyncResult.cause() as ReplyException
-          assertThat(cause.message).isEqualTo("[Invalid name: a bad name]")
-          assertThat(cause.failureCode()).isEqualTo(400)
+          tc.verify { assertThat(cause.message).isEqualTo("[Invalid name: a bad name]") }
+          tc.verify { assertThat(cause.failureCode()).isEqualTo(400) }
           tc.completeNow()
         }
     }
@@ -179,10 +173,10 @@ class CommandHandlerVerticleIT {
     vertx.eventBus()
       .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(commandMetadata, command), options) { asyncResult ->
         tc.verify {
-          assertThat(asyncResult.succeeded()).isFalse()
+          tc.verify { assertThat(asyncResult.succeeded()).isFalse() }
           val cause = asyncResult.cause() as ReplyException
-          assertThat(cause.message).isEqualTo("Command cannot be deserialized")
-          assertThat(cause.failureCode()).isEqualTo(400)
+          tc.verify { assertThat(cause.message).isEqualTo("Command cannot be deserialized") }
+          tc.verify { assertThat(cause.failureCode()).isEqualTo(400) }
           tc.completeNow()
         }
     }

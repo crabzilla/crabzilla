@@ -1,13 +1,15 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
-import io.github.crabzilla.example1.*
-import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
-import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
 import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_FROM_JSON
 import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_TO_JSON
 import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_FROM_JSON
 import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_TO_JSON
+import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
+import io.github.crabzilla.pgc.example1.Example1Fixture.activatedUow1
+import io.github.crabzilla.pgc.example1.Example1Fixture.created1
+import io.github.crabzilla.pgc.example1.Example1Fixture.createdUow1
+import io.github.crabzilla.pgc.example1.Example1Fixture.entityName
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -27,8 +29,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
-import java.time.Instant
-import java.util.*
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -38,19 +38,6 @@ class PgcUowJournalIT {
   internal lateinit var writeDb: PgPool
   internal lateinit var repo: UnitOfWorkRepository
   internal lateinit var journal: UnitOfWorkJournal
-
-  companion object {
-    const val entityName = "customer"
-    val customerId = CustomerId(1)
-    val createCmd = CreateCustomer("customer")
-    val created = CustomerCreated(customerId, "customer")
-    val expectedUow1 = UnitOfWork(UUID.randomUUID(), entityName, 1, UUID.randomUUID(), CREATE.urlFriendly(),
-      createCmd, 1, (listOf(created)))
-    val activateCmd = ActivateCustomer("I want it")
-    val activated = CustomerActivated("a good reason", Instant.now())
-    val expectedUow2 = UnitOfWork(UUID.randomUUID(), entityName, 1, UUID.randomUUID(), ACTIVATE.urlFriendly(),
-      activateCmd, 2, (listOf(activated)))
-  }
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
@@ -108,11 +95,10 @@ class PgcUowJournalIT {
             tc.failNow(deleteResult2.cause())
             return@query
           }
+          println("deleted both read and write model tables")
           tc.completeNow()
         }
       }
-
-
     })
 
   }
@@ -121,54 +107,53 @@ class PgcUowJournalIT {
   @DisplayName("can append version 1")
   fun s1(tc: VertxTestContext) {
 
-    journal.append(expectedUow1, Handler { ar1 ->
+      journal.append(createdUow1, Handler { event1 ->
 
-      if (ar1.failed()) {
-        tc.failNow(ar1.cause())
-        return@Handler
-      }
-
-      val uowSequence: Int = ar1.result()
-
-      assertThat(uowSequence).isGreaterThan(0)
-
-      val uowFuture = Future.future<UnitOfWork>()
-
-      repo.getUowByUowId(expectedUow1.unitOfWorkId, uowFuture)
-
-      uowFuture.setHandler { ar2 ->
-        if (ar2.failed()) {
-          tc.failNow(ar2.cause())
-          return@setHandler
+        if (event1.failed()) {
+          tc.failNow(event1.cause())
+          return@Handler
         }
 
-        val uow = ar2.result()
+        val uowSequence: Int = event1.result()
 
-        assertThat(uow).isEqualTo(expectedUow1)
+        tc.verify { assertThat(uowSequence).isGreaterThan(0) }
 
-        val snapshotDataFuture = Future.future<SnapshotData>()
+        val uowFuture = Future.future<UnitOfWork>()
 
-        repo.selectAfterVersion(expectedUow1.entityId, 0, entityName, snapshotDataFuture.completer())
+        repo.getUowByUowId(createdUow1.unitOfWorkId, uowFuture)
 
-        snapshotDataFuture.setHandler { ar3 ->
-          if (ar3.failed()) {
-            ar3.cause().printStackTrace()
-            tc.failNow(ar3.cause())
+        uowFuture.setHandler { ar2 ->
+          if (ar2.failed()) {
+            tc.failNow(ar2.cause())
             return@setHandler
           }
 
-          val (version, events) = ar3.result()
+          val uow = ar2.result()
 
-          assertThat(version).isEqualTo(expectedUow1.version)
+         tc.verify { assertThat(uow).isEqualTo(createdUow1) }
 
-          assertThat(events).isEqualTo(expectedUow1.events)
+          val snapshotDataFuture = Future.future<SnapshotData>()
 
-          tc.completeNow()
+          repo.selectAfterVersion(createdUow1.entityId, 0, entityName, snapshotDataFuture)
 
+          snapshotDataFuture.setHandler { ar3 ->
+            if (ar3.failed()) {
+              tc.failNow(ar3.cause())
+              return@setHandler
+            }
+
+            val (version, events) = ar3.result()
+
+            tc.verify { assertThat(version).isEqualTo(createdUow1.version) }
+
+            tc.verify { assertThat(events).isEqualTo(createdUow1.events) }
+
+            tc.completeNow()
+
+          }
         }
-      }
 
-    })
+      })
 
   }
 
@@ -179,7 +164,7 @@ class PgcUowJournalIT {
     val appendFuture1 = Future.future<Int>()
 
     // append uow1
-    journal.append(expectedUow1, appendFuture1.completer())
+    journal.append(createdUow1, appendFuture1.completer())
 
     appendFuture1.setHandler { ar1 ->
       if (ar1.failed()) {
@@ -190,16 +175,16 @@ class PgcUowJournalIT {
 
       val uowSequence = ar1.result()
 
-      assertThat(uowSequence).isGreaterThan(0)
+      tc.verify { assertThat(uowSequence).isGreaterThan(0) }
 
       val appendFuture2 = Future.future<Int>()
 
       // try to append uow1 again
-      journal.append(expectedUow1, appendFuture2.completer())
+      journal.append(createdUow1, appendFuture2)
 
       appendFuture2.setHandler { ar2 ->
         if (ar2.failed()) {
-          assertThat(ar2.cause().message).isEqualTo("expected version is 0 but current version is 1")
+          tc.verify { assertThat(ar2.cause().message).isEqualTo("expected version is 0 but current version is 1") }
           tc.completeNow()
           return@setHandler
         }
@@ -217,7 +202,7 @@ class PgcUowJournalIT {
     val appendFuture1 = Future.future<Int>()
 
     // append uow1
-    journal.append(expectedUow1, appendFuture1)
+    journal.append(createdUow1, appendFuture1)
 
     appendFuture1.setHandler { ar1 ->
 
@@ -226,11 +211,11 @@ class PgcUowJournalIT {
       } else {
 
         val uowSequence = ar1.result()
-        assertThat(uowSequence).isGreaterThan(0)
+        tc.verify { assertThat(uowSequence).isGreaterThan(0) }
         val appendFuture2 = Future.future<Int>()
 
         // append uow2
-        journal.append(expectedUow2, appendFuture2)
+        journal.append(activatedUow1, appendFuture2)
 
         appendFuture2.setHandler { ar2 ->
 
@@ -239,11 +224,11 @@ class PgcUowJournalIT {
 
           } else {
             val uowSequence = ar2.result()
-            assertThat(uowSequence).isGreaterThan(2)
+            tc.verify { assertThat(uowSequence).isGreaterThan(2) }
             val snapshotDataFuture = Future.future<SnapshotData>()
 
             // get all versions for id
-            repo.selectAfterVersion(expectedUow2.entityId, 0, entityName, snapshotDataFuture.completer())
+            repo.selectAfterVersion(activatedUow1.entityId, 0, entityName, snapshotDataFuture)
 
             snapshotDataFuture.setHandler { ar4 ->
 
@@ -252,10 +237,10 @@ class PgcUowJournalIT {
 
               } else {
                 val (version, events) = ar4.result()
-                assertThat(version).isEqualTo(expectedUow2.version)
-                assertThat(events.size).isEqualTo(2)
-                assertThat(events[0]).isEqualTo(created)
-                assertThat(events[1]).isEqualToIgnoringGivenFields(activated, "_when")
+                tc.verify { assertThat(version).isEqualTo(activatedUow1.version) }
+                tc.verify { assertThat(events.size).isEqualTo(2) }
+                tc.verify { assertThat(events[0]).isEqualTo(created1) }
+                tc.verify { assertThat(events[1]).isEqualToIgnoringGivenFields(activated1, "_when") }
                 tc.completeNow()
               }
 

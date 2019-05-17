@@ -2,7 +2,9 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.Snapshot
 import io.github.crabzilla.SnapshotRepository
-import io.github.crabzilla.example1.*
+import io.github.crabzilla.example1.CUSTOMER_SEED_VALUE
+import io.github.crabzilla.example1.CUSTOMER_STATE_BUILDER
+import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
 import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_TO_JSON
@@ -12,6 +14,12 @@ import io.github.crabzilla.example1.CustomerJson.CUSTOMER_FROM_JSON
 import io.github.crabzilla.example1.CustomerJson.CUSTOMER_TO_JSON
 import io.github.crabzilla.initVertx
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
+import io.github.crabzilla.pgc.example1.Example1Fixture.activateCmd1
+import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
+import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
+import io.github.crabzilla.pgc.example1.Example1Fixture.created1
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
+import io.github.crabzilla.pgc.example1.Example1Fixture.entityName
 import io.github.crabzilla.toJsonArray
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
@@ -32,7 +40,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
-import java.time.Instant
 import java.util.*
 
 @ExtendWith(VertxExtension::class)
@@ -42,15 +49,6 @@ class PgcSnapshotRepoIT {
   private lateinit var vertx: Vertx
   private lateinit var writeDb: PgPool
   private lateinit var repo: SnapshotRepository<Customer>
-
-  companion object {
-    const val entityName = "customer"
-    val customerId = CustomerId(1)
-    val createCmd = CreateCustomer("customer")
-    val created = CustomerCreated(customerId, "customer")
-    val activateCmd = ActivateCustomer("I want it")
-    val activated = CustomerActivated("a good reason", Instant.now())
-  }
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
@@ -121,14 +119,14 @@ class PgcSnapshotRepoIT {
   @DisplayName("given none snapshot or event, it can retrieve correct snapshot")
   fun a0(tc: VertxTestContext) {
 
-      repo.retrieve(customerId.value, Handler { event ->
+      repo.retrieve(customerId1.value, Handler { event ->
         if (event.failed()) {
           event.cause().printStackTrace()
           tc.failNow(event.cause())
         }
         val snapshot: Snapshot<Customer> = event.result()
-        assertThat(snapshot.version).isEqualTo(0)
-        assertThat(snapshot.state).isEqualTo(CUSTOMER_SEED_VALUE)
+        tc.verify { assertThat(snapshot.version).isEqualTo(0) }
+        tc.verify { assertThat(snapshot.state).isEqualTo(CUSTOMER_SEED_VALUE) }
         tc.completeNow()
       })
 
@@ -138,15 +136,15 @@ class PgcSnapshotRepoIT {
   @DisplayName("given none snapshot and a created event, it can retrieve correct snapshot")
   fun a1(tc: VertxTestContext) {
 
-    val eventsAsJson = (listOf(created).toJsonArray(CUSTOMER_EVENT_TO_JSON))
+    val eventsAsJson = (listOf(created1).toJsonArray(CUSTOMER_EVENT_TO_JSON))
 
     val tuple = Tuple.of(UUID.randomUUID(),
       io.reactiverse.pgclient.data.Json.create(eventsAsJson),
       UUID.randomUUID(),
       CREATE.urlFriendly(),
-      io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
+      io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd1)),
       entityName,
-      customerId.value,
+      customerId1.value,
       1)
 
     writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { event1 ->
@@ -155,16 +153,16 @@ class PgcSnapshotRepoIT {
         tc.failNow(event1.cause())
       }
       val uowSequence = event1.result().first().getLong(0)
-      assertThat(uowSequence).isGreaterThan(0)
+      tc.verify { assertThat(uowSequence).isGreaterThan(0) }
 
-      repo.retrieve(customerId.value, Handler { event2 ->
+      repo.retrieve(customerId1.value, Handler { event2 ->
           if (event2.failed()) {
             event2.cause().printStackTrace()
             tc.failNow(event2.cause())
           }
           val snapshot: Snapshot<Customer> = event2.result()
-          assertThat(snapshot.version).isEqualTo(1)
-          assertThat(snapshot.state).isEqualTo(Customer(customerId, createCmd.name, false, null))
+          tc.verify { assertThat(snapshot.version).isEqualTo(1) }
+          tc.verify { assertThat(snapshot.state).isEqualTo(Customer(customerId1, createCmd1.name, false, null)) }
           tc.completeNow()
       })
     }
@@ -175,15 +173,15 @@ class PgcSnapshotRepoIT {
   @DisplayName("given none snapshot and both created and an activated events, it can retrieve correct snapshot")
   fun a2(tc: VertxTestContext) {
 
-    val eventsAsJson = (listOf(created, activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))
+    val eventsAsJson = (listOf(created1, activated1).toJsonArray(CUSTOMER_EVENT_TO_JSON))
 
     val tuple1 = Tuple.of(UUID.randomUUID(),
       io.reactiverse.pgclient.data.Json.create(eventsAsJson),
       UUID.randomUUID(),
       CREATE.urlFriendly(),
-      io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd)),
+      io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd1)),
       entityName,
-      customerId.value,
+      customerId1.value,
       1)
 
     writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
@@ -194,12 +192,12 @@ class PgcSnapshotRepoIT {
       }
 
       val tuple2 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create((listOf(activated).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        io.reactiverse.pgclient.data.Json.create((listOf(activated1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
         UUID.randomUUID(),
         ACTIVATE.urlFriendly(),
-        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd)),
+        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd1)),
         entityName,
-        customerId.value,
+        customerId1.value,
         2)
 
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
@@ -209,18 +207,18 @@ class PgcSnapshotRepoIT {
           tc.failNow(ar2.cause())
         }
         val uowSequence = ar1.result().first().getLong(0)
-        assertThat(uowSequence).isGreaterThan(0)
+        tc.verify { assertThat(uowSequence).isGreaterThan(0) }
 
-        repo.retrieve(customerId.value, Handler { event ->
+        repo.retrieve(customerId1.value, Handler { event ->
           if (event.failed()) {
             event.cause().printStackTrace()
             tc.failNow(event.cause())
           }
           val snapshot: Snapshot<Customer> = event.result()
-          assertThat(snapshot.version).isEqualTo(2)
-          assertThat(snapshot.state.customerId).isEqualTo(customerId)
-          assertThat(snapshot.state.name).isEqualTo(createCmd.name)
-          assertThat(snapshot.state.isActive).isEqualTo(true)
+          tc.verify { assertThat(snapshot.version).isEqualTo(2) }
+          tc.verify { assertThat(snapshot.state.customerId).isEqualTo(customerId1) }
+          tc.verify { assertThat(snapshot.state.name).isEqualTo(createCmd1.name) }
+          tc.verify { assertThat(snapshot.state.isActive).isEqualTo(true) }
           tc.completeNow()
         })
       }

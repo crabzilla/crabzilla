@@ -36,6 +36,7 @@ object CustomerJson {
   }
 
   val CUSTOMER_CMD_FROM_JSON = { cmdName: String, jo: JsonObject ->
+    println("$cmdName -> ${jo.encodePrettily()}")
     when (cmdName) {
       "create" -> CreateCustomer(jo.getString("name"))
       "activate" -> ActivateCustomer(jo.getString("reason"))
