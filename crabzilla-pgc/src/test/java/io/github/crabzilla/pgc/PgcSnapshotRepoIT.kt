@@ -7,11 +7,6 @@ import io.github.crabzilla.example1.CUSTOMER_STATE_BUILDER
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_TO_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_FROM_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_TO_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_FROM_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_TO_JSON
 import io.github.crabzilla.initVertx
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
 import io.github.crabzilla.pgc.example1.Example1Fixture.activateCmd1
@@ -19,8 +14,8 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.github.crabzilla.pgc.example1.Example1Fixture.entityName
-import io.github.crabzilla.toJsonArray
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -90,8 +85,7 @@ class PgcSnapshotRepoIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      repo = PgcSnapshotRepo(entityName, writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER,
-        CUSTOMER_FROM_JSON, CUSTOMER_TO_JSON, CUSTOMER_EVENT_FROM_JSON)
+      repo = PgcSnapshotRepo(entityName, writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, customerJson)
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {
@@ -136,13 +130,13 @@ class PgcSnapshotRepoIT {
   @DisplayName("given none snapshot and a created event, it can retrieve correct snapshot")
   fun a1(tc: VertxTestContext) {
 
-    val eventsAsJson = (listOf(created1).toJsonArray(CUSTOMER_EVENT_TO_JSON))
+    val eventsAsJson = customerJson.toJsonArray(listOf(created1))
 
     val tuple = Tuple.of(UUID.randomUUID(),
       io.reactiverse.pgclient.data.Json.create(eventsAsJson),
       UUID.randomUUID(),
       CREATE.urlFriendly(),
-      io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd1)),
+      io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
       entityName,
       customerId1.value,
       1)
@@ -173,13 +167,13 @@ class PgcSnapshotRepoIT {
   @DisplayName("given none snapshot and both created and an activated events, it can retrieve correct snapshot")
   fun a2(tc: VertxTestContext) {
 
-    val eventsAsJson = (listOf(created1, activated1).toJsonArray(CUSTOMER_EVENT_TO_JSON))
+    val eventsAsJson = customerJson.toJsonArray(listOf(created1, activated1))
 
     val tuple1 = Tuple.of(UUID.randomUUID(),
       io.reactiverse.pgclient.data.Json.create(eventsAsJson),
       UUID.randomUUID(),
       CREATE.urlFriendly(),
-      io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd1)),
+      io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
       entityName,
       customerId1.value,
       1)
@@ -192,10 +186,10 @@ class PgcSnapshotRepoIT {
       }
 
       val tuple2 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create((listOf(activated1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(activated1))),
         UUID.randomUUID(),
         ACTIVATE.urlFriendly(),
-        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd1)),
+        io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
         entityName,
         customerId1.value,
         2)

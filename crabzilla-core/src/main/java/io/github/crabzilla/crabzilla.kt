@@ -99,19 +99,30 @@ fun initVertx(vertx: Vertx) {
 
 }
 
-// extensions
+// deployment
 
+interface EntityJsonSerDer<E: Entity> {
 
-fun List<DomainEvent>.toJsonArray(eventToJson: (DomainEvent) -> JsonObject): JsonArray {
-  val eventsJsonArray = JsonArray()
-  this.map { event -> Pair(event.javaClass.simpleName, event) }
-    .map { pair -> Pair(pair.first, eventToJson.invoke(pair.second)) }
+  fun toJson(entity: E): JsonObject
+
+  fun fromJson(json: JsonObject): E
+
+  fun cmdFromJson(cmdName: String, json: JsonObject): Command
+
+  fun cmdToJson(cmd: Command): JsonObject
+
+  fun eventFromJson(eventName: String, json:  JsonObject): DomainEvent
+
+  fun eventToJson(event: DomainEvent): JsonObject
+
+  fun toJsonArray(events: List<DomainEvent>): JsonArray {
+    val eventsJsonArray = JsonArray()
+    events.map { event -> Pair(event.javaClass.simpleName, event) }
+      .map { pair -> Pair(pair.first, eventToJson(pair.second)) }
 //    .map { pair -> println(pair.first); println(pair.second); pair}
-    .map { pair -> JsonObject().put(EVENT_NAME, pair.first).put(EVENTS_JSON_CONTENT, pair.second)}
-    .forEach { jo -> eventsJsonArray.add(jo) }
-  return eventsJsonArray
+      .map { pair -> JsonObject().put(EVENT_NAME, pair.first).put(EVENTS_JSON_CONTENT, pair.second)}
+      .forEach { jo -> eventsJsonArray.add(jo) }
+    return eventsJsonArray
+  }
+
 }
-
-// exploring
-
-interface EntitySerDer

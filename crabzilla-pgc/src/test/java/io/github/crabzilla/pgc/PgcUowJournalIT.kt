@@ -1,14 +1,11 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_FROM_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_TO_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_FROM_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_TO_JSON
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activatedUow1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createdUow1
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.github.crabzilla.pgc.example1.Example1Fixture.entityName
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
@@ -79,9 +76,9 @@ class PgcUowJournalIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      repo = PgcUowRepo(writeDb, CUSTOMER_CMD_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
+      repo = PgcUowRepo(writeDb, customerJson)
 
-      journal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
+      journal = PgcUowJournal(writeDb, customerJson)
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {

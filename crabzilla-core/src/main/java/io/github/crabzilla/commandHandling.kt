@@ -42,7 +42,7 @@ abstract class CommandHandler<E: Entity>(val cmdMetadata: CommandMetadata, val c
 }
 
 class CommandHandlerVerticle<E : Entity>(private val endpoint: CommandHandlerEndpoint,
-                                         private val jsonToCommand: (String, JsonObject) -> Command,
+                                         private val jsonSerDer: EntityJsonSerDer<E>,
                                          private val seedValue: E,
                                          private val applyEventsFn: (DomainEvent, E) -> E,
                                          private val cmdHandlerFactory: CommandHandlerFactory<E>,
@@ -66,7 +66,7 @@ class CommandHandlerVerticle<E : Entity>(private val endpoint: CommandHandlerEnd
 
       log.trace("received $commandPair")
 
-      val command: Command? = try { jsonToCommand.invoke(commandPair.first.commandName, commandPair.second) }
+      val command: Command? = try { jsonSerDer.cmdFromJson(commandPair.first.commandName, commandPair.second) }
                               catch (e: Exception) { null }
 
       if (command == null) {

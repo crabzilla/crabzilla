@@ -3,10 +3,6 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.*
 import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_FROM_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_TO_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_FROM_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_TO_JSON
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
 import io.github.crabzilla.pgc.example1.Example1Fixture.activateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
@@ -15,6 +11,7 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createdUow1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.github.crabzilla.pgc.example1.Example1Fixture.entityName
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
@@ -81,8 +78,8 @@ class PgcUowRepoIT {
         .setMaxSize(config.getInteger("WRITE_DATABASE_POOL_MAX_SIZE"))
 
       writeDb = PgClient.pool(vertx, options)
-      repo = PgcUowRepo(writeDb, CUSTOMER_CMD_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
-      journal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
+      repo = PgcUowRepo(writeDb, customerJson)
+      journal = PgcUowJournal(writeDb, customerJson)
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {
@@ -110,10 +107,10 @@ class PgcUowRepoIT {
   fun a4(tc: VertxTestContext) {
 
     val tuple = Tuple.of(UUID.randomUUID(),
-      io.reactiverse.pgclient.data.Json.create((listOf(created1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+      io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
       createdUow1.commandId,
       CREATE.urlFriendly(),
-      io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd1)),
+      io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
       entityName,
       customerId1.value,
       1)
@@ -145,10 +142,10 @@ class PgcUowRepoIT {
   fun a5(tc: VertxTestContext) {
 
     val tuple = Tuple.of(UUID.randomUUID(),
-      io.reactiverse.pgclient.data.Json.create((listOf(created1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+      io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
       createdUow1.commandId,
       CREATE.urlFriendly(),
-      io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd1)),
+      io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
       entityName,
       customerId1.value,
       1)
@@ -197,10 +194,10 @@ class PgcUowRepoIT {
     fun a2(tc: VertxTestContext) {
 
       val tuple = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create((listOf(created1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
-        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd1)),
+        io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         entityName,
         customerId1.value,
         1)
@@ -232,10 +229,10 @@ class PgcUowRepoIT {
     fun a3(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create((listOf(created1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
-        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd1)),
+        io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         entityName,
         customerId1.value,
         1)
@@ -250,10 +247,10 @@ class PgcUowRepoIT {
         }
 
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create((listOf(activated1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(activated1))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
-          io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd1)),
+          io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
           entityName,
           customerId1.value,
           2)
@@ -287,10 +284,10 @@ class PgcUowRepoIT {
     fun a33(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create((listOf(created1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
-        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd1)),
+        io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         entityName,
         customerId1.value,
         1)
@@ -305,10 +302,10 @@ class PgcUowRepoIT {
         }
 
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create((listOf(activated1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(activated1))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
-          io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd1)),
+          io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
           entityName,
           customerId1.value,
           2)
@@ -340,10 +337,10 @@ class PgcUowRepoIT {
     fun a4(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create((listOf(created1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
-        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd1)),
+        io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         entityName,
         customerId1.value,
         1)
@@ -357,10 +354,10 @@ class PgcUowRepoIT {
         }
         val uowSequence1 = ar1.result().first().getInteger("uow_seq_number")
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create((listOf(activated1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(activated1))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
-          io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd1)),
+          io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
           entityName,
           customerId1.value,
           2)
@@ -395,10 +392,10 @@ class PgcUowRepoIT {
     fun a2(tc: VertxTestContext) {
 
       val tuple = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create((listOf(created1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
-        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd1)),
+        io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         entityName,
         customerId1.value,
         1)
@@ -427,10 +424,10 @@ class PgcUowRepoIT {
     fun a3(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create((listOf(created1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
-        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd1)),
+        io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         entityName,
         customerId1.value,
         1)
@@ -443,10 +440,10 @@ class PgcUowRepoIT {
         }
 
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create((listOf(activated1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(activated1))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
-          io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd1)),
+          io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
           entityName,
           customerId1.value,
           2)
@@ -474,10 +471,10 @@ class PgcUowRepoIT {
     fun a4(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create((listOf(created1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
-        io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(createCmd1)),
+        io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         entityName,
         customerId1.value,
         1)
@@ -490,10 +487,10 @@ class PgcUowRepoIT {
         }
         val uowSequence1 = ar1.result().first().getLong("uow_seq_number")
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create((listOf(activated1).toJsonArray(CUSTOMER_EVENT_TO_JSON))),
+          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(activated1))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
-          io.reactiverse.pgclient.data.Json.create(CUSTOMER_CMD_TO_JSON(activateCmd1)),
+          io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
           entityName,
           customerId1.value,
           2)

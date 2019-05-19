@@ -1,9 +1,6 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.DomainEvent
-import io.github.crabzilla.Entity
-import io.github.crabzilla.Snapshot
-import io.github.crabzilla.SnapshotRepository
+import io.github.crabzilla.*
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENT_NAME
 import io.reactiverse.pgclient.PgPool
@@ -20,10 +17,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
                                   private val pgPool: PgPool,
                                   private val seedValue: E,
                                   private val applyEventsFn: (DomainEvent, E) -> E,
-                                  private val writeModelFromJson: (JsonObject) -> E,
-                                  private val writeModelToJson: (E) -> JsonObject,
-                                  private val eventFromJson: (String, JsonObject) -> DomainEvent)
-                                                                          : SnapshotRepository<E> {
+                                  private val jsonSerDer: EntityJsonSerDer<E>) : SnapshotRepository<E> {
 
 
   companion object {
@@ -47,7 +41,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
 
   override fun upsert(entityId: Int, snapshot: Snapshot<E>, aHandler: Handler<AsyncResult<Void>>) {
 
-    val json = io.reactiverse.pgclient.data.Json.create(writeModelToJson.invoke(snapshot.state))
+    val json = io.reactiverse.pgclient.data.Json.create(jsonSerDer.toJson(snapshot.state))
 
     pgPool.preparedQuery(upsertSnapshot(), Tuple.of(entityId, snapshot.version, json)) { insert ->
       if (insert.failed()) {
@@ -69,7 +63,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
     pgPool.getConnection { res ->
 
       if (!res.succeeded()) {
-        future.fail("retrieve.getConnection");
+        future.fail("retrieve.getConnection")
         return@getConnection
 
       } else {
@@ -85,7 +79,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
         conn.preparedQuery(selectSnapshot(), Tuple.of(entityId)) { event1 ->
 
           if (event1.failed()) {
-            tx.rollback(); conn.close(); future.fail(event1.cause());
+            tx.rollback(); conn.close(); future.fail(event1.cause())
             return@preparedQuery
 
           } else {
@@ -98,7 +92,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
               cachedInstance = seedValue
               cachedVersion = 0
             } else {
-              cachedInstance = writeModelFromJson.invoke(JsonObject(pgRow.first().getJson("json_content").toString()))
+              cachedInstance = jsonSerDer.fromJson(JsonObject(pgRow.first().getJson("json_content").toString()))
               cachedVersion = pgRow.first().getInteger("version")
             }
 
@@ -146,7 +140,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
                     val jsonObject = eventsArray.getJsonObject(index)
                     val eventName = jsonObject.getString(EVENT_NAME)
                     val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
-                    eventFromJson.invoke(eventName, eventJson)
+                    jsonSerDer.eventFromJson(eventName, eventJson)
                   }
 
                   val events: List<DomainEvent> = List(eventsArray.size(), jsonToEvent)

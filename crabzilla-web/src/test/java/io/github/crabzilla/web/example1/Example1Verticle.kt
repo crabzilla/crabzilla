@@ -5,17 +5,12 @@ import io.github.crabzilla.example1.CUSTOMER_CMD_HANDLER_FACTORY
 import io.github.crabzilla.example1.CUSTOMER_CMD_VALIDATOR
 import io.github.crabzilla.example1.CUSTOMER_SEED_VALUE
 import io.github.crabzilla.example1.CUSTOMER_STATE_BUILDER
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_FROM_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_TO_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_FROM_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_TO_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_FROM_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_TO_JSON
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.PgcSnapshotRepo
 import io.github.crabzilla.pgc.PgcUowJournal
 import io.github.crabzilla.pgc.PgcUowRepo
 import io.github.crabzilla.pgc.example1.EXAMPLE1_PROJECTOR_HANDLER
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.github.crabzilla.web.getUowHandler
 import io.github.crabzilla.web.postCommandHandler
 import io.reactiverse.pgclient.PgClient
@@ -105,13 +100,13 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       // write model
 
-      val uowRepository = PgcUowRepo(writeDb, CUSTOMER_CMD_FROM_JSON, CUSTOMER_EVENT_FROM_JSON)
-      val uowJournal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
+      val uowRepository = PgcUowRepo(writeDb, customerJson)
+      val uowJournal = PgcUowJournal(writeDb, customerJson)
       val snapshotRepo = PgcSnapshotRepo(CUSTOMER_AGGREGATE_ROOT, writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER,
-        CUSTOMER_FROM_JSON, CUSTOMER_TO_JSON, CUSTOMER_EVENT_FROM_JSON)
+        customerJson)
 
       val commandVerticle = CommandHandlerVerticle(CommandHandlerEndpoint(CUSTOMER_AGGREGATE_ROOT),
-        CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, CUSTOMER_CMD_HANDLER_FACTORY,
+        customerJson, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, CUSTOMER_CMD_HANDLER_FACTORY,
         CUSTOMER_CMD_VALIDATOR, uowJournal, snapshotRepo)
 
       vertx.deployVerticle(commandVerticle)

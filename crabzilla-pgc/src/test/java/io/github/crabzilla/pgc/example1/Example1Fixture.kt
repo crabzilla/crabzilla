@@ -25,9 +25,7 @@ object Example1Fixture {
 
   val deactivated1 = CustomerDeactivated("a good reason", Instant.now())
 
-//  val customerId3 = CustomerId(3)
-//  val created3 = CustomerCreated(customerId3, "customer3")
-//  val activated3 = CustomerActivated("a good reason", Instant.now())
-//  val deactivated3 = CustomerDeactivated("a good reason", Instant.now())
+  val customerJson = CustomerJson()
+
 
 }

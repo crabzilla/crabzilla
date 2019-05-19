@@ -2,14 +2,9 @@ package io.github.crabzilla
 
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_FROM_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_CMD_TO_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_FROM_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_EVENT_TO_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_FROM_JSON
-import io.github.crabzilla.example1.CustomerJson.CUSTOMER_TO_JSON
 import io.github.crabzilla.pgc.PgcSnapshotRepo
 import io.github.crabzilla.pgc.PgcUowJournal
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -82,12 +77,12 @@ class CommandHandlerVerticleIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      val journal = PgcUowJournal(writeDb, CUSTOMER_CMD_TO_JSON, CUSTOMER_EVENT_TO_JSON)
+      val journal = PgcUowJournal(writeDb, customerJson)
 
       val snapshotRepo = PgcSnapshotRepo(handlerEndpoint.entityName, writeDb, CUSTOMER_SEED_VALUE,
-        CUSTOMER_STATE_BUILDER, CUSTOMER_FROM_JSON, CUSTOMER_TO_JSON, CUSTOMER_EVENT_FROM_JSON)
+        CUSTOMER_STATE_BUILDER, customerJson)
 
-      verticle = CommandHandlerVerticle(handlerEndpoint, CUSTOMER_CMD_FROM_JSON, CUSTOMER_SEED_VALUE,
+      verticle = CommandHandlerVerticle(handlerEndpoint, customerJson, CUSTOMER_SEED_VALUE,
                         CUSTOMER_STATE_BUILDER, CUSTOMER_CMD_HANDLER_FACTORY, CUSTOMER_CMD_VALIDATOR, journal, snapshotRepo)
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
@@ -124,7 +119,7 @@ class CommandHandlerVerticleIT {
     val commandMetadata = CommandMetadata(handlerEndpoint.entityName,
                                       customerId.value,
                                       CREATE.urlFriendly())
-    val command = CUSTOMER_CMD_TO_JSON(createCustomerCmd)
+    val command = customerJson.cmdToJson(createCustomerCmd)
 
     vertx.eventBus()
       .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(commandMetadata, command), options) { asyncResult ->
@@ -149,7 +144,7 @@ class CommandHandlerVerticleIT {
     val commandMetadata = CommandMetadata(handlerEndpoint.entityName,
       customerId.value,
         CREATE.urlFriendly())
-    val command = CUSTOMER_CMD_TO_JSON(createCustomerCmd)
+    val command = customerJson.cmdToJson(createCustomerCmd)
 
     vertx.eventBus()
       .send<Pair<UnitOfWork, Int>>(handlerEndpoint.endpoint(), Pair(commandMetadata, command), options) { asyncResult ->
