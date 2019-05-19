@@ -182,6 +182,7 @@ abstract class CrabzillaDeployment(vertx: Vertx,
 }
 
 abstract class AggregateRootDeployment<E: Entity> {
+  abstract fun name(): String
   abstract fun uowJournal(): UnitOfWorkJournal
   abstract fun uowRepo() : UnitOfWorkRepository
   abstract fun snapshotRepo(): SnapshotRepository<E>

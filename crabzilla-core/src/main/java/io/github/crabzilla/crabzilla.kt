@@ -103,9 +103,9 @@ fun initVertx(vertx: Vertx) {
 
 interface EntityJsonSerDer<E: Entity> {
 
-  fun toJson(entity: E): JsonObject
-
   fun fromJson(json: JsonObject): E
+
+  fun toJson(entity: E): JsonObject
 
   fun cmdFromJson(cmdName: String, json: JsonObject): Command
 
