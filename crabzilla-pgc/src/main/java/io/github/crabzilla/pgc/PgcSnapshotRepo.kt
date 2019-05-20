@@ -136,15 +136,15 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
                 stream.handler { row ->
                   currentVersion = row.getInteger(1)
                   val eventsArray = JsonArray(row.getJson(0).value().toString())
-                  val jsonToEvent: (Int) -> DomainEvent = { index ->
+                  val jsonToEvent: (Int) -> Pair<String, DomainEvent> = { index ->
                     val jsonObject = eventsArray.getJsonObject(index)
                     val eventName = jsonObject.getString(EVENT_NAME)
                     val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
                     jsonSerDer.eventFromJson(eventName, eventJson)
                   }
 
-                  val events: List<DomainEvent> = List(eventsArray.size(), jsonToEvent)
-                  currentInstance = events.fold(currentInstance) {state, event -> applyEventsFn(event, state)}
+                  val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEvent)
+                  currentInstance = events.fold(currentInstance) {state, event -> applyEventsFn(event.second, state)}
                   log.trace("Events: $events \n version: $currentVersion \n instance $currentInstance")
 
                 }

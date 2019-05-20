@@ -116,8 +116,8 @@ class PgcEventProjectorIT {
   @DisplayName("can project a couple of events: created and activated")
   fun a1(tc: VertxTestContext) {
 
-    val uow = UnitOfWork(UUID.randomUUID(), "Customer", customerId1.value, UUID.randomUUID(),
-      "Whatsoever", createCmd1, 1, (arrayListOf(created1, activated1)))
+    val uow = UnitOfWork(UUID.randomUUID(), "Customer", customerId1.value, UUID.randomUUID(), "Whatsoever", createCmd1,
+      1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1)))
 
     eventProjector.handle(fromUnitOfWork(1, uow), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
 
@@ -150,8 +150,9 @@ class PgcEventProjectorIT {
   @DisplayName("can project 3 events: created, activated and deactivated")
   fun a2(tc: VertxTestContext) {
 
-    val uow = UnitOfWork(UUID.randomUUID(), "Customer", created1.customerId.value, UUID.randomUUID(), "Whatsoever", createCmd1,
-                                          1, (arrayListOf(created1, activated1, deactivated1)))
+    val uow = UnitOfWork(UUID.randomUUID(), "Customer", customerId1.value, UUID.randomUUID(), "Whatsoever", createCmd1,
+      1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
+      Pair("CustomerDeactivated", deactivated1)))
 
     eventProjector.handle(fromUnitOfWork(1, uow), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
 
@@ -186,9 +187,11 @@ class PgcEventProjectorIT {
   @DisplayName("cannot project more than 6 events within one transaction")
   fun a4(tc: VertxTestContext) {
 
-    val uow = UnitOfWork(UUID.randomUUID(), "Customer", created1.customerId.value, UUID.randomUUID(),
-      "Whatsoever", createCmd1, 1, (arrayListOf(created1, activated1, deactivated1, created1, activated1,
-      deactivated1, created1, activated1, deactivated1)))
+    val uow = UnitOfWork(UUID.randomUUID(), "Customer", customerId1.value, UUID.randomUUID(), "Whatsoever", createCmd1,
+      1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
+      Pair("CustomerDeactivated", deactivated1),  Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
+      Pair("CustomerDeactivated", deactivated1), Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
+      Pair("CustomerDeactivated", deactivated1)))
 
     eventProjector.handle(fromUnitOfWork(1, uow), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
       if (result.failed()) {
@@ -240,7 +243,7 @@ class PgcEventProjectorIT {
 
 
     val uow = UnitOfWork(UUID.randomUUID(), "Customer", created1.customerId.value, UUID.randomUUID(), "Whatsoever",
-                                createCmd1, 1, (arrayListOf(created1, activated1)))
+                                createCmd1, 1, arrayListOf(Pair("CustomerCreated", created1)))
 
     eventProjector.handle(fromUnitOfWork(1, uow), projectorToFail, Handler { result ->
 

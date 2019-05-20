@@ -32,7 +32,7 @@ data class UnitOfWork(val unitOfWorkId: UUID,
                       val commandName: String,
                       val command: Command,
                       val version: Version,
-                      val events: List<DomainEvent>) {
+                      val events: List<Pair<String, DomainEvent>>) {
 
   init { require(this.version >= 1) { "version must be >= 1" } }
 
@@ -40,7 +40,7 @@ data class UnitOfWork(val unitOfWorkId: UUID,
     fun of(entityId: Int, entityName: String, commandId: UUID, commandName: String, command: Command,
            events: List<DomainEvent>, resultingVersion: Version): UnitOfWork {
       return UnitOfWork(UUID.randomUUID(), entityName, entityId, commandId, commandName, command, resultingVersion,
-              events)
+              events.map { e -> Pair(e::class.java.simpleName, e) })
     }
   }
 
@@ -63,9 +63,10 @@ data class UnitOfWork(val unitOfWorkId: UUID,
 
 data class Snapshot<E : Entity>(val state: E, val version: Version)
 
-data class SnapshotData(val version: Version, val events: List<DomainEvent>)
+data class SnapshotData(val version: Version, val events: List<Pair<String, DomainEvent>>)
 
-data class ProjectionData(val uowId: UUID, val uowSequence: Int, val entityId: Int, val events: List<DomainEvent>) {
+data class ProjectionData(val uowId: UUID, val uowSequence: Int, val entityId: Int,
+                          val events: List<Pair<String, DomainEvent>>) {
   companion object {
     fun fromUnitOfWork(uowSequence: Int, uow: UnitOfWork) : ProjectionData {
       return ProjectionData(uow.unitOfWorkId, uowSequence, uow.entityId, uow.events)
@@ -111,16 +112,15 @@ interface EntityJsonSerDer<E: Entity> {
 
   fun cmdToJson(cmd: Command): JsonObject
 
-  fun eventFromJson(eventName: String, json:  JsonObject): DomainEvent
+  fun eventFromJson(eventName: String, json:  JsonObject): Pair<String, DomainEvent>
 
   fun eventToJson(event: DomainEvent): JsonObject
 
-  fun toJsonArray(events: List<DomainEvent>): JsonArray {
+  fun toJsonArray(events: List<Pair<String, DomainEvent>>): JsonArray {
     val eventsJsonArray = JsonArray()
-    events.map { event -> Pair(event.javaClass.simpleName, event) }
-      .map { pair -> Pair(pair.first, eventToJson(pair.second)) }
+    events
+      .map { pair -> JsonObject().put(EVENT_NAME, pair.first).put(EVENTS_JSON_CONTENT, eventToJson(pair.second))}
 //    .map { pair -> println(pair.first); println(pair.second); pair}
-      .map { pair -> JsonObject().put(EVENT_NAME, pair.first).put(EVENTS_JSON_CONTENT, pair.second)}
       .forEach { jo -> eventsJsonArray.add(jo) }
     return eventsJsonArray
   }

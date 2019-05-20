@@ -236,8 +236,9 @@ class PgcUowJournalIT {
                 val (version, events) = ar4.result()
                 tc.verify { assertThat(version).isEqualTo(activatedUow1.version) }
                 tc.verify { assertThat(events.size).isEqualTo(2) }
-                tc.verify { assertThat(events[0]).isEqualTo(created1) }
-                tc.verify { assertThat(events[1]).isEqualToIgnoringGivenFields(activated1, "_when") }
+                tc.verify { assertThat(events[0]).isEqualTo(Pair("CustomerCreated", created1)) }
+                tc.verify { assertThat(events[1]).isEqualToIgnoringGivenFields(
+                  Pair("CustomerActivated", activated1), "_when") }
                 tc.completeNow()
               }
 

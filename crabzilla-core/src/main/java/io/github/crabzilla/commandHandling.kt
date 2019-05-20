@@ -132,7 +132,7 @@ class CommandHandlerVerticle<E : Entity>(private val endpoint: CommandHandlerEnd
           // compute new snapshot
           log.trace("computing new snapshot")
           val newInstance = uowValue.get().events.fold(snapshotValue.get().state)
-          { state, event -> applyEventsFn(event, state) }
+          { state, event -> applyEventsFn(event.second, state) }
           val newSnapshot = Snapshot(newInstance, uowValue.get().version)
 
           log.trace("now will store snapshot $newSnapshot")

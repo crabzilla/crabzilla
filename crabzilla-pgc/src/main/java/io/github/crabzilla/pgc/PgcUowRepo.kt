@@ -74,7 +74,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
 
         val jsonArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
 
-        val jsonToEventPair: (Int) -> DomainEvent = { index ->
+        val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
           val jsonObject = jsonArray.getJsonObject(index)
           val eventName = jsonObject.getString(EVENT_NAME)
           val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
@@ -82,7 +82,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
           domainEvent
         }
 
-        val events: List<DomainEvent> = List(jsonArray.size(), jsonToEventPair)
+        val events: List<Pair<String, DomainEvent>> = List(jsonArray.size(), jsonToEventPair)
         val uow = UnitOfWork(row.getUUID(UOW_ID), row.getString(TARGET_NAME), row.getInteger(TARGET_ID),
           row.getUUID(CMD_ID), row.getString(CMD_NAME), command, row.getInteger(VERSION)!!, events)
 
@@ -121,7 +121,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
 
       val jsonArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
 
-      val jsonToEventPair: (Int) -> DomainEvent = { index ->
+      val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
         val jsonObject = jsonArray.getJsonObject(index)
         val eventName = jsonObject.getString(EVENT_NAME)
         val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
@@ -129,7 +129,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
         domainEvent
       }
 
-      val events: List<DomainEvent> = List(jsonArray.size(), jsonToEventPair)
+      val events: List<Pair<String, DomainEvent>> = List(jsonArray.size(), jsonToEventPair)
       val uow = UnitOfWork(row.getUUID(UOW_ID), row.getString(TARGET_NAME), row.getInteger(TARGET_ID),
         row.getUUID(CMD_ID), row.getString(CMD_NAME), command, row.getInteger(VERSION)!!, events)
       aHandler.handle(Future.succeededFuture(uow))
@@ -163,13 +163,13 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
           // Use the stream
           stream.handler { row ->
             val eventsArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
-            val jsonToEventPair: (Int) -> DomainEvent = { index ->
+            val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
               val jsonObject = eventsArray.getJsonObject(index)
               val eventName = jsonObject.getString(EVENT_NAME)
               val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
               jsonSerDer.eventFromJson(eventName, eventJson)
             }
-            val events: List<DomainEvent> = List(eventsArray.size(), jsonToEventPair)
+            val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEventPair)
             val snapshotData = SnapshotData(row.getInteger(1)!!, events)
             list.add(snapshotData)
           }
@@ -218,13 +218,13 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
         val uowSeq = row.getInteger(1)
         val targetId = row.getInteger(2)
         val eventsArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
-        val jsonToEventPair: (Int) -> DomainEvent = { index ->
+        val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
           val jsonObject = eventsArray.getJsonObject(index)
           val eventName = jsonObject.getString(EVENT_NAME)
           val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
           jsonSerDer.eventFromJson(eventName, eventJson)
         }
-        val events: List<DomainEvent> = List(eventsArray.size(), jsonToEventPair)
+        val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEventPair)
         val projectionData = ProjectionData(uowId, uowSeq, targetId, events)
         list.add(projectionData)
       }

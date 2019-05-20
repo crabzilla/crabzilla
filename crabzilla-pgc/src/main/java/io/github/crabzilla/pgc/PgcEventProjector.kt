@@ -36,7 +36,7 @@ class PgcEventProjector(private val pgPool: PgPool, val name: String) {
         val futures = listOfFutures(minOf(NUMBER_OF_FUTURES, uowProjectionData.events.size))
         for ((pairIndex, event) in uowProjectionData.events.withIndex()) {
           // invoke the projection handler
-          projectorHandler.invoke(tx, uowProjectionData.entityId, event, futures[pairIndex])
+          projectorHandler.invoke(tx, uowProjectionData.entityId, event.second, futures[pairIndex])
         }
 
         CompositeFuture.join(futures).setHandler { event2 ->

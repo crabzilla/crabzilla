@@ -16,7 +16,7 @@ class ProjectionDataTest {
     val command = CreateCustomer("cust#1")
 
     val uow = UnitOfWork(UUID.randomUUID(), "customer", 1, UUID.randomUUID(), CustomerCommandEnum.CREATE.urlFriendly(),
-      command, 1, listOf<DomainEvent>(CustomerCreated(CustomerId(1), "cust#1")))
+      command, 1, listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(CustomerId(1), "cust#1"))))
 
     val pd = ProjectionData.fromUnitOfWork(1, uow)
 

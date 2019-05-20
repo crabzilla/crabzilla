@@ -16,12 +16,12 @@ object Example1Fixture {
   val createCmd1 = CreateCustomer("customer1")
   val created1 = CustomerCreated(customerId1, "customer1")
   val createdUow1 = UnitOfWork(UUID.randomUUID(), entityName, customerId1.value, UUID.randomUUID(),
-    CREATE.urlFriendly(), createCmd1, 1, listOf(created1))
+    CREATE.urlFriendly(), createCmd1, 1, listOf(Pair("CustomerCreated", created1)))
 
   val activateCmd1 = ActivateCustomer("I want it")
   val activated1 = CustomerActivated("a good reason", Instant.now())
   val activatedUow1 = UnitOfWork(UUID.randomUUID(), entityName, customerId1.value, UUID.randomUUID(),
-    ACTIVATE.urlFriendly(), activateCmd1, 2, listOf(activated1))
+    ACTIVATE.urlFriendly(), activateCmd1, 2, listOf(Pair("CustomerActivated", activated1)))
 
   val deactivated1 = CustomerDeactivated("a good reason", Instant.now())
 

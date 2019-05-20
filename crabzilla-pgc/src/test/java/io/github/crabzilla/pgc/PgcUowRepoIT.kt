@@ -107,7 +107,7 @@ class PgcUowRepoIT {
   fun a4(tc: VertxTestContext) {
 
     val tuple = Tuple.of(UUID.randomUUID(),
-      io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
+      io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
       createdUow1.commandId,
       CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
@@ -142,7 +142,7 @@ class PgcUowRepoIT {
   fun a5(tc: VertxTestContext) {
 
     val tuple = Tuple.of(UUID.randomUUID(),
-      io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
+      io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
       createdUow1.commandId,
       CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
@@ -194,7 +194,7 @@ class PgcUowRepoIT {
     fun a2(tc: VertxTestContext) {
 
       val tuple = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
@@ -218,7 +218,7 @@ class PgcUowRepoIT {
           val (_, uowSequence, targetId, events) = snapshotData[0]
           tc.verify { assertThat(uowSequence).isGreaterThan(0) }
           tc.verify { assertThat(targetId).isEqualTo(customerId1.value) }
-          tc.verify { assertThat(events).isEqualTo(listOf(created1)) }
+          tc.verify { assertThat(events).isEqualTo(arrayListOf(Pair("CustomerCreated", created1))) }
           tc.completeNow()
         }
       }
@@ -229,7 +229,7 @@ class PgcUowRepoIT {
     fun a3(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
@@ -247,7 +247,7 @@ class PgcUowRepoIT {
         }
 
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(activated1))),
+          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
@@ -267,11 +267,11 @@ class PgcUowRepoIT {
             val (_, uowSequence1, targetId1, events1) = snapshotData[0]
             tc.verify { assertThat(uowSequence1).isGreaterThan(0) }
             tc.verify { assertThat(targetId1).isEqualTo(customerId1.value) }
-            tc.verify { assertThat(events1).isEqualTo(listOf(created1)) }
+            tc.verify { assertThat(events1).isEqualTo(arrayListOf(Pair("CustomerCreated", created1))) }
             val (_, uowSequence2, targetId2, events2) = snapshotData[1]
             tc.verify { assertThat(uowSequence2).isEqualTo(uowSequence1 + 1) }
             tc.verify { assertThat(targetId2).isEqualTo(customerId1.value) }
-            tc.verify { assertThat(events2).isEqualTo(listOf(activated1)) }
+            tc.verify { assertThat(events2).isEqualTo(arrayListOf(Pair("CustomerActivated", activated1))) }
             tc.completeNow()
           }
         }
@@ -284,7 +284,7 @@ class PgcUowRepoIT {
     fun a33(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
@@ -302,7 +302,7 @@ class PgcUowRepoIT {
         }
 
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(activated1))),
+          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
@@ -337,7 +337,7 @@ class PgcUowRepoIT {
     fun a4(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
@@ -354,7 +354,7 @@ class PgcUowRepoIT {
         }
         val uowSequence1 = ar1.result().first().getInteger("uow_seq_number")
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(activated1))),
+          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
@@ -374,7 +374,7 @@ class PgcUowRepoIT {
             val (_, uowSequence, targetId, events) = snapshotData[0]
             tc.verify { assertThat(uowSequence).isEqualTo(uowSequence2) }
             tc.verify { assertThat(targetId).isEqualTo(customerId1.value) }
-            tc.verify { assertThat(events).isEqualTo(listOf(activated1)) }
+            tc.verify { assertThat(events).isEqualTo(arrayListOf(Pair("CustomerActivated", activated1))) }
             tc.completeNow()
           }
         }
@@ -392,7 +392,7 @@ class PgcUowRepoIT {
     fun a2(tc: VertxTestContext) {
 
       val tuple = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
@@ -412,7 +412,7 @@ class PgcUowRepoIT {
         selectFuture.setHandler { selectAsyncResult ->
           val snapshotData = selectAsyncResult.result()
           tc.verify { assertThat(1).isEqualTo(snapshotData.version) }
-          tc.verify { assertThat(listOf(created1)).isEqualTo(snapshotData.events) }
+          tc.verify { assertThat(arrayListOf(Pair("CustomerCreated", created1))).isEqualTo(snapshotData.events) }
           tc.completeNow()
         }
       }
@@ -424,7 +424,7 @@ class PgcUowRepoIT {
     fun a3(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
@@ -440,7 +440,7 @@ class PgcUowRepoIT {
         }
 
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(activated1))),
+          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
@@ -454,11 +454,12 @@ class PgcUowRepoIT {
             tc.failNow(ar2.cause())
           }
           val selectFuture1 = Future.future<SnapshotData>()
-          repo.selectAfterVersion(customerId1.value, 0, entityName, selectFuture1.completer())
+          repo.selectAfterVersion(customerId1.value, 0, entityName, selectFuture1)
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(2).isEqualTo(snapshotData.version) }
-            tc.verify { assertThat(listOf(created1, activated1)).isEqualTo(snapshotData.events) }
+            tc.verify { assertThat(listOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1)))
+              .isEqualTo(snapshotData.events) }
             tc.completeNow()
           }
         }
@@ -471,7 +472,7 @@ class PgcUowRepoIT {
     fun a4(tc: VertxTestContext) {
 
       val tuple1 = Tuple.of(UUID.randomUUID(),
-        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(created1))),
+        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
@@ -487,7 +488,7 @@ class PgcUowRepoIT {
         }
         val uowSequence1 = ar1.result().first().getLong("uow_seq_number")
         val tuple2 = Tuple.of(UUID.randomUUID(),
-          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(listOf(activated1))),
+          io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
@@ -506,7 +507,7 @@ class PgcUowRepoIT {
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(2).isEqualTo(snapshotData.version) }
-            tc.verify { assertThat(listOf(activated1)).isEqualTo(snapshotData.events) }
+            tc.verify { assertThat(arrayListOf(Pair("CustomerActivated", activated1))).isEqualTo(snapshotData.events) }
             tc.completeNow()
           }
         }
@@ -553,7 +554,7 @@ class PgcUowRepoIT {
           }
           val (version, events) = ar4.result()
           tc.verify { assertThat(version).isEqualTo(activatedUow1.version) }
-          tc.verify { assertThat(events).isEqualTo(listOf(activated1)) }
+          tc.verify { assertThat(events).isEqualTo(arrayListOf(Pair("CustomerActivated", activated1))) }
           tc.completeNow()
         }
       }

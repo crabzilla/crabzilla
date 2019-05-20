@@ -37,12 +37,12 @@ class CustomerJson : EntityJsonSerDer<Customer> {
     }
   }
 
-  override fun eventFromJson(eventName: String, jo: JsonObject): DomainEvent {
+  override fun eventFromJson(eventName: String, jo: JsonObject): Pair<String, DomainEvent> {
     return when (eventName) {
-      "CustomerCreated" -> CustomerCreated(CustomerId(jo.getJsonObject("customerId").getInteger("value")),
-        jo.getString("name"))
-      "CustomerActivated" -> CustomerActivated(jo.getString("reason"), jo.getInstant("_when"))
-      "CustomerDeactivated" -> CustomerDeactivated(jo.getString("reason"), jo.getInstant("_when"))
+      "CustomerCreated" -> Pair(eventName, CustomerCreated(
+        CustomerId(jo.getJsonObject("customerId").getInteger("value")), jo.getString("name")))
+      "CustomerActivated" -> Pair(eventName, CustomerActivated(jo.getString("reason"), jo.getInstant("_when")))
+      "CustomerDeactivated" -> Pair(eventName, CustomerDeactivated(jo.getString("reason"), jo.getInstant("_when")))
       else -> throw java.lang.IllegalArgumentException("$eventName is unknown")
     }
   }
