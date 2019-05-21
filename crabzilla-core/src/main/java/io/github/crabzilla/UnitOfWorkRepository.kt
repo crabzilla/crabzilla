@@ -13,10 +13,10 @@ interface UnitOfWorkRepository {
   operator fun get(query: String, id: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>)
 
   fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String,
-                         aHandler: Handler<AsyncResult<SnapshotData>>)
+                         aHandler: Handler<AsyncResult<SnapshotEvents>>)
 
   fun selectAfterUowSequence(uowSequence: Int, maxRows: Int,
-                             aHandler: Handler<AsyncResult<List<ProjectionData>>>)
+                             aHandler: Handler<AsyncResult<List<UnitOfWorkEvents>>>)
 
   fun getAllUowByEntityId(id: Int, aHandler: Handler<AsyncResult<List<UnitOfWork>>>)
 }

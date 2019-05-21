@@ -17,8 +17,8 @@ object Crabzilla {
       .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
       .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES) // TODO test this
 
-    vertx.eventBus().registerDefaultCodec(ProjectionData::class.java,
-      JacksonGenericCodec(Json.mapper, ProjectionData::class.java))
+    vertx.eventBus().registerDefaultCodec(UnitOfWorkEvents::class.java,
+      JacksonGenericCodec(Json.mapper, UnitOfWorkEvents::class.java))
 
     vertx.eventBus().registerDefaultCodec(Pair::class.java,
       JacksonGenericCodec(Json.mapper, Pair::class.java))

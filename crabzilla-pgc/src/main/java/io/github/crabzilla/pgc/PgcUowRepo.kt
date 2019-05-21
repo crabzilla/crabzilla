@@ -138,7 +138,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
 
   override fun selectAfterVersion(id: Int, version: Version,
                                   aggregateRootName: String,
-                                  aHandler: Handler<AsyncResult<SnapshotData>>) {
+                                  aHandler: Handler<AsyncResult<SnapshotEvents>>) {
 
     log.trace("will load id [{}] after version [{}]", id, version)
 
@@ -158,7 +158,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
           // Fetch 100 rows at a time
           val tuple = Tuple.of( id, aggregateRootName, version)
           val stream = pq.createStream(100, tuple)
-          val list = ArrayList<SnapshotData>()
+          val list = ArrayList<SnapshotEvents>()
 
           // Use the stream
           stream.handler { row ->
@@ -170,7 +170,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
               jsonFunctions.eventFromJson(eventName, eventJson)
             }
             val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEventPair)
-            val snapshotData = SnapshotData(row.getInteger(1)!!, events)
+            val snapshotData = SnapshotEvents(row.getInteger(1)!!, events)
             list.add(snapshotData)
           }
 
@@ -178,7 +178,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
             log.trace("found {} units of work for id {} and version > {}", list.size, id, version)
             val finalVersion = if (list.size == 0) 0 else list[list.size - 1].version
             val flatMappedToEvents = list.flatMap { sd -> sd.events }
-            aHandler.handle(Future.succeededFuture(SnapshotData(finalVersion, flatMappedToEvents)))
+            aHandler.handle(Future.succeededFuture(SnapshotEvents(finalVersion, flatMappedToEvents)))
           }
 
           stream.exceptionHandler { err ->
@@ -191,7 +191,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
 
 
   override fun selectAfterUowSequence(uowSequence: Int, maxRows: Int,
-                                      aHandler: Handler<AsyncResult<List<ProjectionData>>>) {
+                                      aHandler: Handler<AsyncResult<List<UnitOfWorkEvents>>>) {
 
     log.trace("will load after uowSequence [{}]", uowSequence)
 
@@ -201,7 +201,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
       " order by uow_seq_number " +
       " limit " + maxRows
 
-    val list = ArrayList<ProjectionData>()
+    val list = ArrayList<UnitOfWorkEvents>()
 
     pgPool.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowSequence)) { ar ->
       if (ar.failed()) {
@@ -225,7 +225,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
           jsonFunctions.eventFromJson(eventName, eventJson)
         }
         val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEventPair)
-        val projectionData = ProjectionData(uowId, uowSeq, targetId, events)
+        val projectionData = UnitOfWorkEvents(uowId, uowSeq, targetId, events)
         list.add(projectionData)
       }
       aHandler.handle(Future.succeededFuture(list))

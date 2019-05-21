@@ -180,7 +180,7 @@ class PgcUowRepoIT {
     @Test
     @DisplayName("can queries an empty repo")
     fun a1(tc: VertxTestContext) {
-      val selectFuture = Future.future<List<ProjectionData>>()
+      val selectFuture = Future.future<List<UnitOfWorkEvents>>()
       repo.selectAfterUowSequence(0, 100, selectFuture)
       selectFuture.setHandler { selectAsyncResult ->
         val snapshotData = selectAsyncResult.result()
@@ -202,7 +202,7 @@ class PgcUowRepoIT {
         customerId1.value,
         1)
 
-      val selectFuture = Future.future<List<ProjectionData>>()
+      val selectFuture = Future.future<List<UnitOfWorkEvents>>()
 
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar ->
         if (ar.failed()) {
@@ -237,7 +237,7 @@ class PgcUowRepoIT {
         customerId1.value,
         1)
 
-      val selectFuture1 = Future.future<List<ProjectionData>>()
+      val selectFuture1 = Future.future<List<UnitOfWorkEvents>>()
 
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
 
@@ -345,7 +345,7 @@ class PgcUowRepoIT {
         customerId1.value,
         1)
 
-      val selectFuture1 = Future.future<List<ProjectionData>>()
+      val selectFuture1 = Future.future<List<UnitOfWorkEvents>>()
 
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
         if (ar1.failed()) {
@@ -407,7 +407,7 @@ class PgcUowRepoIT {
         }
         val uowSequence = ar.result().first().getLong(0)
         tc.verify { assertThat(uowSequence).isGreaterThan(0) }
-        val selectFuture = Future.future<SnapshotData>()
+        val selectFuture = Future.future<SnapshotEvents>()
         repo.selectAfterVersion(customerId1.value, 0, customerEntityName, selectFuture.completer())
         selectFuture.setHandler { selectAsyncResult ->
           val snapshotData = selectAsyncResult.result()
@@ -453,7 +453,7 @@ class PgcUowRepoIT {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
           }
-          val selectFuture1 = Future.future<SnapshotData>()
+          val selectFuture1 = Future.future<SnapshotEvents>()
           repo.selectAfterVersion(customerId1.value, 0, customerEntityName, selectFuture1)
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
@@ -502,7 +502,7 @@ class PgcUowRepoIT {
             return@preparedQuery
           }
           val uowSequence2 = ar2.result().first().getLong("uow_seq_number")
-          val selectFuture1 = Future.future<SnapshotData>()
+          val selectFuture1 = Future.future<SnapshotEvents>()
           repo.selectAfterVersion(customerId1.value, 1, customerEntityName, selectFuture1.completer())
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
@@ -543,7 +543,7 @@ class PgcUowRepoIT {
         }
         val uowSequence = ar2.result()
         tc.verify { assertThat(uowSequence).isGreaterThan(2) }
-        val snapshotDataFuture = Future.future<SnapshotData>()
+        val snapshotDataFuture = Future.future<SnapshotEvents>()
         // get only above version 1
         repo.selectAfterVersion(activatedUow1.entityId, 1, customerEntityName, snapshotDataFuture.completer())
         snapshotDataFuture.setHandler { ar4 ->

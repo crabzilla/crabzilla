@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.ProjectionData
+import io.github.crabzilla.UnitOfWorkEvents
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
@@ -20,10 +20,10 @@ class PgcEventProjector(private val pgPool: PgPool, val name: String) {
     log.info("starting events projector for $name")
   }
 
-  fun handle(uowProjectionData: ProjectionData, projectorHandler: ProjectorHandler,
+  fun handle(uowUnitOfWorkEvents: UnitOfWorkEvents, projectorHandler: ProjectorHandler,
              handler: Handler<AsyncResult<Void>>) {
 
-    if (uowProjectionData.events.size > NUMBER_OF_FUTURES) {
+    if (uowUnitOfWorkEvents.events.size > NUMBER_OF_FUTURES) {
       handler.handle(Future.failedFuture("only $NUMBER_OF_FUTURES events can be projected per transaction"))
       return
     }
@@ -33,10 +33,10 @@ class PgcEventProjector(private val pgPool: PgPool, val name: String) {
 
         val tx = event1.result()
 
-        val futures = listOfFutures(minOf(NUMBER_OF_FUTURES, uowProjectionData.events.size))
-        for ((pairIndex, event) in uowProjectionData.events.withIndex()) {
+        val futures = listOfFutures(minOf(NUMBER_OF_FUTURES, uowUnitOfWorkEvents.events.size))
+        for ((pairIndex, event) in uowUnitOfWorkEvents.events.withIndex()) {
           // invoke the projection handler
-          projectorHandler.invoke(tx, uowProjectionData.entityId, event.second, futures[pairIndex])
+          projectorHandler.invoke(tx, uowUnitOfWorkEvents.entityId, event.second, futures[pairIndex])
         }
 
         CompositeFuture.join(futures).setHandler { event2 ->
@@ -48,7 +48,7 @@ class PgcEventProjector(private val pgPool: PgPool, val name: String) {
 
           tx.preparedQuery("insert into projections (name, last_uow) " +
             "values ($1, $2) on conflict (name) do update set last_uow = $2",
-            Tuple.of(name, uowProjectionData.uowSequence)) { event3 ->
+            Tuple.of(name, uowUnitOfWorkEvents.uowSequence)) { event3 ->
 
             if (event3.failed()) {
               handler.handle(Future.failedFuture(event3.cause()))

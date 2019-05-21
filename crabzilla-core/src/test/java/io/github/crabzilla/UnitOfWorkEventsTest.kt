@@ -8,7 +8,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.*
 
-class ProjectionDataTest {
+class UnitOfWorkEventsTest {
 
   @Test
   fun fromUow() {
@@ -18,7 +18,7 @@ class ProjectionDataTest {
     val uow = UnitOfWork(UUID.randomUUID(), "customer", 1, UUID.randomUUID(), CustomerCommandEnum.CREATE.urlFriendly(),
       command, 1, listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(CustomerId(1), "cust#1"))))
 
-    val pd = ProjectionData.fromUnitOfWork(1, uow)
+    val pd = UnitOfWorkEvents.fromUnitOfWork(1, uow)
 
     assertThat(pd.uowSequence).isEqualTo(1)
     assertThat(pd.uowId).isEqualTo(uow.unitOfWorkId)

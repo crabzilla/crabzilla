@@ -2,7 +2,7 @@ package io.github.crabzilla.web.example1
 
 import io.github.crabzilla.CommandMetadata
 import io.github.crabzilla.Crabzilla
-import io.github.crabzilla.ProjectionData
+import io.github.crabzilla.UnitOfWorkEvents
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.example1.EXAMPLE1_PROJECTOR_HANDLER
 import io.github.crabzilla.pgc.example1.Example1Fixture.deployCustomer
@@ -85,7 +85,7 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
       // read model
 
       val eventProjector = PgcEventProjector(readDb, "customer summary")
-      vertx.eventBus().consumer<ProjectionData>(EXAMPLE1_PROJECTION_ENDPOINT) { message ->
+      vertx.eventBus().consumer<UnitOfWorkEvents>(EXAMPLE1_PROJECTION_ENDPOINT) { message ->
         log.info("received events: " + message.body())
         eventProjector.handle(message.body(), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
           if (result.failed()) {

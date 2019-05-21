@@ -63,7 +63,7 @@ fun postCommandHandler(rc: RoutingContext, cmdMetadata: CommandMetadata, project
         val eventsDeliveryOptions = DeliveryOptions().setHeaders(headers)
 
         rc.vertx().eventBus()
-          .publish(projectionEndpoint, ProjectionData.fromUnitOfWork(second, first), eventsDeliveryOptions)
+          .publish(projectionEndpoint, UnitOfWorkEvents.fromUnitOfWork(second, first), eventsDeliveryOptions)
 
         val resultJson = when (rc.request().getHeader("accept")) {
           UNIT_OF_WORK_BODY -> JsonObject.mapFrom(result.first)

@@ -129,7 +129,7 @@ class PgcUowJournalIT {
 
          tc.verify { assertThat(uow).isEqualTo(createdUow1) }
 
-          val snapshotDataFuture = Future.future<SnapshotData>()
+          val snapshotDataFuture = Future.future<SnapshotEvents>()
 
           repo.selectAfterVersion(createdUow1.entityId, 0, customerEntityName, snapshotDataFuture)
 
@@ -222,7 +222,7 @@ class PgcUowJournalIT {
           } else {
             val uowSequence = ar2.result()
             tc.verify { assertThat(uowSequence).isGreaterThan(2) }
-            val snapshotDataFuture = Future.future<SnapshotData>()
+            val snapshotDataFuture = Future.future<SnapshotEvents>()
 
             // get all versions for id
             repo.selectAfterVersion(activatedUow1.entityId, 0, customerEntityName, snapshotDataFuture)
