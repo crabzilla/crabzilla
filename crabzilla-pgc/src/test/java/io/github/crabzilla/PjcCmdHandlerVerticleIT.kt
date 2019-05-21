@@ -5,9 +5,9 @@ import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
 import io.github.crabzilla.example1.CustomerId
 import io.github.crabzilla.pgc.PjcCmdHandlerVerticle
-import io.github.crabzilla.pgc.example1.Example1Fixture.deployCustomer
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
+import io.github.crabzilla.pgc.example1.Example1Fixture.deployCustomer
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -45,7 +45,7 @@ class PjcCmdHandlerVerticleIT {
 
     vertx = Vertx.vertx()
 
-    initVertx(vertx)
+    Crabzilla.initVertx(vertx)
 
     val envOptions = ConfigStoreOptions()
       .setType("file")

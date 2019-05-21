@@ -46,7 +46,7 @@ class PgcUowRepoIT {
 
     vertx = Vertx.vertx()
 
-    initVertx(vertx)
+    Crabzilla.initVertx(vertx)
 
     val envOptions = ConfigStoreOptions()
       .setType("file")

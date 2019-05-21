@@ -1,21 +1,21 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.Snapshot
 import io.github.crabzilla.SnapshotRepository
 import io.github.crabzilla.example1.CUSTOMER_SEED_VALUE
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
-import io.github.crabzilla.initVertx
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
 import io.github.crabzilla.pgc.example1.Example1Fixture.activateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
-import io.github.crabzilla.pgc.example1.Example1Fixture.deployCustomer
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
+import io.github.crabzilla.pgc.example1.Example1Fixture.deployCustomer
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -52,7 +52,7 @@ class PgcSnapshotRepoIT {
 
     vertx = Vertx.vertx(vertxOptions)
 
-    initVertx(vertx)
+    Crabzilla.initVertx(vertx)
 
     val envOptions = ConfigStoreOptions()
       .setType("file")

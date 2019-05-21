@@ -1,12 +1,12 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.ProjectionData.Companion.fromUnitOfWork
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerDeactivated
-import io.github.crabzilla.initVertx
 import io.github.crabzilla.pgc.example1.EXAMPLE1_PROJECTOR_HANDLER
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
@@ -61,7 +61,7 @@ class PgcEventProjectorIT {
 
     vertx = Vertx.vertx(vertOption)
 
-    initVertx(vertx)
+    Crabzilla.initVertx(vertx)
 
     val envOptions = ConfigStoreOptions()
       .setType("file")

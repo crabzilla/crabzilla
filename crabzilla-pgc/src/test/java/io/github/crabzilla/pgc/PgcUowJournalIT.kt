@@ -43,7 +43,7 @@ class PgcUowJournalIT {
 
     vertx = Vertx.vertx(vertxOptions)
 
-    initVertx(vertx)
+    Crabzilla.initVertx(vertx)
 
     val envOptions = ConfigStoreOptions()
       .setType("file")
