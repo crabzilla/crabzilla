@@ -140,6 +140,8 @@ fun <E : Entity> entityTrackingHandler(rc: RoutingContext,
                                        snapshotRepo: SnapshotRepository<E>,
                                        entityToJson: (E) -> JsonObject) {
 
+  log.info("Retrieving entity tracking for $entityId")
+
   val httpResp = rc.response()
 
   val snapshotFuture = Future.future<Snapshot<E>>()
@@ -163,7 +165,7 @@ fun <E : Entity> entityTrackingHandler(rc: RoutingContext,
     if (result.isEmpty) {
       httpResp.setStatusCode(404).end("Entity not found")
     } else {
-      httpResp.setStatusCode(200).setChunked(true)
+      httpResp.setStatusCode(200).isChunked = true
       httpResp.headers().add("Content-Type", "application/json")
       httpResp.end(result.encode())
     }

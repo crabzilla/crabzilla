@@ -6,6 +6,7 @@ import io.github.crabzilla.initVertx
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.example1.EXAMPLE1_PROJECTOR_HANDLER
 import io.github.crabzilla.pgc.example1.Example1Fixture.deployCustomer
+import io.github.crabzilla.web.entityTrackingHandler
 import io.github.crabzilla.web.getUowHandler
 import io.github.crabzilla.web.postCommandHandler
 import io.reactiverse.pgclient.PgClient
@@ -34,11 +35,11 @@ fun main() {
 
 class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./example1.env") : AbstractVerticle() {
 
-  companion object {
+  lateinit var server: HttpServer
+  lateinit var writeModelDb: PgPool
+  lateinit var readModelDb: PgPool
 
-    internal var server: HttpServer? = null
-    internal var writeModelDb: PgPool? = null
-    internal var readModelDb: PgPool? = null
+  companion object {
 
     internal var log = getLogger(Example1Verticle::class.java)
 
@@ -118,6 +119,9 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
         getUowHandler(it, customerDeployment.uowRepo, uowId) }
 
       router.get("/customers/:entityId").handler {
+        val customerId = it.pathParam(COMMAND_ENTITY_ID_PARAMETER).toInt()
+        entityTrackingHandler(it, customerId, customerDeployment.uowRepo, customerDeployment.snapshotRepo)
+        { customer -> customerDeployment.ejson.toJson(customer) }
 
       }
 

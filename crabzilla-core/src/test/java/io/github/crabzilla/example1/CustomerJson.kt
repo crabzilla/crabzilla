@@ -7,9 +7,9 @@ import io.vertx.core.json.JsonObject
 
 class CustomerJson : EntityJsonFunctions<Customer> {
 
-  override fun toJson(customer: Customer): JsonObject {
-    return JsonObject().put("customerId", customer.customerId?.value).put("name", customer.name)
-      .put("isActive", customer.isActive).put("reason", customer.reason)
+  override fun toJson(entity: Customer): JsonObject {
+    return JsonObject().put("customerId", entity.customerId?.value).put("name", entity.name)
+      .put("isActive", entity.isActive).put("reason", entity.reason)
   }
 
   override fun fromJson(json: JsonObject): Customer {
@@ -37,12 +37,12 @@ class CustomerJson : EntityJsonFunctions<Customer> {
     }
   }
 
-  override fun eventFromJson(eventName: String, jo: JsonObject): Pair<String, DomainEvent> {
+  override fun eventFromJson(eventName: String, json: JsonObject): Pair<String, DomainEvent> {
     return when (eventName) {
       "CustomerCreated" -> Pair(eventName, CustomerCreated(
-        CustomerId(jo.getJsonObject("customerId").getInteger("value")), jo.getString("name")))
-      "CustomerActivated" -> Pair(eventName, CustomerActivated(jo.getString("reason"), jo.getInstant("_when")))
-      "CustomerDeactivated" -> Pair(eventName, CustomerDeactivated(jo.getString("reason"), jo.getInstant("_when")))
+        CustomerId(json.getJsonObject("customerId").getInteger("value")), json.getString("name")))
+      "CustomerActivated" -> Pair(eventName, CustomerActivated(json.getString("reason"), json.getInstant("_when")))
+      "CustomerDeactivated" -> Pair(eventName, CustomerDeactivated(json.getString("reason"), json.getInstant("_when")))
       else -> throw java.lang.IllegalArgumentException("$eventName is unknown")
     }
   }
