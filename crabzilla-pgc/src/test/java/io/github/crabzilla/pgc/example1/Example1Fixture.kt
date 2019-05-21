@@ -4,7 +4,7 @@ import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
-import io.github.crabzilla.pgc.PjcEntityDeployment
+import io.github.crabzilla.pgc.PgcEntityDeployment
 import io.reactiverse.pgclient.PgPool
 import java.time.Instant
 import java.util.*
@@ -29,8 +29,8 @@ object Example1Fixture {
 
   val customerJson = CustomerJson()
 
-  val deployCustomer: (writeDb: PgPool) -> PjcEntityDeployment<Customer> = { pgPool ->
-    PjcEntityDeployment(customerEntityName, CustomerJson(), CustomerStateFn(), CustomerCmdFn(), pgPool)
+  val DEPLOY_CUSTOMER: (writeDb: PgPool) -> PgcEntityDeployment<Customer> = { pgPool ->
+    PgcEntityDeployment(customerEntityName, CustomerJson(), CustomerStateFn(), CustomerCmdFn(), pgPool)
   }
 
 }

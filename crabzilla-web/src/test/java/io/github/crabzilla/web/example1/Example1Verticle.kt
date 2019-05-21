@@ -5,7 +5,7 @@ import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.UnitOfWorkEvents
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.example1.EXAMPLE1_PROJECTOR_HANDLER
-import io.github.crabzilla.pgc.example1.Example1Fixture.deployCustomer
+import io.github.crabzilla.pgc.example1.Example1Fixture.DEPLOY_CUSTOMER
 import io.github.crabzilla.web.entityTrackingHandler
 import io.github.crabzilla.web.getUowHandler
 import io.github.crabzilla.web.postCommandHandler
@@ -96,7 +96,7 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       // write model
 
-      val customerDeployment = deployCustomer(writeDb)
+      val customerDeployment = DEPLOY_CUSTOMER(writeDb)
 
       vertx.deployVerticle(customerDeployment.cmdHandlerVerticle)
 

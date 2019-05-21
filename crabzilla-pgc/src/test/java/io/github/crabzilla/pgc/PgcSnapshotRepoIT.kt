@@ -15,7 +15,7 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
-import io.github.crabzilla.pgc.example1.Example1Fixture.deployCustomer
+import io.github.crabzilla.pgc.example1.Example1Fixture.DEPLOY_CUSTOMER
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -85,7 +85,7 @@ class PgcSnapshotRepoIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      repo = PgcSnapshotRepo(writeDb, deployCustomer.invoke(writeDb))
+      repo = PgcSnapshotRepo(writeDb, DEPLOY_CUSTOMER.invoke(writeDb))
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {

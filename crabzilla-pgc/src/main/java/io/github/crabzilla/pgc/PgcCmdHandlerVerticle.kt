@@ -8,10 +8,10 @@ import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicReference
 
-class PjcCmdHandlerVerticle<E : Entity>(private val ed: PjcEntityDeployment<E>) : AbstractVerticle() {
+class PgcCmdHandlerVerticle<E : Entity>(private val ed: PgcEntityDeployment<E>) : AbstractVerticle() {
 
   companion object {
-    internal val log = LoggerFactory.getLogger(PjcCmdHandlerVerticle::class.java)
+    internal val log = LoggerFactory.getLogger(PgcCmdHandlerVerticle::class.java)
   }
 
   @Throws(Exception::class)

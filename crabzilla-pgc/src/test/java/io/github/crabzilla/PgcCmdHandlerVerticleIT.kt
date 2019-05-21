@@ -4,10 +4,10 @@ import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
 import io.github.crabzilla.example1.CustomerId
-import io.github.crabzilla.pgc.PjcCmdHandlerVerticle
+import io.github.crabzilla.pgc.PgcCmdHandlerVerticle
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
-import io.github.crabzilla.pgc.example1.Example1Fixture.deployCustomer
+import io.github.crabzilla.pgc.example1.Example1Fixture.DEPLOY_CUSTOMER
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -31,12 +31,12 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PjcCmdHandlerVerticleIT {
+class PgcCmdHandlerVerticleIT {
 
   // TODO https://slinkydeveloper.com/Assertions-With-Vertx-Futures-And-JUnit5/
   private lateinit var vertx: Vertx
   private lateinit var writeDb: PgPool
-  private lateinit var verticle: PjcCmdHandlerVerticle<Customer>
+  private lateinit var verticle: PgcCmdHandlerVerticle<Customer>
 
   private val options = DeliveryOptions()
 
@@ -76,7 +76,7 @@ class PjcCmdHandlerVerticleIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      verticle = PjcCmdHandlerVerticle(deployCustomer(writeDb))
+      verticle = PgcCmdHandlerVerticle(DEPLOY_CUSTOMER(writeDb))
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {
@@ -116,7 +116,7 @@ class PjcCmdHandlerVerticleIT {
     val command = customerJson.cmdToJson(createCustomerCmd)
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(deployCustomer(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
+      .send<Pair<UnitOfWork, Int>>(DEPLOY_CUSTOMER(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
         options) { asyncResult ->
         if (asyncResult.failed()) {
           tc.failNow(asyncResult.cause())
@@ -142,7 +142,7 @@ class PjcCmdHandlerVerticleIT {
     val command = customerJson.cmdToJson(createCustomerCmd)
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(deployCustomer(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
+      .send<Pair<UnitOfWork, Int>>(DEPLOY_CUSTOMER(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
         options) { asyncResult ->
         tc.verify {
           tc.verify { assertThat(asyncResult.succeeded()).isFalse() }
@@ -162,7 +162,7 @@ class PjcCmdHandlerVerticleIT {
     val commandMetadata = CommandMetadata(customerEntityName, customerId.value, "unknown")
     val command = JsonObject()
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(deployCustomer(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
+      .send<Pair<UnitOfWork, Int>>(DEPLOY_CUSTOMER(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
         options) { asyncResult ->
         tc.verify {
           tc.verify { assertThat(asyncResult.succeeded()).isFalse() }

@@ -17,7 +17,7 @@ import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 
 class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
-                                  private val entityDeployment: PjcEntityDeployment<E>) : SnapshotRepository<E> {
+                                  private val entityDeployment: PgcEntityDeployment<E>) : SnapshotRepository<E> {
 
 
   companion object {
