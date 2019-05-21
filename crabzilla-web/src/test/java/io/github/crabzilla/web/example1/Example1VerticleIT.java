@@ -46,6 +46,7 @@ class Example1VerticleIT {
 
   static final Random random = new Random();
   static int nextInt = random.nextInt();
+  static int customerId2 = random.nextInt();
   static final Logger log = LoggerFactory.getLogger(Example1VerticleIT.class);
 
   private static int httpPort() {
@@ -120,9 +121,9 @@ class Example1VerticleIT {
     @Test
     @DisplayName("You get a correspondent UnitOfWork as JSON")
     void a1(VertxTestContext tc) {
-      CreateCustomer cmd = new CreateCustomer("customer#" + nextInt);
+      CreateCustomer cmd = new CreateCustomer("customer#" + customerId2);
       JsonObject cmdAsJson = JsonObject.mapFrom(cmd);
-      client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
+      client.post(port, "0.0.0.0", "/customers/" + customerId2 + "/commands/" + CREATE.urlFriendly())
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
@@ -132,7 +133,7 @@ class Example1VerticleIT {
             System.out.println(uow.encodePrettily());
             assertThat(uow.getString(UOW_ID)).isNotNull();
             assertThat(uow.getString(ENTITY_NAME)).isEqualTo("customer");
-            assertThat(uow.getInteger(ENTITY_ID)).isEqualTo(nextInt);
+            assertThat(uow.getInteger(ENTITY_ID)).isEqualTo(customerId2);
             assertThat(uow.getString(COMMAND_ID)).isNotNull();
             assertThat(uow.getString(COMMAND_NAME)).isEqualTo("create");
             assertThat(uow.getJsonObject(COMMAND)).isEqualTo(cmdAsJson);
@@ -146,15 +147,21 @@ class Example1VerticleIT {
     @Test
     @DisplayName("You get a correspondent entity tracking")
     void a2(VertxTestContext tc) {
-      client.get(port, "0.0.0.0", "/customers/" + nextInt)
+      client.get(port, "0.0.0.0", "/customers/" + customerId2)
         .putHeader("accept", ENTITY_TRACKING)
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
         .send(tc.succeeding(response2 -> tc.verify(() -> {
-          JsonObject tracking = response2.body();
-          // TODO assertions
-          System.out.println(tracking.encodePrettily());
+          JsonObject jo = response2.body();
+          JsonObject snapshot = jo.getJsonObject("snapshot");
+          assertThat(snapshot.getInteger("version")).isEqualTo(1);
+          JsonObject state = snapshot.getJsonObject("state");
+          assertThat(state.getInteger("customerId")).isEqualTo(customerId2);
+          assertThat(state.getString("name")).isEqualTo("customer#" + customerId2);
+          assertThat(state.getBoolean("isActive")).isFalse();
+          assertThat(jo.getJsonArray("units_of_work").size()).isEqualTo(1);
+          System.out.println(jo.encodePrettily());
           tc.completeNow();
         })));
     }
