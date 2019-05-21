@@ -10,9 +10,9 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.activatedUow1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createdUow1
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
-import io.github.crabzilla.pgc.example1.Example1Fixture.entityName
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -111,7 +111,7 @@ class PgcUowRepoIT {
       createdUow1.commandId,
       CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-      entityName,
+      customerEntityName,
       customerId1.value,
       1)
 
@@ -146,7 +146,7 @@ class PgcUowRepoIT {
       createdUow1.commandId,
       CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-      entityName,
+      customerEntityName,
       customerId1.value,
       1)
 
@@ -198,7 +198,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        entityName,
+        customerEntityName,
         customerId1.value,
         1)
 
@@ -233,7 +233,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        entityName,
+        customerEntityName,
         customerId1.value,
         1)
 
@@ -251,7 +251,7 @@ class PgcUowRepoIT {
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
-          entityName,
+          customerEntityName,
           customerId1.value,
           2)
 
@@ -288,7 +288,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        entityName,
+        customerEntityName,
         customerId1.value,
         1)
 
@@ -306,7 +306,7 @@ class PgcUowRepoIT {
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
-          entityName,
+          customerEntityName,
           customerId1.value,
           2)
 
@@ -341,7 +341,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        entityName,
+        customerEntityName,
         customerId1.value,
         1)
 
@@ -358,7 +358,7 @@ class PgcUowRepoIT {
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
-          entityName,
+          customerEntityName,
           customerId1.value,
           2)
         writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
@@ -396,7 +396,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        entityName,
+        customerEntityName,
         customerId1.value,
         1)
 
@@ -408,7 +408,7 @@ class PgcUowRepoIT {
         val uowSequence = ar.result().first().getLong(0)
         tc.verify { assertThat(uowSequence).isGreaterThan(0) }
         val selectFuture = Future.future<SnapshotData>()
-        repo.selectAfterVersion(customerId1.value, 0, entityName, selectFuture.completer())
+        repo.selectAfterVersion(customerId1.value, 0, customerEntityName, selectFuture.completer())
         selectFuture.setHandler { selectAsyncResult ->
           val snapshotData = selectAsyncResult.result()
           tc.verify { assertThat(1).isEqualTo(snapshotData.version) }
@@ -428,7 +428,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        entityName,
+        customerEntityName,
         customerId1.value,
         1)
 
@@ -444,7 +444,7 @@ class PgcUowRepoIT {
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
-          entityName,
+          customerEntityName,
           customerId1.value,
           2)
 
@@ -454,7 +454,7 @@ class PgcUowRepoIT {
             tc.failNow(ar2.cause())
           }
           val selectFuture1 = Future.future<SnapshotData>()
-          repo.selectAfterVersion(customerId1.value, 0, entityName, selectFuture1)
+          repo.selectAfterVersion(customerId1.value, 0, customerEntityName, selectFuture1)
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(2).isEqualTo(snapshotData.version) }
@@ -476,7 +476,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        entityName,
+        customerEntityName,
         customerId1.value,
         1)
 
@@ -492,7 +492,7 @@ class PgcUowRepoIT {
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
-          entityName,
+          customerEntityName,
           customerId1.value,
           2)
         writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
@@ -503,7 +503,7 @@ class PgcUowRepoIT {
           }
           val uowSequence2 = ar2.result().first().getLong("uow_seq_number")
           val selectFuture1 = Future.future<SnapshotData>()
-          repo.selectAfterVersion(customerId1.value, 1, entityName, selectFuture1.completer())
+          repo.selectAfterVersion(customerId1.value, 1, customerEntityName, selectFuture1.completer())
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(2).isEqualTo(snapshotData.version) }
@@ -545,7 +545,7 @@ class PgcUowRepoIT {
         tc.verify { assertThat(uowSequence).isGreaterThan(2) }
         val snapshotDataFuture = Future.future<SnapshotData>()
         // get only above version 1
-        repo.selectAfterVersion(activatedUow1.entityId, 1, entityName, snapshotDataFuture.completer())
+        repo.selectAfterVersion(activatedUow1.entityId, 1, customerEntityName, snapshotDataFuture.completer())
         snapshotDataFuture.setHandler { ar4 ->
           if (ar4.failed()) {
             ar4.cause().printStackTrace()

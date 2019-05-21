@@ -26,8 +26,7 @@ private const val UNIT_OF_WORK_ID_PATH_PARAMETER = "unitOfWorkId"
 
 private val log = LoggerFactory.getLogger("CrabzillaWebHandlers")
 
-fun postCommandHandler(rc: RoutingContext, commandMetadata: CommandMetadata,
-                       projectionEndpoint: String) {
+fun postCommandHandler(rc: RoutingContext, cmdMetadata: CommandMetadata, projectionEndpoint: String) {
 
   val httpResp = rc.response()
 
@@ -37,16 +36,14 @@ fun postCommandHandler(rc: RoutingContext, commandMetadata: CommandMetadata,
     httpResp.setStatusCode(400).setStatusMessage("invalid command").end(); return
   }
 
-  log.trace("command/metadata=:\n${commandJson.encode()}\n$commandMetadata")
+  log.trace("command/metadata=:\n${commandJson.encode()}\n$cmdMetadata")
 
   httpResp.headers().add("Content-Type", "application/json")
-
-  val handlerEndpoint = CommandHandlerEndpoint(commandMetadata.entityName).endpoint()
 
   val begin = System.currentTimeMillis()
 
   rc.vertx().eventBus()
-    .send<Pair<UnitOfWork, Int>>(handlerEndpoint, Pair(commandMetadata, commandJson)) { response ->
+    .send<Pair<UnitOfWork, Int>>(cmdMetadata.handlerEndpoint(), Pair(cmdMetadata, commandJson)) { response ->
 
       val end = System.currentTimeMillis()
       log.info("received response in " + (end - begin) + " ms")

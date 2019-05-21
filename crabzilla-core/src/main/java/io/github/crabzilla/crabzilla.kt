@@ -3,12 +3,10 @@ package io.github.crabzilla
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
-import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
-import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENT_NAME
+import io.vertx.core.AsyncResult
+import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
-import io.vertx.core.json.JsonArray
-import io.vertx.core.json.JsonObject
 import java.util.*
 
 // schema
@@ -25,41 +23,10 @@ interface Entity {
   }
 }
 
-data class UnitOfWork(val unitOfWorkId: UUID,
-                      val entityName: String,
-                      val entityId: Int,
-                      val commandId: UUID,
-                      val commandName: String,
-                      val command: Command,
-                      val version: Version,
-                      val events: List<Pair<String, DomainEvent>>) {
-
-  init { require(this.version >= 1) { "version must be >= 1" } }
-
-  companion object {
-    fun of(entityId: Int, entityName: String, commandId: UUID, commandName: String, command: Command,
-           events: List<DomainEvent>, resultingVersion: Version): UnitOfWork {
-      return UnitOfWork(UUID.randomUUID(), entityName, entityId, commandId, commandName, command, resultingVersion,
-              events.map { e -> Pair(e::class.java.simpleName, e) })
-    }
-  }
-
-  object JsonMetadata {
-    const val UOW_ID = "unitOfWorkId"
-    const val ENTITY_NAME = "entityName"
-    const val ENTITY_ID = "entityId"
-    const val COMMAND_ID = "commandId"
-    const val COMMAND_NAME = "commandName"
-    const val COMMAND = "command"
-    const val VERSION = "version"
-    const val EVENTS = "events"
-
-    const val EVENT_NAME = "eventName"
-    const val EVENTS_JSON_CONTENT = "eventJson"
-  }
-}
-
 // runtime
+
+typealias CommandHandlerFactory<E> = (CommandMetadata, Command, Snapshot<E>,
+                                      Handler<AsyncResult<UnitOfWork>>) -> CommandHandler<E>
 
 data class Snapshot<E : Entity>(val state: E, val version: Version)
 
@@ -100,29 +67,6 @@ fun initVertx(vertx: Vertx) {
 
 }
 
+
 // deployment
 
-interface EntityJsonSerDer<E: Entity> {
-
-  fun fromJson(json: JsonObject): E
-
-  fun toJson(entity: E): JsonObject
-
-  fun cmdFromJson(cmdName: String, json: JsonObject): Command
-
-  fun cmdToJson(cmd: Command): JsonObject
-
-  fun eventFromJson(eventName: String, json:  JsonObject): Pair<String, DomainEvent>
-
-  fun eventToJson(event: DomainEvent): JsonObject
-
-  fun toJsonArray(events: List<Pair<String, DomainEvent>>): JsonArray {
-    val eventsJsonArray = JsonArray()
-    events
-      .map { pair -> JsonObject().put(EVENT_NAME, pair.first).put(EVENTS_JSON_CONTENT, eventToJson(pair.second))}
-//    .map { pair -> println(pair.first); println(pair.second); pair}
-      .forEach { jo -> eventsJsonArray.add(jo) }
-    return eventsJsonArray
-  }
-
-}

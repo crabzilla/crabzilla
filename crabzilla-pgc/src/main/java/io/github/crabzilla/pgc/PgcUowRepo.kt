@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 import java.util.*
 
 open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
-                      private val jsonSerDer: EntityJsonSerDer<E>) : UnitOfWorkRepository {
+                      private val jsonFunctions: EntityJsonFunctions<E>) : UnitOfWorkRepository {
 
   companion object {
 
@@ -65,7 +65,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
         val commandName = row.getString(CMD_NAME)
         val commandAsJson = row.getJson(CMD_DATA).value().toString()
         val command =
-          try { jsonSerDer.cmdFromJson(commandName, JsonObject(commandAsJson)) } catch (e: Exception) { null }
+          try { jsonFunctions.cmdFromJson(commandName, JsonObject(commandAsJson)) } catch (e: Exception) { null }
 
         if (command == null) {
           aHandler.handle(Future.failedFuture("error when getting command $commandName from json "))
@@ -78,7 +78,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
           val jsonObject = jsonArray.getJsonObject(index)
           val eventName = jsonObject.getString(EVENT_NAME)
           val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
-          val domainEvent = jsonSerDer.eventFromJson(eventName, eventJson)
+          val domainEvent = jsonFunctions.eventFromJson(eventName, eventJson)
           domainEvent
         }
 
@@ -112,7 +112,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
       val row = rows.first()
       val commandName = row.getString(CMD_NAME)
       val commandAsJson = row.getJson(CMD_DATA).value().toString()
-      val command = try { jsonSerDer.cmdFromJson(commandName, JsonObject(commandAsJson)) } catch (e: Exception) { null }
+      val command = try { jsonFunctions.cmdFromJson(commandName, JsonObject(commandAsJson)) } catch (e: Exception) { null }
 
       if (command == null) {
         aHandler.handle(Future.failedFuture("error when getting command $commandName from json "))
@@ -125,7 +125,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
         val jsonObject = jsonArray.getJsonObject(index)
         val eventName = jsonObject.getString(EVENT_NAME)
         val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
-        val domainEvent = jsonSerDer.eventFromJson(eventName, eventJson)
+        val domainEvent = jsonFunctions.eventFromJson(eventName, eventJson)
         domainEvent
       }
 
@@ -167,7 +167,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
               val jsonObject = eventsArray.getJsonObject(index)
               val eventName = jsonObject.getString(EVENT_NAME)
               val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
-              jsonSerDer.eventFromJson(eventName, eventJson)
+              jsonFunctions.eventFromJson(eventName, eventJson)
             }
             val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEventPair)
             val snapshotData = SnapshotData(row.getInteger(1)!!, events)
@@ -222,7 +222,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
           val jsonObject = eventsArray.getJsonObject(index)
           val eventName = jsonObject.getString(EVENT_NAME)
           val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
-          jsonSerDer.eventFromJson(eventName, eventJson)
+          jsonFunctions.eventFromJson(eventName, eventJson)
         }
         val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEventPair)
         val projectionData = ProjectionData(uowId, uowSeq, targetId, events)

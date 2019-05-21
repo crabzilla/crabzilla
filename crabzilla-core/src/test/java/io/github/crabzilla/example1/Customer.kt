@@ -145,3 +145,27 @@ enum class CustomerCommandEnum {
     return this.name.toLowerCase().replace('_', '-')
   }
 }
+
+class CustomerStateFn : EntityStateFunctions<Customer> {
+
+  override fun initialState(): Customer {
+    return Customer()
+  }
+
+  override fun applyEvent(event: DomainEvent, state: Customer): Customer {
+    return CUSTOMER_STATE_BUILDER.invoke(event, state)
+  }
+
+}
+
+class CustomerCmdFn:  EntityCommandFunctions<Customer> {
+
+  override fun validateCmd(command: Command): List<String> {
+    return CUSTOMER_CMD_VALIDATOR.invoke(command)
+  }
+
+  override fun cmdHandlerFactory(): CommandHandlerFactory<Customer> {
+    return CUSTOMER_CMD_HANDLER_FACTORY
+  }
+
+}

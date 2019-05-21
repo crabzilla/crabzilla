@@ -5,8 +5,8 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activatedUow1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createdUow1
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
-import io.github.crabzilla.pgc.example1.Example1Fixture.entityName
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -131,7 +131,7 @@ class PgcUowJournalIT {
 
           val snapshotDataFuture = Future.future<SnapshotData>()
 
-          repo.selectAfterVersion(createdUow1.entityId, 0, entityName, snapshotDataFuture)
+          repo.selectAfterVersion(createdUow1.entityId, 0, customerEntityName, snapshotDataFuture)
 
           snapshotDataFuture.setHandler { ar3 ->
             if (ar3.failed()) {
@@ -225,7 +225,7 @@ class PgcUowJournalIT {
             val snapshotDataFuture = Future.future<SnapshotData>()
 
             // get all versions for id
-            repo.selectAfterVersion(activatedUow1.entityId, 0, entityName, snapshotDataFuture)
+            repo.selectAfterVersion(activatedUow1.entityId, 0, customerEntityName, snapshotDataFuture)
 
             snapshotDataFuture.setHandler { ar4 ->
 

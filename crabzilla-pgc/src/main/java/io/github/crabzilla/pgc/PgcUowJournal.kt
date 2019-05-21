@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.Entity
-import io.github.crabzilla.EntityJsonSerDer
+import io.github.crabzilla.EntityJsonFunctions
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.UnitOfWorkJournal
 import io.reactiverse.pgclient.PgPool
@@ -12,7 +12,7 @@ import io.vertx.core.Handler
 import org.slf4j.LoggerFactory
 
 class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
-                               private val jsonSerDer: EntityJsonSerDer<E>) : UnitOfWorkJournal {
+                               private val jsonFunctions: EntityJsonFunctions<E>) : UnitOfWorkJournal {
 
   companion object {
 
@@ -37,8 +37,8 @@ class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
             val currentVersion = event1.result().first()?.getInteger("last_version") ?: 0
             if (currentVersion == unitOfWork.version - 1) {
               // if version is OK, then insert
-              val cmdAsJsonObject = jsonSerDer.cmdToJson(unitOfWork.command)
-              val eventsListAsJsonObject = jsonSerDer.toJsonArray(unitOfWork.events)
+              val cmdAsJsonObject = jsonFunctions.cmdToJson(unitOfWork.command)
+              val eventsListAsJsonObject = jsonFunctions.toJsonArray(unitOfWork.events)
               val params2 = Tuple.of(
                 unitOfWork.unitOfWorkId,
                 io.reactiverse.pgclient.data.Json.create(eventsListAsJsonObject),

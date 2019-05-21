@@ -1,16 +1,11 @@
 package io.github.crabzilla.web.example1
 
-import io.github.crabzilla.*
-import io.github.crabzilla.example1.CUSTOMER_CMD_HANDLER_FACTORY
-import io.github.crabzilla.example1.CUSTOMER_CMD_VALIDATOR
-import io.github.crabzilla.example1.CUSTOMER_SEED_VALUE
-import io.github.crabzilla.example1.CUSTOMER_STATE_BUILDER
+import io.github.crabzilla.CommandMetadata
+import io.github.crabzilla.ProjectionData
+import io.github.crabzilla.initVertx
 import io.github.crabzilla.pgc.PgcEventProjector
-import io.github.crabzilla.pgc.PgcSnapshotRepo
-import io.github.crabzilla.pgc.PgcUowJournal
-import io.github.crabzilla.pgc.PgcUowRepo
 import io.github.crabzilla.pgc.example1.EXAMPLE1_PROJECTOR_HANDLER
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
+import io.github.crabzilla.pgc.example1.Example1Fixture.deployCustomer
 import io.github.crabzilla.web.getUowHandler
 import io.github.crabzilla.web.postCommandHandler
 import io.reactiverse.pgclient.PgClient
@@ -100,16 +95,9 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       // write model
 
-      val uowRepository = PgcUowRepo(writeDb, customerJson)
-      val uowJournal = PgcUowJournal(writeDb, customerJson)
-      val snapshotRepo = PgcSnapshotRepo(CUSTOMER_AGGREGATE_ROOT, writeDb, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER,
-        customerJson)
+      val customerDeployment = deployCustomer(writeDb)
 
-      val commandVerticle = CommandHandlerVerticle(CommandHandlerEndpoint(CUSTOMER_AGGREGATE_ROOT),
-        customerJson, CUSTOMER_SEED_VALUE, CUSTOMER_STATE_BUILDER, CUSTOMER_CMD_HANDLER_FACTORY,
-        CUSTOMER_CMD_VALIDATOR, uowJournal, snapshotRepo)
-
-      vertx.deployVerticle(commandVerticle)
+      vertx.deployVerticle(customerDeployment.cmdHandlerVerticle)
 
       // web
 
@@ -120,14 +108,14 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       router.post("/customers/:entityId/commands/:commandName").handler {
         val commandMetadata = CommandMetadata(CUSTOMER_AGGREGATE_ROOT,
-            it.pathParam(COMMAND_ENTITY_ID_PARAMETER).toInt(),
-            it.pathParam(COMMAND_NAME_PARAMETER))
+          it.pathParam(COMMAND_ENTITY_ID_PARAMETER).toInt(),
+          it.pathParam(COMMAND_NAME_PARAMETER))
         postCommandHandler(it, commandMetadata, EXAMPLE1_PROJECTION_ENDPOINT)
       }
 
       router.get("/units-of-work/:unitOfWorkId").handler {
         val uowId = UUID.fromString(it.pathParam("unitOfWorkId"))
-        getUowHandler(it, uowRepository, uowId) }
+        getUowHandler(it, customerDeployment.uowRepo, uowId) }
 
       router.get("/customers/:entityId").handler {
 
@@ -172,11 +160,11 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 /**
  *
 
-abstract class CrabzillaDeployment(vertx: Vertx,
+abstract class CrabzillaDeployment(
+  vertx: Vertx,
   readModelDb: PgPool,
   writeModelDb: PgPool,
   projectionEndpoint: String,
-  persistSnapshots: Boolean,
   components: List<AggregateRootDeployment<Entity>>) {
   abstract fun projector(): PgcEventProjector
 }

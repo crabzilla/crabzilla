@@ -1,6 +1,9 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.*
+import io.github.crabzilla.DomainEvent
+import io.github.crabzilla.Entity
+import io.github.crabzilla.Snapshot
+import io.github.crabzilla.SnapshotRepository
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENT_NAME
 import io.reactiverse.pgclient.PgPool
@@ -13,11 +16,8 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 
-class PgcSnapshotRepo<E : Entity>(private val entityName: String,
-                                  private val pgPool: PgPool,
-                                  private val seedValue: E,
-                                  private val applyEventsFn: (DomainEvent, E) -> E,
-                                  private val jsonSerDer: EntityJsonSerDer<E>) : SnapshotRepository<E> {
+class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
+                                  private val entityDeployment: PjcEntityDeployment<E>) : SnapshotRepository<E> {
 
 
   companion object {
@@ -30,20 +30,20 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
 
 
   private fun selectSnapshot(): String {
-    return "SELECT version, json_content FROM ${entityName}_snapshots WHERE ar_id = $1"
+    return "SELECT version, json_content FROM ${entityDeployment.name}_snapshots WHERE ar_id = $1"
   }
 
   private fun upsertSnapshot(): String {
-    return "INSERT INTO ${entityName}_snapshots (ar_id, version, json_content) " +
+    return "INSERT INTO ${entityDeployment.name}_snapshots (ar_id, version, json_content) " +
       " VALUES ($1, $2, $3) " +
       " ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"
   }
 
   override fun upsert(entityId: Int, snapshot: Snapshot<E>, aHandler: Handler<AsyncResult<Void>>) {
 
-    val json = io.reactiverse.pgclient.data.Json.create(jsonSerDer.toJson(snapshot.state))
+    val json = io.reactiverse.pgclient.data.Json.create(entityDeployment.toJson(snapshot.state))
 
-    pgPool.preparedQuery(upsertSnapshot(), Tuple.of(entityId, snapshot.version, json)) { insert ->
+    writeModelDb.preparedQuery(upsertSnapshot(), Tuple.of(entityId, snapshot.version, json)) { insert ->
       if (insert.failed()) {
         log.error("upsert snapshot query error")
         aHandler.handle(Future.failedFuture(insert.cause()))
@@ -60,7 +60,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
     val future = Future.future<Snapshot<E>>()
     future.setHandler(aHandler)
 
-    pgPool.getConnection { res ->
+    writeModelDb.getConnection { res ->
 
       if (!res.succeeded()) {
         future.fail("retrieve.getConnection")
@@ -89,10 +89,10 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
             val cachedVersion : Int
 
             if (pgRow == null || pgRow.size() == 0) {
-              cachedInstance = seedValue
+              cachedInstance = entityDeployment.initialState()
               cachedVersion = 0
             } else {
-              cachedInstance = jsonSerDer.fromJson(JsonObject(pgRow.first().getJson("json_content").toString()))
+              cachedInstance = entityDeployment.fromJson(JsonObject(pgRow.first().getJson("json_content").toString()))
               cachedVersion = pgRow.first().getInteger("version")
             }
 
@@ -109,7 +109,7 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
                 val pq = event2.result()
 
                 // Fetch 100 rows at a time
-                val stream = pq.createStream(100, Tuple.of(entityId, entityName, cachedVersion))
+                val stream = pq.createStream(100, Tuple.of(entityId, entityDeployment.name, cachedVersion))
 
                 stream.exceptionHandler { err -> log.error("Retrieve: ${err.message}", err)
                   tx.rollback(); conn.close(); future.fail(err)
@@ -140,11 +140,12 @@ class PgcSnapshotRepo<E : Entity>(private val entityName: String,
                     val jsonObject = eventsArray.getJsonObject(index)
                     val eventName = jsonObject.getString(EVENT_NAME)
                     val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
-                    jsonSerDer.eventFromJson(eventName, eventJson)
+                    entityDeployment.eventFromJson(eventName, eventJson)
                   }
 
                   val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEvent)
-                  currentInstance = events.fold(currentInstance) {state, event -> applyEventsFn(event.second, state)}
+                  currentInstance =
+                    events.fold(currentInstance) {state, event -> entityDeployment.applyEvent(event.second, state)}
                   log.trace("Events: $events \n version: $currentVersion \n instance $currentInstance")
 
                 }
