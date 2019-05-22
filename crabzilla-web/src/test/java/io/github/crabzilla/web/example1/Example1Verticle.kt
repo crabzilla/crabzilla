@@ -101,7 +101,7 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       val customerDeployment = customerDeploymentFn(writeDb)
 
-      vertx.deployVerticle(customerDeployment.cmdHandlerVerticle)
+      vertx.deployVerticle(customerDeployment.cmdHandlerVerticle.value)
 
       // web
 
@@ -119,17 +119,17 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       router.get("/units-of-work/:unitOfWorkId").handler {
         val uowId = UUID.fromString(it.pathParam("unitOfWorkId"))
-        getUowHandler(it, customerDeployment.uowRepo, uowId)
+        getUowHandler(it, customerDeployment.uowRepo.value, uowId)
       }
 
       router.get("/customers/:entityId").handler {
         val customerId = it.pathParam(COMMAND_ENTITY_ID_PARAMETER).toInt()
         println(it.request().getHeader("accept"))
         when (it.request().getHeader("accept")) {
-          ENTITY_TRACKING -> entityTrackingHandler(it, customerId, customerDeployment.uowRepo, customerDeployment.snapshotRepo)
-          { customer -> customerDeployment.ejson.toJson(customer) }
-          ENTITY_WRITE_MODEL -> entityWriteModelHandler(it, customerId, customerDeployment.snapshotRepo)
-          { customer -> customerDeployment.ejson.toJson(customer) }
+          ENTITY_TRACKING -> entityTrackingHandler(it, customerId, customerDeployment.uowRepo.value,
+            customerDeployment.snapshotRepo.value) { customer -> customerDeployment.ejson.toJson(customer) }
+          ENTITY_WRITE_MODEL -> entityWriteModelHandler(it, customerId, customerDeployment.snapshotRepo.value)
+            { customer -> customerDeployment.ejson.toJson(customer) }
           else -> {
             readDb.preparedQuery("select * from customer_summary") { event1 ->
               println("*** read model: " + event1.result().toString())

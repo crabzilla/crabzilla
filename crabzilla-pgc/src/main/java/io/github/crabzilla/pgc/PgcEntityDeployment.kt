@@ -13,10 +13,10 @@ class PgcEntityDeployment<E: Entity>(val name: String,
                                      writeDb: PgPool) :
   EntityJsonFunctions<E> by ejson, EntityStateFunctions<E> by eState, EntityCommandFunctions<E> by eCmd {
 
-  val uowRepo = PgcUowRepo(writeDb, this)
-  val uowJournal = PgcUowJournal(writeDb, this)
-  val snapshotRepo = PgcSnapshotRepo(writeDb, this)
-  val cmdHandlerVerticle = PgcCmdHandlerVerticle(this)
+  val uowRepo = lazy { PgcUowRepo(writeDb, this) }
+  val uowJournal = lazy { PgcUowJournal(writeDb, this) }
+  val snapshotRepo = lazy { PgcSnapshotRepo(writeDb, this) }
+  val cmdHandlerVerticle = lazy { PgcCmdHandlerVerticle(this) }
 
   fun cmdHandlerEndpoint(): String {
     return "$name-cmd-handler"

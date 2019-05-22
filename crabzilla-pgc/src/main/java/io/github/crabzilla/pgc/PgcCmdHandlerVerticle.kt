@@ -56,7 +56,7 @@ class PgcCmdHandlerVerticle<E : Entity>(private val ed: PgcEntityDeployment<E>) 
 
       val snapshotFuture: Future<Snapshot<E>> = Future.future()
 
-      ed.snapshotRepo.retrieve(commandPair.first.entityId, snapshotFuture)
+      ed.snapshotRepo.value.retrieve(commandPair.first.entityId, snapshotFuture)
 
       val snapshotValue: AtomicReference<Snapshot<E>> = AtomicReference()
       val uowValue: AtomicReference<UnitOfWork> = AtomicReference()
@@ -78,7 +78,7 @@ class PgcCmdHandlerVerticle<E : Entity>(private val ed: PgcEntityDeployment<E>) 
           log.info("got unitOfWork $unitOfWork")
           val appendFuture = Future.future<Int>()
           // append to journal
-          ed.uowJournal.append(unitOfWork, appendFuture)
+          ed.uowJournal.value.append(unitOfWork, appendFuture)
           uowValue.set(unitOfWork)
           appendFuture
         }
@@ -95,7 +95,7 @@ class PgcCmdHandlerVerticle<E : Entity>(private val ed: PgcEntityDeployment<E>) 
           val newSnapshot = Snapshot(newInstance, uowValue.get().version)
 
           log.trace("now will store snapshot $newSnapshot")
-          ed.snapshotRepo.upsert(commandPair.first.entityId, newSnapshot, updateSnapshotFuture)
+          ed.snapshotRepo.value.upsert(commandPair.first.entityId, newSnapshot, updateSnapshotFuture)
           updateSnapshotFuture
         }
 

@@ -1,10 +1,12 @@
-package io.github.crabzilla
+package io.github.crabzilla.pgc
 
+import io.github.crabzilla.CommandMetadata
+import io.github.crabzilla.Crabzilla
+import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
 import io.github.crabzilla.example1.CustomerId
-import io.github.crabzilla.pgc.PgcCmdHandlerVerticle
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerDeploymentFn
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
@@ -110,8 +112,8 @@ class PgcCmdHandlerVerticleIT {
     val customerId = CustomerId(1)
     val createCustomerCmd = CreateCustomer("customer1")
     val commandMetadata = CommandMetadata(customerEntityName,
-                                      customerId.value,
-                                      CREATE.urlFriendly())
+      customerId.value,
+      CREATE.urlFriendly())
 
     val command = customerJson.cmdToJson(createCustomerCmd)
 
@@ -138,7 +140,7 @@ class PgcCmdHandlerVerticleIT {
     val createCustomerCmd = CreateCustomer("a bad name")
     val commandMetadata = CommandMetadata(customerEntityName,
       customerId.value,
-        CREATE.urlFriendly())
+      CREATE.urlFriendly())
     val command = customerJson.cmdToJson(createCustomerCmd)
 
     vertx.eventBus()
