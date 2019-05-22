@@ -7,19 +7,15 @@ import io.github.crabzilla.EntityStateFunctions
 import io.reactiverse.pgclient.PgPool
 
 class PgcEntityDeployment<E: Entity>(val name: String,
-                                     val ejson: EntityJsonFunctions<E>,
-                                     val eState: EntityStateFunctions<E>,
-                                     val eCmd: EntityCommandFunctions<E>,
+                                     val jsonFn: EntityJsonFunctions<E>,
+                                     private val stateFn: EntityStateFunctions<E>,
+                                     private val cmdFn: EntityCommandFunctions<E>,
                                      writeDb: PgPool) :
-  EntityJsonFunctions<E> by ejson, EntityStateFunctions<E> by eState, EntityCommandFunctions<E> by eCmd {
+  EntityJsonFunctions<E> by jsonFn, EntityStateFunctions<E> by stateFn, EntityCommandFunctions<E> by cmdFn {
 
   val uowRepo = lazy { PgcUowRepo(writeDb, this) }
   val uowJournal = lazy { PgcUowJournal(writeDb, this) }
   val snapshotRepo = lazy { PgcSnapshotRepo(writeDb, this) }
   val cmdHandlerVerticle = lazy { PgcCmdHandlerVerticle(this) }
-
-  fun cmdHandlerEndpoint(): String {
-    return "$name-cmd-handler"
-  }
 
 }

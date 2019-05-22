@@ -3,6 +3,7 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.CommandMetadata
 import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.UnitOfWork
+import io.github.crabzilla.cmdHandlerEndpoint
 import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
@@ -117,8 +118,10 @@ class PgcCmdHandlerVerticleIT {
 
     val command = customerJson.cmdToJson(createCustomerCmd)
 
+    val deploy = customerDeploymentFn(writeDb)
+
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(customerDeploymentFn(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
+      .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(deploy.name), Pair(commandMetadata, command),
         options) { asyncResult ->
         if (asyncResult.failed()) {
           tc.failNow(asyncResult.cause())
@@ -143,8 +146,10 @@ class PgcCmdHandlerVerticleIT {
       CREATE.urlFriendly())
     val command = customerJson.cmdToJson(createCustomerCmd)
 
+    val deploy = customerDeploymentFn(writeDb)
+
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(customerDeploymentFn(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
+      .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(deploy.name), Pair(commandMetadata, command),
         options) { asyncResult ->
         tc.verify {
           tc.verify { assertThat(asyncResult.succeeded()).isFalse() }
@@ -163,8 +168,10 @@ class PgcCmdHandlerVerticleIT {
     val customerId = CustomerId(1)
     val commandMetadata = CommandMetadata(customerEntityName, customerId.value, "unknown")
     val command = JsonObject()
+    val deploy = customerDeploymentFn(writeDb)
+
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(customerDeploymentFn(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
+      .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(deploy.name), Pair(commandMetadata, command),
         options) { asyncResult ->
         tc.verify {
           tc.verify { assertThat(asyncResult.succeeded()).isFalse() }

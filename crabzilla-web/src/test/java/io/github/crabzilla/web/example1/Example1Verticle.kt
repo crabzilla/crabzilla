@@ -128,9 +128,9 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
         println(it.request().getHeader("accept"))
         when (it.request().getHeader("accept")) {
           ENTITY_TRACKING -> entityTrackingHandler(it, customerId, customerDeployment.uowRepo.value,
-            customerDeployment.snapshotRepo.value) { customer -> customerDeployment.ejson.toJson(customer) }
+            customerDeployment.snapshotRepo.value) { customer -> customerDeployment.jsonFn.toJson(customer) }
           ENTITY_WRITE_MODEL -> entityWriteModelHandler(it, customerId, customerDeployment.snapshotRepo.value)
-            { customer -> customerDeployment.ejson.toJson(customer) }
+            { customer -> customerDeployment.jsonFn.toJson(customer) }
           else -> {
             readDb.preparedQuery("select * from customer_summary") { event1 ->
               println("*** read model: " + event1.result().toString())

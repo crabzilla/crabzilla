@@ -19,7 +19,7 @@ class PgcCmdHandlerVerticle<E : Entity>(private val ed: PgcEntityDeployment<E>) 
 
     log.info("starting command handler verticle for : ${ed.name}")
 
-    vertx.eventBus().consumer<Pair<CommandMetadata, JsonObject>>(ed.cmdHandlerEndpoint(), Handler { commandEvent ->
+    vertx.eventBus().consumer<Pair<CommandMetadata, JsonObject>>(cmdHandlerEndpoint(ed.name), Handler { commandEvent ->
 
       val commandPair = commandEvent.body()
 
