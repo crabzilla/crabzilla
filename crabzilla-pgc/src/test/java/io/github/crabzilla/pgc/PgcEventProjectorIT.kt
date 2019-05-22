@@ -1,23 +1,25 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.Crabzilla
-import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.UnitOfWorkEvents.Companion.fromUnitOfWork
-import io.github.crabzilla.example1.CustomerActivated
-import io.github.crabzilla.example1.CustomerCreated
-import io.github.crabzilla.example1.CustomerDeactivated
-import io.github.crabzilla.pgc.example1.EXAMPLE1_PROJECTOR_HANDLER
+import io.github.crabzilla.pgc.example1.BadProjectionHandler
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
+import io.github.crabzilla.pgc.example1.Example1Fixture.createActivateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.deactivated1
-import io.reactiverse.pgclient.*
+import io.github.crabzilla.pgc.example1.Example1ProjectionHandler
+import io.reactiverse.pgclient.PgClient
+import io.reactiverse.pgclient.PgPool
+import io.reactiverse.pgclient.PgPoolOptions
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
-import io.vertx.core.*
+import io.vertx.core.Handler
+import io.vertx.core.Vertx
+import io.vertx.core.VertxOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -113,34 +115,54 @@ class PgcEventProjectorIT {
   }
 
   @Test
-  @DisplayName("can project a couple of events: created and activated")
+  @DisplayName("can project 1 event")
   fun a1(tc: VertxTestContext) {
 
     val uow = UnitOfWork(UUID.randomUUID(), "Customer", customerId1.value, UUID.randomUUID(), "Whatsoever", createCmd1,
-      1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1)))
+      1, arrayListOf(Pair("CustomerCreated", created1)))
 
-    eventProjector.handle(fromUnitOfWork(1, uow), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
-
-      if (result.failed()) {
-        tc.failNow(result.cause())
+    eventProjector.handle(fromUnitOfWork(1, uow), Example1ProjectionHandler(), Handler { event1 ->
+      if (event1.failed()) {
+        tc.failNow(event1.cause())
         return@Handler
       }
-
-      readDb.preparedQuery("SELECT * FROM customer_summary") { ar3 ->
-
-        if (ar3.failed()) {
-          tc.failNow(ar3.cause())
+      readDb.preparedQuery("SELECT * FROM customer_summary") { event2 ->
+        if (event2.failed()) {
+          tc.failNow(event2.cause())
           return@preparedQuery
         }
+        val result = event2.result()
+        tc.verify { assertThat(1).isEqualTo(result.size()) }
+        tc.verify { assertThat(created1.name).isEqualTo(result.first().getString("name")) }
+        tc.verify { assertThat(result.first().getBoolean("is_active")).isFalse() }
+        tc.completeNow()
+      }
+    })
 
-        val result = ar3.result()
+  }
 
+  @Test
+  @DisplayName("can project 2 events: created and activated")
+  fun a2(tc: VertxTestContext) {
+
+    val uow = UnitOfWork(UUID.randomUUID(), "Customer", customerId1.value, UUID.randomUUID(), "Whatsoever",
+      createActivateCmd1, 1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1)))
+
+    eventProjector.handle(fromUnitOfWork(1, uow), Example1ProjectionHandler(), Handler { event1 ->
+      if (event1.failed()) {
+        tc.failNow(event1.cause())
+        return@Handler
+      }
+      readDb.preparedQuery("SELECT * FROM customer_summary") { event2 ->
+        if (event2.failed()) {
+          tc.failNow(event2.cause())
+          return@preparedQuery
+        }
+        val result = event2.result()
         tc.verify { assertThat(1).isEqualTo(result.size()) }
         tc.verify { assertThat(created1.name).isEqualTo(result.first().getString("name")) }
         tc.verify { assertThat(result.first().getBoolean("is_active")).isTrue() }
-
         tc.completeNow()
-
       }
     })
 
@@ -148,128 +170,157 @@ class PgcEventProjectorIT {
 
   @Test
   @DisplayName("can project 3 events: created, activated and deactivated")
-  fun a2(tc: VertxTestContext) {
+  fun a3(tc: VertxTestContext) {
 
     val uow = UnitOfWork(UUID.randomUUID(), "Customer", customerId1.value, UUID.randomUUID(), "Whatsoever", createCmd1,
       1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1)))
 
-    eventProjector.handle(fromUnitOfWork(1, uow), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
-
-      if (result.failed()) {
-        tc.failNow(result.cause())
+    eventProjector.handle(fromUnitOfWork(1, uow), Example1ProjectionHandler(), Handler { event1 ->
+      if (event1.failed()) {
+        tc.failNow(event1.cause())
         return@Handler
       }
-
-      readDb.preparedQuery("SELECT * FROM customer_summary") { ar3 ->
-
-        if (ar3.failed()) {
-          log.error("select", ar3.cause())
-          tc.failNow(ar3.cause())
+      readDb.preparedQuery("SELECT * FROM customer_summary") { event2 ->
+        if (event2.failed()) {
+          log.error("select", event2.cause())
+          tc.failNow(event2.cause())
           return@preparedQuery
         }
-
-        val result = ar3.result()
-
+        val result = event2.result()
         tc.verify { assertThat(1).isEqualTo(result.size()) }
         tc.verify { assertThat(created1.name).isEqualTo(result.first().getString("name")) }
         tc.verify { assertThat(result.first().getBoolean("is_active")).isFalse() }
-
         tc.completeNow()
-
       }
     })
+  }
 
+  @Test
+  @DisplayName("can project 4 events: created, activated, deactivated, activated")
+  fun a4(tc: VertxTestContext) {
 
+    val uow = UnitOfWork(UUID.randomUUID(), "Customer", customerId1.value, UUID.randomUUID(), "Whatsoever", createCmd1,
+      1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
+      Pair("CustomerDeactivated", deactivated1), Pair("CustomerActivated", activated1)))
+
+    eventProjector.handle(fromUnitOfWork(1, uow), Example1ProjectionHandler(), Handler { event1 ->
+      if (event1.failed()) {
+        tc.failNow(event1.cause())
+        return@Handler
+      }
+      readDb.preparedQuery("SELECT * FROM customer_summary") { event2 ->
+        if (event2.failed()) {
+          log.error("select", event2.cause())
+          tc.failNow(event2.cause())
+          return@preparedQuery
+        }
+        val result = event2.result()
+        tc.verify { assertThat(1).isEqualTo(result.size()) }
+        tc.verify { assertThat(created1.name).isEqualTo(result.first().getString("name")) }
+        tc.verify { assertThat(result.first().getBoolean("is_active")).isTrue() }
+        tc.completeNow()
+      }
+    })
+  }
+
+  @Test
+  @DisplayName("can project 5 events: created, activated, deactivated, activated, deactivated")
+  fun a5(tc: VertxTestContext) {
+
+    val uow = UnitOfWork(UUID.randomUUID(), "Customer", customerId1.value, UUID.randomUUID(), "Whatsoever", createCmd1,
+      1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
+      Pair("CustomerDeactivated", deactivated1), Pair("CustomerActivated", activated1),
+      Pair("CustomerDeactivated", deactivated1)))
+
+    eventProjector.handle(fromUnitOfWork(1, uow), Example1ProjectionHandler(), Handler { event1 ->
+      if (event1.failed()) {
+        tc.failNow(event1.cause())
+        return@Handler
+      }
+      readDb.preparedQuery("SELECT * FROM customer_summary") { event2 ->
+        if (event2.failed()) {
+          log.error("select", event2.cause())
+          tc.failNow(event2.cause())
+          return@preparedQuery
+        }
+        val result = event2.result()
+        tc.verify { assertThat(1).isEqualTo(result.size()) }
+        tc.verify { assertThat(created1.name).isEqualTo(result.first().getString("name")) }
+        tc.verify { assertThat(result.first().getBoolean("is_active")).isFalse() }
+        tc.completeNow()
+      }
+    })
+  }
+
+  @Test
+  @DisplayName("can project 6 events: created, activated, deactivated, activated, deactivated")
+  fun a6(tc: VertxTestContext) {
+
+    val uow = UnitOfWork(UUID.randomUUID(), "Customer", customerId1.value, UUID.randomUUID(), "Whatsoever", createCmd1,
+      1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
+      Pair("CustomerDeactivated", deactivated1), Pair("CustomerActivated", activated1),
+      Pair("CustomerDeactivated", deactivated1), Pair("CustomerActivated", activated1)))
+
+    eventProjector.handle(fromUnitOfWork(1, uow), Example1ProjectionHandler(), Handler { event1 ->
+      if (event1.failed()) {
+        tc.failNow(event1.cause())
+        return@Handler
+      }
+      readDb.preparedQuery("SELECT * FROM customer_summary") { event2 ->
+        if (event2.failed()) {
+          log.error("select", event2.cause())
+          tc.failNow(event2.cause())
+          return@preparedQuery
+        }
+        val result = event2.result()
+        tc.verify { assertThat(1).isEqualTo(result.size()) }
+        tc.verify { assertThat(created1.name).isEqualTo(result.first().getString("name")) }
+        tc.verify { assertThat(result.first().getBoolean("is_active")).isTrue() }
+        tc.completeNow()
+      }
+    })
   }
 
   @Test
   @DisplayName("cannot project more than 6 events within one transaction")
-  fun a4(tc: VertxTestContext) {
-
+  fun a7(tc: VertxTestContext) {
     val uow = UnitOfWork(UUID.randomUUID(), "Customer", customerId1.value, UUID.randomUUID(), "Whatsoever", createCmd1,
       1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1),  Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1), Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1)))
 
-    eventProjector.handle(fromUnitOfWork(1, uow), EXAMPLE1_PROJECTOR_HANDLER, Handler { result ->
+    eventProjector.handle(fromUnitOfWork(1, uow), Example1ProjectionHandler(), Handler { result ->
       if (result.failed()) {
         tc.completeNow()
         return@Handler
       }
       tc.failNow(IllegalArgumentException())
     })
-
   }
 
   @Test
   @DisplayName("on any any SQL error it must rollback all events projections")
-  fun a5(tc: VertxTestContext) {
-
-    val projectorToFail: ProjectorHandler =
-      { pgConn: PgTransaction, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
-
-        log.info("event {} ", event)
-
-        val future: Future<Void> = Future.future<Void>()
-
-        future.setHandler(handler)
-
-        when (event) {
-          is CustomerCreated -> {
-              val query = "INSERT INTO XXXXXX (id, name, is_active) VALUES ($1, $2, $3)"
-              val tuple = Tuple.of(targetId, event.name, false)
-              pgConn.runPreparedQuery(query, tuple, future)
-          }
-          is CustomerActivated -> {
-            val query = "UPDATE XXX SET is_active = true WHERE id = $1"
-            val tuple = Tuple.of(targetId)
-            pgConn.runPreparedQuery(query, tuple, future)
-          }
-          is CustomerDeactivated -> {
-            val query = "UPDATE XX SET is_active = false WHERE id = $1"
-            val tuple = Tuple.of(targetId)
-            pgConn.runPreparedQuery(query, tuple, future)
-          }
-          else -> {
-            future.fail("${event.javaClass.simpleName} does not have any event projector handler")
-            log.info("${event.javaClass.simpleName} does not have any event projector handler")
-          }
-        }
-
-        log.info("finished event {} ", event)
-      }
-
-
+  fun a10(tc: VertxTestContext) {
     val uow = UnitOfWork(UUID.randomUUID(), "Customer", created1.customerId.value, UUID.randomUUID(), "Whatsoever",
                                 createCmd1, 1, arrayListOf(Pair("CustomerCreated", created1)))
-
-    eventProjector.handle(fromUnitOfWork(1, uow), projectorToFail, Handler { result ->
-
+    eventProjector.handle(fromUnitOfWork(1, uow), BadProjectionHandler(), Handler { result ->
       if (result.succeeded()) {
         tc.failNow(result.cause())
         return@Handler
       }
-
       readDb.preparedQuery("SELECT * FROM customer_summary") { ar3 ->
-
         if (ar3.failed()) {
           log.error("select", ar3.cause())
           tc.failNow(ar3.cause())
           return@preparedQuery
         }
-
         val pgRowSet = ar3.result()
-
         tc.verify { assertThat(0).isEqualTo(pgRowSet.size()) }
-
         tc.completeNow()
-
       }
-
     })
-
   }
 
 }

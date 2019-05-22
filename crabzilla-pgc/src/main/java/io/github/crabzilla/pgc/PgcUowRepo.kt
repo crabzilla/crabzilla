@@ -136,9 +136,8 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
     }
   }
 
-  override fun selectAfterVersion(id: Int, version: Version,
-                                  aggregateRootName: String,
-                                  aHandler: Handler<AsyncResult<SnapshotEvents>>) {
+  override fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String,
+                                  aHandler: Handler<AsyncResult<RangeOfEvents>>) {
 
     log.trace("will load id [{}] after version [{}]", id, version)
 
@@ -158,7 +157,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
           // Fetch 100 rows at a time
           val tuple = Tuple.of( id, aggregateRootName, version)
           val stream = pq.createStream(100, tuple)
-          val list = ArrayList<SnapshotEvents>()
+          val list = ArrayList<RangeOfEvents>()
 
           // Use the stream
           stream.handler { row ->
@@ -170,15 +169,15 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
               jsonFunctions.eventFromJson(eventName, eventJson)
             }
             val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEventPair)
-            val snapshotData = SnapshotEvents(row.getInteger(1)!!, events)
+            val snapshotData = RangeOfEvents(version, row.getInteger(1)!!, events)
             list.add(snapshotData)
           }
 
           stream.endHandler {
             log.trace("found {} units of work for id {} and version > {}", list.size, id, version)
-            val finalVersion = if (list.size == 0) 0 else list[list.size - 1].version
+            val finalVersion = if (list.size == 0) 0 else list[list.size - 1].untilVersion
             val flatMappedToEvents = list.flatMap { sd -> sd.events }
-            aHandler.handle(Future.succeededFuture(SnapshotEvents(finalVersion, flatMappedToEvents)))
+            aHandler.handle(Future.succeededFuture(RangeOfEvents(version, finalVersion, flatMappedToEvents)))
           }
 
           stream.exceptionHandler { err ->

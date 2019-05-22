@@ -4,48 +4,49 @@ import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerDeactivated
-import io.github.crabzilla.pgc.ProjectorHandler
+import io.github.crabzilla.pgc.PgcEventProjectorHandler
 import io.github.crabzilla.pgc.runPreparedQuery
 import io.reactiverse.pgclient.PgTransaction
 import io.reactiverse.pgclient.Tuple
-import io.vertx.core.AsyncResult
 import io.vertx.core.Future
-import io.vertx.core.Handler
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("example1")
+class BadProjectionHandler : PgcEventProjectorHandler {
 
-val EXAMPLE1_PROJECTOR_HANDLER: ProjectorHandler = {
+  private val log = LoggerFactory.getLogger(BadProjectionHandler::class.java.name)
 
-  pgConn: PgTransaction, targetId: Int, event: DomainEvent, handler: Handler<AsyncResult<Void>> ->
+  override fun handle(pgConn: PgTransaction, targetId: Int, event: DomainEvent): Future<Void> {
 
     log.info("event {} ", event)
 
     val future: Future<Void> = Future.future<Void>()
-    future.setHandler(handler)
 
     when (event) {
       is CustomerCreated -> {
-        val query = "INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)"
+        val query = "INSERT INTO XXXXXX (id, name, is_active) VALUES ($1, $2, $3)"
         val tuple = Tuple.of(targetId, event.name, false)
         pgConn.runPreparedQuery(query, tuple, future)
       }
       is CustomerActivated -> {
-        val query = "UPDATE customer_summary SET is_active = true WHERE id = $1"
+        val query = "UPDATE XXX SET is_active = true WHERE id = $1"
         val tuple = Tuple.of(targetId)
         pgConn.runPreparedQuery(query, tuple, future)
       }
       is CustomerDeactivated -> {
-        val query = "UPDATE customer_summary SET is_active = false WHERE id = $1"
+        val query = "UPDATE XX SET is_active = false WHERE id = $1"
         val tuple = Tuple.of(targetId)
         pgConn.runPreparedQuery(query, tuple, future)
       }
       else -> {
-        val error = "${event.javaClass.simpleName} does not have any event projector handler"
-        log.info(error)
-        future.fail(error)
+        future.fail("${event.javaClass.simpleName} does not have any event projector handler")
+        log.info("${event.javaClass.simpleName} does not have any event projector handler")
       }
     }
 
     log.info("finished event {} ", event)
+
+    return future
+
+  }
+
 }

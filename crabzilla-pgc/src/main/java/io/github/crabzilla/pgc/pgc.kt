@@ -1,16 +1,8 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.DomainEvent
 import io.reactiverse.pgclient.PgTransaction
 import io.reactiverse.pgclient.Tuple
-import io.vertx.core.AsyncResult
 import io.vertx.core.Future
-import io.vertx.core.Handler
-
-typealias ProjectorHandler =
-  (pgConn: PgTransaction, targetId: Int, event: DomainEvent, future: Handler<AsyncResult<Void>>) -> Unit
-
-// extension function with helper for pgConn
 
 /**
  * https://dzone.com/articles/three-paradigms-of-asynchronous-programming-in-ver

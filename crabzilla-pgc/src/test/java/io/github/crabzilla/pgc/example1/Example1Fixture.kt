@@ -25,6 +25,8 @@ object Example1Fixture {
   val activatedUow1 = UnitOfWork(UUID.randomUUID(), customerEntityName, customerId1.value, UUID.randomUUID(),
     ACTIVATE.urlFriendly(), activateCmd1, 2, listOf(Pair("CustomerActivated", activated1)))
 
+  val createActivateCmd1 = CreateActivateCustomer("customer1", "bcz I can")
+
   val deactivated1 = CustomerDeactivated("a good reason", Instant.now())
 
   val customerJson = CustomerJson()

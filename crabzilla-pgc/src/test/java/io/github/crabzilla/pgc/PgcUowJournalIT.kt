@@ -120,6 +120,7 @@ class PgcUowJournalIT {
         repo.getUowByUowId(createdUow1.unitOfWorkId, uowFuture)
 
         uowFuture.setHandler { ar2 ->
+
           if (ar2.failed()) {
             tc.failNow(ar2.cause())
             return@setHandler
@@ -127,21 +128,23 @@ class PgcUowJournalIT {
 
           val uow = ar2.result()
 
-         tc.verify { assertThat(uow).isEqualTo(createdUow1) }
+          tc.verify { assertThat(uow).isEqualTo(createdUow1) }
 
-          val snapshotDataFuture = Future.future<SnapshotEvents>()
+          val rangeOfEventsFuture = Future.future<RangeOfEvents>()
 
-          repo.selectAfterVersion(createdUow1.entityId, 0, customerEntityName, snapshotDataFuture)
+          repo.selectAfterVersion(createdUow1.entityId, 0, customerEntityName, rangeOfEventsFuture)
 
-          snapshotDataFuture.setHandler { ar3 ->
+          rangeOfEventsFuture.setHandler { ar3 ->
             if (ar3.failed()) {
               tc.failNow(ar3.cause())
               return@setHandler
             }
 
-            val (version, events) = ar3.result()
+            val (afterVersion, untilVersion, events) = ar3.result()
 
-            tc.verify { assertThat(version).isEqualTo(createdUow1.version) }
+            tc.verify { assertThat(afterVersion).isEqualTo(0) }
+
+            tc.verify { assertThat(untilVersion).isEqualTo(createdUow1.version) }
 
             tc.verify { assertThat(events).isEqualTo(createdUow1.events) }
 
@@ -222,19 +225,20 @@ class PgcUowJournalIT {
           } else {
             val uowSequence = ar2.result()
             tc.verify { assertThat(uowSequence).isGreaterThan(2) }
-            val snapshotDataFuture = Future.future<SnapshotEvents>()
+            val rangeOfEventsFuture = Future.future<RangeOfEvents>()
 
             // get all versions for id
-            repo.selectAfterVersion(activatedUow1.entityId, 0, customerEntityName, snapshotDataFuture)
+            repo.selectAfterVersion(activatedUow1.entityId, 0, customerEntityName, rangeOfEventsFuture)
 
-            snapshotDataFuture.setHandler { ar4 ->
+            rangeOfEventsFuture.setHandler { ar4 ->
 
               if (ar4.failed()) {
                 tc.failNow(ar4.cause())
 
               } else {
-                val (version, events) = ar4.result()
-                tc.verify { assertThat(version).isEqualTo(activatedUow1.version) }
+                val (afterVersion, untilVersion, events) = ar4.result()
+                tc.verify { assertThat(afterVersion).isEqualTo(0) }
+                tc.verify { assertThat(untilVersion).isEqualTo(activatedUow1.version) }
                 tc.verify { assertThat(events.size).isEqualTo(2) }
                 tc.verify { assertThat(events[0]).isEqualTo(Pair("CustomerCreated", created1)) }
                 tc.verify { assertThat(events[1]).isEqualToIgnoringGivenFields(

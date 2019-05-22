@@ -27,8 +27,8 @@ object Crabzilla {
     vertx.eventBus().registerDefaultCodec(Snapshot::class.java,
       JacksonGenericCodec(Json.mapper, Snapshot::class.java))
 
-    vertx.eventBus().registerDefaultCodec(SnapshotEvents::class.java,
-      JacksonGenericCodec(Json.mapper, SnapshotEvents::class.java))
+    vertx.eventBus().registerDefaultCodec(RangeOfEvents::class.java,
+      JacksonGenericCodec(Json.mapper, RangeOfEvents::class.java))
 
     vertx.eventBus().registerDefaultCodec(UnitOfWork::class.java,
       JacksonGenericCodec(Json.mapper, UnitOfWork::class.java))

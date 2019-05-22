@@ -112,9 +112,7 @@ class PgcCmdHandlerVerticleIT {
 
     val customerId = CustomerId(1)
     val createCustomerCmd = CreateCustomer("customer1")
-    val commandMetadata = CommandMetadata(customerEntityName,
-      customerId.value,
-      CREATE.urlFriendly())
+    val commandMetadata = CommandMetadata(customerEntityName, customerId.value, CREATE.urlFriendly())
 
     val command = customerJson.cmdToJson(createCustomerCmd)
 
@@ -151,14 +149,12 @@ class PgcCmdHandlerVerticleIT {
     vertx.eventBus()
       .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(deploy.name), Pair(commandMetadata, command),
         options) { asyncResult ->
-        tc.verify {
           tc.verify { assertThat(asyncResult.succeeded()).isFalse() }
           val cause = asyncResult.cause() as ReplyException
           tc.verify { assertThat(cause.message).isEqualTo("[Invalid name: a bad name]") }
           tc.verify { assertThat(cause.failureCode()).isEqualTo(400) }
           tc.completeNow()
         }
-    }
 
   }
 
@@ -173,13 +169,11 @@ class PgcCmdHandlerVerticleIT {
     vertx.eventBus()
       .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(deploy.name), Pair(commandMetadata, command),
         options) { asyncResult ->
-        tc.verify {
-          tc.verify { assertThat(asyncResult.succeeded()).isFalse() }
-          val cause = asyncResult.cause() as ReplyException
-          tc.verify { assertThat(cause.message).isEqualTo("Command cannot be deserialized") }
-          tc.verify { assertThat(cause.failureCode()).isEqualTo(400) }
-          tc.completeNow()
-        }
+        tc.verify { assertThat(asyncResult.succeeded()).isFalse() }
+        val cause = asyncResult.cause() as ReplyException
+        tc.verify { assertThat(cause.message).isEqualTo("Command cannot be deserialized") }
+        tc.verify { assertThat(cause.failureCode()).isEqualTo(400) }
+        tc.completeNow()
     }
 
   }
