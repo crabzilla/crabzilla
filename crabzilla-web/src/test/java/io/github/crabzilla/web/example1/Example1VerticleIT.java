@@ -131,6 +131,7 @@ class Example1VerticleIT {
         .sendJson(cmdAsJson, tc.succeeding(response1 -> tc.verify(() -> {
             JsonObject uow = response1.body();
             System.out.println(uow.encodePrettily());
+            final String uowIdStr = uow.getString(UOW_ID);
             assertThat(uow.getString(UOW_ID)).isNotNull();
             assertThat(uow.getString(ENTITY_NAME)).isEqualTo("customer");
             assertThat(uow.getInteger(ENTITY_ID)).isEqualTo(customerId2);
@@ -139,7 +140,23 @@ class Example1VerticleIT {
             assertThat(uow.getJsonObject(COMMAND)).isEqualTo(cmdAsJson);
             assertThat(uow.getInteger(VERSION)).isEqualTo(1);
             assertThat(uow.getJsonArray(EVENTS).size()).isEqualTo(1);
-            tc.completeNow();
+            client.get(port, "0.0.0.0", "/units-of-work/" + uowIdStr)
+              .as(BodyCodec.jsonObject())
+              .expect(ResponsePredicate.SC_SUCCESS)
+              .expect(ResponsePredicate.JSON)
+              .send(tc.succeeding(response3 -> tc.verify(() -> {
+                JsonObject jo2 = response3.body();
+                assertThat(jo2.getString(UOW_ID)).isNotNull();
+                assertThat(jo2.getString(ENTITY_NAME)).isEqualTo("customer");
+                assertThat(jo2.getInteger(ENTITY_ID)).isEqualTo(customerId2);
+                assertThat(jo2.getString(COMMAND_ID)).isNotNull();
+                assertThat(jo2.getString(COMMAND_NAME)).isEqualTo("create");
+                assertThat(jo2.getJsonObject(COMMAND)).isEqualTo(cmdAsJson);
+                assertThat(jo2.getInteger(VERSION)).isEqualTo(1);
+                assertThat(jo2.getJsonArray(EVENTS).size()).isEqualTo(1);
+                System.out.println(jo2);
+                tc.completeNow();
+              })));
         }))
       );
     }

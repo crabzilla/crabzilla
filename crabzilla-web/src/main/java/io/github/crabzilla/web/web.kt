@@ -80,24 +80,21 @@ fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository, unitOfWorkI
 
   val httpResp = rc.response()
 
-  val uowFuture = Future.future<UnitOfWork>()
-  uowRepo.getUowByUowId(unitOfWorkId, uowFuture)
-
-  uowFuture.setHandler { uowResult ->
+  uowRepo.getUowByUowId(unitOfWorkId, Handler { uowResult ->
     if (uowResult.failed() || uowResult.result() == null) {
-      httpResp.statusCode = if (uowResult.result() == null) 404 else 500; httpResp.end()
+      httpResp.statusCode = if (uowResult.result() == null) 404 else 500;
+      httpResp.end()
     } else {
       val contentType = rc.request().getHeader("accept")
       httpResp.setStatusCode(200).setChunked(true).
         headers().add("Content-Type", "application/json")
       val effectiveResult: JsonObject = when (contentType) {
-        UNIT_OF_WORK_BODY -> JsonObject.mapFrom(uowResult.result())
         UNIT_OF_WORK_ID -> JsonObject().put(UNIT_OF_WORK_ID_PATH_PARAMETER, uowResult.result().unitOfWorkId.toString())
-        else -> JsonObject()
+        else -> JsonObject.mapFrom(uowResult.result())
       }
       httpResp.end(effectiveResult.encode())
     }
-  }
+  })
 
 }
 
@@ -109,7 +106,6 @@ fun <E : Entity> entityWriteModelHandler(rc: RoutingContext,
   log.info("Retrieving entity write model for $entityId")
 
   val httpResp = rc.response().setChunked(true)
-  val snapshotFuture = Future.future<Snapshot<E>>()
 
   snapshotRepo.retrieve(entityId, Handler { event ->
     if (event.failed()) {

@@ -119,6 +119,7 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       router.get("/units-of-work/:unitOfWorkId").handler {
         val uowId = UUID.fromString(it.pathParam("unitOfWorkId"))
+        println("retrieving uow $uowId")
         getUowHandler(it, customerDeployment.uowRepo.value, uowId)
       }
 
