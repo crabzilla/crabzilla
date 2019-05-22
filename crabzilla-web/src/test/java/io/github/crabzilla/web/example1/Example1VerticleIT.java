@@ -145,8 +145,28 @@ class Example1VerticleIT {
     }
 
     @Test
-    @DisplayName("You get a correspondent entity tracking")
+    @DisplayName("You get a correspondent snapshot (write model)")
     void a2(VertxTestContext tc) {
+      client.get(port, "0.0.0.0", "/customers/" + customerId2)
+        .putHeader("accept", ENTITY_WRITE_MODEL)
+        .as(BodyCodec.jsonObject())
+        .expect(ResponsePredicate.SC_SUCCESS)
+        .expect(ResponsePredicate.JSON)
+        .send(tc.succeeding(response2 -> tc.verify(() -> {
+          JsonObject jo = response2.body();
+          System.out.println(jo.encodePrettily());
+          assertThat(jo.getInteger("version")).isEqualTo(1);
+          JsonObject state = jo.getJsonObject("state");
+          assertThat(state.getInteger("customerId")).isEqualTo(customerId2);
+          assertThat(state.getString("name")).isEqualTo("customer#" + customerId2);
+          assertThat(state.getBoolean("isActive")).isFalse();
+          tc.completeNow();
+        })));
+    }
+
+    @Test
+    @DisplayName("You get a correspondent entity tracking")
+    void a3(VertxTestContext tc) {
       client.get(port, "0.0.0.0", "/customers/" + customerId2)
         .putHeader("accept", ENTITY_TRACKING)
         .as(BodyCodec.jsonObject())
@@ -154,6 +174,7 @@ class Example1VerticleIT {
         .expect(ResponsePredicate.JSON)
         .send(tc.succeeding(response2 -> tc.verify(() -> {
           JsonObject jo = response2.body();
+          System.out.println(jo.encodePrettily());
           JsonObject snapshot = jo.getJsonObject("snapshot");
           assertThat(snapshot.getInteger("version")).isEqualTo(1);
           JsonObject state = snapshot.getJsonObject("state");
@@ -161,7 +182,6 @@ class Example1VerticleIT {
           assertThat(state.getString("name")).isEqualTo("customer#" + customerId2);
           assertThat(state.getBoolean("isActive")).isFalse();
           assertThat(jo.getJsonArray("units_of_work").size()).isEqualTo(1);
-          System.out.println(jo.encodePrettily());
           tc.completeNow();
         })));
     }

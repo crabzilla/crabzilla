@@ -5,8 +5,11 @@ import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.UnitOfWorkEvents
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.example1.EXAMPLE1_PROJECTOR_HANDLER
-import io.github.crabzilla.pgc.example1.Example1Fixture.DEPLOY_CUSTOMER
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerDeploymentFn
+import io.github.crabzilla.web.ContentTypes.ENTITY_TRACKING
+import io.github.crabzilla.web.ContentTypes.ENTITY_WRITE_MODEL
 import io.github.crabzilla.web.entityTrackingHandler
+import io.github.crabzilla.web.entityWriteModelHandler
 import io.github.crabzilla.web.getUowHandler
 import io.github.crabzilla.web.postCommandHandler
 import io.reactiverse.pgclient.PgClient
@@ -96,7 +99,7 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       // write model
 
-      val customerDeployment = DEPLOY_CUSTOMER(writeDb)
+      val customerDeployment = customerDeploymentFn(writeDb)
 
       vertx.deployVerticle(customerDeployment.cmdHandlerVerticle)
 
@@ -116,12 +119,23 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       router.get("/units-of-work/:unitOfWorkId").handler {
         val uowId = UUID.fromString(it.pathParam("unitOfWorkId"))
-        getUowHandler(it, customerDeployment.uowRepo, uowId) }
+        getUowHandler(it, customerDeployment.uowRepo, uowId)
+      }
 
       router.get("/customers/:entityId").handler {
         val customerId = it.pathParam(COMMAND_ENTITY_ID_PARAMETER).toInt()
-        entityTrackingHandler(it, customerId, customerDeployment.uowRepo, customerDeployment.snapshotRepo)
-        { customer -> customerDeployment.ejson.toJson(customer) }
+        println(it.request().getHeader("accept"))
+        when (it.request().getHeader("accept")) {
+          ENTITY_TRACKING -> entityTrackingHandler(it, customerId, customerDeployment.uowRepo, customerDeployment.snapshotRepo)
+          { customer -> customerDeployment.ejson.toJson(customer) }
+          ENTITY_WRITE_MODEL -> entityWriteModelHandler(it, customerId, customerDeployment.snapshotRepo)
+          { customer -> customerDeployment.ejson.toJson(customer) }
+          else -> {
+            readDb.preparedQuery("select * from customer_summary") { event1 ->
+              println("*** read model: " + event1.result().toString())
+            }
+          }
+        } // TODO plug read model handler as default
 
       }
 

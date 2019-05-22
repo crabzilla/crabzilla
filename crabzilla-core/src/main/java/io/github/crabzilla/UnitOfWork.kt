@@ -14,6 +14,7 @@ data class UnitOfWork(val unitOfWorkId: UUID,
   init { require(this.version >= 1) { "version must be >= 1" } }
 
   companion object {
+    @JvmStatic
     fun of(entityId: Int, entityName: String, commandId: UUID, commandName: String, command: Command,
            events: List<DomainEvent>, resultingVersion: Version): UnitOfWork {
       return UnitOfWork(UUID.randomUUID(), entityName, entityId, commandId, commandName, command, resultingVersion,

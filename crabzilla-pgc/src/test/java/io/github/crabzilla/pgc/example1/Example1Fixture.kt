@@ -29,7 +29,7 @@ object Example1Fixture {
 
   val customerJson = CustomerJson()
 
-  val DEPLOY_CUSTOMER: (writeDb: PgPool) -> PgcEntityDeployment<Customer> = { pgPool ->
+  val customerDeploymentFn: (writeDb: PgPool) -> PgcEntityDeployment<Customer> = { pgPool ->
     PgcEntityDeployment(customerEntityName, CustomerJson(), CustomerStateFn(), CustomerCmdFn(), pgPool)
   }
 

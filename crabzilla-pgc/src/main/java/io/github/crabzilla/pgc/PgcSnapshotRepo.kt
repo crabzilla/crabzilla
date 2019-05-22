@@ -73,13 +73,17 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
 
         // TODO how to specify transaction isolation level?
         // Begin the transaction
-        val tx: PgTransaction = conn.begin().abortHandler { log.error("Transaction failed") }
+        val tx: PgTransaction = conn.begin().abortHandler {
+            log.error("Transaction aborted")
+            future.fail("Transaction aborted")
+        }
 
         // get current snapshot
         conn.preparedQuery(selectSnapshot(), Tuple.of(entityId)) { event1 ->
 
           if (event1.failed()) {
-            tx.rollback(); conn.close(); future.fail(event1.cause())
+            conn.close()
+            future.fail(event1.cause())
             return@preparedQuery
 
           } else {
@@ -100,7 +104,9 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
             conn.prepare(SELECT_EVENTS_VERSION_AFTER_VERSION) { event2 ->
 
               if (!event2.succeeded()) {
-                tx.rollback(); conn.close(); future.fail(event2.cause()); return@prepare
+                conn.close()
+                future.fail(event2.cause())
+                return@prepare
 
               } else {
                 var currentInstance = cachedInstance

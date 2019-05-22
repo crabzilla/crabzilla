@@ -15,13 +15,6 @@ import io.vertx.ext.web.RoutingContext
 import org.slf4j.LoggerFactory
 import java.util.*
 
-object ContentTypes {
-  const val UNIT_OF_WORK_ID = "application/vnd.crabzilla.unit-of-work-id+json"
-  const val UNIT_OF_WORK_BODY = "application/vnd.crabzilla.unit-of-work+json"
-  const val ENTITY_WRITE_MODEL = "application/vnd.crabzilla.entity-write-model+json"
-  const val ENTITY_TRACKING = "application/vnd.crabzilla.entity-tracking+json"
-}
-
 private const val UNIT_OF_WORK_ID_PATH_PARAMETER = "unitOfWorkId"
 
 private val log = LoggerFactory.getLogger("CrabzillaWebHandlers")
@@ -43,7 +36,8 @@ fun postCommandHandler(rc: RoutingContext, cmdMetadata: CommandMetadata, project
   val begin = System.currentTimeMillis()
 
   rc.vertx().eventBus()
-    .send<Pair<UnitOfWork, Int>>(cmdMetadata.handlerEndpoint(), Pair(cmdMetadata, commandJson)) { response ->
+    .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(cmdMetadata.entityName), Pair(cmdMetadata, commandJson)) {
+      response ->
 
       val end = System.currentTimeMillis()
       log.info("received response in " + (end - begin) + " ms")
@@ -112,6 +106,8 @@ fun <E : Entity> entityWriteModelHandler(rc: RoutingContext,
                                          snapshotRepo: SnapshotRepository<E>,
                                          entityToJson: (E) -> JsonObject) {
 
+  log.info("Retrieving entity write model for $entityId")
+
   val httpResp = rc.response().setChunked(true)
   val snapshotFuture = Future.future<Snapshot<E>>()
 
@@ -121,7 +117,7 @@ fun <E : Entity> entityWriteModelHandler(rc: RoutingContext,
       return@Handler
     }
 
-    val snapshot = snapshotFuture.result()
+    val snapshot = event.result()
     val snapshotJson = JsonObject().put("state", entityToJson.invoke(snapshot.state)).put("version", snapshot.version)
     if (snapshot.version > 0) {
       httpResp.headers().add("Content-Type", "application/json")

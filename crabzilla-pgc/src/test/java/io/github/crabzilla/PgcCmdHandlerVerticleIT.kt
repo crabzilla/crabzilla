@@ -5,9 +5,9 @@ import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
 import io.github.crabzilla.example1.CustomerId
 import io.github.crabzilla.pgc.PgcCmdHandlerVerticle
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerDeploymentFn
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
-import io.github.crabzilla.pgc.example1.Example1Fixture.DEPLOY_CUSTOMER
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -76,7 +76,7 @@ class PgcCmdHandlerVerticleIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      verticle = PgcCmdHandlerVerticle(DEPLOY_CUSTOMER(writeDb))
+      verticle = PgcCmdHandlerVerticle(customerDeploymentFn(writeDb))
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {
@@ -116,7 +116,7 @@ class PgcCmdHandlerVerticleIT {
     val command = customerJson.cmdToJson(createCustomerCmd)
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(DEPLOY_CUSTOMER(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
+      .send<Pair<UnitOfWork, Int>>(customerDeploymentFn(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
         options) { asyncResult ->
         if (asyncResult.failed()) {
           tc.failNow(asyncResult.cause())
@@ -142,7 +142,7 @@ class PgcCmdHandlerVerticleIT {
     val command = customerJson.cmdToJson(createCustomerCmd)
 
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(DEPLOY_CUSTOMER(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
+      .send<Pair<UnitOfWork, Int>>(customerDeploymentFn(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
         options) { asyncResult ->
         tc.verify {
           tc.verify { assertThat(asyncResult.succeeded()).isFalse() }
@@ -162,7 +162,7 @@ class PgcCmdHandlerVerticleIT {
     val commandMetadata = CommandMetadata(customerEntityName, customerId.value, "unknown")
     val command = JsonObject()
     vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(DEPLOY_CUSTOMER(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
+      .send<Pair<UnitOfWork, Int>>(customerDeploymentFn(writeDb).cmdHandlerEndpoint(), Pair(commandMetadata, command),
         options) { asyncResult ->
         tc.verify {
           tc.verify { assertThat(asyncResult.succeeded()).isFalse() }
