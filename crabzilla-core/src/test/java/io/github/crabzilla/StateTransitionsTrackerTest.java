@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockitoAnnotations;
 
 import java.time.Instant;
 
@@ -24,11 +23,6 @@ class StateTransitionsTrackerTest {
 
   final Customer customer = new Customer();
   final Snapshot<Customer> originalSnapshot = new Snapshot<>(customer, 0);
-
-  @BeforeEach
-  void instantiate() {
-    MockitoAnnotations.initMocks(this);
-  }
 
   @Test
   void can_be_instantiated() {

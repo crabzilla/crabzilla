@@ -13,10 +13,12 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
   companion object {
     internal val log = getLogger(PgcUowProjector::class.java)
     const val NUMBER_OF_FUTURES = 6 // same as CompositeFuture limit
+    const val SQL_UPDATE_PROJECTIONS = """insert into projections (name, last_uow) values ($1, $2) on conflict (name)
+      do update set last_uow = $2"""
   }
 
   init {
-    log.info("starting events projector: $name")
+    log.info("starting uow projector: $name")
   }
 
   fun handle(uowEvents: UnitOfWorkEvents, projector: PgcEventProjector, handler: Handler<AsyncResult<Void>>) {
@@ -32,10 +34,11 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
 
         val tx = event1.result()
 
-        val futures = ArrayList<Future<Void>>()
-        for (pair in uowEvents.events) {
-          futures.add(projector.handle(tx, uowEvents.entityId, pair.second))
+        val toFuture: (Int) -> Future<Void> = { index ->
+          projector.handle(tx, uowEvents.entityId, uowEvents.events[index].second)
         }
+
+        val futures: List<Future<Void>> = List(uowEvents.events.size, toFuture)
 
         val future: Future<Void> = when (futures.size) {
           1 -> futures[0]
@@ -49,9 +52,7 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
 
         future.setHandler { event2 ->
           if (event2.succeeded()) {
-            tx.preparedQuery("insert into projections (name, last_uow) " +
-              "values ($1, $2) on conflict (name) do update set last_uow = $2",
-              Tuple.of(name, uowEvents.uowSequence)) { event3 ->
+            tx.preparedQuery(SQL_UPDATE_PROJECTIONS, Tuple.of(name, uowEvents.uowSequence)) { event3 ->
               if (event3.failed()) {
                 handler.handle(Future.failedFuture(event3.cause()))
                 return@preparedQuery
