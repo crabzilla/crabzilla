@@ -63,7 +63,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
     writeModelDb.getConnection { res ->
 
       if (!res.succeeded()) {
-        future.fail("retrieve.getConnection")
+        future.fail(res.cause())
         return@getConnection
 
       } else {
