@@ -20,7 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.util.Random;
 
@@ -131,7 +130,7 @@ class Example1VerticleIT {
         .putHeader("accept", UNIT_OF_WORK_BODY)
         .sendJson(cmdAsJson, tc.succeeding(response1 -> tc.verify(() -> {
             JsonObject uow = response1.body();
-            BigInteger uowId = BigInteger.valueOf(new Long(response1.getHeader("uowId")));
+            Long uowId = Long.valueOf(response1.getHeader("uowId"));
             assertThat(uowId).isPositive();
             System.out.println(uowId);
             System.out.println(uow.encodePrettily());

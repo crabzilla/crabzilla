@@ -29,7 +29,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
-import java.math.BigInteger
 import java.util.*
 
 @ExtendWith(VertxExtension::class)
@@ -116,13 +115,13 @@ class PgcUowJournalIT {
           return@Handler
         }
 
-        val uowSequence: BigInteger = event1.result()
+        val uowId: Long = event1.result()
 
-        tc.verify { assertThat(uowSequence).isGreaterThan(BigInteger.ZERO) }
+        tc.verify { assertThat(uowId).isGreaterThan(0) }
 
         val uowFuture = Future.future<UnitOfWork>()
 
-        repo.getUowByUowId(uowSequence, uowFuture)
+        repo.getUowByUowId(uowId, uowFuture)
 
         uowFuture.setHandler { ar2 ->
 
@@ -166,7 +165,7 @@ class PgcUowJournalIT {
   @DisplayName("cannot append version 1 twice")
   fun s2(tc: VertxTestContext) {
 
-    val appendFuture1 = Future.future<BigInteger>()
+    val appendFuture1 = Future.future<Long>()
 
     // append uow1
     journal.append(createdUow1, appendFuture1)
@@ -178,11 +177,11 @@ class PgcUowJournalIT {
         return@setHandler
       }
 
-      val uowSequence = ar1.result()
+      val uowId = ar1.result()
 
-      tc.verify { assertThat(uowSequence).isGreaterThan(BigInteger.ZERO) }
+      tc.verify { assertThat(uowId).isGreaterThan(0) }
 
-      val appendFuture2 = Future.future<BigInteger>()
+      val appendFuture2 = Future.future<Long>()
 
       // try to append uow1 again
       journal.append(createdUow1, appendFuture2)
@@ -205,7 +204,7 @@ class PgcUowJournalIT {
   @DisplayName("cannot append version 3 after version 1")
   fun s22(tc: VertxTestContext) {
 
-    val appendFuture1 = Future.future<BigInteger>()
+    val appendFuture1 = Future.future<Long>()
 
     val createdUow3 = UnitOfWork(customerEntityName, customerId1.value, UUID.randomUUID(),
       CustomerCommandEnum.CREATE.urlFriendly(), Example1Fixture.createCmd1, 3, listOf(Pair("CustomerCreated", created1)))
@@ -220,11 +219,11 @@ class PgcUowJournalIT {
         return@setHandler
       }
 
-      val uowSequence = ar1.result()
+      val uowId = ar1.result()
 
-      tc.verify { assertThat(uowSequence).isGreaterThan(BigInteger.ZERO) }
+      tc.verify { assertThat(uowId).isGreaterThan(0) }
 
-      val appendFuture2 = Future.future<BigInteger>()
+      val appendFuture2 = Future.future<Long>()
 
       // try to append uow1 again
       journal.append(createdUow3, appendFuture2)
@@ -246,7 +245,7 @@ class PgcUowJournalIT {
   @DisplayName("can append version 1 and version 2")
   fun s3(tc: VertxTestContext) {
 
-    val appendFuture1 = Future.future<BigInteger>()
+    val appendFuture1 = Future.future<Long>()
 
     // append uow1
     journal.append(createdUow1, appendFuture1)
@@ -257,9 +256,9 @@ class PgcUowJournalIT {
         tc.failNow(ar1.cause())
       } else {
 
-        val uowSequence = ar1.result()
-        tc.verify { assertThat(uowSequence).isGreaterThan(BigInteger.ZERO) }
-        val appendFuture2 = Future.future<BigInteger>()
+        val uowId = ar1.result()
+        tc.verify { assertThat(uowId).isGreaterThan(0) }
+        val appendFuture2 = Future.future<Long>()
 
         // append uow2
         journal.append(activatedUow1, appendFuture2)
@@ -270,8 +269,8 @@ class PgcUowJournalIT {
             tc.failNow(ar2.cause())
 
           } else {
-            val uowSequence = ar2.result()
-            tc.verify { assertThat(uowSequence).isGreaterThan(BigInteger.valueOf(2)) }
+            val uowId = ar2.result()
+            tc.verify { assertThat(uowId).isGreaterThan(2) }
             val rangeOfEventsFuture = Future.future<RangeOfEvents>()
 
             // get all versions for id

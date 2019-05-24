@@ -6,7 +6,6 @@ import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
-import java.math.BigInteger
 import java.util.concurrent.atomic.AtomicReference
 
 class PgcCmdHandlerVerticle<E : Entity>(private val ed: PgcEntityDeployment<E>) : AbstractVerticle() {
@@ -43,7 +42,7 @@ class PgcCmdHandlerVerticle<E : Entity>(private val ed: PgcEntityDeployment<E>) 
         return@Handler
       }
 
-      val resultFuture : Future<Pair<UnitOfWork, BigInteger>> = Future.future()
+      val resultFuture : Future<Pair<UnitOfWork, Long>> = Future.future()
 
       resultFuture.setHandler { event ->
         if (event.failed()) {
@@ -61,7 +60,7 @@ class PgcCmdHandlerVerticle<E : Entity>(private val ed: PgcEntityDeployment<E>) 
 
       val snapshotValue: AtomicReference<Snapshot<E>> = AtomicReference()
       val uowValue: AtomicReference<UnitOfWork> = AtomicReference()
-      val uowSeqValue: AtomicReference<BigInteger> = AtomicReference()
+      val uowSeqValue: AtomicReference<Long> = AtomicReference()
 
       snapshotFuture
 
@@ -77,16 +76,16 @@ class PgcCmdHandlerVerticle<E : Entity>(private val ed: PgcEntityDeployment<E>) 
 
         .compose { unitOfWork ->
           log.info("got unitOfWork $unitOfWork")
-          val appendFuture = Future.future<BigInteger>()
+          val appendFuture = Future.future<Long>()
           // append to journal
           ed.uowJournal.value.append(unitOfWork, appendFuture)
           uowValue.set(unitOfWork)
           appendFuture
         }
 
-        .compose { uowSequence ->
-          log.trace("got uowSequence $uowSequence")
-          uowSeqValue.set(uowSequence)
+        .compose { uowId ->
+          log.trace("got uowId $uowId")
+          uowSeqValue.set(uowId)
           val updateSnapshotFuture = Future.future<Void>()
 
           // compute new snapshot
@@ -102,7 +101,7 @@ class PgcCmdHandlerVerticle<E : Entity>(private val ed: PgcEntityDeployment<E>) 
 
         .compose( {
           // set result
-          val pair: Pair<UnitOfWork, BigInteger> = Pair(uowValue.get(), uowSeqValue.get())
+          val pair: Pair<UnitOfWork, Long> = Pair(uowValue.get(), uowSeqValue.get())
           log.info("command handling success: $pair")
           resultFuture.complete(pair)
 

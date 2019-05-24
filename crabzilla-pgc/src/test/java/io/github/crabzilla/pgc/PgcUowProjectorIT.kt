@@ -30,7 +30,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
-import java.math.BigInteger
 import java.util.*
 import io.github.crabzilla.UnitOfWork.Companion as UnitOfWork1
 
@@ -47,7 +46,7 @@ class PgcUowProjectorIT {
 
     // tip on how producers must fold events
     //      val groups = projectionDataList
-    //        .flatMap { (_, uowSequence, targetId, events) -> events.map { Triple(uowSequence, targetId, it) }}
+    //        .flatMap { (_, uowId, targetId, events) -> events.map { Triple(uowId, targetId, it) }}
     //        .chunked(numberOfFutures)
     //
 
@@ -122,7 +121,7 @@ class PgcUowProjectorIT {
     val uow = UnitOfWork("Customer", customerId1.value, UUID.randomUUID(), "Whatsoever", createCmd1,
       1, arrayListOf(Pair("CustomerCreated", created1)))
 
-    uowProjector.handle(fromUnitOfWork(BigInteger.ONE, uow), Example1EventProjector(), Handler { event1 ->
+    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@Handler
@@ -149,7 +148,7 @@ class PgcUowProjectorIT {
     val uow = UnitOfWork("Customer", customerId1.value, UUID.randomUUID(), "Whatsoever",
       createActivateCmd1, 1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1)))
 
-    uowProjector.handle(fromUnitOfWork(BigInteger.ONE, uow), Example1EventProjector(), Handler { event1 ->
+    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@Handler
@@ -177,7 +176,7 @@ class PgcUowProjectorIT {
       1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1)))
 
-    uowProjector.handle(fromUnitOfWork(BigInteger.ONE, uow), Example1EventProjector(), Handler { event1 ->
+    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@Handler
@@ -205,7 +204,7 @@ class PgcUowProjectorIT {
       1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1), Pair("CustomerActivated", activated1)))
 
-    uowProjector.handle(fromUnitOfWork(BigInteger.ONE, uow), Example1EventProjector(), Handler { event1 ->
+    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@Handler
@@ -234,7 +233,7 @@ class PgcUowProjectorIT {
       Pair("CustomerDeactivated", deactivated1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1)))
 
-    uowProjector.handle(fromUnitOfWork(BigInteger.ONE, uow), Example1EventProjector(), Handler { event1 ->
+    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@Handler
@@ -263,7 +262,7 @@ class PgcUowProjectorIT {
       Pair("CustomerDeactivated", deactivated1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1), Pair("CustomerActivated", activated1)))
 
-    uowProjector.handle(fromUnitOfWork(BigInteger.ONE, uow), Example1EventProjector(), Handler { event1 ->
+    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@Handler
@@ -292,7 +291,7 @@ class PgcUowProjectorIT {
       Pair("CustomerDeactivated", deactivated1), Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1)))
 
-    uowProjector.handle(fromUnitOfWork(BigInteger.ONE, uow), Example1EventProjector(), Handler { result ->
+    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { result ->
       if (result.failed()) {
         tc.completeNow()
         return@Handler
@@ -306,7 +305,7 @@ class PgcUowProjectorIT {
   fun a10(tc: VertxTestContext) {
     val uow = UnitOfWork( "Customer", created1.customerId.value, UUID.randomUUID(), "Whatsoever",
                                 createCmd1, 1, arrayListOf(Pair("CustomerCreated", created1)))
-    uowProjector.handle(fromUnitOfWork(BigInteger.ONE, uow), BadEventProjector(), Handler { result ->
+    uowProjector.handle(fromUnitOfWork(1, uow), BadEventProjector(), Handler { result ->
       if (result.succeeded()) {
         tc.failNow(result.cause())
         return@Handler

@@ -6,7 +6,6 @@ import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.math.BigInteger
 import java.util.*
 
 class UnitOfWorkEventsTest {
@@ -19,9 +18,9 @@ class UnitOfWorkEventsTest {
     val uow = UnitOfWork("customer", 1, UUID.randomUUID(), CustomerCommandEnum.CREATE.urlFriendly(),
       command, 1, listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(CustomerId(1), "cust#1"))))
 
-    val pd = UnitOfWorkEvents.fromUnitOfWork(BigInteger.ONE, uow)
+    val pd = UnitOfWorkEvents.fromUnitOfWork(1, uow)
 
-    assertThat(pd.uowSequence).isEqualTo(1)
+    assertThat(pd.uowId).isEqualTo(1)
     assertThat(pd.entityId).isEqualTo(uow.entityId)
     assertThat(pd.events).isEqualTo(uow.events)
 

@@ -13,7 +13,6 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.RoutingContext
 import org.slf4j.LoggerFactory
-import java.math.BigInteger
 
 private const val UNIT_OF_WORK_ID_PATH_PARAMETER = "unitOfWorkId"
 
@@ -36,7 +35,7 @@ fun postCommandHandler(rc: RoutingContext, cmdMetadata: CommandMetadata, project
   val begin = System.currentTimeMillis()
 
   rc.vertx().eventBus()
-    .send<Pair<UnitOfWork, BigInteger>>(cmdHandlerEndpoint(cmdMetadata.entityName), Pair(cmdMetadata, commandJson)) {
+    .send<Pair<UnitOfWork, Long>>(cmdHandlerEndpoint(cmdMetadata.entityName), Pair(cmdMetadata, commandJson)) {
       response ->
 
       val end = System.currentTimeMillis()
@@ -49,7 +48,7 @@ fun postCommandHandler(rc: RoutingContext, cmdMetadata: CommandMetadata, project
         return@send
       }
 
-      val result = response.result().body() as Pair<UnitOfWork, BigInteger>
+      val result = response.result().body() as Pair<UnitOfWork, Long>
 
       with(result) {
 
@@ -77,7 +76,7 @@ fun postCommandHandler(rc: RoutingContext, cmdMetadata: CommandMetadata, project
 
 }
 
-fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository, unitOfWorkId: BigInteger) {
+fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository, unitOfWorkId: Long) {
 
   val httpResp = rc.response()
 

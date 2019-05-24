@@ -29,7 +29,6 @@ import io.vertx.junit5.VertxTestContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
-import java.math.BigInteger
 
 
 @ExtendWith(VertxExtension::class)
@@ -120,8 +119,8 @@ class PgcUowRepoIT {
         ar1.cause().printStackTrace()
         tc.failNow(ar1.cause())
       }
-      val uowSequence = ar1.result().first().getLong(0)
-      tc.verify { tc.verify { assertThat(uowSequence).isGreaterThan(0) } }
+      val uowId = ar1.result().first().getLong(0)
+      tc.verify { tc.verify { assertThat(uowId).isGreaterThan(0) } }
       val selectFuture = Future.future<UnitOfWork>()
       selectFuture.setHandler { ar2 ->
         if (ar2.failed()) {
@@ -153,9 +152,9 @@ class PgcUowRepoIT {
       if (ar1.failed()) {
         tc.failNow(ar1.cause())
       }
-      val uowSequence = ar1.result().first().getNumeric("uow_id").bigIntegerValue()
-      tc.verify { assertThat(uowSequence).isGreaterThan(BigInteger.ZERO) }
-      repo.getUowByUowId(uowSequence, Handler { ar2 ->
+      val uowId = ar1.result().first().getNumeric("uow_id").toLong()
+      tc.verify { assertThat(uowId).isGreaterThan(0) }
+      repo.getUowByUowId(uowId, Handler { ar2 ->
         if (ar2.failed()) {
           tc.failNow(ar2.cause())
         }
@@ -176,7 +175,7 @@ class PgcUowRepoIT {
     @DisplayName("can queries an empty repo")
     fun a1(tc: VertxTestContext) {
       val selectFuture = Future.future<List<UnitOfWorkEvents>>()
-      repo.selectAfterUowId(BigInteger.ONE, 100, selectFuture)
+      repo.selectAfterUowId(1, 100, selectFuture)
       selectFuture.setHandler { selectAsyncResult ->
         val snapshotData = selectAsyncResult.result()
         tc.verify { assertThat(snapshotData.size).isEqualTo(0) }
@@ -204,14 +203,14 @@ class PgcUowRepoIT {
           ar.cause().printStackTrace()
           tc.failNow(ar.cause())
         }
-        val uowSequence = ar.result().first().getLong(0)
-        tc.verify { assertThat(uowSequence).isGreaterThan(0) }
-        repo.selectAfterUowId(BigInteger.ZERO, 100, selectFuture)
+        val uowId = ar.result().first().getLong(0)
+        tc.verify { assertThat(uowId).isGreaterThan(0) }
+        repo.selectAfterUowId(0, 100, selectFuture)
         selectFuture.setHandler { selectAsyncResult ->
           val snapshotData = selectAsyncResult.result()
           tc.verify { assertThat(snapshotData.size).isEqualTo(1) }
-          val (uowSequence, targetId, events) = snapshotData[0]
-          tc.verify { assertThat(uowSequence).isGreaterThan(BigInteger.ZERO) }
+          val (uowId, targetId, events) = snapshotData[0]
+          tc.verify { assertThat(uowId).isGreaterThan(0) }
           tc.verify { assertThat(targetId).isEqualTo(customerId1.value) }
           tc.verify { assertThat(events).isEqualTo(arrayListOf(Pair("CustomerCreated", created1))) }
           tc.completeNow()
@@ -255,16 +254,16 @@ class PgcUowRepoIT {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
           }
-          repo.selectAfterUowId(BigInteger.ZERO, 100, selectFuture1)
+          repo.selectAfterUowId(0, 100, selectFuture1)
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(snapshotData.size).isEqualTo(2) }
-            val (uowSequence1, targetId1, events1) = snapshotData[0]
-            tc.verify { assertThat(uowSequence1).isGreaterThan(BigInteger.ZERO) }
+            val (uowId1, targetId1, events1) = snapshotData[0]
+            tc.verify { assertThat(uowId1).isGreaterThan(0) }
             tc.verify { assertThat(targetId1).isEqualTo(customerId1.value) }
             tc.verify { assertThat(events1).isEqualTo(arrayListOf(Pair("CustomerCreated", created1))) }
-            val (uowSequence2, targetId2, events2) = snapshotData[1]
-            tc.verify { assertThat(uowSequence2).isEqualTo(uowSequence1.inc()) }
+            val (uowId2, targetId2, events2) = snapshotData[1]
+            tc.verify { assertThat(uowId2).isEqualTo(uowId1.inc()) }
             tc.verify { assertThat(targetId2).isEqualTo(customerId1.value) }
             tc.verify { assertThat(events2).isEqualTo(arrayListOf(Pair("CustomerActivated", activated1))) }
             tc.completeNow()
@@ -347,7 +346,7 @@ class PgcUowRepoIT {
           ar1.cause().printStackTrace()
           tc.failNow(ar1.cause())
         }
-        val uowSequence1 = ar1.result().first().getNumeric("uow_id").bigIntegerValue()
+        val uowId1 = ar1.result().first().getNumeric("uow_id").toLong()
         val tuple2 = Tuple.of(
           io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
@@ -361,13 +360,13 @@ class PgcUowRepoIT {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
           }
-          val uowSequence2 = ar2.result().first().getInteger("uow_id")
-          repo.selectAfterUowId(uowSequence1, 100, selectFuture1)
+          val uowId2 = ar2.result().first().getNumeric("uow_id").toLong()
+          repo.selectAfterUowId(uowId1, 100, selectFuture1)
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(snapshotData.size).isEqualTo(1) }
-            val (uowSequence, targetId, events) = snapshotData[0]
-            tc.verify { assertThat(uowSequence).isEqualTo(uowSequence2) }
+            val (uowId, targetId, events) = snapshotData[0]
+            tc.verify { assertThat(uowId).isEqualTo(uowId2) }
             tc.verify { assertThat(targetId).isEqualTo(customerId1.value) }
             tc.verify { assertThat(events).isEqualTo(arrayListOf(Pair("CustomerActivated", activated1))) }
             tc.completeNow()
@@ -400,8 +399,8 @@ class PgcUowRepoIT {
           ar.cause().printStackTrace()
           tc.failNow(ar.cause())
         }
-        val uowSequence = ar.result().first().getLong(0)
-        tc.verify { assertThat(uowSequence).isGreaterThan(0) }
+        val uowId = ar.result().first().getLong(0)
+        tc.verify { assertThat(uowId).isGreaterThan(0) }
         val selectFuture = Future.future<RangeOfEvents>()
         repo.selectAfterVersion(customerId1.value, 0, customerEntityName, selectFuture.completer())
         selectFuture.setHandler { selectAsyncResult ->
@@ -481,7 +480,7 @@ class PgcUowRepoIT {
           tc.failNow(ar1.cause())
           return@preparedQuery
         }
-        val uowSequence1 = ar1.result().first().getLong("uow_id")
+        val uowId1 = ar1.result().first().getLong("uow_id")
         val tuple2 = Tuple.of(
           io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
@@ -496,7 +495,7 @@ class PgcUowRepoIT {
             tc.failNow(ar2.cause())
             return@preparedQuery
           }
-          val uowSequence2 = ar2.result().first().getLong("uow_id")
+          val uowId2 = ar2.result().first().getLong("uow_id")
           val selectFuture1 = Future.future<RangeOfEvents>()
           repo.selectAfterVersion(customerId1.value, 1, customerEntityName, selectFuture1.completer())
           selectFuture1.setHandler { selectAsyncResult ->
@@ -514,7 +513,7 @@ class PgcUowRepoIT {
   @DisplayName("can queries only above version 1")
   fun s4(tc: VertxTestContext) {
 
-    val appendFuture1 = Future.future<BigInteger>()
+    val appendFuture1 = Future.future<Long>()
 
     // append uow1
     journal.append(createdUow1, appendFuture1)
@@ -525,9 +524,9 @@ class PgcUowRepoIT {
         tc.failNow(ar1.cause())
         return@setHandler
       }
-      val uowSequence = ar1.result()
-      tc.verify { assertThat(uowSequence).isGreaterThan(BigInteger.ZERO) }
-      val appendFuture2 = Future.future<BigInteger>()
+      val uowId = ar1.result()
+      tc.verify { assertThat(uowId).isGreaterThan(0) }
+      val appendFuture2 = Future.future<Long>()
       // append uow2
       journal.append(activatedUow1, appendFuture2)
       appendFuture2.setHandler { ar2 ->
@@ -536,8 +535,8 @@ class PgcUowRepoIT {
           tc.failNow(ar2.cause())
           return@setHandler
         }
-        val uowSequence = ar2.result()
-        tc.verify { assertThat(uowSequence).isGreaterThan(BigInteger.valueOf(2)) }
+        val uowId = ar2.result()
+        tc.verify { assertThat(uowId).isGreaterThan(2) }
         val snapshotDataFuture = Future.future<RangeOfEvents>()
         // get only above version 1
         repo.selectAfterVersion(activatedUow1.entityId, 1, customerEntityName, snapshotDataFuture)

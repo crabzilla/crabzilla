@@ -144,8 +144,8 @@ class PgcSnapshotRepoIT {
         event1.cause().printStackTrace()
         tc.failNow(event1.cause())
       }
-      val uowSequence = event1.result().first().getLong(0)
-      tc.verify { assertThat(uowSequence).isGreaterThan(0) }
+      val uowId = event1.result().first().getLong(0)
+      tc.verify { assertThat(uowId).isGreaterThan(0) }
 
       repo.retrieve(customerId1.value, Handler { event2 ->
           if (event2.failed()) {
@@ -198,8 +198,8 @@ class PgcSnapshotRepoIT {
         if (ar2.failed()) {
           tc.failNow(ar2.cause())
         }
-        val uowSequence = ar1.result().first().getLong(0)
-        tc.verify { assertThat(uowSequence).isGreaterThan(0) }
+        val uowId = ar1.result().first().getLong(0)
+        tc.verify { assertThat(uowId).isGreaterThan(0) }
 
         repo.retrieve(customerId1.value, Handler { event ->
           if (event.failed()) {

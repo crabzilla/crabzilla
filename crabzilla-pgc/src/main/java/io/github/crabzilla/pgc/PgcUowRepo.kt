@@ -11,7 +11,6 @@ import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
-import java.math.BigInteger
 import java.util.*
 
 open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
@@ -82,7 +81,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
 
   }
 
-  override fun getUowByUowId(uowId: BigInteger, aHandler: Handler<AsyncResult<UnitOfWork>>) {
+  override fun getUowByUowId(uowId: Long, aHandler: Handler<AsyncResult<UnitOfWork>>) {
 
     val params = Tuple.of(uowId)
 
@@ -226,12 +225,12 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
   }
 
 
-  override fun selectAfterUowId(uowId: BigInteger, maxRows: Int,
+  override fun selectAfterUowId(uowId: Long, maxRows: Int,
                                 aHandler: Handler<AsyncResult<List<UnitOfWorkEvents>>>) {
 
-    log.trace("will load after uowSequence [{}]", uowId)
+    log.trace("will load after uowId [{}]", uowId)
 
-    val selectAfterUowSequenceSql = "select uow_id, ar_id, uow_events " +
+    val selectAfteruowIdSql = "select uow_id, ar_id, uow_events " +
       "  from units_of_work " +
       " where uow_id > $1 " +
       " order by uow_id " +
@@ -239,7 +238,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
 
     val list = ArrayList<UnitOfWorkEvents>()
 
-    pgPool.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowId)) { ar ->
+    pgPool.preparedQuery(selectAfteruowIdSql, Tuple.of(uowId)) { ar ->
       if (ar.failed()) {
         aHandler.handle(Future.failedFuture(ar.cause().message))
         return@preparedQuery
@@ -260,7 +259,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
           jsonFunctions.eventFromJson(eventName, eventJson)
         }
         val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEventPair)
-        val projectionData = UnitOfWorkEvents(uowSeq.bigIntegerValue(), targetId, events)
+        val projectionData = UnitOfWorkEvents(uowSeq.toLong(), targetId, events)
         list.add(projectionData)
       }
       aHandler.handle(Future.succeededFuture(list))

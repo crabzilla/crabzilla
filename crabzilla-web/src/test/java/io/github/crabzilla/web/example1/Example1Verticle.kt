@@ -29,7 +29,6 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.LoggerHandler
 import org.slf4j.LoggerFactory.getLogger
-import java.math.BigInteger
 
 // Convenience method so you can run it in your IDE
 fun main() {
@@ -118,7 +117,7 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
       }
 
       router.get("/units-of-work/:unitOfWorkId").handler {
-        val uowId = BigInteger.valueOf(it.pathParam("unitOfWorkId").toLong())
+        val uowId = it.pathParam("unitOfWorkId").toLong()
         println("retrieving uow $uowId")
         getUowHandler(it, customerDeployment.uowRepo.value, uowId)
       }

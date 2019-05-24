@@ -52,7 +52,7 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
 
         future.setHandler { event2 ->
           if (event2.succeeded()) {
-            tx.preparedQuery(SQL_UPDATE_PROJECTIONS, Tuple.of(name, uowEvents.uowSequence)) { event3 ->
+            tx.preparedQuery(SQL_UPDATE_PROJECTIONS, Tuple.of(name, uowEvents.uowId)) { event3 ->
               if (event3.failed()) {
                 handler.handle(Future.failedFuture(event3.cause()))
                 return@preparedQuery

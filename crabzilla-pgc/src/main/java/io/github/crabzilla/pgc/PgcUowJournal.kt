@@ -10,7 +10,6 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import org.slf4j.LoggerFactory
-import java.math.BigInteger
 
 class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
                                private val jsonFunctions: EntityJsonFunctions<E>) : UnitOfWorkJournal {
@@ -27,7 +26,7 @@ class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
                                         "values ($1, $2, $3, $4, $5, $6, $7) returning uow_id"
   }
 
-  override fun append(unitOfWork: UnitOfWork, aHandler: Handler<AsyncResult<BigInteger>>) {
+  override fun append(unitOfWork: UnitOfWork, aHandler: Handler<AsyncResult<Long>>) {
 
     pgPool.begin { res ->
       if (res.succeeded()) {
@@ -51,7 +50,7 @@ class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
               tx.preparedQuery(SQL_APPEND_UOW, params2) { event2 ->
                 if (event2.succeeded()) {
                   val insertRows = event2.result().value()
-                  val generated = insertRows.first().getNumeric(0).bigIntegerValue()
+                  val generated = insertRows.first().getNumeric(0).toLong()
                   // Commit the transaction
                   tx.commit { event3 ->
                     if (event3.failed()) {
