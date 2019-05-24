@@ -10,6 +10,7 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import org.slf4j.LoggerFactory
+import java.math.BigInteger
 
 class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
                                private val jsonFunctions: EntityJsonFunctions<E>) : UnitOfWorkJournal {
@@ -22,11 +23,11 @@ class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
                                        "from units_of_work where ar_id = $1 and ar_name = $2 "
 
     const val SQL_APPEND_UOW = "insert into units_of_work " +
-                                        "(uow_id, uow_events, cmd_id, cmd_name, cmd_data, ar_name, ar_id, version) " +
-                                        "values ($1, $2, $3, $4, $5, $6, $7, $8) returning uow_seq_number"
+                                        "(uow_events, cmd_id, cmd_name, cmd_data, ar_name, ar_id, version) " +
+                                        "values ($1, $2, $3, $4, $5, $6, $7) returning uow_id"
   }
 
-  override fun append(unitOfWork: UnitOfWork, aHandler: Handler<AsyncResult<Int>>) {
+  override fun append(unitOfWork: UnitOfWork, aHandler: Handler<AsyncResult<BigInteger>>) {
 
     pgPool.begin { res ->
       if (res.succeeded()) {
@@ -40,7 +41,6 @@ class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
               val cmdAsJsonObject = jsonFunctions.cmdToJson(unitOfWork.command)
               val eventsListAsJsonObject = jsonFunctions.toJsonArray(unitOfWork.events)
               val params2 = Tuple.of(
-                unitOfWork.unitOfWorkId,
                 io.reactiverse.pgclient.data.Json.create(eventsListAsJsonObject),
                 unitOfWork.commandId,
                 unitOfWork.commandName,
@@ -51,19 +51,19 @@ class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
               tx.preparedQuery(SQL_APPEND_UOW, params2) { event2 ->
                 if (event2.succeeded()) {
                   val insertRows = event2.result().value()
-                  val generated = insertRows.first().getInteger(0)
+                  val generated = insertRows.first().getNumeric(0).bigIntegerValue()
                   // Commit the transaction
                   tx.commit { event3 ->
                     if (event3.failed()) {
-                      log.error("Transaction failed", event3.cause());
+                      log.error("Transaction failed", event3.cause())
                       aHandler.handle(Future.failedFuture(event3.cause()))
                     } else {
-                      log.info("Transaction succeeded for ${unitOfWork.unitOfWorkId}")
+                      log.info("Transaction succeeded for $generated")
                       aHandler.handle(Future.succeededFuture(generated))
                     }
                   }
                 } else {
-                  log.error("Transaction failed", event2.cause());
+                  log.error("Transaction failed", event2.cause())
                   aHandler.handle(Future.failedFuture(event2.cause()))
                 }
               }

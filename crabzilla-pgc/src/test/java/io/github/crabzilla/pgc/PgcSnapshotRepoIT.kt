@@ -132,9 +132,7 @@ class PgcSnapshotRepoIT {
 
     val eventsAsJson = customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))
 
-    val tuple = Tuple.of(UUID.randomUUID(),
-      io.reactiverse.pgclient.data.Json.create(eventsAsJson),
-      UUID.randomUUID(),
+    val tuple = Tuple.of(io.reactiverse.pgclient.data.Json.create(eventsAsJson), UUID.randomUUID(),
       CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
       customerEntityName,
@@ -170,7 +168,7 @@ class PgcSnapshotRepoIT {
     val eventsAsJson = customerJson.toJsonArray(
       arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1)))
 
-    val tuple1 = Tuple.of(UUID.randomUUID(),
+    val tuple1 = Tuple.of(
       io.reactiverse.pgclient.data.Json.create(eventsAsJson),
       UUID.randomUUID(),
       CREATE.urlFriendly(),
@@ -186,7 +184,7 @@ class PgcSnapshotRepoIT {
         tc.failNow(ar1.cause())
       }
 
-      val tuple2 = Tuple.of(UUID.randomUUID(),
+      val tuple2 = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
         UUID.randomUUID(),
         ACTIVATE.urlFriendly(),

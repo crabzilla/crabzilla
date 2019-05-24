@@ -13,7 +13,7 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.RoutingContext
 import org.slf4j.LoggerFactory
-import java.util.*
+import java.math.BigInteger
 
 private const val UNIT_OF_WORK_ID_PATH_PARAMETER = "unitOfWorkId"
 
@@ -36,7 +36,7 @@ fun postCommandHandler(rc: RoutingContext, cmdMetadata: CommandMetadata, project
   val begin = System.currentTimeMillis()
 
   rc.vertx().eventBus()
-    .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(cmdMetadata.entityName), Pair(cmdMetadata, commandJson)) {
+    .send<Pair<UnitOfWork, BigInteger>>(cmdHandlerEndpoint(cmdMetadata.entityName), Pair(cmdMetadata, commandJson)) {
       response ->
 
       val end = System.currentTimeMillis()
@@ -49,11 +49,11 @@ fun postCommandHandler(rc: RoutingContext, cmdMetadata: CommandMetadata, project
         return@send
       }
 
-      val result = response.result().body() as Pair<UnitOfWork, Int>
+      val result = response.result().body() as Pair<UnitOfWork, BigInteger>
 
       with(result) {
 
-        val headers = CaseInsensitiveHeaders().add("uowSequence", second.toString())
+        val headers = CaseInsensitiveHeaders().add("uowId", second.toString())
         val eventsDeliveryOptions = DeliveryOptions().setHeaders(headers)
 
         rc.vertx().eventBus()
@@ -61,11 +61,12 @@ fun postCommandHandler(rc: RoutingContext, cmdMetadata: CommandMetadata, project
 
         val resultJson = when (rc.request().getHeader("accept")) {
           UNIT_OF_WORK_BODY -> JsonObject.mapFrom(result.first)
-          UNIT_OF_WORK_ID -> JsonObject().put(UNIT_OF_WORK_ID_PATH_PARAMETER, result.first.unitOfWorkId.toString())
+          UNIT_OF_WORK_ID -> JsonObject().put(UNIT_OF_WORK_ID_PATH_PARAMETER, result.second)
           else -> JsonObject()
         }
 
         httpResp
+          .putHeader("uowId", second.toString())
           .putHeader("accept", rc.request().getHeader("accept"))
           .putHeader("Content-Type", "application/json")
           .setStatusCode(201)
@@ -76,20 +77,20 @@ fun postCommandHandler(rc: RoutingContext, cmdMetadata: CommandMetadata, project
 
 }
 
-fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository, unitOfWorkId: UUID) {
+fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository, unitOfWorkId: BigInteger) {
 
   val httpResp = rc.response()
 
   uowRepo.getUowByUowId(unitOfWorkId, Handler { uowResult ->
     if (uowResult.failed() || uowResult.result() == null) {
-      httpResp.statusCode = if (uowResult.result() == null) 404 else 500;
+      httpResp.statusCode = if (uowResult.result() == null) 404 else 500
       httpResp.end()
     } else {
       val contentType = rc.request().getHeader("accept")
       httpResp.setStatusCode(200).setChunked(true).
         headers().add("Content-Type", "application/json")
       val effectiveResult: JsonObject = when (contentType) {
-        UNIT_OF_WORK_ID -> JsonObject().put(UNIT_OF_WORK_ID_PATH_PARAMETER, uowResult.result().unitOfWorkId.toString())
+        UNIT_OF_WORK_ID -> JsonObject().put(UNIT_OF_WORK_ID_PATH_PARAMETER, uowResult.result())
         else -> JsonObject.mapFrom(uowResult.result())
       }
       httpResp.end(effectiveResult.encode())

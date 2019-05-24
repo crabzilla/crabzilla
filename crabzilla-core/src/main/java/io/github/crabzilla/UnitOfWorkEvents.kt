@@ -1,13 +1,13 @@
 package io.github.crabzilla
 
-import java.util.*
+import java.math.BigInteger
 
-data class UnitOfWorkEvents(val uowId: UUID, val uowSequence: Int, val entityId: Int,
+data class UnitOfWorkEvents(val uowSequence: BigInteger, val entityId: Int,
                             val events: List<Pair<String, DomainEvent>>) {
   companion object {
     @JvmStatic
-    fun fromUnitOfWork(uowSequence: Int, uow: UnitOfWork) : UnitOfWorkEvents {
-      return UnitOfWorkEvents(uow.unitOfWorkId, uowSequence, uow.entityId, uow.events)
+    fun fromUnitOfWork(uowSequence: BigInteger, uow: UnitOfWork) : UnitOfWorkEvents {
+      return UnitOfWorkEvents(uowSequence, uow.entityId, uow.events)
     }
   }
 }

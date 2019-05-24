@@ -29,7 +29,7 @@ import io.vertx.junit5.VertxTestContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.*
+import java.math.BigInteger
 
 
 @ExtendWith(VertxExtension::class)
@@ -106,7 +106,7 @@ class PgcUowRepoIT {
   @DisplayName("can queries an unit of work row by it's command id")
   fun a4(tc: VertxTestContext) {
 
-    val tuple = Tuple.of(UUID.randomUUID(),
+    val tuple = Tuple.of(
       io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
       createdUow1.commandId,
       CREATE.urlFriendly(),
@@ -125,11 +125,10 @@ class PgcUowRepoIT {
       val selectFuture = Future.future<UnitOfWork>()
       selectFuture.setHandler { ar2 ->
         if (ar2.failed()) {
-          ar2.cause().printStackTrace()
           tc.failNow(ar2.cause())
         }
         val uow = ar2.result()
-        tc.verify { tc.verify { assertThat(createdUow1).isEqualToIgnoringGivenFields(uow, "unitOfWorkId") } }
+        tc.verify { tc.verify { assertThat(createdUow1).isEqualTo(uow) } }
         tc.completeNow()
       }
       repo.getUowByCmdId(createdUow1.commandId, selectFuture)
@@ -141,7 +140,7 @@ class PgcUowRepoIT {
   @DisplayName("can queries an unit of work row by it's uow id")
   fun a5(tc: VertxTestContext) {
 
-    val tuple = Tuple.of(UUID.randomUUID(),
+    val tuple = Tuple.of(
       io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
       createdUow1.commandId,
       CREATE.urlFriendly(),
@@ -152,22 +151,18 @@ class PgcUowRepoIT {
 
     writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar1 ->
       if (ar1.failed()) {
-        ar1.cause().printStackTrace()
         tc.failNow(ar1.cause())
       }
-      val uowSequence = ar1.result().first().getLong(0)
-      tc.verify { assertThat(uowSequence).isGreaterThan(0) }
-      val selectFuture = Future.future<UnitOfWork>()
-      selectFuture.setHandler { ar2 ->
+      val uowSequence = ar1.result().first().getNumeric("uow_id").bigIntegerValue()
+      tc.verify { assertThat(uowSequence).isGreaterThan(BigInteger.ZERO) }
+      repo.getUowByUowId(uowSequence, Handler { ar2 ->
         if (ar2.failed()) {
-          ar2.cause().printStackTrace()
           tc.failNow(ar2.cause())
         }
         val uow = ar2.result()
-        tc.verify { assertThat(createdUow1).isEqualToIgnoringGivenFields(uow, "unitOfWorkId") }
+        tc.verify { assertThat(createdUow1).isEqualTo(uow) }
         tc.completeNow()
-      }
-      repo.getUowByUowId(tuple.getUUID(0), selectFuture)
+      })
     }
 
   }
@@ -181,7 +176,7 @@ class PgcUowRepoIT {
     @DisplayName("can queries an empty repo")
     fun a1(tc: VertxTestContext) {
       val selectFuture = Future.future<List<UnitOfWorkEvents>>()
-      repo.selectAfterUowSequence(0, 100, selectFuture)
+      repo.selectAfterUowId(BigInteger.ONE, 100, selectFuture)
       selectFuture.setHandler { selectAsyncResult ->
         val snapshotData = selectAsyncResult.result()
         tc.verify { assertThat(snapshotData.size).isEqualTo(0) }
@@ -193,7 +188,7 @@ class PgcUowRepoIT {
     @DisplayName("can queries a single unit of work row")
     fun a2(tc: VertxTestContext) {
 
-      val tuple = Tuple.of(UUID.randomUUID(),
+      val tuple = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
@@ -211,12 +206,12 @@ class PgcUowRepoIT {
         }
         val uowSequence = ar.result().first().getLong(0)
         tc.verify { assertThat(uowSequence).isGreaterThan(0) }
-        repo.selectAfterUowSequence(0, 100, selectFuture)
+        repo.selectAfterUowId(BigInteger.ZERO, 100, selectFuture)
         selectFuture.setHandler { selectAsyncResult ->
           val snapshotData = selectAsyncResult.result()
           tc.verify { assertThat(snapshotData.size).isEqualTo(1) }
-          val (_, uowSequence, targetId, events) = snapshotData[0]
-          tc.verify { assertThat(uowSequence).isGreaterThan(0) }
+          val (uowSequence, targetId, events) = snapshotData[0]
+          tc.verify { assertThat(uowSequence).isGreaterThan(BigInteger.ZERO) }
           tc.verify { assertThat(targetId).isEqualTo(customerId1.value) }
           tc.verify { assertThat(events).isEqualTo(arrayListOf(Pair("CustomerCreated", created1))) }
           tc.completeNow()
@@ -228,7 +223,7 @@ class PgcUowRepoIT {
     @DisplayName("can queries two unit of work rows")
     fun a3(tc: VertxTestContext) {
 
-      val tuple1 = Tuple.of(UUID.randomUUID(),
+      val tuple1 = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
@@ -246,7 +241,7 @@ class PgcUowRepoIT {
           tc.failNow(ar1.cause())
         }
 
-        val tuple2 = Tuple.of(UUID.randomUUID(),
+        val tuple2 = Tuple.of(
           io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
@@ -260,16 +255,16 @@ class PgcUowRepoIT {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
           }
-          repo.selectAfterUowSequence(0, 100, selectFuture1)
+          repo.selectAfterUowId(BigInteger.ZERO, 100, selectFuture1)
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(snapshotData.size).isEqualTo(2) }
-            val (_, uowSequence1, targetId1, events1) = snapshotData[0]
-            tc.verify { assertThat(uowSequence1).isGreaterThan(0) }
+            val (uowSequence1, targetId1, events1) = snapshotData[0]
+            tc.verify { assertThat(uowSequence1).isGreaterThan(BigInteger.ZERO) }
             tc.verify { assertThat(targetId1).isEqualTo(customerId1.value) }
             tc.verify { assertThat(events1).isEqualTo(arrayListOf(Pair("CustomerCreated", created1))) }
-            val (_, uowSequence2, targetId2, events2) = snapshotData[1]
-            tc.verify { assertThat(uowSequence2).isEqualTo(uowSequence1 + 1) }
+            val (uowSequence2, targetId2, events2) = snapshotData[1]
+            tc.verify { assertThat(uowSequence2).isEqualTo(uowSequence1.inc()) }
             tc.verify { assertThat(targetId2).isEqualTo(customerId1.value) }
             tc.verify { assertThat(events2).isEqualTo(arrayListOf(Pair("CustomerActivated", activated1))) }
             tc.completeNow()
@@ -283,7 +278,7 @@ class PgcUowRepoIT {
     @DisplayName("can query units of work for a given entity ID")
     fun a33(tc: VertxTestContext) {
 
-      val tuple1 = Tuple.of(UUID.randomUUID(),
+      val tuple1 = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
@@ -301,7 +296,7 @@ class PgcUowRepoIT {
           tc.failNow(ar1.cause())
         }
 
-        val tuple2 = Tuple.of(UUID.randomUUID(),
+        val tuple2 = Tuple.of(
           io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
@@ -323,8 +318,8 @@ class PgcUowRepoIT {
             tc.verify { assertThat(uowList.size).isEqualTo(2) }
             val uow1 = uowList[0]
             val uow2 = uowList[1]
-            tc.verify { assertThat(uow1).isEqualToIgnoringGivenFields(createdUow1, "unitOfWorkId") }
-            tc.verify { assertThat(uow2).isEqualToIgnoringGivenFields(activatedUow1, "unitOfWorkId") }
+            tc.verify { assertThat(uow1).isEqualTo(createdUow1) }
+            tc.verify { assertThat(uow2).isEqualTo(activatedUow1) }
             tc.completeNow()
           }
         }
@@ -336,7 +331,7 @@ class PgcUowRepoIT {
     @DisplayName("can queries by uow sequence")
     fun a4(tc: VertxTestContext) {
 
-      val tuple1 = Tuple.of(UUID.randomUUID(),
+      val tuple1 = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
@@ -352,8 +347,8 @@ class PgcUowRepoIT {
           ar1.cause().printStackTrace()
           tc.failNow(ar1.cause())
         }
-        val uowSequence1 = ar1.result().first().getInteger("uow_seq_number")
-        val tuple2 = Tuple.of(UUID.randomUUID(),
+        val uowSequence1 = ar1.result().first().getNumeric("uow_id").bigIntegerValue()
+        val tuple2 = Tuple.of(
           io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
@@ -366,12 +361,12 @@ class PgcUowRepoIT {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
           }
-          val uowSequence2 = ar2.result().first().getInteger("uow_seq_number")
-          repo.selectAfterUowSequence(uowSequence1, 100, selectFuture1)
+          val uowSequence2 = ar2.result().first().getInteger("uow_id")
+          repo.selectAfterUowId(uowSequence1, 100, selectFuture1)
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(snapshotData.size).isEqualTo(1) }
-            val (_, uowSequence, targetId, events) = snapshotData[0]
+            val (uowSequence, targetId, events) = snapshotData[0]
             tc.verify { assertThat(uowSequence).isEqualTo(uowSequence2) }
             tc.verify { assertThat(targetId).isEqualTo(customerId1.value) }
             tc.verify { assertThat(events).isEqualTo(arrayListOf(Pair("CustomerActivated", activated1))) }
@@ -391,7 +386,7 @@ class PgcUowRepoIT {
     @DisplayName("can queries a single unit of work row")
     fun a2(tc: VertxTestContext) {
 
-      val tuple = Tuple.of(UUID.randomUUID(),
+      val tuple = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
@@ -423,7 +418,7 @@ class PgcUowRepoIT {
     @DisplayName("can queries two unit of work rows")
     fun a3(tc: VertxTestContext) {
 
-      val tuple1 = Tuple.of(UUID.randomUUID(),
+      val tuple1 = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
@@ -439,7 +434,7 @@ class PgcUowRepoIT {
           tc.failNow(ar1.cause())
         }
 
-        val tuple2 = Tuple.of(UUID.randomUUID(),
+        val tuple2 = Tuple.of(
           io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
@@ -471,7 +466,7 @@ class PgcUowRepoIT {
     @DisplayName("can queries by version")
     fun a4(tc: VertxTestContext) {
 
-      val tuple1 = Tuple.of(UUID.randomUUID(),
+      val tuple1 = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
         CREATE.urlFriendly(),
@@ -486,8 +481,8 @@ class PgcUowRepoIT {
           tc.failNow(ar1.cause())
           return@preparedQuery
         }
-        val uowSequence1 = ar1.result().first().getLong("uow_seq_number")
-        val tuple2 = Tuple.of(UUID.randomUUID(),
+        val uowSequence1 = ar1.result().first().getLong("uow_id")
+        val tuple2 = Tuple.of(
           io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
@@ -501,7 +496,7 @@ class PgcUowRepoIT {
             tc.failNow(ar2.cause())
             return@preparedQuery
           }
-          val uowSequence2 = ar2.result().first().getLong("uow_seq_number")
+          val uowSequence2 = ar2.result().first().getLong("uow_id")
           val selectFuture1 = Future.future<RangeOfEvents>()
           repo.selectAfterVersion(customerId1.value, 1, customerEntityName, selectFuture1.completer())
           selectFuture1.setHandler { selectAsyncResult ->
@@ -519,7 +514,7 @@ class PgcUowRepoIT {
   @DisplayName("can queries only above version 1")
   fun s4(tc: VertxTestContext) {
 
-    val appendFuture1 = Future.future<Int>()
+    val appendFuture1 = Future.future<BigInteger>()
 
     // append uow1
     journal.append(createdUow1, appendFuture1)
@@ -531,8 +526,8 @@ class PgcUowRepoIT {
         return@setHandler
       }
       val uowSequence = ar1.result()
-      tc.verify { assertThat(uowSequence).isGreaterThan(0) }
-      val appendFuture2 = Future.future<Int>()
+      tc.verify { assertThat(uowSequence).isGreaterThan(BigInteger.ZERO) }
+      val appendFuture2 = Future.future<BigInteger>()
       // append uow2
       journal.append(activatedUow1, appendFuture2)
       appendFuture2.setHandler { ar2 ->
@@ -542,10 +537,10 @@ class PgcUowRepoIT {
           return@setHandler
         }
         val uowSequence = ar2.result()
-        tc.verify { assertThat(uowSequence).isGreaterThan(2) }
+        tc.verify { assertThat(uowSequence).isGreaterThan(BigInteger.valueOf(2)) }
         val snapshotDataFuture = Future.future<RangeOfEvents>()
         // get only above version 1
-        repo.selectAfterVersion(activatedUow1.entityId, 1, customerEntityName, snapshotDataFuture.completer())
+        repo.selectAfterVersion(activatedUow1.entityId, 1, customerEntityName, snapshotDataFuture)
         snapshotDataFuture.setHandler { ar4 ->
           if (ar4.failed()) {
             ar4.cause().printStackTrace()

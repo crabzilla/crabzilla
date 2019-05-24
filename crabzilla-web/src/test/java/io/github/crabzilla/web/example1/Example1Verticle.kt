@@ -4,8 +4,8 @@ import io.github.crabzilla.CommandMetadata
 import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.UnitOfWorkEvents
 import io.github.crabzilla.pgc.PgcUowProjector
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerDeploymentFn
 import io.github.crabzilla.pgc.example1.Example1EventProjector
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerDeploymentFn
 import io.github.crabzilla.web.ContentTypes.ENTITY_TRACKING
 import io.github.crabzilla.web.ContentTypes.ENTITY_WRITE_MODEL
 import io.github.crabzilla.web.entityTrackingHandler
@@ -29,7 +29,7 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.LoggerHandler
 import org.slf4j.LoggerFactory.getLogger
-import java.util.*
+import java.math.BigInteger
 
 // Convenience method so you can run it in your IDE
 fun main() {
@@ -118,7 +118,7 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
       }
 
       router.get("/units-of-work/:unitOfWorkId").handler {
-        val uowId = UUID.fromString(it.pathParam("unitOfWorkId"))
+        val uowId = BigInteger.valueOf(it.pathParam("unitOfWorkId").toLong())
         println("retrieving uow $uowId")
         getUowHandler(it, customerDeployment.uowRepo.value, uowId)
       }

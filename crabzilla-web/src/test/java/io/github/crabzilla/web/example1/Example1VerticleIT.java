@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.util.Random;
 
@@ -108,7 +109,7 @@ class Example1VerticleIT {
       .expect(ResponsePredicate.JSON)
       .putHeader("accept", UNIT_OF_WORK_ID)
       .sendJsonObject(jo, tc.succeeding(response -> tc.verify(() -> {
-          assertThat(response.body().getString("unitOfWorkId")).isNotNull();
+          assertThat(response.getHeader("uowId")).isNotNull();
           tc.completeNow();
       }))
     );
@@ -130,9 +131,10 @@ class Example1VerticleIT {
         .putHeader("accept", UNIT_OF_WORK_BODY)
         .sendJson(cmdAsJson, tc.succeeding(response1 -> tc.verify(() -> {
             JsonObject uow = response1.body();
+            BigInteger uowId = BigInteger.valueOf(new Long(response1.getHeader("uowId")));
+            assertThat(uowId).isPositive();
+            System.out.println(uowId);
             System.out.println(uow.encodePrettily());
-            final String uowIdStr = uow.getString(UOW_ID);
-            assertThat(uow.getString(UOW_ID)).isNotNull();
             assertThat(uow.getString(ENTITY_NAME)).isEqualTo("customer");
             assertThat(uow.getInteger(ENTITY_ID)).isEqualTo(customerId2);
             assertThat(uow.getString(COMMAND_ID)).isNotNull();
@@ -140,13 +142,12 @@ class Example1VerticleIT {
             assertThat(uow.getJsonObject(COMMAND)).isEqualTo(cmdAsJson);
             assertThat(uow.getInteger(VERSION)).isEqualTo(1);
             assertThat(uow.getJsonArray(EVENTS).size()).isEqualTo(1);
-            client.get(port, "0.0.0.0", "/units-of-work/" + uowIdStr)
+            client.get(port, "0.0.0.0", "/units-of-work/" + uowId.toString())
               .as(BodyCodec.jsonObject())
               .expect(ResponsePredicate.SC_SUCCESS)
               .expect(ResponsePredicate.JSON)
               .send(tc.succeeding(response3 -> tc.verify(() -> {
                 JsonObject jo2 = response3.body();
-                assertThat(jo2.getString(UOW_ID)).isNotNull();
                 assertThat(jo2.getString(ENTITY_NAME)).isEqualTo("customer");
                 assertThat(jo2.getInteger(ENTITY_ID)).isEqualTo(customerId2);
                 assertThat(jo2.getString(COMMAND_ID)).isNotNull();

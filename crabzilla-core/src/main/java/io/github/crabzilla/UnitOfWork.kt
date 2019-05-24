@@ -2,8 +2,7 @@ package io.github.crabzilla
 
 import java.util.*
 
-data class UnitOfWork(val unitOfWorkId: UUID,
-                      val entityName: String,
+data class UnitOfWork(val entityName: String,
                       val entityId: Int,
                       val commandId: UUID,
                       val commandName: String,
@@ -17,7 +16,7 @@ data class UnitOfWork(val unitOfWorkId: UUID,
     @JvmStatic
     fun of(entityId: Int, entityName: String, commandId: UUID, commandName: String, command: Command,
            events: List<DomainEvent>, resultingVersion: Version): UnitOfWork {
-      return UnitOfWork(UUID.randomUUID(), entityName, entityId, commandId, commandName, command, resultingVersion,
+      return UnitOfWork(entityName, entityId, commandId, commandName, command, resultingVersion,
         events.map { e -> Pair(e::class.java.simpleName, e) })
     }
   }

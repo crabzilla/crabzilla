@@ -14,7 +14,7 @@ class UnitOfWorkTest {
   @Test
   fun versionZeroCannotBeInstantiated() {
     assertThrows(RuntimeException::class.java, {
-      UnitOfWork(UUID.randomUUID(), "customer", 1, UUID.randomUUID(), CREATE.urlFriendly(),
+      UnitOfWork("customer", 1, UUID.randomUUID(), CREATE.urlFriendly(),
         CreateCustomer("cust#1"), 0,
         listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(CustomerId(1), "cust#1"))))
     }, "version should be >= 1")
@@ -23,7 +23,7 @@ class UnitOfWorkTest {
   @Test
   fun versionOneCanBeInstantiated() {
     val command = CreateCustomer("cust#1")
-    UnitOfWork(UUID.randomUUID(), "customer", 1, UUID.randomUUID(), CREATE.urlFriendly(),
+    UnitOfWork("customer", 1, UUID.randomUUID(), CREATE.urlFriendly(),
       command, 1,
       listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(CustomerId(1), "cust#1"))))
   }
@@ -31,7 +31,7 @@ class UnitOfWorkTest {
   @Test
   fun versionLessThanZeroCannotBeInstantiated() {
     assertThrows(RuntimeException::class.java, {
-      UnitOfWork(UUID.randomUUID(), "customer", 1, UUID.randomUUID(), CREATE.urlFriendly(),
+      UnitOfWork("customer", 1, UUID.randomUUID(), CREATE.urlFriendly(),
         CreateCustomer("cust#1"), -1,
         listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(CustomerId(1), "cust#1"))))
     }, "version should be >= 1")
@@ -40,7 +40,7 @@ class UnitOfWorkTest {
   @Test
   fun targetIdIsEqualsToCommandTargetId() {
     val command = CreateCustomer("cust#1")
-    val uow = UnitOfWork(UUID.randomUUID(), "customer", 1, UUID.randomUUID(), CREATE.urlFriendly(),
+    val uow = UnitOfWork("customer", 1, UUID.randomUUID(), CREATE.urlFriendly(),
       command, 1,
       listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(CustomerId(1), "cust#1"))))
     assertThat(uow.entityId).isEqualTo(uow.entityId)

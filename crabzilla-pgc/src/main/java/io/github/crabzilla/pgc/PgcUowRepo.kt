@@ -11,6 +11,7 @@ import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
+import java.math.BigInteger
 import java.util.*
 
 open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
@@ -20,30 +21,108 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
 
     internal val log = LoggerFactory.getLogger(PgcUowRepo::class.java)
 
-    private const val UOW_ID = "uow_id"
     private const val UOW_EVENTS = "uow_events"
     private const val CMD_ID = "cmd_id"
     private const val CMD_DATA = "cmd_data"
     private const val CMD_NAME = "cmd_name"
-    private const val TARGET_ID = "ar_id"
-    private const val TARGET_NAME = "ar_name"
+    private const val AR_ID = "ar_id"
+    private const val AR_NAME = "ar_name"
     private const val VERSION = "version"
 
     const val SQL_SELECT_UOW_BY_CMD_ID = "select * from units_of_work where cmd_id = $1 "
-    const val SQL_SELECT_UOW_BY_UOW_ID = "select $UOW_ID,$UOW_EVENTS,$CMD_ID,$CMD_DATA,$CMD_NAME,$TARGET_ID," +
-                                              "$TARGET_NAME, $VERSION from units_of_work where uow_id = $1 "
-    const val SQL_SELECT_AFTER_VERSION =  "select $UOW_EVENTS,$VERSION from units_of_work " +
+    const val SQL_SELECT_UOW_BY_UOW_ID = "select uow_events, cmd_id, cmd_data, cmd_name, ar_id," +
+                                              "ar_name, version from units_of_work where uow_id = $1 "
+    const val SQL_SELECT_AFTER_VERSION =  "select uow_events, version from units_of_work " +
                                           "where ar_id = $1 and ar_name = $2 and version > $3 order by version "
     const val SQL_SELECT_UOW_BY_ENTITY_ID = "select * from units_of_work where ar_id = $1 order by version "
 
   }
 
   override fun getUowByCmdId(cmdId: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>) {
-    get(SQL_SELECT_UOW_BY_CMD_ID, cmdId, aHandler)
+
+    val params = Tuple.of(cmdId)
+
+    pgPool.preparedQuery(SQL_SELECT_UOW_BY_CMD_ID, params) { ar ->
+      if (ar.failed()) {
+        aHandler.handle(Future.failedFuture(ar.cause()))
+        return@preparedQuery
+      }
+
+      val rows = ar.result()
+      if (rows.size() == 0) {
+        aHandler.handle(Future.succeededFuture(null))
+        return@preparedQuery
+      }
+
+      val row = rows.first()
+      val commandName = row.getString(CMD_NAME)
+      val commandAsJson = row.getJson(CMD_DATA).value().toString()
+      val command = try { jsonFunctions.cmdFromJson(commandName, JsonObject(commandAsJson)) } catch (e: Exception) { null }
+
+      if (command == null) {
+        aHandler.handle(Future.failedFuture("error when getting command $commandName from json "))
+        return@preparedQuery
+      }
+
+      val jsonArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
+
+      val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
+        val jsonObject = jsonArray.getJsonObject(index)
+        val eventName = jsonObject.getString(EVENT_NAME)
+        val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
+        val domainEvent = jsonFunctions.eventFromJson(eventName, eventJson)
+        domainEvent
+      }
+
+      val events: List<Pair<String, DomainEvent>> = List(jsonArray.size(), jsonToEventPair)
+      val uow = UnitOfWork(row.getString(AR_NAME), row.getInteger(AR_ID),
+        row.getUUID(CMD_ID), row.getString(CMD_NAME), command, row.getInteger(VERSION)!!, events)
+      aHandler.handle(Future.succeededFuture(uow))
+    }
+
   }
 
-  override fun getUowByUowId(uowId: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>) {
-    get(SQL_SELECT_UOW_BY_UOW_ID, uowId, aHandler)
+  override fun getUowByUowId(uowId: BigInteger, aHandler: Handler<AsyncResult<UnitOfWork>>) {
+
+    val params = Tuple.of(uowId)
+
+    pgPool.preparedQuery(SQL_SELECT_UOW_BY_UOW_ID, params) { ar ->
+      if (ar.failed()) {
+        aHandler.handle(Future.failedFuture(ar.cause()))
+        return@preparedQuery
+      }
+
+      val rows = ar.result()
+      if (rows.size() == 0) {
+        aHandler.handle(Future.succeededFuture(null))
+        return@preparedQuery
+      }
+
+      val row = rows.first()
+      val commandName = row.getString(CMD_NAME)
+      val commandAsJson = row.getJson(CMD_DATA).value().toString()
+      val command = try { jsonFunctions.cmdFromJson(commandName, JsonObject(commandAsJson)) } catch (e: Exception) { null }
+
+      if (command == null) {
+        aHandler.handle(Future.failedFuture("error when getting command $commandName from json "))
+        return@preparedQuery
+      }
+
+      val jsonArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
+
+      val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
+        val jsonObject = jsonArray.getJsonObject(index)
+        val eventName = jsonObject.getString(EVENT_NAME)
+        val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
+        val domainEvent = jsonFunctions.eventFromJson(eventName, eventJson)
+        domainEvent
+      }
+
+      val events: List<Pair<String, DomainEvent>> = List(jsonArray.size(), jsonToEventPair)
+      val uow = UnitOfWork(row.getString(AR_NAME), row.getInteger(AR_ID),
+        row.getUUID(CMD_ID), row.getString(CMD_NAME), command, row.getInteger(VERSION)!!, events)
+      aHandler.handle(Future.succeededFuture(uow))
+    }
   }
 
   override fun getAllUowByEntityId(id: Int, aHandler: Handler<AsyncResult<List<UnitOfWork>>>) {
@@ -83,7 +162,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
         }
 
         val events: List<Pair<String, DomainEvent>> = List(jsonArray.size(), jsonToEventPair)
-        val uow = UnitOfWork(row.getUUID(UOW_ID), row.getString(TARGET_NAME), row.getInteger(TARGET_ID),
+        val uow = UnitOfWork(row.getString(AR_NAME), row.getInteger(AR_ID),
           row.getUUID(CMD_ID), row.getString(CMD_NAME), command, row.getInteger(VERSION)!!, events)
 
         result.add(uow)
@@ -91,48 +170,6 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
       }
 
       aHandler.handle(Future.succeededFuture(result))
-    }
-  }
-
-  override fun get(query: String, id: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>) {
-    val params = Tuple.of(id)
-
-    pgPool.preparedQuery(query, params) { ar ->
-      if (ar.failed()) {
-        aHandler.handle(Future.failedFuture(ar.cause()))
-        return@preparedQuery
-      }
-
-      val rows = ar.result()
-      if (rows.size() == 0) {
-        aHandler.handle(Future.succeededFuture(null))
-        return@preparedQuery
-      }
-
-      val row = rows.first()
-      val commandName = row.getString(CMD_NAME)
-      val commandAsJson = row.getJson(CMD_DATA).value().toString()
-      val command = try { jsonFunctions.cmdFromJson(commandName, JsonObject(commandAsJson)) } catch (e: Exception) { null }
-
-      if (command == null) {
-        aHandler.handle(Future.failedFuture("error when getting command $commandName from json "))
-        return@preparedQuery
-      }
-
-      val jsonArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
-
-      val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
-        val jsonObject = jsonArray.getJsonObject(index)
-        val eventName = jsonObject.getString(EVENT_NAME)
-        val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
-        val domainEvent = jsonFunctions.eventFromJson(eventName, eventJson)
-        domainEvent
-      }
-
-      val events: List<Pair<String, DomainEvent>> = List(jsonArray.size(), jsonToEventPair)
-      val uow = UnitOfWork(row.getUUID(UOW_ID), row.getString(TARGET_NAME), row.getInteger(TARGET_ID),
-        row.getUUID(CMD_ID), row.getString(CMD_NAME), command, row.getInteger(VERSION)!!, events)
-      aHandler.handle(Future.succeededFuture(uow))
     }
   }
 
@@ -189,20 +226,20 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
   }
 
 
-  override fun selectAfterUowSequence(uowSequence: Int, maxRows: Int,
-                                      aHandler: Handler<AsyncResult<List<UnitOfWorkEvents>>>) {
+  override fun selectAfterUowId(uowId: BigInteger, maxRows: Int,
+                                aHandler: Handler<AsyncResult<List<UnitOfWorkEvents>>>) {
 
-    log.trace("will load after uowSequence [{}]", uowSequence)
+    log.trace("will load after uowSequence [{}]", uowId)
 
-    val selectAfterUowSequenceSql = "select uow_id, uow_seq_number, ar_id as target_id, uow_events " +
+    val selectAfterUowSequenceSql = "select uow_id, ar_id, uow_events " +
       "  from units_of_work " +
-      " where uow_seq_number > $1 " +
-      " order by uow_seq_number " +
+      " where uow_id > $1 " +
+      " order by uow_id " +
       " limit " + maxRows
 
     val list = ArrayList<UnitOfWorkEvents>()
 
-    pgPool.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowSequence)) { ar ->
+    pgPool.preparedQuery(selectAfterUowSequenceSql, Tuple.of(uowId)) { ar ->
       if (ar.failed()) {
         aHandler.handle(Future.failedFuture(ar.cause().message))
         return@preparedQuery
@@ -213,9 +250,8 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
         return@preparedQuery
       }
       for (row in rows) {
-        val uowId = row.getUUID(0)
-        val uowSeq = row.getInteger(1)
-        val targetId = row.getInteger(2)
+        val uowSeq = row.getNumeric("uow_id")
+        val targetId = row.getInteger("ar_id")
         val eventsArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
         val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
           val jsonObject = eventsArray.getJsonObject(index)
@@ -224,7 +260,7 @@ open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
           jsonFunctions.eventFromJson(eventName, eventJson)
         }
         val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEventPair)
-        val projectionData = UnitOfWorkEvents(uowId, uowSeq, targetId, events)
+        val projectionData = UnitOfWorkEvents(uowSeq.bigIntegerValue(), targetId, events)
         list.add(projectionData)
       }
       aHandler.handle(Future.succeededFuture(list))

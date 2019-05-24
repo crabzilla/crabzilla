@@ -20,8 +20,8 @@ interface EntityJsonFunctions<E: Entity> {
   fun toJsonArray(events: List<Pair<String, DomainEvent>>): JsonArray {
     val eventsJsonArray = JsonArray()
     events
-      .map { pair -> JsonObject().put(UnitOfWork.JsonMetadata.EVENT_NAME, pair.first).put(UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT, eventToJson(pair.second))}
-//    .map { pair -> println(pair.first); println(pair.second); pair}
+      .map { pair -> JsonObject().put(UnitOfWork.JsonMetadata.EVENT_NAME, pair.first)
+                                 .put(UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT, eventToJson(pair.second))}
       .forEach { jo -> eventsJsonArray.add(jo) }
     return eventsJsonArray
   }
