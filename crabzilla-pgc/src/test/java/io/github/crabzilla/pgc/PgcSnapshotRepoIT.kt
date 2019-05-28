@@ -6,13 +6,14 @@ import io.github.crabzilla.example1.CUSTOMER_SEED_VALUE
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
+import io.github.crabzilla.example1.CustomerJson
+import io.github.crabzilla.example1.CustomerStateFn
 import io.github.crabzilla.internal.SnapshotRepository
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
 import io.github.crabzilla.pgc.example1.Example1Fixture.activateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerDeploymentFn
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
@@ -85,7 +86,7 @@ class PgcSnapshotRepoIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      repo = PgcSnapshotRepo(writeDb, customerDeploymentFn.invoke(writeDb))
+      repo = PgcSnapshotRepo(writeDb, customerEntityName, CustomerStateFn(), CustomerJson())
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {

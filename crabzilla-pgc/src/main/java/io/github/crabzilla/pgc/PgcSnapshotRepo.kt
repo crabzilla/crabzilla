@@ -1,8 +1,6 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.DomainEvent
-import io.github.crabzilla.Entity
-import io.github.crabzilla.Snapshot
+import io.github.crabzilla.*
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENT_NAME
 import io.github.crabzilla.internal.SnapshotRepository
@@ -17,7 +15,9 @@ import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 
 class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
-                                  private val entityDeployment: PgcEntityDeployment<E>) : SnapshotRepository<E> {
+                                  private val name: String,
+                                  private val eStateFn: EntityStateFunctions<E>,
+                                  private val eJsonFn: EntityJsonFunctions<E>) : SnapshotRepository<E> {
 
 
   companion object {
@@ -30,18 +30,18 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
 
 
   private fun selectSnapshot(): String {
-    return "SELECT version, json_content FROM ${entityDeployment.name}_snapshots WHERE ar_id = $1"
+    return "SELECT version, json_content FROM ${name}_snapshots WHERE ar_id = $1"
   }
 
   private fun upsertSnapshot(): String {
-    return "INSERT INTO ${entityDeployment.name}_snapshots (ar_id, version, json_content) " +
+    return "INSERT INTO ${name}_snapshots (ar_id, version, json_content) " +
       " VALUES ($1, $2, $3) " +
       " ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"
   }
 
   override fun upsert(entityId: Int, snapshot: Snapshot<E>, aHandler: Handler<AsyncResult<Void>>) {
 
-    val json = io.reactiverse.pgclient.data.Json.create(entityDeployment.toJson(snapshot.state))
+    val json = io.reactiverse.pgclient.data.Json.create(eJsonFn.toJson(snapshot.state))
 
     writeModelDb.preparedQuery(upsertSnapshot(), Tuple.of(entityId, snapshot.version, json)) { insert ->
       if (insert.failed()) {
@@ -93,10 +93,10 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
             val cachedVersion : Int
 
             if (pgRow == null || pgRow.size() == 0) {
-              cachedInstance = entityDeployment.initialState()
+              cachedInstance = eStateFn.initialState()
               cachedVersion = 0
             } else {
-              cachedInstance = entityDeployment.fromJson(JsonObject(pgRow.first().getJson("json_content").toString()))
+              cachedInstance = eJsonFn.fromJson(JsonObject(pgRow.first().getJson("json_content").toString()))
               cachedVersion = pgRow.first().getInteger("version")
             }
 
@@ -115,7 +115,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
                 val pq = event2.result()
 
                 // Fetch 100 rows at a time
-                val stream = pq.createStream(100, Tuple.of(entityId, entityDeployment.name, cachedVersion))
+                val stream = pq.createStream(100, Tuple.of(entityId, name, cachedVersion))
 
                 stream.exceptionHandler { err -> log.error("Retrieve: ${err.message}", err)
                   tx.rollback(); conn.close(); future.fail(err)
@@ -146,12 +146,12 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
                     val jsonObject = eventsArray.getJsonObject(index)
                     val eventName = jsonObject.getString(EVENT_NAME)
                     val eventJson = jsonObject.getJsonObject(EVENTS_JSON_CONTENT)
-                    entityDeployment.eventFromJson(eventName, eventJson)
+                    eJsonFn.eventFromJson(eventName, eventJson)
                   }
 
                   val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEvent)
                   currentInstance =
-                    events.fold(currentInstance) {state, event -> entityDeployment.applyEvent(event.second, state)}
+                    events.fold(currentInstance) {state, event -> eStateFn.applyEvent(event.second, state)}
                   log.trace("Events: $events \n version: $currentVersion \n instance $currentInstance")
 
                 }

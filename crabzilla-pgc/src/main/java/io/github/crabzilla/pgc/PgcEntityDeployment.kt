@@ -6,18 +6,16 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 
 class PgcEntityDeployment<E: Entity>(val name: String,
-                                     private val jsonFn: EntityJsonFunctions<E>,
-                                     private val stateFn: EntityStateFunctions<E>,
-                                     private val cmdFn: EntityCommandFunctions<E>,
-                                     writeDb: PgPool) :
-  EntityJsonFunctions<E> by jsonFn, EntityStateFunctions<E> by stateFn, EntityCommandFunctions<E> by cmdFn,
-  EntityComponent<E> {
+                                     jsonFn: EntityJsonFunctions<E>,
+                                     stateFn: EntityStateFunctions<E>,
+                                     cmdFn: EntityCommandFunctions<E>,
+                                     writeDb: PgPool) : EntityComponent<E> {
 
   private val uowRepo =  PgcUowRepo(writeDb, jsonFn)
-  private val snapshotRepo = PgcSnapshotRepo(writeDb, this)
+  private val snapshotRepo = PgcSnapshotRepo(writeDb, name, stateFn, jsonFn)
   private val uowJournal = PgcUowJournal(writeDb, jsonFn)
 
-  val cmdHandlerVerticle = PgcCmdHandlerVerticle(this, snapshotRepo, uowJournal)
+  val cmdHandlerVerticle = PgcCmdHandlerVerticle(name, stateFn, jsonFn, cmdFn, snapshotRepo, uowJournal)
 
   override fun getUowByUowId(uowId: Long, aHandler: Handler<AsyncResult<UnitOfWork>>) {
     uowRepo.getUowByUowId(uowId, aHandler)

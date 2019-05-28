@@ -8,7 +8,10 @@ import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicReference
 
-class PgcCmdHandlerVerticle<E : Entity>(private val eDeployment: PgcEntityDeployment<E>,
+class PgcCmdHandlerVerticle<E : Entity>(private val name: String,
+                                        private val stateFn: EntityStateFunctions<E>,
+                                        private val jsonFn: EntityJsonFunctions<E>,
+                                        private val cmdFn: EntityCommandFunctions<E>,
                                         private val snapshotRepo: PgcSnapshotRepo<E>,
                                         private val uowJournal: PgcUowJournal<E>) : AbstractVerticle() {
 
@@ -19,16 +22,16 @@ class PgcCmdHandlerVerticle<E : Entity>(private val eDeployment: PgcEntityDeploy
   @Throws(Exception::class)
   override fun start() {
 
-    log.info("starting command handler verticle for : ${eDeployment.name}")
+    log.info("starting command handler verticle for : ${name}")
 
-    vertx.eventBus().consumer<Pair<CommandMetadata, JsonObject>>(cmdHandlerEndpoint(eDeployment.name), Handler {
+    vertx.eventBus().consumer<Pair<CommandMetadata, JsonObject>>(cmdHandlerEndpoint(name), Handler {
       commandEvent ->
 
       val commandPair = commandEvent.body()
 
       log.trace("received $commandPair")
 
-      val command: Command? = try { eDeployment.cmdFromJson(commandPair.first.commandName, commandPair.second) }
+      val command: Command? = try { jsonFn.cmdFromJson(commandPair.first.commandName, commandPair.second) }
                               catch (e: Exception) { null }
 
       if (command == null) {
@@ -37,7 +40,7 @@ class PgcCmdHandlerVerticle<E : Entity>(private val eDeployment: PgcEntityDeploy
         return@Handler
       }
 
-      val constraints = eDeployment.validateCmd(command)
+      val constraints = cmdFn.validateCmd(command)
 
       if (constraints.isNotEmpty()) {
         log.error("Command is invalid: $constraints")
@@ -59,7 +62,7 @@ class PgcCmdHandlerVerticle<E : Entity>(private val eDeployment: PgcEntityDeploy
 
       val snapshotFuture: Future<Snapshot<E>> = Future.future()
 
-      eDeployment.getSnapshot(commandPair.first.entityId, snapshotFuture)
+      snapshotRepo.retrieve(commandPair.first.entityId, snapshotFuture)
 
       val snapshotValue: AtomicReference<Snapshot<E>> = AtomicReference()
       val uowValue: AtomicReference<UnitOfWork> = AtomicReference()
@@ -70,9 +73,9 @@ class PgcCmdHandlerVerticle<E : Entity>(private val eDeployment: PgcEntityDeploy
         .compose { snapshot ->
           log.trace("got snapshot $snapshot")
           val commandHandlerFuture = Future.future<UnitOfWork>()
-          val cachedSnapshot = snapshot ?: Snapshot(eDeployment.initialState(), 0)
+          val cachedSnapshot = snapshot ?: Snapshot(stateFn.initialState(), 0)
           val cmdHandler =
-            eDeployment.cmdHandlerFactory().invoke(commandPair.first, command, cachedSnapshot, commandHandlerFuture)
+            cmdFn.cmdHandlerFactory().invoke(commandPair.first, command, cachedSnapshot, commandHandlerFuture)
           cmdHandler.handleCommand()
           snapshotValue.set(cachedSnapshot)
           commandHandlerFuture
@@ -95,7 +98,7 @@ class PgcCmdHandlerVerticle<E : Entity>(private val eDeployment: PgcEntityDeploy
           // compute new snapshot
           log.trace("computing new snapshot")
           val newInstance = uowValue.get().events.fold(snapshotValue.get().state)
-          { state, event -> eDeployment.applyEvent(event.second, state) }
+          { state, event -> stateFn.applyEvent(event.second, state) }
           val newSnapshot = Snapshot(newInstance, uowValue.get().version)
 
           log.trace("now will store snapshot $newSnapshot")

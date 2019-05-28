@@ -3,6 +3,7 @@ package io.github.crabzilla.web.example1
 import io.github.crabzilla.CommandMetadata
 import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.UnitOfWorkEvents
+import io.github.crabzilla.example1.CustomerJson
 import io.github.crabzilla.pgc.PgcUowProjector
 import io.github.crabzilla.pgc.example1.Example1EventProjector
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerDeploymentFn
@@ -100,6 +101,8 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       val customerDeployment = customerDeploymentFn(writeDb)
 
+      val customerJson = CustomerJson()
+
       vertx.deployVerticle(customerDeployment.cmdHandlerVerticle)
 
       // web
@@ -127,9 +130,9 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
         println(it.request().getHeader("accept"))
         when (it.request().getHeader("accept")) {
           ENTITY_TRACKING -> entityTrackingHandler(it, customerId, customerDeployment)
-                                                        { customer -> customerDeployment.toJson(customer) }
+                                                        { customer -> customerJson.toJson(customer) }
           ENTITY_WRITE_MODEL -> entityWriteModelHandler(it, customerId, customerDeployment)
-                                                        { customer -> customerDeployment.toJson(customer) }
+                                                        { customer -> customerJson.toJson(customer) }
           else -> {
             readDb.preparedQuery("select * from customer_summary") { event1 ->
               println("*** read model: " + event1.result().toString())
