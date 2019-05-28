@@ -3,10 +3,10 @@ package io.github.crabzilla.web.example1
 import io.github.crabzilla.CommandMetadata
 import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.UnitOfWorkEvents
-import io.github.crabzilla.example1.CustomerJson
 import io.github.crabzilla.pgc.PgcUowProjector
 import io.github.crabzilla.pgc.example1.Example1EventProjector
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerComponentFn
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.github.crabzilla.web.ContentTypes.ENTITY_TRACKING
 import io.github.crabzilla.web.ContentTypes.ENTITY_WRITE_MODEL
 import io.github.crabzilla.web.entityTrackingHandler
@@ -101,8 +101,6 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       val customerDeployment = customerComponentFn(writeDb)
 
-      val customerJson = CustomerJson()
-
       vertx.deployVerticle(customerDeployment.cmdHandlerVerticle)
 
       // web
@@ -178,24 +176,3 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
 }
 
-/**
- *
-
-abstract class CrabzillaDeployment(
-  vertx: Vertx,
-  readModelDb: PgPool,
-  writeModelDb: PgPool,
-  projectionEndpoint: String,
-  components: List<AggregateRootDeployment<Entity>>) {
-  abstract fun projector(): PgcEventProjector
-}
-
-abstract class AggregateRootDeployment<E: Entity> {
-  abstract fun name(): String
-  abstract fun uowJournal(): UnitOfWorkJournal
-  abstract fun uowRepo() : UnitOfWorkRepository
-  abstract fun snapshotRepo(): SnapshotRepository<E>
-  abstract fun commandHandler(): CommandHandlerVerticle<E>
-}
-
-*/

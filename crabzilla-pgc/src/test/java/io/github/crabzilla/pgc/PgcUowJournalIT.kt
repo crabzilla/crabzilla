@@ -260,8 +260,8 @@ class PgcUowJournalIT {
         tc.failNow(ar1.cause())
       } else {
 
-        val uowId = ar1.result()
-        tc.verify { assertThat(uowId).isGreaterThan(0) }
+        val uowId1 = ar1.result()
+        tc.verify { assertThat(uowId1).isGreaterThan(0) }
         val appendFuture2 = Future.future<Long>()
 
         // append uow2
