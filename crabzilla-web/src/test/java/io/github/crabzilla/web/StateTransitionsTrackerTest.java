@@ -1,4 +1,4 @@
-package io.github.crabzilla.web.example1;
+package io.github.crabzilla.web;
 
 import io.github.crabzilla.Snapshot;
 import io.github.crabzilla.example1.Customer;

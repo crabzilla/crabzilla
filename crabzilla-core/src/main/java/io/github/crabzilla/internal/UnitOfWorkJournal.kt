@@ -1,5 +1,6 @@
-package io.github.crabzilla
+package io.github.crabzilla.internal
 
+import io.github.crabzilla.UnitOfWork
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 

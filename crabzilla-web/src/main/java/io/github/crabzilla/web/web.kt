@@ -76,11 +76,11 @@ fun postCommandHandler(rc: RoutingContext, cmdMetadata: CommandMetadata, project
 
 }
 
-fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository, unitOfWorkId: Long) {
+fun <E : Entity> getUowHandler(rc: RoutingContext, component: EntityComponent<E>, unitOfWorkId: Long) {
 
   val httpResp = rc.response()
 
-  uowRepo.getUowByUowId(unitOfWorkId, Handler { uowResult ->
+  component.getUowByUowId(unitOfWorkId, Handler { uowResult ->
     if (uowResult.failed() || uowResult.result() == null) {
       httpResp.statusCode = if (uowResult.result() == null) 404 else 500
       httpResp.end()
@@ -98,16 +98,14 @@ fun getUowHandler(rc: RoutingContext, uowRepo: UnitOfWorkRepository, unitOfWorkI
 
 }
 
-fun <E : Entity> entityWriteModelHandler(rc: RoutingContext,
-                                         entityId: Int,
-                                         snapshotRepo: SnapshotRepository<E>,
+fun <E : Entity> entityWriteModelHandler(rc: RoutingContext, entityId: Int, component: EntityComponent<E>,
                                          entityToJson: (E) -> JsonObject) {
 
   log.info("Retrieving entity write model for $entityId")
 
   val httpResp = rc.response().setChunked(true)
 
-  snapshotRepo.retrieve(entityId, Handler { event ->
+  component.getSnapshot(entityId, Handler { event ->
     if (event.failed()) {
       httpResp.setStatusCode(500).end("Server error")
       return@Handler
@@ -126,10 +124,7 @@ fun <E : Entity> entityWriteModelHandler(rc: RoutingContext,
 
 }
 
-fun <E : Entity> entityTrackingHandler(rc: RoutingContext,
-                                       entityId: Int,
-                                       uowRepo: UnitOfWorkRepository,
-                                       snapshotRepo: SnapshotRepository<E>,
+fun <E : Entity> entityTrackingHandler(rc: RoutingContext, entityId: Int, component: EntityComponent<E>,
                                        entityToJson: (E) -> JsonObject) {
 
   log.info("Retrieving entity tracking for $entityId")
@@ -137,10 +132,10 @@ fun <E : Entity> entityTrackingHandler(rc: RoutingContext,
   val httpResp = rc.response()
 
   val snapshotFuture = Future.future<Snapshot<E>>()
-  snapshotRepo.retrieve(entityId, snapshotFuture)
+  component.getSnapshot(entityId, snapshotFuture)
 
   val uowListFuture = Future.future<List<UnitOfWork>>()
-  uowRepo.getAllUowByEntityId(entityId, uowListFuture)
+  component.getAllUowByEntityId(entityId, uowListFuture)
 
   CompositeFuture.all(snapshotFuture, uowListFuture).setHandler { event ->
     if (event.failed()) {

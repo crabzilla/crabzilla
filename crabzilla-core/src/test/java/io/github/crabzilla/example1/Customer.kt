@@ -132,6 +132,7 @@ val CUSTOMER_CMD_VALIDATOR = { command: Command ->
 
 // boilerplate
 
+// TODO  default impl for this
 val CUSTOMER_CMD_HANDLER_FACTORY: CommandHandlerFactory<Customer> = { cmdMetadata: CommandMetadata,
                                                                       command: Command,
                                                                       snapshot: Snapshot<Customer>,

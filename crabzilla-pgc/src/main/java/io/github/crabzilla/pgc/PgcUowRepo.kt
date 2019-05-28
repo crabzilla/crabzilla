@@ -3,6 +3,7 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.*
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENT_NAME
+import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
@@ -13,8 +14,8 @@ import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 import java.util.*
 
-open class PgcUowRepo<E: Entity>(private val pgPool: PgPool,
-                      private val jsonFunctions: EntityJsonFunctions<E>) : UnitOfWorkRepository {
+internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jsonFunctions: EntityJsonFunctions<E>)
+  : UnitOfWorkRepository {
 
   companion object {
 

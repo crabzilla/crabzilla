@@ -1,4 +1,4 @@
-package io.github.crabzilla;
+package io.github.crabzilla.internal;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,8 +1,13 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.*
+import io.github.crabzilla.Crabzilla
+import io.github.crabzilla.RangeOfEvents
+import io.github.crabzilla.UnitOfWork
+import io.github.crabzilla.UnitOfWorkEvents
 import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
+import io.github.crabzilla.internal.UnitOfWorkJournal
+import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
 import io.github.crabzilla.pgc.example1.Example1Fixture.activateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1

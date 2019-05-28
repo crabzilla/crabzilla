@@ -79,7 +79,7 @@ class PgcCmdHandlerVerticleIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      verticle = PgcCmdHandlerVerticle(customerDeploymentFn(writeDb))
+      verticle = customerDeploymentFn(writeDb).cmdHandlerVerticle
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {

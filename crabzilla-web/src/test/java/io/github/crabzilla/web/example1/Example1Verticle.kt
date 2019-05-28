@@ -100,7 +100,7 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       val customerDeployment = customerDeploymentFn(writeDb)
 
-      vertx.deployVerticle(customerDeployment.cmdHandlerVerticle.value)
+      vertx.deployVerticle(customerDeployment.cmdHandlerVerticle)
 
       // web
 
@@ -119,17 +119,17 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
       router.get("/units-of-work/:unitOfWorkId").handler {
         val uowId = it.pathParam("unitOfWorkId").toLong()
         println("retrieving uow $uowId")
-        getUowHandler(it, customerDeployment.uowRepo.value, uowId)
+        getUowHandler(it, customerDeployment, uowId)
       }
 
       router.get("/customers/:entityId").handler {
         val customerId = it.pathParam(COMMAND_ENTITY_ID_PARAMETER).toInt()
         println(it.request().getHeader("accept"))
         when (it.request().getHeader("accept")) {
-          ENTITY_TRACKING -> entityTrackingHandler(it, customerId, customerDeployment.uowRepo.value,
-            customerDeployment.snapshotRepo.value) { customer -> customerDeployment.jsonFn.toJson(customer) }
-          ENTITY_WRITE_MODEL -> entityWriteModelHandler(it, customerId, customerDeployment.snapshotRepo.value)
-            { customer -> customerDeployment.jsonFn.toJson(customer) }
+          ENTITY_TRACKING -> entityTrackingHandler(it, customerId, customerDeployment)
+                                                        { customer -> customerDeployment.toJson(customer) }
+          ENTITY_WRITE_MODEL -> entityWriteModelHandler(it, customerId, customerDeployment)
+                                                        { customer -> customerDeployment.toJson(customer) }
           else -> {
             readDb.preparedQuery("select * from customer_summary") { event1 ->
               println("*** read model: " + event1.result().toString())
@@ -141,7 +141,7 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
 
-      server!!.requestHandler(router).listen { startedFuture ->
+      server.requestHandler(router).listen { startedFuture ->
         if (startedFuture.succeeded()) {
           log.info("Server started on port " + startedFuture.result().actualPort())
           startFuture.complete()
@@ -157,9 +157,9 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
   override fun stop() {
     log.info("*** closing resources")
-    writeModelDb?.close()
-    readModelDb?.close()
-    server?.close()
+    writeModelDb.close()
+    readModelDb.close()
+    server.close()
   }
 
   private fun pgPool(id: String, config: JsonObject) : PgPool {

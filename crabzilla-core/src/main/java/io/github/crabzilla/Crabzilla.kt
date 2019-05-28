@@ -1,8 +1,8 @@
 package io.github.crabzilla
 
-import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
+import io.github.crabzilla.internal.JacksonGenericCodec
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 
@@ -13,7 +13,6 @@ object Crabzilla {
     Json.mapper
       .registerModule(Jdk8Module())
       .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-      .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES) // TODO test this
 
     vertx.eventBus().registerDefaultCodec(Pair::class.java,
       JacksonGenericCodec(Json.mapper, Pair::class.java))

@@ -3,9 +3,9 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.Entity
 import io.github.crabzilla.Snapshot
-import io.github.crabzilla.SnapshotRepository
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENT_NAME
+import io.github.crabzilla.internal.SnapshotRepository
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgTransaction
 import io.reactiverse.pgclient.Tuple

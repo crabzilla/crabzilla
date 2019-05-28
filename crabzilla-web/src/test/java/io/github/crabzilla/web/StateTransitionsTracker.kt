@@ -1,4 +1,4 @@
-package io.github.crabzilla.web.example1
+package io.github.crabzilla.web
 
 import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.Entity
