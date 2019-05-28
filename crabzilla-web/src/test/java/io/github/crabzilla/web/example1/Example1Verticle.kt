@@ -6,7 +6,7 @@ import io.github.crabzilla.UnitOfWorkEvents
 import io.github.crabzilla.example1.CustomerJson
 import io.github.crabzilla.pgc.PgcUowProjector
 import io.github.crabzilla.pgc.example1.Example1EventProjector
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerDeploymentFn
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerComponentFn
 import io.github.crabzilla.web.ContentTypes.ENTITY_TRACKING
 import io.github.crabzilla.web.ContentTypes.ENTITY_WRITE_MODEL
 import io.github.crabzilla.web.entityTrackingHandler
@@ -99,7 +99,7 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       // write model
 
-      val customerDeployment = customerDeploymentFn(writeDb)
+      val customerDeployment = customerComponentFn(writeDb)
 
       val customerJson = CustomerJson()
 

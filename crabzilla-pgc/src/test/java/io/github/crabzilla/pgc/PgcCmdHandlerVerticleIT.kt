@@ -8,7 +8,7 @@ import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
 import io.github.crabzilla.example1.CustomerId
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerDeploymentFn
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerComponentFn
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.reactiverse.pgclient.PgClient
@@ -79,7 +79,7 @@ class PgcCmdHandlerVerticleIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      verticle = customerDeploymentFn(writeDb).cmdHandlerVerticle
+      verticle = customerComponentFn(writeDb).cmdHandlerVerticle
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {
@@ -116,7 +116,7 @@ class PgcCmdHandlerVerticleIT {
 
     val command = customerJson.cmdToJson(createCustomerCmd)
 
-    val deploy = customerDeploymentFn(writeDb)
+    val deploy = customerComponentFn(writeDb)
 
     vertx.eventBus()
       .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(deploy.name), Pair(commandMetadata, command),
@@ -144,7 +144,7 @@ class PgcCmdHandlerVerticleIT {
       CREATE.urlFriendly())
     val command = customerJson.cmdToJson(createCustomerCmd)
 
-    val deploy = customerDeploymentFn(writeDb)
+    val deploy = customerComponentFn(writeDb)
 
     vertx.eventBus()
       .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(deploy.name), Pair(commandMetadata, command),
@@ -164,7 +164,7 @@ class PgcCmdHandlerVerticleIT {
     val customerId = CustomerId(1)
     val commandMetadata = CommandMetadata(customerEntityName, customerId.value, "unknown")
     val command = JsonObject()
-    val deploy = customerDeploymentFn(writeDb)
+    val deploy = customerComponentFn(writeDb)
 
     vertx.eventBus()
       .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(deploy.name), Pair(commandMetadata, command),

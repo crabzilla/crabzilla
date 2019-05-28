@@ -5,11 +5,11 @@ import io.reactiverse.pgclient.PgPool
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 
-class PgcEntityDeployment<E: Entity>(val name: String,
-                                     jsonFn: EntityJsonFunctions<E>,
-                                     stateFn: EntityStateFunctions<E>,
-                                     cmdFn: EntityCommandFunctions<E>,
-                                     writeDb: PgPool) : EntityComponent<E> {
+class PgcEntityComponent<E: Entity>(val name: String,
+                                    jsonFn: EntityJsonFunctions<E>,
+                                    stateFn: EntityStateFunctions<E>,
+                                    cmdFn: EntityCommandFunctions<E>,
+                                    writeDb: PgPool) : EntityComponent<E> {
 
   private val uowRepo =  PgcUowRepo(writeDb, jsonFn)
   private val snapshotRepo = PgcSnapshotRepo(writeDb, name, stateFn, jsonFn)
