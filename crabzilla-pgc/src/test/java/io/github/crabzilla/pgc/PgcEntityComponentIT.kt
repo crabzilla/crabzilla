@@ -2,15 +2,13 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.CommandMetadata
 import io.github.crabzilla.Crabzilla
-import io.github.crabzilla.UnitOfWork
-import io.github.crabzilla.cmdHandlerEndpoint
+import io.github.crabzilla.EntityComponent
 import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
 import io.github.crabzilla.example1.CustomerId
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerComponentFn
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -19,8 +17,6 @@ import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
-import io.vertx.core.eventbus.DeliveryOptions
-import io.vertx.core.eventbus.ReplyException
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -34,14 +30,11 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PgcCmdHandlerVerticleIT {
+class PgcEntityComponentIT {
 
-  // TODO https://slinkydeveloper.com/Assertions-With-Vertx-Futures-And-JUnit5/
   private lateinit var vertx: Vertx
   private lateinit var writeDb: PgPool
-  private lateinit var verticle: PgcCmdHandlerVerticle<Customer>
-
-  private val options = DeliveryOptions()
+  private lateinit var customerComponent: EntityComponent<Customer>
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
@@ -79,7 +72,7 @@ class PgcCmdHandlerVerticleIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      verticle = customerComponentFn(writeDb).cmdHandlerVerticle
+      customerComponent = customerPgcComponent(vertx, writeDb)
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {
@@ -93,12 +86,7 @@ class PgcCmdHandlerVerticleIT {
             tc.failNow(deleteResult2.cause())
             return@query
           }
-          vertx.deployVerticle(verticle) { event ->
-            if (event.failed()) {
-              tc.failNow(event.cause())
-            }
-            tc.completeNow()
-          }
+          tc.completeNow()
         }
       }
 
@@ -112,49 +100,35 @@ class PgcCmdHandlerVerticleIT {
 
     val customerId = CustomerId(1)
     val createCustomerCmd = CreateCustomer("customer1")
-    val commandMetadata = CommandMetadata(customerEntityName, customerId.value, CREATE.urlFriendly())
+    val commandMetadata = CommandMetadata(customerId.value, CREATE.urlFriendly())
 
     val command = customerJson.cmdToJson(createCustomerCmd)
 
-    val deploy = customerComponentFn(writeDb)
+    customerComponent.handleCommand(commandMetadata, command, Handler { event ->
+      if (event.succeeded()) {
+        val result = event.result()
+        tc.verify { assertThat(result.first.events.size).isEqualTo(1) }
+        tc.completeNow()
+      } else {
+        tc.failNow(event.cause())
+      }
+    })
 
-    vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(deploy.name), Pair(commandMetadata, command),
-        options) { asyncResult ->
-        if (asyncResult.failed()) {
-          tc.failNow(asyncResult.cause())
-          return@send
-        }
-        tc.verify {
-          val result = asyncResult.result().body() as Pair<UnitOfWork, Int>
-          tc.verify { assertThat(result.first.events.size).isEqualTo(1) }
-          tc.completeNow()
-        }
-    }
   }
 
   @Test
   @DisplayName("given an invalid command it will be VALIDATION_ERROR")
   fun a2(tc: VertxTestContext) {
-
     val customerId = CustomerId(1)
     val createCustomerCmd = CreateCustomer("a bad name")
-    val commandMetadata = CommandMetadata(customerEntityName,
-      customerId.value,
-      CREATE.urlFriendly())
+    val commandMetadata = CommandMetadata(customerId.value, CREATE.urlFriendly())
     val command = customerJson.cmdToJson(createCustomerCmd)
 
-    val deploy = customerComponentFn(writeDb)
-
-    vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(deploy.name), Pair(commandMetadata, command),
-        options) { asyncResult ->
-          tc.verify { assertThat(asyncResult.succeeded()).isFalse() }
-          val cause = asyncResult.cause() as ReplyException
-          tc.verify { assertThat(cause.message).isEqualTo("[Invalid name: a bad name]") }
-          tc.verify { assertThat(cause.failureCode()).isEqualTo(400) }
-          tc.completeNow()
-        }
+    customerComponent.handleCommand(commandMetadata, command, Handler { event ->
+      tc.verify { assertThat(event.succeeded()).isFalse() }
+      tc.verify { assertThat(event.cause().message).isEqualTo("[Invalid name: a bad name]") }
+      tc.completeNow()
+    })
 
   }
 
@@ -162,19 +136,14 @@ class PgcCmdHandlerVerticleIT {
   @DisplayName("given an execution error it will be HANDLING_ERROR")
   fun a3(tc: VertxTestContext) {
     val customerId = CustomerId(1)
-    val commandMetadata = CommandMetadata(customerEntityName, customerId.value, "unknown")
+    val commandMetadata = CommandMetadata(customerId.value, "unknown")
     val command = JsonObject()
-    val deploy = customerComponentFn(writeDb)
 
-    vertx.eventBus()
-      .send<Pair<UnitOfWork, Int>>(cmdHandlerEndpoint(deploy.name), Pair(commandMetadata, command),
-        options) { asyncResult ->
-        tc.verify { assertThat(asyncResult.succeeded()).isFalse() }
-        val cause = asyncResult.cause() as ReplyException
-        tc.verify { assertThat(cause.message).isEqualTo("Command cannot be deserialized") }
-        tc.verify { assertThat(cause.failureCode()).isEqualTo(400) }
-        tc.completeNow()
-    }
+    customerComponent.handleCommand(commandMetadata, command, Handler { event ->
+      tc.verify { assertThat(event.succeeded()).isFalse() }
+      tc.verify { assertThat(event.cause().message).isEqualTo("Command cannot be deserialized") }
+      tc.completeNow()
+    })
 
   }
 

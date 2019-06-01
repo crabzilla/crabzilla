@@ -1,18 +1,11 @@
 package io.github.crabzilla.web.example1
 
-import io.github.crabzilla.CommandMetadata
 import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.UnitOfWorkEvents
 import io.github.crabzilla.pgc.PgcUowProjector
 import io.github.crabzilla.pgc.example1.Example1EventProjector
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerComponentFn
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
-import io.github.crabzilla.web.ContentTypes.ENTITY_TRACKING
-import io.github.crabzilla.web.ContentTypes.ENTITY_WRITE_MODEL
-import io.github.crabzilla.web.entityTrackingHandler
-import io.github.crabzilla.web.entityWriteModelHandler
-import io.github.crabzilla.web.getUowHandler
-import io.github.crabzilla.web.postCommandHandler
+import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
+import io.github.crabzilla.web.WebEntityComponent
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgPoolOptions
@@ -46,11 +39,6 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
     internal var log = getLogger(Example1Verticle::class.java)
 
-    const val CUSTOMER_AGGREGATE_ROOT = "customer"
-    const val EXAMPLE1_PROJECTION_ENDPOINT: String = "example1_projection_endpoint"
-
-    const val COMMAND_NAME_PARAMETER = "commandName"
-    const val COMMAND_ENTITY_ID_PARAMETER = "entityId"
   }
 
   override fun start(startFuture: Future<Void>) {
@@ -88,7 +76,7 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
       // read model
 
       val eventProjector = PgcUowProjector(readDb, "customer summary")
-      vertx.eventBus().consumer<UnitOfWorkEvents>(EXAMPLE1_PROJECTION_ENDPOINT) { message ->
+      vertx.eventBus().consumer<UnitOfWorkEvents>(Crabzilla.PROJECTION_ENDPOINT) { message ->
         log.info("received events: " + message.body())
         eventProjector.handle(message.body(), Example1EventProjector(), Handler { result ->
           if (result.failed()) {
@@ -97,12 +85,6 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
         })
       }
 
-      // write model
-
-      val customerDeployment = customerComponentFn(writeDb)
-
-      vertx.deployVerticle(customerDeployment.cmdHandlerVerticle)
-
       // web
 
       val router = Router.router(vertx)
@@ -110,35 +92,9 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
       router.route().handler(LoggerHandler.create())
       router.route().handler(BodyHandler.create())
 
-      router.post("/customers/:entityId/commands/:commandName").handler {
-        val commandMetadata = CommandMetadata(CUSTOMER_AGGREGATE_ROOT,
-          it.pathParam(COMMAND_ENTITY_ID_PARAMETER).toInt(),
-          it.pathParam(COMMAND_NAME_PARAMETER))
-        postCommandHandler(it, commandMetadata, EXAMPLE1_PROJECTION_ENDPOINT)
-      }
+      val customerWebComponent = WebEntityComponent("customers", customerPgcComponent(vertx, writeDb))
 
-      router.get("/units-of-work/:unitOfWorkId").handler {
-        val uowId = it.pathParam("unitOfWorkId").toLong()
-        println("retrieving uow $uowId")
-        getUowHandler(it, customerDeployment, uowId)
-      }
-
-      router.get("/customers/:entityId").handler {
-        val customerId = it.pathParam(COMMAND_ENTITY_ID_PARAMETER).toInt()
-        println(it.request().getHeader("accept"))
-        when (it.request().getHeader("accept")) {
-          ENTITY_TRACKING -> entityTrackingHandler(it, customerId, customerDeployment)
-                                                        { customer -> customerJson.toJson(customer) }
-          ENTITY_WRITE_MODEL -> entityWriteModelHandler(it, customerId, customerDeployment)
-                                                        { customer -> customerJson.toJson(customer) }
-          else -> {
-            readDb.preparedQuery("select * from customer_summary") { event1 ->
-              println("*** read model: " + event1.result().toString())
-            }
-          }
-        } // TODO plug read model handler as default
-
-      }
+      customerWebComponent.addWebRoutes(router)
 
       server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
 

@@ -6,15 +6,15 @@ import io.github.crabzilla.example1.CUSTOMER_SEED_VALUE
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
-import io.github.crabzilla.example1.CustomerJson
-import io.github.crabzilla.example1.CustomerStateFn
+import io.github.crabzilla.example1.CustomerFn
+import io.github.crabzilla.example1.CustomerJsonFn
 import io.github.crabzilla.internal.SnapshotRepository
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
+import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.pgc.example1.Example1Fixture.activateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.reactiverse.pgclient.PgClient
@@ -86,7 +86,7 @@ class PgcSnapshotRepoIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      repo = PgcSnapshotRepo(writeDb, customerEntityName, CustomerStateFn(), CustomerJson())
+      repo = PgcSnapshotRepo(writeDb, CUSTOMER_ENTITY, CustomerFn(), CustomerJsonFn())
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {
@@ -136,7 +136,7 @@ class PgcSnapshotRepoIT {
     val tuple = Tuple.of(io.reactiverse.pgclient.data.Json.create(eventsAsJson), UUID.randomUUID(),
       CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-      customerEntityName,
+      CUSTOMER_ENTITY,
       customerId1.value,
       1)
 
@@ -174,7 +174,7 @@ class PgcSnapshotRepoIT {
       UUID.randomUUID(),
       CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-      customerEntityName,
+      CUSTOMER_ENTITY,
       customerId1.value,
       1)
 
@@ -190,7 +190,7 @@ class PgcSnapshotRepoIT {
         UUID.randomUUID(),
         ACTIVATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
-        customerEntityName,
+        CUSTOMER_ENTITY,
         customerId1.value,
         2)
 

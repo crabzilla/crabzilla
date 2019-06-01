@@ -4,18 +4,19 @@ import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.RangeOfEvents
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.UnitOfWorkEvents
+import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
 import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
+import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.pgc.example1.Example1Fixture.activateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activatedUow1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createdUow1
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.reactiverse.pgclient.PgClient
@@ -43,7 +44,7 @@ class PgcUowRepoIT {
   private lateinit var vertx: Vertx
   private lateinit var writeDb: PgPool
   private lateinit var repo: UnitOfWorkRepository
-  private lateinit var journal: UnitOfWorkJournal
+  private lateinit var journal: UnitOfWorkJournal<Customer>
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
@@ -115,7 +116,7 @@ class PgcUowRepoIT {
       createdUow1.commandId,
       CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-      customerEntityName,
+      CUSTOMER_ENTITY,
       customerId1.value,
       1)
 
@@ -149,7 +150,7 @@ class PgcUowRepoIT {
       createdUow1.commandId,
       CREATE.urlFriendly(),
       io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-      customerEntityName,
+      CUSTOMER_ENTITY,
       customerId1.value,
       1)
 
@@ -197,7 +198,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        customerEntityName,
+        CUSTOMER_ENTITY,
         customerId1.value,
         1)
 
@@ -232,7 +233,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        customerEntityName,
+        CUSTOMER_ENTITY,
         customerId1.value,
         1)
 
@@ -250,7 +251,7 @@ class PgcUowRepoIT {
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
-          customerEntityName,
+          CUSTOMER_ENTITY,
           customerId1.value,
           2)
 
@@ -287,7 +288,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        customerEntityName,
+        CUSTOMER_ENTITY,
         customerId1.value,
         1)
 
@@ -305,7 +306,7 @@ class PgcUowRepoIT {
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
-          customerEntityName,
+          CUSTOMER_ENTITY,
           customerId1.value,
           2)
 
@@ -340,7 +341,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        customerEntityName,
+        CUSTOMER_ENTITY,
         customerId1.value,
         1)
 
@@ -357,7 +358,7 @@ class PgcUowRepoIT {
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
-          customerEntityName,
+          CUSTOMER_ENTITY,
           customerId1.value,
           2)
         writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
@@ -395,7 +396,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        customerEntityName,
+        CUSTOMER_ENTITY,
         customerId1.value,
         1)
 
@@ -407,7 +408,7 @@ class PgcUowRepoIT {
         val uowId = ar.result().first().getLong(0)
         tc.verify { assertThat(uowId).isGreaterThan(0) }
         val selectFuture = Future.future<RangeOfEvents>()
-        repo.selectAfterVersion(customerId1.value, 0, customerEntityName, selectFuture.completer())
+        repo.selectAfterVersion(customerId1.value, 0, CUSTOMER_ENTITY, selectFuture.completer())
         selectFuture.setHandler { selectAsyncResult ->
           val snapshotData = selectAsyncResult.result()
           tc.verify { assertThat(1).isEqualTo(snapshotData.untilVersion) }
@@ -427,7 +428,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        customerEntityName,
+        CUSTOMER_ENTITY,
         customerId1.value,
         1)
 
@@ -443,7 +444,7 @@ class PgcUowRepoIT {
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
-          customerEntityName,
+          CUSTOMER_ENTITY,
           customerId1.value,
           2)
 
@@ -453,7 +454,7 @@ class PgcUowRepoIT {
             tc.failNow(ar2.cause())
           }
           val selectFuture1 = Future.future<RangeOfEvents>()
-          repo.selectAfterVersion(customerId1.value, 0, customerEntityName, selectFuture1)
+          repo.selectAfterVersion(customerId1.value, 0, CUSTOMER_ENTITY, selectFuture1)
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(2).isEqualTo(snapshotData.untilVersion) }
@@ -475,7 +476,7 @@ class PgcUowRepoIT {
         createdUow1.commandId,
         CREATE.urlFriendly(),
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
-        customerEntityName,
+        CUSTOMER_ENTITY,
         customerId1.value,
         1)
 
@@ -491,7 +492,7 @@ class PgcUowRepoIT {
           activatedUow1.commandId,
           ACTIVATE.urlFriendly(),
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
-          customerEntityName,
+          CUSTOMER_ENTITY,
           customerId1.value,
           2)
         writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
@@ -502,7 +503,7 @@ class PgcUowRepoIT {
           }
           val uowId2 = ar2.result().first().getLong("uow_id")
           val selectFuture1 = Future.future<RangeOfEvents>()
-          repo.selectAfterVersion(customerId1.value, 1, customerEntityName, selectFuture1.completer())
+          repo.selectAfterVersion(customerId1.value, 1, CUSTOMER_ENTITY, selectFuture1.completer())
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(2).isEqualTo(snapshotData.untilVersion) }
@@ -544,7 +545,7 @@ class PgcUowRepoIT {
         tc.verify { assertThat(uowId).isGreaterThan(2) }
         val snapshotDataFuture = Future.future<RangeOfEvents>()
         // get only above version 1
-        repo.selectAfterVersion(activatedUow1.entityId, 1, customerEntityName, snapshotDataFuture)
+        repo.selectAfterVersion(activatedUow1.entityId, 1, CUSTOMER_ENTITY, snapshotDataFuture)
         snapshotDataFuture.setHandler { ar4 ->
           if (ar4.failed()) {
             ar4.cause().printStackTrace()

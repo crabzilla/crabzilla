@@ -7,7 +7,3 @@ typealias CommandHandlerFactory<E> = (CommandMetadata, Command, Snapshot<E>,
                                       Handler<AsyncResult<UnitOfWork>>) -> CommandHandler<E>
 
 typealias Version = Int
-
-fun cmdHandlerEndpoint(entityName: String): String {
-  return "$entityName-cmd-handler"
-}

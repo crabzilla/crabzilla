@@ -5,7 +5,7 @@
 
   <groupId>io.github.crabzilla</groupId>
   <artifactId>crabzilla</artifactId>
-  <version>0.0.6-rc5</version>
+  <version>0.0.6-rc6</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -18,7 +18,7 @@
     <slf4j.version>1.7.25</slf4j.version>
 
     <!-- crabzilla vertx -->
-    <vertx.version>3.7.0</vertx.version>
+    <vertx.version>3.6.3</vertx.version>
 
     <!-- tests-->
     <skipTests>true</skipTests>

@@ -2,10 +2,10 @@ package io.github.crabzilla.example1
 
 import io.github.crabzilla.Command
 import io.github.crabzilla.DomainEvent
-import io.github.crabzilla.EntityJsonFunctions
+import io.github.crabzilla.EntityJsonAware
 import io.vertx.core.json.JsonObject
 
-class CustomerJson : EntityJsonFunctions<Customer> {
+class CustomerJsonFn : EntityJsonAware<Customer> {
 
   override fun toJson(entity: Customer): JsonObject {
     return JsonObject().put("customerId", entity.customerId?.value).put("name", entity.name)

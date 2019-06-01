@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.Entity
-import io.github.crabzilla.EntityJsonFunctions
+import io.github.crabzilla.EntityJsonAware
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.reactiverse.pgclient.PgPool
@@ -12,7 +12,7 @@ import io.vertx.core.Handler
 import org.slf4j.LoggerFactory
 
 class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
-                               private val jsonFunctions: EntityJsonFunctions<E>) : UnitOfWorkJournal {
+                               private val jsonFunctions: EntityJsonAware<E>) : UnitOfWorkJournal<E> {
 
   companion object {
 

@@ -3,15 +3,16 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.RangeOfEvents
 import io.github.crabzilla.UnitOfWork
+import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandEnum
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.github.crabzilla.pgc.example1.Example1Fixture
+import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activatedUow1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createdUow1
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerEntityName
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.reactiverse.pgclient.PgClient
@@ -42,7 +43,7 @@ class PgcUowJournalIT {
   private lateinit var vertx: Vertx
   internal lateinit var writeDb: PgPool
   internal lateinit var repo: UnitOfWorkRepository
-  internal lateinit var journal: UnitOfWorkJournal
+  internal lateinit var journal: UnitOfWorkJournal<Customer>
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
@@ -140,7 +141,7 @@ class PgcUowJournalIT {
 
           val rangeOfEventsFuture = Future.future<RangeOfEvents>()
 
-          repo.selectAfterVersion(createdUow1.entityId, 0, customerEntityName, rangeOfEventsFuture)
+          repo.selectAfterVersion(createdUow1.entityId, 0, CUSTOMER_ENTITY, rangeOfEventsFuture)
 
           rangeOfEventsFuture.setHandler { ar3 ->
             if (ar3.failed()) {
@@ -210,7 +211,7 @@ class PgcUowJournalIT {
 
     val appendFuture1 = Future.future<Long>()
 
-    val createdUow3 = UnitOfWork(customerEntityName, customerId1.value, UUID.randomUUID(),
+    val createdUow3 = UnitOfWork(CUSTOMER_ENTITY, customerId1.value, UUID.randomUUID(),
       CustomerCommandEnum.CREATE.urlFriendly(), Example1Fixture.createCmd1, 3, listOf(Pair("CustomerCreated", created1)))
 
     // append uow1
@@ -278,7 +279,7 @@ class PgcUowJournalIT {
             val rangeOfEventsFuture = Future.future<RangeOfEvents>()
 
             // get all versions for id
-            repo.selectAfterVersion(activatedUow1.entityId, 0, customerEntityName, rangeOfEventsFuture)
+            repo.selectAfterVersion(activatedUow1.entityId, 0, CUSTOMER_ENTITY, rangeOfEventsFuture)
 
             rangeOfEventsFuture.setHandler { ar4 ->
 

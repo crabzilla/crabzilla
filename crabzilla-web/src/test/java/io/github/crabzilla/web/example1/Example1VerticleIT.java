@@ -12,10 +12,7 @@ import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +22,6 @@ import java.util.Random;
 
 import static io.github.crabzilla.UnitOfWork.JsonMetadata.*;
 import static io.github.crabzilla.example1.CustomerCommandEnum.CREATE;
-import static io.github.crabzilla.web.ContentTypes.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -97,23 +93,6 @@ class Example1VerticleIT {
     });
   }
 
-  @Test
-  @DisplayName("When sending a valid CreateCommand expecting uow id")
-  void a1(VertxTestContext tc) {
-    CreateCustomer cmd = new CreateCustomer("customer#" + nextInt);
-    JsonObject jo = JsonObject.mapFrom(cmd);
-    client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
-      .as(BodyCodec.jsonObject())
-      .expect(ResponsePredicate.SC_SUCCESS)
-      .expect(ResponsePredicate.JSON)
-      .putHeader("accept", UNIT_OF_WORK_ID)
-      .sendJsonObject(jo, tc.succeeding(response -> tc.verify(() -> {
-          assertThat(response.getHeader("uowId")).isNotNull();
-          tc.completeNow();
-      }))
-    );
-  }
-
   @Nested
   @DisplayName("When sending a valid CreateCommand expecting uow body")
   class When1 {
@@ -127,7 +106,6 @@ class Example1VerticleIT {
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
-        .putHeader("accept", UNIT_OF_WORK_BODY)
         .sendJson(cmdAsJson, tc.succeeding(response1 -> tc.verify(() -> {
             JsonObject uow = response1.body();
             Long uowId = Long.valueOf(response1.getHeader("uowId"));
@@ -141,22 +119,7 @@ class Example1VerticleIT {
             assertThat(uow.getJsonObject(COMMAND)).isEqualTo(cmdAsJson);
             assertThat(uow.getInteger(VERSION)).isEqualTo(1);
             assertThat(uow.getJsonArray(EVENTS).size()).isEqualTo(1);
-            client.get(port, "0.0.0.0", "/units-of-work/" + uowId.toString())
-              .as(BodyCodec.jsonObject())
-              .expect(ResponsePredicate.SC_SUCCESS)
-              .expect(ResponsePredicate.JSON)
-              .send(tc.succeeding(response3 -> tc.verify(() -> {
-                JsonObject jo2 = response3.body();
-                assertThat(jo2.getString(ENTITY_NAME)).isEqualTo("customer");
-                assertThat(jo2.getInteger(ENTITY_ID)).isEqualTo(customerId2);
-                assertThat(jo2.getString(COMMAND_ID)).isNotNull();
-                assertThat(jo2.getString(COMMAND_NAME)).isEqualTo("create");
-                assertThat(jo2.getJsonObject(COMMAND)).isEqualTo(cmdAsJson);
-                assertThat(jo2.getInteger(VERSION)).isEqualTo(1);
-                assertThat(jo2.getJsonArray(EVENTS).size()).isEqualTo(1);
-                System.out.println(jo2);
-                tc.completeNow();
-              })));
+            tc.completeNow();
         }))
       );
     }
@@ -165,7 +128,6 @@ class Example1VerticleIT {
     @DisplayName("You get a correspondent snapshot (write model)")
     void a2(VertxTestContext tc) {
       client.get(port, "0.0.0.0", "/customers/" + customerId2)
-        .putHeader("accept", ENTITY_WRITE_MODEL)
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
@@ -182,10 +144,10 @@ class Example1VerticleIT {
     }
 
     @Test
+    @Disabled
     @DisplayName("You get a correspondent entity tracking")
     void a3(VertxTestContext tc) {
       client.get(port, "0.0.0.0", "/customers/" + customerId2)
-        .putHeader("accept", ENTITY_TRACKING)
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
@@ -212,7 +174,6 @@ class Example1VerticleIT {
     client.post(port, "0.0.0.0", "/customers/1/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .putHeader("accept", UNIT_OF_WORK_ID)
       .sendJson(invalidCommand, tc.succeeding(response -> tc.verify(() -> {
           tc.completeNow();
         }))
@@ -227,7 +188,6 @@ class Example1VerticleIT {
     client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .putHeader("accept", UNIT_OF_WORK_ID)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
           tc.completeNow();
         }))
@@ -242,7 +202,6 @@ class Example1VerticleIT {
     client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/unknown")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .putHeader("accept", UNIT_OF_WORK_ID)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
           tc.completeNow();
         }))

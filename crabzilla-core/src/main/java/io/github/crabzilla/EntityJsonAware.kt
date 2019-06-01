@@ -3,7 +3,7 @@ package io.github.crabzilla
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 
-interface EntityJsonFunctions<E: Entity> {
+interface EntityJsonAware<E: Entity> {
 
   fun fromJson(json: JsonObject): E
 

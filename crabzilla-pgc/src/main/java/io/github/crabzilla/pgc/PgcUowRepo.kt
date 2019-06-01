@@ -14,7 +14,7 @@ import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 import java.util.*
 
-internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jsonFunctions: EntityJsonFunctions<E>)
+internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jsonFunctions: EntityJsonAware<E>)
   : UnitOfWorkRepository {
 
   companion object {

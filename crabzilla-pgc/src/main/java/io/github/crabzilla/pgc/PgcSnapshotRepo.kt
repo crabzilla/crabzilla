@@ -16,8 +16,8 @@ import io.vertx.core.logging.LoggerFactory
 
 class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
                                   private val name: String,
-                                  private val eStateFn: EntityStateFunctions<E>,
-                                  private val eJsonFn: EntityJsonFunctions<E>) : SnapshotRepository<E> {
+                                  private val entityFn: EntityCommandAware<E>,
+                                  private val eJsonFn: EntityJsonAware<E>) : SnapshotRepository<E> {
 
 
   companion object {
@@ -93,7 +93,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
             val cachedVersion : Int
 
             if (pgRow == null || pgRow.size() == 0) {
-              cachedInstance = eStateFn.initialState()
+              cachedInstance = entityFn.initialState()
               cachedVersion = 0
             } else {
               cachedInstance = eJsonFn.fromJson(JsonObject(pgRow.first().getJson("json_content").toString()))
@@ -151,7 +151,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
 
                   val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEvent)
                   currentInstance =
-                    events.fold(currentInstance) {state, event -> eStateFn.applyEvent(event.second, state)}
+                    events.fold(currentInstance) {state, event -> entityFn.applyEvent(event.second, state)}
                   log.trace("Events: $events \n version: $currentVersion \n instance $currentInstance")
 
                 }

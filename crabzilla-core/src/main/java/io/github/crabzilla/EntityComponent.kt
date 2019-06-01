@@ -2,8 +2,11 @@ package io.github.crabzilla
 
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
+import io.vertx.core.json.JsonObject
 
 interface EntityComponent<E: Entity> {
+
+  fun handleCommand(metadata: CommandMetadata, json: JsonObject, aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>)
 
   fun getUowByUowId(uowId: Long, aHandler: Handler<AsyncResult<UnitOfWork>>)
 
@@ -11,4 +14,7 @@ interface EntityComponent<E: Entity> {
 
   fun getSnapshot(entityId: Int, aHandler: Handler<AsyncResult<Snapshot<E>>>)
 
+  fun toJson(state: E): JsonObject
+
 }
+

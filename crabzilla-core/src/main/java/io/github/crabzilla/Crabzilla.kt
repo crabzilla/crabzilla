@@ -8,6 +8,8 @@ import io.vertx.core.json.Json
 
 object Crabzilla {
 
+  const val PROJECTION_ENDPOINT = "crabzilla.projection.endpoint"
+
   fun initVertx(vertx: Vertx) {
 
     Json.mapper

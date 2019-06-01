@@ -6,6 +6,6 @@ import io.vertx.core.Future
 
 interface PgcEventProjector {
 
-  fun handle(pgConn: PgTransaction, targetId: Int, event: DomainEvent) : Future<Void>
+  fun handle(pgTx: PgTransaction, targetId: Int, event: DomainEvent) : Future<Void>
 
 }

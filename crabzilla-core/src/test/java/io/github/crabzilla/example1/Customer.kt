@@ -37,7 +37,7 @@ class CustomerCmdHandler(cmdMetadata: CommandMetadata,
                          snapshot: Snapshot<Customer>,
                          stateFn: (DomainEvent, Customer) -> Customer,
                          uowHandler: Handler<AsyncResult<UnitOfWork>>) :
-  CommandHandler<Customer>(cmdMetadata, command, snapshot, stateFn, uowHandler) {
+  CommandHandler<Customer>("customer", cmdMetadata, command, snapshot, stateFn, uowHandler) {
 
   override fun handleCommand() {
 
@@ -147,7 +147,7 @@ enum class CustomerCommandEnum {
   }
 }
 
-class CustomerStateFn : EntityStateFunctions<Customer> {
+class CustomerFn : EntityCommandAware<Customer> {
 
   override fun initialState(): Customer {
     return Customer()
@@ -156,10 +156,6 @@ class CustomerStateFn : EntityStateFunctions<Customer> {
   override fun applyEvent(event: DomainEvent, state: Customer): Customer {
     return CUSTOMER_STATE_BUILDER.invoke(event, state)
   }
-
-}
-
-class CustomerCmdFn:  EntityCommandFunctions<Customer> {
 
   override fun validateCmd(command: Command): List<String> {
     return CUSTOMER_CMD_VALIDATOR.invoke(command)
@@ -170,3 +166,4 @@ class CustomerCmdFn:  EntityCommandFunctions<Customer> {
   }
 
 }
+
