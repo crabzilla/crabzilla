@@ -1,11 +1,12 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.example1.aggregate
 
 import io.github.crabzilla.Command
 import io.github.crabzilla.DomainEvent
 import io.github.crabzilla.EntityJsonAware
+import io.github.crabzilla.example1.*
 import io.vertx.core.json.JsonObject
 
-class CustomerJsonFn : EntityJsonAware<Customer> {
+class CustomerJsonAware : EntityJsonAware<Customer> {
 
   override fun toJson(entity: Customer): JsonObject {
     return JsonObject().put("customerId", entity.customerId?.value).put("name", entity.name)

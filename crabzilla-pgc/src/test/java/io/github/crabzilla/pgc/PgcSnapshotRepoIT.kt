@@ -2,12 +2,9 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.Snapshot
-import io.github.crabzilla.example1.CUSTOMER_SEED_VALUE
-import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
-import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
-import io.github.crabzilla.example1.CustomerFn
-import io.github.crabzilla.example1.CustomerJsonFn
+import io.github.crabzilla.example1.aggregate.Customer
+import io.github.crabzilla.example1.aggregate.CustomerCommandAware
+import io.github.crabzilla.example1.aggregate.CustomerJsonAware
 import io.github.crabzilla.internal.SnapshotRepository
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
 import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
@@ -86,7 +83,7 @@ class PgcSnapshotRepoIT {
 
       writeDb = PgClient.pool(vertx, options)
 
-      repo = PgcSnapshotRepo(writeDb, CUSTOMER_ENTITY, CustomerFn(), CustomerJsonFn())
+      repo = PgcSnapshotRepo(writeDb, CUSTOMER_ENTITY, CustomerCommandAware(), CustomerJsonAware())
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {
@@ -121,7 +118,7 @@ class PgcSnapshotRepoIT {
         }
         val snapshot: Snapshot<Customer> = event.result()
         tc.verify { assertThat(snapshot.version).isEqualTo(0) }
-        tc.verify { assertThat(snapshot.state).isEqualTo(CUSTOMER_SEED_VALUE) }
+        tc.verify { assertThat(snapshot.state).isEqualTo(Customer()) }
         tc.completeNow()
       })
 
@@ -134,7 +131,7 @@ class PgcSnapshotRepoIT {
     val eventsAsJson = customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))
 
     val tuple = Tuple.of(io.reactiverse.pgclient.data.Json.create(eventsAsJson), UUID.randomUUID(),
-      CREATE.urlFriendly(),
+      "create",
       io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
       CUSTOMER_ENTITY,
       customerId1.value,
@@ -172,7 +169,7 @@ class PgcSnapshotRepoIT {
     val tuple1 = Tuple.of(
       io.reactiverse.pgclient.data.Json.create(eventsAsJson),
       UUID.randomUUID(),
-      CREATE.urlFriendly(),
+      "create",
       io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
       CUSTOMER_ENTITY,
       customerId1.value,
@@ -188,7 +185,7 @@ class PgcSnapshotRepoIT {
       val tuple2 = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
         UUID.randomUUID(),
-        ACTIVATE.urlFriendly(),
+        "activate",
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
         CUSTOMER_ENTITY,
         customerId1.value,

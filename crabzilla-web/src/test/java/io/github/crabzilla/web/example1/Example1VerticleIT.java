@@ -21,7 +21,6 @@ import java.net.ServerSocket;
 import java.util.Random;
 
 import static io.github.crabzilla.UnitOfWork.JsonMetadata.*;
-import static io.github.crabzilla.example1.CustomerCommandEnum.CREATE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -102,7 +101,7 @@ class Example1VerticleIT {
     void a1(VertxTestContext tc) {
       CreateCustomer cmd = new CreateCustomer("customer#" + customerId2);
       JsonObject cmdAsJson = JsonObject.mapFrom(cmd);
-      client.post(port, "0.0.0.0", "/customers/" + customerId2 + "/commands/" + CREATE.urlFriendly())
+      client.post(port, "0.0.0.0", "/customers/" + customerId2 + "/commands/" + "create"  )
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
@@ -171,7 +170,7 @@ class Example1VerticleIT {
   @DisplayName("When sending an invalid CreateCommand")
   void a3(VertxTestContext tc) {
     JsonObject invalidCommand = new JsonObject();
-    client.post(port, "0.0.0.0", "/customers/1/commands/" + CREATE.urlFriendly())
+    client.post(port, "0.0.0.0", "/customers/1/commands/" + "create")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(invalidCommand, tc.succeeding(response -> tc.verify(() -> {
@@ -185,7 +184,7 @@ class Example1VerticleIT {
   void a4(VertxTestContext tc) {
     CreateCustomer cmd = new CreateCustomer("a bad name");
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + CREATE.urlFriendly())
+    client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + "create")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {

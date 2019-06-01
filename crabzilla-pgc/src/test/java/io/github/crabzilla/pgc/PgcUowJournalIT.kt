@@ -3,8 +3,7 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.RangeOfEvents
 import io.github.crabzilla.UnitOfWork
-import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerCommandEnum
+import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.github.crabzilla.pgc.example1.Example1Fixture
@@ -212,7 +211,7 @@ class PgcUowJournalIT {
     val appendFuture1 = Future.future<Long>()
 
     val createdUow3 = UnitOfWork(CUSTOMER_ENTITY, customerId1.value, UUID.randomUUID(),
-      CustomerCommandEnum.CREATE.urlFriendly(), Example1Fixture.createCmd1, 3, listOf(Pair("CustomerCreated", created1)))
+      "create", Example1Fixture.createCmd1, 3, listOf(Pair("CustomerCreated", created1)))
 
     // append uow1
     journal.append(createdUow1, appendFuture1)

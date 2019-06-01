@@ -4,9 +4,7 @@ import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.RangeOfEvents
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.UnitOfWorkEvents
-import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerCommandEnum.ACTIVATE
-import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
+import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
@@ -114,7 +112,7 @@ class PgcUowRepoIT {
     val tuple = Tuple.of(
       io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
       createdUow1.commandId,
-      CREATE.urlFriendly(),
+      "create",
       io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
       CUSTOMER_ENTITY,
       customerId1.value,
@@ -148,7 +146,7 @@ class PgcUowRepoIT {
     val tuple = Tuple.of(
       io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
       createdUow1.commandId,
-      CREATE.urlFriendly(),
+      "create",
       io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
       CUSTOMER_ENTITY,
       customerId1.value,
@@ -196,7 +194,7 @@ class PgcUowRepoIT {
       val tuple = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
-        CREATE.urlFriendly(),
+        "create",
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         CUSTOMER_ENTITY,
         customerId1.value,
@@ -231,7 +229,7 @@ class PgcUowRepoIT {
       val tuple1 = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
-        CREATE.urlFriendly(),
+        "create",
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         CUSTOMER_ENTITY,
         customerId1.value,
@@ -249,7 +247,7 @@ class PgcUowRepoIT {
         val tuple2 = Tuple.of(
           io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
-          ACTIVATE.urlFriendly(),
+          "activate",
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
           CUSTOMER_ENTITY,
           customerId1.value,
@@ -286,7 +284,7 @@ class PgcUowRepoIT {
       val tuple1 = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
-        CREATE.urlFriendly(),
+        "create",
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         CUSTOMER_ENTITY,
         customerId1.value,
@@ -304,7 +302,7 @@ class PgcUowRepoIT {
         val tuple2 = Tuple.of(
           io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
-          ACTIVATE.urlFriendly(),
+          "activate",
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
           CUSTOMER_ENTITY,
           customerId1.value,
@@ -339,7 +337,7 @@ class PgcUowRepoIT {
       val tuple1 = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
-        CREATE.urlFriendly(),
+        "create",
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         CUSTOMER_ENTITY,
         customerId1.value,
@@ -356,7 +354,7 @@ class PgcUowRepoIT {
         val tuple2 = Tuple.of(
           io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
-          ACTIVATE.urlFriendly(),
+          "activate",
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
           CUSTOMER_ENTITY,
           customerId1.value,
@@ -394,7 +392,7 @@ class PgcUowRepoIT {
       val tuple = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
-        CREATE.urlFriendly(),
+        "create",
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         CUSTOMER_ENTITY,
         customerId1.value,
@@ -426,7 +424,7 @@ class PgcUowRepoIT {
       val tuple1 = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
-        CREATE.urlFriendly(),
+        "create",
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         CUSTOMER_ENTITY,
         customerId1.value,
@@ -442,7 +440,7 @@ class PgcUowRepoIT {
         val tuple2 = Tuple.of(
           io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
-          ACTIVATE.urlFriendly(),
+          "activate",
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
           CUSTOMER_ENTITY,
           customerId1.value,
@@ -474,7 +472,7 @@ class PgcUowRepoIT {
       val tuple1 = Tuple.of(
         io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))),
         createdUow1.commandId,
-        CREATE.urlFriendly(),
+        "create",
         io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
         CUSTOMER_ENTITY,
         customerId1.value,
@@ -490,7 +488,7 @@ class PgcUowRepoIT {
         val tuple2 = Tuple.of(
           io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
           activatedUow1.commandId,
-          ACTIVATE.urlFriendly(),
+          "activate",
           io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
           CUSTOMER_ENTITY,
           customerId1.value,

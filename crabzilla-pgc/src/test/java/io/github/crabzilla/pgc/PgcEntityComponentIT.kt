@@ -4,8 +4,7 @@ import io.github.crabzilla.CommandMetadata
 import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.EntityComponent
 import io.github.crabzilla.example1.CreateCustomer
-import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerCommandEnum.CREATE
+import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.example1.CustomerId
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
@@ -100,7 +99,7 @@ class PgcEntityComponentIT {
 
     val customerId = CustomerId(1)
     val createCustomerCmd = CreateCustomer("customer1")
-    val commandMetadata = CommandMetadata(customerId.value, CREATE.urlFriendly())
+    val commandMetadata = CommandMetadata(customerId.value, "create")
 
     val command = customerJson.cmdToJson(createCustomerCmd)
 
@@ -121,7 +120,7 @@ class PgcEntityComponentIT {
   fun a2(tc: VertxTestContext) {
     val customerId = CustomerId(1)
     val createCustomerCmd = CreateCustomer("a bad name")
-    val commandMetadata = CommandMetadata(customerId.value, CREATE.urlFriendly())
+    val commandMetadata = CommandMetadata(customerId.value, "create")
     val command = customerJson.cmdToJson(createCustomerCmd)
 
     customerComponent.handleCommand(commandMetadata, command, Handler { event ->

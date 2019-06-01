@@ -1,7 +1,6 @@
 package io.github.crabzilla
 
 import io.github.crabzilla.example1.CreateCustomer
-import io.github.crabzilla.example1.CustomerCommandEnum
 import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerId
 import org.assertj.core.api.Assertions.assertThat
@@ -15,7 +14,7 @@ class UnitOfWorkEventsTest {
 
     val command = CreateCustomer("cust#1")
 
-    val uow = UnitOfWork("customer", 1, UUID.randomUUID(), CustomerCommandEnum.CREATE.urlFriendly(),
+    val uow = UnitOfWork("customer", 1, UUID.randomUUID(), "create",
       command, 1, listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(CustomerId(1), "cust#1"))))
 
     val pd = UnitOfWorkEvents.fromUnitOfWork(1, uow)
