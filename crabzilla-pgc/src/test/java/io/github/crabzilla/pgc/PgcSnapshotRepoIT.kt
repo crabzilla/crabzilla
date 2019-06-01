@@ -1,6 +1,5 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.Snapshot
 import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.example1.aggregate.CustomerCommandAware
@@ -49,8 +48,6 @@ class PgcSnapshotRepoIT {
     val vertxOptions = VertxOptions()
 
     vertx = Vertx.vertx(vertxOptions)
-
-    Crabzilla.initVertx(vertx)
 
     val envOptions = ConfigStoreOptions()
       .setType("file")

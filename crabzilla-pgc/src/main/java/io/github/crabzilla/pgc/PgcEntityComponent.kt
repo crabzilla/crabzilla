@@ -1,22 +1,20 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
-import io.github.crabzilla.Crabzilla.PROJECTION_ENDPOINT
 import io.github.crabzilla.internal.CommandHandler
-import io.reactiverse.pgclient.PgPool
+import io.github.crabzilla.pgc.PgcCrablet.Companion.PROJECTION_ENDPOINT
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
-import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 
-class PgcEntityComponent<E: Entity>(val vertx: Vertx, val name: String,
-                                    val jsonAware: EntityJsonAware<E>, cmdAware: EntityCommandAware<E>,
-                                    writeDb: PgPool) : EntityComponent<E> {
+class PgcEntityComponent<E: Entity>(private val crablet: PgcCrablet, val name: String,
+                                    private val jsonAware: EntityJsonAware<E>, cmdAware: EntityCommandAware<E>)
+                                : EntityComponent<E> {
 
-  private val uowRepo =  PgcUowRepo(writeDb, jsonAware)
-  private val snapshotRepo = PgcSnapshotRepo(writeDb, name, cmdAware, jsonAware)
-  private val uowJournal = PgcUowJournal(writeDb, jsonAware)
+  private val uowRepo =  PgcUowRepo(crablet.writeDb, jsonAware)
+  private val snapshotRepo = PgcSnapshotRepo(crablet.writeDb, name, cmdAware, jsonAware)
+  private val uowJournal = PgcUowJournal(crablet.writeDb, jsonAware)
   private val cmdHandler = CommandHandler(jsonAware, cmdAware, snapshotRepo, uowJournal)
 
   override fun getUowByUowId(uowId: Long, aHandler: Handler<AsyncResult<UnitOfWork>>) {
@@ -36,7 +34,7 @@ class PgcEntityComponent<E: Entity>(val vertx: Vertx, val name: String,
     cmdHandler.handle(metadata, json, Handler { event ->
       if (event.succeeded()) {
         val pair = event.result()
-        vertx.eventBus().publish(PROJECTION_ENDPOINT, UnitOfWorkEvents.fromUnitOfWork(pair.second, pair.first))
+        crablet.vertx.eventBus().publish(PROJECTION_ENDPOINT, UnitOfWorkEvents.fromUnitOfWork(pair.second, pair.first))
         aHandler.handle(Future.succeededFuture(pair))
       } else {
         aHandler.handle(Future.failedFuture(event.cause()))

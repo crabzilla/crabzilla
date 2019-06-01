@@ -1,6 +1,5 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.RangeOfEvents
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.UnitOfWorkEvents
@@ -48,8 +47,6 @@ class PgcUowRepoIT {
   fun setup(tc: VertxTestContext) {
 
     vertx = Vertx.vertx()
-
-    Crabzilla.initVertx(vertx)
 
     val envOptions = ConfigStoreOptions()
       .setType("file")

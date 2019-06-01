@@ -1,6 +1,5 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.RangeOfEvents
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.example1.aggregate.Customer
@@ -50,8 +49,6 @@ class PgcUowJournalIT {
     val vertxOptions = VertxOptions()
 
     vertx = Vertx.vertx(vertxOptions)
-
-    Crabzilla.initVertx(vertx)
 
     val envOptions = ConfigStoreOptions()
       .setType("file")

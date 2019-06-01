@@ -1,6 +1,5 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.UnitOfWorkEvents.Companion.fromUnitOfWork
 import io.github.crabzilla.pgc.example1.BadEventProjector
@@ -62,8 +61,6 @@ class PgcUowProjectorIT {
     vertOption.blockedThreadCheckInterval = (1000 * 60 * 60).toLong() // to easier debug
 
     vertx = Vertx.vertx(vertOption)
-
-    Crabzilla.initVertx(vertx)
 
     val envOptions = ConfigStoreOptions()
       .setType("file")

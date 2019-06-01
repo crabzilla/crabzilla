@@ -1,20 +1,14 @@
 package io.github.crabzilla.web.example1
 
-import io.github.crabzilla.Crabzilla
-import io.github.crabzilla.UnitOfWorkEvents
-import io.github.crabzilla.pgc.PgcUowProjector
+import io.github.crabzilla.pgc.PgcCrablet
 import io.github.crabzilla.pgc.example1.Example1EventProjector
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
 import io.github.crabzilla.web.WebEntityComponent
-import io.reactiverse.pgclient.PgClient
-import io.reactiverse.pgclient.PgPool
-import io.reactiverse.pgclient.PgPoolOptions
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
-import io.vertx.core.Handler
 import io.vertx.core.Launcher
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
@@ -32,13 +26,10 @@ fun main() {
 class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./example1.env") : AbstractVerticle() {
 
   lateinit var server: HttpServer
-  lateinit var writeModelDb: PgPool
-  lateinit var readModelDb: PgPool
+  lateinit var crablet: PgcCrablet
 
   companion object {
-
     internal var log = getLogger(Example1Verticle::class.java)
-
   }
 
   override fun start(startFuture: Future<Void>) {
@@ -65,26 +56,6 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       log.trace(config.encodePrettily())
 
-      Crabzilla.initVertx(vertx)
-
-      val readDb = pgPool("READ", config)
-      readModelDb = pgPool("READ", config)
-
-      val writeDb = pgPool("WRITE", config)
-      writeModelDb = writeDb
-
-      // read model
-
-      val eventProjector = PgcUowProjector(readDb, "customer summary")
-      vertx.eventBus().consumer<UnitOfWorkEvents>(Crabzilla.PROJECTION_ENDPOINT) { message ->
-        log.info("received events: " + message.body())
-        eventProjector.handle(message.body(), Example1EventProjector(), Handler { result ->
-          if (result.failed()) {
-            log.error("Projection failed: " + result.cause().message)
-          }
-        })
-      }
-
       // web
 
       val router = Router.router(vertx)
@@ -92,9 +63,15 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
       router.route().handler(LoggerHandler.create())
       router.route().handler(BodyHandler.create())
 
-      val customerWebComponent = WebEntityComponent("customers", customerPgcComponent(vertx, writeDb))
+      // example1
 
-      customerWebComponent.addWebRoutes(router)
+      crablet = PgcCrablet(vertx, config, "example1")
+      crablet.deployProjector(Example1EventProjector())
+
+      val customerPgc = customerPgcComponent(crablet)
+      val customerWebComponent = WebEntityComponent("customers", customerPgc)
+
+      customerWebComponent.deployWebRoutes(router)
 
       server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
 
@@ -114,20 +91,8 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
   override fun stop() {
     log.info("*** closing resources")
-    writeModelDb.close()
-    readModelDb.close()
+    crablet.closeDatabases()
     server.close()
-  }
-
-  private fun pgPool(id: String, config: JsonObject) : PgPool {
-    val writeOptions = PgPoolOptions()
-      .setPort(5432)
-      .setHost(config.getString("${id}_DATABASE_HOST"))
-      .setDatabase(config.getString("${id}_DATABASE_NAME"))
-      .setUser(config.getString("${id}_DATABASE_USER"))
-      .setPassword(config.getString("${id}_DATABASE_PASSWORD"))
-      .setMaxSize(config.getInteger("${id}_DATABASE_POOL_MAX_SIZE"))
-    return PgClient.pool(vertx, writeOptions)
   }
 
 }

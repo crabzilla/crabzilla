@@ -1,16 +1,13 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.CommandMetadata
-import io.github.crabzilla.Crabzilla
 import io.github.crabzilla.EntityComponent
 import io.github.crabzilla.example1.CreateCustomer
-import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.example1.CustomerId
+import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
-import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPool
-import io.reactiverse.pgclient.PgPoolOptions
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -40,8 +37,6 @@ class PgcEntityComponentIT {
 
     vertx = Vertx.vertx()
 
-    Crabzilla.initVertx(vertx)
-
     val envOptions = ConfigStoreOptions()
       .setType("file")
       .setFormat("properties")
@@ -59,19 +54,11 @@ class PgcEntityComponentIT {
 
       val config = configFuture.result()
 
-      // println(config.encodePrettily())
+      val crablet = PgcCrablet(vertx, config, "example1")
 
-      val options = PgPoolOptions()
-        .setPort(5432)
-        .setHost(config.getString("WRITE_DATABASE_HOST"))
-        .setDatabase(config.getString("WRITE_DATABASE_NAME"))
-        .setUser(config.getString("WRITE_DATABASE_USER"))
-        .setPassword(config.getString("WRITE_DATABASE_PASSWORD"))
-        .setMaxSize(config.getInteger("WRITE_DATABASE_POOL_MAX_SIZE"))
+      writeDb = crablet.writeDb
 
-      writeDb = PgClient.pool(vertx, options)
-
-      customerComponent = customerPgcComponent(vertx, writeDb)
+      customerComponent = customerPgcComponent(crablet)
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {

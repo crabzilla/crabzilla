@@ -11,10 +11,10 @@ import org.slf4j.LoggerFactory
 
 class WebEntityComponent<E: Entity>(private val resourceName: String, private val component: EntityComponent<E>) {
 
-  val POST_CMD = "/$resourceName/:$ENTITY_ID_PARAMETER/commands/:$COMMAND_NAME_PARAMETER"
-  val GET_SNAPSHOT = "/$resourceName/:$ENTITY_ID_PARAMETER"
-  val GET_ALL_UOW = "/$resourceName/:$ENTITY_ID_PARAMETER/units-of-work"
-  val GET_UOW = "/$resourceName/units-of-work/:unitOfWorkId"
+  private val postCmd = "/$resourceName/:$ENTITY_ID_PARAMETER/commands/:$COMMAND_NAME_PARAMETER"
+  private val getSnapshot = "/$resourceName/:$ENTITY_ID_PARAMETER"
+  private val getAllUow = "/$resourceName/:$ENTITY_ID_PARAMETER/units-of-work"
+  private val getUow = "/$resourceName/units-of-work/:unitOfWorkId"
 
   companion object {
     private const val COMMAND_NAME_PARAMETER = "commandName"
@@ -24,11 +24,11 @@ class WebEntityComponent<E: Entity>(private val resourceName: String, private va
     private val log = LoggerFactory.getLogger(WebEntityComponent::class.java)
   }
 
-  fun addWebRoutes(router: Router) {
+  fun deployWebRoutes(router: Router) {
 
-    log.info("adding route $POST_CMD")
+    log.info("adding route $postCmd")
 
-    router.post(POST_CMD).handler {
+    router.post(postCmd).handler {
       val commandMetadata = CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(),
                                             it.pathParam(COMMAND_NAME_PARAMETER))
       val begin = System.currentTimeMillis()
@@ -51,9 +51,9 @@ class WebEntityComponent<E: Entity>(private val resourceName: String, private va
       })
     }
 
-    log.info("adding route $GET_SNAPSHOT")
+    log.info("adding route $getSnapshot")
 
-    router.get(GET_SNAPSHOT).handler {
+    router.get(getSnapshot).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
       println("retrieving write model state for $entityId")
       val httpResp = it.response()
@@ -76,9 +76,9 @@ class WebEntityComponent<E: Entity>(private val resourceName: String, private va
       })
     }
 
-    log.info("adding route $GET_ALL_UOW")
+    log.info("adding route $getAllUow")
 
-    router.get(GET_ALL_UOW).handler {
+    router.get(getAllUow).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
       println("retrieving uows for $entityId")
       val httpResp = it.response()
@@ -95,9 +95,9 @@ class WebEntityComponent<E: Entity>(private val resourceName: String, private va
       })
     }
 
-    log.info("adding route $GET_UOW")
+    log.info("adding route $getUow")
 
-    router.get(GET_UOW).handler {
+    router.get(getUow).handler {
       val uowId = it.pathParam(UNIT_OF_WORK_ID_PARAMETER).toLong()
       println("retrieving uow $uowId")
       val httpResp = it.response()

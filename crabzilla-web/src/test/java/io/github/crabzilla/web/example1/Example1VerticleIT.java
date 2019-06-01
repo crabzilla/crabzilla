@@ -66,17 +66,17 @@ class Example1VerticleIT {
 
     vertx.deployVerticle(verticle, deploy -> {
       if (deploy.succeeded()) {
-        verticle.writeModelDb.query("delete from units_of_work", event1 -> {
+        verticle.crablet.getWriteDb().query("delete from units_of_work", event1 -> {
           if (event1.failed()) {
             tc.failNow(event1.cause());
             return;
           }
-          verticle.writeModelDb.query("delete from customer_snapshots", event2 -> {
+          verticle.crablet.getWriteDb().query("delete from customer_snapshots", event2 -> {
             if (event2.failed()) {
               tc.failNow(event2.cause());
               return;
             }
-            verticle.readModelDb.query("delete from customer_summary", event3 -> {
+            verticle.crablet.getReadDb().query("delete from customer_summary", event3 -> {
               if (event3.failed()) {
                 tc.failNow(event3.cause());
                 return;
