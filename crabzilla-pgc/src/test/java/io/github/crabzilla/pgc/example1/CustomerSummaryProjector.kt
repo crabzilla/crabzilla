@@ -11,9 +11,9 @@ import io.reactiverse.pgclient.Tuple
 import io.vertx.core.Future
 import org.slf4j.LoggerFactory
 
-class Example1EventProjector : PgcEventProjector {
+class CustomerSummaryProjector : PgcEventProjector {
 
-  private val log = LoggerFactory.getLogger(Example1EventProjector::class.java.name)
+  private val log = LoggerFactory.getLogger(CustomerSummaryProjector::class.java.name)
 
   override fun handle(pgTx: PgTransaction, targetId: Int, event: DomainEvent): Future<Void> {
 

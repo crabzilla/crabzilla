@@ -11,6 +11,7 @@ import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
+import org.slf4j.LoggerFactory
 
 class PgcCrablet(val vertx: Vertx, val config: JsonObject, val name: String) {
 
@@ -20,17 +21,18 @@ class PgcCrablet(val vertx: Vertx, val config: JsonObject, val name: String) {
 
   val readDb = pgPool("READ", config)
   val writeDb = pgPool("WRITE", config)
-  val uolProjector = PgcUowProjector(readDb, name)
 
   companion object {
+    internal var log = LoggerFactory.getLogger(PgcCrablet::class.java)
     const val PROJECTION_ENDPOINT = "crabzilla.projection.endpoint"
   }
 
-  fun deployProjector(eventProjector: PgcEventProjector) {
+  fun deployProjector(name: String, eventProjector: PgcEventProjector) {
+    val uolProjector = PgcUowProjector(readDb, name)
     vertx.eventBus().consumer<UnitOfWorkEvents>(PROJECTION_ENDPOINT) { message ->
       uolProjector.handle(message.body(), eventProjector, Handler { result ->
         if (result.failed()) {
-//          log.error("Projection failed: " + result.cause().message)
+          log.error("Projection [$name] failed: " + result.cause().message)
         }
       })
     }

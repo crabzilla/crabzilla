@@ -3,7 +3,7 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.UnitOfWorkEvents.Companion.fromUnitOfWork
 import io.github.crabzilla.pgc.example1.BadEventProjector
-import io.github.crabzilla.pgc.example1.Example1EventProjector
+import io.github.crabzilla.pgc.example1.CustomerSummaryProjector
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createActivateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
@@ -118,7 +118,7 @@ class PgcUowProjectorIT {
     val uow = UnitOfWork("Customer", customerId1.value, UUID.randomUUID(), "Whatsoever", createCmd1,
       1, arrayListOf(Pair("CustomerCreated", created1)))
 
-    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { event1 ->
+    uowProjector.handle(fromUnitOfWork(1, uow), CustomerSummaryProjector(), Handler { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@Handler
@@ -145,7 +145,7 @@ class PgcUowProjectorIT {
     val uow = UnitOfWork("Customer", customerId1.value, UUID.randomUUID(), "Whatsoever",
       createActivateCmd1, 1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1)))
 
-    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { event1 ->
+    uowProjector.handle(fromUnitOfWork(1, uow), CustomerSummaryProjector(), Handler { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@Handler
@@ -173,7 +173,7 @@ class PgcUowProjectorIT {
       1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1)))
 
-    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { event1 ->
+    uowProjector.handle(fromUnitOfWork(1, uow), CustomerSummaryProjector(), Handler { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@Handler
@@ -201,7 +201,7 @@ class PgcUowProjectorIT {
       1, arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1), Pair("CustomerActivated", activated1)))
 
-    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { event1 ->
+    uowProjector.handle(fromUnitOfWork(1, uow), CustomerSummaryProjector(), Handler { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@Handler
@@ -230,7 +230,7 @@ class PgcUowProjectorIT {
       Pair("CustomerDeactivated", deactivated1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1)))
 
-    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { event1 ->
+    uowProjector.handle(fromUnitOfWork(1, uow), CustomerSummaryProjector(), Handler { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@Handler
@@ -259,7 +259,7 @@ class PgcUowProjectorIT {
       Pair("CustomerDeactivated", deactivated1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1), Pair("CustomerActivated", activated1)))
 
-    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { event1 ->
+    uowProjector.handle(fromUnitOfWork(1, uow), CustomerSummaryProjector(), Handler { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@Handler
@@ -288,7 +288,7 @@ class PgcUowProjectorIT {
       Pair("CustomerDeactivated", deactivated1), Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1),
       Pair("CustomerDeactivated", deactivated1)))
 
-    uowProjector.handle(fromUnitOfWork(1, uow), Example1EventProjector(), Handler { result ->
+    uowProjector.handle(fromUnitOfWork(1, uow), CustomerSummaryProjector(), Handler { result ->
       if (result.failed()) {
         tc.completeNow()
         return@Handler

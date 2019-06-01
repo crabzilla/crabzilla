@@ -1,7 +1,7 @@
 package io.github.crabzilla.web.example1
 
 import io.github.crabzilla.pgc.PgcCrablet
-import io.github.crabzilla.pgc.example1.Example1EventProjector
+import io.github.crabzilla.pgc.example1.CustomerSummaryProjector
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
 import io.github.crabzilla.web.WebEntityComponent
 import io.vertx.config.ConfigRetriever
@@ -66,7 +66,7 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
       // example1
 
       crablet = PgcCrablet(vertx, config, "example1")
-      crablet.deployProjector(Example1EventProjector())
+      crablet.deployProjector("customer-summary", CustomerSummaryProjector())
 
       val customerPgc = customerPgcComponent(crablet)
       val customerWebComponent = WebEntityComponent("customers", customerPgc)
