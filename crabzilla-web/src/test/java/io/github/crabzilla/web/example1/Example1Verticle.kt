@@ -71,8 +71,8 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       WebEntityComponent(customerPgcComponent(crablet), "customers").deployWebRoutes(router)
 
-      router.get("/customers/:id").handler { rc ->
-         rc.response()
+      router.get("/customers/:id").handler {
+         it.response()
            .putHeader("Content-type", "application/json")
            .end(JsonObject().put("message", "TODO query read model").encode()) // TODO
       }

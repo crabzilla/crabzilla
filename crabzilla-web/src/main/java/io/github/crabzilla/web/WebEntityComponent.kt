@@ -47,7 +47,7 @@ class WebEntityComponent<E: Entity>(private val component: EntityComponent<E>, p
 
       component.handleCommand(commandMetadata, command, Handler { event ->
         val end = System.currentTimeMillis()
-        log.info("received response in " + (end - begin) + " ms")
+        log.trace("received response in " + (end - begin) + " ms")
         if (event.succeeded()) {
           with(event.result()) {
             val location = it.request().absoluteURI().split('/').subList(0, 3)
@@ -116,7 +116,6 @@ class WebEntityComponent<E: Entity>(private val component: EntityComponent<E>, p
 
     router.get(getUow).handler {
       val uowId = it.pathParam(UNIT_OF_WORK_ID_PARAMETER).toLong()
-      println("retrieving uow $uowId")
       val httpResp = it.response()
       component.getUowByUowId(uowId, Handler { uowResult ->
         if (uowResult.failed() || uowResult.result() == null) {

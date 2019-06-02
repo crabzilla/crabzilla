@@ -35,7 +35,7 @@ class CommandController<E : Entity>(private val commandAware: EntityCommandAware
         aHandler.handle(Future.failedFuture(event.cause().message))
         return@setHandler
       } else {
-        log.info("command handler success")
+        log.trace("command handler success")
         aHandler.handle(Future.succeededFuture(event.result()))
       }
     }
@@ -62,7 +62,7 @@ class CommandController<E : Entity>(private val commandAware: EntityCommandAware
       }
 
       .compose { unitOfWork ->
-        log.info("got unitOfWork $unitOfWork")
+        log.trace("got unitOfWork $unitOfWork")
         val appendFuture = Future.future<Long>()
         // append to journal
         uowJournal.append(unitOfWork, appendFuture)
@@ -89,7 +89,7 @@ class CommandController<E : Entity>(private val commandAware: EntityCommandAware
       .compose({
         // set result
         val pair: Pair<UnitOfWork, Long> = Pair(uowValue.get(), uowIdValue.get())
-        log.info("command handling success: $pair")
+        log.trace("command handling success: $pair")
         resultFuture.complete(pair)
 
       }, resultFuture)

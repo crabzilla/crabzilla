@@ -57,7 +57,7 @@ class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
                       log.error("Transaction failed", event3.cause())
                       aHandler.handle(Future.failedFuture(event3.cause()))
                     } else {
-                      log.info("Transaction succeeded for $generated")
+                      log.trace("Transaction succeeded for $generated")
                       aHandler.handle(Future.succeededFuture(generated))
                     }
                   }
