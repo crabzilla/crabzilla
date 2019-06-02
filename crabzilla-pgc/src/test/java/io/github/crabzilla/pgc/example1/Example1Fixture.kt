@@ -6,7 +6,7 @@ import io.github.crabzilla.example1.*
 import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.example1.aggregate.CustomerCommandAware
 import io.github.crabzilla.example1.aggregate.CustomerJsonAware
-import io.github.crabzilla.pgc.PgcCrablet
+import io.github.crabzilla.pgc.Crabzilla
 import io.github.crabzilla.pgc.PgcEntityComponent
 import java.time.Instant
 import java.util.*
@@ -33,7 +33,7 @@ object Example1Fixture {
 
   val customerJson = CustomerJsonAware()
 
-  val customerPgcComponent: (crablet: PgcCrablet) -> EntityComponent<Customer> = { crablet ->
+  val customerPgcComponent: (crablet: Crabzilla) -> EntityComponent<Customer> = { crablet ->
     PgcEntityComponent(crablet, CUSTOMER_ENTITY, CustomerJsonAware(), CustomerCommandAware())
   }
 

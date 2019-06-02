@@ -54,7 +54,7 @@ class PgcEntityComponentIT {
 
       val config = configFuture.result()
 
-      val crablet = PgcCrablet(vertx, config, "example1")
+      val crablet = Crabzilla(vertx, config, "example1")
 
       writeDb = crablet.writeDb
 

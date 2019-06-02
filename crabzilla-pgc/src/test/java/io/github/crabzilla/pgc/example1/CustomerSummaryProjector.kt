@@ -19,8 +19,6 @@ class CustomerSummaryProjector : PgcEventProjector {
 
     val future = Future.future<Void>()
 
-    log.info("event {} ", event)
-
     when (event) {
       is CustomerCreated -> {
         val query = "INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)"
@@ -43,8 +41,6 @@ class CustomerSummaryProjector : PgcEventProjector {
         future.complete()
       }
     }
-
-    log.info("finished event {} ", event)
 
     return future
 

@@ -1,9 +1,9 @@
 package io.github.crabzilla.web.example1
 
-import io.github.crabzilla.pgc.PgcCrablet
+import io.github.crabzilla.example1.aggregate.CustomerCommandAware
+import io.github.crabzilla.example1.aggregate.CustomerJsonAware
+import io.github.crabzilla.pgc.Crabzilla
 import io.github.crabzilla.pgc.example1.CustomerSummaryProjector
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
-import io.github.crabzilla.web.WebEntityComponent
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -26,7 +26,7 @@ fun main() {
 class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./example1.env") : AbstractVerticle() {
 
   lateinit var server: HttpServer
-  lateinit var crablet: PgcCrablet
+  lateinit var crablet: Crabzilla
 
   companion object {
     internal var log = getLogger(Example1Verticle::class.java)
@@ -65,11 +65,11 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       // example1
 
-      crablet = PgcCrablet(vertx, config, "example1")
+      crablet = Crabzilla(vertx, config, "example1")
+      crablet.addEntity("customer", CustomerJsonAware(), CustomerCommandAware())
+      crablet.addWebResource("customers", "customer", router)
 
-      crablet.deployProjector("customer-summary", CustomerSummaryProjector())
-
-      WebEntityComponent(customerPgcComponent(crablet), "customers").deployWebRoutes(router)
+      crablet.addProjector("customer-summary", CustomerSummaryProjector())
 
       router.get("/customers/:id").handler {
          it.response()

@@ -6,7 +6,7 @@ import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
-import io.vertx.core.logging.LoggerFactory.getLogger
+import org.slf4j.LoggerFactory.getLogger
 
 class PgcUowProjector(private val pgPool: PgPool, val name: String) {
 
@@ -60,7 +60,7 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
               // Commit the transaction
               tx.commit { event4 ->
                 if (event4.succeeded()) {
-                  log.trace { "Transaction succeeded" }
+                  log.trace("Transaction succeeded")
                   handler.handle(Future.succeededFuture())
                 } else {
                   log.error("Transaction failed", event4.cause())

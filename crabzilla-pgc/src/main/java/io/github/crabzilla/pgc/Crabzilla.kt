@@ -13,7 +13,7 @@ import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 
-class PgcCrablet(val vertx: Vertx, val config: JsonObject, val name: String) {
+class Crabzilla(val vertx: Vertx, val config: JsonObject, val name: String) {
 
   init {
     initVertx(vertx)
@@ -21,14 +21,18 @@ class PgcCrablet(val vertx: Vertx, val config: JsonObject, val name: String) {
 
   val readDb = pgPool("READ", config)
   val writeDb = pgPool("WRITE", config)
+  val projectors = mutableListOf<String>()
+  val entities = mutableMapOf<String, EntityComponent<out Entity>>()
 
   companion object {
-    internal var log = LoggerFactory.getLogger(PgcCrablet::class.java)
+    var log = LoggerFactory.getLogger(Crabzilla::class.java)
     const val PROJECTION_ENDPOINT = "crabzilla.projection.endpoint"
   }
 
-  fun deployProjector(name: String, eventProjector: PgcEventProjector) {
+  fun addProjector(name: String, eventProjector: PgcEventProjector) {
+    log.info("adding projector $name")
     val uolProjector = PgcUowProjector(readDb, name)
+    projectors.add(name)
     vertx.eventBus().consumer<UnitOfWorkEvents>(PROJECTION_ENDPOINT) { message ->
       uolProjector.handle(message.body(), eventProjector, Handler { result ->
         if (result.failed()) {
@@ -36,6 +40,11 @@ class PgcCrablet(val vertx: Vertx, val config: JsonObject, val name: String) {
         }
       })
     }
+  }
+
+  fun <E: Entity> addEntity(name: String, jsonAware: EntityJsonAware<E>, cmdAware: EntityCommandAware<E>) {
+    log.info("adding entity $name")
+    entities[name] = PgcEntityComponent(this, name, jsonAware, cmdAware)
   }
 
   fun closeDatabases() {

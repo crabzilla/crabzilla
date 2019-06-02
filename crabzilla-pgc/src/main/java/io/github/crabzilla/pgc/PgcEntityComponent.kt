@@ -2,13 +2,13 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
 import io.github.crabzilla.internal.CommandController
-import io.github.crabzilla.pgc.PgcCrablet.Companion.PROJECTION_ENDPOINT
+import io.github.crabzilla.pgc.Crabzilla.Companion.PROJECTION_ENDPOINT
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonObject
 
-class PgcEntityComponent<E: Entity>(private val crablet: PgcCrablet, entityName: String,
+class PgcEntityComponent<E: Entity>(private val crablet: Crabzilla, entityName: String,
                                     private val jsonAware: EntityJsonAware<E>, cmdAware: EntityCommandAware<E>)
                                 : EntityComponent<E> {
 
