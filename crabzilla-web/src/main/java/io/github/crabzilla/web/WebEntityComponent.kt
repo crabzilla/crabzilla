@@ -1,15 +1,18 @@
 package io.github.crabzilla.web
 
+import io.github.crabzilla.Command
 import io.github.crabzilla.CommandMetadata
 import io.github.crabzilla.Entity
 import io.github.crabzilla.EntityComponent
+import io.github.crabzilla.web.ContentTypes.ENTITY_WRITE_MODEL
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
+import io.vertx.ext.web.RoutingContext
 import io.vertx.kotlin.core.json.JsonArray
 import org.slf4j.LoggerFactory
 
-class WebEntityComponent<E: Entity>(private val resourceName: String, private val component: EntityComponent<E>) {
+class WebEntityComponent<E: Entity>(private val component: EntityComponent<E>, private val resourceName: String) {
 
   private val postCmd = "/$resourceName/:$ENTITY_ID_PARAMETER/commands/:$COMMAND_NAME_PARAMETER"
   private val getSnapshot = "/$resourceName/:$ENTITY_ID_PARAMETER"
@@ -22,6 +25,7 @@ class WebEntityComponent<E: Entity>(private val resourceName: String, private va
     private const val ENTITY_ID_PARAMETER = "entityId"
     private const val UNIT_OF_WORK_ID_PARAMETER = "unitOfWorkId"
     private val log = LoggerFactory.getLogger(WebEntityComponent::class.java)
+
   }
 
   fun deployWebRoutes(router: Router) {
@@ -29,10 +33,19 @@ class WebEntityComponent<E: Entity>(private val resourceName: String, private va
     log.info("adding route $postCmd")
 
     router.post(postCmd).handler {
+
+      val begin = System.currentTimeMillis()
+
       val commandMetadata = CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(),
                                             it.pathParam(COMMAND_NAME_PARAMETER))
-      val begin = System.currentTimeMillis()
-      component.handleCommand(commandMetadata, it.bodyAsJson, Handler { event ->
+      val command: Command? = try { component.cmdFromJson(commandMetadata.commandName, it.bodyAsJson) }
+                              catch (e: Exception) { null }
+      if (command == null) {
+        it.response().setStatusCode(400).setStatusMessage("Cannot decode the json for this Command").end()
+        return@handler
+      }
+
+      component.handleCommand(commandMetadata, command, Handler { event ->
         val end = System.currentTimeMillis()
         log.info("received response in " + (end - begin) + " ms")
         if (event.succeeded()) {
@@ -49,32 +62,36 @@ class WebEntityComponent<E: Entity>(private val resourceName: String, private va
           it.response().setStatusCode(400).setStatusMessage(event.cause().message).end()
         }
       })
-    }
+    }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route $getSnapshot")
 
     router.get(getSnapshot).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
-      println("retrieving write model state for $entityId")
-      val httpResp = it.response()
-      component.getSnapshot(entityId, Handler { event ->
-        if (event.failed() || event.result() == null) {
-          httpResp.statusCode = if (event.result() == null) 404 else 500
-          httpResp.end()
-        } else {
-          val snapshot = event.result()
-          val snapshotJson = JsonObject()
-            .put("state", component.toJson(snapshot.state))
-            .put("version", snapshot.version)
-          if (snapshot.version > 0) {
-            httpResp.headers().add("Content-Type", "application/json")
-            httpResp.end(snapshotJson.encode())
+      if (ENTITY_WRITE_MODEL == it.request().getHeader("accept")) {
+        println("retrieving write model state for $entityId")
+        val httpResp = it.response()
+        component.getSnapshot(entityId, Handler { event ->
+          if (event.failed() || event.result() == null) {
+            httpResp.statusCode = if (event.result() == null) 404 else 500
+            httpResp.end()
           } else {
-            httpResp.setStatusCode(404).end("Entity not found")
+            val snapshot = event.result()
+            val snapshotJson = JsonObject()
+              .put("state", component.toJson(snapshot.state))
+              .put("version", snapshot.version)
+            if (snapshot.version > 0) {
+              httpResp.headers().add("Content-Type", "application/json")
+              httpResp.end(snapshotJson.encode())
+            } else {
+              httpResp.setStatusCode(404).end("Entity not found")
+            }
           }
-        }
-      })
-    }
+        })
+      } else {
+        it.next()
+      }
+    }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route $getAllUow")
 
@@ -93,7 +110,7 @@ class WebEntityComponent<E: Entity>(private val resourceName: String, private va
           httpResp.end(JsonArray(resultList).encode())
         }
       })
-    }
+    }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route $getUow")
 
@@ -112,7 +129,20 @@ class WebEntityComponent<E: Entity>(private val resourceName: String, private va
             .end(JsonObject.mapFrom(uowResult.result()).encode())
         }
       })
-    }
-
+    }.failureHandler(errorHandler(UNIT_OF_WORK_ID_PARAMETER))
   }
+
+  private fun errorHandler(paramName: String) : Handler<RoutingContext> {
+    return Handler {
+      log.error(it.failure().message, it.failure())
+      when (it.failure()) {
+        is NumberFormatException -> it.response().setStatusCode(400).end("path param $paramName must be a number")
+        else -> {
+          it.failure().printStackTrace()
+          it.response().setStatusCode(500).end("server error")
+        }
+      }
+    }
+  }
+
 }

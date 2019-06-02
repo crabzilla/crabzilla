@@ -3,6 +3,7 @@ package io.github.crabzilla.web.example1;
 import io.github.crabzilla.example1.CreateCustomer;
 import io.github.crabzilla.example1.CustomerId;
 import io.github.crabzilla.example1.UnknownCommand;
+import io.github.crabzilla.web.ContentTypes;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.SLF4JLogDelegateFactory;
@@ -130,6 +131,7 @@ class Example1VerticleIT {
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
+        .putHeader("accept", ContentTypes.ENTITY_WRITE_MODEL)
         .send(tc.succeeding(response2 -> tc.verify(() -> {
           JsonObject jo = response2.body();
           System.out.println(jo.encodePrettily());
@@ -141,6 +143,22 @@ class Example1VerticleIT {
           tc.completeNow();
         })));
     }
+
+    @Test
+    @DisplayName("You get a correspondent company summary (read model)")
+    void a22(VertxTestContext tc) {
+      client.get(port, "0.0.0.0", "/customers/" + customerId2)
+        .as(BodyCodec.jsonObject())
+        .expect(ResponsePredicate.SC_SUCCESS)
+        .expect(ResponsePredicate.JSON)
+        .send(tc.succeeding(response2 -> tc.verify(() -> {
+          JsonObject jo = response2.body();
+          System.out.println(jo.encodePrettily());
+          assertThat(jo.getString("message")).isEqualTo("TODO query read model");
+          tc.completeNow();
+        })));
+    }
+
 
     @Test
     @Disabled

@@ -6,7 +6,7 @@ import io.vertx.core.json.JsonObject
 
 interface EntityComponent<E: Entity> {
 
-  fun handleCommand(metadata: CommandMetadata, json: JsonObject, aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>)
+  fun handleCommand(metadata: CommandMetadata, command: Command, aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>)
 
   fun getUowByUowId(uowId: Long, aHandler: Handler<AsyncResult<UnitOfWork>>)
 
@@ -15,6 +15,8 @@ interface EntityComponent<E: Entity> {
   fun getSnapshot(entityId: Int, aHandler: Handler<AsyncResult<Snapshot<E>>>)
 
   fun toJson(state: E): JsonObject
+
+  fun cmdFromJson(commandName: String, cmdAsJson: JsonObject): Command
 
 }
 

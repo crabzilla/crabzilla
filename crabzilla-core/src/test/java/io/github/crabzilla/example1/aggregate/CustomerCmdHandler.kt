@@ -11,7 +11,7 @@ class CustomerCmdHandler(cmdMetadata: CommandMetadata,
                          snapshot: Snapshot<Customer>,
                          stateFn: (DomainEvent, Customer) -> Customer,
                          uowHandler: Handler<AsyncResult<UnitOfWork>>) :
-  CommandHandler<Customer>("customer", cmdMetadata, command, snapshot, stateFn, uowHandler) {
+  EntityCommandHandler<Customer>("customer", cmdMetadata, command, snapshot, stateFn, uowHandler) {
 
   override fun handleCommand() {
 

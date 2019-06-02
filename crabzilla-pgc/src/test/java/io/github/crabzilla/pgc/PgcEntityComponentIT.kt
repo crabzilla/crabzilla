@@ -4,8 +4,8 @@ import io.github.crabzilla.CommandMetadata
 import io.github.crabzilla.EntityComponent
 import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.CustomerId
+import io.github.crabzilla.example1.UnknownCommand
 import io.github.crabzilla.example1.aggregate.Customer
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
 import io.reactiverse.pgclient.PgPool
 import io.vertx.config.ConfigRetriever
@@ -85,10 +85,8 @@ class PgcEntityComponentIT {
   fun a1(tc: VertxTestContext) {
 
     val customerId = CustomerId(1)
-    val createCustomerCmd = CreateCustomer("customer1")
+    val command = CreateCustomer("customer1")
     val commandMetadata = CommandMetadata(customerId.value, "create")
-
-    val command = customerJson.cmdToJson(createCustomerCmd)
 
     customerComponent.handleCommand(commandMetadata, command, Handler { event ->
       if (event.succeeded()) {
@@ -106,9 +104,8 @@ class PgcEntityComponentIT {
   @DisplayName("given an invalid command it will be VALIDATION_ERROR")
   fun a2(tc: VertxTestContext) {
     val customerId = CustomerId(1)
-    val createCustomerCmd = CreateCustomer("a bad name")
+    val command = CreateCustomer("a bad name")
     val commandMetadata = CommandMetadata(customerId.value, "create")
-    val command = customerJson.cmdToJson(createCustomerCmd)
 
     customerComponent.handleCommand(commandMetadata, command, Handler { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
@@ -123,11 +120,11 @@ class PgcEntityComponentIT {
   fun a3(tc: VertxTestContext) {
     val customerId = CustomerId(1)
     val commandMetadata = CommandMetadata(customerId.value, "unknown")
-    val command = JsonObject()
+    val command = UnknownCommand(customerId)
 
     customerComponent.handleCommand(commandMetadata, command, Handler { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
-      tc.verify { assertThat(event.cause().message).isEqualTo("Command cannot be deserialized") }
+      tc.verify { assertThat(event.cause().message).isEqualTo("unknown is a unknown command") }
       tc.completeNow()
     })
 

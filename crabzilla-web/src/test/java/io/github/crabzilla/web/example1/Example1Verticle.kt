@@ -66,12 +66,16 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
       // example1
 
       crablet = PgcCrablet(vertx, config, "example1")
+
       crablet.deployProjector("customer-summary", CustomerSummaryProjector())
 
-      val customerPgc = customerPgcComponent(crablet)
-      val customerWebComponent = WebEntityComponent("customers", customerPgc)
+      WebEntityComponent(customerPgcComponent(crablet), "customers").deployWebRoutes(router)
 
-      customerWebComponent.deployWebRoutes(router)
+      router.get("/customers/:id").handler { rc ->
+         rc.response()
+           .putHeader("Content-type", "application/json")
+           .end(JsonObject().put("message", "TODO query read model").encode()) // TODO
+      }
 
       server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
 

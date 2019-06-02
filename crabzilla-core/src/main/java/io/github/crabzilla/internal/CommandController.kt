@@ -4,36 +4,22 @@ import io.github.crabzilla.*
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
-import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicReference
 
-class CommandHandler<E : Entity>(private val entityJsonFn: EntityJsonAware<E>,
-                                 private val entityCmdFn: EntityCommandAware<E>,
-                                 private val snapshotRepo: SnapshotRepository<E>,
-                                 private val uowJournal: UnitOfWorkJournal<E>) {
+class CommandController<E : Entity>(private val commandAware: EntityCommandAware<E>,
+                                    private val snapshotRepo: SnapshotRepository<E>,
+                                    private val uowJournal: UnitOfWorkJournal<E>) {
 
   companion object {
-    internal val log = LoggerFactory.getLogger(CommandHandler::class.java)
+    internal val log = LoggerFactory.getLogger(CommandController::class.java)
   }
 
-  fun handle(metadata: CommandMetadata, cmdAsJson: JsonObject, aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>) {
+  fun handle(metadata: CommandMetadata, command: Command, aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>) {
 
-    log.trace("received $metadata\n ${cmdAsJson.encodePrettily()}")
+    log.trace("received $metadata\n $command")
 
-    val command: Command? = try {
-      entityJsonFn.cmdFromJson(metadata.commandName, cmdAsJson)
-    } catch (e: Exception) {
-      null
-    }
-
-    if (command == null) {
-      log.error("Invalid Command json")
-      aHandler.handle(Future.failedFuture("Command cannot be deserialized"))
-      return
-    }
-
-    val constraints = entityCmdFn.validateCmd(command)
+    val constraints = commandAware.validateCmd(command)
 
     if (constraints.isNotEmpty()) {
       log.error("Command is invalid: $constraints")
@@ -67,9 +53,9 @@ class CommandHandler<E : Entity>(private val entityJsonFn: EntityJsonAware<E>,
       .compose { snapshot ->
         log.trace("got snapshot $snapshot")
         val commandHandlerFuture = Future.future<UnitOfWork>()
-        val cachedSnapshot = snapshot ?: Snapshot(entityCmdFn.initialState(), 0)
+        val cachedSnapshot = snapshot ?: Snapshot(commandAware.initialState(), 0)
         val cmdHandler =
-          entityCmdFn.cmdHandlerFactory().invoke(metadata, command, cachedSnapshot, commandHandlerFuture)
+          commandAware.cmdHandlerFactory().invoke(metadata, command, cachedSnapshot, commandHandlerFuture)
         cmdHandler.handleCommand()
         snapshotValue.set(cachedSnapshot)
         commandHandlerFuture
@@ -92,7 +78,7 @@ class CommandHandler<E : Entity>(private val entityJsonFn: EntityJsonAware<E>,
         // compute new snapshot
         log.trace("computing new snapshot")
         val newInstance = uowValue.get().events.fold(snapshotValue.get().state)
-        { state, event -> entityCmdFn.applyEvent(event.second, state) }
+        { state, event -> commandAware.applyEvent(event.second, state) }
         val newSnapshot = Snapshot(newInstance, uowValue.get().version)
 
         log.trace("now will store snapshot $newSnapshot")

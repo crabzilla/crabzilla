@@ -38,6 +38,11 @@ class PgcCrablet(val vertx: Vertx, val config: JsonObject, val name: String) {
     }
   }
 
+  fun closeDatabases() {
+    writeDb.close()
+    readDb.close()
+  }
+
   private fun initVertx(vertx: Vertx) {
 
     Json.mapper
@@ -81,9 +86,5 @@ class PgcCrablet(val vertx: Vertx, val config: JsonObject, val name: String) {
     return PgClient.pool(vertx, writeOptions)
   }
 
-  fun closeDatabases() {
-    writeDb.close()
-    readDb.close()
-  }
 
 }
