@@ -1,13 +1,15 @@
 package io.github.crabzilla.pgc.example1
 
 import io.github.crabzilla.EntityComponent
+import io.github.crabzilla.EventBusUowPublisher
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.example1.aggregate.CustomerCommandAware
 import io.github.crabzilla.example1.aggregate.CustomerJsonAware
-import io.github.crabzilla.pgc.Crabzilla
 import io.github.crabzilla.pgc.PgcEntityComponent
+import io.reactiverse.pgclient.PgPool
+import io.vertx.core.Vertx
 import java.time.Instant
 import java.util.*
 
@@ -33,8 +35,10 @@ object Example1Fixture {
 
   val customerJson = CustomerJsonAware()
 
-  val customerPgcComponent: (crablet: Crabzilla) -> EntityComponent<Customer> = { crablet ->
-    PgcEntityComponent(crablet, CUSTOMER_ENTITY, CustomerJsonAware(), CustomerCommandAware())
+  val customerPgcComponent: (vertx: Vertx, writeDb: PgPool) -> EntityComponent<Customer> =
+    { vertx: Vertx, writeDb: PgPool ->
+      PgcEntityComponent(writeDb, CUSTOMER_ENTITY, CustomerJsonAware(), CustomerCommandAware(),
+        EventBusUowPublisher(vertx, "example1-projection-endpoint"))
   }
 
 }

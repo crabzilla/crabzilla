@@ -1,8 +1,20 @@
 package io.github.crabzilla.pgc
 
-import io.reactiverse.pgclient.PgTransaction
-import io.reactiverse.pgclient.Tuple
+import io.reactiverse.pgclient.*
 import io.vertx.core.Future
+import io.vertx.core.Vertx
+import io.vertx.core.json.JsonObject
+
+fun pgPool(vertx: Vertx, id: String, config: JsonObject) : PgPool {
+  val writeOptions = PgPoolOptions()
+    .setPort(5432)
+    .setHost(config.getString("${id}_DATABASE_HOST"))
+    .setDatabase(config.getString("${id}_DATABASE_NAME"))
+    .setUser(config.getString("${id}_DATABASE_USER"))
+    .setPassword(config.getString("${id}_DATABASE_PASSWORD"))
+    .setMaxSize(config.getInteger("${id}_DATABASE_POOL_MAX_SIZE"))
+  return PgClient.pool(vertx, writeOptions)
+}
 
 /**
  * https://dzone.com/articles/three-paradigms-of-asynchronous-programming-in-ver

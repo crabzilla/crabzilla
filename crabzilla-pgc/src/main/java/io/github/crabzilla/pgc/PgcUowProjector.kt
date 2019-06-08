@@ -17,10 +17,6 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
       do update set last_uow = $2"""
   }
 
-  init {
-    log.info("starting uow projector: $name")
-  }
-
   fun handle(uowEvents: UnitOfWorkEvents, projector: PgcEventProjector, handler: Handler<AsyncResult<Void>>) {
 
     if (uowEvents.events.size > NUMBER_OF_FUTURES) {

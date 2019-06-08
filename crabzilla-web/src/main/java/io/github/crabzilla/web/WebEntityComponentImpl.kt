@@ -1,18 +1,17 @@
 package io.github.crabzilla.web
 
-import io.github.crabzilla.Command
-import io.github.crabzilla.CommandMetadata
-import io.github.crabzilla.Entity
-import io.github.crabzilla.EntityComponent
+import io.github.crabzilla.*
 import io.github.crabzilla.web.ContentTypes.ENTITY_WRITE_MODEL
 import io.vertx.core.Handler
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
-import io.vertx.kotlin.core.json.JsonArray
 import org.slf4j.LoggerFactory
 
-class WebEntityComponent<E: Entity>(private val component: EntityComponent<E>, private val resourceName: String) {
+class WebEntityComponentImpl<E: Entity>(private val component: EntityComponent<E>, private val resourceName: String,
+                                        private val router: Router)
+  : WebEntityComponent {
 
   private val postCmd = "/$resourceName/:$ENTITY_ID_PARAMETER/commands/:$COMMAND_NAME_PARAMETER"
   private val getSnapshot = "/$resourceName/:$ENTITY_ID_PARAMETER"
@@ -20,22 +19,20 @@ class WebEntityComponent<E: Entity>(private val component: EntityComponent<E>, p
   private val getUow = "/$resourceName/units-of-work/:unitOfWorkId"
 
   companion object {
-    private const val COMMAND_NAME_PARAMETER = "commandName"
-    private const val COMMAND_ID_PARAMETER = "commandId"
-    private const val ENTITY_ID_PARAMETER = "entityId"
-    private const val UNIT_OF_WORK_ID_PARAMETER = "unitOfWorkId"
-    private val log = LoggerFactory.getLogger(WebEntityComponent::class.java)
+    const val COMMAND_NAME_PARAMETER = "commandName"
+    const val COMMAND_ID_PARAMETER = "commandId"
+    const val ENTITY_ID_PARAMETER = "entityId"
+    const val UNIT_OF_WORK_ID_PARAMETER = "unitOfWorkId"
+    private val log = LoggerFactory.getLogger(WebEntityComponentImpl::class.java)
 
   }
 
-  fun deployWebRoutes(router: Router) {
+  override fun deployWebRoutes() {
 
     log.info("adding route $postCmd")
 
     router.post(postCmd).handler {
-
       val begin = System.currentTimeMillis()
-
       val commandMetadata = CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(),
                                             it.pathParam(COMMAND_NAME_PARAMETER))
       val command: Command? = try { component.cmdFromJson(commandMetadata.commandName, it.bodyAsJson) }
@@ -44,10 +41,9 @@ class WebEntityComponent<E: Entity>(private val component: EntityComponent<E>, p
         it.response().setStatusCode(400).setStatusMessage("Cannot decode the json for this Command").end()
         return@handler
       }
-
       component.handleCommand(commandMetadata, command, Handler { event ->
         val end = System.currentTimeMillis()
-        log.trace("received response in " + (end - begin) + " ms")
+        if (log.isTraceEnabled) { log.trace("handled command in " + (end - begin) + " ms") }
         if (event.succeeded()) {
           with(event.result()) {
             val location = it.request().absoluteURI().split('/').subList(0, 3)
@@ -68,8 +64,8 @@ class WebEntityComponent<E: Entity>(private val component: EntityComponent<E>, p
 
     router.get(getSnapshot).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
-      if (ENTITY_WRITE_MODEL == it.request().getHeader("accept")) {
-        println("retrieving write model state for $entityId")
+      val accept = it.request().getHeader("accept")
+      if (ENTITY_WRITE_MODEL == accept) {
         val httpResp = it.response()
         component.getSnapshot(entityId, Handler { event ->
           if (event.failed() || event.result() == null) {
@@ -97,7 +93,6 @@ class WebEntityComponent<E: Entity>(private val component: EntityComponent<E>, p
 
     router.get(getAllUow).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
-      println("retrieving uows for $entityId")
       val httpResp = it.response()
       component.getAllUowByEntityId(entityId, Handler { event ->
         if (event.failed() || event.result() == null) {

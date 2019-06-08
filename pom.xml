@@ -18,7 +18,7 @@
     <slf4j.version>1.7.25</slf4j.version>
 
     <!-- crabzilla vertx -->
-    <vertx.version>3.6.3</vertx.version>
+    <vertx.version>3.7.0</vertx.version>
 
     <!-- tests-->
     <skipTests>true</skipTests>
@@ -74,6 +74,7 @@
     <module>crabzilla-core</module>
     <module>crabzilla-pgc</module>
     <module>crabzilla-web</module>
+    <module>crabzilla-webpgc</module>
     <module>coverage-report</module>
   </modules>
 

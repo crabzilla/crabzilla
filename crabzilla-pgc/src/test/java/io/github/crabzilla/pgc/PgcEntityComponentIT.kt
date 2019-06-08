@@ -6,6 +6,7 @@ import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.CustomerId
 import io.github.crabzilla.example1.UnknownCommand
 import io.github.crabzilla.example1.aggregate.Customer
+import io.github.crabzilla.initVertx
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
 import io.reactiverse.pgclient.PgPool
 import io.vertx.config.ConfigRetriever
@@ -37,6 +38,8 @@ class PgcEntityComponentIT {
 
     vertx = Vertx.vertx()
 
+    initVertx(vertx)
+
     val envOptions = ConfigStoreOptions()
       .setType("file")
       .setFormat("properties")
@@ -54,11 +57,9 @@ class PgcEntityComponentIT {
 
       val config = configFuture.result()
 
-      val crablet = Crabzilla(vertx, config, "example1")
+      writeDb = pgPool(vertx, "WRITE", config)
 
-      writeDb = crablet.writeDb
-
-      customerComponent = customerPgcComponent(crablet)
+      customerComponent = customerPgcComponent(vertx, writeDb)
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {
@@ -91,6 +92,7 @@ class PgcEntityComponentIT {
     customerComponent.handleCommand(commandMetadata, command, Handler { event ->
       if (event.succeeded()) {
         val result = event.result()
+        println(result)
         tc.verify { assertThat(result.first.events.size).isEqualTo(1) }
         tc.completeNow()
       } else {

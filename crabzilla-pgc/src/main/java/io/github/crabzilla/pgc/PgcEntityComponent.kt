@@ -2,19 +2,20 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
 import io.github.crabzilla.internal.CommandController
-import io.github.crabzilla.pgc.Crabzilla.Companion.PROJECTION_ENDPOINT
+import io.reactiverse.pgclient.PgPool
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonObject
 
-class PgcEntityComponent<E: Entity>(private val crablet: Crabzilla, entityName: String,
-                                    private val jsonAware: EntityJsonAware<E>, cmdAware: EntityCommandAware<E>)
-                                : EntityComponent<E> {
+class PgcEntityComponent<E: Entity>(writeDb: PgPool, entityName: String,
+                                    private val jsonAware: EntityJsonAware<E>,
+                                    cmdAware: EntityCommandAware<E>,
+                                    private val uowPublisher: UnitOfWorkPublisher) : EntityComponent<E> {
 
-  private val uowRepo =  PgcUowRepo(crablet.writeDb, jsonAware)
-  private val snapshotRepo = PgcSnapshotRepo(crablet.writeDb, entityName, cmdAware, jsonAware)
-  private val uowJournal = PgcUowJournal(crablet.writeDb, jsonAware)
+  private val uowRepo =  PgcUowRepo(writeDb, jsonAware)
+  private val snapshotRepo = PgcSnapshotRepo(writeDb, entityName, cmdAware, jsonAware)
+  private val uowJournal = PgcUowJournal(writeDb, jsonAware)
   private val cmdHandler = CommandController(cmdAware, snapshotRepo, uowJournal)
 
   override fun getUowByUowId(uowId: Long, aHandler: Handler<AsyncResult<UnitOfWork>>) {
@@ -34,13 +35,19 @@ class PgcEntityComponent<E: Entity>(private val crablet: Crabzilla, entityName: 
     cmdHandler.handle(metadata, command, Handler { event ->
       if (event.succeeded()) {
         val pair = event.result()
-        crablet.vertx.eventBus().publish(PROJECTION_ENDPOINT, UnitOfWorkEvents.fromUnitOfWork(pair.second, pair.first))
-        aHandler.handle(Future.succeededFuture(pair))
+        uowPublisher.run {
+          publish(pair.first, pair.second, Handler { event2 ->
+          if (event2.succeeded()) {
+            aHandler.handle(Future.succeededFuture(pair))
+          } else {
+            aHandler.handle(Future.failedFuture(event2.cause()))
+          }
+        })
+        }
       } else {
         aHandler.handle(Future.failedFuture(event.cause()))
       }
     })
-
   }
 
   override fun toJson(state: E): JsonObject {
