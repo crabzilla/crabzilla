@@ -51,16 +51,6 @@
       <artifactId>vertx-config</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-circuit-breaker</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-health-check</artifactId>
-      <scope>test</scope>
-    </dependency>
 
   </dependencies>
 
