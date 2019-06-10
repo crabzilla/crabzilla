@@ -24,9 +24,8 @@ import java.util.Random;
 import static io.github.crabzilla.UnitOfWork.JsonMetadata.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Disabled // TODO
 @ExtendWith(VertxExtension.class)
-class WebEntityComponentImpl {
+class WebEntityComponentIT {
 
   static {
     System.setProperty(io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME,
@@ -41,7 +40,7 @@ class WebEntityComponentImpl {
   static final Random random = new Random();
   static int nextInt = random.nextInt();
   static int customerId2 = random.nextInt();
-  static final Logger log = LoggerFactory.getLogger(WebEntityComponentImpl.class);
+  static final Logger log = LoggerFactory.getLogger(WebEntityComponentIT.class);
 
   private static int httpPort() {
     int httpPort = 0;

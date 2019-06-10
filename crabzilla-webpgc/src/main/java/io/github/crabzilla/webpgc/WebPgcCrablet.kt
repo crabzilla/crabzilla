@@ -36,7 +36,7 @@ class WebPgcCrablet(val vertx: Vertx, val router: Router, val config: JsonObject
   fun addWebResource(resourceName: String, entityName: String) {
      log.info("adding resource $resourceName for entity $entityName")
      require(entities.containsKey(entityName)) {"entity $entityName must be deployed before resource $resourceName"}
-    WebEntityComponentImpl(entities[entityName]!!, resourceName, router).deployWebRoutes()
+     WebEntityComponentImpl(entities[entityName]!!, resourceName, router).deployWebRoutes()
   }
 
   fun addProjector(name: String, eventProjector: PgcEventProjector) {
