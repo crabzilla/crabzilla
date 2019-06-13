@@ -150,9 +150,12 @@ class PgcEntityComponentIT {
       send<Pair<UnitOfWork, Long>>(cmdHandlerEndpoint("customer"), Pair(commandMetadata, command)) { msg ->
         if (msg.succeeded()) {
           val result = msg.result().body()
-          println(result)
           tc.verify { assertThat(result.first.events.size).isEqualTo(1) }
-          tc.completeNow()
+          customerComponent.getUowByUowId(result.second, Handler { event ->
+            tc.verify { assertThat(event.succeeded()).isTrue() }
+            tc.verify { assertThat(event.result().version).isEqualTo(1) }
+            tc.completeNow()
+          })
         } else {
           tc.failNow(msg.cause())
         }
