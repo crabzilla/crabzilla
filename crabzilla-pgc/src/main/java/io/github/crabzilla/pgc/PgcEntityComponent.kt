@@ -7,12 +7,19 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonObject
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class PgcEntityComponent<E: Entity>(writeDb: PgPool,
                                     private val entityName: String,
                                     private val jsonAware: EntityJsonAware<E>,
                                     cmdAware: EntityCommandAware<E>,
                                     private val uowPublisher: UnitOfWorkPublisher) : EntityComponent<E> {
+
+  companion object {
+    private val log: Logger = LoggerFactory.getLogger(PgcEntityComponent::class.java)
+  }
+
   private val uowRepo =  PgcUowRepo(writeDb, jsonAware)
   private val snapshotRepo = PgcSnapshotRepo(writeDb, entityName, cmdAware, jsonAware)
   private val uowJournal = PgcUowJournal(writeDb, jsonAware)
@@ -40,11 +47,10 @@ class PgcEntityComponent<E: Entity>(writeDb: PgPool,
       if (event.succeeded()) {
         val pair = event.result()
         uowPublisher.publish(pair.first, pair.second, Handler { event2 ->
-          if (event2.succeeded()) {
-            aHandler.handle(Future.succeededFuture(pair))
-          } else {
-            aHandler.handle(Future.failedFuture(event2.cause()))
+          if (event2.failed()) {
+            log.error("When publishing events. This shouldn't never happen.", event2.cause())
           }
+          aHandler.handle(Future.succeededFuture(pair))
         })
       } else {
         aHandler.handle(Future.failedFuture(event.cause()))

@@ -12,7 +12,7 @@ interface EntityComponent<E: Entity> {
   companion object {
     private val log: Logger = LoggerFactory.getLogger(EntityComponent::class.java)
     fun cmdHandlerEndpoint(entityName: String): String {
-      return entityName + "cmd-endpoint"
+      return "$entityName-command-handler-endpoint"
     }
   }
 
