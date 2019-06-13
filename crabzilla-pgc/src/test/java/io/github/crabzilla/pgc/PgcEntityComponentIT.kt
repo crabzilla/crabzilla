@@ -2,6 +2,8 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.CommandMetadata
 import io.github.crabzilla.EntityComponent
+import io.github.crabzilla.EntityComponent.Companion.cmdHandlerEndpoint
+import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.CustomerId
 import io.github.crabzilla.example1.UnknownCommand
@@ -23,15 +25,18 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
+import io.github.crabzilla.EntityComponent.Companion as EntityComponent1
 
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgcEntityComponentIT {
 
-  private lateinit var vertx: Vertx
-  private lateinit var writeDb: PgPool
-  private lateinit var customerComponent: EntityComponent<Customer>
+  companion object {
+    private lateinit var vertx: Vertx
+    private lateinit var writeDb: PgPool
+    private lateinit var customerComponent: EntityComponent<Customer>
+  }
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
@@ -81,6 +86,9 @@ class PgcEntityComponentIT {
 
   }
 
+
+  // via handleCommand
+
   @Test
   @DisplayName("given a valid command it will be SUCCESS")
   fun a1(tc: VertxTestContext) {
@@ -99,7 +107,6 @@ class PgcEntityComponentIT {
         tc.failNow(event.cause())
       }
     })
-
   }
 
   @Test
@@ -114,7 +121,6 @@ class PgcEntityComponentIT {
       tc.verify { assertThat(event.cause().message).isEqualTo("[Invalid name: a bad name]") }
       tc.completeNow()
     })
-
   }
 
   @Test
@@ -129,7 +135,43 @@ class PgcEntityComponentIT {
       tc.verify { assertThat(event.cause().message).isEqualTo("unknown is a unknown command") }
       tc.completeNow()
     })
+  }
 
+  // via eventBus
+
+  @Test
+  @DisplayName("via eventBus - given a valid command it will be SUCCESS")
+  fun a11(tc: VertxTestContext) {
+    val customerId = CustomerId(1)
+    val command = CreateCustomer("customer1")
+    val commandMetadata = CommandMetadata(customerId.value, "create")
+    customerComponent.deployCommandHandler(vertx)
+    vertx.eventBus().
+      send<Pair<UnitOfWork, Long>>(cmdHandlerEndpoint("customer"), Pair(commandMetadata, command)) { msg ->
+        if (msg.succeeded()) {
+          val result = msg.result().body()
+          println(result)
+          tc.verify { assertThat(result.first.events.size).isEqualTo(1) }
+          tc.completeNow()
+        } else {
+          tc.failNow(msg.cause())
+        }
+      }
+  }
+
+  @Test
+  @DisplayName("via eventBus - given an execution error it will be HANDLING_ERROR")
+  fun a33(tc: VertxTestContext) {
+    val customerId = CustomerId(2)
+    val commandMetadata = CommandMetadata(customerId.value, "unknown")
+    val command = UnknownCommand(customerId)
+    customerComponent.deployCommandHandler(vertx)
+    vertx.eventBus().
+      send<Pair<UnitOfWork, Long>>(cmdHandlerEndpoint("customer"), Pair(commandMetadata, command)) { msg ->
+        tc.verify { assertThat(msg.succeeded()).isFalse() }
+        tc.verify { assertThat(msg.cause().message).isEqualTo("unknown is a unknown command") }
+        tc.completeNow()
+      }
   }
 
 }

@@ -8,15 +8,19 @@ import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonObject
 
-class PgcEntityComponent<E: Entity>(writeDb: PgPool, entityName: String,
+class PgcEntityComponent<E: Entity>(writeDb: PgPool,
+                                    private val entityName: String,
                                     private val jsonAware: EntityJsonAware<E>,
                                     cmdAware: EntityCommandAware<E>,
                                     private val uowPublisher: UnitOfWorkPublisher) : EntityComponent<E> {
-
   private val uowRepo =  PgcUowRepo(writeDb, jsonAware)
   private val snapshotRepo = PgcSnapshotRepo(writeDb, entityName, cmdAware, jsonAware)
   private val uowJournal = PgcUowJournal(writeDb, jsonAware)
   private val cmdHandler = CommandController(cmdAware, snapshotRepo, uowJournal)
+
+  override fun entityName(): String {
+    return entityName
+  }
 
   override fun getUowByUowId(uowId: Long, aHandler: Handler<AsyncResult<UnitOfWork>>) {
     uowRepo.getUowByUowId(uowId, aHandler)
@@ -35,15 +39,13 @@ class PgcEntityComponent<E: Entity>(writeDb: PgPool, entityName: String,
     cmdHandler.handle(metadata, command, Handler { event ->
       if (event.succeeded()) {
         val pair = event.result()
-        uowPublisher.run {
-          publish(pair.first, pair.second, Handler { event2 ->
+        uowPublisher.publish(pair.first, pair.second, Handler { event2 ->
           if (event2.succeeded()) {
             aHandler.handle(Future.succeededFuture(pair))
           } else {
             aHandler.handle(Future.failedFuture(event2.cause()))
           }
         })
-        }
       } else {
         aHandler.handle(Future.failedFuture(event.cause()))
       }
