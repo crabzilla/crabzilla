@@ -9,7 +9,7 @@
     <version>0.0.6-rc6</version>
   </parent>
 
-  <artifactId>crabzilla-webpgc</artifactId>
+  <artifactId>crabzilla-stack1</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -29,6 +29,11 @@
       <artifactId>crabzilla-web</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-config</artifactId>
+    </dependency>
+
     <!-- test -->
 
     <dependency>
@@ -45,11 +50,7 @@
       <scope>test</scope>
     </dependency>
 
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-config</artifactId>
-      <scope>test</scope>
-    </dependency>
+
 
   </dependencies>
 

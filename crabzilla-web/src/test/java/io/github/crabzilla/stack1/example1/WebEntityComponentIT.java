@@ -1,4 +1,4 @@
-package io.github.crabzilla.webpgc.example1;
+package io.github.crabzilla.stack1.example1;
 
 import io.github.crabzilla.example1.CreateCustomer;
 import io.github.crabzilla.example1.CustomerId;

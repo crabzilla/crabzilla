@@ -1,4 +1,4 @@
-package io.github.crabzilla.webpgc.example1;
+package io.github.crabzilla.stack1.example1;
 
 import io.github.crabzilla.example1.CreateCustomer;
 import io.github.crabzilla.example1.CustomerId;
@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
   Integration test
 **/
 @ExtendWith(VertxExtension.class)
-class Example1VerticleIT {
+class Stack1IT {
 
   static {
     System.setProperty(io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME,
@@ -43,7 +43,7 @@ class Example1VerticleIT {
   static final Random random = new Random();
   static int nextInt = random.nextInt();
   static int customerId2 = random.nextInt();
-  static final Logger log = LoggerFactory.getLogger(Example1VerticleIT.class);
+  static final Logger log = LoggerFactory.getLogger(Stack1IT.class);
 
   private static int httpPort() {
     int httpPort = 0;

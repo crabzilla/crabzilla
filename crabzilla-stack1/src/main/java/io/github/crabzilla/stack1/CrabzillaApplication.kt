@@ -1,4 +1,4 @@
-package io.github.crabzilla.webpgc
+package io.github.crabzilla.stack1
 
 import io.github.crabzilla.*
 import io.github.crabzilla.pgc.PgcEntityComponent
@@ -13,18 +13,15 @@ import io.vertx.ext.web.Router
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class WebPgcCrablet(val vertx: Vertx, val router: Router, val config: JsonObject, val projectionEndpoint: String) {
-
-  init {
-    initVertx(vertx)
-  }
+class CrabzillaApplication(private val vertx: Vertx, private val router: Router, config: JsonObject,
+                           private val projectionEndpoint: String) {
 
   val readDb = pgPool(vertx, "READ", config)
   val writeDb = pgPool(vertx, "WRITE", config)
   private val entities = mutableMapOf<String, EntityComponent<out Entity>>()
 
   companion object {
-    val log: Logger = LoggerFactory.getLogger(WebPgcCrablet::class.java)
+    val log: Logger = LoggerFactory.getLogger(CrabzillaApplication::class.java)
   }
 
   fun <E: Entity> addEntity(name: String, jsonAware: EntityJsonAware<E>, cmdAware: EntityCommandAware<E>) {

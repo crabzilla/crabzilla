@@ -31,7 +31,7 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-webpgc</artifactId>
+      <artifactId>crabzilla-stack1</artifactId>
     </dependency>
 
   </dependencies>

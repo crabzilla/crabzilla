@@ -1,38 +1,38 @@
-package io.github.crabzilla.webpgc.example1
+package io.github.crabzilla.stack1
 
-import io.github.crabzilla.example1.aggregate.CustomerCommandAware
-import io.github.crabzilla.example1.aggregate.CustomerJsonAware
-import io.github.crabzilla.pgc.example1.CustomerSummaryProjector
-import io.github.crabzilla.webpgc.WebPgcCrablet
+import io.github.crabzilla.initVertx
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
-import io.vertx.core.Launcher
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.JsonObject
+import io.vertx.core.logging.SLF4JLogDelegateFactory
 import io.vertx.ext.web.Router
-import io.vertx.ext.web.handler.BodyHandler
-import io.vertx.ext.web.handler.LoggerHandler
 import org.slf4j.LoggerFactory.getLogger
 
-// Convenience method so you can run it in your IDE
-fun main() {
-  Launcher.executeCommand("run", Example1Verticle::class.java.name)
-}
-
-class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./example1.env") : AbstractVerticle() {
+abstract class CrabzillaWebVerticle(open val httpPort: Int = 8081, open val configFile: String = "./config.env")
+  : AbstractVerticle() {
 
   lateinit var server: HttpServer
-  lateinit var crablet: WebPgcCrablet
 
   companion object {
-    internal var log = getLogger(Example1Verticle::class.java)
+    init {
+      System.setProperty(io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME,
+        SLF4JLogDelegateFactory::class.java.name)
+      getLogger(io.vertx.core.logging.LoggerFactory::class.java)
+    }
+    internal var log = getLogger(CrabzillaWebVerticle::class.java)
   }
 
+
+  abstract fun startCrabzilla(config: JsonObject, router: Router)
+
   override fun start(startFuture: Future<Void>) {
+
+    initVertx(vertx)
 
     log.info("*** starting using HTTP_PORT $httpPort")
 
@@ -56,25 +56,9 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
       log.trace(config.encodePrettily())
 
-      // web
-
       val router = Router.router(vertx)
 
-      router.route().handler(LoggerHandler.create())
-      router.route().handler(BodyHandler.create())
-
-      // example1
-      crablet = WebPgcCrablet(vertx, router, config, "example1")
-      crablet.addEntity("customer", CustomerJsonAware(), CustomerCommandAware())
-      crablet.addWebResource("customers", "customer")
-      crablet.addProjector("customer-summary", CustomerSummaryProjector())
-
-      // read model routes
-      router.get("/customers/:id").handler {
-          it.response()
-            .putHeader("Content-type", "application/json")
-            .end(JsonObject().put("message", "TODO query read model").encode()) // TODO
-      }
+      startCrabzilla(config, router)
 
       server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
 
@@ -90,12 +74,6 @@ class Example1Verticle(val httpPort: Int = 8081, val configFile: String = "./exa
 
     }
 
-  }
-
-  override fun stop() {
-    log.info("*** closing resources")
-    crablet.closeDatabases()
-    server.close()
   }
 
 }

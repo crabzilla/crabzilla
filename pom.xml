@@ -74,7 +74,7 @@
     <module>crabzilla-core</module>
     <module>crabzilla-pgc</module>
     <module>crabzilla-web</module>
-    <module>crabzilla-webpgc</module>
+    <module>crabzilla-stack1</module>
     <module>coverage-report</module>
   </modules>
 
@@ -104,7 +104,7 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-webpgc</artifactId>
+        <artifactId>crabzilla-stack1</artifactId>
         <version>${project.version}</version>
       </dependency>
 
