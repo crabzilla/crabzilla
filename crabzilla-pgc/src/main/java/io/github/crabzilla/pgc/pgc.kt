@@ -5,9 +5,22 @@ import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 
-fun pgPool(vertx: Vertx, id: String, config: JsonObject) : PgPool {
+fun writeModelPgPool(vertx: Vertx, config: JsonObject) : PgPool {
+  val id = "WRITE"
   val writeOptions = PgPoolOptions()
-    .setPort(5432)
+    .setPort(config.getInteger("${id}_DATABASE_PORT"))
+    .setHost(config.getString("${id}_DATABASE_HOST"))
+    .setDatabase(config.getString("${id}_DATABASE_NAME"))
+    .setUser(config.getString("${id}_DATABASE_USER"))
+    .setPassword(config.getString("${id}_DATABASE_PASSWORD"))
+    .setMaxSize(config.getInteger("${id}_DATABASE_POOL_MAX_SIZE"))
+  return PgClient.pool(vertx, writeOptions)
+}
+
+fun readModelPgPool(vertx: Vertx, config: JsonObject) : PgPool {
+  val id = "READ"
+  val writeOptions = PgPoolOptions()
+    .setPort(config.getInteger("${id}_DATABASE_PORT"))
     .setHost(config.getString("${id}_DATABASE_HOST"))
     .setDatabase(config.getString("${id}_DATABASE_NAME"))
     .setUser(config.getString("${id}_DATABASE_USER"))

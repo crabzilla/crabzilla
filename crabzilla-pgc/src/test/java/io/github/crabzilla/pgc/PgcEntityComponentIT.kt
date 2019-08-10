@@ -25,7 +25,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
-import io.github.crabzilla.EntityComponent.Companion as EntityComponent1
 
 
 @ExtendWith(VertxExtension::class)
@@ -62,7 +61,7 @@ class PgcEntityComponentIT {
 
       val config = configFuture.result()
 
-      writeDb = pgPool(vertx, "WRITE", config)
+      writeDb = writeModelPgPool(vertx, config)
 
       customerComponent = customerPgcComponent(vertx, writeDb)
 

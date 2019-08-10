@@ -5,7 +5,7 @@ import io.github.crabzilla.example1.aggregate.CustomerCommandAware
 import io.github.crabzilla.example1.aggregate.CustomerJsonAware
 import io.github.crabzilla.initVertx
 import io.github.crabzilla.pgc.PgcEntityComponent
-import io.github.crabzilla.pgc.pgPool
+import io.github.crabzilla.pgc.writeModelPgPool
 import io.github.crabzilla.web.WebEntityComponentImpl
 import io.reactiverse.pgclient.PgPool
 import io.vertx.config.ConfigRetriever
@@ -70,7 +70,7 @@ class Example1WebVerticle(val httpPort: Int = 8081, val configFile: String = "./
       initVertx(vertx)
 
       // example1
-      this.writeDb = pgPool(vertx, "WRITE", config)
+      this.writeDb = writeModelPgPool(vertx, config)
 
       val ec = PgcEntityComponent(writeDb, "customer", CustomerJsonAware(), CustomerCommandAware(),
         EventBusUowPublisher(vertx, "example1"))
