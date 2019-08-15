@@ -3,7 +3,7 @@ package io.github.crabzilla.stack1.example1
 import io.github.crabzilla.EventBusUowPublisher
 import io.github.crabzilla.example1.aggregate.CustomerCommandAware
 import io.github.crabzilla.example1.aggregate.CustomerJsonAware
-import io.github.crabzilla.initVertx
+import io.github.crabzilla.initCrabzilla
 import io.github.crabzilla.pgc.PgcEntityComponent
 import io.github.crabzilla.pgc.writeModelPgPool
 import io.github.crabzilla.web.WebEntityComponentImpl
@@ -67,7 +67,7 @@ class Example1WebVerticle(val httpPort: Int = 8081, val configFile: String = "./
       router.route().handler(LoggerHandler.create())
       router.route().handler(BodyHandler.create())
 
-      initVertx(vertx)
+      vertx.initCrabzilla()
 
       // example1
       this.writeDb = writeModelPgPool(vertx, config)

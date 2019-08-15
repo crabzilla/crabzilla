@@ -30,7 +30,6 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
 import java.util.*
-import io.github.crabzilla.UnitOfWork.Companion as UnitOfWork1
 
 
 @ExtendWith(VertxExtension::class)

@@ -53,6 +53,7 @@ class PgcEntityComponent<E: Entity>(writeDb: PgPool,
           aHandler.handle(Future.succeededFuture(pair))
         })
       } else {
+        log.error("When handling command", event.cause())
         aHandler.handle(Future.failedFuture(event.cause()))
       }
     })

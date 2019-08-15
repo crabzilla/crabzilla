@@ -8,7 +8,7 @@ import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.CustomerId
 import io.github.crabzilla.example1.UnknownCommand
 import io.github.crabzilla.example1.aggregate.Customer
-import io.github.crabzilla.initVertx
+import io.github.crabzilla.initCrabzilla
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
 import io.reactiverse.pgclient.PgPool
 import io.vertx.config.ConfigRetriever
@@ -42,7 +42,7 @@ class PgcEntityComponentIT {
 
     vertx = Vertx.vertx()
 
-    initVertx(vertx)
+    vertx.initCrabzilla()
 
     val envOptions = ConfigStoreOptions()
       .setType("file")

@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.net.ServerSocket;
 import java.util.Random;
 
+import static io.github.crabzilla.CrabzillaKt.initCrabzillaFor;
 import static io.github.crabzilla.UnitOfWork.JsonMetadata.*;
 import static io.github.crabzilla.pgc.PgcKt.readModelPgPool;
 import static io.github.crabzilla.pgc.PgcKt.writeModelPgPool;
@@ -72,11 +73,10 @@ class Stack1IT {
     return ConfigRetriever.create(vertx, options);
   }
 
-  // 40021552 sem parara
-
   @BeforeAll
   static void setup(VertxTestContext tc, Vertx vertx) {
     port = httpPort();
+    initCrabzillaFor(vertx);
     configRetriever(vertx, "./../example1.env").getConfig(gotConfig -> {
       if (gotConfig.succeeded()) {
         JsonObject config = gotConfig.result();
@@ -128,11 +128,13 @@ class Stack1IT {
     void a1(VertxTestContext tc) {
       CreateCustomer cmd = new CreateCustomer("customer#" + customerId2);
       JsonObject cmdAsJson = JsonObject.mapFrom(cmd);
-      client.post(port, "0.0.0.0", "/customers/" + customerId2 + "/commands/" + "create"  )
+      System.out.println(cmdAsJson.encodePrettily());
+      client.post(port, "0.0.0.0", "/customers/" + customerId2 + "/commands/create"  )
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
         .sendJson(cmdAsJson, tc.succeeding(response1 -> tc.verify(() -> {
+            System.out.println(response1.statusCode());
             JsonObject uow = response1.body();
             Long uowId = Long.valueOf(response1.getHeader("uowId"));
             assertThat(uowId).isPositive();
@@ -214,7 +216,7 @@ class Stack1IT {
   @DisplayName("When sending an invalid CreateCommand")
   void a3(VertxTestContext tc) {
     JsonObject invalidCommand = new JsonObject();
-    client.post(port, "0.0.0.0", "/customers/1/commands/" + "create")
+    client.post(port, "0.0.0.0", "/customers/1/commands/create")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(invalidCommand, tc.succeeding(response -> tc.verify(() -> {
@@ -228,7 +230,7 @@ class Stack1IT {
   void a4(VertxTestContext tc) {
     CreateCustomer cmd = new CreateCustomer("a bad name");
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + "create")
+    client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/create")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {

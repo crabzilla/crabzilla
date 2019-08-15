@@ -8,12 +8,18 @@ import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 
+
 typealias CommandHandlerFactory<E> = (CommandMetadata, Command, Snapshot<E>,
                                       Handler<AsyncResult<UnitOfWork>>) -> EntityCommandHandler<E>
 
 typealias Version = Int
 
-fun initVertx(vertx: Vertx) {
+
+fun Vertx.initCrabzilla() {
+  initCrabzillaFor(this)
+}
+
+fun initCrabzillaFor(vertx: Vertx) {
 
   Json.mapper
     .registerModule(Jdk8Module())
