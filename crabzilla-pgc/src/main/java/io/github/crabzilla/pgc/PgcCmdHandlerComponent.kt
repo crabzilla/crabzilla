@@ -10,14 +10,14 @@ import io.vertx.core.json.JsonObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class PgcEntityComponent<E: Entity>(writeDb: PgPool,
-                                    private val entityName: String,
-                                    private val jsonAware: EntityJsonAware<E>,
-                                    cmdAware: EntityCommandAware<E>,
-                                    private val uowPublisher: UnitOfWorkPublisher) : EntityComponent<E> {
+class PgcCmdHandlerComponent<E: Entity>(writeDb: PgPool,
+                                        private val entityName: String,
+                                        private val jsonAware: EntityJsonAware<E>,
+                                        cmdAware: EntityCommandAware<E>,
+                                        private val uowPublisher: UnitOfWorkPublisher) : EntityComponent<E> {
 
   companion object {
-    private val log: Logger = LoggerFactory.getLogger(PgcEntityComponent::class.java)
+    private val log: Logger = LoggerFactory.getLogger(PgcCmdHandlerComponent::class.java)
   }
 
   private val uowRepo =  PgcUowRepo(writeDb, jsonAware)

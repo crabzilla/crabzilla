@@ -5,6 +5,10 @@ import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 
+fun projectionPingEndpoint(projectionEndpoint: String) : String {
+  return "$projectionEndpoint-ping"
+}
+
 fun writeModelPgPool(vertx: Vertx, config: JsonObject) : PgPool {
   val id = "WRITE"
   val writeOptions = PgPoolOptions()

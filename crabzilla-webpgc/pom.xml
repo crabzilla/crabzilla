@@ -9,7 +9,7 @@
     <version>0.0.6-rc7</version>
   </parent>
 
-  <artifactId>crabzilla-stack1</artifactId>
+  <artifactId>crabzilla-webpgc</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -49,8 +49,6 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-
-
 
   </dependencies>
 

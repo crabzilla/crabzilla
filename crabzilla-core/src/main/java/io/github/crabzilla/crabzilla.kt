@@ -8,12 +8,9 @@ import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 
-
 typealias CommandHandlerFactory<E> = (CommandMetadata, Command, Snapshot<E>,
                                       Handler<AsyncResult<UnitOfWork>>) -> EntityCommandHandler<E>
-
 typealias Version = Int
-
 
 fun Vertx.initCrabzilla() {
   initCrabzillaFor(this)

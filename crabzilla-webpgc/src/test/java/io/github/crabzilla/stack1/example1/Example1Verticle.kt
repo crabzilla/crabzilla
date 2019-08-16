@@ -4,9 +4,9 @@ import io.github.crabzilla.example1.aggregate.CustomerCommandAware
 import io.github.crabzilla.example1.aggregate.CustomerJsonAware
 import io.github.crabzilla.initCrabzilla
 import io.github.crabzilla.pgc.example1.CustomerSummaryProjector
-import io.github.crabzilla.stack1.Stack1Component
-import io.github.crabzilla.stack1.Stack1ProjectionComponent
-import io.github.crabzilla.stack1.Stack1WebCommandComponent
+import io.github.crabzilla.pgc.PgcComponent
+import io.github.crabzilla.pgc.PgcProjectionComponent
+import io.github.crabzilla.stack1.WebPgcCmdHandlerComponent
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -53,7 +53,7 @@ fun configRetriever(vertx: Vertx, configFile: String): ConfigRetriever {
 // override val httpPort: Int, override val configFile: String = "./example1.env"
 class Example1Verticle : AbstractVerticle() {
 
-  lateinit var stack1Component:  Stack1Component
+  lateinit var pgcComponent: PgcComponent
 
   companion object {
     init {
@@ -74,11 +74,11 @@ class Example1Verticle : AbstractVerticle() {
     router.route().handler(BodyHandler.create())
 
     // example1
-    stack1Component = Stack1Component(vertx, config)
-    val webCommandComponent = Stack1WebCommandComponent(stack1Component, router)
-    webCommandComponent.addEntity("customer", CustomerJsonAware(), CustomerCommandAware(), "customers")
+    pgcComponent = PgcComponent(vertx, config)
+    val webCommandComponent = WebPgcCmdHandlerComponent(pgcComponent, router)
+    webCommandComponent.addCommandHandler("customer", CustomerJsonAware(), CustomerCommandAware(), "customers")
 
-    val projectionComponent = Stack1ProjectionComponent(stack1Component)
+    val projectionComponent = PgcProjectionComponent(pgcComponent)
     projectionComponent.addProjector("customer-summary", CustomerSummaryProjector())
 
     // read model routes
@@ -104,8 +104,8 @@ class Example1Verticle : AbstractVerticle() {
   }
 
   override fun stop() {
-    stack1Component.writeDb.close()
-    stack1Component.readDb.close()
+    pgcComponent.writeDb.close()
+    pgcComponent.readDb.close()
   }
 }
 
