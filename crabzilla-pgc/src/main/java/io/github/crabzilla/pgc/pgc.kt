@@ -5,7 +5,7 @@ import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 
-fun projectionPingEndpoint(projectionEndpoint: String) : String {
+fun whoIsRunningProjection(projectionEndpoint: String) : String {
   return "$projectionEndpoint-ping"
 }
 

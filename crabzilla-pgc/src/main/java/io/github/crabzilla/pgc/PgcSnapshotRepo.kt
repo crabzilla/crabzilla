@@ -18,16 +18,11 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
                                   private val name: String,
                                   private val entityFn: EntityCommandAware<E>,
                                   private val eJsonFn: EntityJsonAware<E>) : SnapshotRepository<E> {
-
-
   companion object {
-
     internal val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
     const val SELECT_EVENTS_VERSION_AFTER_VERSION = "SELECT uow_events, version FROM units_of_work " +
       "WHERE ar_id = $1 and ar_name = $2 and version > $3 ORDER BY version "
-
   }
-
 
   private fun selectSnapshot(): String {
     return "SELECT version, json_content FROM ${name}_snapshots WHERE ar_id = $1"
@@ -40,9 +35,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
   }
 
   override fun upsert(entityId: Int, snapshot: Snapshot<E>, aHandler: Handler<AsyncResult<Void>>) {
-
     val json = io.reactiverse.pgclient.data.Json.create(eJsonFn.toJson(snapshot.state))
-
     writeModelDb.preparedQuery(upsertSnapshot(), Tuple.of(entityId, snapshot.version, json)) { insert ->
       if (insert.failed()) {
         log.error("upsert snapshot query error")
@@ -52,7 +45,6 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
         aHandler.handle(Future.succeededFuture())
       }
     }
-
   }
 
   override fun retrieve(entityId: Int, aHandler: Handler<AsyncResult<Snapshot<E>>>) {

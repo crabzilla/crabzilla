@@ -25,7 +25,7 @@ class PgcProjectionComponent(private val pgc: PgcComponent) {
         }
       })
     }
-    pgc.vertx.eventBus().consumer<String>(projectionPingEndpoint(pgc.projectionEndpoint)) { msg ->
+    pgc.vertx.eventBus().consumer<String>(whoIsRunningProjection(pgc.projectionEndpoint)) { msg ->
       log.info("received " + msg.body())
       msg.reply("Yes, I'm running here: $processId")
     }
