@@ -1,9 +1,14 @@
-package io.github.crabzilla.stack1.example1;
+package io.github.crabzilla.webpgc.example1;
 
 import io.github.crabzilla.example1.CreateCustomer;
 import io.github.crabzilla.example1.CustomerId;
 import io.github.crabzilla.example1.UnknownCommand;
 import io.github.crabzilla.web.ContentTypes;
+import io.reactiverse.pgclient.PgPool;
+import io.vertx.config.ConfigRetriever;
+import io.vertx.config.ConfigRetrieverOptions;
+import io.vertx.config.ConfigStoreOptions;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.SLF4JLogDelegateFactory;
@@ -21,11 +26,17 @@ import org.slf4j.LoggerFactory;
 import java.net.ServerSocket;
 import java.util.Random;
 
+import static io.github.crabzilla.CrabzillaKt.initCrabzillaFor;
 import static io.github.crabzilla.UnitOfWork.JsonMetadata.*;
+import static io.github.crabzilla.pgc.PgcKt.readModelPgPool;
+import static io.github.crabzilla.pgc.PgcKt.writeModelPgPool;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+  Integration test
+**/
 @ExtendWith(VertxExtension.class)
-class WebEntityComponentIT {
+class Stack1IT {
 
   static {
     System.setProperty(io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME,
@@ -33,14 +44,13 @@ class WebEntityComponentIT {
     LoggerFactory.getLogger(io.vertx.core.logging.LoggerFactory.class);// Required for Logback to work in Vertx
   }
 
-  static Example1WebVerticle verticle;
-  static WebClient client;
-  static int port;
+  private static WebClient client;
+  private static int port;
 
   static final Random random = new Random();
   static int nextInt = random.nextInt();
   static int customerId2 = random.nextInt();
-  static final Logger log = LoggerFactory.getLogger(WebEntityComponentIT.class);
+  static final Logger log = LoggerFactory.getLogger(Stack1IT.class);
 
   private static int httpPort() {
     int httpPort = 0;
@@ -54,34 +64,59 @@ class WebEntityComponentIT {
     return httpPort;
   }
 
+  static private ConfigRetriever configRetriever(Vertx vertx, String configFile) {
+    ConfigStoreOptions envOptions = new ConfigStoreOptions()
+      .setType("file")
+      .setFormat("properties")
+      .setConfig(new JsonObject().put("path", configFile));
+    ConfigRetrieverOptions options = new ConfigRetrieverOptions().addStore(envOptions);
+    return ConfigRetriever.create(vertx, options);
+  }
+
   @BeforeAll
   static void setup(VertxTestContext tc, Vertx vertx) {
     port = httpPort();
-    verticle = new Example1WebVerticle(port, "../example1.env");
-    log.info("will try to deploy MainVerticle using HTTP_PORT = " + port);
-    WebClientOptions wco = new WebClientOptions();
-    client = WebClient.create(vertx, wco);
-
-    vertx.deployVerticle(verticle, deploy -> {
-      if (deploy.succeeded()) {
-        verticle.writeDb.query("delete from units_of_work", event1 -> {
-          if (event1.failed()) {
-            tc.failNow(event1.cause());
-            return;
+    initCrabzillaFor(vertx);
+    configRetriever(vertx, "./../example1.env").getConfig(gotConfig -> {
+      if (gotConfig.succeeded()) {
+        JsonObject config = gotConfig.result();
+        config.put("HTTP_PORT", port);
+        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(config);
+        WebClientOptions wco = new WebClientOptions();
+        client = WebClient.create(vertx, wco);
+        vertx.deployVerticle(Example1Verticle.class, deploymentOptions, deploy -> {
+          if (deploy.succeeded()) {
+            PgPool read = readModelPgPool(vertx, config);
+            PgPool write = writeModelPgPool(vertx, config);
+            write.query("delete from units_of_work", event1 -> {
+              if (event1.failed()) {
+                tc.failNow(event1.cause());
+                return;
+              }
+              write.query("delete from customer_snapshots", event2 -> {
+                if (event2.failed()) {
+                  tc.failNow(event2.cause());
+                  return;
+                }
+                read.query("delete from customer_summary", event3 -> {
+                  if (event3.failed()) {
+                    tc.failNow(event3.cause());
+                    return;
+                  }
+                  tc.completeNow();
+                });
+              });
+            });
+          } else {
+            deploy.cause().printStackTrace();
+            tc.failNow(deploy.cause());
           }
-          verticle.writeDb.query("delete from customer_snapshots", event2 -> {
-            if (event2.failed()) {
-              tc.failNow(event2.cause());
-              return;
-            }
-            tc.completeNow();
-          });
         });
       } else {
-        deploy.cause().printStackTrace();
-        tc.failNow(deploy.cause());
+        tc.failNow(gotConfig.cause());
       }
     });
+
   }
 
   @Nested
@@ -93,11 +128,13 @@ class WebEntityComponentIT {
     void a1(VertxTestContext tc) {
       CreateCustomer cmd = new CreateCustomer("customer#" + customerId2);
       JsonObject cmdAsJson = JsonObject.mapFrom(cmd);
-      client.post(port, "0.0.0.0", "/customers/" + customerId2 + "/commands/" + "create"  )
+      System.out.println(cmdAsJson.encodePrettily());
+      client.post(port, "0.0.0.0", "/customers/" + customerId2 + "/commands/create"  )
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
         .sendJson(cmdAsJson, tc.succeeding(response1 -> tc.verify(() -> {
+            System.out.println(response1.statusCode());
             JsonObject uow = response1.body();
             Long uowId = Long.valueOf(response1.getHeader("uowId"));
             assertThat(uowId).isPositive();
@@ -179,7 +216,7 @@ class WebEntityComponentIT {
   @DisplayName("When sending an invalid CreateCommand")
   void a3(VertxTestContext tc) {
     JsonObject invalidCommand = new JsonObject();
-    client.post(port, "0.0.0.0", "/customers/1/commands/" + "create")
+    client.post(port, "0.0.0.0", "/customers/1/commands/create")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(invalidCommand, tc.succeeding(response -> tc.verify(() -> {
@@ -193,7 +230,7 @@ class WebEntityComponentIT {
   void a4(VertxTestContext tc) {
     CreateCustomer cmd = new CreateCustomer("a bad name");
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/" + "create")
+    client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/create")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {

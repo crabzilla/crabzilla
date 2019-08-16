@@ -1,4 +1,4 @@
-package io.github.crabzilla.stack1
+package io.github.crabzilla.webpgc
 
 import io.github.crabzilla.Entity
 import io.github.crabzilla.EntityCommandAware

@@ -1,4 +1,4 @@
-package io.github.crabzilla.stack1.example1
+package io.github.crabzilla.webpgc.example1
 
 import io.github.crabzilla.example1.aggregate.CustomerCommandAware
 import io.github.crabzilla.example1.aggregate.CustomerJsonAware
@@ -6,7 +6,7 @@ import io.github.crabzilla.initCrabzilla
 import io.github.crabzilla.pgc.example1.CustomerSummaryProjector
 import io.github.crabzilla.pgc.PgcComponent
 import io.github.crabzilla.pgc.PgcProjectionComponent
-import io.github.crabzilla.stack1.WebPgcCmdHandlerComponent
+import io.github.crabzilla.webpgc.WebPgcCmdHandlerComponent
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
