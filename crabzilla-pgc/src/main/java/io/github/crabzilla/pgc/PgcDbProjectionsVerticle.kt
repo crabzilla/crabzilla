@@ -30,6 +30,11 @@ abstract class PgcDbProjectionsVerticle : PgcVerticle() {
     }
   }
 
+  override fun stop(stopFuture: Future<Void>) {
+    log.info("Closing readDb")
+    readDb.close()
+  }
+
   fun addProjector(projectionName: String, projector: PgcEventProjector) {
     log.info("adding projector for $projectionName subscribing on $projectionEndpoint")
     val uolProjector = PgcUowProjector(readDb, projectionName)
