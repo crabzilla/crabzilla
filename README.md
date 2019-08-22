@@ -15,9 +15,9 @@ Its still in very early development stage. APIs can change. So far Crabzilla has
 [Eventstorming](http://eventstorming.com), the goal is to develop examples and implementations for an ExternalSystem, 
 a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch is very different from that. 
 
-## Links 
+## Example application 
 
-* [example1](https://github.com/crabzilla/crabzilla-examples)
+* [Accounts Example](https://github.com/crabzilla/accounts)
 * [kotlin-example1-manual **deprecated**](https://crabzilla.github.io/crabzilla/docs/kotlin-example1-manual.html)
 
 ### Requirements
