@@ -231,7 +231,7 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
     log.trace("will load after uowId [{}]", uowId)
 
-    val selectAfteruowIdSql = "select uow_id, ar_id, uow_events " +
+    val selectAfterUowIdSql = "select uow_id, ar_id, uow_events " +
       "  from units_of_work " +
       " where uow_id > $1 " +
       " order by uow_id " +
@@ -239,7 +239,7 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
     val list = ArrayList<UnitOfWorkEvents>()
 
-    pgPool.preparedQuery(selectAfteruowIdSql, Tuple.of(uowId)) { ar ->
+    pgPool.preparedQuery(selectAfterUowIdSql, Tuple.of(uowId)) { ar ->
       if (ar.failed()) {
         aHandler.handle(Future.failedFuture(ar.cause().message))
         return@preparedQuery

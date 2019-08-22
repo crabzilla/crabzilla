@@ -6,11 +6,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory
 
+@Deprecated("migrating to PgcVerticles")
 class PgcProjectionComponent(private val pgc: PgcComponent) {
 
   companion object {
     val log: Logger = LoggerFactory.getLogger(PgcProjectionComponent::class.java)
-    private val processId = ManagementFactory.getRuntimeMXBean().name
+    private val processId = ManagementFactory.getRuntimeMXBean().name // TODO does this work with AOT?
   }
 
   fun addProjector(projectionName: String, projector: PgcEventProjector) {
@@ -29,6 +30,10 @@ class PgcProjectionComponent(private val pgc: PgcComponent) {
       log.info("received " + msg.body())
       msg.reply("Yes, I'm running here: $processId")
     }
+  }
+
+  fun whoIsRunningProjection(projectionEndpoint: String) : String {
+    return "$projectionEndpoint-ping"
   }
 
 }

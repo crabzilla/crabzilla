@@ -6,14 +6,13 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.0.6-rc7</version>
+    <version>0.0.6-rc8</version>
   </parent>
 
   <artifactId>crabzilla-pgc</artifactId>
   <packaging>jar</packaging>
 
   <properties>
-
   </properties>
 
   <dependencies>
@@ -21,6 +20,11 @@
     <dependency>
       <groupId>io.github.crabzilla</groupId>
       <artifactId>crabzilla-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-config</artifactId>
     </dependency>
 
     <dependency>
@@ -44,11 +48,6 @@
       <scope>test</scope>
     </dependency>
 
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-config</artifactId>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-circuit-breaker</artifactId>

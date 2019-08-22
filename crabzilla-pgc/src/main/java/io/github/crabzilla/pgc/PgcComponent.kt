@@ -3,6 +3,7 @@ package io.github.crabzilla.pgc
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 
+@Deprecated("migrating to PgcVerticles")
 class PgcComponent(val vertx: Vertx, val config: JsonObject) {
   val readDb = readModelPgPool(vertx, config)
   val writeDb = writeModelPgPool(vertx, config)
