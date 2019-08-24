@@ -3,7 +3,7 @@ package io.github.crabzilla.webpgc.example1;
 import io.github.crabzilla.example1.CreateCustomer;
 import io.github.crabzilla.example1.CustomerId;
 import io.github.crabzilla.example1.UnknownCommand;
-import io.github.crabzilla.web.ContentTypes;
+import io.github.crabzilla.webpgc.ContentTypes;
 import io.reactiverse.pgclient.PgPool;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
   Integration test
 **/
 @ExtendWith(VertxExtension.class)
-class Stack1IT {
+class Example1IT {
 
   static {
     System.setProperty(io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME,
@@ -50,7 +50,7 @@ class Stack1IT {
   static final Random random = new Random();
   static int nextInt = random.nextInt();
   static int customerId2 = random.nextInt();
-  static final Logger log = LoggerFactory.getLogger(Stack1IT.class);
+  static final Logger log = LoggerFactory.getLogger(Example1IT.class);
 
   private static int httpPort() {
     int httpPort = 0;
@@ -84,7 +84,7 @@ class Stack1IT {
         DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(config);
         WebClientOptions wco = new WebClientOptions();
         client = WebClient.create(vertx, wco);
-        vertx.deployVerticle(Example1Verticle.class, deploymentOptions, deploy -> {
+        vertx.deployVerticle(Example1WebVerticle.class, deploymentOptions, deploy -> {
           if (deploy.succeeded()) {
             PgPool read = readModelPgPool(vertx, config);
             PgPool write = writeModelPgPool(vertx, config);
@@ -134,12 +134,9 @@ class Stack1IT {
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
         .sendJson(cmdAsJson, tc.succeeding(response1 -> tc.verify(() -> {
-            System.out.println(response1.statusCode());
             JsonObject uow = response1.body();
             Long uowId = Long.valueOf(response1.getHeader("uowId"));
             assertThat(uowId).isPositive();
-            System.out.println(uowId);
-            System.out.println(uow.encodePrettily());
             assertThat(uow.getString(ENTITY_NAME)).isEqualTo("customer");
             assertThat(uow.getInteger(ENTITY_ID)).isEqualTo(customerId2);
             assertThat(uow.getString(COMMAND_ID)).isNotNull();

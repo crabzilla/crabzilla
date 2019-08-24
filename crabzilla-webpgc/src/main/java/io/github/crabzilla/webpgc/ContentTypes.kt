@@ -1,4 +1,4 @@
-package io.github.crabzilla.web
+package io.github.crabzilla.webpgc
 
 object ContentTypes {
   const val UNIT_OF_WORK_ID = "application/vnd.crabzilla.unit-of-work-id+json"

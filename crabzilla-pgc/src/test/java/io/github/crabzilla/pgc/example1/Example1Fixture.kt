@@ -7,7 +7,7 @@ import io.github.crabzilla.example1.*
 import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.example1.aggregate.CustomerCommandAware
 import io.github.crabzilla.example1.aggregate.CustomerJsonAware
-import io.github.crabzilla.pgc.PgcCmdHandlerComponent
+import io.github.crabzilla.pgc.PgcCmdHandler
 import io.reactiverse.pgclient.PgPool
 import io.vertx.core.Vertx
 import java.time.Instant
@@ -37,7 +37,7 @@ object Example1Fixture {
 
   val customerPgcComponent: (vertx: Vertx, writeDb: PgPool) -> EntityComponent<Customer> =
     { vertx: Vertx, writeDb: PgPool ->
-      PgcCmdHandlerComponent(writeDb, CUSTOMER_ENTITY, CustomerJsonAware(), CustomerCommandAware(),
+      PgcCmdHandler(writeDb, CUSTOMER_ENTITY, CustomerJsonAware(), CustomerCommandAware(),
         EventBusUowPublisher(vertx, "example1-projection-endpoint"))
   }
 

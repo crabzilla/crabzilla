@@ -1,17 +1,22 @@
-package io.github.crabzilla.web
+package io.github.crabzilla.webpgc
 
-import io.github.crabzilla.*
-import io.github.crabzilla.web.ContentTypes.ENTITY_WRITE_MODEL
+import io.github.crabzilla.Command
+import io.github.crabzilla.CommandMetadata
+import io.github.crabzilla.Entity
+import io.github.crabzilla.EntityComponent
+import io.github.crabzilla.webpgc.ContentTypes.ENTITY_WRITE_MODEL
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
-import io.vertx.ext.web.RoutingContext
+import io.vertx.ext.web.api.validation.HTTPRequestValidationHandler
+import io.vertx.ext.web.api.validation.ParameterType
 import org.slf4j.LoggerFactory
 
-class WebEntityComponentImpl<E: Entity>(private val component: EntityComponent<E>, private val resourceName: String,
-                                        private val router: Router)
-  : WebEntityComponent {
+class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
+                             private val resourceName: String,
+                             private val router: Router)
+   {
 
   private val postCmd = "/$resourceName/:$ENTITY_ID_PARAMETER/commands/:$COMMAND_NAME_PARAMETER"
   private val getSnapshot = "/$resourceName/:$ENTITY_ID_PARAMETER"
@@ -23,13 +28,20 @@ class WebEntityComponentImpl<E: Entity>(private val component: EntityComponent<E
     const val COMMAND_ID_PARAMETER = "commandId"
     const val ENTITY_ID_PARAMETER = "entityId"
     const val UNIT_OF_WORK_ID_PARAMETER = "unitOfWorkId"
-    private val log = LoggerFactory.getLogger(WebEntityComponentImpl::class.java)
+    private val log = LoggerFactory.getLogger(WebDeployer::class.java)
 
   }
 
-  override fun deployWebRoutes() {
+  fun deployWebRoutes() {
 
     log.info("adding route $postCmd")
+
+    val validationHandler = HTTPRequestValidationHandler
+      .create()
+      .addPathParam(resourceName, ParameterType.GENERIC_STRING)
+      .addPathParam(ENTITY_ID_PARAMETER, ParameterType.INT)
+      .addPathParam(COMMAND_NAME_PARAMETER, ParameterType.GENERIC_STRING)
+      .addPathParam(UNIT_OF_WORK_ID_PARAMETER, ParameterType.INT)
 
     router.post(postCmd).handler {
       val begin = System.currentTimeMillis()
@@ -58,7 +70,7 @@ class WebEntityComponentImpl<E: Entity>(private val component: EntityComponent<E
           it.response().setStatusCode(400).setStatusMessage(event.cause().message).end()
         }
       })
-    }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
+    }.failureHandler(validationHandler)
 
     log.info("adding route $getSnapshot")
 
@@ -87,7 +99,7 @@ class WebEntityComponentImpl<E: Entity>(private val component: EntityComponent<E
       } else {
         it.next()
       }
-    }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
+    }.failureHandler(validationHandler)
 
     log.info("adding route $getAllUow")
 
@@ -105,7 +117,7 @@ class WebEntityComponentImpl<E: Entity>(private val component: EntityComponent<E
           httpResp.end(JsonArray(resultList).encode())
         }
       })
-    }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
+    }.failureHandler(validationHandler)
 
     log.info("adding route $getUow")
 
@@ -123,20 +135,7 @@ class WebEntityComponentImpl<E: Entity>(private val component: EntityComponent<E
             .end(JsonObject.mapFrom(uowResult.result()).encode())
         }
       })
-    }.failureHandler(errorHandler(UNIT_OF_WORK_ID_PARAMETER))
-  }
-
-  private fun errorHandler(paramName: String) : Handler<RoutingContext> {
-    return Handler {
-      log.error(it.failure().message, it.failure())
-      when (it.failure()) {
-        is NumberFormatException -> it.response().setStatusCode(400).end("path param $paramName must be a number")
-        else -> {
-          it.failure().printStackTrace()
-          it.response().setStatusCode(500).end("server error")
-        }
-      }
-    }
+    }.failureHandler(validationHandler)
   }
 
 }

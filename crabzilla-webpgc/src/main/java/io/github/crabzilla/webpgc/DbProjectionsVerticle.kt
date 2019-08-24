@@ -1,6 +1,9 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.webpgc
 
 import io.github.crabzilla.UnitOfWorkEvents
+import io.github.crabzilla.pgc.PgcEventProjector
+import io.github.crabzilla.pgc.PgcUowProjector
+import io.github.crabzilla.pgc.readModelPgPool
 import io.reactiverse.pgclient.PgPool
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
@@ -9,10 +12,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory
 
-abstract class PgcDbProjectionsVerticle : AbstractVerticle() {
+abstract class DbProjectionsVerticle : AbstractVerticle() {
 
   companion object {
-    val log: Logger = LoggerFactory.getLogger(PgcDbProjectionsVerticle::class.java)
+    val log: Logger = LoggerFactory.getLogger(DbProjectionsVerticle::class.java)
     val processId: String = ManagementFactory.getRuntimeMXBean().name // TODO does this work with AOT?
     fun amIAlreadyRunning(projectionEndpoint: String) : String {
       return "$projectionEndpoint-ping"

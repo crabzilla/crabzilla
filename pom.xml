@@ -73,7 +73,6 @@
   <modules>
     <module>crabzilla-core</module>
     <module>crabzilla-pgc</module>
-    <module>crabzilla-web</module>
     <module>crabzilla-webpgc</module>
     <module>coverage-report</module>
   </modules>
