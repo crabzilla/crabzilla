@@ -6,7 +6,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory
 
-@Deprecated("migrating to PgcVerticles")
+@Deprecated("migrating to PgcDbProjectionsVerticle")
 class PgcProjectionComponent(private val pgc: PgcComponent) {
 
   companion object {

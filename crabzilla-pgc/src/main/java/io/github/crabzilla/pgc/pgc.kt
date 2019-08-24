@@ -1,6 +1,7 @@
 package io.github.crabzilla.pgc
 
-import com.accounts.service.PgcDbProjectionsVerticle.Companion.amIAlreadyRunning
+import io.github.crabzilla.initCrabzilla
+import io.github.crabzilla.pgc.PgcDbProjectionsVerticle.Companion.amIAlreadyRunning
 import io.reactiverse.pgclient.*
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
@@ -56,6 +57,7 @@ fun PgTransaction.runPreparedQuery(query: String, tuple: Tuple, future: Future<V
 }
 
 fun getConfig(vertx: Vertx, configFile: String) : Future<JsonObject> {
+  vertx.initCrabzilla()
   val future: Future<JsonObject> = Future.future()
   configRetriever(vertx, configFile).getConfig { gotConfig ->
     if (gotConfig.succeeded()) {
