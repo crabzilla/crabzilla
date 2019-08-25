@@ -29,7 +29,6 @@ class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
     const val ENTITY_ID_PARAMETER = "entityId"
     const val UNIT_OF_WORK_ID_PARAMETER = "unitOfWorkId"
     private val log = LoggerFactory.getLogger(WebDeployer::class.java)
-
   }
 
   fun deployWebRoutes() {

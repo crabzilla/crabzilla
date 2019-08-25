@@ -26,11 +26,6 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-web</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.github.crabzilla</groupId>
       <artifactId>crabzilla-webpgc</artifactId>
     </dependency>
 

@@ -4,10 +4,8 @@ import io.github.crabzilla.example1.CreateCustomer;
 import io.github.crabzilla.example1.CustomerId;
 import io.github.crabzilla.example1.UnknownCommand;
 import io.github.crabzilla.webpgc.ContentTypes;
+import io.github.crabzilla.webpgc.DeploymentConventions;
 import io.reactiverse.pgclient.PgPool;
-import io.vertx.config.ConfigRetriever;
-import io.vertx.config.ConfigRetrieverOptions;
-import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -26,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import java.net.ServerSocket;
 import java.util.Random;
 
-import static io.github.crabzilla.CrabzillaKt.initCrabzillaFor;
 import static io.github.crabzilla.UnitOfWork.JsonMetadata.*;
 import static io.github.crabzilla.pgc.PgcKt.readModelPgPool;
 import static io.github.crabzilla.pgc.PgcKt.writeModelPgPool;
@@ -45,14 +42,14 @@ class Example1IT {
   }
 
   private static WebClient client;
-  private static int port;
+  private static int port = findFreeHttpPort();
 
   static final Random random = new Random();
   static int nextInt = random.nextInt();
   static int customerId2 = random.nextInt();
   static final Logger log = LoggerFactory.getLogger(Example1IT.class);
 
-  private static int httpPort() {
+  private static int findFreeHttpPort() {
     int httpPort = 0;
     try {
       ServerSocket socket = new ServerSocket(0);
@@ -64,58 +61,48 @@ class Example1IT {
     return httpPort;
   }
 
-  static private ConfigRetriever configRetriever(Vertx vertx, String configFile) {
-    ConfigStoreOptions envOptions = new ConfigStoreOptions()
-      .setType("file")
-      .setFormat("properties")
-      .setConfig(new JsonObject().put("path", configFile));
-    ConfigRetrieverOptions options = new ConfigRetrieverOptions().addStore(envOptions);
-    return ConfigRetriever.create(vertx, options);
-  }
-
   @BeforeAll
   static void setup(VertxTestContext tc, Vertx vertx) {
-    port = httpPort();
-    initCrabzillaFor(vertx);
-    configRetriever(vertx, "./../example1.env").getConfig(gotConfig -> {
-      if (gotConfig.succeeded()) {
-        JsonObject config = gotConfig.result();
-        config.put("HTTP_PORT", port);
-        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(config);
-        WebClientOptions wco = new WebClientOptions();
-        client = WebClient.create(vertx, wco);
-        vertx.deployVerticle(Example1WebVerticle.class, deploymentOptions, deploy -> {
-          if (deploy.succeeded()) {
-            PgPool read = readModelPgPool(vertx, config);
-            PgPool write = writeModelPgPool(vertx, config);
-            write.query("delete from units_of_work", event1 -> {
-              if (event1.failed()) {
-                tc.failNow(event1.cause());
-                return;
-              }
-              write.query("delete from customer_snapshots", event2 -> {
-                if (event2.failed()) {
-                  tc.failNow(event2.cause());
+    DeploymentConventions.INSTANCE.getConfig(vertx,  "./../example1.env")
+      .setHandler(gotConfig -> {
+        if (gotConfig.succeeded()) {
+          JsonObject config = gotConfig.result();
+          config.put("HTTP_PORT", port);
+          DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(config);
+          WebClientOptions wco = new WebClientOptions();
+          client = WebClient.create(vertx, wco);
+          vertx.deployVerticle(Example1WebVerticle.class, deploymentOptions, deploy -> {
+            if (deploy.succeeded()) {
+              PgPool read = readModelPgPool(vertx, config);
+              PgPool write = writeModelPgPool(vertx, config);
+              write.query("delete from units_of_work", event1 -> {
+                if (event1.failed()) {
+                  tc.failNow(event1.cause());
                   return;
                 }
-                read.query("delete from customer_summary", event3 -> {
-                  if (event3.failed()) {
-                    tc.failNow(event3.cause());
+                write.query("delete from customer_snapshots", event2 -> {
+                  if (event2.failed()) {
+                    tc.failNow(event2.cause());
                     return;
                   }
-                  tc.completeNow();
+                  read.query("delete from customer_summary", event3 -> {
+                    if (event3.failed()) {
+                      tc.failNow(event3.cause());
+                      return;
+                    }
+                    tc.completeNow();
+                  });
                 });
               });
-            });
-          } else {
-            deploy.cause().printStackTrace();
-            tc.failNow(deploy.cause());
-          }
-        });
-      } else {
-        tc.failNow(gotConfig.cause());
-      }
-    });
+            } else {
+              deploy.cause().printStackTrace();
+              tc.failNow(deploy.cause());
+            }
+          });
+        } else {
+          tc.failNow(gotConfig.cause());
+        }
+      });
 
   }
 
@@ -249,5 +236,20 @@ class Example1IT {
         }))
       );
   }
+
+
+    @Test
+    @DisplayName("When GET to an invalid UnitOfWork (bad number) You get a 400")
+    void a1(VertxTestContext tc) {
+      client.get(port, "0.0.0.0", "/customers/units-of-work/dddd")
+        .as(BodyCodec.string())
+        .expect(ResponsePredicate.SC_BAD_REQUEST)
+        .send(tc.succeeding(response -> tc.verify(() -> {
+            String result = response.body();
+            assertThat(result).isEqualTo("path param unitOfWorkId must be a number");
+            tc.completeNow();
+          }))
+        );
+    }
 
 }

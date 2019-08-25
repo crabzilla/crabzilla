@@ -16,16 +16,16 @@ abstract class WebCmdHandlerVerticle : AbstractVerticle() {
     val log: Logger = LoggerFactory.getLogger(WebCmdHandlerVerticle::class.java)
   }
 
-  private val projectionEndpoint: String by lazy {
+  val projectionEndpoint: String by lazy {
     config().getString("PROJECTION_ENDPOINT")
   }
-  private val eventsPublisher: UnitOfWorkPublisher by lazy {
+  val eventsPublisher: UnitOfWorkPublisher by lazy {
     EventBusUowPublisher(vertx, projectionEndpoint)
   }
-  private val readDb : PgPool by lazy {
+  val readDb : PgPool by lazy {
     readModelPgPool(vertx, config())
   }
-  private val writeDb : PgPool by lazy {
+  val writeDb : PgPool by lazy {
     writeModelPgPool(vertx, config())
   }
 

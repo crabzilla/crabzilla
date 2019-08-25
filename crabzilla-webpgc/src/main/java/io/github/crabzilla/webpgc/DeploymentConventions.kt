@@ -1,7 +1,6 @@
 package io.github.crabzilla.webpgc
 
 import io.github.crabzilla.initCrabzilla
-import io.github.crabzilla.pgc.log
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -9,10 +8,13 @@ import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
+import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.ServerSocket
 
 object DeploymentConventions {
+
+  private val log = LoggerFactory.getLogger(DeploymentConventions::class.java)
 
   fun getConfig(vertx: Vertx, configFile: String) : Future<JsonObject> {
     vertx.initCrabzilla()
@@ -94,5 +96,6 @@ object DeploymentConventions {
       false
     }
   }
+
 
 }
