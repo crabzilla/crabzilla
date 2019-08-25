@@ -9,8 +9,7 @@ import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
-import io.vertx.ext.web.api.validation.HTTPRequestValidationHandler
-import io.vertx.ext.web.api.validation.ParameterType
+import io.vertx.ext.web.RoutingContext
 import org.slf4j.LoggerFactory
 
 class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
@@ -29,18 +28,12 @@ class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
     const val ENTITY_ID_PARAMETER = "entityId"
     const val UNIT_OF_WORK_ID_PARAMETER = "unitOfWorkId"
     private val log = LoggerFactory.getLogger(WebDeployer::class.java)
+
   }
 
   fun deployWebRoutes() {
 
     log.info("adding route $postCmd")
-
-    val validationHandler = HTTPRequestValidationHandler
-      .create()
-      .addPathParam(resourceName, ParameterType.GENERIC_STRING)
-      .addPathParam(ENTITY_ID_PARAMETER, ParameterType.INT)
-      .addPathParam(COMMAND_NAME_PARAMETER, ParameterType.GENERIC_STRING)
-      .addPathParam(UNIT_OF_WORK_ID_PARAMETER, ParameterType.INT)
 
     router.post(postCmd).handler {
       val begin = System.currentTimeMillis()
@@ -69,7 +62,7 @@ class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
           it.response().setStatusCode(400).setStatusMessage(event.cause().message).end()
         }
       })
-    }.failureHandler(validationHandler)
+    }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route $getSnapshot")
 
@@ -98,7 +91,7 @@ class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
       } else {
         it.next()
       }
-    }.failureHandler(validationHandler)
+    }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route $getAllUow")
 
@@ -116,7 +109,7 @@ class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
           httpResp.end(JsonArray(resultList).encode())
         }
       })
-    }.failureHandler(validationHandler)
+    }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route $getUow")
 
@@ -134,7 +127,20 @@ class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
             .end(JsonObject.mapFrom(uowResult.result()).encode())
         }
       })
-    }.failureHandler(validationHandler)
+    }.failureHandler(errorHandler(UNIT_OF_WORK_ID_PARAMETER))
+  }
+
+  private fun errorHandler(paramName: String) : Handler<RoutingContext> {
+    return Handler {
+      log.error(it.failure().message, it.failure())
+      when (it.failure()) {
+        is NumberFormatException -> it.response().setStatusCode(400).end("path param $paramName must be a number")
+        else -> {
+          it.failure().printStackTrace()
+          it.response().setStatusCode(500).end("server error")
+        }
+      }
+    }
   }
 
 }

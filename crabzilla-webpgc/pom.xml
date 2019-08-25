@@ -34,11 +34,6 @@
       <artifactId>vertx-config</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-api-contract</artifactId>
-    </dependency>
-
     <!-- test -->
 
     <dependency>
