@@ -41,14 +41,15 @@ class Example1IT {
     LoggerFactory.getLogger(io.vertx.core.logging.LoggerFactory.class);// Required for Logback to work in Vertx
   }
 
-  private static WebClient client;
-  private static int port = findFreeHttpPort();
+  private static final Logger log = LoggerFactory.getLogger(Example1IT.class);
 
   static final Random random = new Random();
   static int nextInt = random.nextInt();
   static int customerId2 = random.nextInt();
-  static final Logger log = LoggerFactory.getLogger(Example1IT.class);
 
+  private static WebClient client;
+
+  private static int port = findFreeHttpPort();
   private static int findFreeHttpPort() {
     int httpPort = 0;
     try {
