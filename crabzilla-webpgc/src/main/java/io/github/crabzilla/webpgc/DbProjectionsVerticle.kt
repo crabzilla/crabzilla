@@ -46,7 +46,7 @@ abstract class DbProjectionsVerticle : AbstractVerticle() {
     log.info("adding projector for $projectionName subscribing on $projectionEndpoint")
     val uolProjector = PgcUowProjector(readDb, projectionName)
     vertx.eventBus().consumer<String>(projectionEndpoint) { message ->
-      val uowEvents = toUnitOfWOrkEvents(JsonObject(message.body()))
+      val uowEvents = toUnitOfWorkEvents(JsonObject(message.body()))
       if (uowEvents == null) {
         log.error("Cannot send these events to be projected. Check if all entities have a jsonAware.")
       } else {
@@ -59,7 +59,7 @@ abstract class DbProjectionsVerticle : AbstractVerticle() {
     }
   }
 
-  private fun toUnitOfWOrkEvents(json: JsonObject): UnitOfWorkEvents? {
+  private fun toUnitOfWorkEvents(json: JsonObject): UnitOfWorkEvents? {
 
     val uowId = json.getLong("uowId")
     val entityName = json.getString(JsonMetadata.ENTITY_NAME)
