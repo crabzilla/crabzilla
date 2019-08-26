@@ -4,7 +4,6 @@ import io.github.crabzilla.example1.CreateCustomer;
 import io.github.crabzilla.example1.CustomerId;
 import io.github.crabzilla.example1.UnknownCommand;
 import io.github.crabzilla.webpgc.ContentTypes;
-import io.github.crabzilla.webpgc.DeploymentConventions;
 import io.reactiverse.pgclient.PgPool;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
@@ -27,6 +26,7 @@ import java.util.Random;
 import static io.github.crabzilla.UnitOfWork.JsonMetadata.*;
 import static io.github.crabzilla.pgc.PgcKt.readModelPgPool;
 import static io.github.crabzilla.pgc.PgcKt.writeModelPgPool;
+import static io.github.crabzilla.webpgc.WebpgcKt.getConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -64,7 +64,7 @@ class Example1IT {
 
   @BeforeAll
   static void setup(VertxTestContext tc, Vertx vertx) {
-    DeploymentConventions.INSTANCE.getConfig(vertx,  "./../example1.env")
+    getConfig(vertx,  "./../example1.env")
       .setHandler(gotConfig -> {
         if (gotConfig.succeeded()) {
           JsonObject config = gotConfig.result();

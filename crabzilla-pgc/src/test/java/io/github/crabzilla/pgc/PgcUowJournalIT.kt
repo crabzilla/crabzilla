@@ -80,9 +80,7 @@ class PgcUowJournalIT {
         .setMaxSize(config.getInteger("WRITE_DATABASE_POOL_MAX_SIZE"))
 
       writeDb = PgClient.pool(vertx, options)
-
       repo = PgcUowRepo(writeDb, customerJson)
-
       journal = PgcUowJournal(writeDb, customerJson)
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->

@@ -16,23 +16,18 @@ abstract class WebCmdHandlerVerticle : AbstractVerticle() {
     val log: Logger = LoggerFactory.getLogger(WebCmdHandlerVerticle::class.java)
   }
 
-  val projectionEndpoint: String by lazy {
-    config().getString("PROJECTION_ENDPOINT")
-  }
+  val projectionEndpoint: String by lazy { config().getString("PROJECTION_ENDPOINT") }
+  val readDb : PgPool by lazy { readModelPgPool(vertx, config()) }
+  val writeDb : PgPool by lazy { writeModelPgPool(vertx, config()) }
+  val jsonFunctions: MutableMap<String, EntityJsonAware<out Entity>> = mutableMapOf()
   val eventsPublisher: UnitOfWorkPublisher by lazy {
-    EventBusUowPublisher(vertx, projectionEndpoint)
-  }
-  val readDb : PgPool by lazy {
-    readModelPgPool(vertx, config())
-  }
-  val writeDb : PgPool by lazy {
-    writeModelPgPool(vertx, config())
-  }
+    EventBusUowPublisher(vertx, projectionEndpoint, jsonFunctions) }
 
   fun <E: Entity> addResourceForEntity(resourceName: String, entityName: String,
                                        jsonAware: EntityJsonAware<E>, cmdAware: EntityCommandAware<E>,
                                        router: Router) {
     log.info("adding web command handler for entity $entityName on resource $resourceName")
+    jsonFunctions[entityName] = jsonAware
     val cmdHandlerComponent = PgcCmdHandler(writeDb, entityName, jsonAware, cmdAware, eventsPublisher)
     WebDeployer(cmdHandlerComponent, resourceName, router).deployWebRoutes()
   }

@@ -1,8 +1,6 @@
 package io.github.crabzilla.pgc.example1
 
-import io.github.crabzilla.EntityComponent
-import io.github.crabzilla.EventBusUowPublisher
-import io.github.crabzilla.UnitOfWork
+import io.github.crabzilla.*
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.example1.aggregate.CustomerCommandAware
@@ -37,8 +35,9 @@ object Example1Fixture {
 
   val customerPgcComponent: (vertx: Vertx, writeDb: PgPool) -> EntityComponent<Customer> =
     { vertx: Vertx, writeDb: PgPool ->
-      PgcCmdHandler(writeDb, CUSTOMER_ENTITY, CustomerJsonAware(), CustomerCommandAware(),
-        EventBusUowPublisher(vertx, "example1-projection-endpoint"))
+      val jsonFunctions: Map<String, EntityJsonAware<out Entity>> = mapOf(Pair("customer", customerJson))
+      PgcCmdHandler(writeDb, CUSTOMER_ENTITY, customerJson, CustomerCommandAware(),
+        EventBusUowPublisher(vertx, "example1-projection-endpoint", jsonFunctions))
   }
 
 }

@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.UnitOfWork
-import io.github.crabzilla.UnitOfWorkEvents.Companion.fromUnitOfWork
+import io.github.crabzilla.fromUnitOfWork
 import io.github.crabzilla.pgc.example1.BadEventProjector
 import io.github.crabzilla.pgc.example1.CustomerSummaryProjector
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1

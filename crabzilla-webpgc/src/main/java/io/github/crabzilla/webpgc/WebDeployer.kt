@@ -45,9 +45,12 @@ class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
         it.response().setStatusCode(400).setStatusMessage("Cannot decode the json for this Command").end()
         return@handler
       }
+
+      log.info("Handling $command  $commandMetadata")
+
       component.handleCommand(commandMetadata, command, Handler { event ->
         val end = System.currentTimeMillis()
-        if (log.isTraceEnabled) { log.trace("handled command in " + (end - begin) + " ms") }
+        log.info("handled command in " + (end - begin) + " ms")
         if (event.succeeded()) {
           with(event.result()) {
             val location = it.request().absoluteURI().split('/').subList(0, 3)
@@ -59,6 +62,7 @@ class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
               .end()
           }
         } else {
+          log.error(event.cause().message)
           it.response().setStatusCode(400).setStatusMessage(event.cause().message).end()
         }
       })
