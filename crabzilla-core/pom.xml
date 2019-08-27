@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.0.6-rc11</version>
+    <version>0.0.6-rc12</version>
   </parent>
 
   <artifactId>crabzilla-core</artifactId>
@@ -16,18 +16,6 @@
   </properties>
 
   <dependencies>
-
-    <!-- jackson json -->
-
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.fasterxml.jackson.datatype</groupId>
-      <artifactId>jackson-datatype-jdk8</artifactId>
-    </dependency>
 
     <!--Vertx -->
 

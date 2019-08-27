@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.0.6-rc11</version>
+    <version>0.0.6-rc12</version>
   </parent>
 
   <artifactId>crabzilla-webpgc</artifactId>
@@ -24,6 +24,8 @@
       <artifactId>crabzilla-pgc</artifactId>
     </dependency>
 
+    <!-- vertx -->
+
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web</artifactId>
@@ -32,6 +34,18 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-config</artifactId>
+    </dependency>
+
+    <!-- jackson json -->
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
     </dependency>
 
     <!-- test -->
