@@ -10,7 +10,6 @@ import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 
 class EventBusUowPublisher(val vertx: Vertx,
-                           private val targetEndpoint: String,
                            private val jsonFunctions: Map<String, EntityJsonAware<out Entity>>)
   : UnitOfWorkPublisher {
 
@@ -30,7 +29,7 @@ class EventBusUowPublisher(val vertx: Vertx,
         .put(JsonMetadata.VERSION, uow.version)
         .put(JsonMetadata.EVENTS, eventsAsJson)
       log.info("will publish message $message")
-      vertx.eventBus().publish(targetEndpoint, message.encode())
+      vertx.eventBus().publish(EventBusChannels.unitOfWorkChannel, message.encode())
       log.info("publish success")
       handler.handle(Future.succeededFuture())
     }

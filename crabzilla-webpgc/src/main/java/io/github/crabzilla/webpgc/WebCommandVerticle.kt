@@ -1,21 +1,44 @@
 package io.github.crabzilla.webpgc
 
-import io.github.crabzilla.Command
-import io.github.crabzilla.CommandMetadata
-import io.github.crabzilla.Entity
-import io.github.crabzilla.EntityComponent
-import io.github.crabzilla.webpgc.ContentTypes.ENTITY_WRITE_MODEL
+import io.github.crabzilla.*
+import io.github.crabzilla.pgc.PgcCmdHandler
+import io.github.crabzilla.pgc.writeModelPgPool
+import io.reactiverse.pgclient.PgPool
+import io.vertx.core.AbstractVerticle
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
+abstract class WebCommandVerticle : AbstractVerticle() {
+
+  companion object {
+    val log: Logger = LoggerFactory.getLogger(WebCommandVerticle::class.java)
+  }
+
+  val writeDb : PgPool by lazy { writeModelPgPool(vertx, config()) }
+  val jsonFunctions: MutableMap<String, EntityJsonAware<out Entity>> = mutableMapOf()
+  val eventsPublisher: UnitOfWorkPublisher by lazy { EventBusUowPublisher(vertx, jsonFunctions) }
+  val httpPort : Int by lazy { config().getInteger("WRITE_HTTP_PORT")}
+
+  fun <E: Entity> addResourceForEntity(resourceName: String, entityName: String,
+                                       jsonAware: EntityJsonAware<E>, cmdAware: EntityCommandAware<E>,
+                                       router: Router) {
+    log.info("adding web command handler for entity $entityName on resource $resourceName")
+    jsonFunctions[entityName] = jsonAware
+    val cmdHandlerComponent = PgcCmdHandler(writeDb, entityName, jsonAware, cmdAware, eventsPublisher)
+    WebDeployer(cmdHandlerComponent, resourceName, router).deployWebRoutes()
+  }
+
+}
+
+private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
                              private val resourceName: String,
                              private val router: Router)
-   {
+{
 
   private val postCmd = "/$resourceName/:$ENTITY_ID_PARAMETER/commands/:$COMMAND_NAME_PARAMETER"
   private val getSnapshot = "/$resourceName/:$ENTITY_ID_PARAMETER"
@@ -38,9 +61,9 @@ class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
     router.post(postCmd).handler {
       val begin = System.currentTimeMillis()
       val commandMetadata = CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(),
-                                            it.pathParam(COMMAND_NAME_PARAMETER))
+        it.pathParam(COMMAND_NAME_PARAMETER))
       val command: Command? = try { component.cmdFromJson(commandMetadata.commandName, it.bodyAsJson) }
-                              catch (e: Exception) { null }
+      catch (e: Exception) { null }
       if (command == null) {
         it.response().setStatusCode(400).setStatusMessage("Cannot decode the json for this Command").end()
         return@handler
@@ -73,7 +96,7 @@ class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
     router.get(getSnapshot).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
       val accept = it.request().getHeader("accept")
-      if (ENTITY_WRITE_MODEL == accept) {
+      if (ContentTypes.ENTITY_WRITE_MODEL == accept) {
         val httpResp = it.response()
         component.getSnapshot(entityId, Handler { event ->
           if (event.failed() || event.result() == null) {

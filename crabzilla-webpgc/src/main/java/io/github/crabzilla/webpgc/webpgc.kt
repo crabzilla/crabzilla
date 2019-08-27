@@ -2,6 +2,7 @@ package io.github.crabzilla.webpgc
 
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
+import io.github.crabzilla.*
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -25,10 +26,15 @@ fun getConfig(vertx: Vertx, configFile: String) : Future<JsonObject> {
     if (gotConfig.succeeded()) {
       val config = gotConfig.result()
       log.info("*** config:\n${config.encodePrettily()}")
-      val httpPort = config.getInteger("HTTP_PORT")
-      val nextFreeHttpPort = nextFreePort(httpPort, httpPort + 20)
-      config.put("HTTP_PORT", nextFreeHttpPort)
-      log.info("*** next free HTTP_PORT: $nextFreeHttpPort")
+      val readHttpPort = config.getInteger("READ_HTTP_PORT")
+      val nextFreeReadHttpPort = nextFreePort(readHttpPort, readHttpPort + 20)
+      config.put("READ_HTTP_PORT", nextFreeReadHttpPort)
+      log.info("*** next free READ_HTTP_PORT: $nextFreeReadHttpPort")
+      val writeHttpPort = config.getInteger("WRITE_HTTP_PORT")
+      val nextFreeWriteHttpPort = nextFreePort(writeHttpPort, writeHttpPort + 20)
+      config.put("WRITE_HTTP_PORT", nextFreeWriteHttpPort)
+      log.info("*** next free WRITE_HTTP_PORT: $nextFreeWriteHttpPort")
+
       future.complete(config)
     } else {
       future.fail(gotConfig.cause())
@@ -52,10 +58,9 @@ fun deploy(vertx: Vertx, verticle: String, deploymentOptions: DeploymentOptions)
   return future
 }
 
-fun deploySingleton(vertx: Vertx, verticle: String, pingEndpoint: String,
-                    dOpt: DeploymentOptions, processId: Any): Future<String> {
+fun deploySingleton(vertx: Vertx, verticle: String, dOpt: DeploymentOptions, processId: Any): Future<String> {
   val future: Future<String> = Future.future()
-  vertx.eventBus().send<String>(DbProjectionsVerticle.amIAlreadyRunning(pingEndpoint), processId) { isWorking ->
+  vertx.eventBus().send<String>(verticle, processId) { isWorking ->
     if (isWorking.succeeded()) {
       log.info("No need to start $verticle: " + isWorking.result().body())
     } else {
@@ -99,4 +104,29 @@ private fun isLocalPortFree(port: Int): Boolean {
   }
 }
 
+fun toUnitOfWorkEvents(json: JsonObject, jsonFunctions: Map<String, EntityJsonAware<out Entity>>): UnitOfWorkEvents? {
+
+  val uowId = json.getLong("uowId")
+  val entityName = json.getString(UnitOfWork.JsonMetadata.ENTITY_NAME)
+  val entityId = json.getInteger(UnitOfWork.JsonMetadata.ENTITY_ID)
+  val eventsArray = json.getJsonArray(UnitOfWork.JsonMetadata.EVENTS)
+
+  val jsonAware = jsonFunctions[entityName]
+  if (jsonAware == null) {
+    log.error("JsonAware for $entityName wasn't found")
+    return null
+  }
+
+  val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
+    val jsonObject = eventsArray.getJsonObject(index)
+    val eventName = jsonObject.getString(UnitOfWork.JsonMetadata.EVENT_NAME)
+    val eventJson = jsonObject.getJsonObject(UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT)
+    val domainEvent = jsonAware.eventFromJson(eventName, eventJson)
+    domainEvent
+  }
+
+  val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEventPair)
+  return UnitOfWorkEvents(uowId, entityId, events)
+
+}
 

@@ -37,7 +37,7 @@ object Example1Fixture {
     { vertx: Vertx, writeDb: PgPool ->
       val jsonFunctions: Map<String, EntityJsonAware<out Entity>> = mapOf(Pair("customer", customerJson))
       PgcCmdHandler(writeDb, CUSTOMER_ENTITY, customerJson, CustomerCommandAware(),
-        EventBusUowPublisher(vertx, "example1-projection-endpoint", jsonFunctions))
+        EventBusUowPublisher(vertx, jsonFunctions))
   }
 
 }
