@@ -1,6 +1,6 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.UnitOfWork.*
+import io.github.crabzilla.UnitOfWork.JsonMetadata
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
