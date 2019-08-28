@@ -58,7 +58,7 @@ fun deploy(vertx: Vertx, verticle: String, deploymentOptions: DeploymentOptions)
   return future
 }
 
-fun deploySingleton(vertx: Vertx, verticle: String, dOpt: DeploymentOptions, processId: Any): Future<String> {
+fun deploySingleton(vertx: Vertx, verticle: String, dOpt: DeploymentOptions, processId: String): Future<String> {
   val future: Future<String> = Future.future()
   vertx.eventBus().send<String>(verticle, processId) { isWorking ->
     if (isWorking.succeeded()) {

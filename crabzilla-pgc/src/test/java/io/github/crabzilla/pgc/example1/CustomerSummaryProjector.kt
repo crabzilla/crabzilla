@@ -42,6 +42,9 @@ class CustomerSummaryProjector : PgcEventProjector {
       }
     }
 
+    if (future.failed()) {
+      log.error("Projection of event $event failed", future.cause())
+    }
     return future
 
   }

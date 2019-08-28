@@ -5,8 +5,8 @@ import io.github.crabzilla.example1.CustomerId;
 import io.github.crabzilla.example1.UnknownCommand;
 import io.github.crabzilla.webpgc.ContentTypes;
 import io.reactiverse.pgclient.PgPool;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.SLF4JLogDelegateFactory;
 import io.vertx.ext.web.client.WebClient;
@@ -20,13 +20,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.util.Random;
 
 import static io.github.crabzilla.UnitOfWork.JsonMetadata.*;
 import static io.github.crabzilla.pgc.PgcKt.readModelPgPool;
 import static io.github.crabzilla.pgc.PgcKt.writeModelPgPool;
-import static io.github.crabzilla.webpgc.WebpgcKt.getConfig;
+import static io.github.crabzilla.webpgc.WebpgcKt.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -49,7 +50,9 @@ class Example1IT {
 
   private static WebClient client;
 
-  private static int port = findFreeHttpPort();
+  private static int readHttpPort = findFreeHttpPort();
+  private static int writeHttpPort = findFreeHttpPort();
+
   private static int findFreeHttpPort() {
     int httpPort = 0;
     try {
@@ -68,12 +71,21 @@ class Example1IT {
       .setHandler(gotConfig -> {
         if (gotConfig.succeeded()) {
           JsonObject config = gotConfig.result();
-          config.put("HTTP_PORT", port);
-          DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(config);
+          config.put("WRITE_HTTP_PORT", writeHttpPort);
+          config.put("READ_HTTP_PORT", readHttpPort);
+          DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(config).setInstances(1);
           WebClientOptions wco = new WebClientOptions();
           client = WebClient.create(vertx, wco);
-          vertx.deployVerticle(Example1WebVerticle.class, deploymentOptions, deploy -> {
-            if (deploy.succeeded()) {
+          final String processId = ManagementFactory.getRuntimeMXBean().getName();
+          CompositeFuture.all(
+            deploy(vertx, Ex1WebCommandVerticle.class.getName(), deploymentOptions),
+            deploy(vertx, Ex1WebQueryVerticle.class.getName(), deploymentOptions),
+            deploySingleton(vertx, Ex1DbProjectionsVerticle.class.getName(), deploymentOptions, processId))
+            .setHandler(event -> {
+              if (event.failed()) {
+                tc.failNow(event.cause());
+                return;
+              }
               PgPool read = readModelPgPool(vertx, config);
               PgPool write = writeModelPgPool(vertx, config);
               write.query("delete from units_of_work", event1 -> {
@@ -95,16 +107,13 @@ class Example1IT {
                   });
                 });
               });
-            } else {
-              deploy.cause().printStackTrace();
-              tc.failNow(deploy.cause());
             }
-          });
+          );
         } else {
           tc.failNow(gotConfig.cause());
         }
-      });
-
+      }
+    );
   }
 
   @Nested
@@ -117,7 +126,7 @@ class Example1IT {
       CreateCustomer cmd = new CreateCustomer("customer#" + customerId2);
       JsonObject cmdAsJson = JsonObject.mapFrom(cmd);
       System.out.println(cmdAsJson.encodePrettily());
-      client.post(port, "0.0.0.0", "/customers/" + customerId2 + "/commands/create"  )
+      client.post(writeHttpPort, "0.0.0.0", "/customers/" + customerId2 + "/commands/create"  )
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
@@ -140,7 +149,7 @@ class Example1IT {
     @Test
     @DisplayName("You get a correspondent snapshot (write model)")
     void a2(VertxTestContext tc) {
-      client.get(port, "0.0.0.0", "/customers/" + customerId2)
+      client.get(writeHttpPort, "0.0.0.0", "/customers/" + customerId2)
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
@@ -160,37 +169,28 @@ class Example1IT {
     @Test
     @DisplayName("You get a correspondent company summary (read model)")
     void a22(VertxTestContext tc) {
-      client.get(port, "0.0.0.0", "/customers/" + customerId2)
+      client.get(readHttpPort, "0.0.0.0", "/customers/" + customerId2)
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
         .send(tc.succeeding(response2 -> tc.verify(() -> {
           JsonObject jo = response2.body();
-          System.out.println(jo.encodePrettily());
-          assertThat(jo.getString("message")).isEqualTo("TODO query read model");
+          assertThat(jo.encode())
+            .isEqualTo("{\"id\":" + customerId2 + ",\"name\":\"customer#" + customerId2 + "\",\"is_active\":false}");
           tc.completeNow();
         })));
     }
 
-
     @Test
-    @Disabled
     @DisplayName("You get a correspondent entity tracking") // TODO
     void a3(VertxTestContext tc) {
-      client.get(port, "0.0.0.0", "/customers/" + customerId2)
-        .as(BodyCodec.jsonObject())
+      client.get(writeHttpPort, "0.0.0.0", "/customers/" + customerId2 + "/units-of-work")
+        .as(BodyCodec.jsonArray())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
         .send(tc.succeeding(response2 -> tc.verify(() -> {
-          JsonObject jo = response2.body();
-          System.out.println(jo.encodePrettily());
-          JsonObject snapshot = jo.getJsonObject("snapshot");
-          assertThat(snapshot.getInteger("version")).isEqualTo(1);
-          JsonObject state = snapshot.getJsonObject("state");
-          assertThat(state.getInteger("customerId")).isEqualTo(customerId2);
-          assertThat(state.getString("name")).isEqualTo("customer#" + customerId2);
-          assertThat(state.getBoolean("isActive")).isFalse();
-          assertThat(jo.getJsonArray("units_of_work").size()).isEqualTo(1);
+          JsonArray array = response2.body();
+          assertThat(array.size()).isEqualTo(1);
           tc.completeNow();
         })));
     }
@@ -201,7 +201,7 @@ class Example1IT {
   @DisplayName("When sending an invalid CreateCommand")
   void a3(VertxTestContext tc) {
     JsonObject invalidCommand = new JsonObject();
-    client.post(port, "0.0.0.0", "/customers/1/commands/create")
+    client.post(writeHttpPort, "0.0.0.0", "/customers/1/commands/create")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(invalidCommand, tc.succeeding(response -> tc.verify(() -> {
@@ -215,7 +215,7 @@ class Example1IT {
   void a4(VertxTestContext tc) {
     CreateCustomer cmd = new CreateCustomer("a bad name");
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/create")
+    client.post(writeHttpPort, "0.0.0.0", "/customers/" + nextInt + "/commands/create")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
@@ -229,7 +229,7 @@ class Example1IT {
   void a5(VertxTestContext tc) {
     UnknownCommand cmd = new UnknownCommand(new CustomerId(nextInt));
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.post(port, "0.0.0.0", "/customers/" + nextInt + "/commands/unknown")
+    client.post(writeHttpPort, "0.0.0.0", "/customers/" + nextInt + "/commands/unknown")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
@@ -242,7 +242,7 @@ class Example1IT {
     @Test
     @DisplayName("When GET to an invalid UnitOfWork (bad number) You get a 400")
     void a1(VertxTestContext tc) {
-      client.get(port, "0.0.0.0", "/customers/units-of-work/dddd")
+      client.get(writeHttpPort, "0.0.0.0", "/customers/units-of-work/dddd")
         .as(BodyCodec.string())
         .expect(ResponsePredicate.SC_BAD_REQUEST)
         .send(tc.succeeding(response -> tc.verify(() -> {
