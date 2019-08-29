@@ -58,44 +58,17 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
 
   fun deployWebRoutes() {
 
-    log.info("adding route PUT $putCmd")
-    router.post(putCmd).handler {
-      val begin = System.currentTimeMillis()
-      val commandMetadata = CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(),
-        it.pathParam(COMMAND_NAME_PARAMETER), UUID.fromString(it.pathParam(COMMAND_ID_PARAMETER)))
-      val command: Command? = try { component.cmdFromJson(commandMetadata.commandName, it.bodyAsJson) }
-      catch (e: Exception) { null }
-      if (command == null) {
-        it.response().setStatusCode(400).setStatusMessage("Cannot decode the json for this Command").end()
-        return@handler
-      }
-      log.info("Handling $command  $commandMetadata")
-      component.handleCommand(commandMetadata, command, Handler { event ->
-        val end = System.currentTimeMillis()
-        log.info("handled command in " + (end - begin) + " ms")
-        if (event.succeeded()) {
-          with(event.result()) {
-            val location = it.request().absoluteURI().split('/').subList(0, 3)
-              .reduce { acc, s ->  acc.plus("/$s")} + "/$resourceName/units-of-work/$second"
-            it.response()
-              .putHeader("accept", "application/json")
-              .putHeader("Location", location)
-              .setStatusCode(303)
-              .end()
-          }
-        } else {
-          log.error(event.cause().message)
-          it.response().setStatusCode(400).setStatusMessage(event.cause().message).end()
-        }
-      })
-    }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
-
-
     log.info("adding route POST $postCmd")
     router.post(postCmd).handler {
       val begin = System.currentTimeMillis()
-      val commandMetadata = CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(),
-        it.pathParam(COMMAND_NAME_PARAMETER))
+      val commandId = it.request().getHeader(COMMAND_ID_PARAMETER)
+      val commandMetadata =
+        if (commandId == null) {
+          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), it.pathParam(COMMAND_NAME_PARAMETER))
+        } else {
+          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), it.pathParam(COMMAND_NAME_PARAMETER),
+            UUID.fromString(commandId))
+        }
       val command: Command? = try { component.cmdFromJson(commandMetadata.commandName, it.bodyAsJson) }
                             catch (e: Exception) { null }
       if (command == null) {
@@ -109,7 +82,7 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
         if (event.succeeded()) {
           with(event.result()) {
             val location = it.request().absoluteURI().split('/').subList(0, 3)
-              .reduce { acc, s ->  acc.plus("/$s")} + "/$resourceName/units-of-work/$second"
+              .reduce { acc, s ->  acc.plus("/$s")} + "/commands/$resourceName/units-of-work/$second"
             it.response()
               .putHeader("accept", "application/json")
               .putHeader("Location", location)

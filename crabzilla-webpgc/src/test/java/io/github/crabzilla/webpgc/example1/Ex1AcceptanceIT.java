@@ -173,7 +173,7 @@ class Ex1AcceptanceIT {
     @Test
     @DisplayName("You get a correspondent company summary (read model)")
     void a22(VertxTestContext tc) {
-      client.get(readHttpPort, "0.0.0.0", "customers/" + customerId2)
+      client.get(readHttpPort, "0.0.0.0", "/customers/" + customerId2)
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
@@ -205,14 +205,16 @@ class Ex1AcceptanceIT {
   @DisplayName("When sending the same idempotent valid CreateCommand 2 times expecting uow body")
   class When2 {
 
+    int customerId3 = customerId2 + 1;
     @Test
     @DisplayName("You get a correspondent UnitOfWork as JSON")
     void a1(VertxTestContext tc) {
-      CreateCustomer cmd = new CreateCustomer("customer#" + customerId2);
+      CreateCustomer cmd = new CreateCustomer("customer#" + customerId3);
       JsonObject cmdAsJson = JsonObject.mapFrom(cmd);
       UUID cmdId = UUID.randomUUID();
-      client.put(writeHttpPort, "0.0.0.0", "/commands/customers/" + customerId2 + "/create/" + cmdId  )
+      client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + customerId3 + "/create")
         .as(BodyCodec.jsonObject())
+        .putHeader("commandId", cmdId.toString())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
         .sendJson(cmdAsJson, tc.succeeding(response1 -> tc.verify(() -> {
@@ -220,14 +222,15 @@ class Ex1AcceptanceIT {
             Long uowId1 = Long.valueOf(response1.getHeader("uowId"));
             assertThat(uowId1).isPositive();
             assertThat(uow1.getString(ENTITY_NAME)).isEqualTo("customer");
-            assertThat(uow1.getInteger(ENTITY_ID)).isEqualTo(customerId2);
+            assertThat(uow1.getInteger(ENTITY_ID)).isEqualTo(customerId3);
             assertThat(uow1.getString(COMMAND_ID)).isNotNull();
             assertThat(uow1.getString(COMMAND_NAME)).isEqualTo("create");
             assertThat(uow1.getJsonObject(COMMAND)).isEqualTo(cmdAsJson);
             assertThat(uow1.getInteger(VERSION)).isEqualTo(1);
             assertThat(uow1.getJsonArray(EVENTS).size()).isEqualTo(1);
-            client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + customerId2 + "/create/" + cmdId  )
+            client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + customerId3 + "/create")
               .as(BodyCodec.jsonObject())
+              .putHeader("commandId", cmdId.toString())
               .expect(ResponsePredicate.SC_SUCCESS)
               .expect(ResponsePredicate.JSON)
               .sendJson(cmdAsJson, tc.succeeding(response2 -> tc.verify(() -> {
@@ -238,7 +241,6 @@ class Ex1AcceptanceIT {
                 tc.completeNow();
               }))
             );
-          tc.completeNow();
           }))
         );
     }
@@ -246,7 +248,7 @@ class Ex1AcceptanceIT {
     @Test
     @DisplayName("You get a correspondent snapshot (write model)")
     void a2(VertxTestContext tc) {
-      client.get(writeHttpPort, "0.0.0.0", "/commands/customers/" + customerId2)
+      client.get(writeHttpPort, "0.0.0.0", "/commands/customers/" + customerId3)
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
@@ -256,8 +258,8 @@ class Ex1AcceptanceIT {
           System.out.println(jo.encodePrettily());
           assertThat(jo.getInteger("version")).isEqualTo(1);
           JsonObject state = jo.getJsonObject("state");
-          assertThat(state.getInteger("customerId")).isEqualTo(customerId2);
-          assertThat(state.getString("name")).isEqualTo("customer#" + customerId2);
+          assertThat(state.getInteger("customerId")).isEqualTo(customerId3);
+          assertThat(state.getString("name")).isEqualTo("customer#" + customerId3);
           assertThat(state.getBoolean("isActive")).isFalse();
           tc.completeNow();
         })));
@@ -266,14 +268,14 @@ class Ex1AcceptanceIT {
     @Test
     @DisplayName("You get a correspondent company summary (read model)")
     void a22(VertxTestContext tc) {
-      client.get(readHttpPort, "0.0.0.0", "/commands/customers/" + customerId2)
+      client.get(readHttpPort, "0.0.0.0", "/customers/" + customerId3)
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
         .send(tc.succeeding(response2 -> tc.verify(() -> {
           JsonObject jo = response2.body();
           assertThat(jo.encode())
-            .isEqualTo("{\"id\":" + customerId2 + ",\"name\":\"customer#" + customerId2 + "\",\"is_active\":false}");
+            .isEqualTo("{\"id\":" + customerId3 + ",\"name\":\"customer#" + customerId3 + "\",\"is_active\":false}");
           tc.completeNow();
         })));
     }
@@ -281,7 +283,7 @@ class Ex1AcceptanceIT {
     @Test
     @DisplayName("You get a correspondent entity tracking") // TODO
     void a3(VertxTestContext tc) {
-      client.get(writeHttpPort, "0.0.0.0", "/commands/customers/" + customerId2 + "/units-of-work")
+      client.get(writeHttpPort, "0.0.0.0", "/commands/customers/" + customerId3 + "/units-of-work")
         .as(BodyCodec.jsonArray())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
@@ -298,7 +300,7 @@ class Ex1AcceptanceIT {
   @DisplayName("When sending an invalid CreateCommand")
   void a3(VertxTestContext tc) {
     JsonObject invalidCommand = new JsonObject();
-    client.post(writeHttpPort, "0.0.0.0", "/commands/customers/1/commands/create")
+    client.post(writeHttpPort, "0.0.0.0", "/commands/customers/1/create")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(invalidCommand, tc.succeeding(response -> tc.verify(() -> {
@@ -312,7 +314,7 @@ class Ex1AcceptanceIT {
   void a4(VertxTestContext tc) {
     CreateCustomer cmd = new CreateCustomer("a bad name");
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + nextInt + "/commands/create")
+    client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + nextInt + "/create")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
@@ -326,7 +328,7 @@ class Ex1AcceptanceIT {
   void a5(VertxTestContext tc) {
     UnknownCommand cmd = new UnknownCommand(new CustomerId(nextInt));
     JsonObject jo = JsonObject.mapFrom(cmd);
-    client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + nextInt + "/commands/unknown")
+    client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + nextInt + "/unknown")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
