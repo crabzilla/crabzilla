@@ -10,7 +10,7 @@ import java.util.*
 
 interface UnitOfWorkRepository {
 
-  fun getUowByCmdId(cmdId: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>)
+  fun getUowByCmdId(cmdId: UUID, aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>)
 
   fun getUowByUowId(uowId: Long, aHandler: Handler<AsyncResult<UnitOfWork>>)
 

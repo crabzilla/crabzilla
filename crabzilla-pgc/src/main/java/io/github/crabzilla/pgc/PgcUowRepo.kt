@@ -21,6 +21,7 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
     internal val log = LoggerFactory.getLogger(PgcUowRepo::class.java)
 
+    private const val UOW_ID = "uow_id"
     private const val UOW_EVENTS = "uow_events"
     private const val CMD_ID = "cmd_id"
     private const val CMD_DATA = "cmd_data"
@@ -38,7 +39,7 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
   }
 
-  override fun getUowByCmdId(cmdId: UUID, aHandler: Handler<AsyncResult<UnitOfWork>>) {
+  override fun getUowByCmdId(cmdId: UUID, aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>) {
 
     val params = Tuple.of(cmdId)
 
@@ -57,7 +58,8 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
       val row = rows.first()
       val commandName = row.getString(CMD_NAME)
       val commandAsJson = row.getJson(CMD_DATA).value().toString()
-      val command = try { jsonFunctions.cmdFromJson(commandName, JsonObject(commandAsJson)) } catch (e: Exception) { null }
+      val command = try { jsonFunctions.cmdFromJson(commandName, JsonObject(commandAsJson)) }
+                    catch (e: Exception) { null }
 
       if (command == null) {
         aHandler.handle(Future.failedFuture("error when getting command $commandName from json "))
@@ -75,9 +77,10 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
       }
 
       val events: List<Pair<String, DomainEvent>> = List(jsonArray.size(), jsonToEventPair)
+      val uowId = row.getLong(UOW_ID)
       val uow = UnitOfWork(row.getString(AR_NAME), row.getInteger(AR_ID),
         row.getUUID(CMD_ID), row.getString(CMD_NAME), command, row.getInteger(VERSION)!!, events)
-      aHandler.handle(Future.succeededFuture(uow))
+      aHandler.handle(Future.succeededFuture(Pair(uow, uowId)))
     }
 
   }

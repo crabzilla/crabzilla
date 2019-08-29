@@ -43,23 +43,32 @@ class PgcCmdHandler<E: Entity>(writeDb: PgPool,
 
   override fun handleCommand(metadata: CommandMetadata, command: Command,
                              aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>) {
-    cmdHandler.handle(metadata, command, Handler { event ->
-      if (event.succeeded()) {
-        val pair = event.result()
-        log.info("Command successfully handled: $pair. Will publish events.")
-        uowPublisher.publish(pair.first, pair.second, Handler { event2 ->
-          if (event2.failed()) {
-            log.error("When publishing events. This shouldn't never happen.", event2.cause())
-            aHandler.handle(Future.failedFuture(event2.cause()))
-          } else {
-            aHandler.handle(Future.succeededFuture(pair))
-          }
-        })
-      } else {
-        log.error("When handling command", event.cause())
-        aHandler.handle(Future.failedFuture(event.cause()))
+
+    uowRepo.getUowByCmdId(metadata.commandId, Handler { gotCommand ->
+      if (gotCommand.succeeded()) {
+        val uow = gotCommand.result()
+        aHandler.handle(Future.succeededFuture(uow))
+        return@Handler
       }
+      cmdHandler.handle(metadata, command, Handler { event ->
+        if (event.succeeded()) {
+          val pair = event.result()
+          log.info("Command successfully handled: $pair. Will publish events.")
+          uowPublisher.publish(pair.first, pair.second, Handler { event2 ->
+            if (event2.failed()) {
+              log.error("When publishing events. This shouldn't never happen.", event2.cause())
+              aHandler.handle(Future.failedFuture(event2.cause()))
+            } else {
+              aHandler.handle(Future.succeededFuture(pair))
+            }
+          })
+        } else {
+          log.error("When handling command", event.cause())
+          aHandler.handle(Future.failedFuture(event.cause()))
+        }
+      })
     })
+
   }
 
   override fun toJson(state: E): JsonObject {

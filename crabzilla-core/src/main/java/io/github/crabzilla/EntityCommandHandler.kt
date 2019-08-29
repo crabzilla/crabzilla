@@ -5,12 +5,16 @@ import io.vertx.core.Future
 import io.vertx.core.Handler
 import java.util.*
 
-abstract class EntityCommandHandler<E: Entity>(private val entityName: String, val cmdMetadata: CommandMetadata,
-                                               val command: Command, val snapshot: Snapshot<E>,
+abstract class EntityCommandHandler<E: Entity>(private val entityName: String,
+                                               val cmdMetadata: CommandMetadata,
+                                               val command: Command,
+                                               val snapshot: Snapshot<E>,
                                                val stateFn: (DomainEvent, E) -> E,
                                                uowHandler: Handler<AsyncResult<UnitOfWork>>) {
+
   private val uowFuture: Future<UnitOfWork> = Future.future()
   protected val eventsFuture: Future<List<DomainEvent>> = Future.future()
+
   init {
     uowFuture.setHandler(uowHandler)
     eventsFuture.setHandler { event ->
@@ -23,5 +27,7 @@ abstract class EntityCommandHandler<E: Entity>(private val entityName: String, v
       }
     }
   }
+
   abstract fun handleCommand()
+
 }

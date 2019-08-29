@@ -6,9 +6,7 @@ import io.github.crabzilla.*
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
-import io.vertx.core.DeploymentOptions
-import io.vertx.core.Future
-import io.vertx.core.Vertx
+import io.vertx.core.*
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
@@ -34,7 +32,6 @@ fun getConfig(vertx: Vertx, configFile: String) : Future<JsonObject> {
       val nextFreeWriteHttpPort = nextFreePort(writeHttpPort, writeHttpPort + 20)
       config.put("WRITE_HTTP_PORT", nextFreeWriteHttpPort)
       log.info("*** next free WRITE_HTTP_PORT: $nextFreeWriteHttpPort")
-
       future.complete(config)
     } else {
       future.fail(gotConfig.cause())
@@ -77,6 +74,31 @@ fun deploySingleton(vertx: Vertx, verticle: String, dOpt: DeploymentOptions, pro
     }
   }
   return future
+}
+
+fun deployHandler(vertx: Vertx): Handler<AsyncResult<CompositeFuture>> {
+  return Handler { deploys ->
+    if (deploys.succeeded()) {
+      val deploymentIds = deploys.result().list<String>()
+      log.info("Verticles were successfully deployed")
+      Runtime.getRuntime().addShutdownHook(object : Thread() {
+        override fun run() {
+          for (id in deploymentIds) {
+            if (id.startsWith("singleton")) {
+              log.info("Keeping singleton deployment $id")
+            } else {
+              log.info("Undeploying $id")
+              vertx.undeploy(id)
+            }
+          }
+          log.info("Closing vertx")
+          vertx.close()
+        }
+      })
+    } else {
+      log.error("When deploying", deploys.cause())
+    }
+  }
 }
 
 private fun nextFreePort(from: Int, to: Int): Int {
@@ -130,3 +152,8 @@ fun toUnitOfWorkEvents(json: JsonObject, jsonFunctions: Map<String, EntityJsonAw
 
 }
 
+object ContentTypes {
+  const val UNIT_OF_WORK_ID = "application/vnd.crabzilla.unit-of-work-id+json"
+  const val UNIT_OF_WORK_BODY = "application/vnd.crabzilla.unit-of-work+json"
+  const val ENTITY_WRITE_MODEL = "application/vnd.crabzilla.entity-write-model+json"
+}

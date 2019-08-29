@@ -122,7 +122,7 @@ class PgcUowRepoIT {
       }
       val uowId = ar1.result().first().getLong(0)
       tc.verify { tc.verify { assertThat(uowId).isGreaterThan(0) } }
-      val selectFuture = Future.future<UnitOfWork>()
+      val selectFuture = Future.future<Pair<UnitOfWork, Long>>()
       selectFuture.setHandler { ar2 ->
         if (ar2.failed()) {
           tc.failNow(ar2.cause())

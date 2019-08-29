@@ -12,6 +12,7 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.*
 
 abstract class WebCommandVerticle : AbstractVerticle() {
 
@@ -40,10 +41,11 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
                              private val router: Router)
 {
 
-  private val postCmd = "/$resourceName/:$ENTITY_ID_PARAMETER/commands/:$COMMAND_NAME_PARAMETER"
-  private val getSnapshot = "/$resourceName/:$ENTITY_ID_PARAMETER"
-  private val getAllUow = "/$resourceName/:$ENTITY_ID_PARAMETER/units-of-work"
-  private val getUow = "/$resourceName/units-of-work/:unitOfWorkId"
+  private val putCmd = "/commands/$resourceName/:$ENTITY_ID_PARAMETER/:$COMMAND_NAME_PARAMETER/:$COMMAND_ID_PARAMETER"
+  private val postCmd = "/commands/$resourceName/:$ENTITY_ID_PARAMETER/:$COMMAND_NAME_PARAMETER"
+  private val getSnapshot = "/commands/$resourceName/:$ENTITY_ID_PARAMETER"
+  private val getAllUow = "/commands/$resourceName/:$ENTITY_ID_PARAMETER/units-of-work"
+  private val getUow = "/commands/$resourceName/units-of-work/:unitOfWorkId"
 
   companion object {
     const val COMMAND_NAME_PARAMETER = "commandName"
@@ -56,21 +58,18 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
 
   fun deployWebRoutes() {
 
-    log.info("adding route $postCmd")
-
-    router.post(postCmd).handler {
+    log.info("adding route PUT $putCmd")
+    router.post(putCmd).handler {
       val begin = System.currentTimeMillis()
       val commandMetadata = CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(),
-        it.pathParam(COMMAND_NAME_PARAMETER))
+        it.pathParam(COMMAND_NAME_PARAMETER), UUID.fromString(it.pathParam(COMMAND_ID_PARAMETER)))
       val command: Command? = try { component.cmdFromJson(commandMetadata.commandName, it.bodyAsJson) }
       catch (e: Exception) { null }
       if (command == null) {
         it.response().setStatusCode(400).setStatusMessage("Cannot decode the json for this Command").end()
         return@handler
       }
-
       log.info("Handling $command  $commandMetadata")
-
       component.handleCommand(commandMetadata, command, Handler { event ->
         val end = System.currentTimeMillis()
         log.info("handled command in " + (end - begin) + " ms")
@@ -91,7 +90,40 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
       })
     }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
-    log.info("adding route $getSnapshot")
+
+    log.info("adding route POST $postCmd")
+    router.post(postCmd).handler {
+      val begin = System.currentTimeMillis()
+      val commandMetadata = CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(),
+        it.pathParam(COMMAND_NAME_PARAMETER))
+      val command: Command? = try { component.cmdFromJson(commandMetadata.commandName, it.bodyAsJson) }
+                            catch (e: Exception) { null }
+      if (command == null) {
+        it.response().setStatusCode(400).setStatusMessage("Cannot decode the json for this Command").end()
+        return@handler
+      }
+      log.info("Handling $command  $commandMetadata")
+      component.handleCommand(commandMetadata, command, Handler { event ->
+        val end = System.currentTimeMillis()
+        log.info("handled command in " + (end - begin) + " ms")
+        if (event.succeeded()) {
+          with(event.result()) {
+            val location = it.request().absoluteURI().split('/').subList(0, 3)
+              .reduce { acc, s ->  acc.plus("/$s")} + "/$resourceName/units-of-work/$second"
+            it.response()
+              .putHeader("accept", "application/json")
+              .putHeader("Location", location)
+              .setStatusCode(303)
+              .end()
+          }
+        } else {
+          log.error(event.cause().message)
+          it.response().setStatusCode(400).setStatusMessage(event.cause().message).end()
+        }
+      })
+    }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
+
+    log.info("adding route GET $getSnapshot")
 
     router.get(getSnapshot).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
@@ -120,7 +152,7 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
       }
     }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
-    log.info("adding route $getAllUow")
+    log.info("adding route GET $getAllUow")
 
     router.get(getAllUow).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
@@ -138,7 +170,7 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
       })
     }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
-    log.info("adding route $getUow")
+    log.info("adding route GET $getUow")
 
     router.get(getUow).handler {
       val uowId = it.pathParam(UNIT_OF_WORK_ID_PARAMETER).toLong()
