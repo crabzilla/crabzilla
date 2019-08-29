@@ -41,7 +41,6 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
                              private val router: Router)
 {
 
-  private val putCmd = "/commands/$resourceName/:$ENTITY_ID_PARAMETER/:$COMMAND_NAME_PARAMETER/:$COMMAND_ID_PARAMETER"
   private val postCmd = "/commands/$resourceName/:$ENTITY_ID_PARAMETER/:$COMMAND_NAME_PARAMETER"
   private val getSnapshot = "/commands/$resourceName/:$ENTITY_ID_PARAMETER"
   private val getAllUow = "/commands/$resourceName/:$ENTITY_ID_PARAMETER/units-of-work"
