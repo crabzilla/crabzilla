@@ -127,10 +127,14 @@ class PgcUowRepoIT {
         if (ar2.failed()) {
           tc.failNow(ar2.cause())
         }
-        val uow = ar2.result()
-        tc.verify { tc.verify { assertThat(createdUow1).isEqualTo(uow) } }
-        tc.completeNow()
+        val uowPair = ar2.result()
+        tc.verify {
+          assertThat(uowPair.first).isEqualTo(createdUow1)
+          assertThat(uowPair.second).isEqualTo(uowId)
+          tc.completeNow()
+        }
       }
+
       repo.getUowByCmdId(createdUow1.commandId, selectFuture)
     }
 

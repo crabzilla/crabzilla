@@ -46,9 +46,11 @@ class PgcCmdHandler<E: Entity>(writeDb: PgPool,
 
     uowRepo.getUowByCmdId(metadata.commandId, Handler { gotCommand ->
       if (gotCommand.succeeded()) {
-        val uow = gotCommand.result()
-        aHandler.handle(Future.succeededFuture(uow))
-        return@Handler
+        val uowPair = gotCommand.result()
+        if (uowPair != null) {
+          aHandler.handle(Future.succeededFuture(uowPair))
+          return@Handler
+        }
       }
       cmdHandler.handle(metadata, command, Handler { event ->
         if (event.succeeded()) {
