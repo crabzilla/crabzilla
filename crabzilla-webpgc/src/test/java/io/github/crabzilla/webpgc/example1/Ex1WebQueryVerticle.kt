@@ -1,6 +1,7 @@
 package io.github.crabzilla.webpgc.example1
 
 import io.github.crabzilla.webpgc.WebQueryVerticle
+import io.github.crabzilla.webpgc.listenHandler
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.Future
 import io.vertx.core.http.HttpServer
@@ -21,7 +22,7 @@ class Ex1WebQueryVerticle : WebQueryVerticle() {
 
   private lateinit var server: HttpServer
 
-  override fun start(future: Future<Void>) {
+  override fun start(startFuture: Future<Void>) {
 
     val config = config()
     log.info("*** config: \n" + config.encodePrettily())
@@ -35,15 +36,7 @@ class Ex1WebQueryVerticle : WebQueryVerticle() {
 
     // http server
     server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
-    server.requestHandler(router).listen { startedFuture ->
-      if (startedFuture.succeeded()) {
-        log.info("Server started on port " + startedFuture.result().actualPort())
-        future.complete()
-      } else {
-        log.error("oops, something went wrong during server initialization", startedFuture.cause())
-        future.fail(startedFuture.cause())
-      }
-    }
+    server.requestHandler(router).listen(listenHandler(startFuture))
 
   }
 

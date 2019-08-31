@@ -3,6 +3,7 @@ package io.github.crabzilla.webpgc.example1
 import io.github.crabzilla.example1.aggregate.CustomerCommandAware
 import io.github.crabzilla.example1.aggregate.CustomerJsonAware
 import io.github.crabzilla.webpgc.WebCommandVerticle
+import io.github.crabzilla.webpgc.listenHandler
 import io.vertx.core.Future
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
@@ -33,19 +34,11 @@ class Ex1WebCommandVerticle : WebCommandVerticle() {
     router.route().handler(LoggerHandler.create())
     router.route().handler(BodyHandler.create())
 
-    this.addResourceForEntity("customers", "customer", CustomerJsonAware(), CustomerCommandAware(), router)
+    addResourceForEntity("customers", "customer", CustomerJsonAware(), CustomerCommandAware(), router)
 
     server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
 
-    server.requestHandler(router).listen { startedFuture ->
-      if (startedFuture.succeeded()) {
-        log.info("Server started on port " + startedFuture.result().actualPort())
-        startFuture.complete()
-      } else {
-        log.error("oops, something went wrong during server initialization", startedFuture.cause())
-        startFuture.fail(startedFuture.cause())
-      }
-    }
+    server.requestHandler(router).listen(listenHandler(startFuture))
 
   }
 

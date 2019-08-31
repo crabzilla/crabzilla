@@ -8,13 +8,6 @@ import org.slf4j.LoggerFactory
 
 interface EntityComponent<E: Entity> {
 
-  companion object {
-    private val log: Logger = LoggerFactory.getLogger(EntityComponent::class.java)
-    fun cmdHandlerEndpoint(entityName: String): String {
-      return "$entityName-command-handler-endpoint"
-    }
-  }
-
   fun entityName() : String
 
   fun handleCommand(metadata: CommandMetadata, command: Command, aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>)

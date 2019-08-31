@@ -19,8 +19,7 @@ abstract class EntityCommandHandler<E: Entity>(private val entityName: String,
     uowFuture.setHandler(uowHandler)
     eventsFuture.setHandler { event ->
       if (event.succeeded()) {
-        uowFuture.complete(UnitOfWork.of(cmdMetadata.entityId, entityName,
-          cmdMetadata.commandId ?: UUID.randomUUID(),
+        uowFuture.complete(UnitOfWork.of(cmdMetadata.entityId, entityName, cmdMetadata.commandId,
           cmdMetadata.commandName, command, event.result(), snapshot.version + 1))
       } else {
         uowFuture.fail(event.cause())

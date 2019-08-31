@@ -7,6 +7,7 @@ import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.*
+import io.vertx.core.http.HttpServer
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
@@ -97,6 +98,18 @@ fun deployHandler(vertx: Vertx): Handler<AsyncResult<CompositeFuture>> {
       })
     } else {
       log.error("When deploying", deploys.cause())
+    }
+  }
+}
+
+fun listenHandler(future: Future<Void>): Handler<AsyncResult<HttpServer>> {
+  return Handler { startedFuture ->
+    if (startedFuture.succeeded()) {
+      log.info("Server started on port " + startedFuture.result().actualPort())
+      future.complete()
+    } else {
+      log.error("oops, something went wrong during server initialization", startedFuture.cause())
+      future.fail(startedFuture.cause())
     }
   }
 }
