@@ -6,16 +6,16 @@ import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerDeactivated
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.runPreparedQuery
-import io.reactiverse.pgclient.PgTransaction
-import io.reactiverse.pgclient.Tuple
 import io.vertx.core.Future
+import io.vertx.sqlclient.Transaction
+import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
 class CustomerSummaryProjector : PgcEventProjector {
 
   private val log = LoggerFactory.getLogger(CustomerSummaryProjector::class.java.name)
 
-  override fun handle(pgTx: PgTransaction, targetId: Int, event: DomainEvent): Future<Void> {
+  override fun handle(pgTx: Transaction, targetId: Int, event: DomainEvent): Future<Void> {
 
     val future = Future.future<Void>()
 

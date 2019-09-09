@@ -3,8 +3,8 @@ package io.github.crabzilla.webpgc
 import io.github.crabzilla.Entity
 import io.github.crabzilla.EntityJsonAware
 import io.github.crabzilla.pgc.readModelPgPool
-import io.reactiverse.pgclient.PgPool
 import io.vertx.core.AbstractVerticle
+import io.vertx.pgclient.PgPool
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory

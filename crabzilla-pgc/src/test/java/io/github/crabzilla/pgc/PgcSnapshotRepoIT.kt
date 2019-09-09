@@ -13,10 +13,6 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
-import io.reactiverse.pgclient.PgClient
-import io.reactiverse.pgclient.PgPool
-import io.reactiverse.pgclient.PgPoolOptions
-import io.reactiverse.pgclient.Tuple
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -26,6 +22,8 @@ import io.vertx.core.VertxOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.pgclient.PgPool
+import io.vertx.sqlclient.Tuple
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -68,17 +66,7 @@ class PgcSnapshotRepoIT {
 
       val config = configFuture.result()
 
-      // println(config.encodePrettily())
-
-      val options = PgPoolOptions()
-        .setPort(5432)
-        .setHost(config.getString("WRITE_DATABASE_HOST"))
-        .setDatabase(config.getString("WRITE_DATABASE_NAME"))
-        .setUser(config.getString("WRITE_DATABASE_USER"))
-        .setPassword(config.getString("WRITE_DATABASE_PASSWORD"))
-        .setMaxSize(config.getInteger("WRITE_DATABASE_POOL_MAX_SIZE"))
-
-      writeDb = PgClient.pool(vertx, options)
+      writeDb = writeModelPgPool(vertx, config)
 
       repo = PgcSnapshotRepo(writeDb, CUSTOMER_ENTITY, CustomerCommandAware(), CustomerJsonAware())
 
@@ -127,9 +115,9 @@ class PgcSnapshotRepoIT {
 
     val eventsAsJson = customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1)))
 
-    val tuple = Tuple.of(io.reactiverse.pgclient.data.Json.create(eventsAsJson), UUID.randomUUID(),
+    val tuple = Tuple.of(eventsAsJson, UUID.randomUUID(),
       "create",
-      io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
+      customerJson.cmdToJson(createCmd1),
       CUSTOMER_ENTITY,
       customerId1.value,
       1)
@@ -164,10 +152,10 @@ class PgcSnapshotRepoIT {
       arrayListOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1)))
 
     val tuple1 = Tuple.of(
-      io.reactiverse.pgclient.data.Json.create(eventsAsJson),
+      eventsAsJson,
       UUID.randomUUID(),
       "create",
-      io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(createCmd1)),
+      customerJson.cmdToJson(createCmd1),
       CUSTOMER_ENTITY,
       customerId1.value,
       1)
@@ -180,10 +168,10 @@ class PgcSnapshotRepoIT {
       }
 
       val tuple2 = Tuple.of(
-        io.reactiverse.pgclient.data.Json.create(customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1)))),
+        customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1))),
         UUID.randomUUID(),
         "activate",
-        io.reactiverse.pgclient.data.Json.create(customerJson.cmdToJson(activateCmd1)),
+        customerJson.cmdToJson(activateCmd1),
         CUSTOMER_ENTITY,
         customerId1.value,
         2)

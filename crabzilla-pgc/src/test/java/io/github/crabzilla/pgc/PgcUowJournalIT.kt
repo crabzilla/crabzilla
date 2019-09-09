@@ -13,9 +13,6 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createdUow1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
-import io.reactiverse.pgclient.PgClient
-import io.reactiverse.pgclient.PgPool
-import io.reactiverse.pgclient.PgPoolOptions
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -26,6 +23,7 @@ import io.vertx.core.VertxOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.pgclient.PgPool
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -69,17 +67,7 @@ class PgcUowJournalIT {
 
       val config = configFuture.result()
 
-      // println(config.encodePrettily())
-
-      val options = PgPoolOptions()
-        .setPort(5432)
-        .setHost(config.getString("WRITE_DATABASE_HOST"))
-        .setDatabase(config.getString("WRITE_DATABASE_NAME"))
-        .setUser(config.getString("WRITE_DATABASE_USER"))
-        .setPassword(config.getString("WRITE_DATABASE_PASSWORD"))
-        .setMaxSize(config.getInteger("WRITE_DATABASE_POOL_MAX_SIZE"))
-
-      writeDb = PgClient.pool(vertx, options)
+      writeDb = writeModelPgPool(vertx, config)
       repo = PgcUowRepo(writeDb, customerJson)
       journal = PgcUowJournal(writeDb, customerJson)
 

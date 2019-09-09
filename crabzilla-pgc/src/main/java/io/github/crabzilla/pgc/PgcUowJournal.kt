@@ -4,11 +4,11 @@ import io.github.crabzilla.Entity
 import io.github.crabzilla.EntityJsonAware
 import io.github.crabzilla.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkJournal
-import io.reactiverse.pgclient.PgPool
-import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
+import io.vertx.pgclient.PgPool
+import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
 class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
@@ -35,19 +35,19 @@ class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
             if (currentVersion == unitOfWork.version - 1) {
               // if version is OK, then insert
               val cmdAsJsonObject = jsonFunctions.cmdToJson(unitOfWork.command)
-              val eventsListAsJsonObject = jsonFunctions.toJsonArray(unitOfWork.events)
+              val eventsListAsJsonArray = jsonFunctions.toJsonArray(unitOfWork.events)
               val params2 = Tuple.of(
-                io.reactiverse.pgclient.data.Json.create(eventsListAsJsonObject),
+                eventsListAsJsonArray,
                 unitOfWork.commandId,
                 unitOfWork.commandName,
-                io.reactiverse.pgclient.data.Json.create(cmdAsJsonObject),
+                cmdAsJsonObject,
                 unitOfWork.entityName,
                 unitOfWork.entityId,
                 unitOfWork.version)
               tx.preparedQuery(SQL_APPEND_UOW, params2) { event2 ->
                 if (event2.succeeded()) {
                   val insertRows = event2.result().value()
-                  val generated = insertRows.first().getNumeric(0).toLong()
+                  val generated = insertRows.first().getLong(0)
                   // Commit the transaction
                   tx.commit { event3 ->
                     if (event3.failed()) {

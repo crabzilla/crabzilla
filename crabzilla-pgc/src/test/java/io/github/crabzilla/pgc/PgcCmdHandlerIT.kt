@@ -7,7 +7,6 @@ import io.github.crabzilla.example1.CustomerId
 import io.github.crabzilla.example1.UnknownCommand
 import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
-import io.reactiverse.pgclient.PgPool
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -16,6 +15,7 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.pgclient.PgPool
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName

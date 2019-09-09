@@ -10,9 +10,6 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.deactivated1
-import io.reactiverse.pgclient.PgClient
-import io.reactiverse.pgclient.PgPool
-import io.reactiverse.pgclient.PgPoolOptions
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -22,6 +19,7 @@ import io.vertx.core.VertxOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.pgclient.PgPool
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -80,20 +78,8 @@ class PgcUowProjectorIT {
 
       val config = configFuture.result()
 
-      // println(config.encodePrettily())
-
-      val options = PgPoolOptions()
-        .setPort(5432)
-        .setHost(config.getString("READ_DATABASE_HOST"))
-        .setDatabase(config.getString("READ_DATABASE_NAME"))
-        .setUser(config.getString("READ_DATABASE_USER"))
-        .setPassword(config.getString("READ_DATABASE_PASSWORD"))
-        .setMaxSize(config.getInteger("READ_DATABASE_POOL_MAX_SIZE"))
-
-      readDb = PgClient.pool(vertx, options)
-
+      readDb = readModelPgPool(vertx, config)
       uowProjector = PgcUowProjector(readDb, "customer summary")
-
       readDb.query("DELETE FROM customer_summary") { deleted ->
 
         if (deleted.failed()) {

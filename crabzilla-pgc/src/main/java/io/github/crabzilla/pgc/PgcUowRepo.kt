@@ -4,13 +4,14 @@ import io.github.crabzilla.*
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENT_NAME
 import io.github.crabzilla.internal.UnitOfWorkRepository
-import io.reactiverse.pgclient.PgPool
-import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
+import io.vertx.kotlin.core.json.JsonObject
+import io.vertx.pgclient.PgPool
+import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.util.*
 
@@ -30,12 +31,13 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
     private const val AR_NAME = "ar_name"
     private const val VERSION = "version"
 
-    const val SQL_SELECT_UOW_BY_CMD_ID = "select * from units_of_work where cmd_id = $1 "
-    const val SQL_SELECT_UOW_BY_UOW_ID = "select uow_events, cmd_id, cmd_data, cmd_name, ar_id," +
-                                              "ar_name, version from units_of_work where uow_id = $1 "
+    private const val SQL_SELECT_FIELDS =
+      "select uow_id, uow_events, cmd_id, cmd_data, cmd_name, ar_id, ar_name, version"
+    const val SQL_SELECT_UOW_BY_CMD_ID = "$SQL_SELECT_FIELDS from units_of_work where cmd_id = $1"
+    const val SQL_SELECT_UOW_BY_UOW_ID = "$SQL_SELECT_FIELDS from units_of_work where uow_id = $1"
+    const val SQL_SELECT_UOW_BY_ENTITY_ID = "$SQL_SELECT_FIELDS from units_of_work where ar_id = $1 order by version"
     const val SQL_SELECT_AFTER_VERSION =  "select uow_events, version from units_of_work " +
-                                          "where ar_id = $1 and ar_name = $2 and version > $3 order by version "
-    const val SQL_SELECT_UOW_BY_ENTITY_ID = "select * from units_of_work where ar_id = $1 order by version "
+      "where ar_id = $1 and ar_name = $2 and version > $3 order by version"
 
   }
 
@@ -57,8 +59,8 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
       val row = rows.first()
       val commandName = row.getString(CMD_NAME)
-      val commandAsJson = row.getJson(CMD_DATA).value().toString()
-      val command = try { jsonFunctions.cmdFromJson(commandName, JsonObject(commandAsJson)) }
+      val commandAsJson = row.get(JsonObject::class.java, 3)
+      val command = try { jsonFunctions.cmdFromJson(commandName, commandAsJson) }
                     catch (e: Exception) { null }
 
       if (command == null) {
@@ -66,7 +68,7 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
         return@preparedQuery
       }
 
-      val jsonArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
+      val jsonArray = row.get(JsonArray::class.java, 1)
 
       val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
         val jsonObject = jsonArray.getJsonObject(index)
@@ -103,15 +105,15 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
       val row = rows.first()
       val commandName = row.getString(CMD_NAME)
-      val commandAsJson = row.getJson(CMD_DATA).value().toString()
-      val command = try { jsonFunctions.cmdFromJson(commandName, JsonObject(commandAsJson)) } catch (e: Exception) { null }
+      val commandAsJson = row.get(JsonObject::class.java, 3)
+      val command = try { jsonFunctions.cmdFromJson(commandName, commandAsJson) } catch (e: Exception) { null }
 
       if (command == null) {
         aHandler.handle(Future.failedFuture("error when getting command $commandName from json "))
         return@preparedQuery
       }
 
-      val jsonArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
+      val jsonArray = row.get(JsonArray::class.java, 1)
 
       val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
         val jsonObject = jsonArray.getJsonObject(index)
@@ -145,16 +147,16 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
       for (row in rows) {
 
         val commandName = row.getString(CMD_NAME)
-        val commandAsJson = row.getJson(CMD_DATA).value().toString()
+        val commandAsJson = row.get(JsonObject::class.java, 3)
         val command =
-          try { jsonFunctions.cmdFromJson(commandName, JsonObject(commandAsJson)) } catch (e: Exception) { null }
+          try { jsonFunctions.cmdFromJson(commandName, commandAsJson) } catch (e: Exception) { null }
 
         if (command == null) {
           aHandler.handle(Future.failedFuture("error when getting command $commandName from json "))
           return@preparedQuery
         }
 
-        val jsonArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
+        val jsonArray = row.get(JsonArray::class.java, 1)
 
         val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
           val jsonObject = jsonArray.getJsonObject(index)
@@ -201,7 +203,7 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
           // Use the stream
           stream.handler { row ->
-            val eventsArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
+            val eventsArray = row.get(JsonArray::class.java, 0)
             val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
               val jsonObject = eventsArray.getJsonObject(index)
               val eventName = jsonObject.getString(EVENT_NAME)
@@ -253,9 +255,9 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
         return@preparedQuery
       }
       for (row in rows) {
-        val uowSeq = row.getNumeric("uow_id")
+        val uowSeq = row.getLong("uow_id")
         val targetId = row.getInteger("ar_id")
-        val eventsArray = JsonArray(row.getJson(UOW_EVENTS).value().toString())
+        val eventsArray = row.get(JsonArray::class.java, 2)
         val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
           val jsonObject = eventsArray.getJsonObject(index)
           val eventName = jsonObject.getString(EVENT_NAME)

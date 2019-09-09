@@ -6,10 +6,10 @@ import io.github.crabzilla.EventBusChannels
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.PgcUowProjector
 import io.github.crabzilla.pgc.readModelPgPool
-import io.reactiverse.pgclient.PgPool
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonObject
+import io.vertx.pgclient.PgPool
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory

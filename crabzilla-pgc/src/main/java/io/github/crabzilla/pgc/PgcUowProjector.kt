@@ -1,11 +1,11 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.UnitOfWorkEvents
-import io.reactiverse.pgclient.PgPool
-import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
+import io.vertx.pgclient.PgPool
+import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory.getLogger
 
 class PgcUowProjector(private val pgPool: PgPool, val name: String) {

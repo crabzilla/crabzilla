@@ -2,11 +2,11 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.*
 import io.github.crabzilla.internal.CommandController
-import io.reactiverse.pgclient.PgPool
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonObject
+import io.vertx.pgclient.PgPool
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -23,7 +23,7 @@ class PgcCmdHandler<E: Entity>(writeDb: PgPool,
   private val uowRepo =  PgcUowRepo(writeDb, jsonAware)
   private val snapshotRepo = PgcSnapshotRepo(writeDb, entityName, cmdAware, jsonAware)
   private val uowJournal = PgcUowJournal(writeDb, jsonAware)
-  private val cmdHandler = CommandController(cmdAware, snapshotRepo, uowJournal)
+  private val cmdController = CommandController(cmdAware, snapshotRepo, uowJournal)
 
   override fun entityName(): String {
     return entityName
@@ -44,6 +44,7 @@ class PgcCmdHandler<E: Entity>(writeDb: PgPool,
   override fun handleCommand(metadata: CommandMetadata, command: Command,
                              aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>) {
 
+    // TODO optimize this by checking if commandId is null
     uowRepo.getUowByCmdId(metadata.commandId, Handler { gotCommand ->
       if (gotCommand.succeeded()) {
         val uowPair = gotCommand.result()
@@ -52,7 +53,7 @@ class PgcCmdHandler<E: Entity>(writeDb: PgPool,
           return@Handler
         }
       }
-      cmdHandler.handle(metadata, command, Handler { event ->
+      cmdController.handle(metadata, command, Handler { event ->
         if (event.succeeded()) {
           val pair = event.result()
           log.info("Command successfully handled: $pair. Will publish events.")

@@ -6,8 +6,8 @@ import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.example1.aggregate.CustomerCommandAware
 import io.github.crabzilla.example1.aggregate.CustomerJsonAware
 import io.github.crabzilla.pgc.PgcCmdHandler
-import io.reactiverse.pgclient.PgPool
 import io.vertx.core.Vertx
+import io.vertx.pgclient.PgPool
 import java.time.Instant
 import java.util.*
 

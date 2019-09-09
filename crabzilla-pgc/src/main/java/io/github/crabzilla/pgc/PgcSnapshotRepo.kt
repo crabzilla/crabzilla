@@ -4,20 +4,21 @@ import io.github.crabzilla.*
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
 import io.github.crabzilla.UnitOfWork.JsonMetadata.EVENT_NAME
 import io.github.crabzilla.internal.SnapshotRepository
-import io.reactiverse.pgclient.PgPool
-import io.reactiverse.pgclient.PgTransaction
-import io.reactiverse.pgclient.Tuple
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
+import io.vertx.pgclient.PgPool
+import io.vertx.sqlclient.Transaction
+import io.vertx.sqlclient.Tuple
 
 class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
                                   private val name: String,
                                   private val entityFn: EntityCommandAware<E>,
                                   private val eJsonFn: EntityJsonAware<E>) : SnapshotRepository<E> {
+
   companion object {
     internal val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
     const val SELECT_EVENTS_VERSION_AFTER_VERSION = "SELECT uow_events, version FROM units_of_work " +
@@ -35,7 +36,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
   }
 
   override fun upsert(entityId: Int, snapshot: Snapshot<E>, aHandler: Handler<AsyncResult<Void>>) {
-    val json = io.reactiverse.pgclient.data.Json.create(eJsonFn.toJson(snapshot.state))
+    val json = eJsonFn.toJson(snapshot.state)
     writeModelDb.preparedQuery(upsertSnapshot(), Tuple.of(entityId, snapshot.version, json)) { insert ->
       if (insert.failed()) {
         log.error("upsert snapshot query error")
@@ -65,7 +66,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
 
         // TODO how to specify transaction isolation level?
         // Begin the transaction
-        val tx: PgTransaction = conn.begin().abortHandler {
+        val tx: Transaction = conn.begin().abortHandler {
             log.error("Transaction aborted")
             future.fail("Transaction aborted")
         }
@@ -88,7 +89,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
               cachedInstance = entityFn.initialState()
               cachedVersion = 0
             } else {
-              cachedInstance = eJsonFn.fromJson(JsonObject(pgRow.first().getJson("json_content").toString()))
+              cachedInstance = eJsonFn.fromJson(pgRow.first().get(JsonObject::class.java, 1))
               cachedVersion = pgRow.first().getInteger("version")
             }
 
@@ -133,7 +134,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
 
                 stream.handler { row ->
                   currentVersion = row.getInteger(1)
-                  val eventsArray = JsonArray(row.getJson(0).value().toString())
+                  val eventsArray = row.get(JsonArray::class.java, 0)
                   val jsonToEvent: (Int) -> Pair<String, DomainEvent> = { index ->
                     val jsonObject = eventsArray.getJsonObject(index)
                     val eventName = jsonObject.getString(EVENT_NAME)

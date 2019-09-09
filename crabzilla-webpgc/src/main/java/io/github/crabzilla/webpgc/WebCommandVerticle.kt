@@ -3,13 +3,13 @@ package io.github.crabzilla.webpgc
 import io.github.crabzilla.*
 import io.github.crabzilla.pgc.PgcCmdHandler
 import io.github.crabzilla.pgc.writeModelPgPool
-import io.reactiverse.pgclient.PgPool
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
+import io.vertx.pgclient.PgPool
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*

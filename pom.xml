@@ -5,7 +5,7 @@
 
   <groupId>io.github.crabzilla</groupId>
   <artifactId>crabzilla</artifactId>
-  <version>0.0.6-rc14</version>
+  <version>0.0.6-rc15</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -13,12 +13,12 @@
     <java.version>1.8</java.version>
 
     <!-- crabzilla core -->
-    <kotlin.version>1.3.20</kotlin.version>
-    <jackson.version>2.9.8</jackson.version>
+    <kotlin.version>1.3.30</kotlin.version>
+    <jackson.version>2.9.9</jackson.version>
     <slf4j.version>1.7.25</slf4j.version>
 
     <!-- crabzilla vertx -->
-    <vertx.version>3.7.0</vertx.version>
+    <vertx.version>3.8.1</vertx.version>
 
     <!-- tests-->
     <skipTests>true</skipTests>

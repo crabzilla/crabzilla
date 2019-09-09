@@ -2,7 +2,6 @@ package io.github.crabzilla.webpgc.example1
 
 import io.github.crabzilla.webpgc.WebQueryVerticle
 import io.github.crabzilla.webpgc.listenHandler
-import io.reactiverse.pgclient.Tuple
 import io.vertx.core.Future
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
@@ -12,6 +11,7 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.LoggerHandler
+import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory.getLogger
 
 class Ex1WebQueryVerticle : WebQueryVerticle() {
