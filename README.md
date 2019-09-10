@@ -6,8 +6,7 @@
 
 ## Goal for version 1.0.0
 
-To help you write your domain model with very little framework overhead and smoothly put it to work using a stack based
-on [Vert.x](Uhttp://vertx.io/) and a relational database of your choice. 
+To help writing CQRS and Event Sourcing applications with [Vert.x](http://vertx.io/) 
 
 ## Status
 
