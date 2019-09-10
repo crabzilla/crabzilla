@@ -1,8 +1,8 @@
 package io.github.crabzilla.example1.aggregate
 
-import io.github.crabzilla.Command
-import io.github.crabzilla.DomainEvent
-import io.github.crabzilla.EntityJsonAware
+import io.github.crabzilla.framework.Command
+import io.github.crabzilla.framework.DomainEvent
+import io.github.crabzilla.framework.EntityJsonAware
 import io.github.crabzilla.example1.*
 import io.vertx.core.json.JsonObject
 

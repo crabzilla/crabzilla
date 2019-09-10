@@ -1,19 +1,20 @@
 package io.github.crabzilla.example1.aggregate
 
-import io.github.crabzilla.*
 import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerDeactivated
+import io.github.crabzilla.example1.aggregate.CustomerCommandAware.Companion.CUSTOMER_STATE_BUILDER
+import io.github.crabzilla.framework.*
+import io.github.crabzilla.framework.CommandMetadata
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 
 class CustomerCommandAware : EntityCommandAware<Customer> {
 
   companion object {
-
     val state = Customer()
-
+    val cmdHandlerFactory = CustomerCmdHandlerFactory()
     val CUSTOMER_STATE_BUILDER = { event: DomainEvent, customer: Customer ->
       when (event) {
         is CustomerCreated -> customer.copy(customerId = event.customerId, name = event.name, isActive = false)
@@ -22,7 +23,6 @@ class CustomerCommandAware : EntityCommandAware<Customer> {
         else -> customer
       }
     }
-
   }
 
   override fun initialState(): Customer {
@@ -41,15 +41,15 @@ class CustomerCommandAware : EntityCommandAware<Customer> {
     }
   }
 
-  override fun cmdHandlerFactory(): CommandHandlerFactory<Customer> {
-    return { cmdMetadata: CommandMetadata,
-             command: Command,
-             snapshot: Snapshot<Customer>,
-             uowHandler: Handler<AsyncResult<UnitOfWork>> ->
-      CustomerCmdHandler(cmdMetadata, command, snapshot, CUSTOMER_STATE_BUILDER, uowHandler)
-    }
-
+  override fun cmdHandlerFactory(): EntityCommandHandlerFactory<Customer> {
+    return cmdHandlerFactory
   }
 
 }
 
+class CustomerCmdHandlerFactory : EntityCommandHandlerFactory<Customer> {
+  override fun createHandler(cmdMetadata: CommandMetadata, command: Command, snapshot: Snapshot<Customer>,
+                             handler: Handler<AsyncResult<UnitOfWork>>): EntityCommandHandler<Customer> {
+    return CustomerCmdHandler(cmdMetadata, command, snapshot, CUSTOMER_STATE_BUILDER, handler)
+  }
+}

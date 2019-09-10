@@ -1,7 +1,7 @@
 package io.github.crabzilla.example1
 
-import io.github.crabzilla.Command
-import io.github.crabzilla.DomainEvent
+import io.github.crabzilla.framework.Command
+import io.github.crabzilla.framework.DomainEvent
 import java.time.Instant
 
 data class CustomerId(val value: Int)

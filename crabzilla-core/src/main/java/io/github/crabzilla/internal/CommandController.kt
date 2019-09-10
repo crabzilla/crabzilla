@@ -1,6 +1,6 @@
 package io.github.crabzilla.internal
 
-import io.github.crabzilla.*
+import io.github.crabzilla.framework.*
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicReference
 
 class CommandController<E : Entity>(private val commandAware: EntityCommandAware<E>,
-                                    private val snapshotRepo: SnapshotRepository<E>,
-                                    private val uowJournal: UnitOfWorkJournal<E>) {
+                                                                  private val snapshotRepo: SnapshotRepository<E>,
+                                                                  private val uowJournal: UnitOfWorkJournal<E>) {
 
   companion object {
     internal val log = LoggerFactory.getLogger(CommandController::class.java)
@@ -52,13 +52,13 @@ class CommandController<E : Entity>(private val commandAware: EntityCommandAware
 
       .compose { snapshot ->
         log.trace("got snapshot $snapshot")
-        val commandHandlerFuture = Future.future<UnitOfWork>()
+        val cmdHandlerFuture = Future.future<UnitOfWork>()
         val cachedSnapshot = snapshot ?: Snapshot(commandAware.initialState(), 0)
-        val cmdHandler =
-          commandAware.cmdHandlerFactory().invoke(metadata, command, cachedSnapshot, commandHandlerFuture)
+        val cmdHandler = commandAware.cmdHandlerFactory()
+          .createHandler(metadata, command, cachedSnapshot, cmdHandlerFuture)
         cmdHandler.handleCommand()
         snapshotValue.set(cachedSnapshot)
-        commandHandlerFuture
+        cmdHandlerFuture
       }
 
       .compose { unitOfWork ->

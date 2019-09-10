@@ -1,9 +1,7 @@
 package io.github.crabzilla.internal
 
-import io.github.crabzilla.RangeOfEvents
-import io.github.crabzilla.UnitOfWork
-import io.github.crabzilla.UnitOfWorkEvents
-import io.github.crabzilla.Version
+import io.github.crabzilla.framework.UnitOfWork
+import io.github.crabzilla.framework.Version
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 import java.util.*

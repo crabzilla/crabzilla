@@ -72,8 +72,8 @@
 
   <modules>
     <module>crabzilla-core</module>
-    <module>crabzilla-pgc</module>
-    <module>crabzilla-webpgc</module>
+    <module>crabzilla-pg-client</module>
+    <module>crabzilla-web-pg-client</module>
     <module>coverage-report</module>
   </modules>
 
@@ -91,7 +91,7 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-pgc</artifactId>
+        <artifactId>crabzilla-pg-client</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -103,7 +103,7 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-webpgc</artifactId>
+        <artifactId>crabzilla-web-pg-client</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -161,7 +161,7 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-pgc</artifactId>
+        <artifactId>crabzilla-pg-client</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
       </dependency>

@@ -5,6 +5,8 @@ import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerId
 import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.example1.aggregate.CustomerCommandAware.Companion.CUSTOMER_STATE_BUILDER
+import io.github.crabzilla.framework.Snapshot
+import io.github.crabzilla.framework.StateTransitionsTracker
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName

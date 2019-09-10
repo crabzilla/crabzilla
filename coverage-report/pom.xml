@@ -21,12 +21,12 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-pgc</artifactId>
+      <artifactId>crabzilla-pg-client</artifactId>
     </dependency>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-webpgc</artifactId>
+      <artifactId>crabzilla-web-pg-client</artifactId>
     </dependency>
 
   </dependencies>

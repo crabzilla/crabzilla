@@ -1,7 +1,7 @@
 package io.github.crabzilla.internal
 
-import io.github.crabzilla.Entity
-import io.github.crabzilla.UnitOfWork
+import io.github.crabzilla.framework.Entity
+import io.github.crabzilla.framework.UnitOfWork
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 

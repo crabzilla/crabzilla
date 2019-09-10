@@ -1,7 +1,7 @@
 package io.github.crabzilla.example1.aggregate
 
-import io.github.crabzilla.DomainEvent
-import io.github.crabzilla.Entity
+import io.github.crabzilla.framework.DomainEvent
+import io.github.crabzilla.framework.Entity
 import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerDeactivated
