@@ -1,7 +1,6 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.example1.aggregate.Customer
-import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
@@ -17,7 +16,6 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
-import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject

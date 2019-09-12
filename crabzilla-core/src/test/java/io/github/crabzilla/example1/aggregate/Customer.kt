@@ -1,14 +1,11 @@
 package io.github.crabzilla.example1.aggregate
 
-import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.Entity
 import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerDeactivated
 import io.github.crabzilla.example1.CustomerId
-import io.vertx.core.AsyncResult
-import io.vertx.core.Future
-import io.vertx.core.Handler
+import io.github.crabzilla.framework.DomainEvent
+import io.github.crabzilla.framework.Entity
 import io.vertx.core.Promise
 import java.time.Instant
 

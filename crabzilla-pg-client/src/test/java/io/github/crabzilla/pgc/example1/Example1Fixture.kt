@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgc.example1
 
-import io.github.crabzilla.*
+import io.github.crabzilla.EventBusUowPublisher
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.example1.aggregate.CustomerCommandAware

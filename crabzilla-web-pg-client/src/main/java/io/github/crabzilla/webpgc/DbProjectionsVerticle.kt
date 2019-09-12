@@ -1,8 +1,8 @@
 package io.github.crabzilla.webpgc
 
+import io.github.crabzilla.EventBusChannels
 import io.github.crabzilla.framework.Entity
 import io.github.crabzilla.framework.EntityJsonAware
-import io.github.crabzilla.EventBusChannels
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.PgcUowProjector
 import io.github.crabzilla.pgc.readModelPgPool

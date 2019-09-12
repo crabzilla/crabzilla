@@ -1,9 +1,9 @@
 package io.github.crabzilla.pgc.example1
 
-import io.github.crabzilla.framework.DomainEvent
 import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerDeactivated
+import io.github.crabzilla.framework.DomainEvent
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.runPreparedQuery
 import io.vertx.core.Future

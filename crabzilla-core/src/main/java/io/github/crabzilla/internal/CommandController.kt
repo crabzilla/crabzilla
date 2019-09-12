@@ -1,7 +1,6 @@
 package io.github.crabzilla.internal
 
 import io.github.crabzilla.framework.*
-import io.vertx.core.Future
 import io.vertx.core.Promise
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicReference

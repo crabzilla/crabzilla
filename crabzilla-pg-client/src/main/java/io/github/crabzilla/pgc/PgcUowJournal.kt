@@ -4,9 +4,6 @@ import io.github.crabzilla.framework.Entity
 import io.github.crabzilla.framework.EntityJsonAware
 import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkJournal
-import io.vertx.core.AsyncResult
-import io.vertx.core.Future
-import io.vertx.core.Handler
 import io.vertx.core.Promise
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
