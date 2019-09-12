@@ -6,9 +6,7 @@ import io.github.crabzilla.framework.UnitOfWork.JsonMetadata.EVENT_NAME
 import io.github.crabzilla.internal.RangeOfEvents
 import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.github.crabzilla.internal.UnitOfWorkRepository
-import io.vertx.core.AsyncResult
-import io.vertx.core.Future
-import io.vertx.core.Handler
+import io.vertx.core.Promise
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
@@ -42,19 +40,21 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
   }
 
-  override fun getUowByCmdId(cmdId: UUID, aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>) {
+  override fun getUowByCmdId(cmdId: UUID): Promise<Pair<UnitOfWork, Long>> {
+
+    val promise = Promise.promise<Pair<UnitOfWork, Long>>()
 
     val params = Tuple.of(cmdId)
 
     pgPool.preparedQuery(SQL_SELECT_UOW_BY_CMD_ID, params) { ar ->
       if (ar.failed()) {
-        aHandler.handle(Future.failedFuture(ar.cause()))
+        promise.fail(ar.cause())
         return@preparedQuery
       }
 
       val rows = ar.result()
       if (rows.size() == 0) {
-        aHandler.handle(Future.succeededFuture(null))
+        promise.complete(null)
         return@preparedQuery
       }
 
@@ -65,7 +65,7 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
                     catch (e: Exception) { null }
 
       if (command == null) {
-        aHandler.handle(Future.failedFuture("error when getting command $commandName from json "))
+        promise.fail("error when getting command $commandName from json ")
         return@preparedQuery
       }
 
@@ -83,24 +83,27 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
       val uowId = row.getLong(UOW_ID)
       val uow = UnitOfWork(row.getString(AR_NAME), row.getInteger(AR_ID),
         row.getUUID(CMD_ID), row.getString(CMD_NAME), command, row.getInteger(VERSION)!!, events)
-      aHandler.handle(Future.succeededFuture(Pair(uow, uowId)))
+      promise.complete(Pair(uow, uowId))
     }
+
+    return promise
 
   }
 
-  override fun getUowByUowId(uowId: Long, aHandler: Handler<AsyncResult<UnitOfWork>>) {
+  override fun getUowByUowId(uowId: Long): Promise<UnitOfWork> {
 
+    val promise =  Promise.promise<UnitOfWork>()
     val params = Tuple.of(uowId)
 
     pgPool.preparedQuery(SQL_SELECT_UOW_BY_UOW_ID, params) { ar ->
       if (ar.failed()) {
-        aHandler.handle(Future.failedFuture(ar.cause()))
+        promise.fail(ar.cause())
         return@preparedQuery
       }
 
       val rows = ar.result()
       if (rows.size() == 0) {
-        aHandler.handle(Future.succeededFuture(null))
+        promise.complete(null)
         return@preparedQuery
       }
 
@@ -110,7 +113,7 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
       val command = try { jsonFunctions.cmdFromJson(commandName, commandAsJson) } catch (e: Exception) { null }
 
       if (command == null) {
-        aHandler.handle(Future.failedFuture("error when getting command $commandName from json "))
+        promise.fail("error when getting command $commandName from json ")
         return@preparedQuery
       }
 
@@ -127,17 +130,20 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
       val events: List<Pair<String, DomainEvent>> = List(jsonArray.size(), jsonToEventPair)
       val uow = UnitOfWork(row.getString(AR_NAME), row.getInteger(AR_ID),
         row.getUUID(CMD_ID), row.getString(CMD_NAME), command, row.getInteger(VERSION)!!, events)
-      aHandler.handle(Future.succeededFuture(uow))
+      promise.complete(uow)
     }
+
+    return promise
   }
 
-  override fun getAllUowByEntityId(id: Int, aHandler: Handler<AsyncResult<List<UnitOfWork>>>) {
+  override fun getAllUowByEntityId(id: Int): Promise<List<UnitOfWork>> {
 
+    val promise = Promise.promise<List<UnitOfWork>>()
     val params = Tuple.of(id)
 
     pgPool.preparedQuery(SQL_SELECT_UOW_BY_ENTITY_ID, params) { ar ->
       if (ar.failed()) {
-        aHandler.handle(Future.failedFuture(ar.cause()))
+        promise.fail(ar.cause())
         return@preparedQuery
       }
 
@@ -153,7 +159,7 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
           try { jsonFunctions.cmdFromJson(commandName, commandAsJson) } catch (e: Exception) { null }
 
         if (command == null) {
-          aHandler.handle(Future.failedFuture("error when getting command $commandName from json "))
+          promise.fail("error when getting command $commandName from json ")
           return@preparedQuery
         }
 
@@ -174,26 +180,26 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
         result.add(uow)
 
       }
-
-      aHandler.handle(Future.succeededFuture(result))
+      promise.complete(result)
     }
+
+    return promise
   }
 
-  override fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String,
-                                  aHandler: Handler<AsyncResult<RangeOfEvents>>) {
-
+  override fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String): Promise<RangeOfEvents> {
+    val promise = Promise.promise<RangeOfEvents>()
     log.trace("will load id [{}] after version [{}]", id, version)
 
     pgPool.getConnection { ar0 ->
       if (ar0.failed()) {
-        aHandler.handle(Future.failedFuture(ar0.cause()));
+        promise.fail(ar0.cause())
         return@getConnection
       }
       val conn = ar0.result()
       conn.prepare(SQL_SELECT_AFTER_VERSION) { ar1 ->
 
         if (ar1.failed()) {
-          aHandler.handle(Future.failedFuture(ar1.cause()))
+          promise.fail(ar1.cause())
 
         } else {
           val pq = ar1.result()
@@ -220,21 +226,23 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
             log.trace("found {} units of work for id {} and version > {}", list.size, id, version)
             val finalVersion = if (list.size == 0) 0 else list[list.size - 1].untilVersion
             val flatMappedToEvents = list.flatMap { sd -> sd.events }
-            aHandler.handle(Future.succeededFuture(RangeOfEvents(version, finalVersion, flatMappedToEvents)))
+            promise.complete(RangeOfEvents(version, finalVersion, flatMappedToEvents))
           }
 
           stream.exceptionHandler { err ->
-            log.error(err.message); aHandler.handle(Future.failedFuture(err))
+            log.error(err.message)
+            promise.fail(err)
           }
         }
       }
     }
+    return promise
   }
 
 
-  override fun selectAfterUowId(uowId: Long, maxRows: Int,
-                                aHandler: Handler<AsyncResult<List<UnitOfWorkEvents>>>) {
+  override fun selectAfterUowId(uowId: Long, maxRows: Int): Promise<List<UnitOfWorkEvents>> {
 
+    val promise = Promise.promise<List<UnitOfWorkEvents>>()
     log.trace("will load after uowId [{}]", uowId)
 
     val selectAfterUowIdSql = "select uow_id, ar_id, uow_events " +
@@ -247,12 +255,12 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
     pgPool.preparedQuery(selectAfterUowIdSql, Tuple.of(uowId)) { ar ->
       if (ar.failed()) {
-        aHandler.handle(Future.failedFuture(ar.cause().message))
+        promise.fail(ar.cause().message)
         return@preparedQuery
       }
       val rows = ar.result()
       if (rows.size() == 0) {
-        aHandler.handle(Future.succeededFuture(list))
+        promise.complete(list)
         return@preparedQuery
       }
       for (row in rows) {
@@ -269,9 +277,10 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
         val projectionData = UnitOfWorkEvents(uowSeq.toLong(), targetId, events)
         list.add(projectionData)
       }
-      aHandler.handle(Future.succeededFuture(list))
+      promise.complete(list)
     }
 
+    return promise
   }
 
 }

@@ -1,31 +1,24 @@
 package io.github.crabzilla.framework
 
-import io.vertx.core.AsyncResult
-import io.vertx.core.Future
-import io.vertx.core.Handler
+import io.vertx.core.Promise
 
 abstract class EntityCommandHandler<E: Entity>(private val entityName: String,
                                                val cmdMetadata: CommandMetadata,
                                                val command: Command,
                                                val snapshot: Snapshot<E>,
-                                               val stateFn: (DomainEvent, E) -> E,
-                                               uowHandler: Handler<AsyncResult<UnitOfWork>>) {
+                                               val stateFn: (DomainEvent, E) -> E) {
 
-  private val uowFuture: Future<UnitOfWork> = Future.future()
-  protected val eventsFuture: Future<List<DomainEvent>> = Future.future()
+  private val uowPromise: Promise<UnitOfWork> = Promise.promise()
 
-  init {
-    uowFuture.setHandler(uowHandler)
-    eventsFuture.setHandler { event ->
-      if (event.succeeded()) {
-        uowFuture.complete(UnitOfWork.of(cmdMetadata.entityId, entityName, cmdMetadata.commandId,
-          cmdMetadata.commandName, command, event.result(), snapshot.version + 1))
-      } else {
-        uowFuture.fail(event.cause())
-      }
+  abstract fun handleCommand() : Promise<UnitOfWork>
+
+  fun fromEvents(eventsPromise: Promise<List<DomainEvent>>): Promise<UnitOfWork> {
+    return if (eventsPromise.future().succeeded()) {
+      uowPromise.complete(UnitOfWork.of(cmdMetadata.entityId, entityName, cmdMetadata.commandId,
+        cmdMetadata.commandName, command, eventsPromise.future().result(), snapshot.version + 1))
+      uowPromise
+    } else {
+      Promise.failedPromise(eventsPromise.future().cause())
     }
   }
-
-  abstract fun handleCommand()
-
 }

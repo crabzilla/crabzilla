@@ -1,11 +1,11 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.framework.CommandMetadata
-import io.github.crabzilla.framework.EntityComponent
 import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.CustomerId
 import io.github.crabzilla.example1.UnknownCommand
 import io.github.crabzilla.example1.aggregate.Customer
+import io.github.crabzilla.framework.CommandMetadata
+import io.github.crabzilla.framework.EntityComponent
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
@@ -91,16 +91,15 @@ class PgcCmdHandlerIT {
     val command = CreateCustomer("customer1")
     val commandMetadata = CommandMetadata(customerId.value, "create")
 
-    customerComponent.handleCommand(commandMetadata, command, Handler { event ->
+    customerComponent.handleCommand(commandMetadata, command).future().setHandler { event ->
       if (event.succeeded()) {
         val result = event.result()
-        println(result)
         tc.verify { assertThat(result.first.events.size).isEqualTo(1) }
         tc.completeNow()
       } else {
         tc.failNow(event.cause())
       }
-    })
+    }
   }
 
   @Test
@@ -110,11 +109,11 @@ class PgcCmdHandlerIT {
     val command = CreateCustomer("a bad name")
     val commandMetadata = CommandMetadata(customerId.value, "create")
 
-    customerComponent.handleCommand(commandMetadata, command, Handler { event ->
+    customerComponent.handleCommand(commandMetadata, command).future().setHandler { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
       tc.verify { assertThat(event.cause().message).isEqualTo("[Invalid name: a bad name]") }
       tc.completeNow()
-    })
+    }
   }
 
   @Test
@@ -124,11 +123,11 @@ class PgcCmdHandlerIT {
     val commandMetadata = CommandMetadata(customerId.value, "unknown")
     val command = UnknownCommand(customerId)
 
-    customerComponent.handleCommand(commandMetadata, command, Handler { event ->
+    customerComponent.handleCommand(commandMetadata, command).future().setHandler { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
       tc.verify { assertThat(event.cause().message).isEqualTo("unknown is a unknown command") }
       tc.completeNow()
-    })
+    }
   }
 
 }

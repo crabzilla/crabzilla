@@ -7,6 +7,7 @@ import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
+import io.vertx.core.Promise
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
@@ -23,7 +24,9 @@ class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
                                         "values ($1, $2, $3, $4, $5, $6, $7) returning uow_id"
   }
 
-  override fun append(unitOfWork: UnitOfWork, aHandler: Handler<AsyncResult<Long>>) {
+  override fun append(unitOfWork: UnitOfWork): Promise<Long> {
+
+    val promise = Promise.promise<Long>()
 
     pgPool.begin { res ->
       if (res.succeeded()) {
@@ -52,32 +55,34 @@ class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
                   tx.commit { event3 ->
                     if (event3.failed()) {
                       log.error("Transaction failed", event3.cause())
-                      aHandler.handle(Future.failedFuture(event3.cause()))
+                      promise.fail(event3.cause())
                     } else {
                       log.trace("Transaction succeeded for $generated")
-                      aHandler.handle(Future.succeededFuture(generated))
+                      promise.complete(generated)
                     }
                   }
                 } else {
                   log.error("Transaction failed", event2.cause())
-                  aHandler.handle(Future.failedFuture(event2.cause()))
+                  promise.fail(event2.cause())
                 }
               }
             } else {
               val error = "expected version is ${unitOfWork.version - 1} but current version is $currentVersion"
               log.error(error)
-              aHandler.handle(Future.failedFuture(error))
+              promise.fail(error)
             }
           } else {
             log.error("when selecting current version")
-            aHandler.handle(Future.failedFuture(event1.cause()))
+            promise.fail(event1.cause())
           }
         }
       } else {
         log.error("when starting transaction")
-        aHandler.handle(Future.failedFuture(res.cause()))
+        promise.fail(res.cause())
       }
     }
+
+    return promise
   }
 
 }

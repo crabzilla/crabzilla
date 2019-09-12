@@ -2,10 +2,9 @@ package io.github.crabzilla.internal
 
 import io.github.crabzilla.framework.Entity
 import io.github.crabzilla.framework.UnitOfWork
-import io.vertx.core.AsyncResult
-import io.vertx.core.Handler
+import io.vertx.core.Promise
 
 interface UnitOfWorkJournal<E: Entity> {
 
-  fun append(unitOfWork: UnitOfWork, aHandler: Handler<AsyncResult<Long>>)
+  fun append(unitOfWork: UnitOfWork) : Promise<Long>
 }

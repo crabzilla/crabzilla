@@ -4,7 +4,7 @@ import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerId
 import io.github.crabzilla.example1.aggregate.Customer
-import io.github.crabzilla.example1.aggregate.CustomerCommandAware.Companion.CUSTOMER_STATE_BUILDER
+import io.github.crabzilla.example1.aggregate.CustomerCommandAware
 import io.github.crabzilla.framework.Snapshot
 import io.github.crabzilla.framework.StateTransitionsTracker
 import org.assertj.core.api.Assertions.assertThat
@@ -25,7 +25,7 @@ internal class StateTransitionsTrackerTest {
 
   @Test
   fun can_be_instantiated() {
-    StateTransitionsTracker(originalSnapshot, CUSTOMER_STATE_BUILDER)
+    StateTransitionsTracker(originalSnapshot, CustomerCommandAware().applyEvent)
   }
 
   // TODO test
@@ -41,7 +41,7 @@ internal class StateTransitionsTrackerTest {
 
     @BeforeEach
     fun instantiate() {
-      tracker = StateTransitionsTracker(originalSnapshot, CUSTOMER_STATE_BUILDER)
+      tracker = StateTransitionsTracker(originalSnapshot, CustomerCommandAware().applyEvent)
     }
 
     @Test
@@ -113,17 +113,17 @@ internal class StateTransitionsTrackerTest {
   @DisplayName("when adding both create and activate events")
   internal inner class WhenAddingCreateActivateEvent {
 
-    val IS_OK = "is ok"
+    val isOk = "is ok"
 
     val id = CustomerId(1)
     private val customerCreated = CustomerCreated(id, "customer-1")
-    private val customerActivated = CustomerActivated(IS_OK, Instant.now())
-    private val expectedCustomer = Customer(id, "customer-1", true, IS_OK)
+    private val customerActivated = CustomerActivated(isOk, Instant.now())
+    private val expectedCustomer = Customer(id, "customer-1", true, isOk)
 
     @BeforeEach
     fun instantiate() {
       // given
-      tracker = StateTransitionsTracker(originalSnapshot, CUSTOMER_STATE_BUILDER)
+      tracker = StateTransitionsTracker(originalSnapshot, CustomerCommandAware().applyEvent)
       // when
       tracker.applyEvents { (customerId, name, isActive, reason) -> asList(customerCreated, customerActivated) }
     }

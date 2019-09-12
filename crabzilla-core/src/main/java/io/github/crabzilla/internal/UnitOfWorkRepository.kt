@@ -2,21 +2,18 @@ package io.github.crabzilla.internal
 
 import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.framework.Version
-import io.vertx.core.AsyncResult
-import io.vertx.core.Handler
+import io.vertx.core.Promise
 import java.util.*
 
 interface UnitOfWorkRepository {
 
-  fun getUowByCmdId(cmdId: UUID, aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>)
+  fun getUowByCmdId(cmdId: UUID) : Promise<Pair<UnitOfWork, Long>>
 
-  fun getUowByUowId(uowId: Long, aHandler: Handler<AsyncResult<UnitOfWork>>)
+  fun getUowByUowId(uowId: Long) : Promise<UnitOfWork>
 
-  fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String,
-                         aHandler: Handler<AsyncResult<RangeOfEvents>>)
+  fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String): Promise<RangeOfEvents>
 
-  fun selectAfterUowId(uowId: Long, maxRows: Int,
-                       aHandler: Handler<AsyncResult<List<UnitOfWorkEvents>>>)
+  fun selectAfterUowId(uowId: Long, maxRows: Int): Promise<List<UnitOfWorkEvents>>
 
-  fun getAllUowByEntityId(id: Int, aHandler: Handler<AsyncResult<List<UnitOfWork>>>)
+  fun getAllUowByEntityId(id: Int) : Promise<List<UnitOfWork>>
 }

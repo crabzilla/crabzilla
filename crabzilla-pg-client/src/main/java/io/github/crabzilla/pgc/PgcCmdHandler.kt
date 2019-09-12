@@ -1,12 +1,10 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.*
+import io.github.crabzilla.UnitOfWorkPublisher
 import io.github.crabzilla.framework.*
 import io.github.crabzilla.internal.CommandController
-import io.github.crabzilla.framework.CommandMetadata
-import io.vertx.core.AsyncResult
-import io.vertx.core.Future
 import io.vertx.core.Handler
+import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import org.slf4j.Logger
@@ -31,49 +29,50 @@ class PgcCmdHandler<E: Entity>(writeDb: PgPool,
     return entityName
   }
 
-  override fun getUowByUowId(uowId: Long, aHandler: Handler<AsyncResult<UnitOfWork>>) {
-    uowRepo.getUowByUowId(uowId, aHandler)
+  override fun getUowByUowId(uowId: Long) : Promise<UnitOfWork> {
+    return uowRepo.getUowByUowId(uowId)
   }
 
-  override fun getAllUowByEntityId(id: Int, aHandler: Handler<AsyncResult<List<UnitOfWork>>>) {
-    uowRepo.getAllUowByEntityId(id, aHandler)
+  override fun getAllUowByEntityId(id: Int): Promise<List<UnitOfWork>> {
+    return uowRepo.getAllUowByEntityId(id)
   }
 
-  override fun getSnapshot(entityId: Int, aHandler: Handler<AsyncResult<Snapshot<E>>>) {
-    snapshotRepo.retrieve(entityId, aHandler)
+  override fun getSnapshot(entityId: Int): Promise<Snapshot<E>> {
+    return snapshotRepo.retrieve(entityId)
   }
 
-  override fun handleCommand(metadata: CommandMetadata, command: Command,
-                             aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>) {
+  override fun handleCommand(metadata: CommandMetadata, command: Command): Promise<Pair<UnitOfWork, Long>> {
 
-    // TODO optimize this by checking if commandId is null
-    uowRepo.getUowByCmdId(metadata.commandId, Handler { gotCommand ->
+    val promise = Promise.promise<Pair<UnitOfWork, Long>>()
+
+    uowRepo.getUowByCmdId(metadata.commandId).future().setHandler { gotCommand ->
       if (gotCommand.succeeded()) {
         val uowPair = gotCommand.result()
         if (uowPair != null) {
-          aHandler.handle(Future.succeededFuture(uowPair))
-          return@Handler
+          promise.complete(uowPair)
+          return@setHandler
         }
       }
-      cmdController.handle(metadata, command, Handler { event ->
-        if (event.succeeded()) {
-          val pair = event.result()
+      cmdController.handle(metadata, command).future().setHandler { cmdHandled ->
+        if (cmdHandled.succeeded()) {
+          val pair = cmdHandled.result()
           log.info("Command successfully handled: $pair. Will publish events.")
           uowPublisher.publish(pair.first, pair.second, Handler { event2 ->
             if (event2.failed()) {
               log.error("When publishing events. This shouldn't never happen.", event2.cause())
-              aHandler.handle(Future.failedFuture(event2.cause()))
+              promise.fail(event2.cause())
             } else {
-              aHandler.handle(Future.succeededFuture(pair))
+              promise.complete(pair)
             }
           })
         } else {
-          log.error("When handling command", event.cause())
-          aHandler.handle(Future.failedFuture(event.cause()))
+          log.error("When handling command", cmdHandled.cause())
+          promise.fail(cmdHandled.cause())
         }
-      })
-    })
+      }
+    }
 
+    return promise
   }
 
   override fun toJson(state: E): JsonObject {

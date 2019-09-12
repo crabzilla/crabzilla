@@ -1,9 +1,7 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.internal.RangeOfEvents
-import io.github.crabzilla.framework.UnitOfWork
-import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.github.crabzilla.example1.aggregate.Customer
+import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
@@ -110,7 +108,7 @@ class PgcUowRepoIT {
       }
       val uowId = ar1.result().first().getLong(0)
       tc.verify { tc.verify { assertThat(uowId).isGreaterThan(0) } }
-      val selectFuture = Future.future<Pair<UnitOfWork, Long>>()
+      val selectFuture = repo.getUowByCmdId(createdUow1.commandId).future()
       selectFuture.setHandler { ar2 ->
         if (ar2.failed()) {
           tc.failNow(ar2.cause())
@@ -123,7 +121,6 @@ class PgcUowRepoIT {
         }
       }
 
-      repo.getUowByCmdId(createdUow1.commandId, selectFuture)
     }
 
   }
@@ -147,14 +144,14 @@ class PgcUowRepoIT {
       }
       val uowId = ar1.result().first().getLong("uow_id")
       tc.verify { assertThat(uowId).isGreaterThan(0) }
-      repo.getUowByUowId(uowId, Handler { ar2 ->
+      repo.getUowByUowId(uowId).future().setHandler { ar2 ->
         if (ar2.failed()) {
           tc.failNow(ar2.cause())
         }
         val uow = ar2.result()
         tc.verify { assertThat(createdUow1).isEqualTo(uow) }
         tc.completeNow()
-      })
+      }
     }
 
   }
@@ -167,8 +164,7 @@ class PgcUowRepoIT {
     @Test
     @DisplayName("can queries an empty repo")
     fun a1(tc: VertxTestContext) {
-      val selectFuture = Future.future<List<UnitOfWorkEvents>>()
-      repo.selectAfterUowId(1, 100, selectFuture)
+      val selectFuture = repo.selectAfterUowId(1, 100).future()
       selectFuture.setHandler { selectAsyncResult ->
         val snapshotData = selectAsyncResult.result()
         tc.verify { assertThat(snapshotData.size).isEqualTo(0) }
@@ -189,8 +185,6 @@ class PgcUowRepoIT {
         customerId1.value,
         1)
 
-      val selectFuture = Future.future<List<UnitOfWorkEvents>>()
-
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar ->
         if (ar.failed()) {
           ar.cause().printStackTrace()
@@ -198,7 +192,7 @@ class PgcUowRepoIT {
         }
         val uowId = ar.result().first().getLong(0)
         tc.verify { assertThat(uowId).isGreaterThan(0) }
-        repo.selectAfterUowId(0, 100, selectFuture)
+        val selectFuture = repo.selectAfterUowId(0, 100).future()
         selectFuture.setHandler { selectAsyncResult ->
           val snapshotData = selectAsyncResult.result()
           tc.verify { assertThat(snapshotData.size).isEqualTo(1) }
@@ -224,8 +218,6 @@ class PgcUowRepoIT {
         customerId1.value,
         1)
 
-      val selectFuture1 = Future.future<List<UnitOfWorkEvents>>()
-
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
 
         if (ar1.failed()) {
@@ -247,7 +239,7 @@ class PgcUowRepoIT {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
           }
-          repo.selectAfterUowId(0, 100, selectFuture1)
+          val selectFuture1 = repo.selectAfterUowId(0, 100).future()
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(snapshotData.size).isEqualTo(2) }
@@ -279,8 +271,6 @@ class PgcUowRepoIT {
         customerId1.value,
         1)
 
-      val selectFuture1 = Future.future<List<UnitOfWork>>()
-
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
 
         if (ar1.failed()) {
@@ -302,8 +292,7 @@ class PgcUowRepoIT {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
           }
-          repo.getAllUowByEntityId(customerId1.value, selectFuture1)
-
+          val selectFuture1 = repo.getAllUowByEntityId(customerId1.value).future()
           selectFuture1.setHandler { selectAsyncResult ->
             val uowList = selectAsyncResult.result()
             println(uowList)
@@ -332,8 +321,6 @@ class PgcUowRepoIT {
         customerId1.value,
         1)
 
-      val selectFuture1 = Future.future<List<UnitOfWorkEvents>>()
-
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
         if (ar1.failed()) {
           ar1.cause().printStackTrace()
@@ -354,7 +341,7 @@ class PgcUowRepoIT {
             tc.failNow(ar2.cause())
           }
           val uowId2 = ar2.result().first().getLong("uow_id")
-          repo.selectAfterUowId(uowId1, 100, selectFuture1)
+          val selectFuture1 = repo.selectAfterUowId(uowId1, 100).future()
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(snapshotData.size).isEqualTo(1) }
@@ -394,8 +381,7 @@ class PgcUowRepoIT {
         }
         val uowId = ar.result().first().getLong(0)
         tc.verify { assertThat(uowId).isGreaterThan(0) }
-        val selectFuture = Future.future<RangeOfEvents>()
-        repo.selectAfterVersion(customerId1.value, 0, CUSTOMER_ENTITY, selectFuture.completer())
+        val selectFuture = repo.selectAfterVersion(customerId1.value, 0, CUSTOMER_ENTITY).future()
         selectFuture.setHandler { selectAsyncResult ->
           val snapshotData = selectAsyncResult.result()
           tc.verify { assertThat(1).isEqualTo(snapshotData.untilVersion) }
@@ -440,8 +426,7 @@ class PgcUowRepoIT {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
           }
-          val selectFuture1 = Future.future<RangeOfEvents>()
-          repo.selectAfterVersion(customerId1.value, 0, CUSTOMER_ENTITY, selectFuture1)
+          val selectFuture1 = repo.selectAfterVersion(customerId1.value, 0, CUSTOMER_ENTITY).future()
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(2).isEqualTo(snapshotData.untilVersion) }
@@ -489,8 +474,7 @@ class PgcUowRepoIT {
             return@preparedQuery
           }
           val uowId2 = ar2.result().first().getLong("uow_id")
-          val selectFuture1 = Future.future<RangeOfEvents>()
-          repo.selectAfterVersion(customerId1.value, 1, CUSTOMER_ENTITY, selectFuture1.completer())
+          val selectFuture1 = repo.selectAfterVersion(customerId1.value, 1, CUSTOMER_ENTITY).future()
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(2).isEqualTo(snapshotData.untilVersion) }
@@ -506,10 +490,7 @@ class PgcUowRepoIT {
   @DisplayName("can queries only above version 1")
   fun s4(tc: VertxTestContext) {
 
-    val appendFuture1 = Future.future<Long>()
-
-    // append uow1
-    journal.append(createdUow1, appendFuture1)
+    val appendFuture1 = journal.append(createdUow1).future()
 
     appendFuture1.setHandler { ar1 ->
       if (ar1.failed()) {
@@ -519,9 +500,8 @@ class PgcUowRepoIT {
       }
       val uowId = ar1.result()
       tc.verify { assertThat(uowId).isGreaterThan(0) }
-      val appendFuture2 = Future.future<Long>()
       // append uow2
-      journal.append(activatedUow1, appendFuture2)
+      val appendFuture2 = journal.append(activatedUow1).future()
       appendFuture2.setHandler { ar2 ->
         if (ar2.failed()) {
           ar2.cause().printStackTrace()
@@ -530,9 +510,8 @@ class PgcUowRepoIT {
         }
         val uowId = ar2.result()
         tc.verify { assertThat(uowId).isGreaterThan(2) }
-        val snapshotDataFuture = Future.future<RangeOfEvents>()
         // get only above version 1
-        repo.selectAfterVersion(activatedUow1.entityId, 1, CUSTOMER_ENTITY, snapshotDataFuture)
+        val snapshotDataFuture = repo.selectAfterVersion(activatedUow1.entityId, 1, CUSTOMER_ENTITY).future()
         snapshotDataFuture.setHandler { ar4 ->
           if (ar4.failed()) {
             ar4.cause().printStackTrace()

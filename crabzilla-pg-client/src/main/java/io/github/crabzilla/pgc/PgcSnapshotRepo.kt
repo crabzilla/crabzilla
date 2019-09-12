@@ -4,9 +4,7 @@ import io.github.crabzilla.framework.*
 import io.github.crabzilla.framework.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
 import io.github.crabzilla.framework.UnitOfWork.JsonMetadata.EVENT_NAME
 import io.github.crabzilla.internal.SnapshotRepository
-import io.vertx.core.AsyncResult
-import io.vertx.core.Future
-import io.vertx.core.Handler
+import io.vertx.core.Promise
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
@@ -35,28 +33,29 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
       " ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"
   }
 
-  override fun upsert(entityId: Int, snapshot: Snapshot<E>, aHandler: Handler<AsyncResult<Void>>) {
+  override fun upsert(entityId: Int, snapshot: Snapshot<E>): Promise<Void> {
+    val promise = Promise.promise<Void>()
     val json = eJsonFn.toJson(snapshot.state)
     writeModelDb.preparedQuery(upsertSnapshot(), Tuple.of(entityId, snapshot.version, json)) { insert ->
       if (insert.failed()) {
         log.error("upsert snapshot query error")
-        aHandler.handle(Future.failedFuture(insert.cause()))
+        promise.fail(insert.cause())
       } else {
         log.trace("upsert snapshot success")
-        aHandler.handle(Future.succeededFuture())
+        promise.complete()
       }
     }
+    return promise
   }
 
-  override fun retrieve(entityId: Int, aHandler: Handler<AsyncResult<Snapshot<E>>>) {
+  override fun retrieve(entityId: Int): Promise<Snapshot<E>> {
 
-    val future = Future.future<Snapshot<E>>()
-    future.setHandler(aHandler)
+    val promise = Promise.promise<Snapshot<E>>()
 
     writeModelDb.getConnection { res ->
 
       if (!res.succeeded()) {
-        future.fail(res.cause())
+        promise.fail(res.cause())
         return@getConnection
 
       } else {
@@ -68,7 +67,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
         // Begin the transaction
         val tx: Transaction = conn.begin().abortHandler {
             log.error("Transaction aborted")
-            future.fail("Transaction aborted")
+            promise.fail("Transaction aborted")
         }
 
         // get current snapshot
@@ -76,7 +75,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
 
           if (event1.failed()) {
             conn.close()
-            future.fail(event1.cause())
+            promise.fail(event1.cause())
             return@preparedQuery
 
           } else {
@@ -86,7 +85,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
             val cachedVersion : Int
 
             if (pgRow == null || pgRow.size() == 0) {
-              cachedInstance = entityFn.initialState()
+              cachedInstance = entityFn.initialState
               cachedVersion = 0
             } else {
               cachedInstance = eJsonFn.fromJson(pgRow.first().get(JsonObject::class.java, 1))
@@ -98,7 +97,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
 
               if (!event2.succeeded()) {
                 conn.close()
-                future.fail(event2.cause())
+                promise.fail(event2.cause())
                 return@prepare
 
               } else {
@@ -111,7 +110,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
                 val stream = pq.createStream(100, Tuple.of(entityId, name, cachedVersion))
 
                 stream.exceptionHandler { err -> log.error("Retrieve: ${err.message}", err)
-                  tx.rollback(); conn.close(); future.fail(err)
+                  tx.rollback(); conn.close(); promise.fail(err)
                 }
 
                 stream.endHandler {
@@ -123,11 +122,11 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
                     // But transaction abortion fails it
                     if (ar.failed()) {
                       log.error("endHandler.closeConnection")
-                      future.fail(ar.cause())
+                      promise.fail(ar.cause())
                     } else {
                       log.trace("success: endHandler.closeConnection")
                       val result = Snapshot(currentInstance, currentVersion)
-                      future.complete(result)
+                      promise.complete(result)
                     }
                   }
                 }
@@ -144,7 +143,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
 
                   val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEvent)
                   currentInstance =
-                    events.fold(currentInstance) {state, event -> entityFn.applyEvent(event.second, state)}
+                    events.fold(currentInstance) {state, event -> entityFn.applyEvent.invoke(event.second, state)}
                   log.trace("Events: $events \n version: $currentVersion \n instance $currentInstance")
 
                 }
@@ -154,5 +153,8 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
         }
       }
     }
+
+    return promise
+
   }
 }

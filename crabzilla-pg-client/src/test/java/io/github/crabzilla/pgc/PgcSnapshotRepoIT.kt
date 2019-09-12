@@ -96,7 +96,7 @@ class PgcSnapshotRepoIT {
   @DisplayName("given none snapshot or event, it can retrieve correct snapshot")
   fun a0(tc: VertxTestContext) {
 
-      repo.retrieve(customerId1.value, Handler { event ->
+      repo.retrieve(customerId1.value).future().setHandler { event ->
         if (event.failed()) {
           event.cause().printStackTrace()
           tc.failNow(event.cause())
@@ -105,7 +105,7 @@ class PgcSnapshotRepoIT {
         tc.verify { assertThat(snapshot.version).isEqualTo(0) }
         tc.verify { assertThat(snapshot.state).isEqualTo(Customer()) }
         tc.completeNow()
-      })
+      }
 
   }
 
@@ -130,16 +130,16 @@ class PgcSnapshotRepoIT {
       val uowId = event1.result().first().getLong(0)
       tc.verify { assertThat(uowId).isGreaterThan(0) }
 
-      repo.retrieve(customerId1.value, Handler { event2 ->
-          if (event2.failed()) {
-            event2.cause().printStackTrace()
-            tc.failNow(event2.cause())
-          }
-          val snapshot: Snapshot<Customer> = event2.result()
-          tc.verify { assertThat(snapshot.version).isEqualTo(1) }
-          tc.verify { assertThat(snapshot.state).isEqualTo(Customer(customerId1, createCmd1.name, false, null)) }
-          tc.completeNow()
-      })
+      repo.retrieve(customerId1.value).future().setHandler { event2 ->
+        if (event2.failed()) {
+          event2.cause().printStackTrace()
+          tc.failNow(event2.cause())
+        }
+        val snapshot: Snapshot<Customer> = event2.result()
+        tc.verify { assertThat(snapshot.version).isEqualTo(1) }
+        tc.verify { assertThat(snapshot.state).isEqualTo(Customer(customerId1, createCmd1.name, false, null)) }
+        tc.completeNow()
+      }
     }
 
   }
@@ -184,7 +184,7 @@ class PgcSnapshotRepoIT {
         val uowId = ar1.result().first().getLong(0)
         tc.verify { assertThat(uowId).isGreaterThan(0) }
 
-        repo.retrieve(customerId1.value, Handler { event ->
+        repo.retrieve(customerId1.value).future().setHandler { event ->
           if (event.failed()) {
             tc.failNow(event.cause())
           }
@@ -194,7 +194,7 @@ class PgcSnapshotRepoIT {
           tc.verify { assertThat(snapshot.state.name).isEqualTo(createCmd1.name) }
           tc.verify { assertThat(snapshot.state.isActive).isEqualTo(true) }
           tc.completeNow()
-        })
+        }
       }
     }
 

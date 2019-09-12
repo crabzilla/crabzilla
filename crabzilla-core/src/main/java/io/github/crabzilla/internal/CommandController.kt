@@ -1,98 +1,75 @@
 package io.github.crabzilla.internal
 
 import io.github.crabzilla.framework.*
-import io.vertx.core.AsyncResult
 import io.vertx.core.Future
-import io.vertx.core.Handler
+import io.vertx.core.Promise
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicReference
 
 class CommandController<E : Entity>(private val commandAware: EntityCommandAware<E>,
-                                                                  private val snapshotRepo: SnapshotRepository<E>,
-                                                                  private val uowJournal: UnitOfWorkJournal<E>) {
+                                    private val snapshotRepo: SnapshotRepository<E>,
+                                    private val uowJournal: UnitOfWorkJournal<E>) {
 
   companion object {
     internal val log = LoggerFactory.getLogger(CommandController::class.java)
   }
 
-  fun handle(metadata: CommandMetadata, command: Command, aHandler: Handler<AsyncResult<Pair<UnitOfWork, Long>>>) {
+  fun handle(metadata: CommandMetadata, command: Command) : Promise<Pair<UnitOfWork, Long>> {
 
-    log.trace("received $metadata\n $command")
+    val promise = Promise.promise<Pair<UnitOfWork, Long>>()
+
+    log.info("received $metadata\n $command")
 
     val constraints = commandAware.validateCmd(command)
 
     if (constraints.isNotEmpty()) {
       log.error("Command is invalid: $constraints")
-      aHandler.handle(Future.failedFuture(constraints.toString()))
-      return
+      promise.fail(constraints.toString())
+      return promise
     }
-
-    val resultFuture: Future<Pair<UnitOfWork, Long>> = Future.future()
-
-    resultFuture.setHandler { event ->
-      if (event.failed()) {
-        log.error("command handler error", event.cause())
-        aHandler.handle(Future.failedFuture(event.cause().message))
-        return@setHandler
-      } else {
-        log.trace("command handler success")
-        aHandler.handle(Future.succeededFuture(event.result()))
-      }
-    }
-
-    val snapshotFuture: Future<Snapshot<E>> = Future.future()
-
-    snapshotRepo.retrieve(metadata.entityId, snapshotFuture)
 
     val snapshotValue: AtomicReference<Snapshot<E>> = AtomicReference()
     val uowValue: AtomicReference<UnitOfWork> = AtomicReference()
     val uowIdValue: AtomicReference<Long> = AtomicReference()
 
-    snapshotFuture
+    snapshotRepo.retrieve(metadata.entityId).future()
 
       .compose { snapshot ->
-        log.trace("got snapshot $snapshot")
-        val cmdHandlerFuture = Future.future<UnitOfWork>()
-        val cachedSnapshot = snapshot ?: Snapshot(commandAware.initialState(), 0)
-        val cmdHandler = commandAware.cmdHandlerFactory()
-          .createHandler(metadata, command, cachedSnapshot, cmdHandlerFuture)
-        cmdHandler.handleCommand()
+        log.info("got snapshot $snapshot")
+        val cachedSnapshot = snapshot ?: Snapshot(commandAware.initialState, 0)
         snapshotValue.set(cachedSnapshot)
-        cmdHandlerFuture
+        val cmdHandler = commandAware.cmdHandlerFactory.invoke(metadata, command, cachedSnapshot)
+        cmdHandler.handleCommand().future()
       }
 
       .compose { unitOfWork ->
-        log.trace("got unitOfWork $unitOfWork")
-        val appendFuture = Future.future<Long>()
+        log.info("got unitOfWork $unitOfWork")
         // append to journal
-        uowJournal.append(unitOfWork, appendFuture)
         uowValue.set(unitOfWork)
-        appendFuture
+        uowJournal.append(unitOfWork).future()
       }
 
       .compose { uowId ->
-        log.trace("got uowId $uowId")
+        log.info("got uowId $uowId")
         uowIdValue.set(uowId)
-        val updateSnapshotFuture = Future.future<Void>()
-
         // compute new snapshot
-        log.trace("computing new snapshot")
+        log.info("computing new snapshot")
         val newInstance = uowValue.get().events.fold(snapshotValue.get().state)
-        { state, event -> commandAware.applyEvent(event.second, state) }
+        { state, event -> commandAware.applyEvent.invoke(event.second, state) }
         val newSnapshot = Snapshot(newInstance, uowValue.get().version)
-
-        log.trace("now will store snapshot $newSnapshot")
-        snapshotRepo.upsert(metadata.entityId, newSnapshot, updateSnapshotFuture)
-        updateSnapshotFuture
+        log.info("now will store snapshot $newSnapshot")
+        snapshotRepo.upsert(metadata.entityId, newSnapshot).future()
       }
 
       .compose({
         // set result
         val pair: Pair<UnitOfWork, Long> = Pair(uowValue.get(), uowIdValue.get())
-        log.trace("command handling success: $pair")
-        resultFuture.complete(pair)
+        log.info("command handling success: $pair")
+        promise.complete(pair)
 
-      }, resultFuture)
+      }, promise.future())
+
+    return promise
 
   }
 

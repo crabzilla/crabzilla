@@ -2,12 +2,13 @@ package io.github.crabzilla.framework
 
 interface EntityCommandAware<E: Entity> {
 
-  fun initialState(): E
+  val initialState: E
 
-  fun applyEvent(event: DomainEvent, state: E): E
+  val applyEvent: (event: DomainEvent, state: E) -> E
 
-  fun validateCmd(command: Command): List<String>
+  val validateCmd: (command: Command) -> List<String>
 
-  fun cmdHandlerFactory(): EntityCommandHandlerFactory<E>
+  val cmdHandlerFactory: (cmdMetadata: CommandMetadata, command: Command, snapshot: Snapshot<E>)
+                                                        -> EntityCommandHandler<E>
 
 }

@@ -2,50 +2,54 @@ package io.github.crabzilla.example1.aggregate
 
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.framework.*
-import io.vertx.core.AsyncResult
 import io.vertx.core.Future
-import io.vertx.core.Handler
+import io.vertx.core.Promise
+import io.vertx.core.Promise.failedPromise
+import io.vertx.core.Promise.succeededPromise
 
 class CustomerCmdHandler(cmdMetadata: CommandMetadata,
                          command: Command,
                          snapshot: Snapshot<Customer>,
-                         stateFn: (DomainEvent, Customer) -> Customer,
-                         uowHandler: Handler<AsyncResult<UnitOfWork>>) :
-  EntityCommandHandler<Customer>("customer", cmdMetadata, command, snapshot, stateFn, uowHandler) {
+                         stateFn: (DomainEvent, Customer) -> Customer) :
+  EntityCommandHandler<Customer>("customer", cmdMetadata, command, snapshot, stateFn) {
 
-  override fun handleCommand() {
-
+  override fun handleCommand(): Promise<UnitOfWork> {
     val customer = snapshot.state
-
-    when (command) {
-      is CreateCustomer -> customer.create(CustomerId(cmdMetadata.entityId), command.name, eventsFuture.completer())
-      is ActivateCustomer -> eventsFuture.complete(customer.activate(command.reason))
-      is DeactivateCustomer -> customer.deactivate(command.reason, eventsFuture)
-      is CreateActivateCustomer -> {
-        val createFuture: Future<List<DomainEvent>> = Future.future()
-        val tracker = StateTransitionsTracker(snapshot, stateFn)
-        tracker.currentState.create(CustomerId(cmdMetadata.entityId), command.name, createFuture)
-        createFuture
-          .compose { v ->
-            println("after create")
-            println("  events $v")
-            tracker.applyEvents(v)
-            println("  state " + tracker.currentState)
-            Future.succeededFuture(tracker.currentState.activate("I can"))
-          }
-          .compose { v ->
-            println("after activate")
-            println("  events $v")
-            tracker.applyEvents(v)
-            println("  state " + tracker.currentState)
-            Future.succeededFuture(tracker.appliedEvents)
-          }
-          .compose({ v ->
-            println("after collect all events")
-            println("  events $v")
-          }, eventsFuture)
-      }
-      else -> eventsFuture.fail("${cmdMetadata.commandName} is a unknown command")
+    val eventsPromise: Promise<List<DomainEvent>> =
+      when (command) {
+        is CreateCustomer -> customer.create(CustomerId(cmdMetadata.entityId), command.name)
+        is ActivateCustomer -> succeededPromise(customer.activate(command.reason))
+        is DeactivateCustomer -> customer.deactivate(command.reason)
+        is CreateActivateCustomer -> composed(command)
+        else -> failedPromise("${cmdMetadata.commandName} is a unknown command")
     }
+    return fromEvents(eventsPromise)
   }
+
+  private fun composed(command: CreateActivateCustomer) : Promise<List<DomainEvent>> {
+    val promise = Promise.promise<List<DomainEvent>>()
+    val tracker = StateTransitionsTracker(snapshot, stateFn)
+    tracker.currentState.create(CustomerId(cmdMetadata.entityId), command.name).future()
+      .compose { v ->
+        println("after create")
+        println("  events $v")
+        tracker.applyEvents(v)
+        println("  state " + tracker.currentState)
+        Future.succeededFuture(tracker.currentState.activate("I can"))
+      }
+      .compose { v ->
+        println("after activate")
+        println("  events $v")
+        tracker.applyEvents(v)
+        println("  state " + tracker.currentState)
+        Future.succeededFuture(tracker.appliedEvents)
+      }
+      .compose({ eventsList ->
+        println("after collect all events")
+        println("  events $eventsList")
+        promise.complete(eventsList)
+      }, promise.future())
+    return promise
+  }
+
 }

@@ -1,8 +1,7 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.internal.RangeOfEvents
-import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.example1.aggregate.Customer
+import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.github.crabzilla.pgc.example1.Example1Fixture
@@ -16,7 +15,6 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
-import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
@@ -37,9 +35,9 @@ import java.util.*
 class PgcUowJournalIT {
 
   private lateinit var vertx: Vertx
-  internal lateinit var writeDb: PgPool
-  internal lateinit var repo: UnitOfWorkRepository
-  internal lateinit var journal: UnitOfWorkJournal<Customer>
+  private lateinit var writeDb: PgPool
+  private lateinit var repo: UnitOfWorkRepository
+  private lateinit var journal: UnitOfWorkJournal<Customer>
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
@@ -95,7 +93,7 @@ class PgcUowJournalIT {
   @DisplayName("can append version 1")
   fun s1(tc: VertxTestContext) {
 
-      journal.append(createdUow1, Handler { event1 ->
+      journal.append(createdUow1).future().setHandler(Handler { event1 ->
 
         if (event1.failed()) {
           tc.failNow(event1.cause())
@@ -106,9 +104,7 @@ class PgcUowJournalIT {
 
         tc.verify { assertThat(uowId).isGreaterThan(0) }
 
-        val uowFuture = Future.future<UnitOfWork>()
-
-        repo.getUowByUowId(uowId, uowFuture)
+        val uowFuture = repo.getUowByUowId(uowId).future()
 
         uowFuture.setHandler { ar2 ->
 
@@ -121,9 +117,7 @@ class PgcUowJournalIT {
 
           tc.verify { assertThat(uow).isEqualTo(createdUow1) }
 
-          val rangeOfEventsFuture = Future.future<RangeOfEvents>()
-
-          repo.selectAfterVersion(createdUow1.entityId, 0, CUSTOMER_ENTITY, rangeOfEventsFuture)
+          val rangeOfEventsFuture = repo.selectAfterVersion(createdUow1.entityId, 0, CUSTOMER_ENTITY).future()
 
           rangeOfEventsFuture.setHandler { ar3 ->
             if (ar3.failed()) {
@@ -152,10 +146,7 @@ class PgcUowJournalIT {
   @DisplayName("cannot append version 1 twice")
   fun s2(tc: VertxTestContext) {
 
-    val appendFuture1 = Future.future<Long>()
-
-    // append uow1
-    journal.append(createdUow1, appendFuture1)
+    val appendFuture1 = journal.append(createdUow1).future()
 
     appendFuture1.setHandler { ar1 ->
       if (ar1.failed()) {
@@ -168,10 +159,7 @@ class PgcUowJournalIT {
 
       tc.verify { assertThat(uowId).isGreaterThan(0) }
 
-      val appendFuture2 = Future.future<Long>()
-
-      // try to append uow1 again
-      journal.append(createdUow1, appendFuture2)
+      val appendFuture2 = journal.append(createdUow1).future()
 
       appendFuture2.setHandler { ar2 ->
         if (ar2.failed()) {
@@ -191,13 +179,11 @@ class PgcUowJournalIT {
   @DisplayName("cannot append version 3 after version 1")
   fun s22(tc: VertxTestContext) {
 
-    val appendFuture1 = Future.future<Long>()
-
     val createdUow3 = UnitOfWork(CUSTOMER_ENTITY, customerId1.value, UUID.randomUUID(),
       "create", Example1Fixture.createCmd1, 3, listOf(Pair("CustomerCreated", created1)))
 
     // append uow1
-    journal.append(createdUow1, appendFuture1)
+    val appendFuture1 = journal.append(createdUow1).future()
 
     appendFuture1.setHandler { ar1 ->
       if (ar1.failed()) {
@@ -210,10 +196,7 @@ class PgcUowJournalIT {
 
       tc.verify { assertThat(uowId).isGreaterThan(0) }
 
-      val appendFuture2 = Future.future<Long>()
-
-      // try to append uow1 again
-      journal.append(createdUow3, appendFuture2)
+      val appendFuture2 = journal.append(createdUow3).future()
 
       appendFuture2.setHandler { ar2 ->
         if (ar2.failed()) {
@@ -232,10 +215,7 @@ class PgcUowJournalIT {
   @DisplayName("can append version 1 and version 2")
   fun s3(tc: VertxTestContext) {
 
-    val appendFuture1 = Future.future<Long>()
-
-    // append uow1
-    journal.append(createdUow1, appendFuture1)
+    val appendFuture1 = journal.append(createdUow1).future()
 
     appendFuture1.setHandler { ar1 ->
 
@@ -245,10 +225,8 @@ class PgcUowJournalIT {
 
         val uowId1 = ar1.result()
         tc.verify { assertThat(uowId1).isGreaterThan(0) }
-        val appendFuture2 = Future.future<Long>()
 
-        // append uow2
-        journal.append(activatedUow1, appendFuture2)
+        val appendFuture2 = journal.append(activatedUow1).future()
 
         appendFuture2.setHandler { ar2 ->
 
@@ -258,10 +236,9 @@ class PgcUowJournalIT {
           } else {
             val uowId = ar2.result()
             tc.verify { assertThat(uowId).isGreaterThan(2) }
-            val rangeOfEventsFuture = Future.future<RangeOfEvents>()
 
             // get all versions for id
-            repo.selectAfterVersion(activatedUow1.entityId, 0, CUSTOMER_ENTITY, rangeOfEventsFuture)
+            val rangeOfEventsFuture = repo.selectAfterVersion(activatedUow1.entityId, 0, CUSTOMER_ENTITY).future()
 
             rangeOfEventsFuture.setHandler { ar4 ->
 

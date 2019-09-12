@@ -1,8 +1,8 @@
 package io.github.crabzilla.webpgc
 
-import io.github.crabzilla.*
+import io.github.crabzilla.EventBusUowPublisher
+import io.github.crabzilla.UnitOfWorkPublisher
 import io.github.crabzilla.framework.*
-import io.github.crabzilla.framework.CommandMetadata
 import io.github.crabzilla.pgc.PgcCmdHandler
 import io.github.crabzilla.pgc.writeModelPgPool
 import io.vertx.core.AbstractVerticle
@@ -27,9 +27,11 @@ abstract class WebCommandVerticle : AbstractVerticle() {
   val eventsPublisher: UnitOfWorkPublisher by lazy { EventBusUowPublisher(vertx, jsonFunctions) }
   val httpPort : Int by lazy { config().getInteger("WRITE_HTTP_PORT")}
 
-  fun <E: Entity> addResourceForEntity(resourceName: String, entityName: String,
-                                                                     jsonAware: EntityJsonAware<E>, cmdAware: EntityCommandAware<E>,
-                                                                     router: Router) {
+  fun <E: Entity> addResourceForEntity(resourceName: String,
+                                       entityName: String,
+                                       jsonAware: EntityJsonAware<E>,
+                                       cmdAware: EntityCommandAware<E>,
+                                       router: Router) {
     log.info("adding web command handler for entity $entityName on resource $resourceName")
     jsonFunctions[entityName] = jsonAware
     val cmdHandlerComponent = PgcCmdHandler(writeDb, entityName, jsonAware, cmdAware, eventsPublisher)
@@ -77,7 +79,7 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
         return@handler
       }
       log.info("Handling $command  $commandMetadata")
-      component.handleCommand(commandMetadata, command, Handler { event ->
+      component.handleCommand(commandMetadata, command).future().setHandler { event ->
         val end = System.currentTimeMillis()
         log.info("handled command in " + (end - begin) + " ms")
         if (event.succeeded()) {
@@ -94,7 +96,7 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
           log.error(event.cause().message)
           it.response().setStatusCode(400).setStatusMessage(event.cause().message).end()
         }
-      })
+      }
     }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route GET $getSnapshot")
@@ -104,7 +106,7 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
       val accept = it.request().getHeader("accept")
       if (ContentTypes.ENTITY_WRITE_MODEL == accept) {
         val httpResp = it.response()
-        component.getSnapshot(entityId, Handler { event ->
+        component.getSnapshot(entityId).future().setHandler { event ->
           if (event.failed() || event.result() == null) {
             httpResp.statusCode = if (event.result() == null) 404 else 500
             httpResp.end()
@@ -120,7 +122,7 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
               httpResp.setStatusCode(404).end("Entity not found")
             }
           }
-        })
+        }
       } else {
         it.next()
       }
@@ -131,7 +133,7 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
     router.get(getAllUow).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
       val httpResp = it.response()
-      component.getAllUowByEntityId(entityId, Handler { event ->
+      component.getAllUowByEntityId(entityId).future().setHandler { event ->
         if (event.failed() || event.result() == null) {
           httpResp.statusCode = if (event.result() == null) 404 else 500
           httpResp.end()
@@ -141,7 +143,7 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
             .headers().add("Content-Type", "application/json")
           httpResp.end(JsonArray(resultList).encode())
         }
-      })
+      }
     }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route GET $getUow")
@@ -149,7 +151,7 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
     router.get(getUow).handler {
       val uowId = it.pathParam(UNIT_OF_WORK_ID_PARAMETER).toLong()
       val httpResp = it.response()
-      component.getUowByUowId(uowId, Handler { uowResult ->
+      component.getUowByUowId(uowId).future().setHandler { uowResult ->
         if (uowResult.failed() || uowResult.result() == null) {
           httpResp.statusCode = if (uowResult.result() == null) 404 else 500
           httpResp.end()
@@ -159,7 +161,7 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
             .putHeader("uowId", uowId.toString())
             .end(JsonObject.mapFrom(uowResult.result()).encode())
         }
-      })
+      }
     }.failureHandler(errorHandler(UNIT_OF_WORK_ID_PARAMETER))
   }
 
