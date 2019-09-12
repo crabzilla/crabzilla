@@ -56,7 +56,7 @@ class PgcCmdHandler<E: Entity>(writeDb: PgPool,
       cmdController.handle(metadata, command).future().setHandler { cmdHandled ->
         if (cmdHandled.succeeded()) {
           val pair = cmdHandled.result()
-          log.info("Command successfully handled: $pair. Will publish events.")
+          if (log.isTraceEnabled) log.trace("Command successfully handled: $pair. Will publish events.")
           uowPublisher.publish(pair.first, pair.second, Handler { event2 ->
             if (event2.failed()) {
               log.error("When publishing events. This shouldn't never happen.", event2.cause())

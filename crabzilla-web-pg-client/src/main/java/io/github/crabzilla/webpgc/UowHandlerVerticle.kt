@@ -19,7 +19,7 @@ abstract class UowHandlerVerticle : AbstractVerticle() {
   override fun start() {
     val implClazz = this::class.java.name
     vertx.eventBus().consumer<String>(implClazz) { msg ->
-      log.info("received " + msg.body())
+      if (log.isTraceEnabled) log.trace("received " + msg.body())
       msg.reply("$implClazz is already running here: $processId")
     }
   }

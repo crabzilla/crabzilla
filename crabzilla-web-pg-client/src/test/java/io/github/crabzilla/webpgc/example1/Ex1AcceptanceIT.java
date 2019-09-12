@@ -31,9 +31,9 @@ import java.util.Random;
 import java.util.UUID;
 
 import static io.github.crabzilla.framework.UnitOfWork.JsonMetadata.*;
-import static io.github.crabzilla.pgc._mainKt.readModelPgPool;
-import static io.github.crabzilla.pgc._mainKt.writeModelPgPool;
-import static io.github.crabzilla.webpgc._mainKt.*;
+import static io.github.crabzilla.pgc.PgcKt.readModelPgPool;
+import static io.github.crabzilla.pgc.PgcKt.writeModelPgPool;
+import static io.github.crabzilla.webpgc.WebpgcKt.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**

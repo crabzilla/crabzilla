@@ -17,7 +17,7 @@ class CommandController<E : Entity>(private val commandAware: EntityCommandAware
 
     val promise = Promise.promise<Pair<UnitOfWork, Long>>()
 
-    log.info("received $metadata\n $command")
+    if (log.isTraceEnabled) log.trace("received $metadata\n $command")
 
     val constraints = commandAware.validateCmd(command)
 
@@ -34,7 +34,7 @@ class CommandController<E : Entity>(private val commandAware: EntityCommandAware
     snapshotRepo.retrieve(metadata.entityId).future()
 
       .compose { snapshot ->
-        log.info("got snapshot $snapshot")
+        if (log.isTraceEnabled) log.trace("got snapshot $snapshot")
         val cachedSnapshot = snapshot ?: Snapshot(commandAware.initialState, 0)
         snapshotValue.set(cachedSnapshot)
         val cmdHandler = commandAware.cmdHandlerFactory.invoke(metadata, command, cachedSnapshot)
@@ -42,28 +42,28 @@ class CommandController<E : Entity>(private val commandAware: EntityCommandAware
       }
 
       .compose { unitOfWork ->
-        log.info("got unitOfWork $unitOfWork")
+        if (log.isTraceEnabled) log.trace("got unitOfWork $unitOfWork")
         // append to journal
         uowValue.set(unitOfWork)
         uowJournal.append(unitOfWork).future()
       }
 
       .compose { uowId ->
-        log.info("got uowId $uowId")
+        if (log.isTraceEnabled) log.trace("got uowId $uowId")
         uowIdValue.set(uowId)
         // compute new snapshot
-        log.info("computing new snapshot")
+        if (log.isTraceEnabled) log.trace("computing new snapshot")
         val newInstance = uowValue.get().events.fold(snapshotValue.get().state)
         { state, event -> commandAware.applyEvent.invoke(event.second, state) }
         val newSnapshot = Snapshot(newInstance, uowValue.get().version)
-        log.info("now will store snapshot $newSnapshot")
+        if (log.isTraceEnabled) log.trace("now will store snapshot $newSnapshot")
         snapshotRepo.upsert(metadata.entityId, newSnapshot).future()
       }
 
       .compose({
         // set result
         val pair: Pair<UnitOfWork, Long> = Pair(uowValue.get(), uowIdValue.get())
-        log.info("command handling success: $pair")
+        if (log.isTraceEnabled) log.trace("command handling success: $pair")
         promise.complete(pair)
 
       }, promise.future())

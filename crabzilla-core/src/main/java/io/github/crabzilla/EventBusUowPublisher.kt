@@ -4,6 +4,7 @@ import io.github.crabzilla.framework.Entity
 import io.github.crabzilla.framework.EntityJsonAware
 import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.framework.UnitOfWork.JsonMetadata
+import io.github.crabzilla.internal.CommandController
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
@@ -20,7 +21,7 @@ class EventBusUowPublisher(val vertx: Vertx,
 
   override fun publish(uow: UnitOfWork, uowId: Long, handler: Handler<AsyncResult<Void>>) {
     val jsonAware = jsonFunctions[uow.entityName]
-    log.info("jsonAware $jsonAware")
+    if (log.isTraceEnabled) log.trace("jsonAware $jsonAware")
     if (jsonAware == null) {
       handler.handle(Future.failedFuture("JsonAware for $uow.entityName wasn't found"))
     } else {
@@ -31,9 +32,9 @@ class EventBusUowPublisher(val vertx: Vertx,
         .put(JsonMetadata.ENTITY_ID, uow.entityId)
         .put(JsonMetadata.VERSION, uow.version)
         .put(JsonMetadata.EVENTS, eventsAsJson)
-      log.info("will publish message $message")
+      if (log.isTraceEnabled) log.trace("will publish message $message")
       vertx.eventBus().publish(EventBusChannels.unitOfWorkChannel, message.encode())
-      log.info("publish success")
+      if (log.isTraceEnabled) log.trace("publish success")
       handler.handle(Future.succeededFuture())
     }
   }
