@@ -14,6 +14,7 @@ import io.vertx.core.*
 import io.vertx.core.http.HttpServer
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
+import io.vertx.core.logging.SLF4JLogDelegateFactory
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.ServerSocket
@@ -21,9 +22,15 @@ import java.net.ServerSocket
 private val log = LoggerFactory.getLogger("webpgc")
 
 fun getConfig(vertx: Vertx, configFile: String) : Future<JsonObject> {
+  // slf4j setup
+  System.setProperty(io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME,
+    SLF4JLogDelegateFactory::class.java.name)
+  LoggerFactory.getLogger(io.vertx.core.logging.LoggerFactory::class.java)
+  // Jackson setup
   Json.mapper
     .registerModule(Jdk8Module())
     .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+  // get config
   val future: Future<JsonObject> = Future.future()
   configRetriever(vertx, configFile).getConfig { gotConfig ->
     if (gotConfig.succeeded()) {

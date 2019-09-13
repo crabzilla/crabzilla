@@ -4,6 +4,7 @@ import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
+import io.vertx.core.Promise
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory.getLogger
@@ -17,12 +18,13 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
       do update set last_uow = $2"""
   }
 
-  fun handle(uowEvents: UnitOfWorkEvents, projector: PgcEventProjector, handler: Handler<AsyncResult<Void>>) {
+  fun handle(uowEvents: UnitOfWorkEvents, projector: PgcEventProjector): Promise<Void> {
 
     if (uowEvents.events.size > NUMBER_OF_FUTURES) {
-      handler.handle(Future.failedFuture("only $NUMBER_OF_FUTURES events can be projected per transaction"))
-      return
+      return Promise.failedPromise("only $NUMBER_OF_FUTURES events can be projected per transaction")
     }
+
+    val promise = Promise.promise<Void>()
 
     pgPool.begin { event1 ->
 
@@ -31,7 +33,7 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
         val tx = event1.result()
 
         val toFuture: (Int) -> Future<Void> = { index ->
-          projector.handle(tx, uowEvents.entityId, uowEvents.events[index].second)
+          projector.handle(tx, uowEvents.entityId, uowEvents.events[index].second).future()
         }
 
         val futures: List<Future<Void>> = List(uowEvents.events.size, toFuture)
@@ -50,27 +52,29 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
           if (event2.succeeded()) {
             tx.preparedQuery(SQL_UPDATE_PROJECTIONS, Tuple.of(name, uowEvents.uowId)) { event3 ->
               if (event3.failed()) {
-                handler.handle(Future.failedFuture(event3.cause()))
+                promise.fail(event3.cause())
                 return@preparedQuery
               }
               // Commit the transaction
               tx.commit { event4 ->
                 if (event4.succeeded()) {
-                  log.trace("Transaction succeeded")
-                  handler.handle(Future.succeededFuture())
+                  if (log.isTraceEnabled) log.trace("Transaction succeeded")
+                  promise.complete()
                 } else {
-                  log.error("Transaction failed", event4.cause())
-                  handler.handle(Future.failedFuture(event4.cause()))
+                  if (log.isTraceEnabled) log.error("Transaction failed", event4.cause())
+                  promise.fail(event4.cause())
                 }
               }
             }
           } else {
             log.error("Error while projecting events", event2.cause())
-            handler.handle(Future.failedFuture(event2.cause()))
+            promise.fail(event2.cause())
           }
         }
       }
     }
+
+    return promise
   }
 
   private fun futureOf6(f1: Future<Void>, f2: Future<Void>, f3: Future<Void>, f4: Future<Void>, f5: Future<Void>,

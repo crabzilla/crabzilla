@@ -44,11 +44,11 @@ abstract class DbProjectionsVerticle : AbstractVerticle() {
       if (uowEvents == null) {
         log.error("Cannot send these events to be projected. Check if all entities have a jsonAware.")
       } else {
-        uolProjector.handle(uowEvents, projector, Handler { result ->
+        uolProjector.handle(uowEvents, projector).future().setHandler { result ->
           if (result.failed()) { // TODO circuit breaker
             log.error("Projection [$projectionName] failed: " + result.cause().message)
           }
-        })
+        }
       }
     }
   }

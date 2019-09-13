@@ -41,9 +41,8 @@ abstract class WebCommandVerticle : AbstractVerticle() {
 }
 
 private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
-                                                                   private val resourceName: String,
-                                                                   private val router: Router)
-{
+                                     private val resourceName: String,
+                                     private val router: Router) {
 
   private val postCmd = "/commands/$resourceName/:$ENTITY_ID_PARAMETER/:$COMMAND_NAME_PARAMETER"
   private val getSnapshot = "/commands/$resourceName/:$ENTITY_ID_PARAMETER"
@@ -78,7 +77,7 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
         it.response().setStatusCode(400).setStatusMessage("Cannot decode the json for this Command").end()
         return@handler
       }
-      if (log.isTraceEnabled) log.trace("Handling $command  $commandMetadata")
+      if (log.isTraceEnabled) log.trace("Handling $command $commandMetadata")
       component.handleCommand(commandMetadata, command).future().setHandler { event ->
         val end = System.currentTimeMillis()
         if (log.isTraceEnabled) log.trace("handled command in " + (end - begin) + " ms")

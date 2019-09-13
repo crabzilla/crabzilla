@@ -3,6 +3,7 @@ package io.github.crabzilla.example1.aggregate
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.framework.*
 import io.vertx.core.Future
+import io.vertx.core.Future.*
 import io.vertx.core.Promise
 import io.vertx.core.Promise.failedPromise
 import io.vertx.core.Promise.succeededPromise
@@ -31,22 +32,14 @@ class CustomerCmdHandler(cmdMetadata: CommandMetadata,
     val tracker = StateTransitionsTracker(snapshot, stateFn)
     tracker.currentState.create(CustomerId(cmdMetadata.entityId), command.name).future()
       .compose { v ->
-        println("after create")
-        println("  events $v")
         tracker.applyEvents(v)
-        println("  state " + tracker.currentState)
-        Future.succeededFuture(tracker.currentState.activate("I can"))
+        succeededFuture(tracker.currentState.activate("I can"))
       }
       .compose { v ->
-        println("after activate")
-        println("  events $v")
         tracker.applyEvents(v)
-        println("  state " + tracker.currentState)
-        Future.succeededFuture(tracker.appliedEvents)
+        succeededFuture(tracker.appliedEvents)
       }
       .compose({ eventsList ->
-        println("after collect all events")
-        println("  events $eventsList")
         promise.complete(eventsList)
       }, promise.future())
     return promise

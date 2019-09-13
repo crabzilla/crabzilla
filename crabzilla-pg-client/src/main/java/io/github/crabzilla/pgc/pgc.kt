@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgc
 
-import io.vertx.core.Future
+import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
@@ -37,15 +37,15 @@ fun readModelPgPool(vertx: Vertx, config: JsonObject) : PgPool {
   return PgPool.pool(vertx, readOptions,  pgPoolOptions)
 }
 
-fun Transaction.runPreparedQuery(query: String, tuple: Tuple, future: Future<Void>) {
+fun Transaction.runPreparedQuery(query: String, tuple: Tuple) : Promise<Void> {
+  val promise = Promise.promise<Void>()
   this.preparedQuery(query, tuple) { ar2 ->
-    //    println("running $query with $tuple")
     if (ar2.failed()) {
-//      println("    failed ${ar2.cause()}" )
-      future.fail(ar2.cause())
+      promise.fail(ar2.cause())
     } else {
-      future.complete()
+      promise.complete()
     }
   }
+  return promise
 }
 
