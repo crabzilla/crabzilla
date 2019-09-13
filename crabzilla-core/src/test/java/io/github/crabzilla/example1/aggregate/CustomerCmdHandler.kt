@@ -2,8 +2,7 @@ package io.github.crabzilla.example1.aggregate
 
 import io.github.crabzilla.example1.*
 import io.github.crabzilla.framework.*
-import io.vertx.core.Future
-import io.vertx.core.Future.*
+import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise
 import io.vertx.core.Promise.failedPromise
 import io.vertx.core.Promise.succeededPromise

@@ -4,7 +4,6 @@ import io.github.crabzilla.framework.Entity
 import io.github.crabzilla.framework.EntityJsonAware
 import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.framework.UnitOfWork.JsonMetadata
-import io.github.crabzilla.internal.CommandController
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler

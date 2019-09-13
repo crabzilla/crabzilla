@@ -5,8 +5,6 @@ import io.github.crabzilla.framework.EntityJsonAware
 import io.github.crabzilla.pgc.readModelPgPool
 import io.vertx.core.AbstractVerticle
 import io.vertx.pgclient.PgPool
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 abstract class WebQueryVerticle : AbstractVerticle() {
 

@@ -1,9 +1,7 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.internal.UnitOfWorkEvents
-import io.vertx.core.AsyncResult
 import io.vertx.core.Future
-import io.vertx.core.Handler
 import io.vertx.core.Promise
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
