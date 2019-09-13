@@ -63,7 +63,7 @@ class PgcUowRepoIT {
 
       writeDb = writeModelPgPool(vertx, config)
       repo = PgcUowRepo(writeDb, customerJson)
-      journal = PgcUowJournal(writeDb, customerJson)
+      journal = PgcUowJournal(vertx, writeDb, customerJson)
 
       writeDb.query("delete from units_of_work") { deleteResult1 ->
         if (deleteResult1.failed()) {

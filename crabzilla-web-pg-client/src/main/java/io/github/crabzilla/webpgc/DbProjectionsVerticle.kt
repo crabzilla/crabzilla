@@ -26,7 +26,7 @@ abstract class DbProjectionsVerticle : AbstractVerticle() {
   override fun start() {
     val implClazz = this::class.java.name
     vertx.eventBus().consumer<String>(implClazz) { msg ->
-      if (log.isTraceEnabled) log.trace("received " + msg.body())
+      if (log.isTraceEnabled) log.trace("$implClazz received " + msg.body())
       msg.reply("$implClazz is already running here: $processId")
     }
   }
@@ -37,12 +37,12 @@ abstract class DbProjectionsVerticle : AbstractVerticle() {
 
   fun addProjector(projectionName: String, projector: PgcEventProjector) {
     log.info("adding projector for $projectionName subscribing on ${EventBusChannels.unitOfWorkChannel}")
-    val uolProjector = PgcUowProjector(readDb, projectionName)
     vertx.eventBus().consumer<String>(EventBusChannels.unitOfWorkChannel) { message ->
       val uowEvents = toUnitOfWorkEvents(JsonObject(message.body()), jsonFunctions)
       if (uowEvents == null) {
         log.error("Cannot send these events to be projected. Check if all entities have a jsonAware.")
       } else {
+        val uolProjector = PgcUowProjector(readDb, projectionName)
         uolProjector.handle(uowEvents, projector).future().setHandler { result ->
           if (result.failed()) { // TODO circuit breaker
             log.error("Projection [$projectionName] failed: " + result.cause().message)

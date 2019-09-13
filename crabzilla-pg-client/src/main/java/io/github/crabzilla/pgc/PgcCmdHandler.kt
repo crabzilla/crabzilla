@@ -1,20 +1,19 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.UnitOfWorkPublisher
 import io.github.crabzilla.framework.*
 import io.github.crabzilla.internal.CommandController
-import io.vertx.core.Handler
 import io.vertx.core.Promise
+import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class PgcCmdHandler<E: Entity>(writeDb: PgPool,
+class PgcCmdHandler<E: Entity>(vertx: Vertx,
+                               writeDb: PgPool,
                                private val entityName: String,
                                private val jsonAware: EntityJsonAware<E>,
-                               cmdAware: EntityCommandAware<E>,
-                               private val uowPublisher: UnitOfWorkPublisher) : EntityComponent<E> {
+                               cmdAware: EntityCommandAware<E>) : EntityComponent<E> {
 
   companion object {
     private val log: Logger = LoggerFactory.getLogger(PgcCmdHandler::class.java)
@@ -22,7 +21,7 @@ class PgcCmdHandler<E: Entity>(writeDb: PgPool,
 
   private val uowRepo =  PgcUowRepo(writeDb, jsonAware)
   private val snapshotRepo = PgcSnapshotRepo(writeDb, entityName, cmdAware, jsonAware)
-  private val uowJournal = PgcUowJournal(writeDb, jsonAware)
+  private val uowJournal = PgcUowJournal(vertx, writeDb, jsonAware)
   private val cmdController = CommandController(cmdAware, snapshotRepo, uowJournal)
 
   override fun entityName(): String {
@@ -56,15 +55,8 @@ class PgcCmdHandler<E: Entity>(writeDb: PgPool,
       cmdController.handle(metadata, command).future().setHandler { cmdHandled ->
         if (cmdHandled.succeeded()) {
           val pair = cmdHandled.result()
-          if (log.isTraceEnabled) log.trace("Command successfully handled: $pair. Will publish events.")
-          uowPublisher.publish(pair.first, pair.second, Handler { event2 ->
-            if (event2.failed()) {
-              log.error("When publishing events. This shouldn't never happen.", event2.cause())
-              promise.fail(event2.cause())
-            } else {
-              promise.complete(pair)
-            }
-          })
+          promise.complete(pair)
+          if (log.isTraceEnabled) log.trace("Command successfully handled: $pair")
         } else {
           log.error("When handling command", cmdHandled.cause())
           promise.fail(cmdHandled.cause())

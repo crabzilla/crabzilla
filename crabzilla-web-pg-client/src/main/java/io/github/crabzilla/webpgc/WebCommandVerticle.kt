@@ -1,7 +1,5 @@
 package io.github.crabzilla.webpgc
 
-import io.github.crabzilla.EventBusUowPublisher
-import io.github.crabzilla.UnitOfWorkPublisher
 import io.github.crabzilla.framework.*
 import io.github.crabzilla.pgc.PgcCmdHandler
 import io.github.crabzilla.pgc.writeModelPgPool
@@ -24,7 +22,6 @@ abstract class WebCommandVerticle : AbstractVerticle() {
 
   val writeDb : PgPool by lazy { writeModelPgPool(vertx, config()) }
   val jsonFunctions: MutableMap<String, EntityJsonAware<out Entity>> = mutableMapOf()
-  val eventsPublisher: UnitOfWorkPublisher by lazy { EventBusUowPublisher(vertx, jsonFunctions) }
   val httpPort : Int by lazy { config().getInteger("WRITE_HTTP_PORT")}
 
   fun <E: Entity> addResourceForEntity(resourceName: String,
@@ -34,7 +31,7 @@ abstract class WebCommandVerticle : AbstractVerticle() {
                                        router: Router) {
     log.info("adding web command handler for entity $entityName on resource $resourceName")
     jsonFunctions[entityName] = jsonAware
-    val cmdHandlerComponent = PgcCmdHandler(writeDb, entityName, jsonAware, cmdAware, eventsPublisher)
+    val cmdHandlerComponent = PgcCmdHandler(vertx, writeDb, entityName, jsonAware, cmdAware)
     WebDeployer(cmdHandlerComponent, resourceName, router).deployWebRoutes()
   }
 

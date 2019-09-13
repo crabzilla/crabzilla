@@ -1,16 +1,20 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.EventBusChannels
 import io.github.crabzilla.framework.Entity
 import io.github.crabzilla.framework.EntityJsonAware
 import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.vertx.core.Promise
+import io.vertx.core.Vertx
+import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
-class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
-                                                             private val jsonFunctions: EntityJsonAware<E>) : UnitOfWorkJournal<E> {
+class PgcUowJournal<E: Entity>(private val vertx: Vertx,
+                               private val pgPool: PgPool,
+                               private val jsonFunctions: EntityJsonAware<E>) : UnitOfWorkJournal<E> {
 
   companion object {
     internal val log = LoggerFactory.getLogger(PgcUowJournal::class.java)
@@ -47,15 +51,24 @@ class PgcUowJournal<E: Entity>(private val pgPool: PgPool,
               tx.preparedQuery(SQL_APPEND_UOW, params2) { event2 ->
                 if (event2.succeeded()) {
                   val insertRows = event2.result().value()
-                  val generated = insertRows.first().getLong(0)
+                  val uowId = insertRows.first().getLong(0)
                   // Commit the transaction
                   tx.commit { event3 ->
                     if (event3.failed()) {
                       log.error("Transaction failed", event3.cause())
                       promise.fail(event3.cause())
                     } else {
-                      log.trace("Transaction succeeded for $generated")
-                      promise.complete(generated)
+                      log.trace("Transaction succeeded for $uowId")
+                      val message = JsonObject()
+                        .put("uowId", uowId)
+                        .put(UnitOfWork.JsonMetadata.ENTITY_NAME, unitOfWork.entityName)
+                        .put(UnitOfWork.JsonMetadata.ENTITY_ID, unitOfWork.entityId)
+                        .put(UnitOfWork.JsonMetadata.VERSION, unitOfWork.version)
+                        .put(UnitOfWork.JsonMetadata.EVENTS, eventsListAsJsonArray)
+                      if (log.isTraceEnabled) log.trace("will publish message $message")
+                      vertx.eventBus().publish(EventBusChannels.unitOfWorkChannel, message.encode())
+                      if (log.isTraceEnabled) log.trace("publish success")
+                      promise.complete(uowId)
                     }
                   }
                 } else {
