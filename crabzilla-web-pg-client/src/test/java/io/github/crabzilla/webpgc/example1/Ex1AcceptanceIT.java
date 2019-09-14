@@ -3,7 +3,6 @@ package io.github.crabzilla.webpgc.example1;
 import io.github.crabzilla.example1.CreateCustomer;
 import io.github.crabzilla.example1.CustomerId;
 import io.github.crabzilla.example1.UnknownCommand;
-import io.github.crabzilla.webpgc.ContentTypes;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
@@ -158,7 +157,6 @@ class Ex1AcceptanceIT {
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
-        .putHeader("accept", ContentTypes.ENTITY_WRITE_MODEL)
         .send(tc.succeeding(response2 -> tc.verify(() -> {
           JsonObject jo = response2.body();
           assertThat(jo.getInteger("version")).isEqualTo(1);
@@ -252,7 +250,6 @@ class Ex1AcceptanceIT {
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
-        .putHeader("accept", ContentTypes.ENTITY_WRITE_MODEL)
         .send(tc.succeeding(response2 -> tc.verify(() -> {
           JsonObject jo = response2.body();
           System.out.println(jo.encodePrettily());

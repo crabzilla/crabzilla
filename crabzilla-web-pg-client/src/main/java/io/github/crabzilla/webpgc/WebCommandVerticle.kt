@@ -101,7 +101,6 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
     router.get(getSnapshot).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
       val accept = it.request().getHeader("accept")
-      if (ContentTypes.ENTITY_WRITE_MODEL == accept) {
         val httpResp = it.response()
         component.getSnapshot(entityId).future().setHandler { event ->
           if (event.failed() || event.result() == null) {
@@ -120,8 +119,6 @@ private class WebDeployer<E: Entity>(private val component: EntityComponent<E>,
             }
           }
         }
-      } else {
-        it.next()
       }
     }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
