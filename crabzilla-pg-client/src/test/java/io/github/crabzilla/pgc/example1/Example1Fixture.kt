@@ -4,7 +4,7 @@ import io.github.crabzilla.example1.*
 import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.example1.aggregate.CustomerCommandAware
 import io.github.crabzilla.example1.aggregate.CustomerJsonAware
-import io.github.crabzilla.framework.EntityComponent
+import io.github.crabzilla.internal.EntityComponent
 import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.pgc.PgcCmdHandler
 import io.vertx.core.Vertx

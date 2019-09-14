@@ -5,7 +5,7 @@ import io.github.crabzilla.example1.CustomerId
 import io.github.crabzilla.example1.UnknownCommand
 import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.framework.CommandMetadata
-import io.github.crabzilla.framework.EntityComponent
+import io.github.crabzilla.internal.EntityComponent
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions

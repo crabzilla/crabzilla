@@ -2,6 +2,7 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.framework.*
 import io.github.crabzilla.internal.CommandController
+import io.github.crabzilla.internal.EntityComponent
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject

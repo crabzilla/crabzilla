@@ -1,5 +1,6 @@
-package io.github.crabzilla.framework
+package io.github.crabzilla.internal
 
+import io.github.crabzilla.framework.*
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 
@@ -20,4 +21,3 @@ interface EntityComponent<E: Entity> {
   fun cmdFromJson(commandName: String, cmdAsJson: JsonObject): Command
 
 }
-

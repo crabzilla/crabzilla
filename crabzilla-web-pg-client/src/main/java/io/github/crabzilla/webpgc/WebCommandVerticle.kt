@@ -1,6 +1,7 @@
 package io.github.crabzilla.webpgc
 
 import io.github.crabzilla.framework.*
+import io.github.crabzilla.internal.EntityComponent
 import io.github.crabzilla.pgc.PgcCmdHandler
 import io.github.crabzilla.pgc.writeModelPgPool
 import io.vertx.core.AbstractVerticle
