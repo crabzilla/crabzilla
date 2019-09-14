@@ -10,14 +10,14 @@ import io.vertx.pgclient.PgPool
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class PgcCmdHandler<E: Entity>(vertx: Vertx,
-                               writeDb: PgPool,
-                               private val entityName: String,
-                               private val jsonAware: EntityJsonAware<E>,
-                               cmdAware: EntityCommandAware<E>) : EntityComponent<E> {
+class PgcEntityComponent<E: Entity>(vertx: Vertx,
+                                    writeDb: PgPool,
+                                    private val entityName: String,
+                                    private val jsonAware: EntityJsonAware<E>,
+                                    cmdAware: EntityCommandAware<E>) : EntityComponent<E> {
 
   companion object {
-    private val log: Logger = LoggerFactory.getLogger(PgcCmdHandler::class.java)
+    private val log: Logger = LoggerFactory.getLogger(PgcEntityComponent::class.java)
   }
 
   private val uowRepo =  PgcUowRepo(writeDb, jsonAware)

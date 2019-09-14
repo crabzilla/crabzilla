@@ -26,7 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PgcCmdHandlerIT {
+class PgcEntityComponentIT {
 
   companion object {
     private lateinit var vertx: Vertx

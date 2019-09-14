@@ -15,6 +15,7 @@ import io.vertx.core.http.HttpServer
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.SLF4JLogDelegateFactory
+import io.vertx.ext.web.RoutingContext
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.ServerSocket
@@ -176,3 +177,15 @@ fun toUnitOfWorkEvents(json: JsonObject, jsonFunctions: Map<String, EntityJsonAw
 
 }
 
+fun errorHandler(paramName: String) : Handler<RoutingContext> {
+  return Handler {
+    WebCommandVerticle.log.error(it.failure().message, it.failure())
+    when (it.failure()) {
+      is NumberFormatException -> it.response().setStatusCode(400).end("path param $paramName must be a number")
+      else -> {
+        it.failure().printStackTrace()
+        it.response().setStatusCode(500).end("server error")
+      }
+    }
+  }
+}

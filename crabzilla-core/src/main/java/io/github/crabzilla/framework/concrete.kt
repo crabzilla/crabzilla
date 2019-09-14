@@ -9,7 +9,7 @@ data class CommandMetadata(val entityId: Int, val commandName: String, val comma
 data class Snapshot<E : Entity>(val state: E, val version: Version)
 
 class StateTransitionsTracker<A : Entity>(originalSnapshot: Snapshot<A>,
-                                                                        private val applyEventsFn: (DomainEvent, A) -> A) {
+                                          private val applyEventsFn: (DomainEvent, A) -> A) {
 
   val appliedEvents = mutableListOf<DomainEvent>()
   var currentState: A = originalSnapshot.state
