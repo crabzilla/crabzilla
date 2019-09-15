@@ -30,10 +30,10 @@ interface EntityCommandAware<E: Entity> {
 }
 
 abstract class EntityCommandHandler<E: Entity>(private val entityName: String,
-                                                                             val cmdMetadata: CommandMetadata,
-                                                                             val command: Command,
-                                                                             val snapshot: Snapshot<E>,
-                                                                             val stateFn: (DomainEvent, E) -> E) {
+                                               val cmdMetadata: CommandMetadata,
+                                               val command: Command,
+                                               val snapshot: Snapshot<E>,
+                                               val stateFn: (DomainEvent, E) -> E) {
 
   private val uowPromise: Promise<UnitOfWork> = Promise.promise()
 

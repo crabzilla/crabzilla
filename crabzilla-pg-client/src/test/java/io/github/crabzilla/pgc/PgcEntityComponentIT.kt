@@ -6,6 +6,7 @@ import io.github.crabzilla.example1.UnknownCommand
 import io.github.crabzilla.example1.aggregate.Customer
 import io.github.crabzilla.framework.CommandMetadata
 import io.github.crabzilla.internal.EntityComponent
+import io.github.crabzilla.pgc.example1.Example1Fixture.createActivateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
@@ -127,6 +128,25 @@ class PgcEntityComponentIT {
       tc.verify { assertThat(event.succeeded()).isFalse() }
       tc.verify { assertThat(event.cause().message).isEqualTo("unknown is a unknown command") }
       tc.completeNow()
+    }
+  }
+
+  //createActivateCmd1
+
+  @Test
+  @DisplayName("given a valid composed command it will be SUCCESS")
+  fun a4(tc: VertxTestContext) {
+    val customerId = CustomerId(1)
+    val commandMetadata = CommandMetadata(customerId.value, "create")
+    val command = createActivateCmd1
+    customerComponent.handleCommand(commandMetadata, command).future().setHandler { event ->
+      if (event.succeeded()) {
+        val result = event.result()
+        tc.verify { assertThat(result.first.events.size).isEqualTo(2) }
+        tc.completeNow()
+      } else {
+        tc.failNow(event.cause())
+      }
     }
   }
 
