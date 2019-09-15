@@ -13,16 +13,16 @@ object Example1Fixture {
 
   const val CUSTOMER_ENTITY = "customer"
 
-  val customerId1 = CustomerId(1)
+  const val customerId1 = 1
 
   val createCmd1 = CreateCustomer("customer1")
   val created1 = CustomerCreated(customerId1, "customer1")
-  val createdUow1 = UnitOfWork(CUSTOMER_ENTITY, customerId1.value, UUID.randomUUID(),
+  val createdUow1 = UnitOfWork(CUSTOMER_ENTITY, customerId1, UUID.randomUUID(),
     "create", createCmd1, 1, listOf(Pair("CustomerCreated", created1)))
 
   val activateCmd1 = ActivateCustomer("I want it")
   val activated1 = CustomerActivated("a good reason", Instant.now())
-  val activatedUow1 = UnitOfWork(CUSTOMER_ENTITY, customerId1.value, UUID.randomUUID(),
+  val activatedUow1 = UnitOfWork(CUSTOMER_ENTITY, customerId1, UUID.randomUUID(),
     "activate", activateCmd1, 2, listOf(Pair("CustomerActivated", activated1)))
 
   val createActivateCmd1 = CreateActivateCustomer("customer1", "bcz I can")

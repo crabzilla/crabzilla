@@ -17,7 +17,7 @@ class UnitOfWorkTest {
     assertThrows(RuntimeException::class.java, {
       UnitOfWork("customer", 1, UUID.randomUUID(), "create",
         CreateCustomer("cust#1"), 0,
-        listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(CustomerId(1), "cust#1"))))
+        listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(1, "cust#1"))))
     }, "version should be >= 1")
   }
 
@@ -26,7 +26,7 @@ class UnitOfWorkTest {
     val command = CreateCustomer("cust#1")
     UnitOfWork("customer", 1, UUID.randomUUID(), "create",
       command, 1,
-      listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(CustomerId(1), "cust#1"))))
+      listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(1, "cust#1"))))
   }
 
   @Test
@@ -34,7 +34,7 @@ class UnitOfWorkTest {
     assertThrows(RuntimeException::class.java, {
       UnitOfWork("customer", 1, UUID.randomUUID(), "create",
         CreateCustomer("cust#1"), -1,
-        listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(CustomerId(1), "cust#1"))))
+        listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(1, "cust#1"))))
     }, "version should be >= 1")
   }
 
@@ -43,7 +43,7 @@ class UnitOfWorkTest {
     val command = CreateCustomer("cust#1")
     val uow = UnitOfWork("customer", 1, UUID.randomUUID(), "create",
       command, 1,
-      listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(CustomerId(1), "cust#1"))))
+      listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(1, "cust#1"))))
     assertThat(uow.entityId).isEqualTo(uow.entityId)
   }
 

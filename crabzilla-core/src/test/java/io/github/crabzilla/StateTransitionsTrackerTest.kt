@@ -58,7 +58,7 @@ internal class StateTransitionsTrackerTest {
     @DisplayName("when adding a create customer event")
     internal inner class WhenAddingNewEvent {
 
-      val id = CustomerId(1)
+      val id: CustomerId = 1
       private val customerCreated = CustomerCreated(id, "customer-1")
       private val expectedCustomer = Customer(id, "customer-1", false, null)
 
@@ -115,7 +115,7 @@ internal class StateTransitionsTrackerTest {
 
     val isOk = "is ok"
 
-    val id = CustomerId(1)
+    val id: CustomerId = 1
     private val customerCreated = CustomerCreated(id, "customer-1")
     private val customerActivated = CustomerActivated(isOk, Instant.now())
     private val expectedCustomer = Customer(id, "customer-1", true, isOk)

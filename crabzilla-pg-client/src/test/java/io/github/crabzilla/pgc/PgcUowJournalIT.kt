@@ -179,7 +179,7 @@ class PgcUowJournalIT {
   @DisplayName("cannot append version 3 after version 1")
   fun s22(tc: VertxTestContext) {
 
-    val createdUow3 = UnitOfWork(CUSTOMER_ENTITY, customerId1.value, UUID.randomUUID(),
+    val createdUow3 = UnitOfWork(CUSTOMER_ENTITY, customerId1, UUID.randomUUID(),
       "create", Example1Fixture.createCmd1, 3, listOf(Pair("CustomerCreated", created1)))
 
     // append uow1

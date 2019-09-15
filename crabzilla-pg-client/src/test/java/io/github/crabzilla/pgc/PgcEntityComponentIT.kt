@@ -88,9 +88,9 @@ class PgcEntityComponentIT {
   @DisplayName("given a valid command it will be SUCCESS")
   fun a1(tc: VertxTestContext) {
 
-    val customerId = CustomerId(1)
+    val customerId = 1
     val command = CreateCustomer("customer1")
-    val commandMetadata = CommandMetadata(customerId.value, "create")
+    val commandMetadata = CommandMetadata(customerId, "create")
 
     customerComponent.handleCommand(commandMetadata, command).future().setHandler { event ->
       if (event.succeeded()) {
@@ -106,9 +106,9 @@ class PgcEntityComponentIT {
   @Test
   @DisplayName("given an invalid command it will be VALIDATION_ERROR")
   fun a2(tc: VertxTestContext) {
-    val customerId = CustomerId(1)
+    val customerId = 1
     val command = CreateCustomer("a bad name")
-    val commandMetadata = CommandMetadata(customerId.value, "create")
+    val commandMetadata = CommandMetadata(customerId, "create")
 
     customerComponent.handleCommand(commandMetadata, command).future().setHandler { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
@@ -120,8 +120,8 @@ class PgcEntityComponentIT {
   @Test
   @DisplayName("given an execution error it will be HANDLING_ERROR")
   fun a3(tc: VertxTestContext) {
-    val customerId = CustomerId(1)
-    val commandMetadata = CommandMetadata(customerId.value, "unknown")
+    val customerId = 1
+    val commandMetadata = CommandMetadata(customerId, "unknown")
     val command = UnknownCommand(customerId)
 
     customerComponent.handleCommand(commandMetadata, command).future().setHandler { event ->
@@ -136,8 +136,8 @@ class PgcEntityComponentIT {
   @Test
   @DisplayName("given a valid composed command it will be SUCCESS")
   fun a4(tc: VertxTestContext) {
-    val customerId = CustomerId(1)
-    val commandMetadata = CommandMetadata(customerId.value, "create")
+    val customerId = 1
+    val commandMetadata = CommandMetadata(customerId, "create")
     val command = createActivateCmd1
     customerComponent.handleCommand(commandMetadata, command).future().setHandler { event ->
       if (event.succeeded()) {

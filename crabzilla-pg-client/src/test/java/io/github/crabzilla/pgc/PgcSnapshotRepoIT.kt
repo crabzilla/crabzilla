@@ -96,7 +96,7 @@ class PgcSnapshotRepoIT {
   @DisplayName("given none snapshot or event, it can retrieve correct snapshot")
   fun a0(tc: VertxTestContext) {
 
-      repo.retrieve(customerId1.value).future().setHandler { event ->
+      repo.retrieve(customerId1).future().setHandler { event ->
         if (event.failed()) {
           event.cause().printStackTrace()
           tc.failNow(event.cause())
@@ -119,7 +119,7 @@ class PgcSnapshotRepoIT {
       "create",
       customerJson.cmdToJson(createCmd1),
       CUSTOMER_ENTITY,
-      customerId1.value,
+      customerId1,
       1)
 
     writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { event1 ->
@@ -130,7 +130,7 @@ class PgcSnapshotRepoIT {
       val uowId = event1.result().first().getLong(0)
       tc.verify { assertThat(uowId).isGreaterThan(0) }
 
-      repo.retrieve(customerId1.value).future().setHandler { event2 ->
+      repo.retrieve(customerId1).future().setHandler { event2 ->
         if (event2.failed()) {
           event2.cause().printStackTrace()
           tc.failNow(event2.cause())
@@ -157,7 +157,7 @@ class PgcSnapshotRepoIT {
       "create",
       customerJson.cmdToJson(createCmd1),
       CUSTOMER_ENTITY,
-      customerId1.value,
+      customerId1,
       1)
 
     writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
@@ -173,7 +173,7 @@ class PgcSnapshotRepoIT {
         "activate",
         customerJson.cmdToJson(activateCmd1),
         CUSTOMER_ENTITY,
-        customerId1.value,
+        customerId1,
         2)
 
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
@@ -184,7 +184,7 @@ class PgcSnapshotRepoIT {
         val uowId = ar1.result().first().getLong(0)
         tc.verify { assertThat(uowId).isGreaterThan(0) }
 
-        repo.retrieve(customerId1.value).future().setHandler { event ->
+        repo.retrieve(customerId1).future().setHandler { event ->
           if (event.failed()) {
             tc.failNow(event.cause())
           }

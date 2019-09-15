@@ -16,7 +16,7 @@ class CustomerCmdHandler(cmdMetadata: CommandMetadata,
     val customer = snapshot.state
     val eventsPromise: Promise<List<DomainEvent>> =
       when (command) {
-        is CreateCustomer -> customer.create(CustomerId(cmdMetadata.entityId), command.name)
+        is CreateCustomer -> customer.create(cmdMetadata.entityId, command.name)
         is ActivateCustomer -> succeededPromise(customer.activate(command.reason))
         is DeactivateCustomer -> customer.deactivate(command.reason)
         is CreateActivateCustomer -> composed(command)
@@ -28,7 +28,7 @@ class CustomerCmdHandler(cmdMetadata: CommandMetadata,
   private fun composed(command: CreateActivateCustomer) : Promise<List<DomainEvent>> {
     val promise = Promise.promise<List<DomainEvent>>()
     val tracker = StateTransitionsTracker(snapshot, stateFn)
-    tracker.currentState.create(CustomerId(cmdMetadata.entityId), command.name).future()
+    tracker.currentState.create(cmdMetadata.entityId, command.name).future()
       .compose { v ->
         tracker.applyEvents(v)
         succeededFuture(tracker.currentState.activate("I can"))

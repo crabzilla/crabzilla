@@ -96,7 +96,7 @@ class PgcUowRepoIT {
       "create",
       customerJson.cmdToJson(createCmd1),
       CUSTOMER_ENTITY,
-      customerId1.value,
+      customerId1,
       1)
 
     writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar1 ->
@@ -133,7 +133,7 @@ class PgcUowRepoIT {
       "create",
       customerJson.cmdToJson(createCmd1),
       CUSTOMER_ENTITY,
-      customerId1.value,
+      customerId1,
       1)
 
     writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar1 ->
@@ -180,7 +180,7 @@ class PgcUowRepoIT {
         "create",
         customerJson.cmdToJson(createCmd1),
         CUSTOMER_ENTITY,
-        customerId1.value,
+        customerId1,
         1)
 
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar ->
@@ -196,7 +196,7 @@ class PgcUowRepoIT {
           tc.verify { assertThat(snapshotData.size).isEqualTo(1) }
           val (uowId, targetId, events) = snapshotData[0]
           tc.verify { assertThat(uowId).isGreaterThan(0) }
-          tc.verify { assertThat(targetId).isEqualTo(customerId1.value) }
+          tc.verify { assertThat(targetId).isEqualTo(customerId1) }
           tc.verify { assertThat(events).isEqualTo(arrayListOf(Pair("CustomerCreated", created1))) }
           tc.completeNow()
         }
@@ -213,7 +213,7 @@ class PgcUowRepoIT {
         "create",
         customerJson.cmdToJson(createCmd1),
         CUSTOMER_ENTITY,
-        customerId1.value,
+        customerId1,
         1)
 
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
@@ -229,7 +229,7 @@ class PgcUowRepoIT {
           "activate",
           customerJson.cmdToJson(activateCmd1),
           CUSTOMER_ENTITY,
-          customerId1.value,
+          customerId1,
           2)
 
         writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
@@ -243,11 +243,11 @@ class PgcUowRepoIT {
             tc.verify { assertThat(snapshotData.size).isEqualTo(2) }
             val (uowId1, targetId1, events1) = snapshotData[0]
             tc.verify { assertThat(uowId1).isGreaterThan(0) }
-            tc.verify { assertThat(targetId1).isEqualTo(customerId1.value) }
+            tc.verify { assertThat(targetId1).isEqualTo(customerId1) }
             tc.verify { assertThat(events1).isEqualTo(arrayListOf(Pair("CustomerCreated", created1))) }
             val (uowId2, targetId2, events2) = snapshotData[1]
             tc.verify { assertThat(uowId2).isEqualTo(uowId1.inc()) }
-            tc.verify { assertThat(targetId2).isEqualTo(customerId1.value) }
+            tc.verify { assertThat(targetId2).isEqualTo(customerId1) }
             tc.verify { assertThat(events2).isEqualTo(arrayListOf(Pair("CustomerActivated", activated1))) }
             tc.completeNow()
           }
@@ -266,7 +266,7 @@ class PgcUowRepoIT {
         "create",
         customerJson.cmdToJson(createCmd1),
         CUSTOMER_ENTITY,
-        customerId1.value,
+        customerId1,
         1)
 
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
@@ -282,7 +282,7 @@ class PgcUowRepoIT {
           "activate",
           customerJson.cmdToJson(activateCmd1),
           CUSTOMER_ENTITY,
-          customerId1.value,
+          customerId1,
           2)
 
         writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
@@ -290,7 +290,7 @@ class PgcUowRepoIT {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
           }
-          val selectFuture1 = repo.getAllUowByEntityId(customerId1.value).future()
+          val selectFuture1 = repo.getAllUowByEntityId(customerId1).future()
           selectFuture1.setHandler { selectAsyncResult ->
             val uowList = selectAsyncResult.result()
             println(uowList)
@@ -316,7 +316,7 @@ class PgcUowRepoIT {
         "create",
         customerJson.cmdToJson(createCmd1),
         CUSTOMER_ENTITY,
-        customerId1.value,
+        customerId1,
         1)
 
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
@@ -331,7 +331,7 @@ class PgcUowRepoIT {
           "activate",
           customerJson.cmdToJson(activateCmd1),
           CUSTOMER_ENTITY,
-          customerId1.value,
+          customerId1,
           2)
         writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
           if (ar2.failed()) {
@@ -345,7 +345,7 @@ class PgcUowRepoIT {
             tc.verify { assertThat(snapshotData.size).isEqualTo(1) }
             val (uowId, targetId, events) = snapshotData[0]
             tc.verify { assertThat(uowId).isEqualTo(uowId2) }
-            tc.verify { assertThat(targetId).isEqualTo(customerId1.value) }
+            tc.verify { assertThat(targetId).isEqualTo(customerId1) }
             tc.verify { assertThat(events).isEqualTo(arrayListOf(Pair("CustomerActivated", activated1))) }
             tc.completeNow()
           }
@@ -369,7 +369,7 @@ class PgcUowRepoIT {
         "create",
         customerJson.cmdToJson(createCmd1),
         CUSTOMER_ENTITY,
-        customerId1.value,
+        customerId1,
         1)
 
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar ->
@@ -379,7 +379,7 @@ class PgcUowRepoIT {
         }
         val uowId = ar.result().first().getLong(0)
         tc.verify { assertThat(uowId).isGreaterThan(0) }
-        val selectFuture = repo.selectAfterVersion(customerId1.value, 0, CUSTOMER_ENTITY).future()
+        val selectFuture = repo.selectAfterVersion(customerId1, 0, CUSTOMER_ENTITY).future()
         selectFuture.setHandler { selectAsyncResult ->
           val snapshotData = selectAsyncResult.result()
           tc.verify { assertThat(1).isEqualTo(snapshotData.untilVersion) }
@@ -400,7 +400,7 @@ class PgcUowRepoIT {
         "create",
         customerJson.cmdToJson(createCmd1),
         CUSTOMER_ENTITY,
-        customerId1.value,
+        customerId1,
         1)
 
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
@@ -416,7 +416,7 @@ class PgcUowRepoIT {
           "activate",
           customerJson.cmdToJson(activateCmd1),
           CUSTOMER_ENTITY,
-          customerId1.value,
+          customerId1,
           2)
 
         writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
@@ -424,7 +424,7 @@ class PgcUowRepoIT {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
           }
-          val selectFuture1 = repo.selectAfterVersion(customerId1.value, 0, CUSTOMER_ENTITY).future()
+          val selectFuture1 = repo.selectAfterVersion(customerId1, 0, CUSTOMER_ENTITY).future()
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(2).isEqualTo(snapshotData.untilVersion) }
@@ -447,7 +447,7 @@ class PgcUowRepoIT {
         "create",
         customerJson.cmdToJson(createCmd1),
         CUSTOMER_ENTITY,
-        customerId1.value,
+        customerId1,
         1)
 
       writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
@@ -463,7 +463,7 @@ class PgcUowRepoIT {
           "activate",
           customerJson.cmdToJson(activateCmd1),
           CUSTOMER_ENTITY,
-          customerId1.value,
+          customerId1,
           2)
         writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
           if (ar2.failed()) {
@@ -472,7 +472,7 @@ class PgcUowRepoIT {
             return@preparedQuery
           }
           val uowId2 = ar2.result().first().getLong("uow_id")
-          val selectFuture1 = repo.selectAfterVersion(customerId1.value, 1, CUSTOMER_ENTITY).future()
+          val selectFuture1 = repo.selectAfterVersion(customerId1, 1, CUSTOMER_ENTITY).future()
           selectFuture1.setHandler { selectAsyncResult ->
             val snapshotData = selectAsyncResult.result()
             tc.verify { assertThat(2).isEqualTo(snapshotData.untilVersion) }

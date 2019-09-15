@@ -1,7 +1,6 @@
 package io.github.crabzilla.webpgc.example1;
 
 import io.github.crabzilla.example1.customer.CreateCustomer;
-import io.github.crabzilla.example1.customer.CustomerId;
 import io.github.crabzilla.example1.customer.UnknownCommand;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.DeploymentOptions;
@@ -323,7 +322,7 @@ class Ex1AcceptanceIT {
   @Test
   @DisplayName("When sending an UnknownCommand")
   void a5(VertxTestContext tc) {
-    UnknownCommand cmd = new UnknownCommand(new CustomerId(nextInt));
+    UnknownCommand cmd = new UnknownCommand(nextInt);
     JsonObject jo = JsonObject.mapFrom(cmd);
     client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + nextInt + "/unknown")
       .as(BodyCodec.none())

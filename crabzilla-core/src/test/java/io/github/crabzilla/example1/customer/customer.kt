@@ -4,7 +4,7 @@ import io.github.crabzilla.framework.Command
 import io.github.crabzilla.framework.DomainEvent
 import java.time.Instant
 
-data class CustomerId(val value: Int)
+typealias CustomerId = Int
 
 // events
 
