@@ -1,6 +1,5 @@
-package io.github.crabzilla.example1.aggregate
+package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.example1.*
 import io.github.crabzilla.framework.Command
 import io.github.crabzilla.framework.DomainEvent
 import io.github.crabzilla.framework.EntityJsonAware

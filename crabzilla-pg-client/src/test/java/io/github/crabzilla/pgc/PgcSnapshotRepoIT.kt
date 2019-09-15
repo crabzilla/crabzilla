@@ -1,8 +1,8 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.example1.aggregate.Customer
-import io.github.crabzilla.example1.aggregate.CustomerCommandAware
-import io.github.crabzilla.example1.aggregate.CustomerJsonAware
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerCommandAware
+import io.github.crabzilla.example1.customer.CustomerJsonAware
 import io.github.crabzilla.framework.Snapshot
 import io.github.crabzilla.internal.SnapshotRepository
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW

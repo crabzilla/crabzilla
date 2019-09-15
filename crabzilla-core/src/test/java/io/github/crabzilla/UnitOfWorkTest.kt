@@ -1,8 +1,8 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.example1.CreateCustomer
-import io.github.crabzilla.example1.CustomerCreated
-import io.github.crabzilla.example1.CustomerId
+import io.github.crabzilla.example1.customer.CreateCustomer
+import io.github.crabzilla.example1.customer.CustomerCreated
+import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.framework.DomainEvent
 import io.github.crabzilla.framework.UnitOfWork
 import org.assertj.core.api.Assertions.assertThat

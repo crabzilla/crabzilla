@@ -1,9 +1,5 @@
-package io.github.crabzilla.example1.aggregate
+package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.example1.CreateCustomer
-import io.github.crabzilla.example1.CustomerActivated
-import io.github.crabzilla.example1.CustomerCreated
-import io.github.crabzilla.example1.CustomerDeactivated
 import io.github.crabzilla.framework.*
 
 class CustomerCommandAware : EntityCommandAware<Customer> {

@@ -1,8 +1,8 @@
 package io.github.crabzilla.webpgc.example1;
 
-import io.github.crabzilla.example1.CreateCustomer;
-import io.github.crabzilla.example1.CustomerId;
-import io.github.crabzilla.example1.UnknownCommand;
+import io.github.crabzilla.example1.customer.CreateCustomer;
+import io.github.crabzilla.example1.customer.CustomerId;
+import io.github.crabzilla.example1.customer.UnknownCommand;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;

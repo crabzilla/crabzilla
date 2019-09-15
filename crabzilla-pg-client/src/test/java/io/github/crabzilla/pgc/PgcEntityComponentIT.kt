@@ -1,9 +1,9 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.example1.CreateCustomer
-import io.github.crabzilla.example1.CustomerId
-import io.github.crabzilla.example1.UnknownCommand
-import io.github.crabzilla.example1.aggregate.Customer
+import io.github.crabzilla.example1.customer.CreateCustomer
+import io.github.crabzilla.example1.customer.CustomerId
+import io.github.crabzilla.example1.customer.UnknownCommand
+import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.framework.CommandMetadata
 import io.github.crabzilla.internal.EntityComponent
 import io.github.crabzilla.pgc.example1.Example1Fixture.createActivateCmd1
