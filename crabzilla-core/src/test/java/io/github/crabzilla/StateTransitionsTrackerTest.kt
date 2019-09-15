@@ -1,10 +1,6 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.example1.customer.CustomerActivated
-import io.github.crabzilla.example1.customer.CustomerCreated
-import io.github.crabzilla.example1.customer.CustomerId
-import io.github.crabzilla.example1.customer.Customer
-import io.github.crabzilla.example1.customer.CustomerCommandAware
+import io.github.crabzilla.example1.customer.*
 import io.github.crabzilla.framework.Snapshot
 import io.github.crabzilla.framework.StateTransitionsTracker
 import org.assertj.core.api.Assertions.assertThat

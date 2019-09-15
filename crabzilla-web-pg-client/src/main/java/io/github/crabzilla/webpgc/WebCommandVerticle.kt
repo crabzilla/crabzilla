@@ -1,12 +1,12 @@
 package io.github.crabzilla.webpgc
 
-import io.github.crabzilla.framework.*
+import io.github.crabzilla.framework.Entity
+import io.github.crabzilla.framework.EntityCommandAware
+import io.github.crabzilla.framework.EntityJsonAware
 import io.github.crabzilla.pgc.PgcEntityComponent
 import io.github.crabzilla.pgc.writeModelPgPool
 import io.vertx.core.AbstractVerticle
-import io.vertx.core.Handler
 import io.vertx.ext.web.Router
-import io.vertx.ext.web.RoutingContext
 import io.vertx.pgclient.PgPool
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
