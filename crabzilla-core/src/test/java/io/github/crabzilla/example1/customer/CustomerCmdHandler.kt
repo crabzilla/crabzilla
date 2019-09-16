@@ -28,18 +28,18 @@ class CustomerCmdHandler(cmdMetadata: CommandMetadata,
   private fun composed(command: CreateActivateCustomer) : Promise<List<DomainEvent>> {
     val promise = Promise.promise<List<DomainEvent>>()
     val tracker = StateTransitionsTracker(snapshot, stateFn)
-    tracker.currentState.create(cmdMetadata.entityId, command.name).future()
-      .compose { v ->
-        tracker.applyEvents(v)
-        succeededFuture(tracker.currentState.activate("I can"))
+    tracker.currentState
+      .create(cmdMetadata.entityId, command.name)
+      .future()
+      .compose { eventsList ->
+        tracker.applyEvents(eventsList)
+        succeededFuture(tracker.currentState.activate(command.reason))
       }
-      .compose { v ->
-        tracker.applyEvents(v)
-        succeededFuture(tracker.appliedEvents)
+      .compose { eventsList ->
+        tracker.applyEvents(eventsList)
+        promise.complete(tracker.appliedEvents)
+        promise.future()
       }
-      .compose({ eventsList ->
-        promise.complete(eventsList)
-      }, promise.future())
     return promise
   }
 
