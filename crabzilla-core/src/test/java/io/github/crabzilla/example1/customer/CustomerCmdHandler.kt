@@ -3,8 +3,6 @@ package io.github.crabzilla.example1.customer
 import io.github.crabzilla.framework.*
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise
-import io.vertx.core.Promise.failedPromise
-import io.vertx.core.Promise.succeededPromise
 
 class CustomerCmdHandler(cmdMetadata: CommandMetadata,
                          command: Command,

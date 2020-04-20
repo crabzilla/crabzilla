@@ -45,7 +45,7 @@ class Ex1WebQueryVerticle : WebQueryVerticle() {
     println("sql: $sql")
     val id = rc.request().getParam("id").toInt()
     println("id: $id")
-    readDb.preparedQuery(sql, Tuple.of(id)) { event ->
+    readDb.preparedQuery(sql).execute(Tuple.of(id)) { event ->
       if (event.failed()) {
         rc.response()
           .putHeader("Content-type", "application/json")

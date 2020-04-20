@@ -46,16 +46,17 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
     val params = Tuple.of(cmdId)
 
-    pgPool.preparedQuery(SQL_SELECT_UOW_BY_CMD_ID, params) { ar ->
+    pgPool.preparedQuery(SQL_SELECT_UOW_BY_CMD_ID)
+      .execute(params) { ar ->
       if (ar.failed()) {
         promise.fail(ar.cause())
-        return@preparedQuery
+        return@execute
       }
 
       val rows = ar.result()
       if (rows.size() == 0) {
         promise.complete(null)
-        return@preparedQuery
+        return@execute
       }
 
       val row = rows.first()
@@ -66,7 +67,7 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
       if (command == null) {
         promise.fail("error when getting command $commandName from json ")
-        return@preparedQuery
+        return@execute
       }
 
       val jsonArray = row.get(JsonArray::class.java, 1)
@@ -95,16 +96,17 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
     val promise =  Promise.promise<UnitOfWork>()
     val params = Tuple.of(uowId)
 
-    pgPool.preparedQuery(SQL_SELECT_UOW_BY_UOW_ID, params) { ar ->
+    pgPool.preparedQuery(SQL_SELECT_UOW_BY_UOW_ID)
+      .execute(params) { ar ->
       if (ar.failed()) {
         promise.fail(ar.cause())
-        return@preparedQuery
+        return@execute
       }
 
       val rows = ar.result()
       if (rows.size() == 0) {
         promise.complete(null)
-        return@preparedQuery
+        return@execute
       }
 
       val row = rows.first()
@@ -114,7 +116,7 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
       if (command == null) {
         promise.fail("error when getting command $commandName from json ")
-        return@preparedQuery
+        return@execute
       }
 
       val jsonArray = row.get(JsonArray::class.java, 1)
@@ -141,10 +143,11 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
     val promise = Promise.promise<List<UnitOfWork>>()
     val params = Tuple.of(id)
 
-    pgPool.preparedQuery(SQL_SELECT_UOW_BY_ENTITY_ID, params) { ar ->
+    pgPool.preparedQuery(SQL_SELECT_UOW_BY_ENTITY_ID)
+      .execute(params) { ar ->
       if (ar.failed()) {
         promise.fail(ar.cause())
-        return@preparedQuery
+        return@execute
       }
 
       val result = ArrayList<UnitOfWork>()
@@ -160,7 +163,7 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
         if (command == null) {
           promise.fail("error when getting command $commandName from json ")
-          return@preparedQuery
+          return@execute
         }
 
         val jsonArray = row.get(JsonArray::class.java, 1)
@@ -253,15 +256,16 @@ internal class PgcUowRepo<E: Entity>(private val pgPool: PgPool, private val jso
 
     val list = ArrayList<UnitOfWorkEvents>()
 
-    pgPool.preparedQuery(selectAfterUowIdSql, Tuple.of(uowId)) { ar ->
+    pgPool.preparedQuery(selectAfterUowIdSql)
+      .execute(Tuple.of(uowId)) { ar ->
       if (ar.failed()) {
         promise.fail(ar.cause().message)
-        return@preparedQuery
+        return@execute
       }
       val rows = ar.result()
       if (rows.size() == 0) {
         promise.complete(list)
-        return@preparedQuery
+        return@execute
       }
       for (row in rows) {
         val uowSeq = row.getLong("uow_id")

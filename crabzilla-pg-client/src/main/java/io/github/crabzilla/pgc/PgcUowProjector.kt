@@ -1,5 +1,6 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.framework.failedPromise
 import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.vertx.core.Future
 import io.vertx.core.Promise
@@ -19,7 +20,7 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
   fun handle(uowEvents: UnitOfWorkEvents, projector: PgcEventProjector): Promise<Void> {
 
     if (uowEvents.events.size > NUMBER_OF_FUTURES) {
-      return Promise.failedPromise("only $NUMBER_OF_FUTURES events can be projected per transaction")
+      return failedPromise("only $NUMBER_OF_FUTURES events can be projected per transaction")
     }
 
     val promise = Promise.promise<Void>()
@@ -48,10 +49,11 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
 
         future.setHandler { event2 ->
           if (event2.succeeded()) {
-            tx.preparedQuery(SQL_UPDATE_PROJECTIONS, Tuple.of(name, uowEvents.uowId)) { event3 ->
+            tx.preparedQuery(SQL_UPDATE_PROJECTIONS)
+              .execute(Tuple.of(name, uowEvents.uowId)) { event3 ->
               if (event3.failed()) {
                 promise.fail(event3.cause())
-                return@preparedQuery
+                return@execute
               }
               // Commit the transaction
               tx.commit { event4 ->

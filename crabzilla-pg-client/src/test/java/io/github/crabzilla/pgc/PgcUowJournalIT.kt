@@ -69,17 +69,17 @@ class PgcUowJournalIT {
       repo = PgcUowRepo(writeDb, customerJson)
       journal = PgcUowJournal(vertx, writeDb, customerJson)
 
-      writeDb.query("delete from units_of_work") { deleteResult1 ->
+      writeDb.query("delete from units_of_work").execute { deleteResult1 ->
         if (deleteResult1.failed()) {
           deleteResult1.cause().printStackTrace()
           tc.failNow(deleteResult1.cause())
-          return@query
+          return@execute
         }
-        writeDb.query("delete from customer_snapshots") { deleteResult2 ->
+        writeDb.query("delete from customer_snapshots").execute { deleteResult2 ->
           if (deleteResult2.failed()) {
             deleteResult2.cause().printStackTrace()
             tc.failNow(deleteResult2.cause())
-            return@query
+            return@execute
           }
           println("deleted both read and write model tables")
           tc.completeNow()

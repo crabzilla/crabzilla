@@ -80,12 +80,12 @@ class PgcUowProjectorIT {
 
       readDb = readModelPgPool(vertx, config)
       uowProjector = PgcUowProjector(readDb, "customer summary")
-      readDb.query("DELETE FROM customer_summary") { deleted ->
+      readDb.query("DELETE FROM customer_summary").execute { deleted ->
 
         if (deleted.failed()) {
           log.error("delete ", deleted.cause())
           tc.failNow(deleted.cause())
-          return@query
+          return@execute
         }
 
         tc.completeNow()
@@ -108,10 +108,10 @@ class PgcUowProjectorIT {
         tc.failNow(event1.cause())
         return@Handler
       }
-      readDb.preparedQuery("SELECT * FROM customer_summary") { event2 ->
+      readDb.preparedQuery("SELECT * FROM customer_summary").execute { event2 ->
         if (event2.failed()) {
           tc.failNow(event2.cause())
-          return@preparedQuery
+          return@execute
         }
         val result = event2.result()
         tc.verify { assertThat(1).isEqualTo(result.size()) }
@@ -135,10 +135,10 @@ class PgcUowProjectorIT {
         tc.failNow(event1.cause())
         return@Handler
       }
-      readDb.preparedQuery("SELECT * FROM customer_summary") { event2 ->
+      readDb.preparedQuery("SELECT * FROM customer_summary").execute { event2 ->
         if (event2.failed()) {
           tc.failNow(event2.cause())
-          return@preparedQuery
+          return@execute
         }
         val result = event2.result()
         tc.verify { assertThat(1).isEqualTo(result.size()) }
@@ -163,11 +163,11 @@ class PgcUowProjectorIT {
         tc.failNow(event1.cause())
         return@Handler
       }
-      readDb.preparedQuery("SELECT * FROM customer_summary") { event2 ->
+      readDb.preparedQuery("SELECT * FROM customer_summary").execute { event2 ->
         if (event2.failed()) {
           log.error("select", event2.cause())
           tc.failNow(event2.cause())
-          return@preparedQuery
+          return@execute
         }
         val result = event2.result()
         tc.verify { assertThat(1).isEqualTo(result.size()) }
@@ -191,11 +191,11 @@ class PgcUowProjectorIT {
         tc.failNow(event1.cause())
         return@Handler
       }
-      readDb.preparedQuery("SELECT * FROM customer_summary") { event2 ->
+      readDb.preparedQuery("SELECT * FROM customer_summary").execute{ event2 ->
         if (event2.failed()) {
           log.error("select", event2.cause())
           tc.failNow(event2.cause())
-          return@preparedQuery
+          return@execute
         }
         val result = event2.result()
         tc.verify { assertThat(1).isEqualTo(result.size()) }
@@ -220,11 +220,11 @@ class PgcUowProjectorIT {
         tc.failNow(event1.cause())
         return@Handler
       }
-      readDb.preparedQuery("SELECT * FROM customer_summary") { event2 ->
+      readDb.preparedQuery("SELECT * FROM customer_summary").execute { event2 ->
         if (event2.failed()) {
           log.error("select", event2.cause())
           tc.failNow(event2.cause())
-          return@preparedQuery
+          return@execute
         }
         val result = event2.result()
         tc.verify { assertThat(1).isEqualTo(result.size()) }
@@ -249,11 +249,11 @@ class PgcUowProjectorIT {
         tc.failNow(event1.cause())
         return@Handler
       }
-      readDb.preparedQuery("SELECT * FROM customer_summary") { event2 ->
+      readDb.preparedQuery("SELECT * FROM customer_summary").execute { event2 ->
         if (event2.failed()) {
           log.error("select", event2.cause())
           tc.failNow(event2.cause())
-          return@preparedQuery
+          return@execute
         }
         val result = event2.result()
         tc.verify { assertThat(1).isEqualTo(result.size()) }
@@ -292,11 +292,11 @@ class PgcUowProjectorIT {
         tc.failNow(result.cause())
         return@Handler
       }
-      readDb.preparedQuery("SELECT * FROM customer_summary") { ar3 ->
+      readDb.preparedQuery("SELECT * FROM customer_summary").execute { ar3 ->
         if (ar3.failed()) {
           log.error("select", ar3.cause())
           tc.failNow(ar3.cause())
-          return@preparedQuery
+          return@execute
         }
         val pgRowSet = ar3.result()
         tc.verify { assertThat(0).isEqualTo(pgRowSet.size()) }

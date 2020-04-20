@@ -33,7 +33,8 @@ class PgcUowJournal<E: Entity>(private val vertx: Vertx,
       if (res.succeeded()) {
         val tx = res.result()
         val params1 = Tuple.of(unitOfWork.entityId, unitOfWork.entityName)
-        tx.preparedQuery(SQL_SELECT_CURRENT_VERSION, params1) { event1 ->
+        tx.preparedQuery(SQL_SELECT_CURRENT_VERSION)
+          .execute(params1) { event1 ->
           if (event1.succeeded()) {
             val currentVersion = event1.result().first()?.getInteger("last_version") ?: 0
             if (currentVersion == unitOfWork.version - 1) {
@@ -48,7 +49,8 @@ class PgcUowJournal<E: Entity>(private val vertx: Vertx,
                 unitOfWork.entityName,
                 unitOfWork.entityId,
                 unitOfWork.version)
-              tx.preparedQuery(SQL_APPEND_UOW, params2) { event2 ->
+              tx.preparedQuery(SQL_APPEND_UOW)
+                .execute(params2) { event2 ->
                 if (event2.succeeded()) {
                   val insertRows = event2.result().value()
                   val uowId = insertRows.first().getLong(0)

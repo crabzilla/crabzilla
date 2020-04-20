@@ -13,9 +13,9 @@ import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 
 class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
-                                                                private val name: String,
-                                                                private val entityFn: EntityCommandAware<E>,
-                                                                private val eJsonFn: EntityJsonAware<E>) : SnapshotRepository<E> {
+                                  private val name: String,
+                                  private val entityFn: EntityCommandAware<E>,
+                                  private val eJsonFn: EntityJsonAware<E>) : SnapshotRepository<E> {
 
   companion object {
     internal val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
@@ -36,7 +36,8 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
   override fun upsert(entityId: Int, snapshot: Snapshot<E>): Promise<Void> {
     val promise = Promise.promise<Void>()
     val json = eJsonFn.toJson(snapshot.state)
-    writeModelDb.preparedQuery(upsertSnapshot(), Tuple.of(entityId, snapshot.version, json)) { insert ->
+    writeModelDb.preparedQuery(upsertSnapshot())
+      .execute(Tuple.of(entityId, snapshot.version, json)) { insert ->
       if (insert.failed()) {
         log.error("upsert snapshot query error")
         promise.fail(insert.cause())
@@ -71,12 +72,13 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
         }
 
         // get current snapshot
-        conn.preparedQuery(selectSnapshot(), Tuple.of(entityId)) { event1 ->
+        conn.preparedQuery(selectSnapshot())
+          .execute(Tuple.of(entityId)) { event1 ->
 
           if (event1.failed()) {
             conn.close()
             promise.fail(event1.cause())
-            return@preparedQuery
+            return@execute
 
           } else {
             val pgRow = event1.result()

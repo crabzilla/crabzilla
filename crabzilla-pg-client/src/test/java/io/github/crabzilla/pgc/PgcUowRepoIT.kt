@@ -65,21 +65,23 @@ class PgcUowRepoIT {
       repo = PgcUowRepo(writeDb, customerJson)
       journal = PgcUowJournal(vertx, writeDb, customerJson)
 
-      writeDb.query("delete from units_of_work") { deleteResult1 ->
-        if (deleteResult1.failed()) {
-          deleteResult1.cause().printStackTrace()
-          tc.failNow(deleteResult1.cause())
-          return@query
-        }
-        writeDb.query("delete from customer_snapshots") { deleteResult2 ->
-          if (deleteResult2.failed()) {
-            deleteResult2.cause().printStackTrace()
-            tc.failNow(deleteResult2.cause())
-            return@query
+      writeDb.query("delete from units_of_work")
+        .execute { deleteResult1 ->
+          if (deleteResult1.failed()) {
+            deleteResult1.cause().printStackTrace()
+            tc.failNow(deleteResult1.cause())
+            return@execute
           }
-          tc.completeNow()
+          writeDb.query("delete from customer_snapshots")
+            .execute( { deleteResult2 ->
+            if (deleteResult2.failed()) {
+              deleteResult2.cause().printStackTrace()
+              tc.failNow(deleteResult2.cause())
+              return@execute
+            }
+            tc.completeNow()
+          })
         }
-      }
 
 
     })
@@ -99,7 +101,8 @@ class PgcUowRepoIT {
       customerId1,
       1)
 
-    writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar1 ->
+    writeDb.preparedQuery(SQL_APPEND_UOW)
+      .execute(tuple) { ar1 ->
       if (ar1.failed()) {
         ar1.cause().printStackTrace()
         tc.failNow(ar1.cause())
@@ -136,7 +139,8 @@ class PgcUowRepoIT {
       customerId1,
       1)
 
-    writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar1 ->
+    writeDb.preparedQuery(SQL_APPEND_UOW)
+      .execute(tuple) { ar1 ->
       if (ar1.failed()) {
         tc.failNow(ar1.cause())
       }
@@ -183,7 +187,8 @@ class PgcUowRepoIT {
         customerId1,
         1)
 
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar ->
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple) { ar ->
         if (ar.failed()) {
           ar.cause().printStackTrace()
           tc.failNow(ar.cause())
@@ -216,7 +221,8 @@ class PgcUowRepoIT {
         customerId1,
         1)
 
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple1) { ar1 ->
 
         if (ar1.failed()) {
           ar1.cause().printStackTrace()
@@ -232,7 +238,8 @@ class PgcUowRepoIT {
           customerId1,
           2)
 
-        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
+        writeDb.preparedQuery(SQL_APPEND_UOW)
+          .execute(tuple2) { ar2 ->
           if (ar2.failed()) {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
@@ -269,7 +276,8 @@ class PgcUowRepoIT {
         customerId1,
         1)
 
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple1) { ar1 ->
 
         if (ar1.failed()) {
           ar1.cause().printStackTrace()
@@ -285,7 +293,8 @@ class PgcUowRepoIT {
           customerId1,
           2)
 
-        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
+        writeDb.preparedQuery(SQL_APPEND_UOW)
+          .execute(tuple2) { ar2 ->
           if (ar2.failed()) {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
@@ -319,7 +328,8 @@ class PgcUowRepoIT {
         customerId1,
         1)
 
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple1) { ar1 ->
         if (ar1.failed()) {
           ar1.cause().printStackTrace()
           tc.failNow(ar1.cause())
@@ -333,7 +343,8 @@ class PgcUowRepoIT {
           CUSTOMER_ENTITY,
           customerId1,
           2)
-        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
+        writeDb.preparedQuery(SQL_APPEND_UOW)
+          .execute(tuple2) { ar2 ->
           if (ar2.failed()) {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
@@ -372,7 +383,8 @@ class PgcUowRepoIT {
         customerId1,
         1)
 
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar ->
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple) { ar ->
         if (ar.failed()) {
           ar.cause().printStackTrace()
           tc.failNow(ar.cause())
@@ -403,7 +415,8 @@ class PgcUowRepoIT {
         customerId1,
         1)
 
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple1) { ar1 ->
 
         if (ar1.failed()) {
           ar1.cause().printStackTrace()
@@ -419,7 +432,8 @@ class PgcUowRepoIT {
           customerId1,
           2)
 
-        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
+        writeDb.preparedQuery(SQL_APPEND_UOW)
+          .execute(tuple2) { ar2 ->
           if (ar2.failed()) {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
@@ -450,11 +464,12 @@ class PgcUowRepoIT {
         customerId1,
         1)
 
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple1) { ar1 ->
         if (ar1.failed()) {
           ar1.cause().printStackTrace()
           tc.failNow(ar1.cause())
-          return@preparedQuery
+          return@execute
         }
         val uowId1 = ar1.result().first().getLong("uow_id")
         val tuple2 = Tuple.of(
@@ -465,11 +480,12 @@ class PgcUowRepoIT {
           CUSTOMER_ENTITY,
           customerId1,
           2)
-        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
+        writeDb.preparedQuery(SQL_APPEND_UOW)
+          .execute(tuple2) { ar2 ->
           if (ar2.failed()) {
             ar2.cause().printStackTrace()
             tc.failNow(ar2.cause())
-            return@preparedQuery
+            return@execute
           }
           val uowId2 = ar2.result().first().getLong("uow_id")
           val selectFuture1 = repo.selectAfterVersion(customerId1, 1, CUSTOMER_ENTITY).future()

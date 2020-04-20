@@ -70,17 +70,17 @@ class PgcSnapshotRepoIT {
 
       repo = PgcSnapshotRepo(writeDb, CUSTOMER_ENTITY, CustomerCommandAware(), CustomerJsonAware())
 
-      writeDb.query("delete from units_of_work") { deleteResult1 ->
+      writeDb.query("delete from units_of_work").execute { deleteResult1 ->
         if (deleteResult1.failed()) {
           deleteResult1.cause().printStackTrace()
           tc.failNow(deleteResult1.cause())
-          return@query
+          return@execute
         }
-        writeDb.query("delete from customer_snapshots") { deleteResult2 ->
+        writeDb.query("delete from customer_snapshots").execute { deleteResult2 ->
           if (deleteResult2.failed()) {
             deleteResult2.cause().printStackTrace()
             tc.failNow(deleteResult2.cause())
-            return@query
+            return@execute
           }
           tc.completeNow()
         }
@@ -122,7 +122,8 @@ class PgcSnapshotRepoIT {
       customerId1,
       1)
 
-    writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { event1 ->
+    writeDb.preparedQuery(SQL_APPEND_UOW)
+      .execute(tuple) { event1 ->
       if (event1.failed()) {
         event1.cause().printStackTrace()
         tc.failNow(event1.cause())
@@ -160,7 +161,7 @@ class PgcSnapshotRepoIT {
       customerId1,
       1)
 
-    writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
+    writeDb.preparedQuery(SQL_APPEND_UOW).execute(tuple1) { ar1 ->
 
       if (ar1.failed()) {
         ar1.cause().printStackTrace()
@@ -176,7 +177,7 @@ class PgcSnapshotRepoIT {
         customerId1,
         2)
 
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
+      writeDb.preparedQuery(SQL_APPEND_UOW).execute(tuple2) { ar2 ->
 
         if (ar2.failed()) {
           tc.failNow(ar2.cause())

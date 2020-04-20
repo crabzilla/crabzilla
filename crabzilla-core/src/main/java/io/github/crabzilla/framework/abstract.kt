@@ -45,7 +45,9 @@ abstract class EntityCommandHandler<E: Entity>(private val entityName: String,
         cmdMetadata.commandName, command, eventsPromise.future().result(), snapshot.version + 1))
       uowPromise
     } else {
-      Promise.failedPromise(eventsPromise.future().cause())
+      val promise = Promise.promise<UnitOfWork>()
+      promise.fail(eventsPromise.future().cause())
+      return promise
     }
   }
 }
@@ -73,4 +75,20 @@ interface EntityJsonAware<E: Entity> {
     return eventsJsonArray
   }
 
+}
+
+/**
+ * To overcome https://github.com/vert-x3/wiki/wiki/3.8.3-Deprecations-and-breaking-changes
+ */
+
+fun <T> succeededPromise(result: T): Promise<T> {
+  val promise = Promise.promise<T>()
+  promise.complete(result)
+  return promise
+}
+
+fun <T> failedPromise(errorMessage: String): Promise<T> {
+  val promise = Promise.promise<T>()
+  promise.fail(errorMessage)
+  return promise
 }

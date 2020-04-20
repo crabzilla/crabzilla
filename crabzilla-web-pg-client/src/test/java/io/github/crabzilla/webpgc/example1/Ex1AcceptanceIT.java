@@ -92,17 +92,17 @@ class Ex1AcceptanceIT {
               }
               PgPool read = readModelPgPool(vertx, config);
               PgPool write = writeModelPgPool(vertx, config);
-              write.query("delete from units_of_work", event1 -> {
+              write.query("delete from units_of_work").execute( event1 -> {
                 if (event1.failed()) {
                   tc.failNow(event1.cause());
                   return;
                 }
-                write.query("delete from customer_snapshots", event2 -> {
+                write.query("delete from customer_snapshots").execute( event2 -> {
                   if (event2.failed()) {
                     tc.failNow(event2.cause());
                     return;
                   }
-                  read.query("delete from customer_summary", event3 -> {
+                  read.query("delete from customer_summary").execute( event3 -> {
                     if (event3.failed()) {
                       tc.failNow(event3.cause());
                       return;
