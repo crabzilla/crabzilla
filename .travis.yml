@@ -26,7 +26,8 @@ cache:
   directories:
   - "$HOME/.m2"
 
-install: false
+install:
+  mvn clean verify
 
 script:
   - sleep 1
