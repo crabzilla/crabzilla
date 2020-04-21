@@ -13,12 +13,12 @@ data class CommandMetadata(val entityId: Int, val commandName: String, val comma
 
 data class Snapshot<E : Entity>(val state: E, val version: Version)
 
-class StateTransitionsTracker<A : Entity>(original: Snapshot<A>, private val applyEventFn: (DomainEvent, A) -> A) {
+class StateTransitionsTracker<A : Entity>(originalSnapshot: Snapshot<A>, private val stateFn: (DomainEvent, A) -> A) {
   val appliedEvents = mutableListOf<DomainEvent>()
-  var currentState: A = original.state
+  var currentState: A = originalSnapshot.state
   fun applyEvents(events: List<DomainEvent>): StateTransitionsTracker<A> {
     events.forEach { domainEvent ->
-      currentState = applyEventFn.invoke(domainEvent, currentState)
+      currentState = stateFn.invoke(domainEvent, currentState)
       appliedEvents.add(domainEvent)
     }
     return this

@@ -29,16 +29,11 @@ interface EntityCommandAware<E: Entity> {
     (cmdMetadata: CommandMetadata, command: Command, snapshot: Snapshot<E>) -> EntityCommandHandler<E>
 }
 
-abstract class EntityCommandHandler<E: Entity>(private val entityName: String,
-                                               val cmdMetadata: CommandMetadata,
-                                               val command: Command,
-                                               val snapshot: Snapshot<E>,
+abstract class EntityCommandHandler<E: Entity>(private val entityName: String, val cmdMetadata: CommandMetadata,
+                                               val command: Command, val snapshot: Snapshot<E>,
                                                val stateFn: (DomainEvent, E) -> E) {
-
   private val uowPromise: Promise<UnitOfWork> = Promise.promise()
-
   abstract fun handleCommand() : Future<UnitOfWork>
-
   fun fromEvents(eventsPromise: Future<List<DomainEvent>>): Future<UnitOfWork> {
     return if (eventsPromise.succeeded()) {
       uowPromise.complete(UnitOfWork.of(cmdMetadata.entityId, entityName, cmdMetadata.commandId,
