@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.framework.UnitOfWork
+import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.internal.fromUnitOfWork
 import io.github.crabzilla.pgc.example1.BadEventProjector
 import io.github.crabzilla.pgc.example1.CustomerSummaryProjector

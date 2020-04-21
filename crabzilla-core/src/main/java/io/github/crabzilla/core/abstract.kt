@@ -1,4 +1,4 @@
-package io.github.crabzilla.framework
+package io.github.crabzilla.core
 
 import io.vertx.core.Future
 import io.vertx.core.Promise

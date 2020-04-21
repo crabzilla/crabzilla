@@ -1,8 +1,8 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.framework.Command
-import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.Entity
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.Entity
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 
@@ -52,5 +52,13 @@ val customerModule = SerializersModule {
     CustomerCreated::class with CustomerCreated.serializer()
     CustomerActivated::class with CustomerActivated.serializer()
     CustomerDeactivated::class with CustomerDeactivated.serializer()
+  }
+}
+
+fun commandRoutesMap(route: String) {
+  when (route) {
+    "create" -> CreateCustomer::class.qualifiedName
+    "activate" -> ActivateCustomer::class.qualifiedName
+    "deactivate" -> DeactivateCustomer::class.qualifiedName
   }
 }

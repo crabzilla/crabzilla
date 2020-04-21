@@ -2,9 +2,9 @@ package io.github.crabzilla.webpgc
 
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
-import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.EVENT_SERIALIZER
-import io.github.crabzilla.framework.UnitOfWork
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.EVENT_SERIALIZER
+import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions

@@ -1,9 +1,8 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.EventBusChannels
-import io.github.crabzilla.framework.COMMAND_SERIALIZER
-import io.github.crabzilla.framework.EVENT_SERIALIZER
-import io.github.crabzilla.framework.UnitOfWork
+import io.github.crabzilla.core.COMMAND_SERIALIZER
+import io.github.crabzilla.core.EVENT_SERIALIZER
+import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.vertx.core.Future
 import io.vertx.core.Promise
@@ -80,7 +79,7 @@ class PgcUowJournal(private val vertx: Vertx, private val pgPool: PgPool, privat
                   .put(UnitOfWork.JsonMetadata.VERSION, unitOfWork.version)
                   .put(UnitOfWork.JsonMetadata.EVENTS, JsonArray(eventsListAsJsonObject))
                 if (log.isDebugEnabled) log.debug("will publish message $message")
-                vertx.eventBus().publish(EventBusChannels.unitOfWorkChannel, message)
+                vertx.eventBus().publish(PgcEventBusChannels.unitOfWorkChannel, message)
                 promise.complete(uowId)
               }
             }

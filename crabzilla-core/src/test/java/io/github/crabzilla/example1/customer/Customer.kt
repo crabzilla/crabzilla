@@ -1,7 +1,7 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.Entity
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.Entity
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import kotlinx.serialization.Serializable

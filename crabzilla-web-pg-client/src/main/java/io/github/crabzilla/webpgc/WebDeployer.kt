@@ -1,8 +1,8 @@
 package io.github.crabzilla.webpgc
 
-import io.github.crabzilla.framework.Command
-import io.github.crabzilla.framework.CommandMetadata
-import io.github.crabzilla.framework.Entity
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandMetadata
+import io.github.crabzilla.core.Entity
 import io.github.crabzilla.internal.EntityComponent
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject

@@ -1,11 +1,11 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.ENTITY_SERIALIZER
-import io.github.crabzilla.framework.EVENT_SERIALIZER
-import io.github.crabzilla.framework.Entity
-import io.github.crabzilla.framework.EntityCommandAware
-import io.github.crabzilla.framework.Snapshot
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.ENTITY_SERIALIZER
+import io.github.crabzilla.core.EVENT_SERIALIZER
+import io.github.crabzilla.core.Entity
+import io.github.crabzilla.core.EntityCommandAware
+import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.internal.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise

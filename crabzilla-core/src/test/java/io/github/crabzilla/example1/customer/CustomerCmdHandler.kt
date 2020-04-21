@@ -1,12 +1,12 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.framework.Command
-import io.github.crabzilla.framework.CommandMetadata
-import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.EntityCommandHandler
-import io.github.crabzilla.framework.Snapshot
-import io.github.crabzilla.framework.StateTransitionsTracker
-import io.github.crabzilla.framework.UnitOfWork
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandMetadata
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.EntityCommandHandler
+import io.github.crabzilla.core.Snapshot
+import io.github.crabzilla.core.StateTransitionsTracker
+import io.github.crabzilla.core.UnitOfWork
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise

@@ -1,4 +1,4 @@
-package io.github.crabzilla.framework
+package io.github.crabzilla.core
 
 import java.util.UUID
 import kotlinx.serialization.PolymorphicSerializer

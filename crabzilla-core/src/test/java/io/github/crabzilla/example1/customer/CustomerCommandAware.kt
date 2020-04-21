@@ -1,11 +1,11 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.framework.Command
-import io.github.crabzilla.framework.CommandMetadata
-import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.EntityCommandAware
-import io.github.crabzilla.framework.EntityCommandHandler
-import io.github.crabzilla.framework.Snapshot
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandMetadata
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.EntityCommandAware
+import io.github.crabzilla.core.EntityCommandHandler
+import io.github.crabzilla.core.Snapshot
 
 class CustomerCommandAware : EntityCommandAware<Customer> {
 

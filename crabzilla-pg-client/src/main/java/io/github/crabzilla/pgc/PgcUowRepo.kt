@@ -1,11 +1,11 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.framework.COMMAND_SERIALIZER
-import io.github.crabzilla.framework.Command
-import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.EVENT_SERIALIZER
-import io.github.crabzilla.framework.UnitOfWork
-import io.github.crabzilla.framework.Version
+import io.github.crabzilla.core.COMMAND_SERIALIZER
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.EVENT_SERIALIZER
+import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.core.Version
 import io.github.crabzilla.internal.RangeOfEvents
 import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.github.crabzilla.internal.UnitOfWorkRepository

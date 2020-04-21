@@ -1,6 +1,6 @@
 package io.github.crabzilla.webpgc
 
-import io.github.crabzilla.EventBusChannels
+import io.github.crabzilla.pgc.PgcEventBusChannels
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.PgcUowProjector
 import io.github.crabzilla.pgc.readModelPgPool
@@ -30,8 +30,8 @@ abstract class DbProjectionsVerticle : AbstractVerticle() {
   }
 
   fun addProjector(projectionName: String, projector: PgcEventProjector, json: Json) {
-    log.info("adding projector for $projectionName subscribing on ${EventBusChannels.unitOfWorkChannel}")
-    vertx.eventBus().consumer<JsonObject>(EventBusChannels.unitOfWorkChannel) { message ->
+    log.info("adding projector for $projectionName subscribing on ${PgcEventBusChannels.unitOfWorkChannel}")
+    vertx.eventBus().consumer<JsonObject>(PgcEventBusChannels.unitOfWorkChannel) { message ->
       val uowEvents = toUnitOfWorkEvents(message.body(), json)
       val uolProjector = PgcUowProjector(readDb, projectionName)
       uolProjector.handle(uowEvents, projector).onComplete { result ->
