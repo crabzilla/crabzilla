@@ -51,7 +51,7 @@ class WebDeployer<E : Entity>(private val component: EntityComponent<E>,
         return@handler
       }
       if (log.isTraceEnabled) log.trace("Handling $command $commandMetadata")
-      component.handleCommand(commandMetadata, command).future().setHandler { event ->
+      component.handleCommand(commandMetadata, command).setHandler { event ->
         val end = System.currentTimeMillis()
         if (log.isTraceEnabled) log.trace("handled command in " + (end - begin) + " ms")
         if (event.succeeded()) {
@@ -76,7 +76,7 @@ class WebDeployer<E : Entity>(private val component: EntityComponent<E>,
     router.get(getSnapshot).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
       val httpResp = it.response()
-      component.getSnapshot(entityId).future().setHandler { event ->
+      component.getSnapshot(entityId).setHandler { event ->
         if (event.failed() || event.result() == null) {
           httpResp.statusCode = if (event.result() == null) 404 else 500
           httpResp.end()
@@ -100,7 +100,7 @@ class WebDeployer<E : Entity>(private val component: EntityComponent<E>,
     router.get(getAllUow).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
       val httpResp = it.response()
-      component.getAllUowByEntityId(entityId).future().setHandler { event ->
+      component.getAllUowByEntityId(entityId).setHandler { event ->
         if (event.failed() || event.result() == null) {
           httpResp.statusCode = if (event.result() == null) 404 else 500
           httpResp.end()
@@ -118,7 +118,7 @@ class WebDeployer<E : Entity>(private val component: EntityComponent<E>,
     router.get(getUow).handler {
       val uowId = it.pathParam(UNIT_OF_WORK_ID_PARAMETER).toLong()
       val httpResp = it.response()
-      component.getUowByUowId(uowId).future().setHandler { uowResult ->
+      component.getUowByUowId(uowId).setHandler { uowResult ->
         if (uowResult.failed() || uowResult.result() == null) {
           httpResp.statusCode = if (uowResult.result() == null) 404 else 500
           httpResp.end()

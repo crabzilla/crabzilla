@@ -42,10 +42,8 @@ class Ex1WebQueryVerticle : WebQueryVerticle() {
 
   private fun customersQueryHandler(rc: RoutingContext) {
     val sql = """SELECT id, name, is_active FROM customer_summary where id = $1""".trimMargin()
-    println("sql: $sql")
     val id = rc.request().getParam("id").toInt()
-    println("id: $id")
-    readDb.preparedQuery(sql, Tuple.of(id)) { event ->
+    readDb.preparedQuery(sql).execute(Tuple.of(id)) { event ->
       if (event.failed()) {
         rc.response()
           .putHeader("Content-type", "application/json")
@@ -54,7 +52,6 @@ class Ex1WebQueryVerticle : WebQueryVerticle() {
           .end()
       }
       val set = event.result()
-      println("result: $set")
       val array = JsonArray()
       for (row in set) {
         val jo = JsonObject().put("id", row.getInteger(0))
@@ -62,7 +59,6 @@ class Ex1WebQueryVerticle : WebQueryVerticle() {
                              .put("is_active", row.getBoolean(2))
         array.add(jo)
       }
-      println("array.encodePrettily(): ${array.encodePrettily()}")
       rc.response()
         .putHeader("Content-type", "application/json")
         .end(array.getJsonObject(0).encode())

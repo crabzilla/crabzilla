@@ -1,10 +1,9 @@
 package io.github.crabzilla.internal
 
-import io.github.crabzilla.framework.Entity
 import io.github.crabzilla.framework.UnitOfWork
-import io.vertx.core.Promise
+import io.vertx.core.Future
 
-interface UnitOfWorkJournal<E: Entity> {
+interface UnitOfWorkJournal {
 
-  fun append(unitOfWork: UnitOfWork) : Promise<Long>
+  fun append(unitOfWork: UnitOfWork) : Future<Long>
 }

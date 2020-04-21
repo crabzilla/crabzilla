@@ -1,14 +1,21 @@
 package io.github.crabzilla.framework
 
+import io.vertx.core.Future
 import io.vertx.core.Promise
-import io.vertx.core.json.JsonArray
-import io.vertx.core.json.JsonObject
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
 
-interface Command
+@Serializable
+@Polymorphic
+open class Command
 
-interface DomainEvent
+@Serializable
+@Polymorphic
+open class DomainEvent
 
-interface Entity {
+@Serializable
+@Polymorphic
+open class Entity {
 
   fun eventsOf(vararg event: DomainEvent): List<DomainEvent> {
     return event.asList()
@@ -37,40 +44,17 @@ abstract class EntityCommandHandler<E: Entity>(private val entityName: String,
 
   private val uowPromise: Promise<UnitOfWork> = Promise.promise()
 
-  abstract fun handleCommand() : Promise<UnitOfWork>
+  abstract fun handleCommand() : Future<UnitOfWork>
 
-  fun fromEvents(eventsPromise: Promise<List<DomainEvent>>): Promise<UnitOfWork> {
-    return if (eventsPromise.future().succeeded()) {
+  fun fromEvents(eventsPromise: Future<List<DomainEvent>>): Future<UnitOfWork> {
+    return if (eventsPromise.succeeded()) {
       uowPromise.complete(UnitOfWork.of(cmdMetadata.entityId, entityName, cmdMetadata.commandId,
-        cmdMetadata.commandName, command, eventsPromise.future().result(), snapshot.version + 1))
-      uowPromise
+        command, eventsPromise.result(), snapshot.version + 1))
+      uowPromise.future()
     } else {
-      Promise.failedPromise(eventsPromise.future().cause())
+      val promise = Promise.promise<UnitOfWork>()
+      promise.fail(eventsPromise.cause())
+      return promise.future()
     }
   }
-}
-
-interface EntityJsonAware<E: Entity> {
-
-  fun fromJson(json: JsonObject): E
-
-  fun toJson(entity: E): JsonObject
-
-  fun cmdFromJson(cmdName: String, json: JsonObject): Command
-
-  fun cmdToJson(cmd: Command): JsonObject
-
-  fun eventFromJson(eventName: String, json: JsonObject): Pair<String, DomainEvent>
-
-  fun eventToJson(event: DomainEvent): JsonObject
-
-  fun toJsonArray(events: List<Pair<String, DomainEvent>>): JsonArray {
-    val eventsJsonArray = JsonArray()
-    events
-      .map { pair -> JsonObject().put(UnitOfWork.JsonMetadata.EVENT_NAME, pair.first)
-                                 .put(UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT, eventToJson(pair.second))}
-      .forEach { jo -> eventsJsonArray.add(jo) }
-    return eventsJsonArray
-  }
-
 }

@@ -1,7 +1,5 @@
 package io.github.crabzilla.webpgc.example1;
 
-import io.github.crabzilla.example1.customer.CreateCustomer;
-import io.github.crabzilla.example1.customer.UnknownCommand;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
@@ -92,17 +90,17 @@ class Ex1AcceptanceIT {
               }
               PgPool read = readModelPgPool(vertx, config);
               PgPool write = writeModelPgPool(vertx, config);
-              write.query("delete from units_of_work", event1 -> {
+              write.query("delete from units_of_work").execute( event1 -> {
                 if (event1.failed()) {
                   tc.failNow(event1.cause());
                   return;
                 }
-                write.query("delete from customer_snapshots", event2 -> {
+                write.query("delete from customer_snapshots").execute( event2 -> {
                   if (event2.failed()) {
                     tc.failNow(event2.cause());
                     return;
                   }
-                  read.query("delete from customer_summary", event3 -> {
+                  read.query("delete from customer_summary").execute( event3 -> {
                     if (event3.failed()) {
                       tc.failNow(event3.cause());
                       return;
@@ -127,21 +125,25 @@ class Ex1AcceptanceIT {
     @Test
     @DisplayName("You get a correspondent UnitOfWork as JSON")
     void a1(VertxTestContext tc) {
-      CreateCustomer cmd = new CreateCustomer("customer#" + customerId2);
-      JsonObject cmdAsJson = JsonObject.mapFrom(cmd);
+      // TODO map commandName -> commandType
+      JsonObject cmdAsJson =
+        new JsonObject("{\"type\":\"io.github.crabzilla.example1.customer.CreateCustomer\",\"name\":\"customer#" +
+          customerId2 + "\"}");
+      JsonObject expectedCmd = new JsonObject("{\"name\":\"customer#" + customerId2 + "\"}");
+      log.info("/commands/customers/{}/create with json \n {}", customerId2, cmdAsJson.encodePrettily());
       client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + customerId2 + "/create"  )
         .as(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
         .sendJson(cmdAsJson, tc.succeeding(response1 -> tc.verify(() -> {
             JsonObject uow = response1.body();
+            log.info("UnitOfWork recebida {}", uow.encodePrettily());
             Long uowId = Long.valueOf(response1.getHeader("uowId"));
             assertThat(uowId).isPositive();
             assertThat(uow.getString(ENTITY_NAME)).isEqualTo("customer");
             assertThat(uow.getInteger(ENTITY_ID)).isEqualTo(customerId2);
             assertThat(uow.getString(COMMAND_ID)).isNotNull();
-            assertThat(uow.getString(COMMAND_NAME)).isEqualTo("create");
-            assertThat(uow.getJsonObject(COMMAND)).isEqualTo(cmdAsJson);
+            assertThat(uow.getJsonObject(COMMAND)).isEqualTo(expectedCmd);
             assertThat(uow.getInteger(VERSION)).isEqualTo(1);
             assertThat(uow.getJsonArray(EVENTS).size()).isEqualTo(1);
             tc.completeNow();
@@ -158,6 +160,7 @@ class Ex1AcceptanceIT {
         .expect(ResponsePredicate.JSON)
         .send(tc.succeeding(response2 -> tc.verify(() -> {
           JsonObject jo = response2.body();
+          log.info("UnitOfWork recebida {}", jo.encodePrettily());
           assertThat(jo.getInteger("version")).isEqualTo(1);
           JsonObject state = jo.getJsonObject("state");
           assertThat(state.getInteger("customerId")).isEqualTo(customerId2);
@@ -176,6 +179,7 @@ class Ex1AcceptanceIT {
         .expect(ResponsePredicate.JSON)
         .send(tc.succeeding(response2 -> tc.verify(() -> {
           JsonObject jo = response2.body();
+          log.info("UnitOfWork recebida {}", jo.encodePrettily());
           assertThat(jo.encode())
             .isEqualTo("{\"id\":" + customerId2 + ",\"name\":\"customer#" + customerId2 + "\",\"is_active\":false}");
           tc.completeNow();
@@ -206,8 +210,11 @@ class Ex1AcceptanceIT {
     @Test
     @DisplayName("You get a correspondent UnitOfWork as JSON")
     void a1(VertxTestContext tc) {
-      CreateCustomer cmd = new CreateCustomer("customer#" + customerId3);
-      JsonObject cmdAsJson = JsonObject.mapFrom(cmd);
+      JsonObject cmdAsJson =
+        new JsonObject("{\"type\":\"io.github.crabzilla.example1.customer.CreateCustomer\",\"name\":\"customer#" +
+          customerId3 + "\"}");
+      JsonObject expectedCmd = new JsonObject("{\"name\":\"customer#" + customerId3 + "\"}");
+      log.info("/commands/customers/{}/create with json \n {}", customerId2, cmdAsJson.encodePrettily());
       UUID cmdId = UUID.randomUUID();
       client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + customerId3 + "/create")
         .as(BodyCodec.jsonObject())
@@ -215,14 +222,14 @@ class Ex1AcceptanceIT {
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
         .sendJson(cmdAsJson, tc.succeeding(response1 -> tc.verify(() -> {
-            JsonObject uow1 = response1.body();
-            Long uowId1 = Long.valueOf(response1.getHeader("uowId"));
+          JsonObject uow1 = response1.body();
+          log.info("UnitOfWork recebida {}", uow1.encodePrettily());
+          Long uowId1 = Long.valueOf(response1.getHeader("uowId"));
             assertThat(uowId1).isPositive();
             assertThat(uow1.getString(ENTITY_NAME)).isEqualTo("customer");
             assertThat(uow1.getInteger(ENTITY_ID)).isEqualTo(customerId3);
             assertThat(uow1.getString(COMMAND_ID)).isNotNull();
-            assertThat(uow1.getString(COMMAND_NAME)).isEqualTo("create");
-            assertThat(uow1.getJsonObject(COMMAND)).isEqualTo(cmdAsJson);
+            assertThat(uow1.getJsonObject(COMMAND)).isEqualTo(expectedCmd);
             assertThat(uow1.getInteger(VERSION)).isEqualTo(1);
             assertThat(uow1.getJsonArray(EVENTS).size()).isEqualTo(1);
             client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + customerId3 + "/create")
@@ -251,7 +258,6 @@ class Ex1AcceptanceIT {
         .expect(ResponsePredicate.JSON)
         .send(tc.succeeding(response2 -> tc.verify(() -> {
           JsonObject jo = response2.body();
-          System.out.println(jo.encodePrettily());
           assertThat(jo.getInteger("version")).isEqualTo(1);
           JsonObject state = jo.getJsonObject("state");
           assertThat(state.getInteger("customerId")).isEqualTo(customerId3);
@@ -308,31 +314,17 @@ class Ex1AcceptanceIT {
   @Test
   @DisplayName("When sending an invalid CreateCommand expecting uow id")
   void a4(VertxTestContext tc) {
-    CreateCustomer cmd = new CreateCustomer("a bad name");
-    JsonObject jo = JsonObject.mapFrom(cmd);
+    JsonObject cmdAsJson =
+      new JsonObject("{\"type\":\"io.github.crabzilla.example1.customer.CreateCustomer\",\"name\":\"a bad name\"}");
+    log.info("/commands/customers/{}/create with json \n {}", customerId2, cmdAsJson.encodePrettily());
     client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + nextInt + "/create")
       .as(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
+      .sendJson(cmdAsJson, tc.succeeding(response -> tc.verify(() -> {
           tc.completeNow();
         }))
       );
   }
-
-  @Test
-  @DisplayName("When sending an UnknownCommand")
-  void a5(VertxTestContext tc) {
-    UnknownCommand cmd = new UnknownCommand(nextInt);
-    JsonObject jo = JsonObject.mapFrom(cmd);
-    client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + nextInt + "/unknown")
-      .as(BodyCodec.none())
-      .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .sendJson(jo, tc.succeeding(response -> tc.verify(() -> {
-          tc.completeNow();
-        }))
-      );
-  }
-
 
     @Test
     @DisplayName("When GET to an invalid UnitOfWork (bad number) You get a 400")

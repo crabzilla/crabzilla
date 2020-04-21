@@ -1,14 +1,13 @@
 package io.github.crabzilla.webpgc
 
 import io.github.crabzilla.EventBusChannels
-import io.github.crabzilla.framework.Entity
-import io.github.crabzilla.framework.EntityJsonAware
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.PgcUowProjector
 import io.github.crabzilla.pgc.readModelPgPool
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
+import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory
@@ -21,7 +20,6 @@ abstract class DbProjectionsVerticle : AbstractVerticle() {
   }
 
   private val readDb : PgPool by lazy { readModelPgPool(vertx, config()) }
-  private val jsonFunctions: MutableMap<String, EntityJsonAware<out Entity>> = mutableMapOf()
 
   override fun start() {
     val implClazz = this::class.java.name
@@ -31,22 +29,14 @@ abstract class DbProjectionsVerticle : AbstractVerticle() {
     }
   }
 
-  fun addEntityJsonAware(entityName: String, jsonAware: EntityJsonAware<out Entity>) {
-    jsonFunctions[entityName] = jsonAware
-  }
-
-  fun addProjector(projectionName: String, projector: PgcEventProjector) {
+  fun addProjector(projectionName: String, projector: PgcEventProjector, json: Json) {
     log.info("adding projector for $projectionName subscribing on ${EventBusChannels.unitOfWorkChannel}")
-    vertx.eventBus().consumer<String>(EventBusChannels.unitOfWorkChannel) { message ->
-      val uowEvents = toUnitOfWorkEvents(JsonObject(message.body()), jsonFunctions)
-      if (uowEvents == null) {
-        log.error("Cannot send these events to be projected. Check if all entities have a jsonAware.")
-      } else {
-        val uolProjector = PgcUowProjector(readDb, projectionName)
-        uolProjector.handle(uowEvents, projector).future().setHandler { result ->
-          if (result.failed()) { // TODO circuit breaker
-            log.error("Projection [$projectionName] failed: " + result.cause().message)
-          }
+    vertx.eventBus().consumer<JsonObject>(EventBusChannels.unitOfWorkChannel) { message ->
+      val uowEvents = toUnitOfWorkEvents(message.body(), json)
+      val uolProjector = PgcUowProjector(readDb, projectionName)
+      uolProjector.handle(uowEvents, projector).onComplete { result ->
+        if (result.failed()) { // TODO circuit breaker
+          log.error("Projection [$projectionName] failed: " + result.cause().message)
         }
       }
     }

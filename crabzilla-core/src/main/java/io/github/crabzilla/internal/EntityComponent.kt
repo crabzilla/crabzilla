@@ -1,20 +1,20 @@
 package io.github.crabzilla.internal
 
 import io.github.crabzilla.framework.*
-import io.vertx.core.Promise
+import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 
 interface EntityComponent<E: Entity> {
 
   fun entityName() : String
 
-  fun handleCommand(metadata: CommandMetadata, command: Command) : Promise<Pair<UnitOfWork, Long>>
+  fun handleCommand(metadata: CommandMetadata, command: Command) : Future<Pair<UnitOfWork, Long>>
 
-  fun getUowByUowId(uowId: Long) : Promise<UnitOfWork>
+  fun getUowByUowId(uowId: Long) : Future<UnitOfWork>
 
-  fun getAllUowByEntityId(id: Int) : Promise<List<UnitOfWork>>
+  fun getAllUowByEntityId(id: Int) : Future<List<UnitOfWork>>
 
-  fun getSnapshot(entityId: Int) : Promise<Snapshot<E>>
+  fun getSnapshot(entityId: Int) : Future<Snapshot<E>>
 
   fun toJson(state: E): JsonObject
 

@@ -1,10 +1,9 @@
 package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.framework.*
+import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise
-import io.vertx.core.Promise.failedPromise
-import io.vertx.core.Promise.succeededPromise
 
 class CustomerCmdHandler(cmdMetadata: CommandMetadata,
                          command: Command,
@@ -12,25 +11,24 @@ class CustomerCmdHandler(cmdMetadata: CommandMetadata,
                          stateFn: (DomainEvent, Customer) -> Customer) :
   EntityCommandHandler<Customer>("customer", cmdMetadata, command, snapshot, stateFn) {
 
-  override fun handleCommand(): Promise<UnitOfWork> {
+  override fun handleCommand(): Future<UnitOfWork> {
     val customer = snapshot.state
-    val eventsPromise: Promise<List<DomainEvent>> =
+    val eventsPromise: Future<List<DomainEvent>> =
       when (command) {
         is CreateCustomer -> customer.create(cmdMetadata.entityId, command.name)
-        is ActivateCustomer -> succeededPromise(customer.activate(command.reason))
+        is ActivateCustomer -> succeededFuture(customer.activate(command.reason))
         is DeactivateCustomer -> customer.deactivate(command.reason)
         is CreateActivateCustomer -> composed(command)
-        else -> failedPromise("${cmdMetadata.commandName} is a unknown command")
+        else -> Future.failedFuture("${cmdMetadata.commandName} is a unknown command")
     }
     return fromEvents(eventsPromise)
   }
 
-  private fun composed(command: CreateActivateCustomer) : Promise<List<DomainEvent>> {
+  private fun composed(command: CreateActivateCustomer) : Future<List<DomainEvent>> {
     val promise = Promise.promise<List<DomainEvent>>()
     val tracker = StateTransitionsTracker(snapshot, stateFn)
     tracker.currentState
       .create(cmdMetadata.entityId, command.name)
-      .future()
       .compose { eventsList ->
         tracker.applyEvents(eventsList)
         succeededFuture(tracker.currentState.activate(command.reason))
@@ -40,7 +38,7 @@ class CustomerCmdHandler(cmdMetadata: CommandMetadata,
         promise.complete(tracker.appliedEvents)
         promise.future()
       }
-    return promise
+    return promise.future()
   }
 
 }

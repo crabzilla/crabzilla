@@ -1,19 +1,20 @@
 package io.github.crabzilla.internal
 
 import io.github.crabzilla.framework.*
+import io.vertx.core.Future
 import io.vertx.core.Promise
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicReference
 
 class CommandController<E : Entity>(private val commandAware: EntityCommandAware<E>,
                                     private val snapshotRepo: SnapshotRepository<E>,
-                                    private val uowJournal: UnitOfWorkJournal<E>) {
+                                    private val uowJournal: UnitOfWorkJournal) {
 
   companion object {
     internal val log = LoggerFactory.getLogger(CommandController::class.java)
   }
 
-  fun handle(metadata: CommandMetadata, command: Command) : Promise<Pair<UnitOfWork, Long>> {
+  fun handle(metadata: CommandMetadata, command: Command) : Future<Pair<UnitOfWork, Long>> {
 
     val promise = Promise.promise<Pair<UnitOfWork, Long>>()
 
@@ -24,28 +25,28 @@ class CommandController<E : Entity>(private val commandAware: EntityCommandAware
     if (constraints.isNotEmpty()) {
       log.error("Command is invalid: $constraints")
       promise.fail(constraints.toString())
-      return promise
+      return promise.future()
     }
 
     val snapshotValue: AtomicReference<Snapshot<E>> = AtomicReference()
     val uowValue: AtomicReference<UnitOfWork> = AtomicReference()
     val uowIdValue: AtomicReference<Long> = AtomicReference()
 
-    snapshotRepo.retrieve(metadata.entityId).future()
+    snapshotRepo.retrieve(metadata.entityId)
 
       .compose { snapshot ->
         if (log.isTraceEnabled) log.trace("got snapshot $snapshot")
         val cachedSnapshot = snapshot ?: Snapshot(commandAware.initialState, 0)
         snapshotValue.set(cachedSnapshot)
         val cmdHandler = commandAware.cmdHandlerFactory.invoke(metadata, command, cachedSnapshot)
-        cmdHandler.handleCommand().future()
+        cmdHandler.handleCommand()
       }
 
       .compose { unitOfWork ->
         if (log.isTraceEnabled) log.trace("got unitOfWork $unitOfWork")
         // append to journal
         uowValue.set(unitOfWork)
-        uowJournal.append(unitOfWork).future()
+        uowJournal.append(unitOfWork)
       }
 
       .compose { uowId ->
@@ -54,10 +55,10 @@ class CommandController<E : Entity>(private val commandAware: EntityCommandAware
         // compute new snapshot
         if (log.isTraceEnabled) log.trace("computing new snapshot")
         val newInstance = uowValue.get().events.fold(snapshotValue.get().state)
-        { state, event -> commandAware.applyEvent.invoke(event.second, state) }
+        { state, event -> commandAware.applyEvent.invoke(event, state) }
         val newSnapshot = Snapshot(newInstance, uowValue.get().version)
         if (log.isTraceEnabled) log.trace("now will store snapshot $newSnapshot")
-        snapshotRepo.upsert(metadata.entityId, newSnapshot).future()
+        snapshotRepo.upsert(metadata.entityId, newSnapshot)
       }
 
       .compose({
@@ -68,7 +69,7 @@ class CommandController<E : Entity>(private val commandAware: EntityCommandAware
 
       }, promise.future())
 
-    return promise
+    return promise.future()
 
   }
 

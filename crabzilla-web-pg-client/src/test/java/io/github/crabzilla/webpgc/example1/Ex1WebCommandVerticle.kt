@@ -1,7 +1,7 @@
 package io.github.crabzilla.webpgc.example1
 
 import io.github.crabzilla.example1.customer.CustomerCommandAware
-import io.github.crabzilla.example1.customer.CustomerJsonAware
+import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.webpgc.WebCommandVerticle
 import io.github.crabzilla.webpgc.listenHandler
 import io.vertx.core.Future
@@ -28,18 +28,12 @@ class Ex1WebCommandVerticle : WebCommandVerticle() {
   }
 
   override fun start(startFuture: Future<Void>) {
-
     val router = Router.router(vertx)
-
     router.route().handler(LoggerHandler.create())
     router.route().handler(BodyHandler.create())
-
-    addResourceForEntity("customers", "customer", CustomerJsonAware(), CustomerCommandAware(), router)
-
+    addResourceForEntity("customers", example1Json, "customer", CustomerCommandAware(), router)
     server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
-
     server.requestHandler(router).listen(listenHandler(startFuture))
-
   }
 
 }

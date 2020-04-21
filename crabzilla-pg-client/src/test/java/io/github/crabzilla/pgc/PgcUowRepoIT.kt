@@ -1,6 +1,9 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.example1Json
+import io.github.crabzilla.framework.COMMAND_SERIALIZER
+import io.github.crabzilla.framework.EVENT_SERIALIZER
+import io.github.crabzilla.internal.RangeOfEvents
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
@@ -12,21 +15,20 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createdUow1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
-import io.github.crabzilla.pgc.example1.Example1Fixture.customerJson
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
-import io.vertx.core.Handler
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
+import kotlinx.serialization.builtins.list
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
-
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -35,123 +37,102 @@ class PgcUowRepoIT {
   private lateinit var vertx: Vertx
   private lateinit var writeDb: PgPool
   private lateinit var repo: UnitOfWorkRepository
-  private lateinit var journal: UnitOfWorkJournal<Customer>
+  private lateinit var journal: UnitOfWorkJournal
+
+  val eventsJsonArray = example1Json.stringify(EVENT_SERIALIZER.list, listOf(created1))
+  val commandJsonObject = example1Json.stringify(COMMAND_SERIALIZER, createCmd1)
+  val tuple1 = Tuple.of(JsonArray(eventsJsonArray), createdUow1.commandId, JsonObject(commandJsonObject),
+    CUSTOMER_ENTITY, customerId1, 1)
+
+  val eventsJsonArray2 = example1Json.stringify(EVENT_SERIALIZER.list, listOf(activated1))
+  val commandJsonObject2 = example1Json.stringify(COMMAND_SERIALIZER, activateCmd1)
+  val tuple2 = Tuple.of(JsonArray(eventsJsonArray2), activatedUow1.commandId, JsonObject(commandJsonObject2),
+    CUSTOMER_ENTITY, customerId1, 2)
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
-
     vertx = Vertx.vertx()
-
     val envOptions = ConfigStoreOptions()
       .setType("file")
       .setFormat("properties")
       .setConfig(JsonObject().put("path", "../example1.env"))
-
     val options = ConfigRetrieverOptions().addStore(envOptions)
-
     val retriever = ConfigRetriever.create(vertx, options)
-
-    retriever.getConfig(Handler { configFuture ->
-
+    retriever.getConfig { configFuture ->
       if (configFuture.failed()) {
-        println("Failed to get configuration")
         tc.failNow(configFuture.cause())
-        return@Handler
+        return@getConfig
       }
-
       val config = configFuture.result()
-
       writeDb = writeModelPgPool(vertx, config)
-      repo = PgcUowRepo(writeDb, customerJson)
-      journal = PgcUowJournal(vertx, writeDb, customerJson)
-
-      writeDb.query("delete from units_of_work") { deleteResult1 ->
-        if (deleteResult1.failed()) {
-          deleteResult1.cause().printStackTrace()
-          tc.failNow(deleteResult1.cause())
-          return@query
-        }
-        writeDb.query("delete from customer_snapshots") { deleteResult2 ->
-          if (deleteResult2.failed()) {
-            deleteResult2.cause().printStackTrace()
-            tc.failNow(deleteResult2.cause())
-            return@query
+      repo = PgcUowRepo(writeDb, example1Json)
+      journal = PgcUowJournal(vertx, writeDb, example1Json)
+      writeDb.query("delete from units_of_work")
+        .execute { deleteResult1 ->
+          if (deleteResult1.failed()) {
+            tc.failNow(deleteResult1.cause())
+            return@execute
           }
-          tc.completeNow()
+          writeDb.query("delete from customer_snapshots")
+            .execute { deleteResult2 ->
+              if (deleteResult2.failed()) {
+                tc.failNow(deleteResult2.cause())
+                return@execute
+              }
+              tc.completeNow()
+            }
         }
-      }
-
-
-    })
-
+    }
   }
 
   @Test
   @DisplayName("can queries an unit of work row by it's command id")
   fun a4(tc: VertxTestContext) {
-
-    val tuple = Tuple.of(
-      customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1))),
-      createdUow1.commandId,
-      "create",
-      customerJson.cmdToJson(createCmd1),
-      CUSTOMER_ENTITY,
-      customerId1,
-      1)
-
-    writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar1 ->
-      if (ar1.failed()) {
-        ar1.cause().printStackTrace()
-        tc.failNow(ar1.cause())
+    writeDb.preparedQuery(SQL_APPEND_UOW)
+      .execute(tuple1) { event1 ->
+      if (event1.failed()) {
+        event1.cause().printStackTrace()
+        tc.failNow(event1.cause())
+        return@execute
       }
-      val uowId = ar1.result().first().getLong(0)
+      val uowId = event1.result().first().getLong(0)
       tc.verify { tc.verify { assertThat(uowId).isGreaterThan(0) } }
-      val selectFuture = repo.getUowByCmdId(createdUow1.commandId).future()
-      selectFuture.setHandler { ar2 ->
-        if (ar2.failed()) {
-          tc.failNow(ar2.cause())
+      repo.getUowByCmdId(createdUow1.commandId).onComplete{ event2 ->
+        if (event2.failed()) {
+          tc.failNow(event2.cause())
+          return@onComplete
         }
-        val uowPair = ar2.result()
+        val uowPair = event2.result()
         tc.verify {
           assertThat(uowPair.first).isEqualTo(createdUow1)
           assertThat(uowPair.second).isEqualTo(uowId)
           tc.completeNow()
         }
       }
-
     }
-
   }
 
   @Test
   @DisplayName("can queries an unit of work row by it's uow id")
   fun a5(tc: VertxTestContext) {
-
-    val tuple = Tuple.of(
-      customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1))),
-      createdUow1.commandId,
-      "create",
-      customerJson.cmdToJson(createCmd1),
-      CUSTOMER_ENTITY,
-      customerId1,
-      1)
-
-    writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar1 ->
-      if (ar1.failed()) {
-        tc.failNow(ar1.cause())
+    writeDb.preparedQuery(SQL_APPEND_UOW)
+      .execute(tuple1) { event1 ->
+      if (event1.failed()) {
+        tc.failNow(event1.cause())
+        return@execute
       }
-      val uowId = ar1.result().first().getLong("uow_id")
+      val uowId = event1.result().first().getLong("uow_id")
       tc.verify { assertThat(uowId).isGreaterThan(0) }
-      repo.getUowByUowId(uowId).future().setHandler { ar2 ->
-        if (ar2.failed()) {
-          tc.failNow(ar2.cause())
+      repo.getUowByUowId(uowId).onComplete { event2 ->
+        if (event2.failed()) {
+          tc.failNow(event2.cause())
+          return@onComplete
         }
-        val uow = ar2.result()
+        val uow = event2.result()
         tc.verify { assertThat(createdUow1).isEqualTo(uow) }
         tc.completeNow()
       }
     }
-
   }
 
   @Nested
@@ -162,9 +143,12 @@ class PgcUowRepoIT {
     @Test
     @DisplayName("can queries an empty repo")
     fun a1(tc: VertxTestContext) {
-      val selectFuture = repo.selectAfterUowId(1, 100).future()
-      selectFuture.setHandler { selectAsyncResult ->
-        val snapshotData = selectAsyncResult.result()
+      repo.selectAfterUowId(1, 100).onComplete { event1 ->
+        if (event1.failed()) {
+          tc.failNow(event1.cause())
+          return@onComplete
+        }
+        val snapshotData = event1.result()
         tc.verify { assertThat(snapshotData.size).isEqualTo(0) }
         tc.completeNow()
       }
@@ -173,31 +157,26 @@ class PgcUowRepoIT {
     @Test
     @DisplayName("can queries a single unit of work row")
     fun a2(tc: VertxTestContext) {
-
-      val tuple = Tuple.of(
-        customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1))),
-        createdUow1.commandId,
-        "create",
-        customerJson.cmdToJson(createCmd1),
-        CUSTOMER_ENTITY,
-        customerId1,
-        1)
-
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar ->
-        if (ar.failed()) {
-          ar.cause().printStackTrace()
-          tc.failNow(ar.cause())
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple1) { event1 ->
+        if (event1.failed()) {
+          tc.failNow(event1.cause())
+          return@execute
         }
-        val uowId = ar.result().first().getLong(0)
+        val uowId = event1.result().first().getLong(0)
         tc.verify { assertThat(uowId).isGreaterThan(0) }
-        val selectFuture = repo.selectAfterUowId(0, 100).future()
-        selectFuture.setHandler { selectAsyncResult ->
-          val snapshotData = selectAsyncResult.result()
+        val selectFuture = repo.selectAfterUowId(0, 100)
+        selectFuture.onComplete { event2 ->
+          if (event2.failed()) {
+            tc.failNow(event2.cause())
+            return@onComplete
+          }
+          val snapshotData = event2.result()
           tc.verify { assertThat(snapshotData.size).isEqualTo(1) }
           val (uowId, targetId, events) = snapshotData[0]
           tc.verify { assertThat(uowId).isGreaterThan(0) }
           tc.verify { assertThat(targetId).isEqualTo(customerId1) }
-          tc.verify { assertThat(events).isEqualTo(arrayListOf(Pair("CustomerCreated", created1))) }
+          tc.verify { assertThat(events).isEqualTo(arrayListOf(created1)) }
           tc.completeNow()
         }
       }
@@ -206,93 +185,60 @@ class PgcUowRepoIT {
     @Test
     @DisplayName("can queries two unit of work rows")
     fun a3(tc: VertxTestContext) {
-
-      val tuple1 = Tuple.of(
-        customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1))),
-        createdUow1.commandId,
-        "create",
-        customerJson.cmdToJson(createCmd1),
-        CUSTOMER_ENTITY,
-        customerId1,
-        1)
-
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
-
-        if (ar1.failed()) {
-          ar1.cause().printStackTrace()
-          tc.failNow(ar1.cause())
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple1) { event1 ->
+        if (event1.failed()) {
+          tc.failNow(event1.cause())
+          return@execute
         }
-
-        val tuple2 = Tuple.of(
-          customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1))),
-          activatedUow1.commandId,
-          "activate",
-          customerJson.cmdToJson(activateCmd1),
-          CUSTOMER_ENTITY,
-          customerId1,
-          2)
-
-        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
-          if (ar2.failed()) {
-            ar2.cause().printStackTrace()
-            tc.failNow(ar2.cause())
+        writeDb.preparedQuery(SQL_APPEND_UOW)
+          .execute(tuple2) { event2 ->
+          if (event2.failed()) {
+            tc.failNow(event2.cause())
+            return@execute
           }
-          val selectFuture1 = repo.selectAfterUowId(0, 100).future()
-          selectFuture1.setHandler { selectAsyncResult ->
-            val snapshotData = selectAsyncResult.result()
+          repo.selectAfterUowId(0, 100).onComplete { event3 ->
+            if (event3.failed()) {
+              tc.failNow(event3.cause())
+              return@onComplete
+            }
+            val snapshotData = event3.result()
             tc.verify { assertThat(snapshotData.size).isEqualTo(2) }
             val (uowId1, targetId1, events1) = snapshotData[0]
             tc.verify { assertThat(uowId1).isGreaterThan(0) }
             tc.verify { assertThat(targetId1).isEqualTo(customerId1) }
-            tc.verify { assertThat(events1).isEqualTo(arrayListOf(Pair("CustomerCreated", created1))) }
+            tc.verify { assertThat(events1).isEqualTo(listOf(created1)) }
             val (uowId2, targetId2, events2) = snapshotData[1]
             tc.verify { assertThat(uowId2).isEqualTo(uowId1.inc()) }
             tc.verify { assertThat(targetId2).isEqualTo(customerId1) }
-            tc.verify { assertThat(events2).isEqualTo(arrayListOf(Pair("CustomerActivated", activated1))) }
+            tc.verify { assertThat(events2).isEqualTo(listOf(activated1)) }
             tc.completeNow()
           }
         }
-
       }
     }
 
     @Test
     @DisplayName("can query units of work for a given entity ID")
     fun a33(tc: VertxTestContext) {
-
-      val tuple1 = Tuple.of(
-        customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1))),
-        createdUow1.commandId,
-        "create",
-        customerJson.cmdToJson(createCmd1),
-        CUSTOMER_ENTITY,
-        customerId1,
-        1)
-
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
-
-        if (ar1.failed()) {
-          ar1.cause().printStackTrace()
-          tc.failNow(ar1.cause())
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple1) { event1 ->
+        if (event1.failed()) {
+          tc.failNow(event1.cause())
+          return@execute
         }
-
-        val tuple2 = Tuple.of(
-          customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1))),
-          activatedUow1.commandId,
-          "activate",
-          customerJson.cmdToJson(activateCmd1),
-          CUSTOMER_ENTITY,
-          customerId1,
-          2)
-
-        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
-          if (ar2.failed()) {
-            ar2.cause().printStackTrace()
-            tc.failNow(ar2.cause())
+        writeDb.preparedQuery(SQL_APPEND_UOW)
+          .execute(tuple2) { event2 ->
+          if (event2.failed()) {
+            tc.failNow(event2.cause())
+            return@execute
           }
-          val selectFuture1 = repo.getAllUowByEntityId(customerId1).future()
-          selectFuture1.setHandler { selectAsyncResult ->
-            val uowList = selectAsyncResult.result()
+          repo.getAllUowByEntityId(customerId1).onComplete { event3 ->
+            if (event3.failed()) {
+              tc.failNow(event2.cause())
+              return@onComplete
+            }
+            val uowList = event3.result()
             println(uowList)
             tc.verify { assertThat(uowList.size).isEqualTo(2) }
             val uow1 = uowList[0]
@@ -302,51 +248,37 @@ class PgcUowRepoIT {
             tc.completeNow()
           }
         }
-
       }
     }
 
     @Test
     @DisplayName("can queries by uow sequence")
     fun a4(tc: VertxTestContext) {
-
-      val tuple1 = Tuple.of(
-        customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1))),
-        createdUow1.commandId,
-        "create",
-        customerJson.cmdToJson(createCmd1),
-        CUSTOMER_ENTITY,
-        customerId1,
-        1)
-
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
-        if (ar1.failed()) {
-          ar1.cause().printStackTrace()
-          tc.failNow(ar1.cause())
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple1) { event1 ->
+        if (event1.failed()) {
+          tc.failNow(event1.cause())
+          return@execute
         }
-        val uowId1 = ar1.result().first().getLong("uow_id")
-        val tuple2 = Tuple.of(
-          customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1))),
-          activatedUow1.commandId,
-          "activate",
-          customerJson.cmdToJson(activateCmd1),
-          CUSTOMER_ENTITY,
-          customerId1,
-          2)
-        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
-          if (ar2.failed()) {
-            ar2.cause().printStackTrace()
-            tc.failNow(ar2.cause())
+        val uowId1 = event1.result().first().getLong("uow_id")
+        writeDb.preparedQuery(SQL_APPEND_UOW)
+          .execute(tuple2) { event2 ->
+          if (event2.failed()) {
+            tc.failNow(event2.cause())
+            return@execute
           }
-          val uowId2 = ar2.result().first().getLong("uow_id")
-          val selectFuture1 = repo.selectAfterUowId(uowId1, 100).future()
-          selectFuture1.setHandler { selectAsyncResult ->
-            val snapshotData = selectAsyncResult.result()
+          val uowId2 = event2.result().first().getLong("uow_id")
+          repo.selectAfterUowId(uowId1, 100).onComplete{ event3 ->
+            if (event3.failed()) {
+              tc.failNow(event3.cause())
+              return@onComplete
+            }
+            val snapshotData = event3.result()
             tc.verify { assertThat(snapshotData.size).isEqualTo(1) }
             val (uowId, targetId, events) = snapshotData[0]
             tc.verify { assertThat(uowId).isEqualTo(uowId2) }
             tc.verify { assertThat(targetId).isEqualTo(customerId1) }
-            tc.verify { assertThat(events).isEqualTo(arrayListOf(Pair("CustomerActivated", activated1))) }
+            tc.verify { assertThat(events).isEqualTo(arrayListOf(activated1)) }
             tc.completeNow()
           }
         }
@@ -362,121 +294,81 @@ class PgcUowRepoIT {
     @Test
     @DisplayName("can queries a single unit of work row")
     fun a2(tc: VertxTestContext) {
-
-      val tuple = Tuple.of(
-        customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1))),
-        createdUow1.commandId,
-        "create",
-        customerJson.cmdToJson(createCmd1),
-        CUSTOMER_ENTITY,
-        customerId1,
-        1)
-
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple) { ar ->
-        if (ar.failed()) {
-          ar.cause().printStackTrace()
-          tc.failNow(ar.cause())
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple1) { event1 ->
+        if (event1.failed()) {
+          tc.failNow(event1.cause())
+          return@execute
         }
-        val uowId = ar.result().first().getLong(0)
+        val uowId = event1.result().first().getLong(0)
         tc.verify { assertThat(uowId).isGreaterThan(0) }
-        val selectFuture = repo.selectAfterVersion(customerId1, 0, CUSTOMER_ENTITY).future()
-        selectFuture.setHandler { selectAsyncResult ->
-          val snapshotData = selectAsyncResult.result()
+        repo.selectAfterVersion(customerId1, 0, CUSTOMER_ENTITY).onComplete { event2 ->
+          if (event2.failed()) {
+            tc.failNow(event2.cause())
+            return@onComplete
+          }
+          val snapshotData = event2.result()
           tc.verify { assertThat(1).isEqualTo(snapshotData.untilVersion) }
-          tc.verify { assertThat(arrayListOf(Pair("CustomerCreated", created1))).isEqualTo(snapshotData.events) }
+          tc.verify { assertThat(arrayListOf(created1)).isEqualTo(snapshotData.events) }
           tc.completeNow()
         }
       }
-
     }
 
     @Test
     @DisplayName("can queries two unit of work rows")
     fun a3(tc: VertxTestContext) {
-
-      val tuple1 = Tuple.of(
-        customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1))),
-        createdUow1.commandId,
-        "create",
-        customerJson.cmdToJson(createCmd1),
-        CUSTOMER_ENTITY,
-        customerId1,
-        1)
-
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
-
-        if (ar1.failed()) {
-          ar1.cause().printStackTrace()
-          tc.failNow(ar1.cause())
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple1) { event1 ->
+        if (event1.failed()) {
+          tc.failNow(event1.cause())
+          return@execute
         }
-
-        val tuple2 = Tuple.of(
-          customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1))),
-          activatedUow1.commandId,
-          "activate",
-          customerJson.cmdToJson(activateCmd1),
-          CUSTOMER_ENTITY,
-          customerId1,
-          2)
-
-        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
-          if (ar2.failed()) {
-            ar2.cause().printStackTrace()
-            tc.failNow(ar2.cause())
+        writeDb.preparedQuery(SQL_APPEND_UOW)
+          .execute(tuple2) { event2 ->
+          if (event2.failed()) {
+            tc.failNow(event2.cause())
+            return@execute
           }
-          val selectFuture1 = repo.selectAfterVersion(customerId1, 0, CUSTOMER_ENTITY).future()
-          selectFuture1.setHandler { selectAsyncResult ->
-            val snapshotData = selectAsyncResult.result()
+          repo.selectAfterVersion(customerId1, 0, CUSTOMER_ENTITY).onComplete{ event3 ->
+            if (event3.failed()) {
+              tc.failNow(event3.cause())
+              return@onComplete
+            }
+            val snapshotData = event3.result()
             tc.verify { assertThat(2).isEqualTo(snapshotData.untilVersion) }
-            tc.verify { assertThat(listOf(Pair("CustomerCreated", created1), Pair("CustomerActivated", activated1)))
-              .isEqualTo(snapshotData.events) }
+            tc.verify { assertThat(listOf(created1, activated1)).isEqualTo(snapshotData.events) }
             tc.completeNow()
           }
         }
       }
-
     }
 
     @Test
     @DisplayName("can queries by version")
     fun a4(tc: VertxTestContext) {
-
-      val tuple1 = Tuple.of(
-        customerJson.toJsonArray(arrayListOf(Pair("CustomerCreated", created1))),
-        createdUow1.commandId,
-        "create",
-        customerJson.cmdToJson(createCmd1),
-        CUSTOMER_ENTITY,
-        customerId1,
-        1)
-
-      writeDb.preparedQuery(SQL_APPEND_UOW, tuple1) { ar1 ->
-        if (ar1.failed()) {
-          ar1.cause().printStackTrace()
-          tc.failNow(ar1.cause())
-          return@preparedQuery
+      writeDb.preparedQuery(SQL_APPEND_UOW)
+        .execute(tuple1) { event1 ->
+        if (event1.failed()) {
+          tc.failNow(event1.cause())
+          return@execute
         }
-        val uowId1 = ar1.result().first().getLong("uow_id")
-        val tuple2 = Tuple.of(
-          customerJson.toJsonArray(arrayListOf(Pair("CustomerActivated", activated1))),
-          activatedUow1.commandId,
-          "activate",
-          customerJson.cmdToJson(activateCmd1),
-          CUSTOMER_ENTITY,
-          customerId1,
-          2)
-        writeDb.preparedQuery(SQL_APPEND_UOW, tuple2) { ar2 ->
-          if (ar2.failed()) {
-            ar2.cause().printStackTrace()
-            tc.failNow(ar2.cause())
-            return@preparedQuery
+        val uowId1 = event1.result().first().getLong("uow_id")
+        writeDb.preparedQuery(SQL_APPEND_UOW)
+          .execute(tuple2) { event2 ->
+          if (event2.failed()) {
+            tc.failNow(event2.cause())
+            return@execute
           }
-          val uowId2 = ar2.result().first().getLong("uow_id")
-          val selectFuture1 = repo.selectAfterVersion(customerId1, 1, CUSTOMER_ENTITY).future()
-          selectFuture1.setHandler { selectAsyncResult ->
-            val snapshotData = selectAsyncResult.result()
+          val uowId2 = event2.result().first().getLong("uow_id")
+          repo.selectAfterVersion(customerId1, 1, CUSTOMER_ENTITY).onComplete { event3 ->
+            if (event3.failed()) {
+              tc.failNow(event3.cause())
+              return@onComplete
+            }
+            val snapshotData: RangeOfEvents = event3.result()
             tc.verify { assertThat(2).isEqualTo(snapshotData.untilVersion) }
-            tc.verify { assertThat(arrayListOf(Pair("CustomerActivated", activated1))).isEqualTo(snapshotData.events) }
+            tc.verify { assertThat(listOf(activated1)).isEqualTo(snapshotData.events) }
             tc.completeNow()
           }
         }
@@ -487,45 +379,35 @@ class PgcUowRepoIT {
   @Test
   @DisplayName("can queries only above version 1")
   fun s4(tc: VertxTestContext) {
-
-    val appendFuture1 = journal.append(createdUow1).future()
-
-    appendFuture1.setHandler { ar1 ->
-      if (ar1.failed()) {
-        ar1.cause().printStackTrace()
-        tc.failNow(ar1.cause())
-        return@setHandler
+    journal.append(createdUow1).onComplete{ event1 ->
+      if (event1.failed()) {
+        tc.failNow(event1.cause())
+        return@onComplete
       }
-      val uowId = ar1.result()
+      val uowId = event1.result()
       tc.verify { assertThat(uowId).isGreaterThan(0) }
       // append uow2
-      val appendFuture2 = journal.append(activatedUow1).future()
-      appendFuture2.setHandler { ar2 ->
-        if (ar2.failed()) {
-          ar2.cause().printStackTrace()
-          tc.failNow(ar2.cause())
-          return@setHandler
+      journal.append(activatedUow1).onComplete{ event2 ->
+        if (event2.failed()) {
+          tc.failNow(event2.cause())
+          return@onComplete
         }
-        val uowId = ar2.result()
+        val uowId = event2.result()
         tc.verify { assertThat(uowId).isGreaterThan(2) }
         // get only above version 1
-        val snapshotDataFuture = repo.selectAfterVersion(activatedUow1.entityId, 1, CUSTOMER_ENTITY).future()
-        snapshotDataFuture.setHandler { ar4 ->
-          if (ar4.failed()) {
-            ar4.cause().printStackTrace()
-            tc.failNow(ar4.cause())
-            return@setHandler
+        repo.selectAfterVersion(activatedUow1.entityId, 1, CUSTOMER_ENTITY).onComplete{ event3 ->
+          if (event3.failed()) {
+            tc.failNow(event3.cause())
+            return@onComplete
           }
-          val (afterVersion, untilVersion, events) = ar4.result()
-
+          val (afterVersion, untilVersion, events) = event3.result()
           tc.verify { assertThat(afterVersion).isEqualTo(1) }
           tc.verify { assertThat(untilVersion).isEqualTo(activatedUow1.version) }
-          tc.verify { assertThat(events).isEqualTo(arrayListOf(Pair("CustomerActivated", activated1))) }
+          tc.verify { assertThat(events).isEqualTo(arrayListOf(activated1)) }
           tc.completeNow()
         }
       }
     }
-
   }
 
 }

@@ -6,17 +6,17 @@
 
 ## Goal for version 1.0.0
 
-To help writing CQRS and Event Sourcing applications with [Vert.x](http://vertx.io/) 
+To help writing CQRS and Event Sourcing applications with [Vert.x](http://vertx.io/)
 
 ![Architecture](crabzilla-accts.png)
 
 ## Status
 
-Its still in very early development stage. APIs can change. So far Crabzilla has only an Aggregate example. Inspired by 
-[Eventstorming](http://eventstorming.com), the goal is to develop examples and implementations for an ExternalSystem, 
-a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch is very different from that. 
+Its still in very early development stage. APIs can change. So far Crabzilla has only an Aggregate example. Inspired by
+[Eventstorming](http://eventstorming.com), the goal is to develop examples and implementations for an ExternalSystem,
+a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch is very different from that.
 
-## Example application 
+## Example application
 
 * [Accounts Example](https://github.com/crabzilla/accounts)
 * [kotlin-example1-manual **deprecated**](https://crabzilla.github.io/crabzilla/docs/kotlin-example1-manual.html)
@@ -46,7 +46,7 @@ docker-compose up
 3. Open another terminal and build it, running both unit and integration tests:
 
 ```bash
-mvn clean install
+mvn clean install -DskipTests=false
 ```
 
 ### Random notes

@@ -1,4 +1,4 @@
-//package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc
 //
 //import io.github.crabzilla.*
 //import io.github.crabzilla.framework.UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT
