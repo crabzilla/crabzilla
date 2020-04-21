@@ -51,14 +51,11 @@ data class UnitOfWork(val entityName: String,
   }
 
   object JsonMetadata {
-
     const val ENTITY_NAME = "entityName"
     const val ENTITY_ID = "entityId"
     const val COMMAND_ID = "commandId"
     const val COMMAND = "command"
     const val VERSION = "version"
     const val EVENTS = "events"
-
-    const val EVENTS_JSON_CONTENT = "eventJson"
   }
 }

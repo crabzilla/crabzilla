@@ -8,6 +8,7 @@ import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
@@ -52,10 +53,8 @@ class PgcUowJournal(private val vertx: Vertx, private val pgPool: PgPool, privat
           }
           // if version is OK, then insert
           val cmdAsJsonObject: String = json.stringify(COMMAND_SERIALIZER, unitOfWork.command)
-          log.info(cmdAsJsonObject)
           val eventsListAsJsonObject: String = json.stringify(EVENT_SERIALIZER.list, unitOfWork.events)
-          log.info(eventsListAsJsonObject)
-          val params2 = Tuple.of(eventsListAsJsonObject, unitOfWork.commandId, cmdAsJsonObject,
+          val params2 = Tuple.of(JsonArray(eventsListAsJsonObject), unitOfWork.commandId, JsonObject(cmdAsJsonObject),
             unitOfWork.entityName, unitOfWork.entityId, unitOfWork.version)
           tx.preparedQuery(SQL_APPEND_UOW)
             .execute(params2) { event2 ->
@@ -79,10 +78,9 @@ class PgcUowJournal(private val vertx: Vertx, private val pgPool: PgPool, privat
                   .put(UnitOfWork.JsonMetadata.ENTITY_NAME, unitOfWork.entityName)
                   .put(UnitOfWork.JsonMetadata.ENTITY_ID, unitOfWork.entityId)
                   .put(UnitOfWork.JsonMetadata.VERSION, unitOfWork.version)
-                  .put(UnitOfWork.JsonMetadata.EVENTS, eventsListAsJsonObject)
-                if (log.isTraceEnabled) log.trace("will publish message $message")
-                vertx.eventBus().publish(EventBusChannels.unitOfWorkChannel, message.encode())
-                if (log.isTraceEnabled) log.trace("publish success")
+                  .put(UnitOfWork.JsonMetadata.EVENTS, JsonArray(eventsListAsJsonObject))
+                if (log.isDebugEnabled) log.debug("will publish message $message")
+                vertx.eventBus().publish(EventBusChannels.unitOfWorkChannel, message)
                 promise.complete(uowId)
               }
             }

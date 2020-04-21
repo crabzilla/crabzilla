@@ -155,7 +155,7 @@ fun toUnitOfWorkEvents(jsonObject: JsonObject, json: kotlinx.serialization.json.
   val uowId = jsonObject.getLong("uowId")
   val entityId = jsonObject.getInteger(UnitOfWork.JsonMetadata.ENTITY_ID)
   val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list,
-    jsonObject.getJsonArray(UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT).encode())
+    jsonObject.getJsonArray(UnitOfWork.JsonMetadata.EVENTS).encode())
   return UnitOfWorkEvents(uowId, entityId, events)
 
 }

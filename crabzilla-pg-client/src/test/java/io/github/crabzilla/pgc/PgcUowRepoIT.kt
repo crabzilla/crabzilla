@@ -19,6 +19,7 @@ import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -40,11 +41,13 @@ class PgcUowRepoIT {
 
   val eventsJsonArray = example1Json.stringify(EVENT_SERIALIZER.list, listOf(created1))
   val commandJsonObject = example1Json.stringify(COMMAND_SERIALIZER, createCmd1)
-  val tuple1 = Tuple.of(eventsJsonArray, createdUow1.commandId, commandJsonObject, CUSTOMER_ENTITY, customerId1, 1)
+  val tuple1 = Tuple.of(JsonArray(eventsJsonArray), createdUow1.commandId, JsonObject(commandJsonObject),
+    CUSTOMER_ENTITY, customerId1, 1)
 
   val eventsJsonArray2 = example1Json.stringify(EVENT_SERIALIZER.list, listOf(activated1))
   val commandJsonObject2 = example1Json.stringify(COMMAND_SERIALIZER, activateCmd1)
-  val tuple2 = Tuple.of(eventsJsonArray2, activatedUow1.commandId, commandJsonObject2, CUSTOMER_ENTITY, customerId1, 2)
+  val tuple2 = Tuple.of(JsonArray(eventsJsonArray2), activatedUow1.commandId, JsonObject(commandJsonObject2),
+    CUSTOMER_ENTITY, customerId1, 2)
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {

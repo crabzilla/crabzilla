@@ -6,6 +6,8 @@ import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
+import io.vertx.core.json.JsonArray
+import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
 import kotlinx.serialization.builtins.list
@@ -52,10 +54,10 @@ internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : 
         return@execute
       }
       val row = rows.first()
-      val commandAsJson: String = row.get(String::class.java, 3)
-      val command: Command = json.parse(COMMAND_SERIALIZER, commandAsJson)
-      val eventsAsJson: String = row.get(String::class.java, 1)
-      val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson)
+      val commandAsJson: JsonObject = row.get(JsonObject::class.java, 3)
+      val command: Command = json.parse(COMMAND_SERIALIZER, commandAsJson.encode())
+      val eventsAsJson: JsonArray = row.get(JsonArray::class.java, 1)
+      val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson.encode())
       val uowId = row.getLong(UOW_ID)
       val uow = UnitOfWork(row.getString(AR_NAME), row.getInteger(AR_ID), row.getUUID(CMD_ID), command,
         row.getInteger(VERSION)!!, events)
@@ -79,10 +81,10 @@ internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : 
         return@execute
       }
       val row = rows.first()
-      val commandAsJson: String = row.get(String::class.java, 3)
-      val command: Command = json.parse(COMMAND_SERIALIZER, commandAsJson)
-      val eventsAsJson: String = row.get(String::class.java, 1)
-      val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson)
+      val commandAsJson: JsonObject = row.get(JsonObject::class.java, 3)
+      val command: Command = json.parse(COMMAND_SERIALIZER, commandAsJson.encode())
+      val eventsAsJson: JsonArray = row.get(JsonArray::class.java, 1)
+      val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson.encode())
       val uow = UnitOfWork(row.getString(AR_NAME), row.getInteger(AR_ID), row.getUUID(CMD_ID), command,
           row.getInteger(VERSION)!!, events)
       promise.complete(uow)
@@ -102,10 +104,10 @@ internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : 
       val result = ArrayList<UnitOfWork>()
       val rows = ar.result()
       for (row in rows) {
-        val commandAsJson: String = row.get(String::class.java, 3)
-        val command: Command = json.parse(COMMAND_SERIALIZER, commandAsJson)
-        val eventsAsJson: String = row.get(String::class.java, 1)
-        val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson)
+        val commandAsJson: JsonObject = row.get(JsonObject::class.java, 3)
+        val command: Command = json.parse(COMMAND_SERIALIZER, commandAsJson.encode())
+        val eventsAsJson: JsonArray = row.get(JsonArray::class.java, 1)
+        val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson.encode())
         val uow = UnitOfWork(row.getString(AR_NAME), row.getInteger(AR_ID), row.getUUID(CMD_ID), command,
           row.getInteger(VERSION)!!, events)
         result.add(uow)
@@ -135,8 +137,8 @@ internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : 
           val list = ArrayList<RangeOfEvents>()
           // Use the stream
           stream.handler { row ->
-            val eventsAsJson: String = row.get(String::class.java, 0)
-            val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson)
+            val eventsAsJson: JsonArray = row.get(JsonArray::class.java, 0)
+            val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson.encode())
             val snapshotData = RangeOfEvents(version, row.getInteger(VERSION)!!, events)
             list.add(snapshotData)
           }
@@ -180,8 +182,8 @@ internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : 
       for (row in rows) {
         val uowSeq = row.getLong(UOW_ID)
         val targetId = row.getInteger(AR_ID)
-        val eventsAsJson: String = row.get(String::class.java, 2)
-        val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson)
+        val eventsAsJson: JsonArray = row.get(JsonArray::class.java, 2)
+        val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson.encode())
         val projectionData = UnitOfWorkEvents(uowSeq.toLong(), targetId, events)
         list.add(projectionData)
       }

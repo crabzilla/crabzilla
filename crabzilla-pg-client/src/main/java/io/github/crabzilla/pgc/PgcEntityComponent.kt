@@ -45,15 +45,15 @@ class PgcEntityComponent<E: Entity>(vertx: Vertx, writeDb: PgPool,
 
     val promise = Promise.promise<Pair<UnitOfWork, Long>>()
 
-    uowRepo.getUowByCmdId(metadata.commandId).setHandler { gotCommand ->
+    uowRepo.getUowByCmdId(metadata.commandId).onComplete { gotCommand ->
       if (gotCommand.succeeded()) {
         val uowPair = gotCommand.result()
         if (uowPair != null) {
           promise.complete(uowPair)
-          return@setHandler
+          return@onComplete
         }
       }
-      cmdController.handle(metadata, command).setHandler { cmdHandled ->
+      cmdController.handle(metadata, command).onComplete { cmdHandled ->
         if (cmdHandled.succeeded()) {
           val pair = cmdHandled.result()
           promise.complete(pair)
