@@ -28,8 +28,7 @@ class CustomerCommandAware : EntityCommandAware<Customer> {
         if (command.name == "a bad name") listOf("Invalid name: ${command.name}") else listOf()
       is CreateActivateCustomer ->
         if (command.name == "a bad name") listOf("Invalid name: ${command.name}") else listOf()
-      is ActivateCustomer -> listOf()
-      is DeactivateCustomer -> listOf()
+      is ActivateCustomer, is DeactivateCustomer -> listOf()
       else -> listOf("invalid command ${command.javaClass.simpleName}") // all other commands are invalid
     }
   }
