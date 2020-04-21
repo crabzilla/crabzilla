@@ -1,6 +1,11 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.framework.*
+import io.github.crabzilla.framework.Command
+import io.github.crabzilla.framework.CommandMetadata
+import io.github.crabzilla.framework.DomainEvent
+import io.github.crabzilla.framework.EntityCommandAware
+import io.github.crabzilla.framework.EntityCommandHandler
+import io.github.crabzilla.framework.Snapshot
 
 class CustomerCommandAware : EntityCommandAware<Customer> {
 
@@ -16,21 +21,21 @@ class CustomerCommandAware : EntityCommandAware<Customer> {
     }
   }
 
-   override val validateCmd: (command: Command) -> List<String> = {
-     command ->
-     when (command) {
-       is CreateCustomer ->
-         if (command.name == "a bad name") listOf("Invalid name: ${command.name}") else listOf()
-       else -> listOf() // all other commands are valid
-     }
-   }
+  override val validateCmd: (command: Command) -> List<String> = {
+    command ->
+    when (command) {
+      is CreateCustomer ->
+        if (command.name == "a bad name") listOf("Invalid name: ${command.name}") else listOf()
+      else -> listOf() // all other commands are valid
+    }
+  }
 
-  override val cmdHandlerFactory: (cmdMetadata: CommandMetadata,
-                                   command: Command,
-                                   snapshot: Snapshot<Customer>) -> EntityCommandHandler<Customer> = {
+  override val cmdHandlerFactory: (
+    cmdMetadata: CommandMetadata,
+    command: Command,
+    snapshot: Snapshot<Customer>
+  ) -> EntityCommandHandler<Customer> = {
     cmdMetadata: CommandMetadata, command: Command, snapshot: Snapshot<Customer> ->
             CustomerCmdHandler(cmdMetadata, command, snapshot, applyEvent)
   }
-
 }
-

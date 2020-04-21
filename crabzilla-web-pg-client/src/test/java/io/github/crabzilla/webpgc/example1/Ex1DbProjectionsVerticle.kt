@@ -12,5 +12,4 @@ open class Ex1DbProjectionsVerticle : DbProjectionsVerticle() {
     addProjector("customers-summary", CustomerSummaryProjector(), example1Json)
     promise.complete()
   }
-
 }

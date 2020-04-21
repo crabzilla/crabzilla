@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 
-
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgcEntityComponentIT {
@@ -68,7 +67,6 @@ class PgcEntityComponentIT {
       }
     })
   }
-
 
   // via handleCommand
 
@@ -115,7 +113,7 @@ class PgcEntityComponentIT {
     }
   }
 
-  //createActivateCmd1
+  // createActivateCmd1
 
   @Test
   @DisplayName("given a valid composed command it will be SUCCESS")
@@ -133,5 +131,4 @@ class PgcEntityComponentIT {
       }
     }
   }
-
 }

@@ -9,20 +9,25 @@ import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
-import io.vertx.core.*
+import io.vertx.core.AsyncResult
+import io.vertx.core.CompositeFuture
+import io.vertx.core.DeploymentOptions
+import io.vertx.core.Future
+import io.vertx.core.Handler
+import io.vertx.core.Vertx
 import io.vertx.core.http.HttpServer
 import io.vertx.core.json.JsonObject
 import io.vertx.core.json.jackson.DatabindCodec
 import io.vertx.core.logging.SLF4JLogDelegateFactory
 import io.vertx.ext.web.RoutingContext
-import kotlinx.serialization.builtins.list
-import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.ServerSocket
+import kotlinx.serialization.builtins.list
+import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("webpgc")
 
-fun getConfig(vertx: Vertx, configFile: String) : Future<JsonObject> {
+fun getConfig(vertx: Vertx, configFile: String): Future<JsonObject> {
   // slf4j setup
   System.setProperty(io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME,
     SLF4JLogDelegateFactory::class.java.name)
@@ -133,7 +138,7 @@ private fun nextFreePort(from: Int, to: Int): Int {
       return port
     } else {
       if (port == to) {
-        throw IllegalStateException("Could not find any from available from $from to $to");
+        throw IllegalStateException("Could not find any from available from $from to $to")
       } else {
         port += 1
       }
@@ -157,10 +162,9 @@ fun toUnitOfWorkEvents(jsonObject: JsonObject, json: kotlinx.serialization.json.
   val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list,
     jsonObject.getJsonArray(UnitOfWork.JsonMetadata.EVENTS).encode())
   return UnitOfWorkEvents(uowId, entityId, events)
-
 }
 
-fun errorHandler(paramName: String) : Handler<RoutingContext> {
+fun errorHandler(paramName: String): Handler<RoutingContext> {
   return Handler {
     WebCommandVerticle.log.error(it.failure().message, it.failure())
     when (it.failure()) {

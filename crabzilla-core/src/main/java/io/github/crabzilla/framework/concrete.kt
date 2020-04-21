@@ -1,7 +1,7 @@
 package io.github.crabzilla.framework
 
+import java.util.UUID
 import kotlinx.serialization.PolymorphicSerializer
-import java.util.*
 
 val ENTITY_SERIALIZER = PolymorphicSerializer(Entity::class)
 val COMMAND_SERIALIZER = PolymorphicSerializer(Command::class)
@@ -13,15 +13,12 @@ data class CommandMetadata(val entityId: Int, val commandName: String, val comma
 
 data class Snapshot<E : Entity>(val state: E, val version: Version)
 
-class StateTransitionsTracker<A : Entity>(originalSnapshot: Snapshot<A>,
-                                          private val applyEventsFn: (DomainEvent, A) -> A) {
-
+class StateTransitionsTracker<A : Entity>(originalSnapshot: Snapshot<A>, private val stateFn: (DomainEvent, A) -> A) {
   val appliedEvents = mutableListOf<DomainEvent>()
   var currentState: A = originalSnapshot.state
-
   fun applyEvents(events: List<DomainEvent>): StateTransitionsTracker<A> {
     events.forEach { domainEvent ->
-      currentState = applyEventsFn.invoke(domainEvent, currentState)
+      currentState = stateFn.invoke(domainEvent, currentState)
       appliedEvents.add(domainEvent)
     }
     return this
@@ -33,21 +30,16 @@ class StateTransitionsTracker<A : Entity>(originalSnapshot: Snapshot<A>,
   }
 }
 
-data class UnitOfWork(val entityName: String,
-                      val entityId: Int,
-                      val commandId: UUID,
-                      val command: Command,
-                      val version: Version,
-                      val events: List<DomainEvent>) {
-
-  init { require(this.version >= 1) { "version must be >= 1" } }
-
-  companion object {
-    @JvmStatic
-    fun of(entityId: Int, entityName: String, commandId: UUID, command: Command,
-           events: List<DomainEvent>, resultingVersion: Version): UnitOfWork {
-      return UnitOfWork(entityName, entityId, commandId, command, resultingVersion, events)
-    }
+data class UnitOfWork(
+  val entityName: String,
+  val entityId: Int,
+  val commandId: UUID,
+  val command: Command,
+  val version: Version,
+  val events: List<DomainEvent>
+) {
+  init {
+    require(this.version >= 1) { "version must be >= 1" }
   }
 
   object JsonMetadata {

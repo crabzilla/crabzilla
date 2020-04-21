@@ -1,13 +1,20 @@
 package io.github.crabzilla.pgc.example1
 
-import io.github.crabzilla.example1.customer.*
+import io.github.crabzilla.example1.customer.ActivateCustomer
+import io.github.crabzilla.example1.customer.CreateActivateCustomer
+import io.github.crabzilla.example1.customer.CreateCustomer
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerActivated
+import io.github.crabzilla.example1.customer.CustomerCommandAware
+import io.github.crabzilla.example1.customer.CustomerCreated
+import io.github.crabzilla.example1.customer.CustomerDeactivated
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.internal.EntityComponent
 import io.github.crabzilla.pgc.PgcEntityComponent
 import io.vertx.core.Vertx
 import io.vertx.pgclient.PgPool
-import java.util.*
+import java.util.UUID
 
 object Example1Fixture {
 
@@ -31,5 +38,4 @@ object Example1Fixture {
     { vertx: Vertx, writeDb: PgPool ->
       PgcEntityComponent(vertx, writeDb, example1Json, CUSTOMER_ENTITY, CustomerCommandAware())
   }
-
 }

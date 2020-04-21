@@ -8,8 +8,6 @@
 
 To help writing CQRS and Event Sourcing applications with [Vert.x](http://vertx.io/)
 
-![Architecture](crabzilla-accts.png)
-
 ## Status
 
 Its still in very early development stage. APIs can change. So far Crabzilla has only an Aggregate example. Inspired by

@@ -35,6 +35,4 @@ class Ex1WebCommandVerticle : WebCommandVerticle() {
     server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
     server.requestHandler(router).listen(listenHandler(startFuture))
   }
-
 }
-

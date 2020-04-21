@@ -7,10 +7,10 @@ import io.github.crabzilla.pgc.readModelPgPool
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
+import java.lang.management.ManagementFactory
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.lang.management.ManagementFactory
 
 abstract class DbProjectionsVerticle : AbstractVerticle() {
 
@@ -19,7 +19,7 @@ abstract class DbProjectionsVerticle : AbstractVerticle() {
     val processId: String = ManagementFactory.getRuntimeMXBean().name // TODO does this work with AOT?
   }
 
-  private val readDb : PgPool by lazy { readModelPgPool(vertx, config()) }
+  private val readDb: PgPool by lazy { readModelPgPool(vertx, config()) }
 
   override fun start() {
     val implClazz = this::class.java.name
@@ -41,5 +41,4 @@ abstract class DbProjectionsVerticle : AbstractVerticle() {
       }
     }
   }
-
 }

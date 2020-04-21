@@ -40,7 +40,5 @@ class BadEventProjector : PgcEventProjector {
         failedFuture("${event.javaClass.simpleName} does not have any event projector handler")
       }
     }
-
   }
-
 }

@@ -37,7 +37,6 @@ class Ex1WebQueryVerticle : WebQueryVerticle() {
     // http server
     server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
     server.requestHandler(router).listen(listenHandler(startFuture))
-
   }
 
   private fun customersQueryHandler(rc: RoutingContext) {
@@ -54,9 +53,8 @@ class Ex1WebQueryVerticle : WebQueryVerticle() {
       val set = event.result()
       val array = JsonArray()
       for (row in set) {
-        val jo = JsonObject().put("id", row.getInteger(0))
-                             .put("name", row.getString(1))
-                             .put("is_active", row.getBoolean(2))
+        val jo =
+          JsonObject().put("id", row.getInteger(0)).put("name", row.getString(1)).put("is_active", row.getBoolean(2))
         array.add(jo)
       }
       rc.response()
@@ -64,6 +62,4 @@ class Ex1WebQueryVerticle : WebQueryVerticle() {
         .end(array.getJsonObject(0).encode())
     }
   }
-
 }
-

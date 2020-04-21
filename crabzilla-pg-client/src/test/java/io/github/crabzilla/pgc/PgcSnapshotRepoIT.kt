@@ -25,6 +25,7 @@ import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
+import java.util.UUID
 import kotlinx.serialization.builtins.list
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -32,7 +33,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.*
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -129,7 +129,7 @@ class PgcSnapshotRepoIT {
   fun a2(tc: VertxTestContext) {
     val eventsJsonArray: String = example1Json.stringify(EVENT_SERIALIZER.list, listOf(created1, activated1))
     val commandJsonObject: String = example1Json.stringify(COMMAND_SERIALIZER, createCmd1)
-    val tuple1 = Tuple.of(eventsJsonArray, UUID.randomUUID(), commandJsonObject , CUSTOMER_ENTITY, customerId1, 1)
+    val tuple1 = Tuple.of(eventsJsonArray, UUID.randomUUID(), commandJsonObject, CUSTOMER_ENTITY, customerId1, 1)
     writeDb.preparedQuery(SQL_APPEND_UOW).execute(tuple1) { ar1 ->
       if (ar1.failed()) {
         ar1.cause().printStackTrace()
@@ -164,5 +164,4 @@ class PgcSnapshotRepoIT {
 
   // TODO given a snapshot and none events
   // TODO given a snapshot and some events, etc
-
 }

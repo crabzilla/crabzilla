@@ -70,27 +70,36 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
     return promise.future()
   }
 
-  private fun futureOf6(f1: Future<Void>, f2: Future<Void>, f3: Future<Void>, f4: Future<Void>, f5: Future<Void>,
-                        f6: Future<Void>): Future<Void> {
+  private fun futureOf6(
+    f1: Future<Void>,
+    f2: Future<Void>,
+    f3: Future<Void>,
+    f4: Future<Void>,
+    f5: Future<Void>,
+    f6: Future<Void>
+  ): Future<Void> {
     return f1.compose { f2 }.compose { f3 }.compose { f4 }.compose { f5 }.compose { f6 }
   }
 
-  private fun futureOf5(f1: Future<Void>, f2: Future<Void>, f3: Future<Void>, f4: Future<Void>,
-                        f5: Future<Void>): Future<Void> {
-    return f1.compose { f2 } .compose { f3 } .compose { f4 } .compose { f5 }
+  private fun futureOf5(
+    f1: Future<Void>,
+    f2: Future<Void>,
+    f3: Future<Void>,
+    f4: Future<Void>,
+    f5: Future<Void>
+  ): Future<Void> {
+    return f1.compose { f2 }.compose { f3 }.compose { f4 }.compose { f5 }
   }
 
   private fun futureOf4(f1: Future<Void>, f2: Future<Void>, f3: Future<Void>, f4: Future<Void>): Future<Void> {
-    return f1.compose { f2 } .compose { f3 }.compose { f4 }
+    return f1.compose { f2 }.compose { f3 }.compose { f4 }
   }
 
   private fun futureOf3(f1: Future<Void>, f2: Future<Void>, f3: Future<Void>): Future<Void> {
-    return f1.compose { f2 } .compose { f3 }
+    return f1.compose { f2 }.compose { f3 }
   }
 
   private fun futureOf2(f1: Future<Void>, f2: Future<Void>): Future<Void> {
     return f1.compose { f2 }
   }
-
 }
-

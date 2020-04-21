@@ -1,6 +1,11 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.framework.*
+import io.github.crabzilla.framework.COMMAND_SERIALIZER
+import io.github.crabzilla.framework.Command
+import io.github.crabzilla.framework.DomainEvent
+import io.github.crabzilla.framework.EVENT_SERIALIZER
+import io.github.crabzilla.framework.UnitOfWork
+import io.github.crabzilla.framework.Version
 import io.github.crabzilla.internal.RangeOfEvents
 import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.github.crabzilla.internal.UnitOfWorkRepository
@@ -10,10 +15,11 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
+import java.util.ArrayList
+import java.util.UUID
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-import java.util.*
 
 internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : UnitOfWorkRepository {
 
@@ -33,10 +39,9 @@ internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : 
     const val SQL_SELECT_UOW_BY_CMD_ID = "$SQL_SELECT_FIELDS from units_of_work where cmd_id = $1"
     const val SQL_SELECT_UOW_BY_UOW_ID = "$SQL_SELECT_FIELDS from units_of_work where uow_id = $1"
     const val SQL_SELECT_UOW_BY_ENTITY_ID = "$SQL_SELECT_FIELDS from units_of_work where ar_id = $1 order by version"
-    const val SQL_SELECT_AFTER_VERSION =  "select uow_events, version from units_of_work " +
+    const val SQL_SELECT_AFTER_VERSION = "select uow_events, version from units_of_work " +
       "where ar_id = $1 and ar_name = $2 and version > $3 order by version"
     private val STREAM_ROWS = 1000
-
   }
 
   override fun getUowByCmdId(cmdId: UUID): Future<Pair<UnitOfWork, Long>> {
@@ -67,7 +72,7 @@ internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : 
   }
 
   override fun getUowByUowId(uowId: Long): Future<UnitOfWork> {
-    val promise =  Promise.promise<UnitOfWork>()
+    val promise = Promise.promise<UnitOfWork>()
     val params = Tuple.of(uowId)
     pgPool.preparedQuery(SQL_SELECT_UOW_BY_UOW_ID)
       .execute(params) { ar ->
@@ -132,7 +137,7 @@ internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : 
         } else {
           val pq = ar1.result()
           // Fetch STREAM_ROWS rows at a time
-          val tuple = Tuple.of( id, aggregateRootName, version)
+          val tuple = Tuple.of(id, aggregateRootName, version)
           val stream = pq.createStream(STREAM_ROWS, tuple)
           val list = ArrayList<RangeOfEvents>()
           // Use the stream
@@ -157,7 +162,6 @@ internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : 
     }
     return promise.future()
   }
-
 
   override fun selectAfterUowId(uowId: Long, maxRows: Int): Future<List<UnitOfWorkEvents>> {
     val promise = Promise.promise<List<UnitOfWorkEvents>>()
@@ -191,5 +195,4 @@ internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : 
     }
     return promise.future()
   }
-
 }
