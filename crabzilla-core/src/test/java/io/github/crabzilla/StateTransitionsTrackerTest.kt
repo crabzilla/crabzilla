@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.Instant
 import java.util.Arrays.asList
 
 @DisplayName("A StateTransitionsTracker")
@@ -78,7 +77,7 @@ internal class StateTransitionsTrackerTest {
       @DisplayName("when adding an activate customer event")
       internal inner class WhenAddingActivateEvent {
 
-        private val customerActivated = CustomerActivated("is ok", Instant.now())
+        private val customerActivated = CustomerActivated("is ok")
         private val expectedCustomer = Customer(id, "customer-1", true,
                 customerActivated.reason)
 
@@ -113,7 +112,7 @@ internal class StateTransitionsTrackerTest {
 
     val id: CustomerId = 1
     private val customerCreated = CustomerCreated(id, "customer-1")
-    private val customerActivated = CustomerActivated(isOk, Instant.now())
+    private val customerActivated = CustomerActivated(isOk)
     private val expectedCustomer = Customer(id, "customer-1", true, isOk)
 
     @BeforeEach

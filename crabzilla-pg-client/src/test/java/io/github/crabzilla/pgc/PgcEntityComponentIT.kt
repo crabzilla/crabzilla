@@ -36,30 +36,21 @@ class PgcEntityComponentIT {
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
-
     vertx = Vertx.vertx()
-
     val envOptions = ConfigStoreOptions()
       .setType("file")
       .setFormat("properties")
       .setConfig(JsonObject().put("path", "../example1.env"))
-
     val retriever = ConfigRetriever.create(vertx, ConfigRetrieverOptions().addStore(envOptions))
-
     retriever.getConfig(Handler { configFuture ->
-
       if (configFuture.failed()) {
         println("Failed to get configuration")
         tc.failNow(configFuture.cause())
         return@Handler
       }
-
       val config = configFuture.result()
-
       writeDb = writeModelPgPool(vertx, config)
-
       customerComponent = customerPgcComponent(vertx, writeDb)
-
       writeDb.query("delete from units_of_work").execute { deleteResult1 ->
         if (deleteResult1.failed()) {
           deleteResult1.cause().printStackTrace()
@@ -75,9 +66,7 @@ class PgcEntityComponentIT {
           tc.completeNow()
         }
       }
-
     })
-
   }
 
 
@@ -86,12 +75,10 @@ class PgcEntityComponentIT {
   @Test
   @DisplayName("given a valid command it will be SUCCESS")
   fun a1(tc: VertxTestContext) {
-
     val customerId = 1
     val command = CreateCustomer("customer1")
     val commandMetadata = CommandMetadata(customerId, "create")
-
-    customerComponent.handleCommand(commandMetadata, command).future().setHandler { event ->
+    customerComponent.handleCommand(commandMetadata, command).setHandler { event ->
       if (event.succeeded()) {
         val result = event.result()
         tc.verify { assertThat(result.first.events.size).isEqualTo(1) }
@@ -108,8 +95,7 @@ class PgcEntityComponentIT {
     val customerId = 1
     val command = CreateCustomer("a bad name")
     val commandMetadata = CommandMetadata(customerId, "create")
-
-    customerComponent.handleCommand(commandMetadata, command).future().setHandler { event ->
+    customerComponent.handleCommand(commandMetadata, command).setHandler { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
       tc.verify { assertThat(event.cause().message).isEqualTo("[Invalid name: a bad name]") }
       tc.completeNow()
@@ -122,8 +108,7 @@ class PgcEntityComponentIT {
     val customerId = 1
     val commandMetadata = CommandMetadata(customerId, "unknown")
     val command = UnknownCommand(customerId)
-
-    customerComponent.handleCommand(commandMetadata, command).future().setHandler { event ->
+    customerComponent.handleCommand(commandMetadata, command).setHandler { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
       tc.verify { assertThat(event.cause().message).isEqualTo("unknown is a unknown command") }
       tc.completeNow()
@@ -138,7 +123,7 @@ class PgcEntityComponentIT {
     val customerId = 1
     val commandMetadata = CommandMetadata(customerId, "create")
     val command = createActivateCmd1
-    customerComponent.handleCommand(commandMetadata, command).future().setHandler { event ->
+    customerComponent.handleCommand(commandMetadata, command).setHandler { event ->
       if (event.succeeded()) {
         val result = event.result()
         tc.verify { assertThat(result.first.events.size).isEqualTo(2) }

@@ -12,9 +12,6 @@
   <artifactId>crabzilla-pg-client</artifactId>
   <packaging>jar</packaging>
 
-  <properties>
-  </properties>
-
   <dependencies>
 
     <dependency>
@@ -40,13 +37,6 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.jetbrains.kotlin</groupId>
-      <artifactId>kotlin-test</artifactId>
-      <version>${kotlin.version}</version>
-      <scope>test</scope>
-    </dependency>
-
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-circuit-breaker</artifactId>

@@ -2,18 +2,18 @@ package io.github.crabzilla.internal
 
 import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.framework.Version
-import io.vertx.core.Promise
+import io.vertx.core.Future
 import java.util.*
 
 interface UnitOfWorkRepository {
 
-  fun getUowByCmdId(cmdId: UUID) : Promise<Pair<UnitOfWork, Long>>
+  fun getUowByCmdId(cmdId: UUID) : Future<Pair<UnitOfWork, Long>>
 
-  fun getUowByUowId(uowId: Long) : Promise<UnitOfWork>
+  fun getUowByUowId(uowId: Long) : Future<UnitOfWork>
 
-  fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String): Promise<RangeOfEvents>
+  fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String): Future<RangeOfEvents>
 
-  fun selectAfterUowId(uowId: Long, maxRows: Int): Promise<List<UnitOfWorkEvents>>
+  fun selectAfterUowId(uowId: Long, maxRows: Int): Future<List<UnitOfWorkEvents>>
 
-  fun getAllUowByEntityId(id: Int) : Promise<List<UnitOfWork>>
+  fun getAllUowByEntityId(id: Int) : Future<List<UnitOfWork>>
 }

@@ -3,8 +3,7 @@ package io.github.crabzilla.webpgc
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.Entity
-import io.github.crabzilla.framework.EntityJsonAware
+import io.github.crabzilla.framework.EVENT_SERIALIZER
 import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.vertx.config.ConfigRetriever
@@ -12,10 +11,11 @@ import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.*
 import io.vertx.core.http.HttpServer
-import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
+import io.vertx.core.json.jackson.DatabindCodec
 import io.vertx.core.logging.SLF4JLogDelegateFactory
 import io.vertx.ext.web.RoutingContext
+import kotlinx.serialization.builtins.list
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.ServerSocket
@@ -28,7 +28,7 @@ fun getConfig(vertx: Vertx, configFile: String) : Future<JsonObject> {
     SLF4JLogDelegateFactory::class.java.name)
   LoggerFactory.getLogger(io.vertx.core.logging.LoggerFactory::class.java)
   // Jackson setup
-  Json.mapper
+  DatabindCodec.mapper()
     .registerModule(Jdk8Module())
     .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
   // get config
@@ -151,28 +151,11 @@ private fun isLocalPortFree(port: Int): Boolean {
   }
 }
 
-fun toUnitOfWorkEvents(json: JsonObject, jsonFunctions: Map<String, EntityJsonAware<out Entity>>): UnitOfWorkEvents? {
-
-  val uowId = json.getLong("uowId")
-  val entityName = json.getString(UnitOfWork.JsonMetadata.ENTITY_NAME)
-  val entityId = json.getInteger(UnitOfWork.JsonMetadata.ENTITY_ID)
-  val eventsArray = json.getJsonArray(UnitOfWork.JsonMetadata.EVENTS)
-
-  val jsonAware = jsonFunctions[entityName]
-  if (jsonAware == null) {
-    log.error("JsonAware for $entityName wasn't found")
-    return null
-  }
-
-  val jsonToEventPair: (Int) -> Pair<String, DomainEvent> = { index ->
-    val jsonObject = eventsArray.getJsonObject(index)
-    val eventName = jsonObject.getString(UnitOfWork.JsonMetadata.EVENT_NAME)
-    val eventJson = jsonObject.getJsonObject(UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT)
-    val domainEvent = jsonAware.eventFromJson(eventName, eventJson)
-    domainEvent
-  }
-
-  val events: List<Pair<String, DomainEvent>> = List(eventsArray.size(), jsonToEventPair)
+fun toUnitOfWorkEvents(jsonObject: JsonObject, json: kotlinx.serialization.json.Json): UnitOfWorkEvents {
+  val uowId = jsonObject.getLong("uowId")
+  val entityId = jsonObject.getInteger(UnitOfWork.JsonMetadata.ENTITY_ID)
+  val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list,
+    jsonObject.getJsonArray(UnitOfWork.JsonMetadata.EVENTS_JSON_CONTENT).encode())
   return UnitOfWorkEvents(uowId, entityId, events)
 
 }

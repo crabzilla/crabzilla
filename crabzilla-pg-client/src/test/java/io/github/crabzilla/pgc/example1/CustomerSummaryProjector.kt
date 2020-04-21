@@ -4,16 +4,16 @@ import io.github.crabzilla.example1.customer.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerDeactivated
 import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.failedPromise
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.runPreparedQuery
-import io.vertx.core.Promise
+import io.vertx.core.Future
+import io.vertx.core.Future.failedFuture
 import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 
 class CustomerSummaryProjector : PgcEventProjector {
 
-  override fun handle(pgTx: Transaction, targetId: Int, event: DomainEvent): Promise<Void> {
+  override fun handle(pgTx: Transaction, targetId: Int, event: DomainEvent): Future<Void> {
 
     return when (event) {
       is CustomerCreated -> {
@@ -32,7 +32,7 @@ class CustomerSummaryProjector : PgcEventProjector {
         pgTx.runPreparedQuery(query, tuple)
       }
       else -> {
-        failedPromise("${event.javaClass.simpleName} does not have any event projector handler")
+        failedFuture("${event.javaClass.simpleName} does not have any event projector handler")
       }
     }
 

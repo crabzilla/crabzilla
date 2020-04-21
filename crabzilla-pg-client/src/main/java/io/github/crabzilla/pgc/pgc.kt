@@ -1,5 +1,6 @@
 package io.github.crabzilla.pgc
 
+import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -32,7 +33,7 @@ fun pgPool(vertx: Vertx, config: JsonObject, id: String): PgPool {
   return PgPool.pool(vertx, readOptions,  pgPoolOptions)
 }
 
-fun Transaction.runPreparedQuery(query: String, tuple: Tuple) : Promise<Void> {
+fun Transaction.runPreparedQuery(query: String, tuple: Tuple) : Future<Void> {
   val promise = Promise.promise<Void>()
   this.preparedQuery(query)
     .execute(tuple) { event ->
@@ -42,6 +43,6 @@ fun Transaction.runPreparedQuery(query: String, tuple: Tuple) : Promise<Void> {
       promise.complete()
     }
   }
-  return promise
+  return promise.future()
 }
 

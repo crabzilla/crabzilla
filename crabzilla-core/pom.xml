@@ -12,33 +12,4 @@
   <artifactId>crabzilla-core</artifactId>
   <packaging>jar</packaging>
 
-  <properties>
-  </properties>
-
-  <dependencies>
-
-    <!--Vertx -->
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-    </dependency>
-
-    <!-- test -->
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-junit5</artifactId>
-      <scope>test</scope>
-      <version>${vertx.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jetbrains.kotlin</groupId>
-      <artifactId>kotlin-test</artifactId>
-      <version>${kotlin.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-  </dependencies>
-
 </project>

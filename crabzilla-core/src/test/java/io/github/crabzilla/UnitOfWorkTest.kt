@@ -14,36 +14,30 @@ class UnitOfWorkTest {
   @Test
   fun versionZeroCannotBeInstantiated() {
     assertThrows(RuntimeException::class.java, {
-      UnitOfWork("customer", 1, UUID.randomUUID(), "create",
-        CreateCustomer("cust#1"), 0,
-        listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(1, "cust#1"))))
+      UnitOfWork("customer", 1, UUID.randomUUID(), CreateCustomer("cust#1"), 0,
+        listOf<DomainEvent>(CustomerCreated(1, "cust#1")))
     }, "version should be >= 1")
   }
 
   @Test
   fun versionOneCanBeInstantiated() {
     val command = CreateCustomer("cust#1")
-    UnitOfWork("customer", 1, UUID.randomUUID(), "create",
-      command, 1,
-      listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(1, "cust#1"))))
+    UnitOfWork("customer", 1, UUID.randomUUID(), command, 1, listOf<DomainEvent>(CustomerCreated(1, "cust#1")))
   }
 
   @Test
   fun versionLessThanZeroCannotBeInstantiated() {
     assertThrows(RuntimeException::class.java, {
-      UnitOfWork("customer", 1, UUID.randomUUID(), "create",
-        CreateCustomer("cust#1"), -1,
-        listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(1, "cust#1"))))
+      UnitOfWork("customer", 1, UUID.randomUUID(), CreateCustomer("cust#1"), -1,
+        listOf<DomainEvent>(CustomerCreated(1, "cust#1")))
     }, "version should be >= 1")
   }
 
   @Test
   fun targetIdIsEqualsToCommandTargetId() {
     val command = CreateCustomer("cust#1")
-    val uow = UnitOfWork("customer", 1, UUID.randomUUID(), "create",
-      command, 1,
-      listOf<Pair<String, DomainEvent>>(Pair("CustomerCreated", CustomerCreated(1, "cust#1"))))
+    val uow = UnitOfWork("customer", 1, UUID.randomUUID(), command, 1,
+      listOf<DomainEvent>(CustomerCreated(1, "cust#1")))
     assertThat(uow.entityId).isEqualTo(uow.entityId)
   }
-
 }
