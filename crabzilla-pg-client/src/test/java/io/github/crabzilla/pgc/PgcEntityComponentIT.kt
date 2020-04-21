@@ -108,7 +108,7 @@ class PgcEntityComponentIT {
     val command = UnknownCommand(customerId)
     customerComponent.handleCommand(commandMetadata, command).setHandler { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
-      tc.verify { assertThat(event.cause().message).isEqualTo("unknown is a unknown command") }
+      tc.verify { assertThat(event.cause().message).isEqualTo("[invalid command UnknownCommand]") }
       tc.completeNow()
     }
   }

@@ -51,11 +51,11 @@ class WebDeployer<E : Entity>(
         it.response().setStatusCode(400).setStatusMessage("Cannot decode the json for this Command").end()
         return@handler
       }
-      if (log.isTraceEnabled) log.trace("Handling $command $commandMetadata")
+      if (log.isDebugEnabled) log.debug("Handling $command $commandMetadata")
       component.handleCommand(commandMetadata, command)
         .onSuccess { result ->
           val end = System.currentTimeMillis()
-          if (log.isTraceEnabled) log.trace("handled command in " + (end - begin) + " ms")
+          if (log.isDebugEnabled) log.debug("handled command in " + (end - begin) + " ms")
           with(result) {
             val location = it.request().absoluteURI().split('/').subList(0, 3)
               .reduce { acc, s -> acc.plus("/$s") } + "/commands/$resourceName/units-of-work/$second"

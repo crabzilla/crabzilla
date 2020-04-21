@@ -57,11 +57,11 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
           // Commit the transaction
           tx.commit { event4 ->
             if (event4.failed()) {
-              if (log.isTraceEnabled) log.error("Transaction failed", event4.cause())
+              if (log.isDebugEnabled) log.error("Transaction failed", event4.cause())
               promise.fail(event4.cause())
               return@commit
             }
-            if (log.isTraceEnabled) log.trace("Transaction succeeded")
+            if (log.isDebugEnabled) log.debug("Transaction succeeded")
             promise.complete()
           }
         }

@@ -24,7 +24,7 @@ abstract class DbProjectionsVerticle : AbstractVerticle() {
   override fun start() {
     val implClazz = this::class.java.name
     vertx.eventBus().consumer<String>(implClazz) { msg ->
-      if (log.isTraceEnabled) log.trace("$implClazz received " + msg.body())
+      if (log.isDebugEnabled) log.debug("$implClazz received " + msg.body())
       msg.reply("$implClazz is already running here: $processId")
     }
   }

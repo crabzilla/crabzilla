@@ -12,9 +12,7 @@ import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 
 class CustomerSummaryProjector : PgcEventProjector {
-
   override fun handle(pgTx: Transaction, targetId: Int, event: DomainEvent): Future<Void> {
-
     return when (event) {
       is CustomerCreated -> {
         val query = "INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)"

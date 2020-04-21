@@ -72,7 +72,7 @@ class PgcUowJournal(private val vertx: Vertx, private val pgPool: PgPool, privat
                   promise.fail(event3.cause())
                   return@commit
                 }
-                log.trace("Transaction succeeded for $uowId")
+                log.debug("Transaction succeeded for $uowId")
                 val message = JsonObject()
                   .put("uowId", uowId)
                   .put(UnitOfWork.JsonMetadata.ENTITY_NAME, unitOfWork.entityName)

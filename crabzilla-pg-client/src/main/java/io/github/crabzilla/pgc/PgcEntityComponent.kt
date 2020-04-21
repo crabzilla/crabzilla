@@ -59,7 +59,7 @@ class PgcEntityComponent<E : Entity>(
         if (cmdHandled.succeeded()) {
           val pair = cmdHandled.result()
           promise.complete(pair)
-          if (log.isTraceEnabled) log.trace("Command successfully handled: $pair")
+          if (log.isDebugEnabled) log.debug("Command successfully handled: $pair")
         } else {
           log.error("When handling command", cmdHandled.cause())
           promise.fail(cmdHandled.cause())
