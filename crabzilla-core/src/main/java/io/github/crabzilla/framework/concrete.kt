@@ -13,35 +13,25 @@ data class CommandMetadata(val entityId: Int, val commandName: String, val comma
 
 data class Snapshot<E : Entity>(val state: E, val version: Version)
 
-class StateTransitionsTracker<A : Entity>(originalSnapshot: Snapshot<A>,
-                                          private val applyEventsFn: (DomainEvent, A) -> A) {
-
+class StateTransitionsTracker<A : Entity>(original: Snapshot<A>, private val applyEventFn: (DomainEvent, A) -> A) {
   val appliedEvents = mutableListOf<DomainEvent>()
-  var currentState: A = originalSnapshot.state
-
+  var currentState: A = original.state
   fun applyEvents(events: List<DomainEvent>): StateTransitionsTracker<A> {
     events.forEach { domainEvent ->
-      currentState = applyEventsFn.invoke(domainEvent, currentState)
+      currentState = applyEventFn.invoke(domainEvent, currentState)
       appliedEvents.add(domainEvent)
     }
     return this
   }
-
   inline fun applyEvents(fn: (A) -> List<DomainEvent>): StateTransitionsTracker<A> {
     val newEvents = fn.invoke(currentState)
     return applyEvents(newEvents)
   }
 }
 
-data class UnitOfWork(val entityName: String,
-                      val entityId: Int,
-                      val commandId: UUID,
-                      val command: Command,
-                      val version: Version,
-                      val events: List<DomainEvent>) {
-
+data class UnitOfWork(val entityName: String, val entityId: Int, val commandId: UUID, val command: Command,
+                      val version: Version, val events: List<DomainEvent>) {
   init { require(this.version >= 1) { "version must be >= 1" } }
-
   companion object {
     @JvmStatic
     fun of(entityId: Int, entityName: String, commandId: UUID, command: Command,
@@ -49,7 +39,6 @@ data class UnitOfWork(val entityName: String,
       return UnitOfWork(entityName, entityId, commandId, command, resultingVersion, events)
     }
   }
-
   object JsonMetadata {
     const val ENTITY_NAME = "entityName"
     const val ENTITY_ID = "entityId"
