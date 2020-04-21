@@ -16,24 +16,17 @@ open class DomainEvent
 @Serializable
 @Polymorphic
 open class Entity {
-
   fun eventsOf(vararg event: DomainEvent): List<DomainEvent> {
     return event.asList()
   }
-
 }
 
 interface EntityCommandAware<E: Entity> {
-
   val initialState: E
-
   val applyEvent: (event: DomainEvent, state: E) -> E
-
   val validateCmd: (command: Command) -> List<String>
-
-  val cmdHandlerFactory: (cmdMetadata: CommandMetadata, command: Command, snapshot: Snapshot<E>)
-                                                        -> EntityCommandHandler<E>
-
+  val cmdHandlerFactory:
+    (cmdMetadata: CommandMetadata, command: Command, snapshot: Snapshot<E>) -> EntityCommandHandler<E>
 }
 
 abstract class EntityCommandHandler<E: Entity>(private val entityName: String,
