@@ -18,5 +18,4 @@ fun main() {
   val y = example1Json.stringify(EVENT_SERIALIZER.list, listOf(CustomerCreated(1, "c1"), CustomerActivated("yeah")))
 
   println(y)
-
 }

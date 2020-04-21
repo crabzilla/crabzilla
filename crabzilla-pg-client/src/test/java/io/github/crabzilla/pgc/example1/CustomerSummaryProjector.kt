@@ -35,7 +35,5 @@ class CustomerSummaryProjector : PgcEventProjector {
         failedFuture("${event.javaClass.simpleName} does not have any event projector handler")
       }
     }
-
   }
-
 }

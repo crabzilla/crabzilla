@@ -19,6 +19,7 @@ import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
+import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -26,8 +27,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
-import java.util.*
-
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -93,7 +92,6 @@ class PgcUowProjectorIT {
         tc.completeNow()
       }
     }
-
   }
 
   @Test
@@ -154,7 +152,7 @@ class PgcUowProjectorIT {
         tc.failNow(event1.cause())
         return@onComplete
       }
-      readDb.preparedQuery("SELECT * FROM customer_summary").execute{ event2 ->
+      readDb.preparedQuery("SELECT * FROM customer_summary").execute { event2 ->
         if (event2.failed()) {
           log.error("select", event2.cause())
           tc.failNow(event2.cause())
@@ -254,5 +252,4 @@ class PgcUowProjectorIT {
       }
     }
   }
-
 }

@@ -4,9 +4,9 @@ import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.framework.DomainEvent
 import io.github.crabzilla.framework.UnitOfWork
+import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.*
 
 class UnitOfWorkEventsTest {
 
@@ -23,7 +23,5 @@ class UnitOfWorkEventsTest {
     assertThat(pd.uowId).isEqualTo(1)
     assertThat(pd.entityId).isEqualTo(uow.entityId)
     assertThat(pd.events).isEqualTo(uow.events)
-
   }
-
 }

@@ -1,14 +1,18 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.example1.customer.*
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerActivated
+import io.github.crabzilla.example1.customer.CustomerCommandAware
+import io.github.crabzilla.example1.customer.CustomerCreated
+import io.github.crabzilla.example1.customer.CustomerId
 import io.github.crabzilla.framework.Snapshot
 import io.github.crabzilla.framework.StateTransitionsTracker
+import java.util.Arrays.asList
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.util.Arrays.asList
 
 @DisplayName("A StateTransitionsTracker")
 internal class StateTransitionsTrackerTest {
@@ -97,11 +101,8 @@ internal class StateTransitionsTrackerTest {
           assertThat(tracker.appliedEvents[1]).isEqualTo(customerActivated)
           assertThat(tracker.appliedEvents.size).isEqualTo(2)
         }
-
       }
-
     }
-
   }
 
   @Nested
@@ -136,7 +137,5 @@ internal class StateTransitionsTrackerTest {
       assertThat(tracker.appliedEvents).contains(customerActivated)
       assertThat(tracker.appliedEvents.size).isEqualTo(2)
     }
-
   }
-
 }

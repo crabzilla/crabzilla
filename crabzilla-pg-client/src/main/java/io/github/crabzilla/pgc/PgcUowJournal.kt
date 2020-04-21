@@ -89,5 +89,4 @@ class PgcUowJournal(private val vertx: Vertx, private val pgPool: PgPool, privat
     log.debug("returning {}", promise)
     return promise.future()
   }
-
 }

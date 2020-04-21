@@ -1,6 +1,11 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.framework.*
+import io.github.crabzilla.framework.DomainEvent
+import io.github.crabzilla.framework.ENTITY_SERIALIZER
+import io.github.crabzilla.framework.EVENT_SERIALIZER
+import io.github.crabzilla.framework.Entity
+import io.github.crabzilla.framework.EntityCommandAware
+import io.github.crabzilla.framework.Snapshot
 import io.github.crabzilla.internal.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
@@ -11,9 +16,12 @@ import io.vertx.sqlclient.Tuple
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
 
-class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
-                                  private val json: Json, private val entityName: String,
-                                  private val entityFn: EntityCommandAware<E>) : SnapshotRepository<E> {
+class PgcSnapshotRepo<E : Entity>(
+  private val writeModelDb: PgPool,
+  private val json: Json,
+  private val entityName: String,
+  private val entityFn: EntityCommandAware<E>
+) : SnapshotRepository<E> {
 
   companion object {
     internal val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
@@ -21,17 +29,14 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
       "WHERE ar_id = $1 and ar_name = $2 and version > $3 ORDER BY version "
     private val ROWS_PER_TIME = 1000
   }
-
   private fun selectSnapshot(): String {
     return "SELECT version, json_content FROM ${entityName}_snapshots WHERE ar_id = $1"
   }
-
   private fun upsertSnapshot(): String {
     return "INSERT INTO ${entityName}_snapshots (ar_id, version, json_content) " +
       " VALUES ($1, $2, $3) " +
       " ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"
   }
-
   override fun upsert(entityId: Int, snapshot: Snapshot<E>): Future<Void> {
     val promise = Promise.promise<Void>()
     val json: String = json.stringify(ENTITY_SERIALIZER, snapshot.state)
@@ -73,8 +78,8 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
             return@execute
           } else {
             val pgRow = event1.result()
-            val cachedInstance : E
-            val cachedVersion : Int
+            val cachedInstance: E
+            val cachedVersion: Int
             if (pgRow == null || pgRow.size() == 0) {
               cachedInstance = entityFn.initialState
               cachedVersion = 0
@@ -119,8 +124,7 @@ class PgcSnapshotRepo<E : Entity>(private val writeModelDb: PgPool,
                   currentVersion = row.getInteger(1)
                   val eventsJsonString: String = row.get(String::class.java, 0)
                   val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsJsonString)
-                  currentInstance = events.fold(currentInstance)
-                      { state, event -> entityFn.applyEvent.invoke(event, state)}
+                  currentInstance = events.fold(currentInstance) { state, event -> entityFn.applyEvent.invoke(event, state) }
                   log.trace("Events: $events \n version: $currentVersion \n instance $currentInstance")
                 }
               }

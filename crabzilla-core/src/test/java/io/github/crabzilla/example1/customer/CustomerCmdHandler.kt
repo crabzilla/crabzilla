@@ -1,14 +1,22 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.framework.*
+import io.github.crabzilla.framework.Command
+import io.github.crabzilla.framework.CommandMetadata
+import io.github.crabzilla.framework.DomainEvent
+import io.github.crabzilla.framework.EntityCommandHandler
+import io.github.crabzilla.framework.Snapshot
+import io.github.crabzilla.framework.StateTransitionsTracker
+import io.github.crabzilla.framework.UnitOfWork
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise
 
-class CustomerCmdHandler(cmdMetadata: CommandMetadata,
-                         command: Command,
-                         snapshot: Snapshot<Customer>,
-                         stateFn: (DomainEvent, Customer) -> Customer) :
+class CustomerCmdHandler(
+  cmdMetadata: CommandMetadata,
+  command: Command,
+  snapshot: Snapshot<Customer>,
+  stateFn: (DomainEvent, Customer) -> Customer
+) :
   EntityCommandHandler<Customer>("customer", cmdMetadata, command, snapshot, stateFn) {
 
   override fun handleCommand(): Future<UnitOfWork> {
@@ -24,7 +32,7 @@ class CustomerCmdHandler(cmdMetadata: CommandMetadata,
     return fromEvents(eventsPromise)
   }
 
-  private fun composed(command: CreateActivateCustomer) : Future<List<DomainEvent>> {
+  private fun composed(command: CreateActivateCustomer): Future<List<DomainEvent>> {
     val promise = Promise.promise<List<DomainEvent>>()
     val tracker = StateTransitionsTracker(snapshot, stateFn)
     tracker.currentState
@@ -40,5 +48,4 @@ class CustomerCmdHandler(cmdMetadata: CommandMetadata,
       }
     return promise.future()
   }
-
 }

@@ -1,7 +1,7 @@
 package io.github.crabzilla.framework
 
+import java.util.UUID
 import kotlinx.serialization.PolymorphicSerializer
-import java.util.*
 
 val ENTITY_SERIALIZER = PolymorphicSerializer(Entity::class)
 val COMMAND_SERIALIZER = PolymorphicSerializer(Command::class)
@@ -23,22 +23,25 @@ class StateTransitionsTracker<A : Entity>(originalSnapshot: Snapshot<A>, private
     }
     return this
   }
+
   inline fun applyEvents(fn: (A) -> List<DomainEvent>): StateTransitionsTracker<A> {
     val newEvents = fn.invoke(currentState)
     return applyEvents(newEvents)
   }
 }
 
-data class UnitOfWork(val entityName: String, val entityId: Int, val commandId: UUID, val command: Command,
-                      val version: Version, val events: List<DomainEvent>) {
-  init { require(this.version >= 1) { "version must be >= 1" } }
-  companion object {
-    @JvmStatic
-    fun of(entityId: Int, entityName: String, commandId: UUID, command: Command,
-           events: List<DomainEvent>, resultingVersion: Version): UnitOfWork {
-      return UnitOfWork(entityName, entityId, commandId, command, resultingVersion, events)
-    }
+data class UnitOfWork(
+  val entityName: String,
+  val entityId: Int,
+  val commandId: UUID,
+  val command: Command,
+  val version: Version,
+  val events: List<DomainEvent>
+) {
+  init {
+    require(this.version >= 1) { "version must be >= 1" }
   }
+
   object JsonMetadata {
     const val ENTITY_NAME = "entityName"
     const val ENTITY_ID = "entityId"

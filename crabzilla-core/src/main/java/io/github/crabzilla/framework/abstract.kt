@@ -21,7 +21,7 @@ open class Entity {
   }
 }
 
-interface EntityCommandAware<E: Entity> {
+interface EntityCommandAware<E : Entity> {
   val initialState: E
   val applyEvent: (event: DomainEvent, state: E) -> E
   val validateCmd: (command: Command) -> List<String>
@@ -29,15 +29,19 @@ interface EntityCommandAware<E: Entity> {
     (cmdMetadata: CommandMetadata, command: Command, snapshot: Snapshot<E>) -> EntityCommandHandler<E>
 }
 
-abstract class EntityCommandHandler<E: Entity>(private val entityName: String, val cmdMetadata: CommandMetadata,
-                                               val command: Command, val snapshot: Snapshot<E>,
-                                               val stateFn: (DomainEvent, E) -> E) {
+abstract class EntityCommandHandler<E : Entity>(
+  private val entityName: String,
+  val cmdMetadata: CommandMetadata,
+  val command: Command,
+  val snapshot: Snapshot<E>,
+  val stateFn: (DomainEvent, E) -> E
+) {
   private val uowPromise: Promise<UnitOfWork> = Promise.promise()
-  abstract fun handleCommand() : Future<UnitOfWork>
+  abstract fun handleCommand(): Future<UnitOfWork>
   fun fromEvents(eventsPromise: Future<List<DomainEvent>>): Future<UnitOfWork> {
     return if (eventsPromise.succeeded()) {
-      uowPromise.complete(UnitOfWork.of(cmdMetadata.entityId, entityName, cmdMetadata.commandId,
-        command, eventsPromise.result(), snapshot.version + 1))
+      uowPromise.complete(UnitOfWork(entityName, cmdMetadata.entityId, cmdMetadata.commandId,
+        command, snapshot.version + 1, eventsPromise.result()))
       uowPromise.future()
     } else {
       val promise = Promise.promise<UnitOfWork>()

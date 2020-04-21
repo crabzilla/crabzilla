@@ -1,9 +1,9 @@
 package io.github.crabzilla.webpgc
 
 import io.vertx.core.AbstractVerticle
+import java.lang.management.ManagementFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.lang.management.ManagementFactory
 
 abstract class UowHandlerVerticle : AbstractVerticle() {
 
@@ -19,5 +19,4 @@ abstract class UowHandlerVerticle : AbstractVerticle() {
       msg.reply("$implClazz is already running here: $processId")
     }
   }
-
 }

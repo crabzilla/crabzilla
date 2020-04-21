@@ -7,13 +7,15 @@ import io.vertx.core.Future.succeededFuture
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Customer(val customerId: CustomerId? = null,
-                    val name: String? = null,
-                    val isActive: Boolean? = false,
-                    val reason: String? = null) : Entity() {
+data class Customer(
+  val customerId: CustomerId? = null,
+  val name: String? = null,
+  val isActive: Boolean? = false,
+  val reason: String? = null
+) : Entity() {
 
   // TODO perform a query on read model to validate name uniqueness
-  fun create(id: CustomerId, name: String) : Future<List<DomainEvent>> {
+  fun create(id: CustomerId, name: String): Future<List<DomainEvent>> {
     require(this.customerId == null) { "customer already created" }
     return succeededFuture(eventsOf(CustomerCreated(id, name)))
   }
@@ -24,7 +26,7 @@ data class Customer(val customerId: CustomerId? = null,
   }
 
   // TODO perform a web request ask if this operation is allowed
-  fun deactivate(reason: String) : Future<List<DomainEvent>> {
+  fun deactivate(reason: String): Future<List<DomainEvent>> {
     customerMustExist()
     return succeededFuture(eventsOf(CustomerDeactivated(reason)))
   }
@@ -32,5 +34,4 @@ data class Customer(val customerId: CustomerId? = null,
   private fun customerMustExist() {
     require(this.customerId != null) { "customer must exists" }
   }
-
 }

@@ -7,12 +7,14 @@ import io.github.crabzilla.internal.EntityComponent
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
+import java.util.UUID
 import org.slf4j.LoggerFactory
-import java.util.*
 
-class WebDeployer<E : Entity>(private val component: EntityComponent<E>,
-                              private val resourceName: String,
-                              private val router: Router) {
+class WebDeployer<E : Entity>(
+  private val component: EntityComponent<E>,
+  private val resourceName: String,
+  private val router: Router
+) {
 
   private val postCmd = "/commands/$resourceName/:$ENTITY_ID_PARAMETER/:$COMMAND_NAME_PARAMETER"
   private val getSnapshot = "/commands/$resourceName/:$ENTITY_ID_PARAMETER"
@@ -25,7 +27,6 @@ class WebDeployer<E : Entity>(private val component: EntityComponent<E>,
     const val ENTITY_ID_PARAMETER = "entityId"
     const val UNIT_OF_WORK_ID_PARAMETER = "unitOfWorkId"
     private val log = LoggerFactory.getLogger(WebDeployer::class.java)
-
   }
 
   fun deployWebRoutes() {
@@ -51,11 +52,11 @@ class WebDeployer<E : Entity>(private val component: EntityComponent<E>,
         return@handler
       }
       if (log.isTraceEnabled) log.trace("Handling $command $commandMetadata")
-      component.handleCommand(commandMetadata, command).setHandler { event ->
-        val end = System.currentTimeMillis()
-        if (log.isTraceEnabled) log.trace("handled command in " + (end - begin) + " ms")
-        if (event.succeeded()) {
-          with(event.result()) {
+      component.handleCommand(commandMetadata, command)
+        .onSuccess { result ->
+          val end = System.currentTimeMillis()
+          if (log.isTraceEnabled) log.trace("handled command in " + (end - begin) + " ms")
+          with(result) {
             val location = it.request().absoluteURI().split('/').subList(0, 3)
               .reduce { acc, s -> acc.plus("/$s") } + "/commands/$resourceName/units-of-work/$second"
             it.response()
@@ -64,19 +65,17 @@ class WebDeployer<E : Entity>(private val component: EntityComponent<E>,
               .setStatusCode(303)
               .end()
           }
-        } else {
-          log.error(event.cause().message)
-          it.response().setStatusCode(400).setStatusMessage(event.cause().message).end()
+        }.onFailure { error ->
+          log.error(error.message)
+          it.response().setStatusCode(400).setStatusMessage(error.message).end()
         }
-      }
     }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route GET $getSnapshot")
-
     router.get(getSnapshot).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
       val httpResp = it.response()
-      component.getSnapshot(entityId).setHandler { event ->
+      component.getSnapshot(entityId).onComplete { event ->
         if (event.failed() || event.result() == null) {
           httpResp.statusCode = if (event.result() == null) 404 else 500
           httpResp.end()
@@ -96,11 +95,10 @@ class WebDeployer<E : Entity>(private val component: EntityComponent<E>,
     }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route GET $getAllUow")
-
     router.get(getAllUow).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
       val httpResp = it.response()
-      component.getAllUowByEntityId(entityId).setHandler { event ->
+      component.getAllUowByEntityId(entityId).onComplete { event ->
         if (event.failed() || event.result() == null) {
           httpResp.statusCode = if (event.result() == null) 404 else 500
           httpResp.end()
@@ -114,11 +112,10 @@ class WebDeployer<E : Entity>(private val component: EntityComponent<E>,
     }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route GET $getUow")
-
     router.get(getUow).handler {
       val uowId = it.pathParam(UNIT_OF_WORK_ID_PARAMETER).toLong()
       val httpResp = it.response()
-      component.getUowByUowId(uowId).setHandler { uowResult ->
+      component.getUowByUowId(uowId).onComplete { uowResult ->
         if (uowResult.failed() || uowResult.result() == null) {
           httpResp.statusCode = if (uowResult.result() == null) 404 else 500
           httpResp.end()
@@ -130,7 +127,5 @@ class WebDeployer<E : Entity>(private val component: EntityComponent<E>,
         }
       }
     }.failureHandler(errorHandler(UNIT_OF_WORK_ID_PARAMETER))
-
   }
-
 }

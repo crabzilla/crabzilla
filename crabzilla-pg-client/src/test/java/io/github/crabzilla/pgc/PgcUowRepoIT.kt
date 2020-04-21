@@ -27,7 +27,11 @@ import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
 import kotlinx.serialization.builtins.list
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(VertxExtension::class)
@@ -97,7 +101,7 @@ class PgcUowRepoIT {
       }
       val uowId = event1.result().first().getLong(0)
       tc.verify { tc.verify { assertThat(uowId).isGreaterThan(0) } }
-      repo.getUowByCmdId(createdUow1.commandId).onComplete{ event2 ->
+      repo.getUowByCmdId(createdUow1.commandId).onComplete { event2 ->
         if (event2.failed()) {
           tc.failNow(event2.cause())
           return@onComplete
@@ -268,7 +272,7 @@ class PgcUowRepoIT {
             return@execute
           }
           val uowId2 = event2.result().first().getLong("uow_id")
-          repo.selectAfterUowId(uowId1, 100).onComplete{ event3 ->
+          repo.selectAfterUowId(uowId1, 100).onComplete { event3 ->
             if (event3.failed()) {
               tc.failNow(event3.cause())
               return@onComplete
@@ -330,7 +334,7 @@ class PgcUowRepoIT {
             tc.failNow(event2.cause())
             return@execute
           }
-          repo.selectAfterVersion(customerId1, 0, CUSTOMER_ENTITY).onComplete{ event3 ->
+          repo.selectAfterVersion(customerId1, 0, CUSTOMER_ENTITY).onComplete { event3 ->
             if (event3.failed()) {
               tc.failNow(event3.cause())
               return@onComplete
@@ -379,7 +383,7 @@ class PgcUowRepoIT {
   @Test
   @DisplayName("can queries only above version 1")
   fun s4(tc: VertxTestContext) {
-    journal.append(createdUow1).onComplete{ event1 ->
+    journal.append(createdUow1).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -387,7 +391,7 @@ class PgcUowRepoIT {
       val uowId = event1.result()
       tc.verify { assertThat(uowId).isGreaterThan(0) }
       // append uow2
-      journal.append(activatedUow1).onComplete{ event2 ->
+      journal.append(activatedUow1).onComplete { event2 ->
         if (event2.failed()) {
           tc.failNow(event2.cause())
           return@onComplete
@@ -395,7 +399,7 @@ class PgcUowRepoIT {
         val uowId = event2.result()
         tc.verify { assertThat(uowId).isGreaterThan(2) }
         // get only above version 1
-        repo.selectAfterVersion(activatedUow1.entityId, 1, CUSTOMER_ENTITY).onComplete{ event3 ->
+        repo.selectAfterVersion(activatedUow1.entityId, 1, CUSTOMER_ENTITY).onComplete { event3 ->
           if (event3.failed()) {
             tc.failNow(event3.cause())
             return@onComplete
@@ -409,5 +413,4 @@ class PgcUowRepoIT {
       }
     }
   }
-
 }
