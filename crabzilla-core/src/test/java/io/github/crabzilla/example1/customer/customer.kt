@@ -55,4 +55,3 @@ val customerModule = SerializersModule {
     CustomerDeactivated::class with CustomerDeactivated.serializer()
   }
 }
-
