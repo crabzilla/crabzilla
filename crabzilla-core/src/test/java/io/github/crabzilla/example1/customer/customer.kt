@@ -33,9 +33,10 @@ data class DeactivateCustomer(val reason: String) : Command()
 @Serializable
 data class CreateActivateCustomer(val name: String, val reason: String) : Command()
 
-// just for test
 @Serializable
 data class UnknownCommand(val x: Int) : Command()
+
+// kotlinx.serialization
 
 val customerModule = SerializersModule {
   polymorphic(Entity::class) {
@@ -54,6 +55,8 @@ val customerModule = SerializersModule {
     CustomerDeactivated::class with CustomerDeactivated.serializer()
   }
 }
+
+// command web routes
 
 fun commandRoutesMap(route: String) {
   when (route) {
