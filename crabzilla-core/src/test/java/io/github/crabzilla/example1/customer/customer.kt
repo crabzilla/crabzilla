@@ -56,12 +56,3 @@ val customerModule = SerializersModule {
   }
 }
 
-// command web routes
-
-fun commandRoutesMap(route: String) {
-  when (route) {
-    "create" -> CreateCustomer::class.qualifiedName
-    "activate" -> ActivateCustomer::class.qualifiedName
-    "deactivate" -> DeactivateCustomer::class.qualifiedName
-  }
-}
