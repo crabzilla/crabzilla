@@ -30,7 +30,6 @@ class WebDeployer<E : Entity>(
   }
 
   fun deployWebRoutes() {
-
     log.info("adding route POST $postCmd")
     router.post(postCmd).handler {
       val begin = System.currentTimeMillis()
