@@ -37,10 +37,11 @@ class WebDeployer<E : Entity>(
       val commandId = it.request().getHeader(COMMAND_ID_PARAMETER)
       val commandMetadata =
         if (commandId == null) {
-          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), it.pathParam(COMMAND_NAME_PARAMETER))
+          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), component.entityName(),
+            it.pathParam(COMMAND_NAME_PARAMETER))
         } else {
-          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), it.pathParam(COMMAND_NAME_PARAMETER),
-            UUID.fromString(commandId))
+          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), component.entityName(),
+            it.pathParam(COMMAND_NAME_PARAMETER), UUID.fromString(commandId))
         }
       val command: Command? = try {
         component.cmdFromJson(commandMetadata.commandName, it.bodyAsJson)

@@ -34,6 +34,7 @@ class PgcEntityComponent<E : Entity>(
   private val snapshotRepo = PgcSnapshotRepo(writeDb, json, entityName, cmdAware)
   private val uowJournal = PgcUowJournal(vertx, writeDb, json)
   private val cmdController = CommandController(cmdAware, snapshotRepo, uowJournal)
+
   override fun entityName(): String {
     return entityName
   }

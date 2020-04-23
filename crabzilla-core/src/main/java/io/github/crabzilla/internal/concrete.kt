@@ -47,8 +47,9 @@ class CommandController<E : Entity>(
         if (log.isDebugEnabled) log.debug("got snapshot $snapshot")
         val cachedSnapshot = snapshot ?: Snapshot(commandAware.initialState, 0)
         snapshotValue.set(cachedSnapshot)
-        val cmdHandler = commandAware.cmdHandlerFactory.invoke(metadata, command, cachedSnapshot)
-        val uow = cmdHandler.handleCommand()
+        val request = Triple(metadata, command, cachedSnapshot)
+        val events = commandAware.handleCmd(request)
+        val uow = toUnitOfWork(request, events)
         uow
       }
       .compose { unitOfWork ->
@@ -76,5 +77,20 @@ class CommandController<E : Entity>(
       }, promise.future())
 
     return promise.future()
+  }
+
+  private fun toUnitOfWork(
+    request: Triple<CommandMetadata, Command, Snapshot<E>>,
+    promise: Future<List<DomainEvent>>
+  ): Future<UnitOfWork> {
+    val uowPromise: Promise<UnitOfWork> = Promise.promise()
+    val (cmdMetadata, command, snapshot) = request
+    if (promise.succeeded()) {
+      uowPromise.complete(UnitOfWork(cmdMetadata.entityName, cmdMetadata.entityId, cmdMetadata.commandId,
+        command, snapshot.version + 1, promise.result()))
+    } else {
+      uowPromise.fail(promise.cause())
+    }
+    return uowPromise.future()
   }
 }
