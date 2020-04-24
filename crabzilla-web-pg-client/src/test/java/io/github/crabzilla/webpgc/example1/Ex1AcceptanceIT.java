@@ -26,7 +26,7 @@ import java.net.ServerSocket;
 import java.util.Random;
 import java.util.UUID;
 
-import static io.github.crabzilla.framework.UnitOfWork.JsonMetadata.*;
+import static io.github.crabzilla.core.UnitOfWork.JsonMetadata.*;
 import static io.github.crabzilla.pgc.PgcKt.readModelPgPool;
 import static io.github.crabzilla.pgc.PgcKt.writeModelPgPool;
 import static io.github.crabzilla.webpgc.WebpgcKt.*;
@@ -137,7 +137,7 @@ class Ex1AcceptanceIT {
         .expect(ResponsePredicate.JSON)
         .sendJson(cmdAsJson, tc.succeeding(response1 -> tc.verify(() -> {
             JsonObject uow = response1.body();
-            log.info("UnitOfWork recebida {}", uow.encodePrettily());
+            log.info("UnitOfWork {}", uow.encodePrettily());
             Long uowId = Long.valueOf(response1.getHeader("uowId"));
             assertThat(uowId).isPositive();
             assertThat(uow.getString(ENTITY_NAME)).isEqualTo("customer");
@@ -160,7 +160,7 @@ class Ex1AcceptanceIT {
         .expect(ResponsePredicate.JSON)
         .send(tc.succeeding(response2 -> tc.verify(() -> {
           JsonObject jo = response2.body();
-          log.info("UnitOfWork recebida {}", jo.encodePrettily());
+          log.info("UnitOfWork {}", jo.encodePrettily());
           assertThat(jo.getInteger("version")).isEqualTo(1);
           JsonObject state = jo.getJsonObject("state");
           assertThat(state.getInteger("customerId")).isEqualTo(customerId2);
@@ -179,7 +179,7 @@ class Ex1AcceptanceIT {
         .expect(ResponsePredicate.JSON)
         .send(tc.succeeding(response2 -> tc.verify(() -> {
           JsonObject jo = response2.body();
-          log.info("UnitOfWork recebida {}", jo.encodePrettily());
+          log.info("UnitOfWork {}", jo.encodePrettily());
           assertThat(jo.encode())
             .isEqualTo("{\"id\":" + customerId2 + ",\"name\":\"customer#" + customerId2 + "\",\"is_active\":false}");
           tc.completeNow();
@@ -223,7 +223,7 @@ class Ex1AcceptanceIT {
         .expect(ResponsePredicate.JSON)
         .sendJson(cmdAsJson, tc.succeeding(response1 -> tc.verify(() -> {
           JsonObject uow1 = response1.body();
-          log.info("UnitOfWork recebida {}", uow1.encodePrettily());
+          log.info("UnitOfWork {}", uow1.encodePrettily());
           Long uowId1 = Long.valueOf(response1.getHeader("uowId"));
             assertThat(uowId1).isPositive();
             assertThat(uow1.getString(ENTITY_NAME)).isEqualTo("customer");

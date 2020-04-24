@@ -1,8 +1,8 @@
 package io.github.crabzilla.webpgc
 
-import io.github.crabzilla.framework.Command
-import io.github.crabzilla.framework.CommandMetadata
-import io.github.crabzilla.framework.Entity
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandMetadata
+import io.github.crabzilla.core.Entity
 import io.github.crabzilla.internal.EntityComponent
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
@@ -30,17 +30,17 @@ class WebDeployer<E : Entity>(
   }
 
   fun deployWebRoutes() {
-
     log.info("adding route POST $postCmd")
     router.post(postCmd).handler {
       val begin = System.currentTimeMillis()
       val commandId = it.request().getHeader(COMMAND_ID_PARAMETER)
       val commandMetadata =
         if (commandId == null) {
-          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), it.pathParam(COMMAND_NAME_PARAMETER))
+          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), component.entityName(),
+            it.pathParam(COMMAND_NAME_PARAMETER))
         } else {
-          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), it.pathParam(COMMAND_NAME_PARAMETER),
-            UUID.fromString(commandId))
+          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), component.entityName(),
+            it.pathParam(COMMAND_NAME_PARAMETER), UUID.fromString(commandId))
         }
       val command: Command? = try {
         component.cmdFromJson(commandMetadata.commandName, it.bodyAsJson)
@@ -51,11 +51,11 @@ class WebDeployer<E : Entity>(
         it.response().setStatusCode(400).setStatusMessage("Cannot decode the json for this Command").end()
         return@handler
       }
-      if (log.isTraceEnabled) log.trace("Handling $command $commandMetadata")
+      if (log.isDebugEnabled) log.debug("Handling $command $commandMetadata")
       component.handleCommand(commandMetadata, command)
         .onSuccess { result ->
           val end = System.currentTimeMillis()
-          if (log.isTraceEnabled) log.trace("handled command in " + (end - begin) + " ms")
+          if (log.isDebugEnabled) log.debug("handled command in " + (end - begin) + " ms")
           with(result) {
             val location = it.request().absoluteURI().split('/').subList(0, 3)
               .reduce { acc, s -> acc.plus("/$s") } + "/commands/$resourceName/units-of-work/$second"

@@ -1,11 +1,11 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.core.COMMAND_SERIALIZER
+import io.github.crabzilla.core.EVENT_SERIALIZER
+import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommandAware
 import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.framework.COMMAND_SERIALIZER
-import io.github.crabzilla.framework.EVENT_SERIALIZER
-import io.github.crabzilla.framework.Snapshot
 import io.github.crabzilla.internal.SnapshotRepository
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
 import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY

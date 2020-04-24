@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.github.crabzilla.pgc.example1.Example1Fixture

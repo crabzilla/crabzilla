@@ -1,9 +1,9 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.core.CommandMetadata
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.UnknownCommand
-import io.github.crabzilla.framework.CommandMetadata
 import io.github.crabzilla.internal.EntityComponent
 import io.github.crabzilla.pgc.example1.Example1Fixture.createActivateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
@@ -75,7 +75,7 @@ class PgcEntityComponentIT {
   fun a1(tc: VertxTestContext) {
     val customerId = 1
     val command = CreateCustomer("customer1")
-    val commandMetadata = CommandMetadata(customerId, "create")
+    val commandMetadata = CommandMetadata(customerId, "customer", "create")
     customerComponent.handleCommand(commandMetadata, command).setHandler { event ->
       if (event.succeeded()) {
         val result = event.result()
@@ -92,7 +92,7 @@ class PgcEntityComponentIT {
   fun a2(tc: VertxTestContext) {
     val customerId = 1
     val command = CreateCustomer("a bad name")
-    val commandMetadata = CommandMetadata(customerId, "create")
+    val commandMetadata = CommandMetadata(customerId, "customer", "create")
     customerComponent.handleCommand(commandMetadata, command).setHandler { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
       tc.verify { assertThat(event.cause().message).isEqualTo("[Invalid name: a bad name]") }
@@ -104,11 +104,11 @@ class PgcEntityComponentIT {
   @DisplayName("given an execution error it will be HANDLING_ERROR")
   fun a3(tc: VertxTestContext) {
     val customerId = 1
-    val commandMetadata = CommandMetadata(customerId, "unknown")
+    val commandMetadata = CommandMetadata(customerId, "customer", "unknown")
     val command = UnknownCommand(customerId)
     customerComponent.handleCommand(commandMetadata, command).setHandler { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
-      tc.verify { assertThat(event.cause().message).isEqualTo("unknown is a unknown command") }
+      tc.verify { assertThat(event.cause().message).isEqualTo("[invalid command UnknownCommand]") }
       tc.completeNow()
     }
   }
@@ -119,7 +119,7 @@ class PgcEntityComponentIT {
   @DisplayName("given a valid composed command it will be SUCCESS")
   fun a4(tc: VertxTestContext) {
     val customerId = 1
-    val commandMetadata = CommandMetadata(customerId, "create")
+    val commandMetadata = CommandMetadata(customerId, "customer", "create")
     val command = createActivateCmd1
     customerComponent.handleCommand(commandMetadata, command).setHandler { event ->
       if (event.succeeded()) {

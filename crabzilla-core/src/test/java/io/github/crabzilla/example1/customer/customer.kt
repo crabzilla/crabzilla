@@ -1,8 +1,8 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.framework.Command
-import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.Entity
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.Entity
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 
@@ -33,9 +33,10 @@ data class DeactivateCustomer(val reason: String) : Command()
 @Serializable
 data class CreateActivateCustomer(val name: String, val reason: String) : Command()
 
-// just for test
 @Serializable
 data class UnknownCommand(val x: Int) : Command()
+
+// kotlinx.serialization
 
 val customerModule = SerializersModule {
   polymorphic(Entity::class) {

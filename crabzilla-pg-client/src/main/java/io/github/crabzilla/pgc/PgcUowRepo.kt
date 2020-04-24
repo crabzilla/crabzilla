@@ -1,11 +1,11 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.framework.COMMAND_SERIALIZER
-import io.github.crabzilla.framework.Command
-import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.EVENT_SERIALIZER
-import io.github.crabzilla.framework.UnitOfWork
-import io.github.crabzilla.framework.Version
+import io.github.crabzilla.core.COMMAND_SERIALIZER
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.EVENT_SERIALIZER
+import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.core.Version
 import io.github.crabzilla.internal.RangeOfEvents
 import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.github.crabzilla.internal.UnitOfWorkRepository
@@ -124,7 +124,7 @@ internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : 
 
   override fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String): Future<RangeOfEvents> {
     val promise = Promise.promise<RangeOfEvents>()
-    log.trace("will load id [{}] after version [{}]", id, version)
+    log.debug("will load id [{}] after version [{}]", id, version)
     pgPool.getConnection { ar0 ->
       if (ar0.failed()) {
         promise.fail(ar0.cause())
@@ -148,7 +148,7 @@ internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : 
             list.add(snapshotData)
           }
           stream.endHandler {
-            log.trace("found {} units of work for id {} and version > {}", list.size, id, version)
+            log.debug("found {} units of work for id {} and version > {}", list.size, id, version)
             val finalVersion = if (list.size == 0) 0 else list[list.size - 1].untilVersion
             val flatMappedToEvents = list.flatMap { sd -> sd.events }
             promise.complete(RangeOfEvents(version, finalVersion, flatMappedToEvents))
@@ -165,7 +165,7 @@ internal class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : 
 
   override fun selectAfterUowId(uowId: Long, maxRows: Int): Future<List<UnitOfWorkEvents>> {
     val promise = Promise.promise<List<UnitOfWorkEvents>>()
-    log.trace("will load after uowId [{}]", uowId)
+    log.debug("will load after uowId [{}]", uowId)
     val selectAfterUowIdSql = "select uow_id, ar_id, uow_events " +
       "  from units_of_work " +
       " where uow_id > $1 " +

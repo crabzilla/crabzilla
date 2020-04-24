@@ -1,13 +1,13 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.framework.COMMAND_SERIALIZER
-import io.github.crabzilla.framework.Command
-import io.github.crabzilla.framework.CommandMetadata
-import io.github.crabzilla.framework.ENTITY_SERIALIZER
-import io.github.crabzilla.framework.Entity
-import io.github.crabzilla.framework.EntityCommandAware
-import io.github.crabzilla.framework.Snapshot
-import io.github.crabzilla.framework.UnitOfWork
+import io.github.crabzilla.core.COMMAND_SERIALIZER
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandMetadata
+import io.github.crabzilla.core.ENTITY_SERIALIZER
+import io.github.crabzilla.core.Entity
+import io.github.crabzilla.core.EntityCommandAware
+import io.github.crabzilla.core.Snapshot
+import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.internal.CommandController
 import io.github.crabzilla.internal.EntityComponent
 import io.vertx.core.Future
@@ -29,22 +29,28 @@ class PgcEntityComponent<E : Entity>(
   companion object {
     private val log: Logger = LoggerFactory.getLogger(PgcEntityComponent::class.java)
   }
+
   private val uowRepo = PgcUowRepo(writeDb, json)
   private val snapshotRepo = PgcSnapshotRepo(writeDb, json, entityName, cmdAware)
   private val uowJournal = PgcUowJournal(vertx, writeDb, json)
   private val cmdController = CommandController(cmdAware, snapshotRepo, uowJournal)
+
   override fun entityName(): String {
     return entityName
   }
+
   override fun getUowByUowId(uowId: Long): Future<UnitOfWork> {
     return uowRepo.getUowByUowId(uowId)
   }
+
   override fun getAllUowByEntityId(id: Int): Future<List<UnitOfWork>> {
     return uowRepo.getAllUowByEntityId(id)
   }
+
   override fun getSnapshot(entityId: Int): Future<Snapshot<E>> {
     return snapshotRepo.retrieve(entityId)
   }
+
   override fun handleCommand(metadata: CommandMetadata, command: Command): Future<Pair<UnitOfWork, Long>> {
     val promise = Promise.promise<Pair<UnitOfWork, Long>>()
     uowRepo.getUowByCmdId(metadata.commandId).onComplete { gotCommand ->
@@ -59,7 +65,7 @@ class PgcEntityComponent<E : Entity>(
         if (cmdHandled.succeeded()) {
           val pair = cmdHandled.result()
           promise.complete(pair)
-          if (log.isTraceEnabled) log.trace("Command successfully handled: $pair")
+          if (log.isDebugEnabled) log.debug("Command successfully handled: $pair")
         } else {
           log.error("When handling command", cmdHandled.cause())
           promise.fail(cmdHandled.cause())
@@ -68,9 +74,11 @@ class PgcEntityComponent<E : Entity>(
     }
     return promise.future()
   }
+
   override fun toJson(state: E): JsonObject {
     return JsonObject(json.stringify(ENTITY_SERIALIZER, state))
   }
+
   override fun cmdFromJson(commandName: String, cmdAsJson: JsonObject): Command {
     return json.parse(COMMAND_SERIALIZER, cmdAsJson.encode())
   }

@@ -1,7 +1,7 @@
 package io.github.crabzilla.webpgc
 
-import io.github.crabzilla.framework.Entity
-import io.github.crabzilla.framework.EntityCommandAware
+import io.github.crabzilla.core.Entity
+import io.github.crabzilla.core.EntityCommandAware
 import io.github.crabzilla.pgc.PgcEntityComponent
 import io.github.crabzilla.pgc.writeModelPgPool
 import io.vertx.core.AbstractVerticle
