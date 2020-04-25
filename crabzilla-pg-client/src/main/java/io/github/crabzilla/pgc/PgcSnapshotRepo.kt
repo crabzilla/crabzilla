@@ -9,6 +9,7 @@ import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.internal.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
+import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Transaction
@@ -39,7 +40,7 @@ class PgcSnapshotRepo<E : Entity>(
   }
   override fun upsert(entityId: Int, snapshot: Snapshot<E>): Future<Void> {
     val promise = Promise.promise<Void>()
-    val json: String = json.stringify(ENTITY_SERIALIZER, snapshot.state)
+    val json = JsonObject(json.stringify(ENTITY_SERIALIZER, snapshot.state))
     writeModelDb.preparedQuery(upsertSnapshot())
       .execute(Tuple.of(entityId, snapshot.version, json)) { insert ->
       if (insert.failed()) {
@@ -84,8 +85,8 @@ class PgcSnapshotRepo<E : Entity>(
               cachedInstance = entityFn.initialState
               cachedVersion = 0
             } else {
-              val stateAsJson: String = pgRow.first().get(String::class.java, 1)
-              cachedInstance = json.parse(ENTITY_SERIALIZER, stateAsJson) as E
+              val stateAsJson: JsonObject = pgRow.first().get(JsonObject::class.java, 1)
+              cachedInstance = json.parse(ENTITY_SERIALIZER, stateAsJson.encode()) as E
               cachedVersion = pgRow.first().getInteger("version")
             }
             // get committed events after snapshot version

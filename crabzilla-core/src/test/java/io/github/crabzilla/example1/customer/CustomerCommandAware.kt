@@ -1,11 +1,10 @@
 package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.CommandMetadata
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EntityCommandAware
-import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.StateTransitionsTracker
+import io.github.crabzilla.internal.CommandContext
 import io.vertx.core.Future
 import io.vertx.core.Promise
 
@@ -23,8 +22,7 @@ class CustomerCommandAware : EntityCommandAware<Customer> {
     }
   }
 
-  override val validateCmd: (command: Command) -> List<String> = {
-    command ->
+  override val validateCmd: (command: Command) -> List<String> = { command ->
     when (command) {
       is CreateCustomer ->
         if (command.name == "a bad name") listOf("Invalid name: ${command.name}") else listOf()
@@ -35,23 +33,21 @@ class CustomerCommandAware : EntityCommandAware<Customer> {
     }
   }
 
-  override val handleCmd: (Triple<CommandMetadata, Command, Snapshot<Customer>>) -> Future<List<DomainEvent>> = {
-    request ->
-    val (cmdMetadata, command, snapshot) = request
+  override val handleCmd: (CommandContext<Customer>) -> Future<List<DomainEvent>> = { ctx ->
+    val (cmdMetadata, command, snapshot) = ctx
     val customer = snapshot.state
     when (command) {
       is CreateCustomer -> customer.create(cmdMetadata.entityId, command.name)
       is ActivateCustomer -> Future.succeededFuture(customer.activate(command.reason))
       is DeactivateCustomer -> customer.deactivate(command.reason)
-      is CreateActivateCustomer -> createActivate(request)
+      is CreateActivateCustomer -> createActivate(ctx)
       else -> Future.failedFuture("${cmdMetadata.commandName} is a unknown command")
     }
   }
 
-  private fun createActivate(cmdRequest: Triple<CommandMetadata, Command, Snapshot<Customer>>):
-    Future<List<DomainEvent>> {
+  private fun createActivate(ctx: CommandContext<Customer>): Future<List<DomainEvent>> {
     val promise = Promise.promise<List<DomainEvent>>()
-    val (cmdMetadata, command, snapshot) = cmdRequest
+    val (cmdMetadata, command, snapshot) = ctx
     val tracker = StateTransitionsTracker(snapshot, applyEvent)
     val cmd = command as CreateActivateCustomer
     tracker.currentState

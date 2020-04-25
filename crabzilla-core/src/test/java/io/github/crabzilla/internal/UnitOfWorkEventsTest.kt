@@ -18,7 +18,7 @@ class UnitOfWorkEventsTest {
     val uow =
       UnitOfWork("customer", 1, UUID.randomUUID(), command, 1, listOf<DomainEvent>(CustomerCreated(1, "cust#1")))
 
-    val pd = fromUnitOfWork(1, uow)
+    val pd = UnitOfWorkEvents(1, uow.entityId, uow.events)
 
     assertThat(pd.uowId).isEqualTo(1)
     assertThat(pd.entityId).isEqualTo(uow.entityId)

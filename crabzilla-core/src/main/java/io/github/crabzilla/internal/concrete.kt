@@ -13,13 +13,11 @@ import io.vertx.core.Promise
 import java.util.concurrent.atomic.AtomicReference
 import org.slf4j.LoggerFactory
 
+typealias CommandContext<E> = Triple<CommandMetadata, Command, Snapshot<E>>
+
 data class RangeOfEvents(val afterVersion: Version, val untilVersion: Version, val events: List<DomainEvent>)
 
 data class UnitOfWorkEvents(val uowId: Long, val entityId: Int, val events: List<DomainEvent>)
-
-fun fromUnitOfWork(uowId: Long, uow: UnitOfWork): UnitOfWorkEvents {
-  return UnitOfWorkEvents(uowId, uow.entityId, uow.events)
-}
 
 class CommandController<E : Entity>(
   private val commandAware: EntityCommandAware<E>,
@@ -79,12 +77,9 @@ class CommandController<E : Entity>(
     return promise.future()
   }
 
-  private fun toUnitOfWork(
-    request: Triple<CommandMetadata, Command, Snapshot<E>>,
-    promise: Future<List<DomainEvent>>
-  ): Future<UnitOfWork> {
+  private fun toUnitOfWork(ctx: CommandContext<E>, promise: Future<List<DomainEvent>>): Future<UnitOfWork> {
     val uowPromise: Promise<UnitOfWork> = Promise.promise()
-    val (cmdMetadata, command, snapshot) = request
+    val (cmdMetadata, command, snapshot) = ctx
     if (promise.succeeded()) {
       uowPromise.complete(UnitOfWork(cmdMetadata.entityName, cmdMetadata.entityId, cmdMetadata.commandId,
         command, snapshot.version + 1, promise.result()))
