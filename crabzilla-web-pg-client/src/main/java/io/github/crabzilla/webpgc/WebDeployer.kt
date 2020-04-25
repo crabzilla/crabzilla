@@ -7,12 +7,13 @@ import io.github.crabzilla.internal.EntityComponent
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
-import java.util.UUID
 import org.slf4j.LoggerFactory
+import java.util.UUID
 
 class WebDeployer<E : Entity>(
-  private val component: EntityComponent<E>,
   private val resourceName: String,
+  private val cmdTypeMap: Map<String, String>,
+  private val component: EntityComponent<E>,
   private val router: Router
 ) {
 
@@ -42,8 +43,9 @@ class WebDeployer<E : Entity>(
           CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), component.entityName(),
             it.pathParam(COMMAND_NAME_PARAMETER), UUID.fromString(commandId))
         }
+      val commandType = cmdTypeMap[commandMetadata.commandName]
       val command: Command? = try {
-        component.cmdFromJson(commandMetadata.commandName, it.bodyAsJson)
+        component.cmdFromJson(commandMetadata.commandName, it.bodyAsJson.put("type", commandType))
       } catch (e: Exception) {
         null
       }

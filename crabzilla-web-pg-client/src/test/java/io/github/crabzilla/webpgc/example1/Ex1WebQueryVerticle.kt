@@ -2,7 +2,7 @@ package io.github.crabzilla.webpgc.example1
 
 import io.github.crabzilla.webpgc.WebQueryVerticle
 import io.github.crabzilla.webpgc.listenHandler
-import io.vertx.core.Future
+import io.vertx.core.Promise
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.JsonArray
@@ -22,7 +22,7 @@ class Ex1WebQueryVerticle : WebQueryVerticle() {
 
   private lateinit var server: HttpServer
 
-  override fun start(startFuture: Future<Void>) {
+  override fun start(promise: Promise<Void>) {
 
     val config = config()
     log.info("*** config: \n" + config.encodePrettily())
@@ -36,7 +36,7 @@ class Ex1WebQueryVerticle : WebQueryVerticle() {
 
     // http server
     server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
-    server.requestHandler(router).listen(listenHandler(startFuture))
+    server.requestHandler(router).listen(listenHandler(promise))
   }
 
   private fun customersQueryHandler(rc: RoutingContext) {

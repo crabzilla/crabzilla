@@ -126,9 +126,7 @@ class Ex1AcceptanceIT {
     @DisplayName("You get a correspondent UnitOfWork as JSON")
     void a1(VertxTestContext tc) {
       // TODO map commandName -> commandType
-      JsonObject cmdAsJson =
-        new JsonObject("{\"type\":\"io.github.crabzilla.example1.customer.CreateCustomer\",\"name\":\"customer#" +
-          customerId2 + "\"}");
+      JsonObject cmdAsJson = new JsonObject("{\"name\":\"customer#" + customerId2 + "\"}");
       JsonObject expectedCmd = new JsonObject("{\"name\":\"customer#" + customerId2 + "\"}");
       log.info("/commands/customers/{}/create with json \n {}", customerId2, cmdAsJson.encodePrettily());
       client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + customerId2 + "/create"  )
@@ -210,11 +208,9 @@ class Ex1AcceptanceIT {
     @Test
     @DisplayName("You get a correspondent UnitOfWork as JSON")
     void a1(VertxTestContext tc) {
-      JsonObject cmdAsJson =
-        new JsonObject("{\"type\":\"io.github.crabzilla.example1.customer.CreateCustomer\",\"name\":\"customer#" +
-          customerId3 + "\"}");
+      JsonObject cmdAsJson = new JsonObject("{\"name\":\"customer#" + customerId3 + "\"}");
       JsonObject expectedCmd = new JsonObject("{\"name\":\"customer#" + customerId3 + "\"}");
-      log.info("/commands/customers/{}/create with json \n {}", customerId2, cmdAsJson.encodePrettily());
+      log.info("/commands/customers/{}/create with json \n {}", customerId3, cmdAsJson.encodePrettily());
       UUID cmdId = UUID.randomUUID();
       client.post(writeHttpPort, "0.0.0.0", "/commands/customers/" + customerId3 + "/create")
         .as(BodyCodec.jsonObject())

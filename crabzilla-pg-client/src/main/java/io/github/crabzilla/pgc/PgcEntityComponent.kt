@@ -22,9 +22,9 @@ import org.slf4j.LoggerFactory
 class PgcEntityComponent<E : Entity>(
   vertx: Vertx,
   writeDb: PgPool,
+  cmdAware: EntityCommandAware<E>,
   private val json: Json,
-  private val entityName: String,
-  cmdAware: EntityCommandAware<E>
+  private val entityName: String
 ) : EntityComponent<E> {
   companion object {
     private val log: Logger = LoggerFactory.getLogger(PgcEntityComponent::class.java)

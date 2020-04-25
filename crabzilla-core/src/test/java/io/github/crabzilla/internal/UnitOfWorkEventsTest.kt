@@ -4,9 +4,9 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerCreated
-import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 class UnitOfWorkEventsTest {
 

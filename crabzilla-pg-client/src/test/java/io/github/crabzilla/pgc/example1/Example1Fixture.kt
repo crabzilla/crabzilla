@@ -36,6 +36,6 @@ object Example1Fixture {
 
   val customerPgcComponent: (vertx: Vertx, writeDb: PgPool) -> EntityComponent<Customer> =
     { vertx: Vertx, writeDb: PgPool ->
-      PgcEntityComponent(vertx, writeDb, example1Json, CUSTOMER_ENTITY, CustomerCommandAware())
+      PgcEntityComponent(vertx, writeDb, CustomerCommandAware(), example1Json, CUSTOMER_ENTITY)
   }
 }

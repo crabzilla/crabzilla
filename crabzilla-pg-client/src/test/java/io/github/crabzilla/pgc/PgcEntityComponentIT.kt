@@ -76,7 +76,7 @@ class PgcEntityComponentIT {
     val customerId = 1
     val command = CreateCustomer("customer1")
     val commandMetadata = CommandMetadata(customerId, "customer", "create")
-    customerComponent.handleCommand(commandMetadata, command).setHandler { event ->
+    customerComponent.handleCommand(commandMetadata, command).onComplete { event ->
       if (event.succeeded()) {
         val result = event.result()
         tc.verify { assertThat(result.first.events.size).isEqualTo(1) }
@@ -93,7 +93,7 @@ class PgcEntityComponentIT {
     val customerId = 1
     val command = CreateCustomer("a bad name")
     val commandMetadata = CommandMetadata(customerId, "customer", "create")
-    customerComponent.handleCommand(commandMetadata, command).setHandler { event ->
+    customerComponent.handleCommand(commandMetadata, command).onComplete { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
       tc.verify { assertThat(event.cause().message).isEqualTo("[Invalid name: a bad name]") }
       tc.completeNow()
@@ -106,7 +106,7 @@ class PgcEntityComponentIT {
     val customerId = 1
     val commandMetadata = CommandMetadata(customerId, "customer", "unknown")
     val command = UnknownCommand(customerId)
-    customerComponent.handleCommand(commandMetadata, command).setHandler { event ->
+    customerComponent.handleCommand(commandMetadata, command).onComplete { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
       tc.verify { assertThat(event.cause().message).isEqualTo("[invalid command UnknownCommand]") }
       tc.completeNow()
@@ -121,7 +121,7 @@ class PgcEntityComponentIT {
     val customerId = 1
     val commandMetadata = CommandMetadata(customerId, "customer", "create")
     val command = createActivateCmd1
-    customerComponent.handleCommand(commandMetadata, command).setHandler { event ->
+    customerComponent.handleCommand(commandMetadata, command).onComplete { event ->
       if (event.succeeded()) {
         val result = event.result()
         tc.verify { assertThat(result.first.events.size).isEqualTo(2) }
