@@ -5,7 +5,7 @@
 
   <groupId>io.github.crabzilla</groupId>
   <artifactId>crabzilla</artifactId>
-  <version>0.0.6-rc18</version>
+  <version>v0.0.7</version>
   <packaging>pom</packaging>
 
   <properties>
