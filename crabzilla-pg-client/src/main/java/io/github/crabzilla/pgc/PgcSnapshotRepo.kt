@@ -1,14 +1,15 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.ENTITY_SERIALIZER
-import io.github.crabzilla.framework.EVENT_SERIALIZER
-import io.github.crabzilla.framework.Entity
-import io.github.crabzilla.framework.EntityCommandAware
-import io.github.crabzilla.framework.Snapshot
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.ENTITY_SERIALIZER
+import io.github.crabzilla.core.EVENT_SERIALIZER
+import io.github.crabzilla.core.Entity
+import io.github.crabzilla.core.EntityCommandAware
+import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.internal.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
+import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Transaction
@@ -39,14 +40,14 @@ class PgcSnapshotRepo<E : Entity>(
   }
   override fun upsert(entityId: Int, snapshot: Snapshot<E>): Future<Void> {
     val promise = Promise.promise<Void>()
-    val json: String = json.stringify(ENTITY_SERIALIZER, snapshot.state)
+    val json = JsonObject(json.stringify(ENTITY_SERIALIZER, snapshot.state))
     writeModelDb.preparedQuery(upsertSnapshot())
       .execute(Tuple.of(entityId, snapshot.version, json)) { insert ->
       if (insert.failed()) {
         log.error("upsert snapshot query error")
         promise.fail(insert.cause())
       } else {
-        log.trace("upsert snapshot success")
+        log.debug("upsert snapshot success")
         promise.complete()
       }
     }
@@ -84,8 +85,8 @@ class PgcSnapshotRepo<E : Entity>(
               cachedInstance = entityFn.initialState
               cachedVersion = 0
             } else {
-              val stateAsJson: String = pgRow.first().get(String::class.java, 1)
-              cachedInstance = json.parse(ENTITY_SERIALIZER, stateAsJson) as E
+              val stateAsJson: JsonObject = pgRow.first().get(JsonObject::class.java, 1)
+              cachedInstance = json.parse(ENTITY_SERIALIZER, stateAsJson.encode()) as E
               cachedVersion = pgRow.first().getInteger("version")
             }
             // get committed events after snapshot version
@@ -104,7 +105,7 @@ class PgcSnapshotRepo<E : Entity>(
                   tx.rollback(); conn.close(); promise.fail(err)
                 }
                 stream.endHandler {
-                  log.trace("End of stream")
+                  log.debug("End of stream")
                   // Attempt to commit the transaction
                   tx.commit { ar ->
                     // Return the connection to the pool
@@ -114,7 +115,7 @@ class PgcSnapshotRepo<E : Entity>(
                       log.error("endHandler.closeConnection")
                       promise.fail(ar.cause())
                     } else {
-                      log.trace("success: endHandler.closeConnection")
+                      log.debug("success: endHandler.closeConnection")
                       val result = Snapshot(currentInstance, currentVersion)
                       promise.complete(result)
                     }
@@ -125,7 +126,7 @@ class PgcSnapshotRepo<E : Entity>(
                   val eventsJsonString: String = row.get(String::class.java, 0)
                   val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsJsonString)
                   currentInstance = events.fold(currentInstance) { state, event -> entityFn.applyEvent.invoke(event, state) }
-                  log.trace("Events: $events \n version: $currentVersion \n instance $currentInstance")
+                  log.debug("Events: $events \n version: $currentVersion \n instance $currentInstance")
                 }
               }
             }

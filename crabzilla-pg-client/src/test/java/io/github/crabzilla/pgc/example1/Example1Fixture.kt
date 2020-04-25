@@ -1,5 +1,6 @@
 package io.github.crabzilla.pgc.example1
 
+import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.example1.customer.ActivateCustomer
 import io.github.crabzilla.example1.customer.CreateActivateCustomer
 import io.github.crabzilla.example1.customer.CreateCustomer
@@ -9,7 +10,6 @@ import io.github.crabzilla.example1.customer.CustomerCommandAware
 import io.github.crabzilla.example1.customer.CustomerCreated
 import io.github.crabzilla.example1.customer.CustomerDeactivated
 import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.framework.UnitOfWork
 import io.github.crabzilla.internal.EntityComponent
 import io.github.crabzilla.pgc.PgcEntityComponent
 import io.vertx.core.Vertx
@@ -36,6 +36,6 @@ object Example1Fixture {
 
   val customerPgcComponent: (vertx: Vertx, writeDb: PgPool) -> EntityComponent<Customer> =
     { vertx: Vertx, writeDb: PgPool ->
-      PgcEntityComponent(vertx, writeDb, example1Json, CUSTOMER_ENTITY, CustomerCommandAware())
+      PgcEntityComponent(vertx, writeDb, CustomerCommandAware(), example1Json, CUSTOMER_ENTITY)
   }
 }

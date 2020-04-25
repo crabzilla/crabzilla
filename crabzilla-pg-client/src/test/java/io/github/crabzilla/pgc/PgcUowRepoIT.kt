@@ -1,8 +1,8 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.core.COMMAND_SERIALIZER
+import io.github.crabzilla.core.EVENT_SERIALIZER
 import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.framework.COMMAND_SERIALIZER
-import io.github.crabzilla.framework.EVENT_SERIALIZER
 import io.github.crabzilla.internal.RangeOfEvents
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.github.crabzilla.internal.UnitOfWorkRepository

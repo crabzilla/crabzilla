@@ -1,7 +1,7 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.Entity
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.Entity
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import kotlinx.serialization.Serializable
@@ -14,21 +14,19 @@ data class Customer(
   val reason: String? = null
 ) : Entity() {
 
-  // TODO perform a query on read model to validate name uniqueness
   fun create(id: CustomerId, name: String): Future<List<DomainEvent>> {
     require(this.customerId == null) { "customer already created" }
-    return succeededFuture(eventsOf(CustomerCreated(id, name)))
+    return succeededFuture(listOf(CustomerCreated(id, name)))
   }
 
   fun activate(reason: String): List<DomainEvent> {
     customerMustExist()
-    return eventsOf(CustomerActivated(reason))
+    return listOf(CustomerActivated(reason))
   }
 
-  // TODO perform a web request ask if this operation is allowed
   fun deactivate(reason: String): Future<List<DomainEvent>> {
     customerMustExist()
-    return succeededFuture(eventsOf(CustomerDeactivated(reason)))
+    return succeededFuture(listOf(CustomerDeactivated(reason)))
   }
 
   private fun customerMustExist() {

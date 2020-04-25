@@ -1,15 +1,23 @@
 package io.github.crabzilla.internal
 
-import io.github.crabzilla.framework.Command
-import io.github.crabzilla.framework.CommandMetadata
-import io.github.crabzilla.framework.Entity
-import io.github.crabzilla.framework.EntityCommandAware
-import io.github.crabzilla.framework.Snapshot
-import io.github.crabzilla.framework.UnitOfWork
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandMetadata
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.Entity
+import io.github.crabzilla.core.EntityCommandAware
+import io.github.crabzilla.core.Snapshot
+import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.core.Version
 import io.vertx.core.Future
 import io.vertx.core.Promise
-import java.util.concurrent.atomic.AtomicReference
 import org.slf4j.LoggerFactory
+import java.util.concurrent.atomic.AtomicReference
+
+typealias CommandContext<E> = Triple<CommandMetadata, Command, Snapshot<E>>
+
+data class RangeOfEvents(val afterVersion: Version, val untilVersion: Version, val events: List<DomainEvent>)
+
+data class UnitOfWorkEvents(val uowId: Long, val entityId: Int, val events: List<DomainEvent>)
 
 class CommandController<E : Entity>(
   private val commandAware: EntityCommandAware<E>,
@@ -22,7 +30,7 @@ class CommandController<E : Entity>(
 
   fun handle(metadata: CommandMetadata, command: Command): Future<Pair<UnitOfWork, Long>> {
     val promise = Promise.promise<Pair<UnitOfWork, Long>>()
-    if (log.isTraceEnabled) log.trace("received $metadata\n $command")
+    if (log.isDebugEnabled) log.debug("received $metadata\n $command")
     val constraints = commandAware.validateCmd(command)
     if (constraints.isNotEmpty()) {
       log.error("Command is invalid: $constraints")
@@ -34,26 +42,29 @@ class CommandController<E : Entity>(
     val uowIdValue: AtomicReference<Long> = AtomicReference()
     snapshotRepo.retrieve(metadata.entityId)
       .compose { snapshot ->
-        if (log.isTraceEnabled) log.trace("got snapshot $snapshot")
+        if (log.isDebugEnabled) log.debug("got snapshot $snapshot")
         val cachedSnapshot = snapshot ?: Snapshot(commandAware.initialState, 0)
         snapshotValue.set(cachedSnapshot)
-        val cmdHandler = commandAware.cmdHandlerFactory.invoke(metadata, command, cachedSnapshot)
-        cmdHandler.handleCommand()
+        val request = Triple(metadata, command, cachedSnapshot)
+        val events = commandAware.handleCmd(request)
+        val uow = toUnitOfWork(request, events)
+        uow
       }
       .compose { unitOfWork ->
-        if (log.isTraceEnabled) log.trace("got unitOfWork $unitOfWork")
+        if (log.isDebugEnabled) log.debug("got unitOfWork $unitOfWork")
         // append to journal
         uowValue.set(unitOfWork)
-        uowJournal.append(unitOfWork)
+        val uowId = uowJournal.append(unitOfWork)
+        uowId
       }
       .compose { uowId ->
-        if (log.isTraceEnabled) log.trace("got uowId $uowId")
+        if (log.isDebugEnabled) log.debug("got uowId $uowId")
         uowIdValue.set(uowId)
         // compute new snapshot
-        if (log.isTraceEnabled) log.trace("computing new snapshot")
+        if (log.isDebugEnabled) log.debug("computing new snapshot")
         val newInstance = uowValue.get().events.fold(snapshotValue.get().state) { state, event -> commandAware.applyEvent.invoke(event, state) }
         val newSnapshot = Snapshot(newInstance, uowValue.get().version)
-        if (log.isTraceEnabled) log.trace("now will store snapshot $newSnapshot")
+        if (log.isDebugEnabled) log.debug("now will store snapshot $newSnapshot")
         snapshotRepo.upsert(metadata.entityId, newSnapshot)
       }
       .compose({
@@ -62,6 +73,19 @@ class CommandController<E : Entity>(
         if (log.isTraceEnabled) log.trace("command handling success: $pair")
         promise.complete(pair)
       }, promise.future())
+
     return promise.future()
+  }
+
+  private fun toUnitOfWork(ctx: CommandContext<E>, promise: Future<List<DomainEvent>>): Future<UnitOfWork> {
+    val uowPromise: Promise<UnitOfWork> = Promise.promise()
+    val (cmdMetadata, command, snapshot) = ctx
+    if (promise.succeeded()) {
+      uowPromise.complete(UnitOfWork(cmdMetadata.entityName, cmdMetadata.entityId, cmdMetadata.commandId,
+        command, snapshot.version + 1, promise.result()))
+    } else {
+      uowPromise.fail(promise.cause())
+    }
+    return uowPromise.future()
   }
 }

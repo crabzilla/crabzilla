@@ -1,16 +1,16 @@
 package io.github.crabzilla.webpgc
 
-import io.github.crabzilla.EventBusChannels
+import io.github.crabzilla.pgc.PgcEventBusChannels
 import io.github.crabzilla.pgc.PgcEventProjector
 import io.github.crabzilla.pgc.PgcUowProjector
 import io.github.crabzilla.pgc.readModelPgPool
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
-import java.lang.management.ManagementFactory
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.lang.management.ManagementFactory
 
 abstract class DbProjectionsVerticle : AbstractVerticle() {
 
@@ -24,14 +24,14 @@ abstract class DbProjectionsVerticle : AbstractVerticle() {
   override fun start() {
     val implClazz = this::class.java.name
     vertx.eventBus().consumer<String>(implClazz) { msg ->
-      if (log.isTraceEnabled) log.trace("$implClazz received " + msg.body())
+      if (log.isDebugEnabled) log.debug("$implClazz received " + msg.body())
       msg.reply("$implClazz is already running here: $processId")
     }
   }
 
   fun addProjector(projectionName: String, projector: PgcEventProjector, json: Json) {
-    log.info("adding projector for $projectionName subscribing on ${EventBusChannels.unitOfWorkChannel}")
-    vertx.eventBus().consumer<JsonObject>(EventBusChannels.unitOfWorkChannel) { message ->
+    log.info("adding projector for $projectionName subscribing on ${PgcEventBusChannels.unitOfWorkChannel}")
+    vertx.eventBus().consumer<JsonObject>(PgcEventBusChannels.unitOfWorkChannel) { message ->
       val uowEvents = toUnitOfWorkEvents(message.body(), json)
       val uolProjector = PgcUowProjector(readDb, projectionName)
       uolProjector.handle(uowEvents, projector).onComplete { result ->

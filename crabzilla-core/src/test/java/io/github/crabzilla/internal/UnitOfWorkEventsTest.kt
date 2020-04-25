@@ -1,12 +1,12 @@
 package io.github.crabzilla.internal
 
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.example1.customer.CreateCustomer
 import io.github.crabzilla.example1.customer.CustomerCreated
-import io.github.crabzilla.framework.DomainEvent
-import io.github.crabzilla.framework.UnitOfWork
-import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 class UnitOfWorkEventsTest {
 
@@ -18,7 +18,7 @@ class UnitOfWorkEventsTest {
     val uow =
       UnitOfWork("customer", 1, UUID.randomUUID(), command, 1, listOf<DomainEvent>(CustomerCreated(1, "cust#1")))
 
-    val pd = fromUnitOfWork(1, uow)
+    val pd = UnitOfWorkEvents(1, uow.entityId, uow.events)
 
     assertThat(pd.uowId).isEqualTo(1)
     assertThat(pd.entityId).isEqualTo(uow.entityId)
