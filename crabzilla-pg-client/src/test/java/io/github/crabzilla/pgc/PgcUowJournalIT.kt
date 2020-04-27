@@ -1,16 +1,16 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.internal.UnitOfWorkJournal
 import io.github.crabzilla.internal.UnitOfWorkRepository
-import io.github.crabzilla.pgc.example1.Example1Fixture
 import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activatedUow1
+import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createdUow1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
+import io.github.crabzilla.pgc.example1.Example1Fixture.example1Json
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -21,13 +21,13 @@ import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
+import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -136,7 +136,7 @@ class PgcUowJournalIT {
   @DisplayName("cannot append version 3 after version 1")
   fun s22(tc: VertxTestContext) {
     val createdUow3 =
-      UnitOfWork(CUSTOMER_ENTITY, customerId1, UUID.randomUUID(), Example1Fixture.createCmd1, 3, listOf(created1))
+      UnitOfWork(CUSTOMER_ENTITY, customerId1, UUID.randomUUID(), createCmd1, 3, listOf(created1))
     // append uow1
     journal.append(createdUow1).onComplete { ar1 ->
       if (ar1.failed()) {

@@ -1,12 +1,77 @@
-package io.github.crabzilla.example1.customer
+package io.github.crabzilla.webpgc.example1
 
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.Entity
 import io.github.crabzilla.core.EntityCommandAware
 import io.github.crabzilla.core.StateTransitionsTracker
 import io.github.crabzilla.internal.CommandContext
 import io.vertx.core.Future
 import io.vertx.core.Promise
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModule
+
+typealias CustomerId = Int
+
+// events
+
+@Serializable
+data class CustomerCreated(val customerId: CustomerId, val name: String) : DomainEvent()
+
+@Serializable
+data class CustomerActivated(val reason: String) : DomainEvent()
+
+@Serializable
+data class CustomerDeactivated(val reason: String) : DomainEvent()
+
+// commands
+
+@Serializable
+data class CreateCustomer(val name: String) : Command()
+
+@Serializable
+data class ActivateCustomer(val reason: String) : Command()
+
+@Serializable
+data class DeactivateCustomer(val reason: String) : Command()
+
+@Serializable
+data class CreateActivateCustomer(val name: String, val reason: String) : Command()
+
+@Serializable
+data class UnknownCommand(val x: Int) : Command()
+
+// aggregate root
+
+@Serializable
+data class Customer(
+  val customerId: CustomerId? = null,
+  val name: String? = null,
+  val isActive: Boolean? = false,
+  val reason: String? = null
+) : Entity() {
+
+  fun create(id: CustomerId, name: String): Future<List<DomainEvent>> {
+    require(this.customerId == null) { "customer already created" }
+    return Future.succeededFuture(listOf(CustomerCreated(id, name)))
+  }
+
+  fun activate(reason: String): List<DomainEvent> {
+    customerMustExist()
+    return listOf(CustomerActivated(reason))
+  }
+
+  fun deactivate(reason: String): Future<List<DomainEvent>> {
+    customerMustExist()
+    return Future.succeededFuture(listOf(CustomerDeactivated(reason)))
+  }
+
+  private fun customerMustExist() {
+    require(this.customerId != null) { "customer must exists" }
+  }
+}
+
+// command aware
 
 class CustomerCommandAware : EntityCommandAware<Customer> {
 
@@ -62,5 +127,25 @@ class CustomerCommandAware : EntityCommandAware<Customer> {
         promise.future()
       }
     return promise.future()
+  }
+}
+
+// kotlinx.serialization
+
+val customerModule = SerializersModule {
+  polymorphic(Entity::class) {
+    Customer::class with Customer.serializer()
+  }
+  polymorphic(Command::class) {
+    CreateCustomer::class with CreateCustomer.serializer()
+    ActivateCustomer::class with ActivateCustomer.serializer()
+    DeactivateCustomer::class with DeactivateCustomer.serializer()
+    CreateActivateCustomer::class with CreateActivateCustomer.serializer()
+    UnknownCommand::class with UnknownCommand.serializer()
+  }
+  polymorphic(DomainEvent::class) {
+    CustomerCreated::class with CustomerCreated.serializer()
+    CustomerActivated::class with CustomerActivated.serializer()
+    CustomerDeactivated::class with CustomerDeactivated.serializer()
   }
 }

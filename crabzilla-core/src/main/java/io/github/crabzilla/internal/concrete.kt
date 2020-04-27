@@ -10,8 +10,8 @@ import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.Version
 import io.vertx.core.Future
 import io.vertx.core.Promise
-import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicReference
+import org.slf4j.LoggerFactory
 
 typealias CommandContext<E> = Triple<CommandMetadata, Command, Snapshot<E>>
 

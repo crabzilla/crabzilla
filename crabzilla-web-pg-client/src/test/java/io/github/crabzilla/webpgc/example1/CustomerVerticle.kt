@@ -1,7 +1,14 @@
 package io.github.crabzilla.webpgc.example1
 
-import io.github.crabzilla.webpgc.WebQueryVerticle
+import io.github.crabzilla.webpgc.ResourceContext
+import io.github.crabzilla.webpgc.WebPgcReadContext
+import io.github.crabzilla.webpgc.WebPgcWriteContext
+import io.github.crabzilla.webpgc.addProjector
+import io.github.crabzilla.webpgc.addResourceForEntity
 import io.github.crabzilla.webpgc.listenHandler
+import io.github.crabzilla.webpgc.readModelPgPool
+import io.github.crabzilla.webpgc.writeModelPgPool
+import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
@@ -11,30 +18,45 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.LoggerHandler
+import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
-import org.slf4j.LoggerFactory.getLogger
+import kotlinx.serialization.json.Json
 
-class Ex1WebQueryVerticle : WebQueryVerticle() {
+class CustomerVerticle : AbstractVerticle() {
 
-  companion object {
-    internal val log = getLogger(Ex1WebQueryVerticle::class.java)
-  }
-
-  private lateinit var server: HttpServer
+  val httpPort: Int by lazy { config().getInteger("HTTP_PORT") }
+  val readDb: PgPool by lazy { readModelPgPool(vertx, config()) }
+  val writeDb: PgPool by lazy { writeModelPgPool(vertx, config()) }
+  lateinit var server: HttpServer
 
   override fun start(promise: Promise<Void>) {
-
-    val config = config()
-    log.info("*** config: \n" + config.encodePrettily())
 
     val router = Router.router(vertx)
     router.route().handler(LoggerHandler.create())
     router.route().handler(BodyHandler.create())
 
+    // kotlinx serialization
+    val example1Json = Json(context = customerModule)
+
+    // web command routes
+    val cmdTypeMap = mapOf(
+      Pair("create", CreateCustomer::class.qualifiedName as String),
+      Pair("activate", ActivateCustomer::class.qualifiedName as String),
+      Pair("deactivate", DeactivateCustomer::class.qualifiedName as String),
+      Pair("create-activate", CreateActivateCustomer::class.qualifiedName as String))
+
+    val webPgcWriteContext = WebPgcWriteContext(vertx, example1Json, writeDb)
+    val resourceContext = ResourceContext("customers", "customer", CustomerCommandAware(), cmdTypeMap)
+    addResourceForEntity(webPgcWriteContext, resourceContext, router)
+
+    // projection consumers
+    val webPgcReadContext = WebPgcReadContext(vertx, example1Json, readDb)
+    addProjector(webPgcReadContext, "customers-summary", CustomerProjector())
+
     // read model routes
     router.get("/customers/:id").handler(::customersQueryHandler)
 
-    // http server
+    // vertx http
     server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
     server.requestHandler(router).listen(listenHandler(promise))
   }

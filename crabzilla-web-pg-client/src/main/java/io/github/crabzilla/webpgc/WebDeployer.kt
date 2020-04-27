@@ -4,11 +4,13 @@ import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandMetadata
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.internal.EntityComponent
+import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
-import org.slf4j.LoggerFactory
+import io.vertx.ext.web.RoutingContext
 import java.util.UUID
+import org.slf4j.LoggerFactory
 
 class WebDeployer<E : Entity>(
   private val resourceName: String,
@@ -129,5 +131,18 @@ class WebDeployer<E : Entity>(
         }
       }
     }.failureHandler(errorHandler(UNIT_OF_WORK_ID_PARAMETER))
+  }
+
+  fun errorHandler(paramName: String): Handler<RoutingContext> {
+    return Handler {
+      log.error(it.failure().message, it.failure())
+      when (it.failure()) {
+        is NumberFormatException -> it.response().setStatusCode(400).end("path param $paramName must be a number")
+        else -> {
+          it.failure().printStackTrace()
+          it.response().setStatusCode(500).end("server error")
+        }
+      }
+    }
   }
 }
