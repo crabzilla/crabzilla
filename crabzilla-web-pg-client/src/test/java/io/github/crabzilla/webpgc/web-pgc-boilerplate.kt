@@ -2,10 +2,6 @@ package io.github.crabzilla.webpgc
 
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.EVENT_SERIALIZER
-import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -21,13 +17,23 @@ import io.vertx.core.http.HttpServer
 import io.vertx.core.json.JsonObject
 import io.vertx.core.json.jackson.DatabindCodec
 import io.vertx.core.logging.SLF4JLogDelegateFactory
-import io.vertx.ext.web.RoutingContext
-import kotlinx.serialization.builtins.list
-import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.ServerSocket
+import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("webpgc")
+private val log = LoggerFactory.getLogger("web-pgc-infra")
+
+fun findFreeHttpPort(): Int {
+  var httpPort = 0
+  try {
+    val socket = ServerSocket(0)
+    httpPort = socket.localPort
+    socket.close()
+  } catch (e: Exception) {
+    e.printStackTrace()
+  }
+  return httpPort
+}
 
 fun getConfig(vertx: Vertx, configFile: String): Future<JsonObject> {
   // slf4j setup
@@ -44,14 +50,10 @@ fun getConfig(vertx: Vertx, configFile: String): Future<JsonObject> {
     if (gotConfig.succeeded()) {
       val config = gotConfig.result()
       log.info("*** config:\n${config.encodePrettily()}")
-      val readHttpPort = config.getInteger("READ_HTTP_PORT")
-      val nextFreeReadHttpPort = nextFreePort(readHttpPort, readHttpPort + 20)
-      config.put("READ_HTTP_PORT", nextFreeReadHttpPort)
-      log.info("*** next free READ_HTTP_PORT: $nextFreeReadHttpPort")
-      val writeHttpPort = config.getInteger("WRITE_HTTP_PORT")
-      val nextFreeWriteHttpPort = nextFreePort(writeHttpPort, writeHttpPort + 20)
-      config.put("WRITE_HTTP_PORT", nextFreeWriteHttpPort)
-      log.info("*** next free WRITE_HTTP_PORT: $nextFreeWriteHttpPort")
+      val httpPort = config.getInteger("HTTP_PORT")
+      val nextFreeHttpPort = nextFreePort(httpPort, httpPort + 20)
+      config.put("WRITE_HTTP_PORT", nextFreeHttpPort)
+      log.info("*** next free HTTP_PORT: $nextFreeHttpPort")
       promise.complete(config)
     } else {
       promise.fail(gotConfig.cause())
@@ -155,26 +157,5 @@ private fun isLocalPortFree(port: Int): Boolean {
     true
   } catch (e: IOException) {
     false
-  }
-}
-
-fun toUnitOfWorkEvents(jsonObject: JsonObject, json: kotlinx.serialization.json.Json): UnitOfWorkEvents {
-  val uowId = jsonObject.getLong("uowId")
-  val entityId = jsonObject.getInteger(UnitOfWork.JsonMetadata.ENTITY_ID)
-  val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list,
-    jsonObject.getJsonArray(UnitOfWork.JsonMetadata.EVENTS).encode())
-  return UnitOfWorkEvents(uowId, entityId, events)
-}
-
-fun errorHandler(paramName: String): Handler<RoutingContext> {
-  return Handler {
-    WebCommandVerticle.log.error(it.failure().message, it.failure())
-    when (it.failure()) {
-      is NumberFormatException -> it.response().setStatusCode(400).end("path param $paramName must be a number")
-      else -> {
-        it.failure().printStackTrace()
-        it.response().setStatusCode(500).end("server error")
-      }
-    }
   }
 }

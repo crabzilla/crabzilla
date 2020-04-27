@@ -1,12 +1,12 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.CommandMetadata
-import io.github.crabzilla.example1.customer.CreateCustomer
-import io.github.crabzilla.example1.customer.Customer
-import io.github.crabzilla.example1.customer.UnknownCommand
 import io.github.crabzilla.internal.EntityComponent
+import io.github.crabzilla.pgc.example1.CreateCustomer
+import io.github.crabzilla.pgc.example1.Customer
 import io.github.crabzilla.pgc.example1.Example1Fixture.createActivateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
+import io.github.crabzilla.pgc.example1.UnknownCommand
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions

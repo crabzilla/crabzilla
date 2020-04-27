@@ -2,17 +2,17 @@ package io.github.crabzilla
 
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.StateTransitionsTracker
-import io.github.crabzilla.example1.customer.Customer
-import io.github.crabzilla.example1.customer.CustomerActivated
-import io.github.crabzilla.example1.customer.CustomerCommandAware
-import io.github.crabzilla.example1.customer.CustomerCreated
-import io.github.crabzilla.example1.customer.CustomerId
+import io.github.crabzilla.example1.Customer
+import io.github.crabzilla.example1.CustomerActivated
+import io.github.crabzilla.example1.CustomerCommandAware
+import io.github.crabzilla.example1.CustomerCreated
+import io.github.crabzilla.example1.CustomerId
+import java.util.Arrays.asList
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.util.Arrays.asList
 
 @DisplayName("A StateTransitionsTracker")
 internal class StateTransitionsTrackerTest {
