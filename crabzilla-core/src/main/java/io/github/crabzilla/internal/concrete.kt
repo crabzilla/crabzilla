@@ -11,8 +11,8 @@ import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.Version
 import io.vertx.core.Future
 import io.vertx.core.Promise
-import java.util.concurrent.atomic.AtomicReference
 import org.slf4j.LoggerFactory
+import java.util.concurrent.atomic.AtomicReference
 
 data class RangeOfEvents(val afterVersion: Version, val untilVersion: Version, val events: List<DomainEvent>)
 
@@ -66,13 +66,13 @@ class CommandController<E : Entity>(
         if (log.isDebugEnabled) log.debug("now will store snapshot $newSnapshot")
         snapshotRepo.upsert(metadata.entityId, newSnapshot)
       }
-      .compose({
+      .compose {
         // set result
         val pair: Pair<UnitOfWork, Long> = Pair(uowValue.get(), uowIdValue.get())
         if (log.isDebugEnabled) log.debug("command handling success: $pair")
         promise.complete(pair)
-      }, promise.future())
-
+        promise.future()
+      }
     return promise.future()
   }
 
