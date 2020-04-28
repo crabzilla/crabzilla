@@ -1,6 +1,5 @@
 package io.github.crabzilla.core
 
-import io.github.crabzilla.internal.CommandContext
 import io.vertx.core.Future
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable

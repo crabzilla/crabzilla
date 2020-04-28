@@ -1,6 +1,7 @@
 package io.github.crabzilla.internal
 
 import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandContext
 import io.github.crabzilla.core.CommandMetadata
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.Entity
@@ -12,8 +13,6 @@ import io.vertx.core.Future
 import io.vertx.core.Promise
 import java.util.concurrent.atomic.AtomicReference
 import org.slf4j.LoggerFactory
-
-typealias CommandContext<E> = Triple<CommandMetadata, Command, Snapshot<E>>
 
 data class RangeOfEvents(val afterVersion: Version, val untilVersion: Version, val events: List<DomainEvent>)
 
@@ -70,7 +69,7 @@ class CommandController<E : Entity>(
       .compose({
         // set result
         val pair: Pair<UnitOfWork, Long> = Pair(uowValue.get(), uowIdValue.get())
-        if (log.isTraceEnabled) log.trace("command handling success: $pair")
+        if (log.isDebugEnabled) log.debug("command handling success: $pair")
         promise.complete(pair)
       }, promise.future())
 

@@ -5,7 +5,7 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.core.EntityCommandAware
 import io.github.crabzilla.core.StateTransitionsTracker
-import io.github.crabzilla.internal.CommandContext
+import io.github.crabzilla.core.CommandContext
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import kotlinx.serialization.Serializable

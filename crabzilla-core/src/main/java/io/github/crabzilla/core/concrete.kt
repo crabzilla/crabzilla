@@ -9,6 +9,8 @@ val EVENT_SERIALIZER = PolymorphicSerializer(DomainEvent::class)
 
 typealias Version = Int
 
+typealias CommandContext<E> = Triple<CommandMetadata, Command, Snapshot<E>>
+
 data class CommandMetadata(
   val entityId: Int,
   val entityName: String,
