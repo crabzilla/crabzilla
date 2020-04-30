@@ -17,9 +17,9 @@ import io.vertx.core.http.HttpServer
 import io.vertx.core.json.JsonObject
 import io.vertx.core.json.jackson.DatabindCodec
 import io.vertx.core.logging.SLF4JLogDelegateFactory
+import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.ServerSocket
-import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("web-pgc-infra")
 

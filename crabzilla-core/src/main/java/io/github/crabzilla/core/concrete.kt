@@ -1,13 +1,15 @@
 package io.github.crabzilla.core
 
-import java.util.UUID
 import kotlinx.serialization.PolymorphicSerializer
+import java.util.UUID
 
 val ENTITY_SERIALIZER = PolymorphicSerializer(Entity::class)
 val COMMAND_SERIALIZER = PolymorphicSerializer(Command::class)
 val EVENT_SERIALIZER = PolymorphicSerializer(DomainEvent::class)
 
 typealias Version = Int
+
+typealias CommandContext<E> = Triple<CommandMetadata, Command, Snapshot<E>>
 
 data class CommandMetadata(
   val entityId: Int,
@@ -21,9 +23,9 @@ data class Snapshot<E : Entity>(
   val version: Version
 )
 
-class StateTransitionsTracker<A : Entity>(originalSnapshot: Snapshot<A>, private val stateFn: (DomainEvent, A) -> A) {
+class StateTransitionsTracker<A : Entity>(originalState: A, private val stateFn: (DomainEvent, A) -> A) {
   val appliedEvents = mutableListOf<DomainEvent>()
-  var currentState: A = originalSnapshot.state
+  var currentState: A = originalState
 
   fun applyEvents(events: List<DomainEvent>): StateTransitionsTracker<A> {
     events.forEach { domainEvent ->

@@ -1,30 +1,27 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.StateTransitionsTracker
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCommandAware
 import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerId
-import java.util.Arrays.asList
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.util.Arrays.asList
 
 @DisplayName("A StateTransitionsTracker")
 internal class StateTransitionsTrackerTest {
 
   lateinit var tracker: StateTransitionsTracker<Customer>
-
   val customer = Customer()
-  val originalSnapshot = Snapshot(customer, 0)
 
   @Test
   fun can_be_instantiated() {
-    StateTransitionsTracker(originalSnapshot, CustomerCommandAware().applyEvent)
+    StateTransitionsTracker(customer, CustomerCommandAware().applyEvent)
   }
 
   // TODO test
@@ -40,7 +37,7 @@ internal class StateTransitionsTrackerTest {
 
     @BeforeEach
     fun instantiate() {
-      tracker = StateTransitionsTracker(originalSnapshot, CustomerCommandAware().applyEvent)
+      tracker = StateTransitionsTracker(customer, CustomerCommandAware().applyEvent)
     }
 
     @Test
@@ -50,7 +47,7 @@ internal class StateTransitionsTrackerTest {
 
     @Test
     fun has_empty_state() {
-      assertThat(tracker.currentState).isEqualTo(originalSnapshot.state)
+      assertThat(tracker.currentState).isEqualTo(customer)
     }
 
     @Nested
@@ -63,7 +60,7 @@ internal class StateTransitionsTrackerTest {
 
       @BeforeEach
       fun apply_create_event() {
-        tracker.applyEvents { (customerId, name, isActive, reason) -> listOf(customerCreated) }
+        tracker.applyEvents { customer -> listOf(customerCreated) }
       }
 
       @Test
@@ -87,7 +84,7 @@ internal class StateTransitionsTrackerTest {
 
         @BeforeEach
         fun apply_activate_event() {
-          tracker.applyEvents { (customerId, name, isActive, reason) -> listOf(customerActivated) }
+          tracker.applyEvents { customer -> listOf(customerActivated) }
         }
 
         @Test
@@ -119,9 +116,9 @@ internal class StateTransitionsTrackerTest {
     @BeforeEach
     fun instantiate() {
       // given
-      tracker = StateTransitionsTracker(originalSnapshot, CustomerCommandAware().applyEvent)
+      tracker = StateTransitionsTracker(customer, CustomerCommandAware().applyEvent)
       // when
-      tracker.applyEvents { (customerId, name, isActive, reason) -> asList(customerCreated, customerActivated) }
+      tracker.applyEvents { customer -> asList(customerCreated, customerActivated) }
     }
 
     // then
