@@ -22,7 +22,7 @@ class CustomerAcceptanceTest {
       val reason = "because I need it"
       val command1 = ActivateCustomer(reason)
       val events2 = aware.handleCmd(customerId, state1, command1).result()
-      val state2 = events1.plus(events2).fold(state1) { state, event -> aware.applyEvent.invoke(event, state) }
+      val state2 = events2.fold(state1) { state, event -> aware.applyEvent.invoke(event, state) }
       @Test
       fun `Then a CustomerActivate event is generated`() {
         assertThat(events2).isEqualTo(listOf(CustomerActivated(reason)))
