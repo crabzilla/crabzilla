@@ -59,8 +59,7 @@ class CustomerCommandAware : EntityCommandAware<Customer> {
 
   override val initialState: Customer = Customer()
 
-  override val applyEvent: (event: DomainEvent, state: Customer) -> Customer = {
-    event: DomainEvent, customer: Customer ->
+  override val applyEvent: (DomainEvent, Customer) -> Customer = { event: DomainEvent, customer: Customer ->
     when (event) {
       is CustomerCreated -> customer.copy(customerId = event.customerId, name = event.name, isActive = false)
       is CustomerActivated -> customer.copy(isActive = true, reason = event.reason)
@@ -69,7 +68,7 @@ class CustomerCommandAware : EntityCommandAware<Customer> {
     }
   }
 
-  override val validateCmd: (command: Command) -> List<String> = { command ->
+  override val validateCmd: (Command) -> List<String> = { command ->
     when (command) {
       is CreateCustomer ->
         if (command.name == "a bad name") listOf("Invalid name: ${command.name}") else listOf()

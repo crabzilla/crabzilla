@@ -1,7 +1,7 @@
 package io.github.crabzilla.core
 
-import java.util.UUID
 import kotlinx.serialization.PolymorphicSerializer
+import java.util.UUID
 
 val ENTITY_SERIALIZER = PolymorphicSerializer(Entity::class)
 val COMMAND_SERIALIZER = PolymorphicSerializer(Command::class)
