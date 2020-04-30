@@ -14,7 +14,7 @@ class CustomerAcceptanceTest {
     val events1 = listOf(CustomerCreated(customerId, name))
     val state1 = events1.fold(state0) { state, event -> aware.applyEvent.invoke(event, state) }
     @Test
-    fun `Then expect a Customer state is ok`() {
+    fun `Then Customer state is ok`() {
       assertThat(state1).isEqualTo(Customer(customerId = customerId, name = name))
     }
     @Nested
@@ -28,7 +28,7 @@ class CustomerAcceptanceTest {
         assertThat(events2).isEqualTo(listOf(CustomerActivated(reason)))
       }
       @Test
-      fun `Then expect a Customer state is ok`() {
+      fun `Then Customer state is ok`() {
         assertThat(state2).isEqualTo(Customer(customerId, name, true, reason))
       }
     }
