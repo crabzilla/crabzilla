@@ -8,25 +8,28 @@ class CustomerAcceptanceTests {
   val state0 = Customer()
   val aware = CustomerCommandAware()
   @Nested
-  inner class `Given events` {
-    val events1 = listOf(CustomerCreated(1, "Bob"))
+  inner class `Given a CustomerCreate event` {
+    val customerId = 1
+    val name = "Bob"
+    val events1 = listOf(CustomerCreated(customerId, name))
     val state1 = events1.fold(state0) { state, event -> aware.applyEvent.invoke(event, state) }
+    @Test
+    fun `Then expect a Customer state is ok`() {
+      assertThat(state1).isEqualTo(Customer(customerId = customerId, name = name))
+    }
     @Nested
-    inner class `When activating it` {
-      val command = ActivateCustomer("because I need it")
-      val events2 = aware.handleCmd(1, state1, command).result()
+    inner class `When handling an ActivateCustomer command` {
+      val reason = "because I need it"
+      val command1 = ActivateCustomer(reason)
+      val events2 = aware.handleCmd(customerId, state1, command1).result()
       val state2 = events1.plus(events2).fold(state1) { state, event -> aware.applyEvent.invoke(event, state) }
       @Test
-      fun `Then id = 1`() {
-        assertThat(state2.customerId).isEqualTo(1)
+      fun `Then a CustomerActivate event is generated`() {
+        assertThat(events2).isEqualTo(listOf(CustomerActivated(reason)))
       }
       @Test
-      fun `Then name = Bob`() {
-        assertThat(state2.name).isEqualTo("Bob")
-      }
-      @Test
-      fun `Then isActive is true`() {
-        assertThat(state2.isActive).isTrue()
+      fun `Then expect a Customer state is ok`() {
+        assertThat(state2).isEqualTo(Customer(customerId, name, true, reason))
       }
     }
   }
