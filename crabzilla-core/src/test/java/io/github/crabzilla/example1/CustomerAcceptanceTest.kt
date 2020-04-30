@@ -4,7 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
-class CustomerAcceptanceTests {
+class CustomerAcceptanceTest {
   val state0 = Customer()
   val aware = CustomerCommandAware()
   @Nested
