@@ -34,6 +34,7 @@ class PgcEntityComponentIT {
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
+    vertx = Vertx.vertx()
     val envOptions = ConfigStoreOptions()
       .setType("file")
       .setFormat("properties")
