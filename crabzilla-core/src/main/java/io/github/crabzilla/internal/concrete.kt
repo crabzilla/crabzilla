@@ -11,8 +11,8 @@ import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.Version
 import io.vertx.core.Future
 import io.vertx.core.Promise
-import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicReference
+import org.slf4j.LoggerFactory
 
 data class RangeOfEvents(val afterVersion: Version, val untilVersion: Version, val events: List<DomainEvent>)
 
@@ -45,7 +45,7 @@ class CommandController<E : Entity>(
         val cachedSnapshot = snapshot ?: Snapshot(commandAware.initialState, 0)
         snapshotValue.set(cachedSnapshot)
         val request = Triple(metadata, command, cachedSnapshot)
-        val events = commandAware.handleCmd(request)
+        val events = commandAware.handleCmd(metadata.entityId, cachedSnapshot.state, command)
         val uow = toUnitOfWork(request, events)
         uow
       }

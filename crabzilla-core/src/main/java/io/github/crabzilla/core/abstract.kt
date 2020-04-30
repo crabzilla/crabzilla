@@ -20,5 +20,5 @@ interface EntityCommandAware<E : Entity> {
   val initialState: E
   val applyEvent: (event: DomainEvent, state: E) -> E
   val validateCmd: (command: Command) -> List<String>
-  val handleCmd: (context: CommandContext<E>) -> Future<List<DomainEvent>>
+  val handleCmd: (id: Int, state: E, context: Command) -> Future<List<DomainEvent>>
 }

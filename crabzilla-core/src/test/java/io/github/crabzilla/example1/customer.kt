@@ -1,12 +1,12 @@
 package io.github.crabzilla.example1
 
 import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.CommandContext
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.core.EntityCommandAware
 import io.github.crabzilla.core.StateTransitionsTracker
 import io.vertx.core.Future
+import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
@@ -14,35 +14,17 @@ import kotlinx.serialization.modules.SerializersModule
 typealias CustomerId = Int
 
 // events
-
-@Serializable
-data class CustomerCreated(val customerId: CustomerId, val name: String) : DomainEvent()
-
-@Serializable
-data class CustomerActivated(val reason: String) : DomainEvent()
-
-@Serializable
-data class CustomerDeactivated(val reason: String) : DomainEvent()
+@Serializable data class CustomerCreated(val customerId: CustomerId, val name: String) : DomainEvent()
+@Serializable data class CustomerActivated(val reason: String) : DomainEvent()
+@Serializable data class CustomerDeactivated(val reason: String) : DomainEvent()
 
 // commands
-
-@Serializable
-data class CreateCustomer(val name: String) : Command()
-
-@Serializable
-data class ActivateCustomer(val reason: String) : Command()
-
-@Serializable
-data class DeactivateCustomer(val reason: String) : Command()
-
-@Serializable
-data class CreateActivateCustomer(val name: String, val reason: String) : Command()
-
-@Serializable
-data class UnknownCommand(val x: Int) : Command()
+@Serializable data class CreateCustomer(val name: String) : Command()
+@Serializable data class ActivateCustomer(val reason: String) : Command()
+@Serializable data class DeactivateCustomer(val reason: String) : Command()
+@Serializable data class CreateActivateCustomer(val name: String, val reason: String) : Command()
 
 // aggregate root
-
 @Serializable
 data class Customer(
   val customerId: CustomerId? = null,
@@ -53,7 +35,7 @@ data class Customer(
 
   fun create(id: CustomerId, name: String): Future<List<DomainEvent>> {
     require(this.customerId == null) { "customer already created" }
-    return Future.succeededFuture(listOf(CustomerCreated(id, name)))
+    return succeededFuture(listOf(CustomerCreated(id, name)))
   }
 
   fun activate(reason: String): List<DomainEvent> {
@@ -63,7 +45,7 @@ data class Customer(
 
   fun deactivate(reason: String): Future<List<DomainEvent>> {
     customerMustExist()
-    return Future.succeededFuture(listOf(CustomerDeactivated(reason)))
+    return succeededFuture(listOf(CustomerDeactivated(reason)))
   }
 
   private fun customerMustExist() {
@@ -98,28 +80,25 @@ class CustomerCommandAware : EntityCommandAware<Customer> {
     }
   }
 
-  override val handleCmd: (CommandContext<Customer>) -> Future<List<DomainEvent>> = { ctx ->
-    val (cmdMetadata, command, snapshot) = ctx
-    val customer = snapshot.state
+  override val handleCmd: (Int, Customer, Command) -> Future<List<DomainEvent>> = { id, customer, command ->
     when (command) {
-      is CreateCustomer -> customer.create(cmdMetadata.entityId, command.name)
-      is ActivateCustomer -> Future.succeededFuture(customer.activate(command.reason))
+      is CreateCustomer -> customer.create(id, command.name)
+      is ActivateCustomer -> succeededFuture(customer.activate(command.reason))
       is DeactivateCustomer -> customer.deactivate(command.reason)
-      is CreateActivateCustomer -> createActivate(ctx)
-      else -> Future.failedFuture("${cmdMetadata.commandName} is a unknown command")
+      is CreateActivateCustomer -> createActivate(id, customer, command)
+      else -> Future.failedFuture("${command::class.java} is a unknown command")
     }
   }
 
-  private fun createActivate(ctx: CommandContext<Customer>): Future<List<DomainEvent>> {
+  private fun createActivate(id: Int, state: Customer, command: Command): Future<List<DomainEvent>> {
     val promise = Promise.promise<List<DomainEvent>>()
-    val (cmdMetadata, command, snapshot) = ctx
-    val tracker = StateTransitionsTracker(snapshot, applyEvent)
+    val tracker = StateTransitionsTracker(state, applyEvent)
     val cmd = command as CreateActivateCustomer
     tracker.currentState
-      .create(cmdMetadata.entityId, cmd.name)
+      .create(id, cmd.name)
       .compose { eventsList ->
         tracker.applyEvents(eventsList)
-        Future.succeededFuture(tracker.currentState.activate(cmd.reason))
+        succeededFuture(tracker.currentState.activate(cmd.reason))
       }
       .compose { eventsList ->
         tracker.applyEvents(eventsList)
@@ -141,7 +120,6 @@ val customerModule = SerializersModule {
     ActivateCustomer::class with ActivateCustomer.serializer()
     DeactivateCustomer::class with DeactivateCustomer.serializer()
     CreateActivateCustomer::class with CreateActivateCustomer.serializer()
-    UnknownCommand::class with UnknownCommand.serializer()
   }
   polymorphic(DomainEvent::class) {
     CustomerCreated::class with CustomerCreated.serializer()

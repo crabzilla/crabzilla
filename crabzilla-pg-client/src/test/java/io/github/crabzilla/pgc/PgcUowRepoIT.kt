@@ -90,8 +90,7 @@ class PgcUowRepoIT {
   }
 
   @Test
-  @DisplayName("can queries an unit of work row by it's command id")
-  fun a4(tc: VertxTestContext) {
+  fun `can queries an unit of work row by it's command id`(tc: VertxTestContext) {
     writeDb.preparedQuery(SQL_APPEND_UOW)
       .execute(tuple1) { event1 ->
       if (event1.failed()) {

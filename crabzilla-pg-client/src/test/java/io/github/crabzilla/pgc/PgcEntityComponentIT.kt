@@ -6,7 +6,6 @@ import io.github.crabzilla.pgc.example1.CreateCustomer
 import io.github.crabzilla.pgc.example1.Customer
 import io.github.crabzilla.pgc.example1.Example1Fixture.createActivateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerPgcComponent
-import io.github.crabzilla.pgc.example1.UnknownCommand
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -96,19 +95,6 @@ class PgcEntityComponentIT {
     customerComponent.handleCommand(commandMetadata, command).onComplete { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
       tc.verify { assertThat(event.cause().message).isEqualTo("[Invalid name: a bad name]") }
-      tc.completeNow()
-    }
-  }
-
-  @Test
-  @DisplayName("given an execution error it will be HANDLING_ERROR")
-  fun a3(tc: VertxTestContext) {
-    val customerId = 1
-    val commandMetadata = CommandMetadata(customerId, "customer", "unknown")
-    val command = UnknownCommand(customerId)
-    customerComponent.handleCommand(commandMetadata, command).onComplete { event ->
-      tc.verify { assertThat(event.succeeded()).isFalse() }
-      tc.verify { assertThat(event.cause().message).isEqualTo("[invalid command UnknownCommand]") }
       tc.completeNow()
     }
   }

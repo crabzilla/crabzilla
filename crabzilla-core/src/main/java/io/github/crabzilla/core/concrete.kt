@@ -23,9 +23,9 @@ data class Snapshot<E : Entity>(
   val version: Version
 )
 
-class StateTransitionsTracker<A : Entity>(originalSnapshot: Snapshot<A>, private val stateFn: (DomainEvent, A) -> A) {
+class StateTransitionsTracker<A : Entity>(originalState: A, private val stateFn: (DomainEvent, A) -> A) {
   val appliedEvents = mutableListOf<DomainEvent>()
-  var currentState: A = originalSnapshot.state
+  var currentState: A = originalState
 
   fun applyEvents(events: List<DomainEvent>): StateTransitionsTracker<A> {
     events.forEach { domainEvent ->
