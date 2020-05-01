@@ -9,8 +9,8 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
-import org.slf4j.LoggerFactory
 import java.util.UUID
+import org.slf4j.LoggerFactory
 
 class WebDeployer<E : Entity>(
   private val resourceName: String,

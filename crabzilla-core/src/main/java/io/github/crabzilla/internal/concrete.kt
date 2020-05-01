@@ -11,8 +11,8 @@ import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.Version
 import io.vertx.core.Future
 import io.vertx.core.Promise
-import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicReference
+import org.slf4j.LoggerFactory
 
 data class RangeOfEvents(val afterVersion: Version, val untilVersion: Version, val events: List<DomainEvent>)
 
@@ -61,7 +61,8 @@ class CommandController<E : Entity>(
         uowIdValue.set(uowId)
         // compute new snapshot
         if (log.isDebugEnabled) log.debug("computing new snapshot")
-        val newInstance = uowValue.get().events.fold(snapshotValue.get().state) { state, event -> commandAware.applyEvent.invoke(event, state) }
+        val newInstance = uowValue.get().events
+          .fold(snapshotValue.get().state) { state, event -> commandAware.applyEvent.invoke(event, state) }
         val newSnapshot = Snapshot(newInstance, uowValue.get().version)
         if (log.isDebugEnabled) log.debug("now will store snapshot $newSnapshot")
         snapshotRepo.upsert(metadata.entityId, newSnapshot)

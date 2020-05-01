@@ -5,8 +5,8 @@ import io.github.crabzilla.internal.EntityComponent
 import io.github.crabzilla.pgc.PgcEntityComponent
 import io.vertx.core.Vertx
 import io.vertx.pgclient.PgPool
-import kotlinx.serialization.json.Json
 import java.util.UUID
+import kotlinx.serialization.json.Json
 
 object Example1Fixture {
 
