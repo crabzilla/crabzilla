@@ -60,79 +60,77 @@ class PgcSnapshotRepo<E : Entity>(
       if (!res.succeeded()) {
         promise.fail(res.cause())
         return@getConnection
-      } else {
-        // Transaction must use a connection
-        val conn = res.result()
-        // TODO how to specify transaction isolation level?
-        // Begin the transaction
-        val tx: Transaction = conn.begin().abortHandler {
-            log.error("Transaction aborted")
-            promise.fail("Transaction aborted")
-            return@abortHandler
-        }
-        // get current snapshot
-        conn.preparedQuery(selectSnapshot())
-          .execute(Tuple.of(entityId)) { event1 ->
+      }
+      // Transaction must use a connection
+      val conn = res.result()
+      // TODO how to specify transaction isolation level?
+      // Begin the transaction
+      val tx: Transaction = conn.begin().abortHandler {
+        log.error("Transaction aborted")
+        promise.fail("Transaction aborted")
+        return@abortHandler
+      }
+      // get current snapshot
+      conn.preparedQuery(selectSnapshot())
+        .execute(Tuple.of(entityId)) { event1 ->
           if (event1.failed()) {
             conn.close()
             promise.fail(event1.cause())
             return@execute
+          }
+          val pgRow = event1.result()
+          val cachedInstance: E
+          val cachedVersion: Int
+          if (pgRow == null || pgRow.size() == 0) {
+            cachedInstance = entityFn.initialState
+            cachedVersion = 0
           } else {
-            val pgRow = event1.result()
-            val cachedInstance: E
-            val cachedVersion: Int
-            if (pgRow == null || pgRow.size() == 0) {
-              cachedInstance = entityFn.initialState
-              cachedVersion = 0
-            } else {
-              val stateAsJson: JsonObject = pgRow.first().get(JsonObject::class.java, 1)
-              cachedInstance = json.parse(ENTITY_SERIALIZER, stateAsJson.encode()) as E
-              cachedVersion = pgRow.first().getInteger("version")
+            val stateAsJson: JsonObject = pgRow.first().get(JsonObject::class.java, 1)
+            cachedInstance = json.parse(ENTITY_SERIALIZER, stateAsJson.encode()) as E
+            cachedVersion = pgRow.first().getInteger("version")
+          }
+          // get committed events after snapshot version
+          conn.prepare(SELECT_EVENTS_VERSION_AFTER_VERSION) { event2 ->
+            if (!event2.succeeded()) {
+              conn.close()
+              promise.fail(event2.cause())
+              return@prepare
             }
-            // get committed events after snapshot version
-            conn.prepare(SELECT_EVENTS_VERSION_AFTER_VERSION) { event2 ->
-              if (!event2.succeeded()) {
+            var currentInstance = cachedInstance
+            var currentVersion = cachedVersion
+            val pq = event2.result()
+            // Fetch N rows at a time
+            val stream = pq.createStream(ROWS_PER_TIME, Tuple.of(entityId, entityName, cachedVersion))
+            stream.exceptionHandler { err -> log.error("Retrieve: ${err.message}", err)
+              tx.rollback(); conn.close(); promise.fail(err)
+            }
+            stream.endHandler {
+              log.debug("End of stream")
+              // Attempt to commit the transaction
+              tx.commit { ar ->
+                // Return the connection to the pool
                 conn.close()
-                promise.fail(event2.cause())
-                return@prepare
-              } else {
-                var currentInstance = cachedInstance
-                var currentVersion = cachedVersion
-                val pq = event2.result()
-                // Fetch N rows at a time
-                val stream = pq.createStream(ROWS_PER_TIME, Tuple.of(entityId, entityName, cachedVersion))
-                stream.exceptionHandler { err -> log.error("Retrieve: ${err.message}", err)
-                  tx.rollback(); conn.close(); promise.fail(err)
-                }
-                stream.endHandler {
-                  log.debug("End of stream")
-                  // Attempt to commit the transaction
-                  tx.commit { ar ->
-                    // Return the connection to the pool
-                    conn.close()
-                    // But transaction abortion fails it
-                    if (ar.failed()) {
-                      log.error("endHandler.closeConnection")
-                      promise.fail(ar.cause())
-                    } else {
-                      log.debug("success: endHandler.closeConnection")
-                      val result = Snapshot(currentInstance, currentVersion)
-                      promise.complete(result)
-                    }
-                  }
-                }
-                stream.handler { row ->
-                  currentVersion = row.getInteger(1)
-                  val eventsJsonString: String = row.get(String::class.java, 0)
-                  val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsJsonString)
-                  currentInstance = events.fold(currentInstance) { state, event -> entityFn.applyEvent.invoke(event, state) }
-                  log.debug("Events: $events \n version: $currentVersion \n instance $currentInstance")
+                // But transaction abortion fails it
+                if (ar.failed()) {
+                  log.error("endHandler.closeConnection")
+                  promise.fail(ar.cause())
+                } else {
+                  log.debug("success: endHandler.closeConnection")
+                  val result = Snapshot(currentInstance, currentVersion)
+                  promise.complete(result)
                 }
               }
             }
+            stream.handler { row ->
+              currentVersion = row.getInteger(1)
+              val eventsJsonString: String = row.get(String::class.java, 0)
+              val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsJsonString)
+              currentInstance =
+                events.fold(currentInstance) { state, event -> entityFn.applyEvent.invoke(event, state) }
+              log.debug("Events: $events \n version: $currentVersion \n instance $currentInstance")
+            }
           }
         }
-      }
     }
     return promise.future()
   }

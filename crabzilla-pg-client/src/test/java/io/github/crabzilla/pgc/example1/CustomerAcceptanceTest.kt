@@ -1,4 +1,4 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.pgc.example1
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested

@@ -1,11 +1,11 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.pgc.web.example1
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Not an exhaustive test. Just as an example on how to test a domain.
+ * Not an exhaustive test. Just as an example on how to test a domain: given events, when command, then events/state
  */
 class CustomerAcceptanceTest {
   val state0 = Customer()

@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.jooq
 
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkEvents
@@ -9,6 +9,7 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.deactivated1
+import io.github.crabzilla.pgc.readModelPgPool
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -21,7 +22,9 @@ import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
 import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
+import org.jooq.Configuration
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -30,14 +33,16 @@ import org.slf4j.LoggerFactory
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PgcUowProjectorIT {
+@Disabled // TODO
+class PgcJooqUowProjectorIT {
 
   private lateinit var vertx: Vertx
   private lateinit var readDb: PgPool
-  private lateinit var uowProjector: PgcUowProjector
+  private lateinit var jooq: Configuration
+  private lateinit var jooqUowProjector: PgcJooqUowProjector
 
   companion object {
-    internal val log = LoggerFactory.getLogger(PgcUowProjectorIT::class.java)
+    internal val log = LoggerFactory.getLogger(PgcJooqUowProjectorIT::class.java)
   }
 
   @BeforeEach
@@ -59,7 +64,7 @@ class PgcUowProjectorIT {
       }
       val config = configFuture.result()
       readDb = readModelPgPool(vertx, config)
-      uowProjector = PgcUowProjector(readDb, "customer summary")
+      jooqUowProjector = PgcJooqUowProjector(jooq, readDb, "customer summary")
       readDb.query("DELETE FROM customer_summary").execute { deleted ->
         if (deleted.failed()) {
           log.error("delete ", deleted.cause())
@@ -75,7 +80,7 @@ class PgcUowProjectorIT {
   @DisplayName("can project 1 event")
   fun a1(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1, listOf(created1))
-    uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
+    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -98,7 +103,7 @@ class PgcUowProjectorIT {
   @DisplayName("can project 2 events: created and activated")
   fun a2(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1, listOf(created1, activated1))
-    uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
+    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -122,7 +127,7 @@ class PgcUowProjectorIT {
   fun a3(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1))
-    uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
+    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -147,7 +152,7 @@ class PgcUowProjectorIT {
   fun a4(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1, activated1))
-    uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
+    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -172,7 +177,7 @@ class PgcUowProjectorIT {
   fun a5(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1, activated1, deactivated1))
-    uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
+    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -197,7 +202,7 @@ class PgcUowProjectorIT {
   fun a6(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1, activated1, deactivated1, activated1))
-    uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
+    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -222,7 +227,7 @@ class PgcUowProjectorIT {
   fun a7(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1, activated1, deactivated1, activated1, deactivated1))
-    uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { result ->
+    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { result ->
       if (result.failed()) {
         tc.completeNow()
         return@onComplete
@@ -235,7 +240,7 @@ class PgcUowProjectorIT {
   @DisplayName("on any any SQL error it must rollback all events projections")
   fun a10(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", created1.customerId, UUID.randomUUID(), createCmd1, 1, listOf(created1))
-    uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), BadEventProjector()).onComplete { result ->
+    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), BadEventProjector()).onComplete { result ->
       if (result.succeeded()) {
         tc.failNow(result.cause())
         return@onComplete

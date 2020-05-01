@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.example1
+package io.github.crabzilla.pgc.web.example1
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.pgc.PgcEventProjector
