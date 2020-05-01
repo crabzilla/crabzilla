@@ -26,7 +26,12 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-web-pg-client</artifactId>
+      <artifactId>crabzilla-pg-client-jooq</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-pg-client-web</artifactId>
     </dependency>
 
   </dependencies>
