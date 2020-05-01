@@ -1,13 +1,15 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.jooq
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.internal.UnitOfWorkEvents
+import io.github.jklingsporn.vertx.jooq.classic.reactivepg.ReactiveClassicGenericQueryExecutor
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Promise
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
+import org.jooq.Configuration
 import org.slf4j.LoggerFactory.getLogger
 
 /*  TODO vertx-jooq implementation
@@ -23,10 +25,10 @@ import org.slf4j.LoggerFactory.getLogger
   );
 
  */
-class PgcUowProjector(private val pgPool: PgPool, val name: String) {
+class PgcJooqUowProjector(private val jooq: Configuration, private val pgPool: PgPool, val name: String) {
 
   companion object {
-    internal val log = getLogger(PgcUowProjector::class.java)
+    internal val log = getLogger(PgcJooqUowProjector::class.java)
     const val NUMBER_OF_FUTURES = 6 // same as CompositeFuture limit
     const val SQL_UPDATE_PROJECTIONS = """insert into projections (name, last_uow) values ($1, $2) on conflict (name)
       do update set last_uow = $2"""
@@ -36,6 +38,8 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
     if (uowEvents.events.size > NUMBER_OF_FUTURES) {
       return failedFuture("only $NUMBER_OF_FUTURES events can be projected per transaction")
     }
+    val vertxJooq = ReactiveClassicGenericQueryExecutor(jooq, pgPool) // TODO
+
     val promise = Promise.promise<Void>()
     pgPool.begin { event1 ->
       if (event1.failed()) {
@@ -125,6 +129,7 @@ interface PgcEventProjector {
 
   fun executePreparedQuery(tx: Transaction, query: String, tuple: Tuple): Future<Void> {
     val promise = Promise.promise<Void>()
+
     tx.preparedQuery(query)
       .execute(tuple) { event ->
         if (event.failed()) {
