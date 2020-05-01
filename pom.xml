@@ -74,7 +74,7 @@
   <modules>
     <module>crabzilla-core</module>
     <module>crabzilla-pg-client</module>
-    <module>crabzilla-pg-client-jooq</module>
+<!--    <module>crabzilla-pg-client-jooq</module>-->
     <module>crabzilla-pg-client-web</module>
     <module>coverage-report</module>
   </modules>
