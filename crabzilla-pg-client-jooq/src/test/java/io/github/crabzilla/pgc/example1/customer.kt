@@ -130,26 +130,3 @@ val customerModule = SerializersModule {
   }
 }
 
-// projections functions
-
-val projectorFn: (DomainEvent, Int) -> (DSLContext) -> Query = {
-  event: DomainEvent, targetId: Int ->
-  when (event) {
-    is CustomerCreated -> { dsl ->
-      dsl.insertInto(CUSTOMER_SUMMARY)
-        .columns(CUSTOMER_SUMMARY.ID, CUSTOMER_SUMMARY.NAME, CUSTOMER_SUMMARY.IS_ACTIVE)
-        .values(targetId, event.name, false)
-    }
-    is CustomerActivated -> { dsl ->
-      dsl.update(CUSTOMER_SUMMARY)
-        .set(CUSTOMER_SUMMARY.IS_ACTIVE, true)
-        .where(CUSTOMER_SUMMARY.ID.eq(targetId))
-    }
-    is CustomerDeactivated -> { dsl ->
-      dsl.update(CUSTOMER_SUMMARY)
-        .set(CUSTOMER_SUMMARY.IS_ACTIVE, false)
-        .where(CUSTOMER_SUMMARY.ID.eq(targetId))
-    }
-    else -> { _ -> throw IllegalArgumentException("") } // TODO consider Either<Query, Nothing>
-  }
-}
