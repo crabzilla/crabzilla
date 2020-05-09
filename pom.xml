@@ -74,7 +74,7 @@
   <modules>
     <module>crabzilla-core</module>
     <module>crabzilla-pg-client</module>
-<!--    <module>crabzilla-pg-client-jooq</module>-->
+    <module>crabzilla-pg-client-jooq</module>
     <module>crabzilla-pg-client-web</module>
     <module>coverage-report</module>
   </modules>
@@ -375,7 +375,7 @@
         <version>${maven-surefire-plugin.version}</version>
         <configuration>
           <!-- Sets the VM argument line used when unit tests are run. -->
-          <argLine>${surefireArgLine}</argLine>
+          <!--  <argLine>${surefireArgLine}</argLine>-->
           <!-- Skips unit tests if the value of skip.unit.tests property is true -->
           <skipTests>${skipTests}</skipTests>
           <!-- Excludes integration tests when unit tests are run. -->
@@ -398,18 +398,6 @@
                         -->
           </properties>
         </configuration>
-        <!--<dependencies>-->
-        <!--<dependency>-->
-        <!--<groupId>org.junit.platform</groupId>-->
-        <!--<artifactId>junit-platform-surefire-provider</artifactId>-->
-        <!--<version>${junit.platform.version}</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-        <!--<groupId>org.junit.jupiter</groupId>-->
-        <!--<artifactId>junit-jupiter-engine</artifactId>-->
-        <!--<version>${junit.jupiter.version}</version>-->
-        <!--</dependency>-->
-        <!--</dependencies>-->
       </plugin>
 
       <plugin>
@@ -429,7 +417,7 @@
             </goals>
             <configuration>
               <!-- Sets the VM argument line used when integration tests are run. -->
-              <argLine>${failsafeArgLine}</argLine>
+              <!--  <argLine>${failsafeArgLine}</argLine>-->
               <!--
                                 Skips integration tests if the value of skip.integration.tests property
                                 is true
@@ -438,13 +426,6 @@
             </configuration>
           </execution>
         </executions>
-        <!--<dependencies>-->
-        <!--<dependency>-->
-        <!--<groupId>org.junit.platform</groupId>-->
-        <!--<artifactId>junit-platform-surefire-provider</artifactId>-->
-        <!--<version>${junit.platform.version}</version>-->
-        <!--</dependency>-->
-        <!--</dependencies>-->
       </plugin>
 
       <plugin>

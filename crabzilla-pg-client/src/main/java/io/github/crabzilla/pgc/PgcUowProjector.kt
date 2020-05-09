@@ -10,18 +10,8 @@ import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory.getLogger
 
-/*  TODO vertx-jooq implementation
-
- ReactiveClassicGenericQueryExecutor nonTransactionalQueryExecutor...;
-  Future<QueryResult> resultOfTransaction = nonTransactionalQueryExecutor.transaction(transactionalQueryExecutor ->{
-
-    //make all calls on the provided QueryExecutor that runs all code in a transaction
-    return transactionalQueryExecutor.execute(dslContext -> dslContext.insertInto(Tables.XYZ)...)
-            .compose(i -> transactionalQueryExecutor.query(dslContext ->
-                              dslContext.selectFrom(Tables.XYZ).where(Tables.XYZ.SOME_VALUE.eq("FOO")));
-    }
-  );
-
+/**
+ * This implementation is reactive but also has a limitation: it can project only UnitOfWork with 6 events.
  */
 class PgcUowProjector(private val pgPool: PgPool, val name: String) {
 

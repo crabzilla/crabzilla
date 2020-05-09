@@ -1,9 +1,12 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.github.crabzilla.pgc.example1.BadEventProjector
-import io.github.crabzilla.pgc.example1.CustomerProjector
+import io.github.crabzilla.pgc.example1.CustomerActivated
+import io.github.crabzilla.pgc.example1.CustomerCreated
+import io.github.crabzilla.pgc.example1.CustomerDeactivated
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
@@ -12,6 +15,7 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.deactivated1
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
+import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
@@ -19,17 +23,17 @@ import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
+import io.vertx.sqlclient.Transaction
+import io.vertx.sqlclient.Tuple
 import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
 
 @ExtendWith(VertxExtension::class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgcUowProjectorIT {
 
   private lateinit var vertx: Vertx
@@ -249,6 +253,32 @@ class PgcUowProjectorIT {
         val pgRowSet = ar3.result()
         tc.verify { assertThat(0).isEqualTo(pgRowSet.size()) }
         tc.completeNow()
+      }
+    }
+  }
+}
+
+class CustomerProjector : PgcEventProjector {
+
+  override fun handle(pgTx: Transaction, targetId: Int, event: DomainEvent): Future<Void> {
+    return when (event) {
+      is CustomerCreated -> {
+        val query = "INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)"
+        val tuple = Tuple.of(targetId, event.name, false)
+        executePreparedQuery(pgTx, query, tuple)
+      }
+      is CustomerActivated -> {
+        val query = "UPDATE customer_summary SET is_active = true WHERE id = $1"
+        val tuple = Tuple.of(targetId)
+        executePreparedQuery(pgTx, query, tuple)
+      }
+      is CustomerDeactivated -> {
+        val query = "UPDATE customer_summary SET is_active = false WHERE id = $1"
+        val tuple = Tuple.of(targetId)
+        executePreparedQuery(pgTx, query, tuple)
+      }
+      else -> {
+        Future.failedFuture("${event.javaClass.simpleName} does not have any event projector handler")
       }
     }
   }
