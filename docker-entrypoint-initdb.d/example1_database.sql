@@ -1,6 +1,6 @@
-CREATE DATABASE example1 OWNER user1;
+CREATE DATABASE example1_read OWNER user1;
 
-\connect example1 ;
+\connect example1_read ;
 
 -- read model
 
@@ -17,12 +17,9 @@ CREATE TABLE customer_summary (
     PRIMARY KEY (id)
 );
 
-CREATE TABLE account_summary (
-    id INTEGER NOT NULL,
-    balance NUMERIC DEFAULT 0.00,
-    PRIMARY KEY (id)
-);
+CREATE DATABASE example1_write OWNER user1;
 
+\connect example1_write ;
 
 -- write model (in production, it could be a different database instance)
 
@@ -63,11 +60,3 @@ CREATE TABLE customer_snapshots (
       json_content JSONB NOT NULL,
       PRIMARY KEY (ar_id)
     );
-
-CREATE TABLE account_snapshots (
-      ar_id INTEGER NOT NULL,
-      version INTEGER,
-      json_content JSONB NOT NULL,
-      PRIMARY KEY (ar_id)
-    );
-

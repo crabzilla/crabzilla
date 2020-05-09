@@ -2,13 +2,12 @@ package io.github.crabzilla.pgc.jooq
 
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.internal.UnitOfWorkEvents
-import io.github.crabzilla.pgc.example1.BadEventProjector
-import io.github.crabzilla.pgc.example1.CustomerProjector
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.deactivated1
+import io.github.crabzilla.pgc.example1.projectorFn
 import io.github.crabzilla.pgc.readModelPgPool
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
@@ -23,8 +22,9 @@ import io.vertx.pgclient.PgPool
 import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.jooq.Configuration
+import org.jooq.SQLDialect
+import org.jooq.impl.DefaultConfiguration
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Disabled // TODO
 class PgcJooqUowProjectorIT {
 
   private lateinit var vertx: Vertx
@@ -64,6 +63,8 @@ class PgcJooqUowProjectorIT {
       }
       val config = configFuture.result()
       readDb = readModelPgPool(vertx, config)
+      jooq = DefaultConfiguration()
+      jooq.set(SQLDialect.POSTGRES)
       jooqUowProjector = PgcJooqUowProjector(jooq, readDb, "customer summary")
       readDb.query("DELETE FROM customer_summary").execute { deleted ->
         if (deleted.failed()) {
@@ -80,7 +81,8 @@ class PgcJooqUowProjectorIT {
   @DisplayName("can project 1 event")
   fun a1(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1, listOf(created1))
-    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
+    val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
+    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -103,7 +105,8 @@ class PgcJooqUowProjectorIT {
   @DisplayName("can project 2 events: created and activated")
   fun a2(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1, listOf(created1, activated1))
-    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
+    val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
+    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -127,7 +130,8 @@ class PgcJooqUowProjectorIT {
   fun a3(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1))
-    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
+    val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
+    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -152,7 +156,8 @@ class PgcJooqUowProjectorIT {
   fun a4(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1, activated1))
-    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
+    val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
+    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -177,7 +182,8 @@ class PgcJooqUowProjectorIT {
   fun a5(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1, activated1, deactivated1))
-    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
+    val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
+    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -202,7 +208,8 @@ class PgcJooqUowProjectorIT {
   fun a6(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1, activated1, deactivated1, activated1))
-    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { event1 ->
+    val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
+    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -223,12 +230,18 @@ class PgcJooqUowProjectorIT {
   }
 
   @Test
-  @DisplayName("cannot project more than 6 events within one transaction")
+  @DisplayName("cannot project more than 10 events within one transaction")
   fun a7(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
-      listOf(created1, activated1, deactivated1, activated1, deactivated1, activated1, deactivated1))
-    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), CustomerProjector()).onComplete { result ->
-      if (result.failed()) {
+      listOf(created1,
+        activated1, deactivated1,
+        activated1, deactivated1,
+        activated1, deactivated1,
+        activated1, deactivated1,
+        activated1, deactivated1))
+    val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
+    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
+      if (event1.failed()) {
         tc.completeNow()
         return@onComplete
       }
@@ -236,25 +249,25 @@ class PgcJooqUowProjectorIT {
     }
   }
 
-  @Test
-  @DisplayName("on any any SQL error it must rollback all events projections")
-  fun a10(tc: VertxTestContext) {
-    val uow = UnitOfWork("Customer", created1.customerId, UUID.randomUUID(), createCmd1, 1, listOf(created1))
-    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), BadEventProjector()).onComplete { result ->
-      if (result.succeeded()) {
-        tc.failNow(result.cause())
-        return@onComplete
-      }
-      readDb.preparedQuery("SELECT * FROM customer_summary").execute { ar3 ->
-        if (ar3.failed()) {
-          log.error("select", ar3.cause())
-          tc.failNow(ar3.cause())
-          return@execute
-        }
-        val pgRowSet = ar3.result()
-        tc.verify { assertThat(0).isEqualTo(pgRowSet.size()) }
-        tc.completeNow()
-      }
-    }
-  }
+  //  @Test
+  //  @DisplayName("on any any SQL error it must rollback all events projections")
+  //  fun a10(tc: VertxTestContext) {
+  //    val uow = UnitOfWork("Customer", created1.customerId, UUID.randomUUID(), createCmd1, 1, listOf(created1))
+  //    jooqUowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), BadJooqEventProjector()).onComplete { result ->
+  //      if (result.succeeded()) {
+  //        tc.failNow(result.cause())
+  //        return@onComplete
+  //      }
+  //      readDb.preparedQuery("SELECT * FROM customer_summary").execute { ar3 ->
+  //        if (ar3.failed()) {
+  //          log.error("select", ar3.cause())
+  //          tc.failNow(ar3.cause())
+  //          return@execute
+  //        }
+  //        val pgRowSet = ar3.result()
+  //        tc.verify { assertThat(0).isEqualTo(pgRowSet.size()) }
+  //        tc.completeNow()
+  //      }
+  //    }
+  //  }
 }

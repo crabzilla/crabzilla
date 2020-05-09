@@ -28,6 +28,19 @@ class CommandController<E : Entity>(
   }
 
   fun handle(metadata: CommandMetadata, command: Command): Future<Pair<UnitOfWork, Long>> {
+
+    fun toUnitOfWork(ctx: CommandContext<E>, promise: Future<List<DomainEvent>>): Future<UnitOfWork> {
+      val uowPromise: Promise<UnitOfWork> = Promise.promise()
+      val (cmdMetadata, command, snapshot) = ctx
+      if (promise.succeeded()) {
+        uowPromise.complete(UnitOfWork(cmdMetadata.entityName, cmdMetadata.entityId, cmdMetadata.commandId,
+          command, snapshot.version + 1, promise.result()))
+      } else {
+        uowPromise.fail(promise.cause())
+      }
+      return uowPromise.future()
+    }
+
     val promise = Promise.promise<Pair<UnitOfWork, Long>>()
     if (log.isDebugEnabled) log.debug("received $metadata\n $command")
     val constraints = commandAware.validateCmd(command)
@@ -75,17 +88,5 @@ class CommandController<E : Entity>(
         promise.future()
       }
     return promise.future()
-  }
-
-  private fun toUnitOfWork(ctx: CommandContext<E>, promise: Future<List<DomainEvent>>): Future<UnitOfWork> {
-    val uowPromise: Promise<UnitOfWork> = Promise.promise()
-    val (cmdMetadata, command, snapshot) = ctx
-    if (promise.succeeded()) {
-      uowPromise.complete(UnitOfWork(cmdMetadata.entityName, cmdMetadata.entityId, cmdMetadata.commandId,
-        command, snapshot.version + 1, promise.result()))
-    } else {
-      uowPromise.fail(promise.cause())
-    }
-    return uowPromise.future()
   }
 }

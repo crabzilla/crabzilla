@@ -5,11 +5,14 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.core.EntityCommandAware
 import io.github.crabzilla.core.StateTransitionsTracker
+import io.github.crabzilla.pgc.jooq.example1.datamodel.tables.CustomerSummary.CUSTOMER_SUMMARY
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
+import org.jooq.DSLContext
+import org.jooq.Query
 
 typealias CustomerId = Int
 
@@ -124,5 +127,29 @@ val customerModule = SerializersModule {
     CustomerCreated::class with CustomerCreated.serializer()
     CustomerActivated::class with CustomerActivated.serializer()
     CustomerDeactivated::class with CustomerDeactivated.serializer()
+  }
+}
+
+// projections functions
+
+val projectorFn: (DomainEvent, Int) -> (DSLContext) -> Query = {
+  event: DomainEvent, targetId: Int ->
+  when (event) {
+    is CustomerCreated -> { dsl ->
+      dsl.insertInto(CUSTOMER_SUMMARY)
+        .columns(CUSTOMER_SUMMARY.ID, CUSTOMER_SUMMARY.NAME, CUSTOMER_SUMMARY.IS_ACTIVE)
+        .values(targetId, event.name, false)
+    }
+    is CustomerActivated -> { dsl ->
+      dsl.update(CUSTOMER_SUMMARY)
+        .set(CUSTOMER_SUMMARY.IS_ACTIVE, true)
+        .where(CUSTOMER_SUMMARY.ID.eq(targetId))
+    }
+    is CustomerDeactivated -> { dsl ->
+      dsl.update(CUSTOMER_SUMMARY)
+        .set(CUSTOMER_SUMMARY.IS_ACTIVE, false)
+        .where(CUSTOMER_SUMMARY.ID.eq(targetId))
+    }
+    else -> { _ -> throw IllegalArgumentException("") } // TODO consider Either<Query, Nothing>
   }
 }
