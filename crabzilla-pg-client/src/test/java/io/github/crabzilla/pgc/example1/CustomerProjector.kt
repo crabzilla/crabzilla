@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc.example1
 
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.pgc.jooq.PgcEventProjector
+import io.github.crabzilla.pgc.PgcEventProjector
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.sqlclient.Transaction

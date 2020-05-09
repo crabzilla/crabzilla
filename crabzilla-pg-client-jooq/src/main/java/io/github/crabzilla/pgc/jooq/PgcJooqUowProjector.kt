@@ -19,8 +19,6 @@ class PgcJooqUowProjector(private val jooq: Configuration, private val pgPool: P
   companion object {
     internal val log = getLogger(PgcJooqUowProjector::class.java)
     const val NUMBER_OF_FUTURES = 10 // not limited by CompositeFuture limit :)
-    const val SQL_UPDATE_PROJECTIONS = """insert into projections (name, last_uow) values (\"%s\", %d) on conflict (name)
-      do update set last_uow = %d"""
   }
 
   fun handle(uowEvents: UnitOfWorkEvents, projector: (DomainEvent, Int) -> (DSLContext) -> Query): Future<Int> {
