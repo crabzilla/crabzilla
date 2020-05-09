@@ -41,22 +41,27 @@ class PgcJooqUowProjector(private val jooq: Configuration, private val pgPool: P
     ReactiveClassicGenericQueryExecutor(jooq, pgPool).transaction { tx: ReactiveClassicGenericQueryExecutor ->
       tx.execute(firstOp)
         .compose { i: Int -> futures[0].invoke(tx, i) }
-        .compose { i: Int -> if (futures.size > 1) futures[1].invoke(tx, i) else succeededFuture(1) }
-        .compose { i: Int -> if (futures.size > 2) futures[2].invoke(tx, i) else succeededFuture(1) }
-        .compose { i: Int -> if (futures.size > 3) futures[3].invoke(tx, i) else succeededFuture(1) }
-        .compose { i: Int -> if (futures.size > 4) futures[4].invoke(tx, i) else succeededFuture(1) }
-        .compose { i: Int -> if (futures.size > 5) futures[5].invoke(tx, i) else succeededFuture(1) }
-        .compose { i: Int -> if (futures.size > 6) futures[6].invoke(tx, i) else succeededFuture(1) }
-        .compose { i: Int -> if (futures.size > 7) futures[7].invoke(tx, i) else succeededFuture(1) }
-        .compose { i: Int -> if (futures.size > 8) futures[8].invoke(tx, i) else succeededFuture(1) }
-        .compose { i: Int -> if (futures.size > 9) futures[9].invoke(tx, i) else succeededFuture(1) }
-        .onSuccess { count -> promise.complete(count) }
-        .onFailure { err -> promise.fail(err) }
+        .compose { i: Int -> if (futures.size > 1) futures[1].invoke(tx, i) else succeededFuture(0) }
+        .compose { i: Int -> if (futures.size > 2) futures[2].invoke(tx, i) else succeededFuture(0) }
+        .compose { i: Int -> if (futures.size > 3) futures[3].invoke(tx, i) else succeededFuture(0) }
+        .compose { i: Int -> if (futures.size > 4) futures[4].invoke(tx, i) else succeededFuture(0) }
+        .compose { i: Int -> if (futures.size > 5) futures[5].invoke(tx, i) else succeededFuture(0) }
+        .compose { i: Int -> if (futures.size > 6) futures[6].invoke(tx, i) else succeededFuture(0) }
+        .compose { i: Int -> if (futures.size > 7) futures[7].invoke(tx, i) else succeededFuture(0) }
+        .compose { i: Int -> if (futures.size > 8) futures[8].invoke(tx, i) else succeededFuture(0) }
+        .compose { i: Int -> if (futures.size > 9) futures[9].invoke(tx, i) else succeededFuture(0) }
+        .onSuccess { count ->
+          if (log.isDebugEnabled) log.debug("Projection success, rows = $count")
+          promise.complete(count) }
+        .onFailure { err ->
+          log.error("Projection error", err)
+          promise.fail(err)
+        }
     }
     return promise.future()
   }
 
-  fun convert(event: DomainEvent, targetId: Int, pFn: (DomainEvent, Int) -> (DSLContext) -> Query):
+  private fun convert(event: DomainEvent, targetId: Int, pFn: (DomainEvent, Int) -> (DSLContext) -> Query):
     (ReactiveClassicGenericQueryExecutor, Int) -> Future<Int> {
     return { tx: ReactiveClassicGenericQueryExecutor, _: Int -> tx.execute(pFn.invoke(event, targetId)) }
   }
