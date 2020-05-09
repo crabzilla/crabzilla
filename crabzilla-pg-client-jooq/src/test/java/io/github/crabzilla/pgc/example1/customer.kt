@@ -5,14 +5,11 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.core.EntityCommandAware
 import io.github.crabzilla.core.StateTransitionsTracker
-import io.github.crabzilla.pgc.jooq.example1.datamodel.tables.CustomerSummary.CUSTOMER_SUMMARY
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
-import org.jooq.DSLContext
-import org.jooq.Query
 
 typealias CustomerId = Int
 
@@ -129,4 +126,3 @@ val customerModule = SerializersModule {
     CustomerDeactivated::class with CustomerDeactivated.serializer()
   }
 }
-

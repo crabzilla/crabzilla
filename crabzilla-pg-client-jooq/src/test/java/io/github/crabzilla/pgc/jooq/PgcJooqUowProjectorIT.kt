@@ -11,7 +11,7 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.deactivated1
-import io.github.crabzilla.pgc.jooq.example1.datamodel.tables.CustomerSummary
+import io.github.crabzilla.pgc.jooq.example1.datamodel.tables.CustomerSummary.CUSTOMER_SUMMARY
 import io.github.crabzilla.pgc.readModelPgPool
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
@@ -56,19 +56,19 @@ class PgcJooqUowProjectorIT {
     event: DomainEvent, targetId: Int ->
     when (event) {
       is CustomerCreated -> { dsl ->
-        dsl.insertInto(CustomerSummary.CUSTOMER_SUMMARY)
-          .columns(CustomerSummary.CUSTOMER_SUMMARY.ID, CustomerSummary.CUSTOMER_SUMMARY.NAME, CustomerSummary.CUSTOMER_SUMMARY.IS_ACTIVE)
+        dsl.insertInto(CUSTOMER_SUMMARY)
+          .columns(CUSTOMER_SUMMARY.ID, CUSTOMER_SUMMARY.NAME, CUSTOMER_SUMMARY.IS_ACTIVE)
           .values(targetId, event.name, false)
       }
       is CustomerActivated -> { dsl ->
-        dsl.update(CustomerSummary.CUSTOMER_SUMMARY)
-          .set(CustomerSummary.CUSTOMER_SUMMARY.IS_ACTIVE, true)
-          .where(CustomerSummary.CUSTOMER_SUMMARY.ID.eq(targetId))
+        dsl.update(CUSTOMER_SUMMARY)
+          .set(CUSTOMER_SUMMARY.IS_ACTIVE, true)
+          .where(CUSTOMER_SUMMARY.ID.eq(targetId))
       }
       is CustomerDeactivated -> { dsl ->
-        dsl.update(CustomerSummary.CUSTOMER_SUMMARY)
-          .set(CustomerSummary.CUSTOMER_SUMMARY.IS_ACTIVE, false)
-          .where(CustomerSummary.CUSTOMER_SUMMARY.ID.eq(targetId))
+        dsl.update(CUSTOMER_SUMMARY)
+          .set(CUSTOMER_SUMMARY.IS_ACTIVE, false)
+          .where(CUSTOMER_SUMMARY.ID.eq(targetId))
       }
       else -> { _ -> throw IllegalArgumentException("") } // TODO consider Either<Query, Nothing>
     }
