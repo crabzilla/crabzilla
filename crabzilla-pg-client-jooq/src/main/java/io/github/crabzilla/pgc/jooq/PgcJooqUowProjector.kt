@@ -22,19 +22,14 @@ class PgcJooqUowProjector(private val jooq: Configuration, private val pgPool: P
   }
 
   fun handle(uowEvents: UnitOfWorkEvents, projector: (DomainEvent, Int) -> (DSLContext) -> Query): Future<Int> {
-
     if (uowEvents.events.size > NUMBER_OF_FUTURES) {
       return failedFuture("only $NUMBER_OF_FUTURES events can be projected per transaction")
     }
-
     val promise = Promise.promise<Int>()
-
     val toFut: (Int) -> (ReactiveClassicGenericQueryExecutor, Int) -> Future<Int> = { index ->
       convert(uowEvents.events[index], uowEvents.entityId, projector)
     }
-
     val futures: List<(ReactiveClassicGenericQueryExecutor, Int) -> Future<Int>> = List(uowEvents.events.size, toFut)
-
     val firstOp: (DSLContext) -> Query = { dslContext ->
       dslContext
         .insertInto(Tables.PROJECTIONS)
@@ -43,9 +38,6 @@ class PgcJooqUowProjector(private val jooq: Configuration, private val pgPool: P
         .onDuplicateKeyUpdate()
         .set(Tables.PROJECTIONS.LAST_UOW, uowEvents.uowId.toInt())
     }
-
-    log.info("Futures size ${futures.size}")
-
     ReactiveClassicGenericQueryExecutor(jooq, pgPool).transaction { tx: ReactiveClassicGenericQueryExecutor ->
       tx.execute(firstOp)
         .compose { i: Int -> futures[0].invoke(tx, i) }
@@ -61,7 +53,6 @@ class PgcJooqUowProjector(private val jooq: Configuration, private val pgPool: P
         .onSuccess { count -> promise.complete(count) }
         .onFailure { err -> promise.fail(err) }
     }
-
     return promise.future()
   }
 

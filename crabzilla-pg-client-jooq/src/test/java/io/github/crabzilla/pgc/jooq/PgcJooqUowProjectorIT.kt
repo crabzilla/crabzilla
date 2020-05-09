@@ -72,7 +72,14 @@ class PgcJooqUowProjectorIT {
           tc.failNow(deleted.cause())
           return@execute
         }
-        tc.completeNow()
+        readDb.query("DELETE FROM projections").execute { deleted ->
+          if (deleted.failed()) {
+            log.error("delete ", deleted.cause())
+            tc.failNow(deleted.cause())
+            return@execute
+          }
+          tc.completeNow()
+        }
       }
     })
   }
