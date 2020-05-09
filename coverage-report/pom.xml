@@ -24,10 +24,10 @@
       <artifactId>crabzilla-pg-client</artifactId>
     </dependency>
 
-<!--    <dependency>-->
-<!--      <groupId>io.github.crabzilla</groupId>-->
-<!--      <artifactId>crabzilla-pg-client-jooq</artifactId>-->
-<!--    </dependency>-->
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-pg-client-jooq</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
