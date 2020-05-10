@@ -12,18 +12,24 @@ import io.vertx.pgclient.PgPool
 import org.jooq.Configuration
 import org.jooq.DSLContext
 import org.jooq.Query
+import org.jooq.SQLDialect
+import org.jooq.impl.DefaultConfiguration
 import org.slf4j.LoggerFactory.getLogger
 
 class PgcJooqUowProjector(
-  private val jooq: Configuration,
   private val pgPool: PgPool,
   private val streamId: String,
-  private val projector: (DomainEvent, Int) -> (DSLContext) -> Query
+  private val projector: (DomainEvent, Int) -> (DSLContext) -> Query,
+  private val jooq: Configuration = DefaultConfiguration()
 ) {
 
   companion object {
     internal val log = getLogger(PgcJooqUowProjector::class.java)
     const val NUMBER_OF_FUTURES = 10 // not limited by CompositeFuture limit :)
+  }
+
+  init {
+    jooq.set(SQLDialect.POSTGRES)
   }
 
   fun handle(uowEvents: UnitOfWorkEvents): Future<Int> {

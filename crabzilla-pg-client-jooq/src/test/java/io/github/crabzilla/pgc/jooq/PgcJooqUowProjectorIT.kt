@@ -25,23 +25,21 @@ import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
 import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
-import org.jooq.Configuration
 import org.jooq.DSLContext
 import org.jooq.Query
-import org.jooq.SQLDialect
-import org.jooq.impl.DefaultConfiguration
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
 
 @ExtendWith(VertxExtension::class)
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class PgcJooqUowProjectorIT {
 
   private lateinit var vertx: Vertx
   private lateinit var readDb: PgPool
-  private lateinit var jooq: Configuration
   private lateinit var jooqUowProjector: PgcJooqUowProjector
 
   companion object {
@@ -91,9 +89,7 @@ class PgcJooqUowProjectorIT {
       }
       val config = configFuture.result()
       readDb = readModelPgPool(vertx, config)
-      jooq = DefaultConfiguration()
-      jooq.set(SQLDialect.POSTGRES)
-      jooqUowProjector = PgcJooqUowProjector(jooq, readDb, "customer summary", streamProjectorFn)
+      jooqUowProjector = PgcJooqUowProjector(readDb, "customer summary", streamProjectorFn)
       readDb.query("DELETE FROM customer_summary").execute { deleted1 ->
         if (deleted1.failed()) {
           log.error("delete ", deleted1.cause())

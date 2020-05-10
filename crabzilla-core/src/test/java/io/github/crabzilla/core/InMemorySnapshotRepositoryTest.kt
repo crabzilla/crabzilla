@@ -17,7 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 class InMemorySnapshotRepositoryTest {
 
   @Test
-  @DisplayName("given none snapshot or event, it can retrieve correct snapshot")
+  @DisplayName("given none snapshot, it can retrieve correct snapshot")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val repo = InMemorySnapshotRepository(vertx.sharedData(), example1Json, CUSTOMER_ENTITY, Customer())
     repo.retrieve(customerId1)
