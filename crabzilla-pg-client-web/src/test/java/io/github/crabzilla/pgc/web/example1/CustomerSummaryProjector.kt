@@ -7,7 +7,7 @@ import io.vertx.core.Future.failedFuture
 import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 
-class CustomerProjector : PgcEventProjector {
+class CustomerSummaryProjector : PgcEventProjector {
 
   override fun handle(pgTx: Transaction, targetId: Int, event: DomainEvent): Future<Void> {
     return when (event) {

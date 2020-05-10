@@ -31,26 +31,25 @@ data class Customer(
   val name: String? = null,
   val isActive: Boolean? = false,
   val reason: String? = null
-) : Entity() {
+) : Entity()
 
-  fun create(id: CustomerId, name: String): Future<List<DomainEvent>> {
-    require(this.customerId == null) { "customer already created" }
-    return succeededFuture(listOf(CustomerCreated(id, name)))
-  }
+fun Customer.create(id: CustomerId, name: String): Future<List<DomainEvent>> {
+  require(this.customerId == null) { "customer already created" }
+  return succeededFuture(listOf(CustomerCreated(id, name)))
+}
 
-  fun activate(reason: String): List<DomainEvent> {
-    customerMustExist()
-    return listOf(CustomerActivated(reason))
-  }
+fun Customer.activate(reason: String): List<DomainEvent> {
+  customerMustExist()
+  return listOf(CustomerActivated(reason))
+}
 
-  fun deactivate(reason: String): Future<List<DomainEvent>> {
-    customerMustExist()
-    return succeededFuture(listOf(CustomerDeactivated(reason)))
-  }
+fun Customer.deactivate(reason: String): Future<List<DomainEvent>> {
+  customerMustExist()
+  return succeededFuture(listOf(CustomerDeactivated(reason)))
+}
 
-  private fun customerMustExist() {
-    require(this.customerId != null) { "customer must exists" }
-  }
+private fun Customer.customerMustExist() {
+  require(this.customerId != null) { "customer must exists" }
 }
 
 // command aware

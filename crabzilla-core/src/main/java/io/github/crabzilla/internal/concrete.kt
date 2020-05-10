@@ -11,8 +11,8 @@ import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.Version
 import io.vertx.core.Future
 import io.vertx.core.Promise
-import java.util.concurrent.atomic.AtomicReference
 import org.slf4j.LoggerFactory
+import java.util.concurrent.atomic.AtomicReference
 
 data class RangeOfEvents(val afterVersion: Version, val untilVersion: Version, val events: List<DomainEvent>)
 
@@ -26,9 +26,7 @@ class CommandController<E : Entity>(
   companion object {
     internal val log = LoggerFactory.getLogger(CommandController::class.java)
   }
-
   fun handle(metadata: CommandMetadata, command: Command): Future<Pair<UnitOfWork, Long>> {
-
     fun toUnitOfWork(ctx: CommandContext<E>, promise: Future<List<DomainEvent>>): Future<UnitOfWork> {
       val uowPromise: Promise<UnitOfWork> = Promise.promise()
       val (cmdMetadata, command, snapshot) = ctx
@@ -40,7 +38,6 @@ class CommandController<E : Entity>(
       }
       return uowPromise.future()
     }
-
     val promise = Promise.promise<Pair<UnitOfWork, Long>>()
     if (log.isDebugEnabled) log.debug("received $metadata\n $command")
     val constraints = commandAware.validateCmd(command)

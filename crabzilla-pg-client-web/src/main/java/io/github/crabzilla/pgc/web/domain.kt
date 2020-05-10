@@ -21,42 +21,42 @@ import org.slf4j.LoggerFactory
 
 private val log: Logger = LoggerFactory.getLogger("web-pgc-domain")
 
-typealias WebPgcReadContext = Triple<Vertx, Json, PgPool>
+typealias PgcReadContext = Triple<Vertx, Json, PgPool>
 
-typealias WebPgcWriteContext = Triple<Vertx, Json, PgPool>
+typealias PgcWriteContext = Triple<Vertx, Json, PgPool>
 
-class ResourceContext<E : Entity>(
+class WebResourceContext<E : Entity>(
   val resourceName: String,
   val entityName: String,
   val cmdAware: EntityCommandAware<E>,
   val cmdTypeMap: Map<String, String>
 )
 
-fun <E : Entity> addResourceForEntity(writeContext: WebPgcWriteContext, rsContext: ResourceContext<E>, router: Router) {
-  val (vertx, json, writeDb) = writeContext
-  log.info("adding web command handler for entity $rsContext.entityName on resource $rsContext.resourceName")
-  val cmdHandlerComponent = PgcEntityComponent(vertx, writeDb, rsContext.cmdAware, json, rsContext.entityName)
-  WebDeployer(rsContext.resourceName, rsContext.cmdTypeMap, cmdHandlerComponent, router).deployWebRoutes()
+fun <E : Entity> addResourceForEntity(writeCtx: PgcWriteContext, webResourceCtx: WebResourceContext<E>, router: Router) {
+  val (vertx, json, writeDb) = writeCtx
+  log.info("adding web command handler for entity $webResourceCtx.entityName on resource $webResourceCtx.resourceName")
+  val cmdHandlerComponent = PgcEntityComponent(vertx, writeDb, webResourceCtx.cmdAware, json, webResourceCtx.entityName)
+  WebDeployer(webResourceCtx.resourceName, webResourceCtx.cmdTypeMap, cmdHandlerComponent, router).deployWebRoutes()
 }
 
-fun addProjector(readContext: WebPgcReadContext, projectionName: String, projector: PgcEventProjector) {
-  log.info("adding projector for $projectionName subscribing on ${PgcEventBusChannels.unitOfWorkChannel}")
+fun addProjector(readContext: PgcReadContext, streamId: String, projector: PgcEventProjector) {
+  fun toUnitOfWorkEvents(jsonObject: JsonObject, json: Json): UnitOfWorkEvents {
+    val uowId = jsonObject.getLong("uowId")
+    val entityId = jsonObject.getInteger(UnitOfWork.JsonMetadata.ENTITY_ID)
+    val eventsAsString = jsonObject.getJsonArray(UnitOfWork.JsonMetadata.EVENTS).encode()
+    val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsString)
+    return UnitOfWorkEvents(uowId, entityId, events)
+  }
+  log.info("adding projector for $streamId subscribing on ${PgcEventBusChannels.unitOfWorkChannel}")
   val (vertx, json, readDb) = readContext
   vertx.eventBus().consumer<JsonObject>(PgcEventBusChannels.unitOfWorkChannel) { message ->
     val uowEvents = toUnitOfWorkEvents(message.body(), json)
-    val uolProjector = PgcUowProjector(readDb, projectionName)
-    uolProjector.handle(uowEvents, projector).onComplete { result ->
+    val uolProjector = PgcUowProjector(readDb, streamId, projector)
+    uolProjector.handle(uowEvents).onComplete { result ->
       if (result.failed()) { // TODO circuit breaker
-        log.error("Projection [$projectionName] failed: " + result.cause().message)
+        log.error("Projection [$streamId] failed: " + result.cause().message)
       }
     }
   }
 }
 
-private fun toUnitOfWorkEvents(jsonObject: JsonObject, json: Json): UnitOfWorkEvents {
-  val uowId = jsonObject.getLong("uowId")
-  val entityId = jsonObject.getInteger(UnitOfWork.JsonMetadata.ENTITY_ID)
-  val eventsAsString = jsonObject.getJsonArray(UnitOfWork.JsonMetadata.EVENTS).encode()
-  val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsString)
-  return UnitOfWorkEvents(uowId, entityId, events)
-}

@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory.getLogger
 /**
  * This implementation is reactive but also has a limitation: it can project only UnitOfWork with 6 events.
  */
-class PgcUowProjector(private val pgPool: PgPool, val name: String) {
+class PgcUowProjector(private val pgPool: PgPool, val name: String, val projector: PgcEventProjector) {
 
   companion object {
     internal val log = getLogger(PgcUowProjector::class.java)
@@ -22,7 +22,7 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String) {
       do update set last_uow = $2"""
   }
 
-  fun handle(uowEvents: UnitOfWorkEvents, projector: PgcEventProjector): Future<Void> {
+  fun handle(uowEvents: UnitOfWorkEvents): Future<Void> {
     if (uowEvents.events.size > NUMBER_OF_FUTURES) {
       return failedFuture("only $NUMBER_OF_FUTURES events can be projected per transaction")
     }
