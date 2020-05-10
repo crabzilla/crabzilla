@@ -1,8 +1,8 @@
 package io.github.crabzilla.pgc.web.example1
 
-import io.github.crabzilla.pgc.web.ResourceContext
-import io.github.crabzilla.pgc.web.WebPgcReadContext
-import io.github.crabzilla.pgc.web.WebPgcWriteContext
+import io.github.crabzilla.pgc.web.WebResourceContext
+import io.github.crabzilla.pgc.web.PgcReadContext
+import io.github.crabzilla.pgc.web.PgcWriteContext
 import io.github.crabzilla.pgc.web.addProjector
 import io.github.crabzilla.pgc.web.addResourceForEntity
 import io.github.crabzilla.pgc.web.listenHandler
@@ -45,13 +45,13 @@ class CustomerVerticle : AbstractVerticle() {
       Pair("deactivate", DeactivateCustomer::class.qualifiedName as String),
       Pair("create-activate", CreateActivateCustomer::class.qualifiedName as String))
 
-    val webPgcWriteContext = WebPgcWriteContext(vertx, example1Json, writeDb)
-    val resourceContext = ResourceContext("customers", "customer", CustomerCommandAware(), cmdTypeMap)
+    val webPgcWriteContext = PgcWriteContext(vertx, example1Json, writeDb)
+    val resourceContext = WebResourceContext("customers", "customer", CustomerCommandAware(), cmdTypeMap)
     addResourceForEntity(webPgcWriteContext, resourceContext, router)
 
     // projection consumers
-    val webPgcReadContext = WebPgcReadContext(vertx, example1Json, readDb)
-    addProjector(webPgcReadContext, "customers-summary", CustomerProjector())
+    val webPgcReadContext = PgcReadContext(vertx, example1Json, readDb)
+    addProjector(webPgcReadContext, "customers-summary", CustomerSummaryProjector())
 
     // read model routes
     router.get("/customers/:id").handler(::customersQueryHandler)

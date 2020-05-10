@@ -14,14 +14,19 @@ import org.jooq.DSLContext
 import org.jooq.Query
 import org.slf4j.LoggerFactory.getLogger
 
-class PgcJooqUowProjector(private val jooq: Configuration, private val pgPool: PgPool, val name: String) {
+class PgcJooqUowProjector(
+  private val jooq: Configuration,
+  private val pgPool: PgPool,
+  private val streamId: String,
+  private val projector: (DomainEvent, Int) -> (DSLContext) -> Query
+) {
 
   companion object {
     internal val log = getLogger(PgcJooqUowProjector::class.java)
     const val NUMBER_OF_FUTURES = 10 // not limited by CompositeFuture limit :)
   }
 
-  fun handle(uowEvents: UnitOfWorkEvents, projector: (DomainEvent, Int) -> (DSLContext) -> Query): Future<Int> {
+  fun handle(uowEvents: UnitOfWorkEvents): Future<Int> {
     if (uowEvents.events.size > NUMBER_OF_FUTURES) {
       return failedFuture("only $NUMBER_OF_FUTURES events can be projected per transaction")
     }
@@ -34,7 +39,7 @@ class PgcJooqUowProjector(private val jooq: Configuration, private val pgPool: P
       dslContext
         .insertInto(Tables.PROJECTIONS)
         .columns(Tables.PROJECTIONS.NAME, Tables.PROJECTIONS.LAST_UOW)
-        .values(name, uowEvents.uowId.toInt()) // TODO remove toInt
+        .values(streamId, uowEvents.uowId.toInt()) // TODO remove toInt
         .onDuplicateKeyUpdate()
         .set(Tables.PROJECTIONS.LAST_UOW, uowEvents.uowId.toInt())
     }

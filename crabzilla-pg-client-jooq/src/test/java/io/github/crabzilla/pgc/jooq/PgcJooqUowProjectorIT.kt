@@ -52,7 +52,7 @@ class PgcJooqUowProjectorIT {
 
   // projection function
 
-  private val projectorFn: (DomainEvent, Int) -> (DSLContext) -> Query = {
+  private val streamProjectorFn: (DomainEvent, Int) -> (DSLContext) -> Query = {
     event: DomainEvent, targetId: Int ->
     when (event) {
       is CustomerCreated -> { dsl ->
@@ -95,7 +95,7 @@ class PgcJooqUowProjectorIT {
       readDb = readModelPgPool(vertx, config)
       jooq = DefaultConfiguration()
       jooq.set(SQLDialect.POSTGRES)
-      jooqUowProjector = PgcJooqUowProjector(jooq, readDb, "customer summary")
+      jooqUowProjector = PgcJooqUowProjector(jooq, readDb, "customer summary", streamProjectorFn)
       readDb.query("DELETE FROM customer_summary").execute { deleted ->
         if (deleted.failed()) {
           log.error("delete ", deleted.cause())
@@ -119,7 +119,7 @@ class PgcJooqUowProjectorIT {
   fun a1(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1, listOf(created1))
     val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
-    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
+    jooqUowProjector.handle(uowEvents).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -143,7 +143,7 @@ class PgcJooqUowProjectorIT {
   fun a2(tc: VertxTestContext) {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1, listOf(created1, activated1))
     val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
-    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
+    jooqUowProjector.handle(uowEvents).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -168,7 +168,7 @@ class PgcJooqUowProjectorIT {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1))
     val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
-    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
+    jooqUowProjector.handle(uowEvents).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -194,7 +194,7 @@ class PgcJooqUowProjectorIT {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1, activated1))
     val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
-    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
+    jooqUowProjector.handle(uowEvents).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -220,7 +220,7 @@ class PgcJooqUowProjectorIT {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1, activated1, deactivated1))
     val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
-    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
+    jooqUowProjector.handle(uowEvents).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -246,7 +246,7 @@ class PgcJooqUowProjectorIT {
     val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1, activated1, deactivated1, activated1))
     val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
-    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
+    jooqUowProjector.handle(uowEvents).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
         return@onComplete
@@ -277,7 +277,7 @@ class PgcJooqUowProjectorIT {
         activated1, deactivated1,
         activated1, deactivated1))
     val uowEvents = UnitOfWorkEvents(1, uow.entityId, uow.events)
-    jooqUowProjector.handle(uowEvents, projectorFn).onComplete { event1 ->
+    jooqUowProjector.handle(uowEvents).onComplete { event1 ->
       if (event1.failed()) {
         tc.completeNow()
         return@onComplete
