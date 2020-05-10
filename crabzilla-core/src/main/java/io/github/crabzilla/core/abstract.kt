@@ -22,3 +22,8 @@ interface EntityCommandAware<E : Entity> {
   val validateCmd: (command: Command) -> List<String>
   val handleCmd: (id: Int, state: E, command: Command) -> Future<List<DomainEvent>>
 }
+
+interface SnapshotRepository<E : Entity> {
+  fun retrieve(entityId: Int): Future<Snapshot<E>>
+  fun upsert(entityId: Int, snapshot: Snapshot<E>): Future<Void>
+}

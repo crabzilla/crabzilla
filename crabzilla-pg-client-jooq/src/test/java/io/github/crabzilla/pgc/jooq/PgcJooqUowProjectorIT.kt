@@ -96,16 +96,16 @@ class PgcJooqUowProjectorIT {
       jooq = DefaultConfiguration()
       jooq.set(SQLDialect.POSTGRES)
       jooqUowProjector = PgcJooqUowProjector(jooq, readDb, "customer summary", streamProjectorFn)
-      readDb.query("DELETE FROM customer_summary").execute { deleted ->
-        if (deleted.failed()) {
-          log.error("delete ", deleted.cause())
-          tc.failNow(deleted.cause())
+      readDb.query("DELETE FROM customer_summary").execute { deleted1 ->
+        if (deleted1.failed()) {
+          log.error("delete ", deleted1.cause())
+          tc.failNow(deleted1.cause())
           return@execute
         }
-        readDb.query("DELETE FROM projections").execute { deleted ->
-          if (deleted.failed()) {
-            log.error("delete ", deleted.cause())
-            tc.failNow(deleted.cause())
+        readDb.query("DELETE FROM projections").execute { deleted2 ->
+          if (deleted2.failed()) {
+            log.error("delete ", deleted2.cause())
+            tc.failNow(deleted2.cause())
             return@execute
           }
           tc.completeNow()

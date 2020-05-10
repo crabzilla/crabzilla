@@ -7,12 +7,13 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.core.EntityCommandAware
 import io.github.crabzilla.core.Snapshot
+import io.github.crabzilla.core.SnapshotRepository
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.Version
 import io.vertx.core.Future
 import io.vertx.core.Promise
-import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicReference
+import org.slf4j.LoggerFactory
 
 data class RangeOfEvents(val afterVersion: Version, val untilVersion: Version, val events: List<DomainEvent>)
 

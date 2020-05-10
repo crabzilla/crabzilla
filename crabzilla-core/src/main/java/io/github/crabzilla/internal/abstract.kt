@@ -20,11 +20,6 @@ interface EntityComponent<E : Entity> {
   fun cmdFromJson(commandName: String, cmdAsJson: JsonObject): Command
 }
 
-interface SnapshotRepository<E : Entity> {
-  fun retrieve(entityId: Int): Future<Snapshot<E>>
-  fun upsert(entityId: Int, snapshot: Snapshot<E>): Future<Void>
-}
-
 interface UnitOfWorkJournal {
   fun append(unitOfWork: UnitOfWork): Future<Long>
 }

@@ -7,6 +7,7 @@ import io.github.crabzilla.core.ENTITY_SERIALIZER
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.core.EntityCommandAware
 import io.github.crabzilla.core.Snapshot
+import io.github.crabzilla.core.SnapshotRepository
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.internal.CommandController
 import io.github.crabzilla.internal.EntityComponent
@@ -24,14 +25,14 @@ class PgcEntityComponent<E : Entity>(
   writeDb: PgPool,
   cmdAware: EntityCommandAware<E>,
   private val json: Json,
-  private val entityName: String
+  private val entityName: String,
+  private val snapshotRepo: SnapshotRepository<E> = PgcSnapshotRepo(writeDb, json, entityName, cmdAware)
 ) : EntityComponent<E> {
   companion object {
     private val log: Logger = LoggerFactory.getLogger(PgcEntityComponent::class.java)
   }
 
   private val uowRepo = PgcUowRepo(writeDb, json)
-  private val snapshotRepo = PgcSnapshotRepo(writeDb, json, entityName, cmdAware)
   private val uowJournal = PgcUowJournal(vertx, writeDb, json)
   private val cmdController = CommandController(cmdAware, snapshotRepo, uowJournal)
 
