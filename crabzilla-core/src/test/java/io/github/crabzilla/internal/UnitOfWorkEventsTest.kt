@@ -2,6 +2,7 @@ package io.github.crabzilla.internal
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.core.UnitOfWorkEvents
 import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.CustomerCreated
 import java.util.UUID

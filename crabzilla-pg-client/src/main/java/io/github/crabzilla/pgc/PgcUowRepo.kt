@@ -5,9 +5,9 @@ import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EVENT_SERIALIZER
 import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.core.UnitOfWorkEvents
 import io.github.crabzilla.core.Version
 import io.github.crabzilla.internal.RangeOfEvents
-import io.github.crabzilla.internal.UnitOfWorkEvents
 import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise

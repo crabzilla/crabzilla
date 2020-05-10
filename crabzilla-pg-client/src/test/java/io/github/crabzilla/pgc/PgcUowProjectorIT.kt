@@ -2,7 +2,7 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.internal.UnitOfWorkEvents
+import io.github.crabzilla.core.UnitOfWorkEvents
 import io.github.crabzilla.pgc.example1.CustomerActivated
 import io.github.crabzilla.pgc.example1.CustomerCreated
 import io.github.crabzilla.pgc.example1.CustomerDeactivated

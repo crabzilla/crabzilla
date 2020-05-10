@@ -137,3 +137,5 @@ class InMemorySnapshotRepository<E : Entity>(
     return promise.future()
   }
 }
+
+data class UnitOfWorkEvents(val uowId: Long, val entityId: Int, val events: List<DomainEvent>)

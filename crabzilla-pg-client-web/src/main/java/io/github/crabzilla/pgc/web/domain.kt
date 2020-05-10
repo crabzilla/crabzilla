@@ -6,10 +6,11 @@ import io.github.crabzilla.core.Entity
 import io.github.crabzilla.core.EntityCommandAware
 import io.github.crabzilla.core.SnapshotRepository
 import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.internal.UnitOfWorkEvents
+import io.github.crabzilla.core.UnitOfWorkEvents
 import io.github.crabzilla.pgc.PgcEntityComponent
 import io.github.crabzilla.pgc.PgcEventBusChannels
 import io.github.crabzilla.pgc.PgcEventProjector
+import io.github.crabzilla.pgc.PgcSnapshotRepo
 import io.github.crabzilla.pgc.PgcUowProjector
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -36,20 +37,9 @@ class WebResourceContext<E : Entity>(
 fun <E : Entity> addResourceForEntity(
   writeCtx: PgcWriteContext,
   webResourceCtx: WebResourceContext<E>,
-  router: Router
-) {
-  val (vertx, json, writeDb) = writeCtx
-  log.info("adding web command handler for entity $webResourceCtx.entityName on resource $webResourceCtx.resourceName")
-  val cmdHandlerComponent =
-    PgcEntityComponent(vertx, writeDb, webResourceCtx.cmdAware, json, webResourceCtx.entityName)
-  WebDeployer(webResourceCtx.resourceName, webResourceCtx.cmdTypeMap, cmdHandlerComponent, router).deployWebRoutes()
-}
-
-fun <E : Entity> addResourceForEntity(
-  writeCtx: PgcWriteContext,
-  webResourceCtx: WebResourceContext<E>,
   router: Router,
-  snapshotRepo: SnapshotRepository<E>
+  snapshotRepo: SnapshotRepository<E> = PgcSnapshotRepo(writeCtx.third, writeCtx.second,
+    webResourceCtx.entityName, webResourceCtx.cmdAware)
 ) {
   val (vertx, json, writeDb) = writeCtx
   log.info("adding web command handler for entity $webResourceCtx.entityName on resource $webResourceCtx.resourceName")

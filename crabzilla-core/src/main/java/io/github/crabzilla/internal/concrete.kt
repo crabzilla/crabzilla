@@ -17,8 +17,6 @@ import org.slf4j.LoggerFactory
 
 data class RangeOfEvents(val afterVersion: Version, val untilVersion: Version, val events: List<DomainEvent>)
 
-data class UnitOfWorkEvents(val uowId: Long, val entityId: Int, val events: List<DomainEvent>)
-
 class CommandController<E : Entity>(
   private val commandAware: EntityCommandAware<E>,
   private val snapshotRepo: SnapshotRepository<E>,

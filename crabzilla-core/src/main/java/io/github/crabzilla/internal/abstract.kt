@@ -5,6 +5,7 @@ import io.github.crabzilla.core.CommandMetadata
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.core.UnitOfWorkEvents
 import io.github.crabzilla.core.Version
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject

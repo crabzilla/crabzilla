@@ -375,7 +375,7 @@
         <version>${maven-surefire-plugin.version}</version>
         <configuration>
           <!-- Sets the VM argument line used when unit tests are run. -->
-          <!--  <argLine>${surefireArgLine}</argLine>-->
+          <argLine>${surefireArgLine}</argLine>
           <!-- Skips unit tests if the value of skip.unit.tests property is true -->
           <skipTests>${skipTests}</skipTests>
           <!-- Excludes integration tests when unit tests are run. -->
