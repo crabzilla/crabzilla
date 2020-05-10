@@ -33,6 +33,18 @@ class WebDeployer<E : Entity>(
   }
 
   fun deployWebRoutes() {
+    fun errorHandler(paramName: String): Handler<RoutingContext> {
+      return Handler {
+        log.error(it.failure().message, it.failure())
+        when (it.failure()) {
+          is NumberFormatException -> it.response().setStatusCode(400).end("path param $paramName must be a number")
+          else -> {
+            it.failure().printStackTrace()
+            it.response().setStatusCode(500).end("server error")
+          }
+        }
+      }
+    }
     log.info("adding route POST $postCmd")
     router.post(postCmd).handler {
       val begin = System.currentTimeMillis()
@@ -131,18 +143,5 @@ class WebDeployer<E : Entity>(
         }
       }
     }.failureHandler(errorHandler(UNIT_OF_WORK_ID_PARAMETER))
-  }
-
-  fun errorHandler(paramName: String): Handler<RoutingContext> {
-    return Handler {
-      log.error(it.failure().message, it.failure())
-      when (it.failure()) {
-        is NumberFormatException -> it.response().setStatusCode(400).end("path param $paramName must be a number")
-        else -> {
-          it.failure().printStackTrace()
-          it.response().setStatusCode(500).end("server error")
-        }
-      }
-    }
   }
 }

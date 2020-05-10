@@ -1,6 +1,8 @@
 package io.github.crabzilla.pgc.jooq;
 
 import io.github.crabzilla.core.DomainEvent;
+import io.github.crabzilla.pgc.jooq.example1.datamodel.tables.daos.CustomerSummaryDao;
+import io.github.crabzilla.pgc.jooq.example1.datamodel.tables.pojos.CustomerSummary;
 import io.github.jklingsporn.vertx.jooq.classic.reactivepg.ReactiveClassicGenericQueryExecutor;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -24,63 +26,14 @@ public class JooqTest {
 
   public static void main(String[] args) {
 
-    Future<Integer> fut1 = Future.succeededFuture(1);
-
-    Future<Integer> startFuture = fut1
-      .compose(v -> {
-        // When the file is created (fut1), execute this:
-        return Future.succeededFuture(1);
-      })
-      .compose(v -> {
-        // When the file is created (fut1), execute this:
-        return Future.succeededFuture(v + 1);
-      })
-      .compose(v -> {
-        // When the file is created (fut1), execute this:
-        return Future.succeededFuture(v + 1);
-      })
-      .compose(v -> {
-        // When the file is created (fut1), execute this:
-        return Future.succeededFuture(v + 1);
-      })
-      .compose(v -> {
-        // When the file is created (fut1), execute this:
-        return Future.succeededFuture(v + 1);
-      })
-      .compose(v -> {
-        // When the file is created (fut1), execute this:
-        return Future.succeededFuture(v + 1);
-      })
-      .compose(v -> {
-        // When the file is created (fut1), execute this:
-        return Future.succeededFuture(v + 1);
-      })
-      .compose(v -> {
-        // When the file is created (fut1), execute this:
-        return Future.succeededFuture(v + 1);
-      })
-      .compose(v -> {
-        // When the file is created (fut1), execute this:
-        return Future.succeededFuture(v + 1);
-      })
-      .compose(v -> {
-        // When the file is created (fut1), execute this:
-        return Future.succeededFuture(v + 1);
-      })
-      .compose(v -> {
-        // When the file is created (fut1), execute this:
-        return Future.succeededFuture(v + 1);
-      })
-      .onSuccess(it -> System.out.println(it));
-
-    if (true) return;
+    // TODO try another uowProjector using Jooq dao instead of dsl
 
     Configuration jooq = new DefaultConfiguration();
     jooq.set(SQLDialect.POSTGRES);
     PgPool pgPool = pgPool(Vertx.vertx());
 
-    // TODO use kotlin function composition OR
-    // TODO first command is update projections then the projections (more than 6)
+    CustomerSummaryDao dao = new CustomerSummaryDao(jooq, pgPool);
+    dao.insert(new CustomerSummary());
 
 //    Function<DSLContext, RowCountQuery> firstOp = dslContext -> dslContext
 //      .insertInto(PROJECTIONS)

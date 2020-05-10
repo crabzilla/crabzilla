@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory
 private val log: Logger = LoggerFactory.getLogger("web-pgc-domain")
 
 typealias PgcReadContext = Triple<Vertx, Json, PgPool>
-
 typealias PgcWriteContext = Triple<Vertx, Json, PgPool>
 
 class WebResourceContext<E : Entity>(

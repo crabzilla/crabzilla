@@ -82,15 +82,20 @@
               </execution>
             </executions>
             <dependencies>
+<!--              <dependency>-->
+<!--                <groupId>org.jooq</groupId>-->
+<!--                <artifactId>jooq-meta</artifactId>-->
+<!--                <version>${jooq.version}</version>-->
+<!--              </dependency>-->
+<!--              <dependency>-->
+<!--                <groupId>org.jooq</groupId>-->
+<!--                <artifactId>jooq-codegen</artifactId>-->
+<!--                <version>${jooq.version}</version>-->
+<!--              </dependency>-->
               <dependency>
-                <groupId>org.jooq</groupId>
-                <artifactId>jooq-meta</artifactId>
-                <version>${jooq.version}</version>
-              </dependency>
-              <dependency>
-                <groupId>org.jooq</groupId>
-                <artifactId>jooq-codegen</artifactId>
-                <version>${jooq.version}</version>
+                <groupId>io.github.jklingsporn</groupId>
+                <artifactId>vertx-jooq-generate</artifactId>
+                <version>${vertx.jooq.version}</version>
               </dependency>
               <dependency>
                 <groupId>org.postgresql</groupId>
@@ -106,12 +111,12 @@
                 <password>${jdbc.password}</password>
               </jdbc>
               <generator>
+                <name>io.github.jklingsporn.vertx.jooq.generate.classic.ClassicReactiveVertxGenerator</name>
                 <database>
                   <inputSchema>public</inputSchema>
                   <name>org.jooq.meta.postgres.PostgresDatabase</name>
                   <includes>.*projections</includes>
                   <excludes></excludes>
-                  <name>org.jooq.meta.postgres.PostgresDatabase</name>
                   <forcedTypes>
                   </forcedTypes>
                 </database>
@@ -125,6 +130,9 @@
                   <daos>false</daos>
                   <fluentSetters>false</fluentSetters>
                 </generate>
+                <strategy>
+                  <name>io.github.jklingsporn.vertx.jooq.generate.VertxGeneratorStrategy</name>
+                </strategy>
               </generator>
             </configuration>
           </plugin>
@@ -159,15 +167,20 @@
               </execution>
             </executions>
             <dependencies>
+<!--              <dependency>-->
+<!--                <groupId>org.jooq</groupId>-->
+<!--                <artifactId>jooq-meta</artifactId>-->
+<!--                <version>${jooq.version}</version>-->
+<!--              </dependency>-->
+<!--              <dependency>-->
+<!--                <groupId>org.jooq</groupId>-->
+<!--                <artifactId>jooq-codegen</artifactId>-->
+<!--                <version>${jooq.version}</version>-->
+<!--              </dependency>-->
               <dependency>
-                <groupId>org.jooq</groupId>
-                <artifactId>jooq-meta</artifactId>
-                <version>${jooq.version}</version>
-              </dependency>
-              <dependency>
-                <groupId>org.jooq</groupId>
-                <artifactId>jooq-codegen</artifactId>
-                <version>${jooq.version}</version>
+                <groupId>io.github.jklingsporn</groupId>
+                <artifactId>vertx-jooq-generate</artifactId>
+                <version>${vertx.jooq.version}</version>
               </dependency>
               <dependency>
                 <groupId>org.postgresql</groupId>
@@ -183,12 +196,12 @@
                 <password>${jdbc.password}</password>
               </jdbc>
               <generator>
+                <name>io.github.jklingsporn.vertx.jooq.generate.classic.ClassicReactiveVertxGenerator</name>
                 <database>
                   <inputSchema>public</inputSchema>
                   <name>org.jooq.meta.postgres.PostgresDatabase</name>
                   <includes>.*</includes>
                   <excludes>.*projections</excludes>
-                  <name>org.jooq.meta.postgres.PostgresDatabase</name>
                   <forcedTypes>
                     <!--                    <forcedType>-->
                     <!--                      <userType>java.time.LocalDateTime</userType>-->
@@ -225,7 +238,12 @@
                   <pojos>true</pojos>
                   <daos>true</daos>
                   <fluentSetters>true</fluentSetters>
+                  <interfaces>true</interfaces>
+                  <records>false</records>
                 </generate>
+                <strategy>
+                  <name>io.github.jklingsporn.vertx.jooq.generate.VertxGeneratorStrategy</name>
+                </strategy>
               </generator>
             </configuration>
           </plugin>
