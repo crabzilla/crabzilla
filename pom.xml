@@ -224,6 +224,11 @@
 
     <dependency>
       <groupId>io.vertx</groupId>
+      <artifactId>vertx-config</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
       <artifactId>vertx-junit5</artifactId>
       <scope>test</scope>
     </dependency>
@@ -375,7 +380,7 @@
         <version>${maven-surefire-plugin.version}</version>
         <configuration>
           <!-- Sets the VM argument line used when unit tests are run. -->
-          <!--  <argLine>${surefireArgLine}</argLine>-->
+          <argLine>${surefireArgLine}</argLine>
           <!-- Skips unit tests if the value of skip.unit.tests property is true -->
           <skipTests>${skipTests}</skipTests>
           <!-- Excludes integration tests when unit tests are run. -->
@@ -417,7 +422,7 @@
             </goals>
             <configuration>
               <!-- Sets the VM argument line used when integration tests are run. -->
-              <!--  <argLine>${failsafeArgLine}</argLine>-->
+              <argLine>${failsafeArgLine}</argLine>
               <!--
                                 Skips integration tests if the value of skip.integration.tests property
                                 is true

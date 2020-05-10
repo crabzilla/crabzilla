@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc.jooq
 
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.internal.UnitOfWorkEvents
+import io.github.crabzilla.core.UnitOfWorkEvents
 import io.github.crabzilla.pgc.jooq.datamodel.Tables
 import io.github.jklingsporn.vertx.jooq.classic.reactivepg.ReactiveClassicGenericQueryExecutor
 import io.vertx.core.Future

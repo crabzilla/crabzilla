@@ -2,7 +2,7 @@ package io.github.crabzilla.pgc.jooq
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.internal.UnitOfWorkEvents
+import io.github.crabzilla.core.UnitOfWorkEvents
 import io.github.crabzilla.pgc.example1.CustomerActivated
 import io.github.crabzilla.pgc.example1.CustomerCreated
 import io.github.crabzilla.pgc.example1.CustomerDeactivated
@@ -33,12 +33,10 @@ import org.jooq.impl.DefaultConfiguration
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
 
 @ExtendWith(VertxExtension::class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgcJooqUowProjectorIT {
 
   private lateinit var vertx: Vertx
@@ -96,18 +94,19 @@ class PgcJooqUowProjectorIT {
       jooq = DefaultConfiguration()
       jooq.set(SQLDialect.POSTGRES)
       jooqUowProjector = PgcJooqUowProjector(jooq, readDb, "customer summary", streamProjectorFn)
-      readDb.query("DELETE FROM customer_summary").execute { deleted ->
-        if (deleted.failed()) {
-          log.error("delete ", deleted.cause())
-          tc.failNow(deleted.cause())
+      readDb.query("DELETE FROM customer_summary").execute { deleted1 ->
+        if (deleted1.failed()) {
+          log.error("delete ", deleted1.cause())
+          tc.failNow(deleted1.cause())
           return@execute
         }
-        readDb.query("DELETE FROM projections").execute { deleted ->
-          if (deleted.failed()) {
-            log.error("delete ", deleted.cause())
-            tc.failNow(deleted.cause())
+        readDb.query("DELETE FROM projections").execute { deleted2 ->
+          if (deleted2.failed()) {
+            log.error("delete ", deleted2.cause())
+            tc.failNow(deleted2.cause())
             return@execute
           }
+          println("** db cleaned")
           tc.completeNow()
         }
       }

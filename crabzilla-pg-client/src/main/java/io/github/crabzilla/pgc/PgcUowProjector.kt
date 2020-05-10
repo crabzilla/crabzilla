@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.internal.UnitOfWorkEvents
+import io.github.crabzilla.core.UnitOfWorkEvents
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Promise

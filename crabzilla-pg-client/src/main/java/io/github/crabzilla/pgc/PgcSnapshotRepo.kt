@@ -6,7 +6,7 @@ import io.github.crabzilla.core.EVENT_SERIALIZER
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.core.EntityCommandAware
 import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.internal.SnapshotRepository
+import io.github.crabzilla.core.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject

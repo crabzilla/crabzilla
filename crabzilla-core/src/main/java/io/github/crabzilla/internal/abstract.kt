@@ -5,6 +5,7 @@ import io.github.crabzilla.core.CommandMetadata
 import io.github.crabzilla.core.Entity
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.core.UnitOfWorkEvents
 import io.github.crabzilla.core.Version
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
@@ -18,11 +19,6 @@ interface EntityComponent<E : Entity> {
   fun getSnapshot(entityId: Int): Future<Snapshot<E>>
   fun toJson(state: E): JsonObject
   fun cmdFromJson(commandName: String, cmdAsJson: JsonObject): Command
-}
-
-interface SnapshotRepository<E : Entity> {
-  fun retrieve(entityId: Int): Future<Snapshot<E>>
-  fun upsert(entityId: Int, snapshot: Snapshot<E>): Future<Void>
 }
 
 interface UnitOfWorkJournal {

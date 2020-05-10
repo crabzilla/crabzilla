@@ -1,8 +1,9 @@
 package io.github.crabzilla.pgc.web.example1
 
-import io.github.crabzilla.pgc.web.WebResourceContext
+import io.github.crabzilla.core.InMemorySnapshotRepository
 import io.github.crabzilla.pgc.web.PgcReadContext
 import io.github.crabzilla.pgc.web.PgcWriteContext
+import io.github.crabzilla.pgc.web.WebResourceContext
 import io.github.crabzilla.pgc.web.addProjector
 import io.github.crabzilla.pgc.web.addResourceForEntity
 import io.github.crabzilla.pgc.web.listenHandler
@@ -45,13 +46,17 @@ class CustomerVerticle : AbstractVerticle() {
       Pair("deactivate", DeactivateCustomer::class.qualifiedName as String),
       Pair("create-activate", CreateActivateCustomer::class.qualifiedName as String))
 
-    val webPgcWriteContext = PgcWriteContext(vertx, example1Json, writeDb)
+    val writeContext = PgcWriteContext(vertx, example1Json, writeDb)
     val resourceContext = WebResourceContext("customers", "customer", CustomerCommandAware(), cmdTypeMap)
-    addResourceForEntity(webPgcWriteContext, resourceContext, router)
+    // addResourceForEntity(writeContext, resourceContext, router)
+
+    // or
+    val inMemoryRepo = InMemorySnapshotRepository(vertx.sharedData(), example1Json, "customer", Customer())
+    addResourceForEntity(writeContext, resourceContext, router, inMemoryRepo)
 
     // projection consumers
-    val webPgcReadContext = PgcReadContext(vertx, example1Json, readDb)
-    addProjector(webPgcReadContext, "customers-summary", CustomerSummaryProjector())
+    val readContext = PgcReadContext(vertx, example1Json, readDb)
+    addProjector(readContext, "customers-summary", CustomerSummaryProjector())
 
     // read model routes
     router.get("/customers/:id").handler(::customersQueryHandler)

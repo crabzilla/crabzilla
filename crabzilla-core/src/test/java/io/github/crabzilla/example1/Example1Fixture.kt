@@ -1,10 +1,6 @@
-package io.github.crabzilla.pgc.example1
+package io.github.crabzilla.example1
 
 import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.internal.EntityComponent
-import io.github.crabzilla.pgc.PgcEntityComponent
-import io.vertx.core.Vertx
-import io.vertx.pgclient.PgPool
 import java.util.UUID
 import kotlinx.serialization.json.Json
 
@@ -27,9 +23,4 @@ object Example1Fixture {
   val deactivated1 = CustomerDeactivated("a good reason")
 
   val example1Json = Json(context = customerModule)
-
-  val customerPgcComponent: (vertx: Vertx, writeDb: PgPool) -> EntityComponent<Customer> =
-    { vertx: Vertx, writeDb: PgPool ->
-      PgcEntityComponent(vertx, writeDb, CustomerCommandAware(), example1Json, CUSTOMER_ENTITY)
-  }
 }
