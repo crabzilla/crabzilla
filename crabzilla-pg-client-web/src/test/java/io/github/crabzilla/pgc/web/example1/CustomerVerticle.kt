@@ -45,13 +45,13 @@ class CustomerVerticle : AbstractVerticle() {
       Pair("deactivate", DeactivateCustomer::class.qualifiedName as String),
       Pair("create-activate", CreateActivateCustomer::class.qualifiedName as String))
 
-    val webPgcWriteContext = PgcWriteContext(vertx, example1Json, writeDb)
+    val writeContext = PgcWriteContext(vertx, example1Json, writeDb)
     val resourceContext = WebResourceContext("customers", "customer", CustomerCommandAware(), cmdTypeMap)
-    addResourceForEntity(webPgcWriteContext, resourceContext, router)
+    addResourceForEntity(writeContext, resourceContext, router)
 
     // projection consumers
-    val webPgcReadContext = PgcReadContext(vertx, example1Json, readDb)
-    addProjector(webPgcReadContext, "customers-summary", CustomerSummaryProjector())
+    val readContext = PgcReadContext(vertx, example1Json, readDb)
+    addProjector(readContext, "customers-summary", CustomerSummaryProjector())
 
     // read model routes
     router.get("/customers/:id").handler(::customersQueryHandler)
