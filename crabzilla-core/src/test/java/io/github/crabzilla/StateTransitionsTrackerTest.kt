@@ -6,12 +6,12 @@ import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCommandAware
 import io.github.crabzilla.example1.CustomerCreated
 import io.github.crabzilla.example1.CustomerId
-import java.util.Arrays.asList
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.util.Arrays.asList
 
 @DisplayName("A StateTransitionsTracker")
 internal class StateTransitionsTrackerTest {

@@ -1,14 +1,18 @@
 package io.github.crabzilla.core
 
 import io.github.crabzilla.internal.CommandController
+import io.github.crabzilla.internal.EntityComponent
+import io.github.crabzilla.internal.UnitOfWorkJournal
+import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.core.shareddata.SharedData
-import java.util.UUID
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.UUID
 
 val ENTITY_SERIALIZER = PolymorphicSerializer(Entity::class)
 val COMMAND_SERIALIZER = PolymorphicSerializer(Command::class)
@@ -139,3 +143,79 @@ class InMemorySnapshotRepository<E : Entity>(
 }
 
 data class UnitOfWorkEvents(val uowId: Long, val entityId: Int, val events: List<DomainEvent>)
+
+class CrabzillaContext(
+  val json: Json,
+  val uowRepository: UnitOfWorkRepository,
+  val uowJournal: UnitOfWorkJournal
+)
+
+class WebResourceContext<E : Entity>(
+  val resourceName: String,
+  val entityName: String,
+  val cmdTypeMap: Map<String, String>,
+  val cmdAware: EntityCommandAware<E>,
+  val snapshotRepo: SnapshotRepository<E>
+)
+
+class EntityComponent<E : Entity>(
+  private val ctx: CrabzillaContext,
+  private val entityName: String,
+  private val snapshotRepo: SnapshotRepository<E>,
+  cmdAware: EntityCommandAware<E>
+) : EntityComponent<E> {
+
+  companion object {
+    private val log: Logger = LoggerFactory.getLogger(EntityComponent::class.java)
+  }
+
+  private val cmdController = CommandController(cmdAware, snapshotRepo, ctx.uowJournal)
+
+  override fun entityName(): String {
+    return entityName
+  }
+
+  override fun getUowByUowId(uowId: Long): Future<UnitOfWork> {
+    return ctx.uowRepository.getUowByUowId(uowId)
+  }
+
+  override fun getAllUowByEntityId(id: Int): Future<List<UnitOfWork>> {
+    return ctx.uowRepository.getAllUowByEntityId(id)
+  }
+
+  override fun getSnapshot(entityId: Int): Future<Snapshot<E>> {
+    return snapshotRepo.retrieve(entityId)
+  }
+
+  override fun handleCommand(metadata: CommandMetadata, command: Command): Future<Pair<UnitOfWork, Long>> {
+    val promise = Promise.promise<Pair<UnitOfWork, Long>>()
+    ctx.uowRepository.getUowByCmdId(metadata.commandId).onComplete { gotCommand ->
+      if (gotCommand.succeeded()) {
+        val uowPair = gotCommand.result()
+        if (uowPair != null) {
+          promise.complete(uowPair)
+          return@onComplete
+        }
+      }
+      cmdController.handle(metadata, command).onComplete { cmdHandled ->
+        if (cmdHandled.succeeded()) {
+          val pair = cmdHandled.result()
+          promise.complete(pair)
+          if (log.isDebugEnabled) log.debug("Command successfully handled: $pair")
+        } else {
+          log.error("When handling command", cmdHandled.cause())
+          promise.fail(cmdHandled.cause())
+        }
+      }
+    }
+    return promise.future()
+  }
+
+  override fun toJson(state: E): JsonObject {
+    return JsonObject(ctx.json.stringify(ENTITY_SERIALIZER, state))
+  }
+
+  override fun cmdFromJson(commandName: String, cmdAsJson: JsonObject): Command {
+    return ctx.json.parse(COMMAND_SERIALIZER, cmdAsJson.encode())
+  }
+}

@@ -12,8 +12,8 @@ import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.Version
 import io.vertx.core.Future
 import io.vertx.core.Promise
-import java.util.concurrent.atomic.AtomicReference
 import org.slf4j.LoggerFactory
+import java.util.concurrent.atomic.AtomicReference
 
 data class RangeOfEvents(val afterVersion: Version, val untilVersion: Version, val events: List<DomainEvent>)
 
@@ -85,4 +85,8 @@ class CommandController<E : Entity>(
       }
     return promise.future()
   }
+}
+
+object PgcEventBusChannels {
+  const val unitOfWorkChannel = "crabzilla.pgc.events.channel"
 }
