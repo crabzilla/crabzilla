@@ -12,6 +12,8 @@ import io.github.crabzilla.jooq.example1.Example1Fixture.created1
 import io.github.crabzilla.jooq.example1.Example1Fixture.customerId1
 import io.github.crabzilla.jooq.example1.Example1Fixture.deactivated1
 import io.github.crabzilla.jooq.example1.datamodel.tables.CustomerSummary.CUSTOMER_SUMMARY
+import io.github.crabzilla.pgc.cleanDatabase
+import io.github.crabzilla.pgc.readModelPgPool
 import io.github.jklingsporn.vertx.jooq.classic.reactivepg.ReactiveClassicGenericQueryExecutor
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
@@ -38,7 +40,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
 
 @ExtendWith(VertxExtension::class)
-@TestInstance(TestInstance.Lifecycle.PER_METHOD)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class JooqUowProjectorIT {
 
   private lateinit var vertx: Vertx
@@ -81,7 +83,6 @@ class JooqUowProjectorIT {
   @BeforeEach
   fun setup(tc: VertxTestContext) {
     val vertOption = VertxOptions()
-    vertOption.blockedThreadCheckInterval = (1000 * 60 * 60).toLong() // to easier debug
     vertx = Vertx.vertx(vertOption)
     val envOptions = ConfigStoreOptions()
       .setType("file")
@@ -101,22 +102,9 @@ class JooqUowProjectorIT {
       jooq.setSQLDialect(POSTGRES)
       val executor = ReactiveClassicGenericQueryExecutor(jooq, readDb)
       jooqUowProjector = JooqUowProjector(executor, "customer summary", streamProjectorFn)
-      readDb.query("DELETE FROM customer_summary").execute { deleted1 ->
-        if (deleted1.failed()) {
-          log.error("delete ", deleted1.cause())
-          tc.failNow(deleted1.cause())
-          return@execute
-        }
-        readDb.query("DELETE FROM projections").execute { deleted2 ->
-          if (deleted2.failed()) {
-            log.error("delete ", deleted2.cause())
-            tc.failNow(deleted2.cause())
-            return@execute
-          }
-          println("** db cleaned")
-          tc.completeNow()
-        }
-      }
+      cleanDatabase(vertx, config)
+        .onSuccess { tc.completeNow() }
+        .onFailure { tc.failNow(it) }
     })
   }
 

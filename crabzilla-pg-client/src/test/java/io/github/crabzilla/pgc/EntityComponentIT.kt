@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.CommandMetadata
-import io.github.crabzilla.core.EntityComponent
+import io.github.crabzilla.core.CrabzillaInternal.EntityComponent
 import io.github.crabzilla.pgc.example1.CreateCustomer
 import io.github.crabzilla.pgc.example1.Customer
 import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_COMPONENT
@@ -49,21 +49,9 @@ class EntityComponentIT {
       val config = configFuture.result()
       writeDb = writeModelPgPool(vertx, config)
       customerComponent = CUSTOMER_COMPONENT(vertx, writeDb)
-      writeDb.query("delete from units_of_work").execute { deleteResult1 ->
-        if (deleteResult1.failed()) {
-          deleteResult1.cause().printStackTrace()
-          tc.failNow(deleteResult1.cause())
-          return@execute
-        }
-        writeDb.query("delete from customer_snapshots").execute { deleteResult2 ->
-          if (deleteResult2.failed()) {
-            deleteResult2.cause().printStackTrace()
-            tc.failNow(deleteResult2.cause())
-            return@execute
-          }
-          tc.completeNow()
-        }
-      }
+      cleanDatabase(vertx, config)
+        .onSuccess { tc.completeNow() }
+        .onFailure { tc.failNow(it) }
     })
   }
 

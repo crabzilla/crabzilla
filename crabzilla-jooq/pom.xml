@@ -37,7 +37,6 @@
 
     <!-- test -->
 
-
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-pg-client</artifactId>

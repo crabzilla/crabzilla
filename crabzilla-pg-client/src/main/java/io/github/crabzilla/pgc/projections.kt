@@ -2,7 +2,7 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EVENT_SERIALIZER
-import io.github.crabzilla.core.PgcEventBusChannels
+import io.github.crabzilla.core.EventBusChannels
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.UnitOfWorkEvents
 import io.vertx.core.Future
@@ -16,6 +16,50 @@ import io.vertx.sqlclient.Tuple
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory.getLogger
+
+
+internal val log = getLogger("addProjector")
+
+typealias PgcReadContext = Triple<Vertx, Json, PgPool>
+
+fun addProjector(readContext: PgcReadContext, streamId: String, projector: PgcEventProjector) {
+  fun toUnitOfWorkEvents(jsonObject: JsonObject, json: Json): UnitOfWorkEvents {
+    val uowId = jsonObject.getLong("uowId")
+    val entityId = jsonObject.getInteger(UnitOfWork.JsonMetadata.ENTITY_ID)
+    val eventsAsString = jsonObject.getJsonArray(UnitOfWork.JsonMetadata.EVENTS).encode()
+    val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsString)
+    return UnitOfWorkEvents(uowId, entityId, events)
+  }
+  log.info("adding projector for $streamId subscribing on ${EventBusChannels.unitOfWorkChannel}")
+  val (vertx, json, readDb) = readContext
+  vertx.eventBus().consumer<JsonObject>(EventBusChannels.unitOfWorkChannel) { message ->
+    val uowEvents = toUnitOfWorkEvents(message.body(), json)
+    val uolProjector = PgcUowProjector(readDb, streamId, projector)
+    uolProjector.handle(uowEvents).onComplete { result ->
+      if (result.failed()) { // TODO circuit breaker
+        log.error("Projection [$streamId] failed: " + result.cause().message)
+      }
+    }
+  }
+}
+
+interface PgcEventProjector {
+
+  fun handle(pgTx: Transaction, targetId: Int, event: DomainEvent): Future<Void>
+
+  fun executePreparedQuery(tx: Transaction, query: String, tuple: Tuple): Future<Void> {
+    val promise = Promise.promise<Void>()
+    tx.preparedQuery(query)
+      .execute(tuple) { event ->
+        if (event.failed()) {
+          promise.fail(event.cause())
+        } else {
+          promise.complete()
+        }
+      }
+    return promise.future()
+  }
+}
 
 /**
  * This implementation is reactive but also has a limitation: it can project only UnitOfWork with 6 events.
@@ -113,48 +157,5 @@ class PgcUowProjector(private val pgPool: PgPool, val name: String, val projecto
 
   private fun futureOf2(f1: Future<Void>, f2: Future<Void>): Future<Void> {
     return f1.compose { f2 }
-  }
-}
-
-interface PgcEventProjector {
-
-  fun handle(pgTx: Transaction, targetId: Int, event: DomainEvent): Future<Void>
-
-  fun executePreparedQuery(tx: Transaction, query: String, tuple: Tuple): Future<Void> {
-    val promise = Promise.promise<Void>()
-    tx.preparedQuery(query)
-      .execute(tuple) { event ->
-        if (event.failed()) {
-          promise.fail(event.cause())
-        } else {
-          promise.complete()
-        }
-      }
-    return promise.future()
-  }
-}
-
-internal val log = getLogger("addProjector")
-
-typealias PgcReadContext = Triple<Vertx, Json, PgPool>
-
-fun addProjector(readContext: PgcReadContext, streamId: String, projector: PgcEventProjector) {
-  fun toUnitOfWorkEvents(jsonObject: JsonObject, json: Json): UnitOfWorkEvents {
-    val uowId = jsonObject.getLong("uowId")
-    val entityId = jsonObject.getInteger(UnitOfWork.JsonMetadata.ENTITY_ID)
-    val eventsAsString = jsonObject.getJsonArray(UnitOfWork.JsonMetadata.EVENTS).encode()
-    val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsString)
-    return UnitOfWorkEvents(uowId, entityId, events)
-  }
-  log.info("adding projector for $streamId subscribing on ${PgcEventBusChannels.unitOfWorkChannel}")
-  val (vertx, json, readDb) = readContext
-  vertx.eventBus().consumer<JsonObject>(PgcEventBusChannels.unitOfWorkChannel) { message ->
-    val uowEvents = toUnitOfWorkEvents(message.body(), json)
-    val uolProjector = PgcUowProjector(readDb, streamId, projector)
-    uolProjector.handle(uowEvents).onComplete { result ->
-      if (result.failed()) { // TODO circuit breaker
-        log.error("Projection [$streamId] failed: " + result.cause().message)
-      }
-    }
   }
 }

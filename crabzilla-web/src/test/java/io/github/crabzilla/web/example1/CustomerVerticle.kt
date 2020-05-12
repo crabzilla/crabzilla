@@ -6,11 +6,11 @@ import io.github.crabzilla.pgc.PgcReadContext
 import io.github.crabzilla.pgc.PgcUowJournal
 import io.github.crabzilla.pgc.PgcUowRepo
 import io.github.crabzilla.pgc.addProjector
+import io.github.crabzilla.pgc.readModelPgPool
+import io.github.crabzilla.pgc.writeModelPgPool
 import io.github.crabzilla.web.WebResourceContext
 import io.github.crabzilla.web.addResourceForEntity
 import io.github.crabzilla.web.listenHandler
-import io.github.crabzilla.web.readModelPgPool
-import io.github.crabzilla.web.writeModelPgPool
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.core.http.HttpServer

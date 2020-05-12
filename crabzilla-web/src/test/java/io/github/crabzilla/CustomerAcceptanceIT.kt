@@ -6,13 +6,11 @@ import io.github.crabzilla.core.UnitOfWork.JsonMetadata.ENTITY_ID
 import io.github.crabzilla.core.UnitOfWork.JsonMetadata.ENTITY_NAME
 import io.github.crabzilla.core.UnitOfWork.JsonMetadata.EVENTS
 import io.github.crabzilla.core.UnitOfWork.JsonMetadata.VERSION
+import io.github.crabzilla.pgc.cleanDatabase
 import io.github.crabzilla.web.deploy
 import io.github.crabzilla.web.example1.CustomerVerticle
 import io.github.crabzilla.web.findFreeHttpPort
 import io.github.crabzilla.web.getConfig
-import io.github.crabzilla.web.readModelPgPool
-import io.github.crabzilla.web.writeModelPgPool
-import io.vertx.core.AsyncResult
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
@@ -30,17 +28,18 @@ import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.junit5.web.TestRequest.statusCode
 import io.vertx.junit5.web.TestRequest.testRequest
-import io.vertx.sqlclient.Row
-import io.vertx.sqlclient.RowSet
 import java.util.Random
 import java.util.UUID
 import java.util.function.Consumer
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.StringAssert
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.TestInstance.Lifecycle
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
 
@@ -48,60 +47,41 @@ import org.slf4j.LoggerFactory
  * Integration test
  */
 @ExtendWith(VertxExtension::class)
+@TestInstance(Lifecycle.PER_CLASS)
 internal class CustomerAcceptanceIT {
 
+  val random = Random()
+  var nextInt = random.nextInt()
+  var customerId2 = random.nextInt()
+  private val httpPort = findFreeHttpPort()
+  private lateinit var client: WebClient
+
   companion object {
-
     private val log = LoggerFactory.getLogger(CustomerAcceptanceIT::class.java)
-    val random = Random()
-    var nextInt = random.nextInt()
-    var customerId2 = random.nextInt()
-    private val httpPort = findFreeHttpPort()
-    private lateinit var client: WebClient
-
-    @BeforeAll
-    @JvmStatic
-    fun setup(tc: VertxTestContext, vertx: Vertx) {
-      getConfig(vertx, "./../example1.env")
-        .onSuccess { config: JsonObject ->
-          config.put("HTTP_PORT", httpPort)
-          val deploymentOptions = DeploymentOptions().setConfig(config).setInstances(1)
-          val wco = WebClientOptions()
-          wco.defaultHost = "0.0.0.0"
-          wco.defaultPort = httpPort
-          client = WebClient.create(vertx, wco)
-          deploy(vertx, CustomerVerticle::class.java.name, deploymentOptions)
-            .onComplete {
-              val read = readModelPgPool(vertx, config)
-              val write = writeModelPgPool(vertx, config)
-              write.query("delete from units_of_work").execute { event1: AsyncResult<RowSet<Row?>?> ->
-                if (event1.failed()) {
-                  tc.failNow(event1.cause())
-                  return@execute
-                }
-                write.query("delete from customer_snapshots").execute { event2: AsyncResult<RowSet<Row?>?> ->
-                  if (event2.failed()) {
-                    tc.failNow(event2.cause())
-                    return@execute
-                  }
-                  read.query("delete from customer_summary").execute { event3: AsyncResult<RowSet<Row?>?> ->
-                    if (event3.failed()) {
-                      tc.failNow(event3.cause())
-                      return@execute
-                    }
-                    tc.completeNow()
-                  }
-                }
-              }
-            }
-        }.onFailure { t: Throwable? -> tc.failNow(t) }
-    }
-
     init {
       System.setProperty(io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME,
         SLF4JLogDelegateFactory::class.java.name)
       LoggerFactory.getLogger(io.vertx.core.logging.LoggerFactory::class.java) // Required for Logback to work in Vertx
     }
+  }
+
+  @BeforeAll
+  fun setup(tc: VertxTestContext, vertx: Vertx) {
+    getConfig(vertx, "./../example1.env")
+      .onSuccess { config: JsonObject ->
+        config.put("HTTP_PORT", httpPort)
+        val deploymentOptions = DeploymentOptions().setConfig(config).setInstances(1)
+        val wco = WebClientOptions()
+        wco.defaultHost = "0.0.0.0"
+        wco.defaultPort = httpPort
+        client = WebClient.create(vertx, wco)
+        deploy(vertx, CustomerVerticle::class.java.name, deploymentOptions)
+          .onComplete {
+            cleanDatabase(vertx, config)
+              .onSuccess { tc.completeNow() }
+              .onFailure { tc.failNow(it) }
+          }
+      }.onFailure { tc.failNow(it) }
   }
 
   @Nested
@@ -161,7 +141,8 @@ internal class CustomerAcceptanceIT {
         .expect(Consumer { obj: HttpResponse<Buffer?> -> obj.bodyAsJsonObject() })
         .expect(Consumer { response: HttpResponse<Buffer?> -> println(response.bodyAsString()) })
         .expect(Consumer { response: HttpResponse<Buffer?> ->
-          StringAssert(response.bodyAsJsonObject().encode()).isEqualToIgnoringWhitespace(expected.encode()) })
+          StringAssert(response.bodyAsJsonObject().encode()).isEqualToIgnoringWhitespace(expected.encode())
+        })
         .send(tc)
     }
 
@@ -282,7 +263,7 @@ internal class CustomerAcceptanceIT {
 
   @Test
   @DisplayName("When sending an invalid CreateCommand")
-  fun a3(tc: VertxTestContext) {
+  fun a1(tc: VertxTestContext) {
     val invalidCommand = JsonObject()
     client.post(httpPort, "0.0.0.0", "/commands/customers/1/create")
       .`as`(BodyCodec.none())
@@ -293,7 +274,7 @@ internal class CustomerAcceptanceIT {
 
   @Test
   @DisplayName("When sending an invalid CreateCommand expecting uow id")
-  fun a4(tc: VertxTestContext) {
+  fun a2(tc: VertxTestContext) {
     val cmdAsJson = JsonObject("{\"type\":\"io.github.crabzilla.example1.CreateCustomer\",\"name\":\"a bad name\"}")
     log.info("/commands/customers/{}/create with json \n {}", customerId2, cmdAsJson.encodePrettily())
     client.post(httpPort, "0.0.0.0", "/commands/customers/$nextInt/create")
@@ -304,8 +285,25 @@ internal class CustomerAcceptanceIT {
   }
 
   @Test
+  @DisplayName("When sending a command with invalid type")
+  @Disabled // TODO it should fail on deploy instead
+  fun a3(tc: VertxTestContext) {
+    val invalidCommand = JsonObject()
+    val commandWithoutType = "doSomething"
+    client.post(httpPort, "0.0.0.0", "/commands/customers/1/$commandWithoutType")
+      .`as`(BodyCodec.none())
+      .expect(ResponsePredicate.SC_NOT_FOUND)
+      .sendJson(invalidCommand, tc.succeeding {
+        response: HttpResponse<Void>? -> tc.verify {
+          assertThat(response?.statusCode()).isEqualTo(404)
+        }
+      }
+    )
+  }
+
+  @Test
   @DisplayName("When GET to an invalid UnitOfWork (bad number) You get a 400")
-  fun a1(tc: VertxTestContext) {
+  fun a4(tc: VertxTestContext) {
     client[httpPort, "0.0.0.0", "/commands/customers/units-of-work/dddd"]
       .`as`(BodyCodec.string())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
@@ -315,7 +313,6 @@ internal class CustomerAcceptanceIT {
           assertThat(result).isEqualTo("path param unitOfWorkId must be a number")
           tc.completeNow()
         }
-      }
-      )
+      })
   }
 }

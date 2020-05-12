@@ -10,7 +10,8 @@ To help writing CQRS and Event Sourcing applications with [Vert.x](http://vertx.
 
 ## Status
 
-Its still in very early development stage. Do not use release 0.0.5, master branch is very different from that.
+It's still in very early development stage. Do not use release 0.0.5, master branch is very different from that.
+Hopefully the useful version will be v0.0.8 final.
 
 ### Requirements
 
@@ -43,7 +44,10 @@ mvn clean install -DskipTests=false
 ### Random notes
 
 1. Crabzilla tries to provide a chassis for wiring and running your domain by using verticles and other components.
-2. If your functions are pure, all side effects will occurs within UnitOfWorkJournal and EventsProjector components.
+2. If your command handling functions are pure, all side effects will occurs within:
+    * core.UnitOfWorkJournal: to save the events to database using Optimistic concurrency control
+    * pgc.PgcUowProjector: to project events to a read model using a PostgreSql database using vertx-pg-client
+    * jooq.JooqUowProjector: to project events to a a read model using vertx-jooq-classic-reactive
 3. So far events from all entities are written as an UnitOfWork in Json format into a single partitioned append only table.
 
 
