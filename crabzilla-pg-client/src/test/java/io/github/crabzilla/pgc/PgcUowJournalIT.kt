@@ -1,8 +1,8 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.internal.UnitOfWorkJournal
-import io.github.crabzilla.internal.UnitOfWorkRepository
+import io.github.crabzilla.core.UnitOfWorkJournal
+import io.github.crabzilla.core.UnitOfWorkRepository
 import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activatedUow1

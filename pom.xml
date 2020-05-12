@@ -74,8 +74,8 @@
   <modules>
     <module>crabzilla-core</module>
     <module>crabzilla-pg-client</module>
-    <module>crabzilla-pg-client-jooq</module>
-    <module>crabzilla-pg-client-web</module>
+    <module>crabzilla-web</module>
+    <module>crabzilla-jooq</module>
     <module>coverage-report</module>
   </modules>
 
@@ -99,13 +99,13 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-pg-client-jooq</artifactId>
+        <artifactId>crabzilla-jooq</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-pg-client-web</artifactId>
+        <artifactId>crabzilla-web</artifactId>
         <version>${project.version}</version>
       </dependency>
 

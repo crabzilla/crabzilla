@@ -2,8 +2,9 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.COMMAND_SERIALIZER
 import io.github.crabzilla.core.EVENT_SERIALIZER
+import io.github.crabzilla.core.PgcEventBusChannels
 import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.internal.UnitOfWorkJournal
+import io.github.crabzilla.core.UnitOfWorkJournal
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx

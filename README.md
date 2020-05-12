@@ -10,14 +10,7 @@ To help writing CQRS and Event Sourcing applications with [Vert.x](http://vertx.
 
 ## Status
 
-Its still in very early development stage. APIs can change. So far Crabzilla has only an Aggregate example. Inspired by
-[Eventstorming](http://eventstorming.com), the goal is to develop examples and implementations for an ExternalSystem,
-a Listener and a ProcessManager / Saga. Do not use release 0.0.5, master branch is very different from that.
-
-## Example application
-
-* [Accounts Example](https://github.com/crabzilla/accounts)
-* [kotlin-example1-manual **deprecated**](https://crabzilla.github.io/crabzilla/docs/kotlin-example1-manual.html)
+Its still in very early development stage. Do not use release 0.0.5, master branch is very different from that.
 
 ### Requirements
 

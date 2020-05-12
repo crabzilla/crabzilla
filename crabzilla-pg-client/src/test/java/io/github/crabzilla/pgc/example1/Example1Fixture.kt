@@ -1,8 +1,12 @@
 package io.github.crabzilla.pgc.example1
 
+import io.github.crabzilla.core.CrabzillaContext
+import io.github.crabzilla.core.EntityComponent
+import io.github.crabzilla.core.SnapshotRepository
 import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.internal.EntityComponent
-import io.github.crabzilla.pgc.PgcEntityComponent
+import io.github.crabzilla.pgc.PgcSnapshotRepo
+import io.github.crabzilla.pgc.PgcUowJournal
+import io.github.crabzilla.pgc.PgcUowRepo
 import io.vertx.core.Vertx
 import io.vertx.pgclient.PgPool
 import java.util.UUID
@@ -28,8 +32,14 @@ object Example1Fixture {
 
   val example1Json = Json(context = customerModule)
 
-  val customerPgcComponent: (vertx: Vertx, writeDb: PgPool) -> EntityComponent<Customer> =
+  val CUSTOMER_COMPONENT: (vertx: Vertx, writeDb: PgPool) -> EntityComponent<Customer> =
     { vertx: Vertx, writeDb: PgPool ->
-      PgcEntityComponent(vertx, writeDb, CustomerCommandAware(), example1Json, CUSTOMER_ENTITY)
+      val cmdAware = CustomerCommandAware()
+      val uowRepo = PgcUowRepo(writeDb, example1Json)
+      val uowJournal = PgcUowJournal(vertx, writeDb, example1Json)
+      val snapshotRepo:
+        SnapshotRepository<Customer> = PgcSnapshotRepo(writeDb, example1Json, CUSTOMER_ENTITY, cmdAware)
+      val ctx = CrabzillaContext(example1Json, uowRepo, uowJournal)
+      EntityComponent(ctx, CUSTOMER_ENTITY, snapshotRepo, cmdAware)
   }
 }
