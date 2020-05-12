@@ -31,11 +31,6 @@
       <artifactId>vertx-config</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-pg-client</artifactId>
-    </dependency>
-
     <!-- jackson json -->
 
     <dependency>
@@ -49,6 +44,12 @@
     </dependency>
 
     <!-- test -->
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-pg-client</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>

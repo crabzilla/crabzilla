@@ -2,8 +2,8 @@ package io.github.crabzilla.web
 
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandMetadata
+import io.github.crabzilla.core.CrabzillaInternal.EntityComponent
 import io.github.crabzilla.core.Entity
-import io.github.crabzilla.core.EntityComponent
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
@@ -58,6 +58,9 @@ class WebDeployer<E : Entity>(
             it.pathParam(COMMAND_NAME_PARAMETER), UUID.fromString(commandId))
         }
       val commandType = cmdTypeMap[commandMetadata.commandName]
+      if (commandType == null) {
+        // TODO it should fail
+      }
       val command: Command? = try {
         component.cmdFromJson(it.bodyAsJson.put("type", commandType))
       } catch (e: Exception) {

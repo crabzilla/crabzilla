@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc.example1
 
 import io.github.crabzilla.core.CrabzillaContext
-import io.github.crabzilla.core.EntityComponent
+import io.github.crabzilla.core.CrabzillaInternal.EntityComponent
 import io.github.crabzilla.core.SnapshotRepository
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.pgc.PgcSnapshotRepo

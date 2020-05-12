@@ -2,7 +2,7 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EVENT_SERIALIZER
-import io.github.crabzilla.core.PgcEventBusChannels
+import io.github.crabzilla.core.EventBusChannels
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.UnitOfWorkEvents
 import io.vertx.core.Future
@@ -146,9 +146,9 @@ fun addProjector(readContext: PgcReadContext, streamId: String, projector: PgcEv
     val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsString)
     return UnitOfWorkEvents(uowId, entityId, events)
   }
-  log.info("adding projector for $streamId subscribing on ${PgcEventBusChannels.unitOfWorkChannel}")
+  log.info("adding projector for $streamId subscribing on ${EventBusChannels.unitOfWorkChannel}")
   val (vertx, json, readDb) = readContext
-  vertx.eventBus().consumer<JsonObject>(PgcEventBusChannels.unitOfWorkChannel) { message ->
+  vertx.eventBus().consumer<JsonObject>(EventBusChannels.unitOfWorkChannel) { message ->
     val uowEvents = toUnitOfWorkEvents(message.body(), json)
     val uolProjector = PgcUowProjector(readDb, streamId, projector)
     uolProjector.handle(uowEvents).onComplete { result ->
