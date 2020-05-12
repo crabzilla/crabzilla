@@ -32,6 +32,9 @@ import io.vertx.junit5.web.TestRequest.statusCode
 import io.vertx.junit5.web.TestRequest.testRequest
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
+import java.util.Random
+import java.util.UUID
+import java.util.function.Consumer
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.StringAssert
 import org.junit.jupiter.api.BeforeAll
@@ -40,9 +43,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
-import java.util.Random
-import java.util.UUID
-import java.util.function.Consumer
 
 /**
  * Integration test

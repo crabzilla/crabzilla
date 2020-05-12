@@ -3,14 +3,14 @@ package io.github.crabzilla.web
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandMetadata
 import io.github.crabzilla.core.Entity
-import io.github.crabzilla.internal.EntityComponent
+import io.github.crabzilla.core.EntityComponent
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
-import org.slf4j.LoggerFactory
 import java.util.UUID
+import org.slf4j.LoggerFactory
 
 class WebDeployer<E : Entity>(
   private val resourceName: String,
@@ -59,7 +59,7 @@ class WebDeployer<E : Entity>(
         }
       val commandType = cmdTypeMap[commandMetadata.commandName]
       val command: Command? = try {
-        component.cmdFromJson(commandMetadata.commandName, it.bodyAsJson.put("type", commandType))
+        component.cmdFromJson(it.bodyAsJson.put("type", commandType))
       } catch (e: Exception) {
         null
       }

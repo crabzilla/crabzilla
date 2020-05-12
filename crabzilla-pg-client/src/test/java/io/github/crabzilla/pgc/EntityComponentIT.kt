@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.CommandMetadata
-import io.github.crabzilla.internal.EntityComponent
+import io.github.crabzilla.core.EntityComponent
 import io.github.crabzilla.pgc.example1.CreateCustomer
 import io.github.crabzilla.pgc.example1.Customer
 import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_COMPONENT

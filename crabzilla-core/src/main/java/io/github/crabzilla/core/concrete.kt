@@ -1,18 +1,15 @@
 package io.github.crabzilla.core
 
-import io.github.crabzilla.internal.CommandController
-import io.github.crabzilla.internal.EntityComponent
-import io.github.crabzilla.internal.UnitOfWorkJournal
-import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.core.shareddata.SharedData
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 val ENTITY_SERIALIZER = PolymorphicSerializer(Entity::class)
 val COMMAND_SERIALIZER = PolymorphicSerializer(Command::class)
@@ -84,7 +81,7 @@ class InMemorySnapshotRepository<E : Entity>(
   private val initialState: E
 ) : SnapshotRepository<E> {
   companion object {
-    internal val log = LoggerFactory.getLogger(CommandController::class.java)
+    internal val log = LoggerFactory.getLogger(InMemorySnapshotRepository::class.java)
   }
   override fun upsert(entityId: Int, snapshot: Snapshot<E>): Future<Void> {
     val promise = Promise.promise<Void>()
@@ -150,20 +147,88 @@ class CrabzillaContext(
   val uowJournal: UnitOfWorkJournal
 )
 
-class WebResourceContext<E : Entity>(
-  val resourceName: String,
-  val entityName: String,
-  val cmdTypeMap: Map<String, String>,
-  val cmdAware: EntityCommandAware<E>,
-  val snapshotRepo: SnapshotRepository<E>
-)
+data class RangeOfEvents(val afterVersion: Version, val untilVersion: Version, val events: List<DomainEvent>)
+
+class CommandController<E : Entity>(
+  private val commandAware: EntityCommandAware<E>,
+  private val snapshotRepo: SnapshotRepository<E>,
+  private val uowJournal: UnitOfWorkJournal
+) {
+  companion object {
+    internal val log = LoggerFactory.getLogger(CommandController::class.java)
+  }
+  fun handle(metadata: CommandMetadata, command: Command): Future<Pair<UnitOfWork, Long>> {
+    fun toUnitOfWork(ctx: CommandContext<E>, promise: Future<List<DomainEvent>>): Future<UnitOfWork> {
+      val uowPromise: Promise<UnitOfWork> = Promise.promise()
+      val (cmdMetadata, command, snapshot) = ctx
+      if (promise.succeeded()) {
+        uowPromise.complete(UnitOfWork(cmdMetadata.entityName, cmdMetadata.entityId, cmdMetadata.commandId,
+          command, snapshot.version + 1, promise.result()))
+      } else {
+        uowPromise.fail(promise.cause())
+      }
+      return uowPromise.future()
+    }
+    val promise = Promise.promise<Pair<UnitOfWork, Long>>()
+    if (log.isDebugEnabled) log.debug("received $metadata\n $command")
+    val constraints = commandAware.validateCmd(command)
+    if (constraints.isNotEmpty()) {
+      log.error("Command is invalid: $constraints")
+      promise.fail(constraints.toString())
+      return promise.future()
+    }
+    val snapshotValue: AtomicReference<Snapshot<E>> = AtomicReference()
+    val uowValue: AtomicReference<UnitOfWork> = AtomicReference()
+    val uowIdValue: AtomicReference<Long> = AtomicReference()
+    snapshotRepo.retrieve(metadata.entityId)
+      .compose { snapshot ->
+        if (log.isDebugEnabled) log.debug("got snapshot $snapshot")
+        val cachedSnapshot = snapshot ?: Snapshot(commandAware.initialState, 0)
+        snapshotValue.set(cachedSnapshot)
+        val request = Triple(metadata, command, cachedSnapshot)
+        val events = commandAware.handleCmd(metadata.entityId, cachedSnapshot.state, command)
+        val uow = toUnitOfWork(request, events)
+        uow
+      }
+      .compose { unitOfWork ->
+        if (log.isDebugEnabled) log.debug("got unitOfWork $unitOfWork")
+        // append to journal
+        uowValue.set(unitOfWork)
+        val uowId = uowJournal.append(unitOfWork)
+        uowId
+      }
+      .compose { uowId ->
+        if (log.isDebugEnabled) log.debug("got uowId $uowId")
+        uowIdValue.set(uowId)
+        // compute new snapshot
+        if (log.isDebugEnabled) log.debug("computing new snapshot")
+        val newInstance = uowValue.get().events
+          .fold(snapshotValue.get().state) { state, event -> commandAware.applyEvent.invoke(event, state) }
+        val newSnapshot = Snapshot(newInstance, uowValue.get().version)
+        if (log.isDebugEnabled) log.debug("now will store snapshot $newSnapshot")
+        snapshotRepo.upsert(metadata.entityId, newSnapshot)
+      }
+      .compose {
+        // set result
+        val pair: Pair<UnitOfWork, Long> = Pair(uowValue.get(), uowIdValue.get())
+        if (log.isDebugEnabled) log.debug("command handling success: $pair")
+        promise.complete(pair)
+        promise.future()
+      }
+    return promise.future()
+  }
+}
+
+object PgcEventBusChannels {
+  const val unitOfWorkChannel = "crabzilla.pgc.events.channel"
+}
 
 class EntityComponent<E : Entity>(
   private val ctx: CrabzillaContext,
   private val entityName: String,
   private val snapshotRepo: SnapshotRepository<E>,
   cmdAware: EntityCommandAware<E>
-) : EntityComponent<E> {
+) {
 
   companion object {
     private val log: Logger = LoggerFactory.getLogger(EntityComponent::class.java)
@@ -171,23 +236,23 @@ class EntityComponent<E : Entity>(
 
   private val cmdController = CommandController(cmdAware, snapshotRepo, ctx.uowJournal)
 
-  override fun entityName(): String {
+  fun entityName(): String {
     return entityName
   }
 
-  override fun getUowByUowId(uowId: Long): Future<UnitOfWork> {
+  fun getUowByUowId(uowId: Long): Future<UnitOfWork> {
     return ctx.uowRepository.getUowByUowId(uowId)
   }
 
-  override fun getAllUowByEntityId(id: Int): Future<List<UnitOfWork>> {
+  fun getAllUowByEntityId(id: Int): Future<List<UnitOfWork>> {
     return ctx.uowRepository.getAllUowByEntityId(id)
   }
 
-  override fun getSnapshot(entityId: Int): Future<Snapshot<E>> {
+  fun getSnapshot(entityId: Int): Future<Snapshot<E>> {
     return snapshotRepo.retrieve(entityId)
   }
 
-  override fun handleCommand(metadata: CommandMetadata, command: Command): Future<Pair<UnitOfWork, Long>> {
+  fun handleCommand(metadata: CommandMetadata, command: Command): Future<Pair<UnitOfWork, Long>> {
     val promise = Promise.promise<Pair<UnitOfWork, Long>>()
     ctx.uowRepository.getUowByCmdId(metadata.commandId).onComplete { gotCommand ->
       if (gotCommand.succeeded()) {
@@ -211,11 +276,11 @@ class EntityComponent<E : Entity>(
     return promise.future()
   }
 
-  override fun toJson(state: E): JsonObject {
+  fun toJson(state: E): JsonObject {
     return JsonObject(ctx.json.stringify(ENTITY_SERIALIZER, state))
   }
 
-  override fun cmdFromJson(commandName: String, cmdAsJson: JsonObject): Command {
+  fun cmdFromJson(cmdAsJson: JsonObject): Command {
     return ctx.json.parse(COMMAND_SERIALIZER, cmdAsJson.encode())
   }
 }

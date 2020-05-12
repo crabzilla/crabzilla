@@ -4,22 +4,22 @@ import io.github.crabzilla.core.COMMAND_SERIALIZER
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EVENT_SERIALIZER
+import io.github.crabzilla.core.RangeOfEvents
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.UnitOfWorkEvents
+import io.github.crabzilla.core.UnitOfWorkRepository
 import io.github.crabzilla.core.Version
-import io.github.crabzilla.internal.RangeOfEvents
-import io.github.crabzilla.internal.UnitOfWorkRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
+import java.util.ArrayList
+import java.util.UUID
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-import java.util.ArrayList
-import java.util.UUID
 
 class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : UnitOfWorkRepository {
 

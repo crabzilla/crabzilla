@@ -1,8 +1,8 @@
 package io.github.crabzilla.jooq.example1
 
 import io.github.crabzilla.core.UnitOfWork
-import kotlinx.serialization.json.Json
 import java.util.UUID
+import kotlinx.serialization.json.Json
 
 object Example1Fixture {
 

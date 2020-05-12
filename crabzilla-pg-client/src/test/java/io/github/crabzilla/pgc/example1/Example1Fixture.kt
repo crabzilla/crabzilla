@@ -9,8 +9,8 @@ import io.github.crabzilla.pgc.PgcUowJournal
 import io.github.crabzilla.pgc.PgcUowRepo
 import io.vertx.core.Vertx
 import io.vertx.pgclient.PgPool
-import kotlinx.serialization.json.Json
 import java.util.UUID
+import kotlinx.serialization.json.Json
 
 object Example1Fixture {
 
@@ -32,7 +32,7 @@ object Example1Fixture {
 
   val example1Json = Json(context = customerModule)
 
-  val CUSTOMER_COMPONENT: (vertx: Vertx, writeDb: PgPool) -> io.github.crabzilla.internal.EntityComponent<Customer> =
+  val CUSTOMER_COMPONENT: (vertx: Vertx, writeDb: PgPool) -> EntityComponent<Customer> =
     { vertx: Vertx, writeDb: PgPool ->
       val cmdAware = CustomerCommandAware()
       val uowRepo = PgcUowRepo(writeDb, example1Json)

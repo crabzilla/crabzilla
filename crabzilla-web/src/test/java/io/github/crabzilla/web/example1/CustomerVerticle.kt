@@ -2,11 +2,11 @@ package io.github.crabzilla.web.example1
 
 import io.github.crabzilla.core.CrabzillaContext
 import io.github.crabzilla.core.InMemorySnapshotRepository
-import io.github.crabzilla.core.WebResourceContext
 import io.github.crabzilla.pgc.PgcReadContext
 import io.github.crabzilla.pgc.PgcUowJournal
 import io.github.crabzilla.pgc.PgcUowRepo
 import io.github.crabzilla.pgc.addProjector
+import io.github.crabzilla.web.WebResourceContext
 import io.github.crabzilla.web.addResourceForEntity
 import io.github.crabzilla.web.listenHandler
 import io.github.crabzilla.web.readModelPgPool

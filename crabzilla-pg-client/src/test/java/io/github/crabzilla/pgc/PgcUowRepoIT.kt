@@ -2,9 +2,9 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.COMMAND_SERIALIZER
 import io.github.crabzilla.core.EVENT_SERIALIZER
-import io.github.crabzilla.internal.RangeOfEvents
-import io.github.crabzilla.internal.UnitOfWorkJournal
-import io.github.crabzilla.internal.UnitOfWorkRepository
+import io.github.crabzilla.core.RangeOfEvents
+import io.github.crabzilla.core.UnitOfWorkJournal
+import io.github.crabzilla.core.UnitOfWorkRepository
 import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
 import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.pgc.example1.Example1Fixture.activateCmd1

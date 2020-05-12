@@ -2,8 +2,9 @@ package io.github.crabzilla.web
 
 import io.github.crabzilla.core.CrabzillaContext
 import io.github.crabzilla.core.Entity
+import io.github.crabzilla.core.EntityCommandAware
 import io.github.crabzilla.core.EntityComponent
-import io.github.crabzilla.core.WebResourceContext
+import io.github.crabzilla.core.SnapshotRepository
 import io.vertx.ext.web.Router
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -19,3 +20,11 @@ fun <E : Entity> addResourceForEntity(
   val cmdHandlerComponent = EntityComponent(ctx, webCtx.entityName, webCtx.snapshotRepo, webCtx.cmdAware)
   WebDeployer(webCtx.resourceName, webCtx.cmdTypeMap, cmdHandlerComponent, router).deployWebRoutes()
 }
+
+class WebResourceContext<E : Entity>(
+  val resourceName: String,
+  val entityName: String,
+  val cmdTypeMap: Map<String, String>,
+  val cmdAware: EntityCommandAware<E>,
+  val snapshotRepo: SnapshotRepository<E>
+)

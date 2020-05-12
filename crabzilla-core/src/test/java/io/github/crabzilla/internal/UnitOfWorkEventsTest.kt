@@ -5,9 +5,9 @@ import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.UnitOfWorkEvents
 import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.CustomerCreated
+import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.UUID
 
 class UnitOfWorkEventsTest {
 

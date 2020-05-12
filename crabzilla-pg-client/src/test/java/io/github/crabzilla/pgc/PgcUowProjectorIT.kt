@@ -24,13 +24,13 @@ import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
+import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 class PgcUowProjectorIT {

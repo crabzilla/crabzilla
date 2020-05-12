@@ -23,6 +23,7 @@ import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
+import java.util.UUID
 import kotlinx.serialization.Serializable
 import org.assertj.core.api.Assertions.assertThat
 import org.jooq.DSLContext
@@ -35,7 +36,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
