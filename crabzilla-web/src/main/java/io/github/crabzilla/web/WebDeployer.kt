@@ -29,6 +29,7 @@ class WebDeployer<E : Entity>(
     const val COMMAND_ID_PARAMETER = "commandId"
     const val ENTITY_ID_PARAMETER = "entityId"
     const val UNIT_OF_WORK_ID_PARAMETER = "unitOfWorkId"
+    const val JSON = "application/json"
     private val log = LoggerFactory.getLogger(WebDeployer::class.java)
   }
 
@@ -46,7 +47,7 @@ class WebDeployer<E : Entity>(
       }
     }
     log.info("adding route POST $postCmd")
-    router.post(postCmd).handler {
+    router.post(postCmd).consumes(JSON).produces(JSON).handler {
       val begin = System.currentTimeMillis()
       val commandId = it.request().getHeader(COMMAND_ID_PARAMETER)
       val commandMetadata =
@@ -58,9 +59,6 @@ class WebDeployer<E : Entity>(
             it.pathParam(COMMAND_NAME_PARAMETER), UUID.fromString(commandId))
         }
       val commandType = cmdTypeMap[commandMetadata.commandName]
-      if (commandType == null) {
-        // TODO it should fail
-      }
       val command: Command? = try {
         component.cmdFromJson(it.bodyAsJson.put("type", commandType))
       } catch (e: Exception) {
@@ -79,8 +77,8 @@ class WebDeployer<E : Entity>(
             val location = it.request().absoluteURI().split('/').subList(0, 3)
               .reduce { acc, s -> acc.plus("/$s") } + "/commands/$resourceName/units-of-work/$second"
             it.response()
-              .putHeader("accept", "application/json")
               .putHeader("Location", location)
+              .putHeader("Content-Type", JSON)
               .setStatusCode(303)
               .end()
           }
@@ -91,7 +89,7 @@ class WebDeployer<E : Entity>(
     }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route GET $getSnapshot")
-    router.get(getSnapshot).handler {
+    router.get(getSnapshot).produces(JSON).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
       val httpResp = it.response()
       component.getSnapshot(entityId).onComplete { event ->
@@ -104,8 +102,9 @@ class WebDeployer<E : Entity>(
             .put("state", component.toJson(snapshot.state))
             .put("version", snapshot.version)
           if (snapshot.version > 0) {
-            httpResp.headers().add("Content-Type", "application/json")
-            httpResp.end(snapshotJson.encode())
+            httpResp
+              .putHeader("Content-Type", JSON)
+              .end(snapshotJson.encode())
           } else {
             httpResp.setStatusCode(404).end("Entity not found")
           }
@@ -114,7 +113,7 @@ class WebDeployer<E : Entity>(
     }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route GET $getAllUow")
-    router.get(getAllUow).handler {
+    router.get(getAllUow).produces(JSON).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
       val httpResp = it.response()
       component.getAllUowByEntityId(entityId).onComplete { event ->
@@ -123,15 +122,16 @@ class WebDeployer<E : Entity>(
           httpResp.end()
         } else {
           val resultList = event.result()
-          httpResp.setStatusCode(200).setChunked(true)
-            .headers().add("Content-Type", "application/json")
+          httpResp.setStatusCode(200)
+            .setChunked(true)
+            .putHeader("Content-Type", JSON)
           httpResp.end(JsonArray(resultList).encode())
         }
       }
     }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
     log.info("adding route GET $getUow")
-    router.get(getUow).handler {
+    router.get(getUow).produces(JSON).handler {
       val uowId = it.pathParam(UNIT_OF_WORK_ID_PARAMETER).toLong()
       val httpResp = it.response()
       component.getUowByUowId(uowId).onComplete { uowResult ->
@@ -140,8 +140,8 @@ class WebDeployer<E : Entity>(
           httpResp.end()
         } else {
           httpResp.setStatusCode(200).setChunked(true)
-            .putHeader("Content-Type", "application/json")
             .putHeader("uowId", uowId.toString())
+            .putHeader("Content-Type", JSON)
             .end(JsonObject.mapFrom(uowResult.result()).encode())
         }
       }

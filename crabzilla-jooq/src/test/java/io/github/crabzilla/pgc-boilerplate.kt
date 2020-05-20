@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla
 
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future

@@ -1,4 +1,4 @@
-package io.github.crabzilla
+package io.github.crabzilla.web.example1
 
 import io.github.crabzilla.core.UnitOfWork.JsonMetadata.COMMAND
 import io.github.crabzilla.core.UnitOfWork.JsonMetadata.COMMAND_ID
@@ -6,11 +6,10 @@ import io.github.crabzilla.core.UnitOfWork.JsonMetadata.ENTITY_ID
 import io.github.crabzilla.core.UnitOfWork.JsonMetadata.ENTITY_NAME
 import io.github.crabzilla.core.UnitOfWork.JsonMetadata.EVENTS
 import io.github.crabzilla.core.UnitOfWork.JsonMetadata.VERSION
-import io.github.crabzilla.pgc.cleanDatabase
-import io.github.crabzilla.web.deploy
-import io.github.crabzilla.web.example1.CustomerVerticle
-import io.github.crabzilla.web.findFreeHttpPort
-import io.github.crabzilla.web.getConfig
+import io.github.crabzilla.web.boilerplate.cleanDatabase
+import io.github.crabzilla.web.boilerplate.deploy
+import io.github.crabzilla.web.boilerplate.findFreeHttpPort
+import io.github.crabzilla.web.boilerplate.getConfig
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
@@ -91,7 +90,7 @@ internal class CustomerAcceptanceIT {
     @DisplayName("You get a correspondent UnitOfWork as JSON")
     fun a1(tc: VertxTestContext) {
       val cmdAsJson = JsonObject("{\"name\":\"customer#$customerId2\"}")
-      val route = "/commands/customers/$customerId2/create"
+      val route = "/commands/customer/$customerId2/create"
       log.info("$route with json \n {}", customerId2, cmdAsJson.encodePrettily())
       testRequest(client, POST, route)
         .expect(statusCode(200))
@@ -113,7 +112,7 @@ internal class CustomerAcceptanceIT {
     @Test
     @DisplayName("You get a correspondent snapshot (write model)")
     fun a2(tc: VertxTestContext) {
-      client[httpPort, "0.0.0.0", "/commands/customers/$customerId2"]
+      client["/commands/customer/$customerId2"]
         .`as`(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
@@ -149,7 +148,7 @@ internal class CustomerAcceptanceIT {
     @Test
     @DisplayName("You get a correspondent entity tracking")
     fun a4(tc: VertxTestContext) {
-      client[httpPort, "0.0.0.0", "/commands/customers/$customerId2/units-of-work"]
+      client["/commands/customer/$customerId2/units-of-work"]
         .`as`(BodyCodec.jsonArray())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
@@ -172,9 +171,9 @@ internal class CustomerAcceptanceIT {
     @DisplayName("You get a correspondent UnitOfWork as JSON")
     fun a1(tc: VertxTestContext) {
       val cmdAsJson = JsonObject("{\"name\":\"customer#$customerId3\"}")
-      log.info("/commands/customers/{}/create with json \n {}", customerId3, cmdAsJson.encodePrettily())
+      log.info("/commands/customer/{}/create with json \n {}", customerId3, cmdAsJson.encodePrettily())
       val cmdId = UUID.randomUUID()
-      client.post(httpPort, "0.0.0.0", "/commands/customers/$customerId3/create")
+      client.post("/commands/customer/$customerId3/create")
         .`as`(BodyCodec.jsonObject())
         .putHeader("commandId", cmdId.toString())
         .expect(ResponsePredicate.SC_SUCCESS)
@@ -191,7 +190,7 @@ internal class CustomerAcceptanceIT {
             assertThat(uow1.getJsonObject(COMMAND)).isEqualTo(cmdAsJson)
             assertThat(uow1.getInteger(VERSION)).isEqualTo(1)
             assertThat(uow1.getJsonArray(EVENTS).size()).isEqualTo(1)
-            client.post(httpPort, "0.0.0.0", "/commands/customers/$customerId3/create")
+            client.post(httpPort, "0.0.0.0", "/commands/customer/$customerId3/create")
               .`as`(BodyCodec.jsonObject())
               .putHeader("commandId", cmdId.toString())
               .expect(ResponsePredicate.SC_SUCCESS)
@@ -215,7 +214,7 @@ internal class CustomerAcceptanceIT {
     @Test
     @DisplayName("You get a correspondent snapshot (write model)")
     fun a2(tc: VertxTestContext) {
-      client[httpPort, "0.0.0.0", "/commands/customers/$customerId3"]
+      client["/commands/customer/$customerId3"]
         .`as`(BodyCodec.jsonObject())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
@@ -247,7 +246,7 @@ internal class CustomerAcceptanceIT {
     @Test
     @DisplayName("You get a correspondent entity tracking")
     fun a4(tc: VertxTestContext) {
-      client[httpPort, "0.0.0.0", "/commands/customers/$customerId3/units-of-work"]
+      client["/commands/customer/$customerId3/units-of-work"]
         .`as`(BodyCodec.jsonArray())
         .expect(ResponsePredicate.SC_SUCCESS)
         .expect(ResponsePredicate.JSON)
@@ -265,7 +264,7 @@ internal class CustomerAcceptanceIT {
   @DisplayName("When sending an invalid CreateCommand")
   fun a1(tc: VertxTestContext) {
     val invalidCommand = JsonObject()
-    client.post(httpPort, "0.0.0.0", "/commands/customers/1/create")
+    client.post("/commands/customer/1/create")
       .`as`(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(invalidCommand, tc.succeeding { response: HttpResponse<Void>? -> tc.verify { tc.completeNow() } }
@@ -276,8 +275,8 @@ internal class CustomerAcceptanceIT {
   @DisplayName("When sending an invalid CreateCommand expecting uow id")
   fun a2(tc: VertxTestContext) {
     val cmdAsJson = JsonObject("{\"type\":\"io.github.crabzilla.example1.CreateCustomer\",\"name\":\"a bad name\"}")
-    log.info("/commands/customers/{}/create with json \n {}", customerId2, cmdAsJson.encodePrettily())
-    client.post(httpPort, "0.0.0.0", "/commands/customers/$nextInt/create")
+    log.info("/commands/customer/{}/create with json \n {}", customerId2, cmdAsJson.encodePrettily())
+    client.post("/commands/customer/$nextInt/create")
       .`as`(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(cmdAsJson, tc.succeeding { response: HttpResponse<Void>? -> tc.verify { tc.completeNow() } }
@@ -290,7 +289,7 @@ internal class CustomerAcceptanceIT {
   fun a3(tc: VertxTestContext) {
     val invalidCommand = JsonObject()
     val commandWithoutType = "doSomething"
-    client.post(httpPort, "0.0.0.0", "/commands/customers/1/$commandWithoutType")
+    client.post("/commands/customer/1/$commandWithoutType")
       .`as`(BodyCodec.none())
       .expect(ResponsePredicate.SC_NOT_FOUND)
       .sendJson(invalidCommand, tc.succeeding {
@@ -304,7 +303,7 @@ internal class CustomerAcceptanceIT {
   @Test
   @DisplayName("When GET to an invalid UnitOfWork (bad number) You get a 400")
   fun a4(tc: VertxTestContext) {
-    client[httpPort, "0.0.0.0", "/commands/customers/units-of-work/dddd"]
+    client["/commands/customer/units-of-work/dddd"]
       .`as`(BodyCodec.string())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
       .send(tc.succeeding { response: HttpResponse<String> ->
