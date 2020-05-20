@@ -1,7 +1,7 @@
 package io.github.crabzilla.core
 
 import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.Example1Fixture.CUSTOMER_ENTITY
+import io.github.crabzilla.example1.CustomerCommandAware
 import io.github.crabzilla.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.example1.Example1Fixture.customerId1
 import io.github.crabzilla.example1.Example1Fixture.example1Json
@@ -19,7 +19,7 @@ class InMemorySnapshotRepositoryTest {
   @Test
   @DisplayName("given none snapshot, it can retrieve correct snapshot")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val repo = InMemorySnapshotRepository(vertx.sharedData(), example1Json, CUSTOMER_ENTITY, Customer())
+    val repo = InMemorySnapshotRepository(vertx.sharedData(), example1Json, CustomerCommandAware())
     repo.retrieve(customerId1)
         .onFailure { err -> tc.failNow(err) }
         .onSuccess { snapshot ->
@@ -32,7 +32,7 @@ class InMemorySnapshotRepositoryTest {
   @Test
   @DisplayName("when appending it can retrieve correct snapshot")
   fun a1(tc: VertxTestContext, vertx: Vertx) {
-    val repo = InMemorySnapshotRepository(vertx.sharedData(), example1Json, CUSTOMER_ENTITY, Customer())
+    val repo = InMemorySnapshotRepository(vertx.sharedData(), example1Json, CustomerCommandAware())
     repo.upsert(customerId1, Snapshot(Customer(customerId = customerId1, name = createCmd1.name, isActive = false), 1))
       .onFailure { err -> tc.failNow(err) }
       .onSuccess {

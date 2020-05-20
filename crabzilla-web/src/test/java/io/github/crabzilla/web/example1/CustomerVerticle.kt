@@ -3,14 +3,15 @@ package io.github.crabzilla.web.example1
 import io.github.crabzilla.core.CrabzillaContext
 import io.github.crabzilla.core.InMemorySnapshotRepository
 import io.github.crabzilla.pgc.PgcReadContext
+import io.github.crabzilla.pgc.PgcSnapshotRepo
 import io.github.crabzilla.pgc.PgcUowJournal
 import io.github.crabzilla.pgc.PgcUowRepo
 import io.github.crabzilla.pgc.addProjector
-import io.github.crabzilla.pgc.readModelPgPool
-import io.github.crabzilla.pgc.writeModelPgPool
 import io.github.crabzilla.web.WebResourceContext
 import io.github.crabzilla.web.addResourceForEntity
-import io.github.crabzilla.web.listenHandler
+import io.github.crabzilla.web.boilerplate.listenHandler
+import io.github.crabzilla.web.boilerplate.readModelPgPool
+import io.github.crabzilla.web.boilerplate.writeModelPgPool
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.core.http.HttpServer
@@ -38,10 +39,10 @@ class CustomerVerticle : AbstractVerticle() {
     router.route().handler(LoggerHandler.create())
     router.route().handler(BodyHandler.create())
 
-    // kotlinx serialization
     val example1Json = Json(context = customerModule)
     val uowJournal = PgcUowJournal(vertx, writeDb, example1Json)
-    val ctx = CrabzillaContext(example1Json, PgcUowRepo(writeDb, example1Json), uowJournal)
+    val uowRepository = PgcUowRepo(writeDb, example1Json)
+    val ctx = CrabzillaContext(example1Json, uowRepository, uowJournal)
 
     // web command routes
     val cmdTypeMap = mapOf(
@@ -51,10 +52,10 @@ class CustomerVerticle : AbstractVerticle() {
       Pair("create-activate", CreateActivateCustomer::class.qualifiedName as String))
 
     val cmdAware = CustomerCommandAware()
-    //  val snapshotRepo = PgcSnapshotRepo(writeDb, example1Json, "customer", cmdAware) // TO write to db
-    val snapshotRepo = InMemorySnapshotRepository(vertx.sharedData(), example1Json, "customer", Customer())
+    val snapshotRepoDb = PgcSnapshotRepo(writeDb, example1Json, cmdAware) // TO write to db
+    val snapshotRepo = InMemorySnapshotRepository(vertx.sharedData(), example1Json, cmdAware)
 
-    val resourceContext = WebResourceContext<Customer>("customers", "customer", cmdTypeMap, cmdAware, snapshotRepo)
+    val resourceContext = WebResourceContext(cmdTypeMap, cmdAware, snapshotRepo)
     addResourceForEntity(router, ctx, resourceContext)
 
     // projection consumers

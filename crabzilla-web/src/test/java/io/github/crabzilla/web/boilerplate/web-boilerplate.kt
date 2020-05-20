@@ -1,4 +1,4 @@
-package io.github.crabzilla.web
+package io.github.crabzilla.web.boilerplate
 
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module

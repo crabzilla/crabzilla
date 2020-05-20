@@ -60,7 +60,7 @@ class PgcSnapshotRepoIT {
       }
       val config = configFuture.result()
       writeDb = writeModelPgPool(vertx, config)
-      repo = PgcSnapshotRepo(writeDb, example1Json, CUSTOMER_ENTITY, CustomerCommandAware())
+      repo = PgcSnapshotRepo(writeDb, example1Json, CustomerCommandAware())
       writeDb.query("delete from units_of_work").execute { deleteResult1 ->
         if (deleteResult1.failed()) {
           deleteResult1.cause().printStackTrace()

@@ -90,17 +90,16 @@ data class UnitOfWork(
 class InMemorySnapshotRepository<E : Entity>(
   private val sharedData: SharedData,
   private val json: Json,
-  private val entityName: String,
-  private val initialState: E
+  private val commandAware: EntityCommandAware<E>
 ) : SnapshotRepository<E> {
   companion object {
     internal val log = LoggerFactory.getLogger(InMemorySnapshotRepository::class.java)
   }
   override fun upsert(entityId: Int, snapshot: Snapshot<E>): Future<Void> {
     val promise = Promise.promise<Void>()
-    sharedData.getAsyncMap<Int, String>(entityName) { event1 ->
+    sharedData.getAsyncMap<Int, String>(commandAware.entityName) { event1 ->
       if (event1.failed()) {
-        log.error("Failed to get map $entityName")
+        log.error("Failed to get map ${commandAware.entityName}")
         promise.fail(event1.cause())
         return@getAsyncMap
       }
@@ -108,7 +107,7 @@ class InMemorySnapshotRepository<E : Entity>(
       val mapEntryAsJson = JsonObject().put("version", snapshot.version).put("state", stateAsJson)
       event1.result().put(entityId, mapEntryAsJson.encode()) { event2 ->
         if (event2.failed()) {
-          log.error("Failed to put $entityId on map $entityName")
+          log.error("Failed to put $entityId on map ${commandAware.entityName}")
           promise.fail(event2.cause())
           return@put
         }
@@ -120,23 +119,23 @@ class InMemorySnapshotRepository<E : Entity>(
 
   override fun retrieve(entityId: Int): Future<Snapshot<E>> {
     val promise = Promise.promise<Snapshot<E>>()
-    val defaultSnapshot = Snapshot(initialState, 0)
-    sharedData.getAsyncMap<Int, String>(entityName) { event1 ->
+    val defaultSnapshot = Snapshot(commandAware.initialState, 0)
+    sharedData.getAsyncMap<Int, String>(commandAware.entityName) { event1 ->
       if (event1.failed()) {
-        log.error("Failed get map $entityName")
+        log.error("Failed get map ${commandAware.entityName}")
         promise.fail(event1.cause())
         return@getAsyncMap
       }
       event1.result().get(entityId) { event2 ->
         if (event2.failed()) {
-          log.error("Failed to get $entityId on map $entityName")
+          log.error("Failed to get $entityId on map ${commandAware.entityName}")
           promise.fail(event2.cause())
           return@get
         }
         val result = event2.result()
         if (result == null) {
           if (log.isDebugEnabled) {
-            log.debug("Returning default snapshot for $entityId on map $entityName")
+            log.debug("Returning default snapshot for $entityId on map ${commandAware.entityName}")
           }
           promise.complete(defaultSnapshot)
           return@get
@@ -163,16 +162,10 @@ object CrabzillaInternal {
       internal val log = LoggerFactory.getLogger(CommandController::class.java)
     }
     fun handle(metadata: CommandMetadata, command: Command): Future<Pair<UnitOfWork, Long>> {
-      fun toUnitOfWork(ctx: CommandContext<E>, promise: Future<List<DomainEvent>>): Future<UnitOfWork> {
-        val uowPromise: Promise<UnitOfWork> = Promise.promise()
+      fun toUnitOfWork(ctx: CommandContext<E>, events: List<DomainEvent>): UnitOfWork {
         val (cmdMetadata, command, snapshot) = ctx
-        if (promise.succeeded()) {
-          uowPromise.complete(UnitOfWork(cmdMetadata.entityName, cmdMetadata.entityId, cmdMetadata.commandId,
-            command, snapshot.version + 1, promise.result()))
-        } else {
-          uowPromise.fail(promise.cause())
-        }
-        return uowPromise.future()
+        return UnitOfWork(cmdMetadata.entityName, cmdMetadata.entityId, cmdMetadata.commandId,
+          command, snapshot.version + 1, events)
       }
       val promise = Promise.promise<Pair<UnitOfWork, Long>>()
       if (log.isDebugEnabled) log.debug("received $metadata\n $command")
@@ -190,16 +183,16 @@ object CrabzillaInternal {
           if (log.isDebugEnabled) log.debug("got snapshot $snapshot")
           val cachedSnapshot = snapshot ?: Snapshot(commandAware.initialState, 0)
           snapshotValue.set(cachedSnapshot)
-          val request = Triple(metadata, command, cachedSnapshot)
-          val events = commandAware.handleCmd(metadata.entityId, cachedSnapshot.state, command)
-          val uow = toUnitOfWork(request, events)
-          uow
+          commandAware.handleCmd(metadata.entityId, cachedSnapshot.state, command)
         }
-        .compose { unitOfWork ->
-          if (log.isDebugEnabled) log.debug("got unitOfWork $unitOfWork")
+        .compose { l ->
+          val request = Triple(metadata, command, snapshotValue.get())
+          val uow = toUnitOfWork(request, l)
+          if (log.isDebugEnabled) log.debug("got uow $uow")
+          if (log.isDebugEnabled) log.debug("got unitOfWork $uow")
           // append to journal
-          uowValue.set(unitOfWork)
-          val uowId = uowJournal.append(unitOfWork)
+          uowValue.set(uow)
+          val uowId = uowJournal.append(uow)
           uowId
         }
         .compose { uowId ->
@@ -213,13 +206,12 @@ object CrabzillaInternal {
           if (log.isDebugEnabled) log.debug("now will store snapshot $newSnapshot")
           snapshotRepo.upsert(metadata.entityId, newSnapshot)
         }
-        .compose {
-          // set result
+        .onSuccess {
           val pair: Pair<UnitOfWork, Long> = Pair(uowValue.get(), uowIdValue.get())
           if (log.isDebugEnabled) log.debug("command handling success: $pair")
           promise.complete(pair)
-          promise.future()
-        }
+        }.onFailure { err -> promise.fail(err) }
+
       return promise.future()
     }
   }

@@ -38,7 +38,7 @@ object Example1Fixture {
       val uowRepo = PgcUowRepo(writeDb, example1Json)
       val uowJournal = PgcUowJournal(vertx, writeDb, example1Json)
       val snapshotRepo:
-        SnapshotRepository<Customer> = PgcSnapshotRepo(writeDb, example1Json, CUSTOMER_ENTITY, cmdAware)
+        SnapshotRepository<Customer> = PgcSnapshotRepo(writeDb, example1Json, CustomerCommandAware())
       val ctx = CrabzillaContext(example1Json, uowRepo, uowJournal)
       EntityComponent(ctx, CUSTOMER_ENTITY, snapshotRepo, cmdAware)
   }

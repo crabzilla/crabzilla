@@ -17,7 +17,6 @@ import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory.getLogger
 
-
 internal val log = getLogger("addProjector")
 
 typealias PgcReadContext = Triple<Vertx, Json, PgPool>

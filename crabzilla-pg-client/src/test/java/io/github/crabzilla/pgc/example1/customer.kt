@@ -57,6 +57,8 @@ data class Customer(
 
 class CustomerCommandAware : EntityCommandAware<Customer> {
 
+  override val entityName = "customer"
+
   override val initialState: Customer = Customer()
 
   override val applyEvent: (DomainEvent, Customer) -> Customer = { event: DomainEvent, customer: Customer ->
