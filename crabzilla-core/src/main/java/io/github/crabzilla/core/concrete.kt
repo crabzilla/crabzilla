@@ -8,7 +8,6 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 object EventBusChannels {
@@ -188,12 +187,10 @@ object CrabzillaInternal {
         .compose { l ->
           val request = Triple(metadata, command, snapshotValue.get())
           val uow = toUnitOfWork(request, l)
-          if (log.isDebugEnabled) log.debug("got uow $uow")
           if (log.isDebugEnabled) log.debug("got unitOfWork $uow")
           // append to journal
           uowValue.set(uow)
-          val uowId = uowJournal.append(uow)
-          uowId
+          uowJournal.append(uow)
         }
         .compose { uowId ->
           if (log.isDebugEnabled) log.debug("got uowId $uowId")
@@ -213,68 +210,6 @@ object CrabzillaInternal {
         }.onFailure { err -> promise.fail(err) }
 
       return promise.future()
-    }
-  }
-
-  class EntityComponent<E : Entity>(
-    private val ctx: CrabzillaContext,
-    private val entityName: String,
-    private val snapshotRepo: SnapshotRepository<E>,
-    cmdAware: EntityCommandAware<E>
-  ) {
-
-    companion object {
-      private val log: Logger = LoggerFactory.getLogger(EntityComponent::class.java)
-    }
-
-    private val cmdController = CommandController(cmdAware, snapshotRepo, ctx.uowJournal)
-
-    fun entityName(): String {
-      return entityName
-    }
-
-    fun getUowByUowId(uowId: Long): Future<UnitOfWork> {
-      return ctx.uowRepository.getUowByUowId(uowId)
-    }
-
-    fun getAllUowByEntityId(id: Int): Future<List<UnitOfWork>> {
-      return ctx.uowRepository.getAllUowByEntityId(id)
-    }
-
-    fun getSnapshot(entityId: Int): Future<Snapshot<E>> {
-      return snapshotRepo.retrieve(entityId)
-    }
-
-    fun handleCommand(metadata: CommandMetadata, command: Command): Future<Pair<UnitOfWork, Long>> {
-      val promise = Promise.promise<Pair<UnitOfWork, Long>>()
-      ctx.uowRepository.getUowByCmdId(metadata.commandId).onComplete { gotCommand ->
-        if (gotCommand.succeeded()) {
-          val uowPair = gotCommand.result()
-          if (uowPair != null) {
-            promise.complete(uowPair)
-            return@onComplete
-          }
-        }
-        cmdController.handle(metadata, command).onComplete { cmdHandled ->
-          if (cmdHandled.succeeded()) {
-            val pair = cmdHandled.result()
-            promise.complete(pair)
-            if (log.isDebugEnabled) log.debug("Command successfully handled: $pair")
-          } else {
-            log.error("When handling command", cmdHandled.cause())
-            promise.fail(cmdHandled.cause())
-          }
-        }
-      }
-      return promise.future()
-    }
-
-    fun toJson(state: E): JsonObject {
-      return JsonObject(ctx.json.stringify(ENTITY_SERIALIZER, state))
-    }
-
-    fun cmdFromJson(cmdAsJson: JsonObject): Command {
-      return ctx.json.parse(COMMAND_SERIALIZER, cmdAsJson.encode())
     }
   }
 }

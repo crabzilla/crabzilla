@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.example1
+package io.github.crabzilla.web.example1
 
 import io.github.crabzilla.core.UnitOfWork
 import java.util.UUID

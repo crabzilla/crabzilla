@@ -2,7 +2,6 @@ package io.github.crabzilla.web
 
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandMetadata
-import io.github.crabzilla.core.CrabzillaInternal.EntityComponent
 import io.github.crabzilla.core.Entity
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
