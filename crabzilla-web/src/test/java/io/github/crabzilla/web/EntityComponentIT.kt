@@ -1,11 +1,18 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.web
 
 import io.github.crabzilla.core.CommandMetadata
-import io.github.crabzilla.core.CrabzillaInternal.EntityComponent
-import io.github.crabzilla.pgc.example1.CreateCustomer
-import io.github.crabzilla.pgc.example1.Customer
-import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_COMPONENT
-import io.github.crabzilla.pgc.example1.Example1Fixture.createActivateCmd1
+import io.github.crabzilla.core.CrabzillaContext
+import io.github.crabzilla.core.SnapshotRepository
+import io.github.crabzilla.pgc.PgcSnapshotRepo
+import io.github.crabzilla.pgc.PgcUowJournal
+import io.github.crabzilla.pgc.PgcUowRepo
+import io.github.crabzilla.web.boilerplate.cleanDatabase
+import io.github.crabzilla.web.boilerplate.writeModelPgPool
+import io.github.crabzilla.web.example1.CreateCustomer
+import io.github.crabzilla.web.example1.Customer
+import io.github.crabzilla.web.example1.CustomerCommandAware
+import io.github.crabzilla.web.example1.Example1Fixture
+import io.github.crabzilla.web.example1.Example1Fixture.createActivateCmd1
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -30,6 +37,16 @@ class EntityComponentIT {
     private lateinit var vertx: Vertx
     private lateinit var writeDb: PgPool
     private lateinit var customerComponent: EntityComponent<Customer>
+    val CUSTOMER_COMPONENT: (vertx: Vertx, writeDb: PgPool) -> EntityComponent<Customer> =
+      { vertx: Vertx, writeDb: PgPool ->
+        val cmdAware = CustomerCommandAware()
+        val uowRepo = PgcUowRepo(writeDb, Example1Fixture.example1Json)
+        val uowJournal = PgcUowJournal(vertx, writeDb, Example1Fixture.example1Json)
+        val snapshotRepo:
+          SnapshotRepository<Customer> = PgcSnapshotRepo(writeDb, Example1Fixture.example1Json, CustomerCommandAware())
+        val ctx = CrabzillaContext(Example1Fixture.example1Json, uowRepo, uowJournal)
+        EntityComponent(ctx, Example1Fixture.CUSTOMER_ENTITY, snapshotRepo, cmdAware)
+      }
   }
 
   @BeforeEach
