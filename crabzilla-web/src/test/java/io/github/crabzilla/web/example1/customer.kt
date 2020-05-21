@@ -24,7 +24,6 @@ typealias CustomerId = Int
 @Serializable data class DeactivateCustomer(val reason: String) : Command()
 @Serializable data class CreateActivateCustomer(val name: String, val reason: String) : Command()
 
-// aggregate root
 @Serializable
 data class Customer(
   val customerId: CustomerId? = null,

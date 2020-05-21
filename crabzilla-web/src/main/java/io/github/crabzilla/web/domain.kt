@@ -28,15 +28,14 @@ class WebResourceContext<E : Entity>(
 
 fun <E : Entity> addResourceForEntity(router: Router, ctx: CrabzillaContext, webCtx: WebResourceContext<E>) {
   log.info("adding web command handler for entity ${webCtx.cmdAware.entityName}")
-  val cmdHandlerComponent = EntityComponent(ctx, webCtx.cmdAware.entityName, webCtx.snapshotRepo, webCtx.cmdAware)
+  val cmdHandlerComponent = EntityComponent(ctx, webCtx.snapshotRepo, webCtx.cmdAware)
   WebDeployer(webCtx.cmdAware.entityName, webCtx.cmdTypeMap, cmdHandlerComponent, router).deployWebRoutes()
 }
 
 class EntityComponent<E : Entity>(
   private val ctx: CrabzillaContext,
-  private val entityName: String,
   private val snapshotRepo: SnapshotRepository<E>,
-  cmdAware: EntityCommandAware<E>
+  private val cmdAware: EntityCommandAware<E>
 ) {
 
   companion object {
@@ -46,7 +45,7 @@ class EntityComponent<E : Entity>(
   private val cmdController = CommandController(cmdAware, snapshotRepo, ctx.uowJournal)
 
   fun entityName(): String {
-    return entityName
+    return cmdAware.entityName
   }
 
   fun getUowByUowId(uowId: Long): Future<UnitOfWork> {

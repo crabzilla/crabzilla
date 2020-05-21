@@ -45,7 +45,7 @@ class EntityComponentIT {
         val snapshotRepo:
           SnapshotRepository<Customer> = PgcSnapshotRepo(writeDb, Example1Fixture.example1Json, CustomerCommandAware())
         val ctx = CrabzillaContext(Example1Fixture.example1Json, uowRepo, uowJournal)
-        EntityComponent(ctx, Example1Fixture.CUSTOMER_ENTITY, snapshotRepo, cmdAware)
+        EntityComponent(ctx, snapshotRepo, cmdAware)
       }
   }
 
@@ -59,7 +59,6 @@ class EntityComponentIT {
     val retriever = ConfigRetriever.create(vertx, ConfigRetrieverOptions().addStore(envOptions))
     retriever.getConfig(Handler { configFuture ->
       if (configFuture.failed()) {
-        println("Failed to get configuration")
         tc.failNow(configFuture.cause())
         return@Handler
       }
