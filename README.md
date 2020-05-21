@@ -12,20 +12,19 @@ To help writing CQRS and Event Sourcing applications with [Vert.x](http://vertx.
 
 It's still in very early development stage. Do not use release 0.0.5, master branch is very different from that.
 
-## Example
-
+## Example 
 * [Accounts Example](https://github.com/crabzilla/accounts)
 
 ## Building
 
-### Requirements
+##### Requirements
 
 * Java 8
 * Maven (tested with 3.5.0+)
 * Docker compose (tested with 1.18.0)
 * Kotlin plugin for your IDE
 
-### Steps
+##### Steps
 
 1. Clone it:
 
