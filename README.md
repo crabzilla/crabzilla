@@ -11,7 +11,12 @@ To help writing CQRS and Event Sourcing applications with [Vert.x](http://vertx.
 ## Status
 
 It's still in very early development stage. Do not use release 0.0.5, master branch is very different from that.
-Hopefully the useful version will be v0.0.8 final.
+
+## Example application
+
+* [Accounts Example](https://github.com/crabzilla/accounts)
+
+## Building
 
 ### Requirements
 
@@ -41,9 +46,9 @@ docker-compose up
 mvn clean install -DskipTests=false
 ```
 
-### Random notes
+## Random notes
 
-1. Crabzilla tries to provide a chassis for wiring and running your domain by using verticles and other components.
+1. Crabzilla tries to provide a chassis for wiring and running your domain by using plain verticles.
 2. If your command handling functions are pure, all side effects will occurs within:
     * core.UnitOfWorkJournal: to save the events to a database using Optimistic concurrency control
     * pgc.PgcUowProjector: to project events to a read model using a PostgreSql database using vertx-pg-client
