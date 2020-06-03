@@ -4,13 +4,17 @@ import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.core.shareddata.SharedData
+import java.util.UUID
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 interface SnapshotRepository<E : Entity> {
   fun retrieve(entityId: Int): Future<Snapshot<E>>
   fun upsert(entityId: Int, snapshot: Snapshot<E>): Future<Void>
+}
+
+interface UnitOfWorkPublisher {
+  fun publish(events: JsonObject)
 }
 
 interface UnitOfWorkJournal {
@@ -20,9 +24,10 @@ interface UnitOfWorkJournal {
 interface UnitOfWorkRepository {
   fun getUowByCmdId(cmdId: UUID): Future<Pair<UnitOfWork, Long>>
   fun getUowByUowId(uowId: Long): Future<UnitOfWork>
-  fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String): Future<RangeOfEvents>
-  fun selectAfterUowId(uowId: Long, maxRows: Int): Future<List<UnitOfWorkEvents>>
+  fun selectAfterVersion(id: Int, version: Version, entityName: String): Future<RangeOfEvents>
+  fun selectAfterUowId(uowId: Long, maxRows: Int, entityName: String?): Future<List<UnitOfWorkEvents>>
   fun getAllUowByEntityId(id: Int): Future<List<UnitOfWork>>
+  fun selectLastUowId(): Future<Long>
 }
 
 class InMemorySnapshotRepository<E : Entity>(
@@ -90,4 +95,3 @@ class InMemorySnapshotRepository<E : Entity>(
     return promise.future()
   }
 }
-

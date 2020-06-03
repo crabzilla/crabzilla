@@ -2,11 +2,13 @@ package io.github.crabzilla.core
 
 import io.vertx.core.Future
 import io.vertx.core.Promise
+import io.vertx.core.Vertx
+import io.vertx.core.json.JsonObject
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-import java.util.UUID
-import java.util.concurrent.atomic.AtomicReference
 
 object EventBusChannels {
   const val unitOfWorkChannel = "crabzilla.events.channel"
@@ -60,6 +62,18 @@ class StateTransitionsTracker<A : Entity>(originalState: A, private val stateFn:
   }
 }
 
+class EventBusUowPublisher(private val vertx: Vertx) : UnitOfWorkPublisher {
+
+  companion object {
+    private val log = LoggerFactory.getLogger(EventBusUowPublisher::class.java)
+  }
+
+  override fun publish(events: JsonObject) {
+    if (log.isDebugEnabled) log.debug("will publish $events")
+    vertx.eventBus().publish(EventBusChannels.unitOfWorkChannel, events)
+  }
+}
+
 data class UnitOfWork(
   val entityName: String,
   val entityId: Int,
@@ -93,9 +107,9 @@ object CrabzillaInternal {
     }
     fun handle(metadata: CommandMetadata, command: Command): Future<Pair<UnitOfWork, Long>> {
       fun toUnitOfWork(ctx: CommandContext<E>, events: List<DomainEvent>): UnitOfWork {
-        val (cmdMetadata, command, snapshot) = ctx
-        return UnitOfWork(cmdMetadata.entityName, cmdMetadata.entityId, cmdMetadata.commandId,
-          command, snapshot.version + 1, events)
+        val (cmdMetadata, _, snapshot) = ctx
+        val (entityId, entityName, _, commandId) = cmdMetadata
+        return UnitOfWork(entityName, entityId, commandId, command, snapshot.version + 1, events)
       }
       val promise = Promise.promise<Pair<UnitOfWork, Long>>()
       if (log.isDebugEnabled) log.debug("received $metadata\n $command")

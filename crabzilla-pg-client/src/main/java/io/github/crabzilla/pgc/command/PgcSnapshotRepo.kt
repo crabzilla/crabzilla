@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.ENTITY_SERIALIZER
@@ -24,10 +24,10 @@ class PgcSnapshotRepo<E : Entity>(
 ) : SnapshotRepository<E> {
 
   companion object {
-    internal val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
-    const val SELECT_EVENTS_VERSION_AFTER_VERSION = "SELECT uow_events, version FROM units_of_work " +
+    private val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
+    private const val SELECT_EVENTS_VERSION_AFTER_VERSION = "SELECT uow_events, version FROM units_of_work " +
       "WHERE ar_id = $1 and ar_name = $2 and version > $3 ORDER BY version "
-    private val ROWS_PER_TIME = 1000
+    private const val ROWS_PER_TIME = 1000
   }
   private fun selectSnapshot(): String {
     return "SELECT version, json_content FROM ${commandAware.entityName}_snapshots WHERE ar_id = $1"

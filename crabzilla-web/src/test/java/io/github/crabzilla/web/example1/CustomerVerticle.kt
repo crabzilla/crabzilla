@@ -2,16 +2,17 @@ package io.github.crabzilla.web.example1
 
 import io.github.crabzilla.core.CrabzillaContext
 import io.github.crabzilla.core.InMemorySnapshotRepository
-import io.github.crabzilla.pgc.PgcReadContext
-import io.github.crabzilla.pgc.PgcSnapshotRepo
-import io.github.crabzilla.pgc.PgcUowJournal
-import io.github.crabzilla.pgc.PgcUowRepo
-import io.github.crabzilla.pgc.addProjector
+import io.github.crabzilla.pgc.command.PgcSnapshotRepo
+import io.github.crabzilla.pgc.command.PgcUowJournal
+import io.github.crabzilla.pgc.command.PgcUowRepo
+import io.github.crabzilla.pgc.query.PgcReadContext
+import io.github.crabzilla.pgc.query.addEventBusProjector
 import io.github.crabzilla.web.WebResourceContext
 import io.github.crabzilla.web.addResourceForEntity
 import io.github.crabzilla.web.boilerplate.listenHandler
 import io.github.crabzilla.web.boilerplate.readModelPgPool
 import io.github.crabzilla.web.boilerplate.writeModelPgPool
+import io.github.crabzilla.web.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.core.http.HttpServer
@@ -60,7 +61,8 @@ class CustomerVerticle : AbstractVerticle() {
 
     // projection consumers
     val readContext = PgcReadContext(vertx, example1Json, readDb)
-    addProjector(readContext, "customers-summary", CustomerSummaryProjector())
+    // addPoolingProjector("customer-summary", readContext, CustomerSummaryProjector(), uowRepository, PgcProjectionRepo(readDb))
+    addEventBusProjector(CUSTOMER_ENTITY, "customers-summary", readContext, CustomerSummaryProjector())
 
     // read model routes
     router.get("/customers/:id").handler(::customersQueryHandler)

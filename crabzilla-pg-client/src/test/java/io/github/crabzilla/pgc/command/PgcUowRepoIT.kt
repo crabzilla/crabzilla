@@ -1,11 +1,11 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.COMMAND_SERIALIZER
 import io.github.crabzilla.core.EVENT_SERIALIZER
 import io.github.crabzilla.core.RangeOfEvents
 import io.github.crabzilla.core.UnitOfWorkJournal
 import io.github.crabzilla.core.UnitOfWorkRepository
-import io.github.crabzilla.pgc.PgcUowJournal.Companion.SQL_APPEND_UOW
+import io.github.crabzilla.pgc.command.PgcUowJournal.Companion.SQL_APPEND_UOW
 import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.pgc.example1.Example1Fixture.activateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
@@ -15,6 +15,7 @@ import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createdUow1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.example1Json
+import io.github.crabzilla.pgc.writeModelPgPool
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -146,7 +147,7 @@ class PgcUowRepoIT {
     @Test
     @DisplayName("can queries an empty repo")
     fun a1(tc: VertxTestContext) {
-      repo.selectAfterUowId(1, 100).onComplete { event1 ->
+      repo.selectAfterUowId(1, 100, CUSTOMER_ENTITY).onComplete { event1 ->
         if (event1.failed()) {
           tc.failNow(event1.cause())
           return@onComplete
@@ -168,7 +169,7 @@ class PgcUowRepoIT {
         }
         val uowId = event1.result().first().getLong(0)
         tc.verify { assertThat(uowId).isGreaterThan(0) }
-        val selectFuture = repo.selectAfterUowId(0, 100)
+        val selectFuture = repo.selectAfterUowId(0, 100, CUSTOMER_ENTITY)
         selectFuture.onComplete { event2 ->
           if (event2.failed()) {
             tc.failNow(event2.cause())
@@ -200,7 +201,7 @@ class PgcUowRepoIT {
             tc.failNow(event2.cause())
             return@execute
           }
-          repo.selectAfterUowId(0, 100).onComplete { event3 ->
+          repo.selectAfterUowId(0, 100, CUSTOMER_ENTITY).onComplete { event3 ->
             if (event3.failed()) {
               tc.failNow(event3.cause())
               return@onComplete
@@ -271,7 +272,7 @@ class PgcUowRepoIT {
             return@execute
           }
           val uowId2 = event2.result().first().getLong("uow_id")
-          repo.selectAfterUowId(uowId1, 100).onComplete { event3 ->
+          repo.selectAfterUowId(uowId1, 100, CUSTOMER_ENTITY).onComplete { event3 ->
             if (event3.failed()) {
               tc.failNow(event3.cause())
               return@onComplete

@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.COMMAND_SERIALIZER
 import io.github.crabzilla.core.Command
@@ -122,7 +122,7 @@ class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : UnitOfWor
     return promise.future()
   }
 
-  override fun selectAfterVersion(id: Int, version: Version, aggregateRootName: String): Future<RangeOfEvents> {
+  override fun selectAfterVersion(id: Int, version: Version, entityName: String): Future<RangeOfEvents> {
     val promise = Promise.promise<RangeOfEvents>()
     log.debug("will load id [{}] after version [{}]", id, version)
     pgPool.getConnection { ar0 ->
@@ -137,7 +137,7 @@ class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : UnitOfWor
         } else {
           val pq = ar1.result()
           // Fetch STREAM_ROWS rows at a time
-          val tuple = Tuple.of(id, aggregateRootName, version)
+          val tuple = Tuple.of(id, entityName, version)
           val stream = pq.createStream(STREAM_ROWS, tuple)
           val list = ArrayList<RangeOfEvents>()
           // Use the stream
@@ -163,12 +163,29 @@ class PgcUowRepo(private val pgPool: PgPool, private val json: Json) : UnitOfWor
     return promise.future()
   }
 
-  override fun selectAfterUowId(uowId: Long, maxRows: Int): Future<List<UnitOfWorkEvents>> {
+  override fun selectLastUowId(): Future<Long> {
+    val promise = Promise.promise<Long>()
+    val selectLastUowIdSql = "select max(uow_id) from units_of_work"
+    pgPool
+      .query(selectLastUowIdSql)
+      .execute { event ->
+        if (event.failed()) {
+          promise.fail(event.cause())
+          return@execute
+        }
+        val result = event.result()
+        promise.complete(if (result == null || result.size() == 0) 0 else result.first().getLong(0))
+      }
+    return promise.future()
+  }
+
+  override fun selectAfterUowId(uowId: Long, maxRows: Int, entityName: String?): Future<List<UnitOfWorkEvents>> {
     val promise = Promise.promise<List<UnitOfWorkEvents>>()
     log.debug("will load after uowId [{}]", uowId)
     val selectAfterUowIdSql = "select uow_id, ar_id, uow_events " +
       "  from units_of_work " +
       " where uow_id > $1 " +
+      if (entityName == null) "" else "and ar_name = '$entityName'" +
       " order by uow_id " +
       " limit " + maxRows
     val list = ArrayList<UnitOfWorkEvents>()

@@ -5,9 +5,10 @@ CREATE DATABASE example1_read OWNER user1;
 -- read model
 
 CREATE TABLE projections (
-    name VARCHAR(36) NOT NULL,
+    entityName VARCHAR(36) NOT NULL,
+    streamId VARCHAR(36) NOT NULL,
     last_uow INTEGER ,
-    PRIMARY KEY (name)
+    PRIMARY KEY (entityName, streamId)
 );
 
 CREATE TABLE customer_summary (

@@ -1,10 +1,11 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.COMMAND_SERIALIZER
 import io.github.crabzilla.core.EVENT_SERIALIZER
-import io.github.crabzilla.core.EventBusChannels
+import io.github.crabzilla.core.EventBusUowPublisher
 import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.core.UnitOfWorkJournal
+import io.github.crabzilla.core.UnitOfWorkPublisher
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
@@ -16,10 +17,15 @@ import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 
-class PgcUowJournal(private val vertx: Vertx, private val pgPool: PgPool, private val json: Json) : UnitOfWorkJournal {
+class PgcUowJournal(
+  private val vertx: Vertx,
+  private val pgPool: PgPool,
+  private val json: Json,
+  private val uowPublisher: UnitOfWorkPublisher = EventBusUowPublisher(vertx)
+) : UnitOfWorkJournal {
 
   companion object {
-    internal val log = LoggerFactory.getLogger(PgcUowJournal::class.java)
+    private val log = LoggerFactory.getLogger(PgcUowJournal::class.java)
     const val SQL_SELECT_CURRENT_VERSION =
       """ select max(version) as last_version from units_of_work where ar_id = $1 and ar_name = $2 """
     const val SQL_APPEND_UOW =
@@ -79,8 +85,7 @@ class PgcUowJournal(private val vertx: Vertx, private val pgPool: PgPool, privat
                   .put(UnitOfWork.JsonMetadata.ENTITY_ID, unitOfWork.entityId)
                   .put(UnitOfWork.JsonMetadata.VERSION, unitOfWork.version)
                   .put(UnitOfWork.JsonMetadata.EVENTS, JsonArray(eventsListAsJsonObject))
-                if (log.isDebugEnabled) log.debug("will publish message $message")
-                vertx.eventBus().publish(EventBusChannels.unitOfWorkChannel, message)
+                uowPublisher.publish(message)
                 promise.complete(uowId)
               }
             }

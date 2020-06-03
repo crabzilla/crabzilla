@@ -3,9 +3,9 @@ package io.github.crabzilla.web
 import io.github.crabzilla.core.CommandMetadata
 import io.github.crabzilla.core.CrabzillaContext
 import io.github.crabzilla.core.SnapshotRepository
-import io.github.crabzilla.pgc.PgcSnapshotRepo
-import io.github.crabzilla.pgc.PgcUowJournal
-import io.github.crabzilla.pgc.PgcUowRepo
+import io.github.crabzilla.pgc.command.PgcSnapshotRepo
+import io.github.crabzilla.pgc.command.PgcUowJournal
+import io.github.crabzilla.pgc.command.PgcUowRepo
 import io.github.crabzilla.web.boilerplate.cleanDatabase
 import io.github.crabzilla.web.boilerplate.writeModelPgPool
 import io.github.crabzilla.web.example1.CreateCustomer

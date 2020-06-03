@@ -12,12 +12,6 @@
   <artifactId>crabzilla-jooq</artifactId>
   <packaging>jar</packaging>
 
-  <properties>
-    <jooq.version>3.13.1</jooq.version>
-    <vertx-jooq.version>5.1.1</vertx-jooq.version>
-    <postgresql.version>42.2.10</postgresql.version>
-  </properties>
-
   <dependencies>
 
     <dependency>

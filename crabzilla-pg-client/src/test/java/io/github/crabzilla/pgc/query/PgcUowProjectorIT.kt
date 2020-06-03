@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.query
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.UnitOfWork
@@ -6,11 +6,13 @@ import io.github.crabzilla.core.UnitOfWorkEvents
 import io.github.crabzilla.pgc.example1.CustomerActivated
 import io.github.crabzilla.pgc.example1.CustomerCreated
 import io.github.crabzilla.pgc.example1.CustomerDeactivated
+import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
 import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
 import io.github.crabzilla.pgc.example1.Example1Fixture.deactivated1
+import io.github.crabzilla.pgc.readModelPgPool
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
@@ -43,6 +45,8 @@ class PgcUowProjectorIT {
     internal val log = LoggerFactory.getLogger(PgcUowProjectorIT::class.java)
   }
 
+  // TODO assertions on projections table
+
   @BeforeEach
   fun setup(tc: VertxTestContext) {
     val vertOption = VertxOptions()
@@ -62,7 +66,7 @@ class PgcUowProjectorIT {
       }
       val config = configFuture.result()
       readDb = readModelPgPool(vertx, config)
-      uowProjector = PgcUowProjector(readDb, "customer summary", CustomerProjector())
+      uowProjector = PgcUowProjector(readDb, "customer summary", CUSTOMER_ENTITY, CustomerProjector())
       readDb.query("DELETE FROM customer_summary").execute { deleted ->
         if (deleted.failed()) {
           log.error("delete ", deleted.cause())
@@ -77,7 +81,7 @@ class PgcUowProjectorIT {
   @Test
   @DisplayName("can project 1 event")
   fun a1(tc: VertxTestContext) {
-    val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1, listOf(created1))
+    val uow = UnitOfWork(CUSTOMER_ENTITY, customerId1, UUID.randomUUID(), createCmd1, 1, listOf(created1))
     uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events)).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
@@ -100,7 +104,7 @@ class PgcUowProjectorIT {
   @Test
   @DisplayName("can project 2 events: created and activated")
   fun a2(tc: VertxTestContext) {
-    val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1, listOf(created1, activated1))
+    val uow = UnitOfWork(CUSTOMER_ENTITY, customerId1, UUID.randomUUID(), createCmd1, 1, listOf(created1, activated1))
     uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events)).onComplete { event1 ->
       if (event1.failed()) {
         tc.failNow(event1.cause())
@@ -123,7 +127,7 @@ class PgcUowProjectorIT {
   @Test
   @DisplayName("can project 3 events: created, activated and deactivated")
   fun a3(tc: VertxTestContext) {
-    val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
+    val uow = UnitOfWork(CUSTOMER_ENTITY, customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1))
     uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events)).onComplete { event1 ->
       if (event1.failed()) {
@@ -148,7 +152,7 @@ class PgcUowProjectorIT {
   @Test
   @DisplayName("can project 4 events: created, activated, deactivated, activated")
   fun a4(tc: VertxTestContext) {
-    val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
+    val uow = UnitOfWork(CUSTOMER_ENTITY, customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1, activated1))
     uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events)).onComplete { event1 ->
       if (event1.failed()) {
@@ -173,7 +177,7 @@ class PgcUowProjectorIT {
   @Test
   @DisplayName("can project 5 events: created, activated, deactivated, activated, deactivated")
   fun a5(tc: VertxTestContext) {
-    val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
+    val uow = UnitOfWork(CUSTOMER_ENTITY, customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1, activated1, deactivated1))
     uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events)).onComplete { event1 ->
       if (event1.failed()) {
@@ -198,7 +202,7 @@ class PgcUowProjectorIT {
   @Test
   @DisplayName("can project 6 events: created, activated, deactivated, activated, deactivated")
   fun a6(tc: VertxTestContext) {
-    val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
+    val uow = UnitOfWork(CUSTOMER_ENTITY, customerId1, UUID.randomUUID(), createCmd1, 1,
       listOf(created1, activated1, deactivated1, activated1, deactivated1, activated1))
     uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events)).onComplete { event1 ->
       if (event1.failed()) {
@@ -221,41 +225,27 @@ class PgcUowProjectorIT {
   }
 
   @Test
-  @DisplayName("cannot project more than 6 events within one transaction")
-  fun a7(tc: VertxTestContext) {
-    val uow = UnitOfWork("Customer", customerId1, UUID.randomUUID(), createCmd1, 1,
-      listOf(created1, activated1, deactivated1, activated1, deactivated1, activated1, deactivated1))
-    uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events)).onComplete { result ->
-      if (result.failed()) {
-        tc.completeNow()
+  @DisplayName("on any any SQL error it must rollback all events projections")
+  fun a10(tc: VertxTestContext) {
+    val uow = UnitOfWork(CUSTOMER_ENTITY, created1.customerId, UUID.randomUUID(), createCmd1, 1, listOf(created1))
+    PgcUowProjector(readDb, "customer summary", CUSTOMER_ENTITY, BadEventProjector())
+      .handle(UnitOfWorkEvents(1, uow.entityId, uow.events)).onComplete { result ->
+      if (result.succeeded()) {
+        tc.failNow(result.cause())
         return@onComplete
       }
-      tc.failNow(IllegalArgumentException())
+      readDb.preparedQuery("SELECT * FROM customer_summary").execute { ar3 ->
+        if (ar3.failed()) {
+          log.error("select", ar3.cause())
+          tc.failNow(ar3.cause())
+          return@execute
+        }
+        val pgRowSet = ar3.result()
+        tc.verify { assertThat(0).isEqualTo(pgRowSet.size()) }
+        tc.completeNow()
+      }
     }
   }
-
-  // TODO
-//  @Test
-//  @DisplayName("on any any SQL error it must rollback all events projections")
-//  fun a10(tc: VertxTestContext) {
-//    val uow = UnitOfWork("Customer", created1.customerId, UUID.randomUUID(), createCmd1, 1, listOf(created1))
-//    uowProjector.handle(UnitOfWorkEvents(1, uow.entityId, uow.events), BadEventProjector()).onComplete { result ->
-//      if (result.succeeded()) {
-//        tc.failNow(result.cause())
-//        return@onComplete
-//      }
-//      readDb.preparedQuery("SELECT * FROM customer_summary").execute { ar3 ->
-//        if (ar3.failed()) {
-//          log.error("select", ar3.cause())
-//          tc.failNow(ar3.cause())
-//          return@execute
-//        }
-//        val pgRowSet = ar3.result()
-//        tc.verify { assertThat(0).isEqualTo(pgRowSet.size()) }
-//        tc.completeNow()
-//      }
-//    }
-//  }
 }
 
 class CustomerProjector : PgcEventProjector {
@@ -274,6 +264,37 @@ class CustomerProjector : PgcEventProjector {
       }
       is CustomerDeactivated -> {
         val query = "UPDATE customer_summary SET is_active = false WHERE id = $1"
+        val tuple = Tuple.of(targetId)
+        executePreparedQuery(pgTx, query, tuple)
+      }
+      else -> {
+        Future.failedFuture("${event.javaClass.simpleName} does not have any event projector handler")
+      }
+    }
+  }
+}
+
+class BadEventProjector : PgcEventProjector {
+
+  private val log = LoggerFactory.getLogger(BadEventProjector::class.java.name)
+
+  override fun handle(pgTx: Transaction, targetId: Int, event: DomainEvent): Future<Void> {
+
+    log.info("event {} ", event)
+
+    return when (event) {
+      is CustomerCreated -> {
+        val query = "INSERT INTO XXXXXX (id, name, is_active) VALUES ($1, $2, $3)"
+        val tuple = Tuple.of(targetId, event.name, false)
+        executePreparedQuery(pgTx, query, tuple)
+      }
+      is CustomerActivated -> {
+        val query = "UPDATE XXX SET is_active = true WHERE id = $1"
+        val tuple = Tuple.of(targetId)
+        executePreparedQuery(pgTx, query, tuple)
+      }
+      is CustomerDeactivated -> {
+        val query = "UPDATE XX SET is_active = false WHERE id = $1"
         val tuple = Tuple.of(targetId)
         executePreparedQuery(pgTx, query, tuple)
       }

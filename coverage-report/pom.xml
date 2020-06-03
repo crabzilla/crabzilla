@@ -29,10 +29,18 @@
       <artifactId>crabzilla-web</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-jooq</artifactId>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>io.github.crabzilla</groupId>-->
+<!--      <artifactId>crabzilla-jooq</artifactId>-->
+<!--    </dependency>-->
+<!--    <dependency>-->
+<!--      <groupId>io.github.crabzilla</groupId>-->
+<!--      <artifactId>crabzilla-rabbitmq</artifactId>-->
+<!--    </dependency>-->
+<!--    <dependency>-->
+<!--      <groupId>io.github.crabzilla</groupId>-->
+<!--      <artifactId>crabzilla-hazelcast</artifactId>-->
+<!--    </dependency>-->
 
   </dependencies>
 

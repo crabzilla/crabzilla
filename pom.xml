@@ -17,6 +17,8 @@
     <serialization.version>0.20.0</serialization.version>
     <vertx.version>3.9.0</vertx.version>
     <vertx.jooq.version>5.1.1</vertx.jooq.version>
+    <jooq.version>3.13.1</jooq.version>
+    <postgresql.version>42.2.10</postgresql.version>
     <jackson.version>2.10.2</jackson.version>
     <slf4j.version>1.7.25</slf4j.version>
 
@@ -75,7 +77,9 @@
     <module>crabzilla-core</module>
     <module>crabzilla-pg-client</module>
     <module>crabzilla-web</module>
-    <module>crabzilla-jooq</module>
+<!--    <module>crabzilla-jooq</module>-->
+<!--    <module>crabzilla-rabbitmq</module>-->
+<!--    <module>crabzilla-hazelcast</module>-->
     <module>coverage-report</module>
   </modules>
 
@@ -109,6 +113,18 @@
         <version>${project.version}</version>
       </dependency>
 
+      <dependency>
+        <groupId>io.github.crabzilla</groupId>
+        <artifactId>crabzilla-hazelcast</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+<!--      <dependency>-->
+<!--        <groupId>io.github.crabzilla</groupId>-->
+<!--        <artifactId>crabzilla-rabbitmq</artifactId>-->
+<!--        <version>${project.version}</version>-->
+<!--      </dependency>-->
+
       <!-- vertx -->
 
       <dependency>
@@ -124,7 +140,7 @@
       <dependency>
         <groupId>io.github.jklingsporn</groupId>
         <artifactId>vertx-jooq-classic-reactive</artifactId>
-        <version>5.1.1</version>
+        <version>${vertx.jooq.version}</version>
       </dependency>
 
       <!-- util -->
