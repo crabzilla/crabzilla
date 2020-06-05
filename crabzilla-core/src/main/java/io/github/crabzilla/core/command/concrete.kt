@@ -11,7 +11,7 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 
 object EventBusChannels {
-  val entityChannel = { entityName: String -> "crabzilla.entity.$entityName" }
+  val aggregateRootChannel = { entityName: String -> "crabzilla.aggregate.$entityName" }
 }
 
 val AGGREGATE_ROOT_SERIALIZER = PolymorphicSerializer(AggregateRoot::class)

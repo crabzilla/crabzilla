@@ -96,14 +96,14 @@ class PgcUowJournal(
   class FullPayloadPublisher(private val vertx: Vertx) : UnitOfWorkPublisher {
     override fun publish(events: JsonObject) {
       vertx.eventBus()
-        .publish(EventBusChannels.entityChannel(events.getString(UnitOfWork.JsonMetadata.ENTITY_NAME)), events)
+        .publish(EventBusChannels.aggregateRootChannel(events.getString(UnitOfWork.JsonMetadata.ENTITY_NAME)), events)
     }
   }
 
   class EmptyPayloadPublisher(private val vertx: Vertx) : UnitOfWorkPublisher {
     override fun publish(events: JsonObject) {
       vertx.eventBus()
-        .publish(EventBusChannels.entityChannel(events.getString(UnitOfWork.JsonMetadata.ENTITY_NAME)), null)
+        .publish(EventBusChannels.aggregateRootChannel(events.getString(UnitOfWork.JsonMetadata.ENTITY_NAME)), null)
     }
   }
 }

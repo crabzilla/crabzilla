@@ -20,7 +20,7 @@ internal val log = getLogger("startProjection")
 
 typealias PgcReadContext = Triple<Vertx, Json, PgPool>
 
-fun startProjection(
+fun startProjectionConsumingFromEventbus(
   entityName: String,
   streamId: String,
   readContext: PgcReadContext,
@@ -34,7 +34,7 @@ fun startProjection(
     return UnitOfWorkEvents(uowId, entityId, events)
   }
 
-  val channel = EventBusChannels.entityChannel(entityName)
+  val channel = EventBusChannels.aggregateRootChannel(entityName)
   log.info("adding projector for $streamId subscribing on $channel")
   val (vertx, json, readDb) = readContext
   val uolProjector = PgcUnitOfWorkProjector(readDb, entityName, streamId, projectorDomain)
@@ -49,7 +49,7 @@ fun startProjection(
   }
 }
 
-fun startProjection(
+fun startProjectionConsumingFromDatabase(
   vertx: Vertx,
   projectionsRepo: PgcProjectionsRepo,
   streamProjector: PgcStreamProjector
@@ -84,7 +84,7 @@ fun startProjection(
   }
   log.info("starting db pooling projector for entity $entityName streamId $streamId")
   // on startup, get latest projected uowId
-  // TODO sinalize command handler with dependency to this stream in order to avoid commands until it's done
+  // TODO signalize command handler with dependency to this stream in order to avoid commands until it's done
   projectionsRepo.selectLastUowId(entityName, streamId)
     .onFailure { err ->
       promise0.fail(err)
@@ -97,7 +97,7 @@ fun startProjection(
         .onSuccess { rows ->
           log.info("$rows units of work successfully projected on startup phase")
           // after projecting missing events, react to repeat the operation given any event on this entityName
-          val channel = EventBusChannels.entityChannel(entityName)
+          val channel = EventBusChannels.aggregateRootChannel(entityName)
           log.info("db pooling projector for entity $entityName streamId $streamId is now ready")
           vertx.eventBus().consumer<JsonObject>(channel) {
             log.info("Got message")

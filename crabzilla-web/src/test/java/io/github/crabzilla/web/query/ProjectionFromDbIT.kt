@@ -1,4 +1,4 @@
-package io.github.crabzilla.web.example1
+package io.github.crabzilla.web.query
 
 import io.github.crabzilla.core.command.UnitOfWork.JsonMetadata.COMMAND
 import io.github.crabzilla.core.command.UnitOfWork.JsonMetadata.COMMAND_ID
@@ -48,7 +48,7 @@ import java.util.function.Consumer
  */
 @ExtendWith(VertxExtension::class)
 @TestInstance(Lifecycle.PER_CLASS)
-internal class CustomerAcceptance2IT {
+internal class ProjectionFromDbIT {
 
   val random = Random()
   var nextInt = random.nextInt()
@@ -57,7 +57,7 @@ internal class CustomerAcceptance2IT {
   private lateinit var client: WebClient
 
   companion object {
-    private val log = LoggerFactory.getLogger(CustomerAcceptance2IT::class.java)
+    private val log = LoggerFactory.getLogger(ProjectionFromDbIT::class.java)
     init {
       System.setProperty(io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME,
         SLF4JLogDelegateFactory::class.java.name)
@@ -75,7 +75,7 @@ internal class CustomerAcceptance2IT {
         wco.defaultHost = "0.0.0.0"
         wco.defaultPort = httpPort
         client = WebClient.create(vertx, wco)
-        deploy(vertx, CustomerVerticle2::class.java.name, deploymentOptions)
+        deploy(vertx, ProjectionFromDbVerticle::class.java.name, deploymentOptions)
           .onComplete {
             cleanDatabase(vertx, config)
               .onSuccess { tc.completeNow() }
