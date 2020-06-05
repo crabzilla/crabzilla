@@ -20,6 +20,6 @@ interface AggregateRootCommandAware<A : AggregateRoot> {
   val entityName: String
   val initialState: A
   val applyEvent: (event: DomainEvent, state: A) -> A
-  val validateCmd: (command: Command) -> List<String>
+  val validateCmd: (command: Command) -> List<String> // TODO move to command.validate() ?
   val handleCmd: (id: Int, state: A, command: Command) -> Future<List<DomainEvent>>
 }
