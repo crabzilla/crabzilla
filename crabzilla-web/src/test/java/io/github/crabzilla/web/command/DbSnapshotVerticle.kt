@@ -7,7 +7,7 @@ import io.github.crabzilla.pgc.command.PgcUowJournal.FullPayloadPublisher
 import io.github.crabzilla.pgc.command.PgcUowRepo
 import io.github.crabzilla.web.boilerplate.listenHandler
 import io.github.crabzilla.web.boilerplate.writeModelPgPool
-import io.github.crabzilla.web.command.AggregateRootWebHelper.Companion.subRouteOf
+import io.github.crabzilla.web.command.WebResourceContext.Companion.subRouteOf
 import io.github.crabzilla.web.example1.ActivateCustomer
 import io.github.crabzilla.web.example1.CreateActivateCustomer
 import io.github.crabzilla.web.example1.CreateCustomer

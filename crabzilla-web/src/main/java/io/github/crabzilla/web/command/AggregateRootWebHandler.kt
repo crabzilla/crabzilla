@@ -14,24 +14,17 @@ import io.github.crabzilla.core.command.UnitOfWork
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
-import io.vertx.ext.web.Router
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class AggregateRootWebHelper<A : AggregateRoot>(
-  private val crabzillaContext: CrabzillaContext,
-  private val snapshotRepo: SnapshotRepository<A>,
-  private val cmdAware: AggregateRootCommandAware<A>
+class AggregateRootWebHandler<A : AggregateRoot>(
+        private val crabzillaContext: CrabzillaContext,
+        private val snapshotRepo: SnapshotRepository<A>,
+        private val cmdAware: AggregateRootCommandAware<A>
 ) {
 
   companion object {
-    private val log: Logger = LoggerFactory.getLogger(AggregateRootWebHelper::class.java)
-    // TODO i guess this should return a sub-router
-    fun <A : AggregateRoot> subRouteOf(router: Router, ctx: CrabzillaContext, webCtx: WebResourceContext<A>) {
-      log.info("adding web command handler for entity ${webCtx.cmdAware.entityName}")
-      val cmdHandlerComponent = AggregateRootWebHelper(ctx, webCtx.snapshotRepo, webCtx.cmdAware)
-      WebResourceDeployer(webCtx.cmdAware.entityName, webCtx.cmdTypeMap, cmdHandlerComponent, router).deployWebRoutes()
-    }
+    private val log: Logger = LoggerFactory.getLogger(AggregateRootWebHandler::class.java)
   }
 
   private val cmdController = CommandController(cmdAware, snapshotRepo, crabzillaContext.uowJournal)

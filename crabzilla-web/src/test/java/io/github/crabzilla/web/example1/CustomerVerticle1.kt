@@ -10,8 +10,8 @@ import io.github.crabzilla.pgc.query.startProjection
 import io.github.crabzilla.web.boilerplate.listenHandler
 import io.github.crabzilla.web.boilerplate.readModelPgPool
 import io.github.crabzilla.web.boilerplate.writeModelPgPool
-import io.github.crabzilla.web.command.AggregateRootWebHelper.Companion.subRouteOf
 import io.github.crabzilla.web.command.WebResourceContext
+import io.github.crabzilla.web.command.WebResourceContext.Companion.subRouteOf
 import io.github.crabzilla.web.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.web.example1.Example1Fixture.CUSTOMER_SUMMARY_STREAM
 import io.vertx.core.AbstractVerticle
