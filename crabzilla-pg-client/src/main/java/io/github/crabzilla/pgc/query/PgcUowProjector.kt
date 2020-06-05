@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgc.query
 
-import io.github.crabzilla.core.UnitOfWorkEvents
+import io.github.crabzilla.core.command.UnitOfWorkEvents
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.pgclient.PgPool
@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory
 
 class PgcUowProjector(
   private val pgPool: PgPool,
-  private val entityName: String,
-  private val streamId: String,
+  val entityName: String,
+  val streamId: String,
   private val projector: PgcEventProjector
 ) {
 
@@ -43,8 +43,8 @@ class PgcUowProjector(
 
       future
         .onFailure { err ->
-          transaction.rollback { result -> if (result.failed()) log.error("Doing rollback ", result.cause()) }
-          log.error("Error while projecting events", err)
+          log.error("Error while projecting events. Will perform rollback.", err)
+//          transaction.rollback { result -> if (result.failed()) log.error("Doing rollback ", result.cause()) }
           promise.fail(err)
         }
         .onSuccess {
@@ -52,8 +52,8 @@ class PgcUowProjector(
             .execute(Tuple.of(entityName, streamId, uowEvents.uowId)) { event3 ->
               if (event3.failed()) {
                 promise.fail(event3.cause())
-                transaction.rollback { result -> if (result.failed()) log.error("Doing rollback ", result.cause()) }
-                log.error("Error while updating projections table", event3.cause())
+                log.error("Error while updating projections table. Will perform rollback.", event3.cause())
+//                transaction.rollback { result -> if (result.failed()) log.error("Doing rollback ", result.cause()) }
                 return@execute
               }
               // Commit the transaction

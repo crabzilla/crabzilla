@@ -1,6 +1,6 @@
 package io.github.crabzilla.web.example1
 
-import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.command.DomainEvent
 import io.github.crabzilla.pgc.query.PgcEventProjector
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture

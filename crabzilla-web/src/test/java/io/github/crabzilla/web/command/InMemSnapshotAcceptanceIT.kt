@@ -1,11 +1,11 @@
-package io.github.crabzilla.web.example1
+package io.github.crabzilla.web.command
 
-import io.github.crabzilla.core.UnitOfWork.JsonMetadata.COMMAND
-import io.github.crabzilla.core.UnitOfWork.JsonMetadata.COMMAND_ID
-import io.github.crabzilla.core.UnitOfWork.JsonMetadata.ENTITY_ID
-import io.github.crabzilla.core.UnitOfWork.JsonMetadata.ENTITY_NAME
-import io.github.crabzilla.core.UnitOfWork.JsonMetadata.EVENTS
-import io.github.crabzilla.core.UnitOfWork.JsonMetadata.VERSION
+import io.github.crabzilla.core.command.UnitOfWork.JsonMetadata.COMMAND
+import io.github.crabzilla.core.command.UnitOfWork.JsonMetadata.COMMAND_ID
+import io.github.crabzilla.core.command.UnitOfWork.JsonMetadata.ENTITY_ID
+import io.github.crabzilla.core.command.UnitOfWork.JsonMetadata.ENTITY_NAME
+import io.github.crabzilla.core.command.UnitOfWork.JsonMetadata.EVENTS
+import io.github.crabzilla.core.command.UnitOfWork.JsonMetadata.VERSION
 import io.github.crabzilla.web.boilerplate.cleanDatabase
 import io.github.crabzilla.web.boilerplate.deploy
 import io.github.crabzilla.web.boilerplate.findFreeHttpPort
@@ -13,7 +13,6 @@ import io.github.crabzilla.web.boilerplate.getConfig
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
-import io.vertx.core.http.HttpMethod.GET
 import io.vertx.core.http.HttpMethod.POST
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
@@ -27,11 +26,7 @@ import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.junit5.web.TestRequest.statusCode
 import io.vertx.junit5.web.TestRequest.testRequest
-import java.util.Random
-import java.util.UUID
-import java.util.function.Consumer
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.StringAssert
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
@@ -41,13 +36,16 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
+import java.util.Random
+import java.util.UUID
+import java.util.function.Consumer
 
 /**
  * Integration test
  */
 @ExtendWith(VertxExtension::class)
 @TestInstance(Lifecycle.PER_CLASS)
-internal class CustomerAcceptanceIT {
+internal class InMemSnapshotAcceptanceIT {
 
   val random = Random()
   var nextInt = random.nextInt()
@@ -56,7 +54,7 @@ internal class CustomerAcceptanceIT {
   private lateinit var client: WebClient
 
   companion object {
-    private val log = LoggerFactory.getLogger(CustomerAcceptanceIT::class.java)
+    private val log = LoggerFactory.getLogger(InMemSnapshotAcceptanceIT::class.java)
     init {
       System.setProperty(io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME,
         SLF4JLogDelegateFactory::class.java.name)
@@ -74,7 +72,7 @@ internal class CustomerAcceptanceIT {
         wco.defaultHost = "0.0.0.0"
         wco.defaultPort = httpPort
         client = WebClient.create(vertx, wco)
-        deploy(vertx, CustomerVerticle::class.java.name, deploymentOptions)
+        deploy(vertx, InMemSnapshotVerticle::class.java.name, deploymentOptions)
           .onComplete {
             cleanDatabase(vertx, config)
               .onSuccess { tc.completeNow() }
@@ -131,21 +129,6 @@ internal class CustomerAcceptanceIT {
     }
 
     @Test
-    @DisplayName("You get a correspondent company summary (read model)")
-    fun a3(tc: VertxTestContext?) {
-      val route = "/customers/$customerId2"
-      val expected = JsonObject("{\"id\":$customerId2,\"name\":\"customer#$customerId2\",\"is_active\":false}")
-      testRequest(client, GET, route)
-        .expect(statusCode(200))
-        .expect(Consumer { obj: HttpResponse<Buffer?> -> obj.bodyAsJsonObject() })
-        .expect(Consumer { response: HttpResponse<Buffer?> -> println(response.bodyAsString()) })
-        .expect(Consumer { response: HttpResponse<Buffer?> ->
-          StringAssert(response.bodyAsJsonObject().encode()).isEqualToIgnoringWhitespace(expected.encode())
-        })
-        .send(tc)
-    }
-
-    @Test
     @DisplayName("You get a correspondent entity tracking")
     fun a4(tc: VertxTestContext) {
       client["/commands/customer/$customerId2/units-of-work"]
@@ -198,7 +181,6 @@ internal class CustomerAcceptanceIT {
               .sendJson(cmdAsJson, tc.succeeding { response2: HttpResponse<JsonObject> ->
                 tc.verify {
                   val uow2 = response2.body()
-                  println(uow2.encodePrettily())
                   val uowId2 = java.lang.Long.valueOf(response2.getHeader("uowId"))
                   assertThat(uow2).isEqualTo(uow1)
                   assertThat(uowId2).isEqualTo(uowId1)
@@ -229,18 +211,6 @@ internal class CustomerAcceptanceIT {
             tc.completeNow()
           }
         })
-    }
-
-    @Test
-    @DisplayName("You get a correspondent company summary (read model)")
-    fun a3(tc: VertxTestContext?) {
-      val route = "/customers/$customerId3"
-      val expected = "{\"id\":$customerId3,\"name\":\"customer#$customerId3\",\"is_active\":false}"
-      testRequest(client, GET, route)
-        .expect(statusCode(200))
-        .expect(Consumer { obj: HttpResponse<Buffer?> -> obj.bodyAsJsonObject() })
-        .expect(Consumer { bufferHttpResponse: HttpResponse<Buffer?> -> bufferHttpResponse.bodyAsString() == expected })
-        .send(tc)
     }
 
     @Test

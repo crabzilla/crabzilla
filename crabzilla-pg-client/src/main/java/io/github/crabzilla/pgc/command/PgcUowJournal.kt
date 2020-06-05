@@ -1,11 +1,11 @@
 package io.github.crabzilla.pgc.command
 
-import io.github.crabzilla.core.COMMAND_SERIALIZER
-import io.github.crabzilla.core.EVENT_SERIALIZER
-import io.github.crabzilla.core.EventBusUowPublisher
-import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.core.UnitOfWorkJournal
-import io.github.crabzilla.core.UnitOfWorkPublisher
+import io.github.crabzilla.core.command.COMMAND_SERIALIZER
+import io.github.crabzilla.core.command.EVENT_SERIALIZER
+import io.github.crabzilla.core.command.EventBusUowPublisher
+import io.github.crabzilla.core.command.UnitOfWork
+import io.github.crabzilla.core.command.UnitOfWorkJournal
+import io.github.crabzilla.core.command.UnitOfWorkPublisher
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory
 
 class PgcUowJournal(
   private val vertx: Vertx,
-  private val pgPool: PgPool,
+  private val writeModelDb: PgPool,
   private val json: Json,
   private val uowPublisher: UnitOfWorkPublisher = EventBusUowPublisher(vertx)
 ) : UnitOfWorkJournal {
@@ -35,7 +35,7 @@ class PgcUowJournal(
 
   override fun append(unitOfWork: UnitOfWork): Future<Long> {
     val promise = Promise.promise<Long>()
-    pgPool.begin { event0 ->
+    writeModelDb.begin { event0 ->
       if (event0.failed()) {
         log.error("when starting transaction")
         promise.fail(event0.cause())
@@ -85,7 +85,7 @@ class PgcUowJournal(
                   .put(UnitOfWork.JsonMetadata.ENTITY_ID, unitOfWork.entityId)
                   .put(UnitOfWork.JsonMetadata.VERSION, unitOfWork.version)
                   .put(UnitOfWork.JsonMetadata.EVENTS, JsonArray(eventsListAsJsonObject))
-                uowPublisher.publish(message)
+                uowPublisher.publish(unitOfWork.entityName, message)
                 promise.complete(uowId)
               }
             }

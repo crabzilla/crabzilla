@@ -1,8 +1,5 @@
-package io.github.crabzilla.internal
+package io.github.crabzilla.core.command
 
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.core.UnitOfWorkEvents
 import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.CustomerCreated
 import java.util.UUID
@@ -17,7 +14,7 @@ class UnitOfWorkEventsTest {
     val command = CreateCustomer("cust#1")
 
     val uow =
-      UnitOfWork("customer", 1, UUID.randomUUID(), command, 1, listOf<DomainEvent>(CustomerCreated(1, "cust#1")))
+            UnitOfWork("customer", 1, UUID.randomUUID(), command, 1, listOf<DomainEvent>(CustomerCreated(1, "cust#1")))
 
     val pd = UnitOfWorkEvents(1, uow.entityId, uow.events)
 

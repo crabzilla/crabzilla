@@ -1,24 +1,26 @@
 package io.github.crabzilla.pgc.query
 
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.EVENT_SERIALIZER
-import io.github.crabzilla.core.EventBusChannels
-import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.core.UnitOfWorkEvents
-import io.github.crabzilla.pgc.command.PgcUowRepo
+import io.github.crabzilla.core.command.DomainEvent
+import io.github.crabzilla.core.command.EVENT_SERIALIZER
+import io.github.crabzilla.core.command.EventBusChannels
+import io.github.crabzilla.core.command.UnitOfWork
+import io.github.crabzilla.core.command.UnitOfWorkEvents
+import io.github.crabzilla.pgc.command.PgcStreamProjector
 import io.vertx.core.Future
+import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory.getLogger
+import java.util.concurrent.atomic.AtomicBoolean
 
-internal val log = getLogger("addProjector")
+internal val log = getLogger("startProjection")
 
 typealias PgcReadContext = Triple<Vertx, Json, PgPool>
 
-fun addEventBusProjector(
+fun startProjection(
   entityName: String,
   streamId: String,
   readContext: PgcReadContext,
@@ -31,73 +33,87 @@ fun addEventBusProjector(
     val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsString)
     return UnitOfWorkEvents(uowId, entityId, events)
   }
-  log.info("adding projector for $streamId subscribing on ${EventBusChannels.unitOfWorkChannel}")
+
+  val channel = EventBusChannels.entityChannel(entityName)
+  log.info("adding projector for $streamId subscribing on $channel")
   val (vertx, json, readDb) = readContext
   val uolProjector = PgcUowProjector(readDb, entityName, streamId, projector)
-  vertx.eventBus().consumer<JsonObject>(EventBusChannels.unitOfWorkChannel) { message ->
+  vertx.eventBus().consumer<JsonObject>(channel) { message ->
     val uowEvents = toUnitOfWorkEvents(message.body(), json)
+    log.info("Got $uowEvents")
     uolProjector.handle(uowEvents).onComplete { result ->
       if (result.failed()) {
-        log.error("Projection [$streamId] failed: " + result.cause().message)
+        log.error("Projection for $streamId failed: " + result.cause().message)
       }
     }
   }
 }
 
-fun addDbPoolingProjector(
-  entityName: String,
-  streamId: String,
-  readContext: PgcReadContext,
-  projector: PgcEventProjector,
-  uowRepo: PgcUowRepo,
-  projectionRepo: PgcProjectionRepo
-) {
-
-  log.info("adding db pooling projector for $streamId")
-  val (vertx, _, readDb) = readContext
-  val uolProjector = PgcUowProjector(readDb, entityName, streamId, projector)
+fun startProjection(
+  vertx: Vertx,
+  projectionRepo: PgcProjectionRepo,
+  streamProjector: PgcStreamProjector
+): Future<Void> {
+  val promise0 = Promise.promise<Void>()
+  val isRunning = AtomicBoolean(false)
+  val entityName = streamProjector.entityName()
+  val streamId = streamProjector.streamId()
+  fun react(): Future<Long> {
+    val promise = Promise.promise<Long>()
+    isRunning.set(true)
+    projectionRepo.selectLastUowId(entityName, streamId)
+      .onFailure { err ->
+        isRunning.set(false)
+        promise.fail(err)
+        log.error("On projectionRepo.selectLastUowId for entity $entityName streamId $streamId", err)
+      }
+      .onSuccess { lastStreamUow1 ->
+        streamProjector.handle(lastStreamUow1, 10, entityName, 10)
+          .onFailure { err ->
+            isRunning.set(false)
+            promise.fail(err)
+            log.error("On streamProjector.handle for entity $entityName streamId $streamId ", err)
+          }
+          .onSuccess { rows2 ->
+            isRunning.set(false)
+            promise.complete(rows2)
+            log.info("$rows2 units of work successfully projected")
+          }
+      }
+    return promise.future()
+  }
+  log.info("starting db pooling projector for entity $entityName streamId $streamId")
   // on startup, get latest projected uowId
   projectionRepo.selectLastUowId(entityName, streamId)
-    .onFailure { err -> log.error("On projectionRepo.selectLastUowId for stream $streamId ", err) }
-    .onSuccess { lastStreamUow ->
-      // then retrieve missing events from entityName
-      uowRepo.selectAfterUowId(lastStreamUow, Int.MAX_VALUE, entityName)
-        .onFailure { err -> log.error("On uowRepo.selectAfterUowId for stream $streamId ", err) }
-        .onSuccess { uowEventsList: List<UnitOfWorkEvents> ->
-          // then transactional project each unit of work
-          log.info("Projecting {} events for stream {}", uowEventsList.size, streamId)
-          val toFuture: (Int) -> () -> Future<Void> = { index -> { uolProjector.handle(uowEventsList[index]) } }
-          val futures: List<() -> Future<Void>> = List(uowEventsList.size, toFuture)
-          futures.fold(Future.succeededFuture()) { previousFuture: Future<Void>,
-              currentFuture: () -> Future<Void> ->
-              previousFuture.compose { currentFuture.invoke() }
+    .onFailure { err ->
+      promise0.fail(err)
+      log.error("On projectionRepo.selectLastUowId for entity $entityName streamId $streamId", err) }
+    .onSuccess { lastStreamUow1 ->
+      streamProjector.handle(lastStreamUow1, 100, entityName, Int.MAX_VALUE)
+        .onFailure { err ->
+//          promise0.fail(err) // TODO no need to wait?
+          log.error("On streamProjector.handle for entity $entityName streamId $streamId ", err) }
+        .onSuccess { rows ->
+          log.info("$rows units of work successfully projected on startup phase")
+          // after projecting missing events, react to repeat the operation given any event on this entityName
+          val channel = EventBusChannels.entityChannel(entityName)
+          log.info("db pooling projector for entity $entityName streamId $streamId is now ready")
+          vertx.eventBus().consumer<JsonObject>(channel) {
+            log.info("Got message")
+            if (isRunning.get()) {
+              log.info("StreamProjector is already running. Skipping for now.")
+              return@consumer
             }
-            .onFailure { err -> log.error("On handling projection for stream $streamId ", err) }
-            .onSuccess {
-              // after projecting missing events, repeat the operation given any event on this entityName
-              if (log.isDebugEnabled) {
-                log.debug("${uowEventsList.size} events projected successfully on stream $streamId")
-              }
-              vertx.eventBus().consumer<Void>(entityName) {
-                uowRepo.selectAfterUowId(lastStreamUow, 100, entityName)
-                  .onFailure { err -> log.error("On uowRepo.selectAfterUowId for stream $streamId ", err) }
-                  .onSuccess { uowEventsList: List<UnitOfWorkEvents> ->
-                    log.info("Projecting {} events for stream {}", uowEventsList.size, streamId)
-                    val toFuture1: (Int) -> () -> Future<Void> = { index -> { uolProjector.handle(uowEventsList[index]) } }
-                    val futures1: List<() -> Future<Void>> = List(uowEventsList.size, toFuture1)
-                    futures1.fold(Future.succeededFuture()) { previousFuture: Future<Void>,
-                        currentFuture: () -> Future<Void> ->
-                        previousFuture.compose { currentFuture.invoke() }
-                      }
-                      .onFailure { err -> log.error("On handling projection for stream $streamId ", err) }
-                      .onSuccess {
-                        if (log.isDebugEnabled) {
-                          log.debug("${uowEventsList.size} events projected successfully on stream $streamId")
-                        }
-                      }
-                  }
-              }
-            }
+            // TODO implement some backoff policy here (perhaps using CircuitBreaker (triggered on first fail)
+            react()
+              .onSuccess { rows ->
+                log.info("$rows were projected on react phase") }
+              .onFailure { err ->
+                log.error("when trying to project event", err) }
+          }
+//          promise0.fail(err) // TODO no need to wait?
         }
+      promise0.complete()
     }
+  return promise0.future()
 }

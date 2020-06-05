@@ -1,18 +1,17 @@
 package io.github.crabzilla.pgc.command
 
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.ENTITY_SERIALIZER
-import io.github.crabzilla.core.EVENT_SERIALIZER
-import io.github.crabzilla.core.Entity
-import io.github.crabzilla.core.EntityCommandAware
-import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.core.SnapshotRepository
+import io.github.crabzilla.core.command.DomainEvent
+import io.github.crabzilla.core.command.ENTITY_SERIALIZER
+import io.github.crabzilla.core.command.EVENT_SERIALIZER
+import io.github.crabzilla.core.command.Entity
+import io.github.crabzilla.core.command.EntityCommandAware
+import io.github.crabzilla.core.command.Snapshot
+import io.github.crabzilla.core.command.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.pgclient.PgPool
-import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
@@ -55,25 +54,17 @@ class PgcSnapshotRepo<E : Entity>(
 
   override fun retrieve(entityId: Int): Future<Snapshot<E>> {
     val promise = Promise.promise<Snapshot<E>>()
-    writeModelDb.getConnection { res ->
-      if (!res.succeeded()) {
-        promise.fail(res.cause())
-        return@getConnection
+    writeModelDb.begin { event0 ->
+      if (event0.failed()) {
+        log.error("when starting transaction", event0.cause())
+        promise.fail(event0.cause())
+        return@begin
       }
-      // Transaction must use a connection
-      val conn = res.result()
-      // TODO how to specify transaction isolation level?
-      // Begin the transaction
-      val tx: Transaction = conn.begin().abortHandler {
-        log.error("Transaction aborted")
-        promise.fail("Transaction aborted")
-        return@abortHandler
-      }
+      val tx = event0.result()
       // get current snapshot
-      conn.preparedQuery(selectSnapshot())
+      tx.preparedQuery(selectSnapshot())
         .execute(Tuple.of(entityId)) { event1 ->
           if (event1.failed()) {
-            conn.close()
             promise.fail(event1.cause())
             return@execute
           }
@@ -89,9 +80,9 @@ class PgcSnapshotRepo<E : Entity>(
             cachedVersion = pgRow.first().getInteger("version")
           }
           // get committed events after snapshot version
-          conn.prepare(SELECT_EVENTS_VERSION_AFTER_VERSION) { event2 ->
-            if (!event2.succeeded()) {
-              conn.close()
+          tx.prepare(SELECT_EVENTS_VERSION_AFTER_VERSION) { event2 ->
+            if (event2.failed()) {
+              log.error("when gettting committed events after snapshot version", event2.cause())
               promise.fail(event2.cause())
               return@prepare
             }
@@ -100,33 +91,30 @@ class PgcSnapshotRepo<E : Entity>(
             val pq = event2.result()
             // Fetch N rows at a time
             val stream = pq.createStream(ROWS_PER_TIME, Tuple.of(entityId, commandAware.entityName, cachedVersion))
-            stream.exceptionHandler { err -> log.error("Retrieve: ${err.message}", err)
-              tx.rollback(); conn.close(); promise.fail(err)
-            }
-            stream.endHandler {
-              log.debug("End of stream")
-              // Attempt to commit the transaction
-              tx.commit { ar ->
-                // Return the connection to the pool
-                conn.close()
-                // But transaction abortion fails it
-                if (ar.failed()) {
-                  log.error("endHandler.closeConnection")
-                  promise.fail(ar.cause())
-                } else {
-                  log.debug("success: endHandler.closeConnection")
-                  val result = Snapshot(currentInstance, currentVersion)
-                  promise.complete(result)
-                }
-              }
-            }
+            stream.exceptionHandler { err -> log.error("Stream error", err) }
             stream.handler { row ->
               currentVersion = row.getInteger(1)
               val eventsJsonString: String = row.get(String::class.java, 0)
               val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsJsonString)
               currentInstance =
                 events.fold(currentInstance) { state, event -> commandAware.applyEvent.invoke(event, state) }
-              log.debug("Events: $events \n version: $currentVersion \n instance $currentInstance")
+              if (log.isDebugEnabled) {
+                log.debug("Events: $events \n version: $currentVersion \n instance $currentInstance")
+              }
+            }
+            stream.endHandler {
+              if (log.isDebugEnabled) log.debug("End of stream")
+              // Attempt to commit the transaction
+              tx.commit { ar ->
+                if (ar.failed()) {
+                  log.error("tx.commit", ar.cause())
+                  promise.fail(ar.cause())
+                } else {
+                  if (log.isDebugEnabled) log.debug("tx.commit successfully")
+                  val result = Snapshot(currentInstance, currentVersion)
+                  promise.complete(result)
+                }
+              }
             }
           }
         }

@@ -1,9 +1,9 @@
 package io.github.crabzilla.pgc.command
 
-import io.github.crabzilla.core.COMMAND_SERIALIZER
-import io.github.crabzilla.core.EVENT_SERIALIZER
-import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.core.SnapshotRepository
+import io.github.crabzilla.core.command.COMMAND_SERIALIZER
+import io.github.crabzilla.core.command.EVENT_SERIALIZER
+import io.github.crabzilla.core.command.Snapshot
+import io.github.crabzilla.core.command.SnapshotRepository
 import io.github.crabzilla.pgc.command.PgcUowJournal.Companion.SQL_APPEND_UOW
 import io.github.crabzilla.pgc.example1.Customer
 import io.github.crabzilla.pgc.example1.CustomerCommandAware
@@ -26,7 +26,6 @@ import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
-import java.util.UUID
 import kotlinx.serialization.builtins.list
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -34,6 +33,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
+import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

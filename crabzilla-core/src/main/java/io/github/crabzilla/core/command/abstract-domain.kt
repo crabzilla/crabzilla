@@ -1,4 +1,4 @@
-package io.github.crabzilla.core
+package io.github.crabzilla.core.command
 
 import io.vertx.core.Future
 import kotlinx.serialization.Polymorphic

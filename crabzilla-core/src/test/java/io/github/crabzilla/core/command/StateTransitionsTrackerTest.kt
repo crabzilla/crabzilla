@@ -1,6 +1,5 @@
-package io.github.crabzilla
+package io.github.crabzilla.core.command
 
-import io.github.crabzilla.core.StateTransitionsTracker
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerActivated
 import io.github.crabzilla.example1.CustomerCommandAware

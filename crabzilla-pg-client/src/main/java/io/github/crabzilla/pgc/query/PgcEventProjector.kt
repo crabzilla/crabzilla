@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgc.query
 
-import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.command.DomainEvent
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.sqlclient.Transaction

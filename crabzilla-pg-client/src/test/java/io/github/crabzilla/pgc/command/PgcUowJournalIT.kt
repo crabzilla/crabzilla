@@ -1,8 +1,8 @@
 package io.github.crabzilla.pgc.command
 
-import io.github.crabzilla.core.UnitOfWork
-import io.github.crabzilla.core.UnitOfWorkJournal
-import io.github.crabzilla.core.UnitOfWorkRepository
+import io.github.crabzilla.core.command.UnitOfWork
+import io.github.crabzilla.core.command.UnitOfWorkJournal
+import io.github.crabzilla.core.command.UnitOfWorkRepository
 import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activatedUow1
@@ -17,33 +17,31 @@ import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
-import io.vertx.core.VertxOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
-import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
+import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgcUowJournalIT {
 
-  private lateinit var vertx: Vertx
   private lateinit var writeDb: PgPool
   private lateinit var repo: UnitOfWorkRepository
   private lateinit var journal: UnitOfWorkJournal
 
-  @BeforeEach
-  fun setup(tc: VertxTestContext) {
+  private lateinit var testRepo: PgcUowTestRepo
 
-    val vertxOptions = VertxOptions()
-    vertx = Vertx.vertx(vertxOptions)
+  @BeforeEach
+  fun setup(vertx: Vertx, tc: VertxTestContext) {
+
     val envOptions = ConfigStoreOptions()
       .setType("file")
       .setFormat("properties")
@@ -61,6 +59,7 @@ class PgcUowJournalIT {
       writeDb = writeModelPgPool(vertx, config)
       repo = PgcUowRepo(writeDb, example1Json)
       journal = PgcUowJournal(vertx, writeDb, example1Json)
+      testRepo = PgcUowTestRepo(writeDb, example1Json)
       writeDb.query("delete from units_of_work").execute { deleteResult1 ->
         if (deleteResult1.failed()) {
           deleteResult1.cause().printStackTrace()
@@ -97,7 +96,7 @@ class PgcUowJournalIT {
           }
           val uow = event2.result()
           tc.verify { assertThat(uow).isEqualTo(createdUow1) }
-          repo.selectAfterVersion(createdUow1.entityId, 0, CUSTOMER_ENTITY).onComplete { event3 ->
+          testRepo.selectAfterVersion(createdUow1.entityId, 0, CUSTOMER_ENTITY).onComplete { event3 ->
             if (event3.failed()) {
               tc.failNow(event3.cause())
               return@onComplete
@@ -173,7 +172,7 @@ class PgcUowJournalIT {
             val uowId = ar2.result()
             tc.verify { assertThat(uowId).isGreaterThan(2) }
             // get all versions for id
-            repo.selectAfterVersion(activatedUow1.entityId, 0, CUSTOMER_ENTITY).onComplete { ar4 ->
+            testRepo.selectAfterVersion(activatedUow1.entityId, 0, CUSTOMER_ENTITY).onComplete { ar4 ->
               if (ar4.failed()) {
                 tc.failNow(ar4.cause())
               } else {

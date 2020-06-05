@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>v0.0.8</version>
+    <version>0.0.8-snapshot</version>
   </parent>
 
   <artifactId>crabzilla-pg-client</artifactId>
@@ -22,6 +22,11 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-config</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-circuit-breaker</artifactId>
     </dependency>
 
     <dependency>

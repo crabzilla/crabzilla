@@ -1,8 +1,8 @@
 package io.github.crabzilla.pgc.example1
 
-import io.github.crabzilla.core.UnitOfWork
-import java.util.UUID
+import io.github.crabzilla.core.command.UnitOfWork
 import kotlinx.serialization.json.Json
+import java.util.UUID
 
 object Example1Fixture {
 

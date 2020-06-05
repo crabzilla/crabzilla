@@ -1,10 +1,10 @@
 package io.github.crabzilla.web.example1
 
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.Entity
-import io.github.crabzilla.core.EntityCommandAware
-import io.github.crabzilla.core.StateTransitionsTracker
+import io.github.crabzilla.core.command.Command
+import io.github.crabzilla.core.command.DomainEvent
+import io.github.crabzilla.core.command.Entity
+import io.github.crabzilla.core.command.EntityCommandAware
+import io.github.crabzilla.core.command.StateTransitionsTracker
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise

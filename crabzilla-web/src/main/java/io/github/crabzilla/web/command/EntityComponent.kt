@@ -1,36 +1,21 @@
-package io.github.crabzilla.web
+package io.github.crabzilla.web.command
 
-import io.github.crabzilla.core.COMMAND_SERIALIZER
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.CommandMetadata
-import io.github.crabzilla.core.CrabzillaContext
-import io.github.crabzilla.core.CrabzillaInternal.CommandController
-import io.github.crabzilla.core.ENTITY_SERIALIZER
-import io.github.crabzilla.core.Entity
-import io.github.crabzilla.core.EntityCommandAware
-import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.core.SnapshotRepository
-import io.github.crabzilla.core.UnitOfWork
+import io.github.crabzilla.core.command.COMMAND_SERIALIZER
+import io.github.crabzilla.core.command.Command
+import io.github.crabzilla.core.command.CommandController
+import io.github.crabzilla.core.command.CommandMetadata
+import io.github.crabzilla.core.command.CrabzillaContext
+import io.github.crabzilla.core.command.ENTITY_SERIALIZER
+import io.github.crabzilla.core.command.Entity
+import io.github.crabzilla.core.command.EntityCommandAware
+import io.github.crabzilla.core.command.Snapshot
+import io.github.crabzilla.core.command.SnapshotRepository
+import io.github.crabzilla.core.command.UnitOfWork
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
-import io.vertx.ext.web.Router
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-
-private val log: Logger = LoggerFactory.getLogger("addResourceForEntity")
-
-class WebResourceContext<E : Entity>(
-  val cmdTypeMap: Map<String, String>,
-  val cmdAware: EntityCommandAware<E>,
-  val snapshotRepo: SnapshotRepository<E>
-)
-
-fun <E : Entity> addResourceForEntity(router: Router, ctx: CrabzillaContext, webCtx: WebResourceContext<E>) {
-  log.info("adding web command handler for entity ${webCtx.cmdAware.entityName}")
-  val cmdHandlerComponent = EntityComponent(ctx, webCtx.snapshotRepo, webCtx.cmdAware)
-  WebDeployer(webCtx.cmdAware.entityName, webCtx.cmdTypeMap, cmdHandlerComponent, router).deployWebRoutes()
-}
 
 class EntityComponent<E : Entity>(
   private val ctx: CrabzillaContext,
@@ -48,12 +33,12 @@ class EntityComponent<E : Entity>(
     return cmdAware.entityName
   }
 
-  fun getUowByUowId(uowId: Long): Future<UnitOfWork> {
+  fun getUowByUowId(uowId: Long): Future<UnitOfWork?> {
     return ctx.uowRepository.getUowByUowId(uowId)
   }
 
   fun getAllUowByEntityId(id: Int): Future<List<UnitOfWork>> {
-    return ctx.uowRepository.getAllUowByEntityId(id)
+    return ctx.uowRepository.selectByEntityId(id)
   }
 
   fun getSnapshot(entityId: Int): Future<Snapshot<E>> {

@@ -1,12 +1,13 @@
 package io.github.crabzilla.web.example1
 
-import io.github.crabzilla.core.UnitOfWork
-import java.util.UUID
+import io.github.crabzilla.core.command.UnitOfWork
 import kotlinx.serialization.json.Json
+import java.util.UUID
 
 object Example1Fixture {
 
   const val CUSTOMER_ENTITY = "customer"
+  const val CUSTOMER_SUMMARY_STREAM = "customers-summary"
 
   const val customerId1 = 1
 

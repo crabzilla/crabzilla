@@ -1,17 +1,17 @@
-package io.github.crabzilla.web
+package io.github.crabzilla.web.command
 
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.CommandMetadata
-import io.github.crabzilla.core.Entity
+import io.github.crabzilla.core.command.Command
+import io.github.crabzilla.core.command.CommandMetadata
+import io.github.crabzilla.core.command.Entity
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
-import java.util.UUID
 import org.slf4j.LoggerFactory
+import java.util.UUID
 
-class WebDeployer<E : Entity>(
+class WebResourceDeployer<E : Entity>(
   private val resourceName: String,
   private val cmdTypeMap: Map<String, String>,
   private val component: EntityComponent<E>,
@@ -29,7 +29,7 @@ class WebDeployer<E : Entity>(
     const val ENTITY_ID_PARAMETER = "entityId"
     const val UNIT_OF_WORK_ID_PARAMETER = "unitOfWorkId"
     const val JSON = "application/json"
-    private val log = LoggerFactory.getLogger(WebDeployer::class.java)
+    private val log = LoggerFactory.getLogger(WebResourceDeployer::class.java)
   }
 
   fun deployWebRoutes() {
@@ -52,10 +52,10 @@ class WebDeployer<E : Entity>(
       val commandMetadata =
         if (commandId == null) {
           CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), component.entityName(),
-            it.pathParam(COMMAND_NAME_PARAMETER))
+                  it.pathParam(COMMAND_NAME_PARAMETER))
         } else {
           CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), component.entityName(),
-            it.pathParam(COMMAND_NAME_PARAMETER), UUID.fromString(commandId))
+                  it.pathParam(COMMAND_NAME_PARAMETER), UUID.fromString(commandId))
         }
       val commandType = cmdTypeMap[commandMetadata.commandName]
       val command: Command? = try {

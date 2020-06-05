@@ -1,4 +1,4 @@
-package io.github.crabzilla.core
+package io.github.crabzilla.core.command
 
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommandAware

@@ -1,18 +1,18 @@
 package io.github.crabzilla.web.example1
 
-import io.github.crabzilla.core.CrabzillaContext
-import io.github.crabzilla.core.InMemorySnapshotRepository
+import io.github.crabzilla.core.command.CrabzillaContext
 import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.github.crabzilla.pgc.command.PgcUowJournal
 import io.github.crabzilla.pgc.command.PgcUowRepo
 import io.github.crabzilla.pgc.query.PgcReadContext
-import io.github.crabzilla.pgc.query.addEventBusProjector
-import io.github.crabzilla.web.WebResourceContext
-import io.github.crabzilla.web.addResourceForEntity
+import io.github.crabzilla.pgc.query.startProjection
 import io.github.crabzilla.web.boilerplate.listenHandler
 import io.github.crabzilla.web.boilerplate.readModelPgPool
 import io.github.crabzilla.web.boilerplate.writeModelPgPool
+import io.github.crabzilla.web.command.WebResourceContext
+import io.github.crabzilla.web.command.WebResourcesRegistry
 import io.github.crabzilla.web.example1.Example1Fixture.CUSTOMER_ENTITY
+import io.github.crabzilla.web.example1.Example1Fixture.CUSTOMER_SUMMARY_STREAM
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.core.http.HttpServer
@@ -27,7 +27,7 @@ import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
 import kotlinx.serialization.json.Json
 
-class CustomerVerticle : AbstractVerticle() {
+class CustomerVerticle1 : AbstractVerticle() {
 
   val httpPort: Int by lazy { config().getInteger("HTTP_PORT") }
   val readDb: PgPool by lazy { readModelPgPool(vertx, config()) }
@@ -46,23 +46,22 @@ class CustomerVerticle : AbstractVerticle() {
     val ctx = CrabzillaContext(example1Json, uowRepository, uowJournal)
 
     // web command routes
-    val cmdTypeMap = mapOf(
+    val cmdTypeMapOfCustomer = mapOf(
       Pair("create", CreateCustomer::class.qualifiedName as String),
       Pair("activate", ActivateCustomer::class.qualifiedName as String),
       Pair("deactivate", DeactivateCustomer::class.qualifiedName as String),
       Pair("create-activate", CreateActivateCustomer::class.qualifiedName as String))
 
     val cmdAware = CustomerCommandAware()
-    val snapshotRepoDb = PgcSnapshotRepo(writeDb, example1Json, cmdAware) // TO write to db
-    val snapshotRepo = InMemorySnapshotRepository(vertx.sharedData(), example1Json, cmdAware)
+    val snapshotRepoDb = PgcSnapshotRepo(writeDb, example1Json, cmdAware) // TO write snapshots to db
+    // val snapshotRepo = InMemorySnapshotRepository(vertx.sharedData(), example1Json, cmdAware)
 
-    val resourceContext = WebResourceContext(cmdTypeMap, cmdAware, snapshotRepo)
-    addResourceForEntity(router, ctx, resourceContext)
+    WebResourcesRegistry()
+      .add(router, ctx, WebResourceContext(cmdTypeMapOfCustomer, cmdAware, snapshotRepoDb))
 
-    // projection consumers
+    // projections
     val readContext = PgcReadContext(vertx, example1Json, readDb)
-    // addPoolingProjector("customer-summary", readContext, CustomerSummaryProjector(), uowRepository, PgcProjectionRepo(readDb))
-    addEventBusProjector(CUSTOMER_ENTITY, "customers-summary", readContext, CustomerSummaryProjector())
+    startProjection(CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM, readContext, CustomerSummaryProjector())
 
     // read model routes
     router.get("/customers/:id").handler(::customersQueryHandler)
