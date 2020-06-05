@@ -16,10 +16,10 @@ open class DomainEvent
 @Polymorphic
 open class AggregateRoot
 
-interface AggregateRootCommandAware<E : AggregateRoot> {
+interface AggregateRootCommandAware<A : AggregateRoot> {
   val entityName: String
-  val initialState: E
-  val applyEvent: (event: DomainEvent, state: E) -> E
+  val initialState: A
+  val applyEvent: (event: DomainEvent, state: A) -> A
   val validateCmd: (command: Command) -> List<String>
-  val handleCmd: (id: Int, state: E, command: Command) -> Future<List<DomainEvent>>
+  val handleCmd: (id: Int, state: A, command: Command) -> Future<List<DomainEvent>>
 }
