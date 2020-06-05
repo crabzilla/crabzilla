@@ -97,7 +97,7 @@ class PgcUowJournalIT {
           }
           val uow = event2.result()
           tc.verify { assertThat(uow).isEqualTo(createdUow1) }
-          testRepo.selectAfterVersion(createdUow1.entityId, 0, CUSTOMER_ENTITY).onComplete { event3 ->
+          testRepo.selectAfterVersion(createdUow1.aggregateRootId, 0, CUSTOMER_ENTITY).onComplete { event3 ->
             if (event3.failed()) {
               tc.failNow(event3.cause())
               return@onComplete
@@ -173,7 +173,7 @@ class PgcUowJournalIT {
             val uowId = ar2.result()
             tc.verify { assertThat(uowId).isGreaterThan(2) }
             // get all versions for id
-            testRepo.selectAfterVersion(activatedUow1.entityId, 0, CUSTOMER_ENTITY).onComplete { ar4 ->
+            testRepo.selectAfterVersion(activatedUow1.aggregateRootId, 0, CUSTOMER_ENTITY).onComplete { ar4 ->
               if (ar4.failed()) {
                 tc.failNow(ar4.cause())
               } else {

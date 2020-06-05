@@ -4,9 +4,9 @@ import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import java.util.UUID
 
-interface SnapshotRepository<E : Entity> {
-  fun retrieve(entityId: Int): Future<Snapshot<E>>
-  fun upsert(entityId: Int, snapshot: Snapshot<E>): Future<Void>
+interface SnapshotRepository<A : AggregateRoot> {
+  fun retrieve(id: Int): Future<Snapshot<A>>
+  fun upsert(id: Int, snapshot: Snapshot<A>): Future<Void>
 }
 
 interface UnitOfWorkPublisher {
@@ -21,5 +21,5 @@ interface UnitOfWorkRepository {
   fun selectLastUowId(): Future<Long>
   fun getUowByCmdId(cmdId: UUID): Future<Pair<UnitOfWork, Long>?>
   fun getUowByUowId(uowId: Long): Future<UnitOfWork?>
-  fun selectByEntityId(id: Int): Future<List<UnitOfWork>>
+  fun selectByAggregateRootId(id: Int): Future<List<UnitOfWork>>
 }

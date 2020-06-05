@@ -10,8 +10,8 @@ import io.github.crabzilla.pgc.query.startProjection
 import io.github.crabzilla.web.boilerplate.listenHandler
 import io.github.crabzilla.web.boilerplate.readModelPgPool
 import io.github.crabzilla.web.boilerplate.writeModelPgPool
+import io.github.crabzilla.web.command.AggregateRootWebHelper.Companion.subRouteOf
 import io.github.crabzilla.web.command.WebResourceContext
-import io.github.crabzilla.web.command.WebResourcesRegistry
 import io.github.crabzilla.web.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.web.example1.Example1Fixture.CUSTOMER_SUMMARY_STREAM
 import io.vertx.core.AbstractVerticle
@@ -57,12 +57,11 @@ class CustomerVerticle1 : AbstractVerticle() {
     val snapshotRepoDb = PgcSnapshotRepo(writeDb, example1Json, cmdAware) // TO write snapshots to db
     // val snapshotRepo = InMemorySnapshotRepository(vertx.sharedData(), example1Json, cmdAware)
 
-    WebResourcesRegistry()
-      .add(router, ctx, WebResourceContext(cmdTypeMapOfCustomer, cmdAware, snapshotRepoDb))
+    subRouteOf(router, ctx, WebResourceContext(cmdTypeMapOfCustomer, cmdAware, snapshotRepoDb))
 
     // projections
     val readContext = PgcReadContext(vertx, example1Json, readDb)
-    startProjection(CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM, readContext, CustomerSummaryProjector())
+    startProjection(CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM, readContext, CustomerSummaryDomainEventProjector())
 
     // read model routes
     router.get("/customers/:id").handler(::customersQueryHandler)

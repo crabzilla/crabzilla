@@ -32,13 +32,13 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class EntityComponentIT {
+class AggregateRootComponentIT {
 
   companion object {
     private lateinit var vertx: Vertx
     private lateinit var writeDb: PgPool
-    private lateinit var customerComponent: EntityComponent<Customer>
-    val CUSTOMER_COMPONENT: (vertx: Vertx, writeDb: PgPool) -> EntityComponent<Customer> =
+    private lateinit var customerHelper: AggregateRootWebHelper<Customer>
+    val CUSTOMER_HELPER: (vertx: Vertx, writeDb: PgPool) -> AggregateRootWebHelper<Customer> =
       { vertx: Vertx, writeDb: PgPool ->
         val cmdAware = CustomerCommandAware()
         val uowRepo = PgcUowRepo(writeDb, Example1Fixture.example1Json)
@@ -46,7 +46,7 @@ class EntityComponentIT {
         val snapshotRepo:
                 SnapshotRepository<Customer> = PgcSnapshotRepo(writeDb, Example1Fixture.example1Json, CustomerCommandAware())
         val ctx = CrabzillaContext(Example1Fixture.example1Json, uowRepo, uowJournal)
-        EntityComponent(ctx, snapshotRepo, cmdAware)
+        AggregateRootWebHelper(ctx, snapshotRepo, cmdAware)
       }
   }
 
@@ -65,7 +65,7 @@ class EntityComponentIT {
       }
       val config = configFuture.result()
       writeDb = writeModelPgPool(vertx, config)
-      customerComponent = CUSTOMER_COMPONENT(vertx, writeDb)
+      customerHelper = CUSTOMER_HELPER(vertx, writeDb)
       cleanDatabase(vertx, config)
         .onSuccess { tc.completeNow() }
         .onFailure { tc.failNow(it) }
@@ -80,7 +80,7 @@ class EntityComponentIT {
     val customerId = 1
     val command = CreateCustomer("customer1")
     val commandMetadata = CommandMetadata(customerId, "customer", "create")
-    customerComponent.handleCommand(commandMetadata, command).onComplete { event ->
+    customerHelper.handleCommand(commandMetadata, command).onComplete { event ->
       if (event.succeeded()) {
         val result = event.result()
         tc.verify { assertThat(result.first.events.size).isEqualTo(1) }
@@ -97,7 +97,7 @@ class EntityComponentIT {
     val customerId = 1
     val command = CreateCustomer("a bad name")
     val commandMetadata = CommandMetadata(customerId, "customer", "create")
-    customerComponent.handleCommand(commandMetadata, command).onComplete { event ->
+    customerHelper.handleCommand(commandMetadata, command).onComplete { event ->
       tc.verify { assertThat(event.succeeded()).isFalse() }
       tc.verify { assertThat(event.cause().message).isEqualTo("[Invalid name: a bad name]") }
       tc.completeNow()
@@ -112,7 +112,7 @@ class EntityComponentIT {
     val customerId = 1
     val commandMetadata = CommandMetadata(customerId, "customer", "create")
     val command = createActivateCmd1
-    customerComponent.handleCommand(commandMetadata, command).onComplete { event ->
+    customerHelper.handleCommand(commandMetadata, command).onComplete { event ->
       if (event.succeeded()) {
         val result = event.result()
         tc.verify { assertThat(result.first.events.size).isEqualTo(2) }

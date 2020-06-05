@@ -6,7 +6,7 @@ import io.vertx.core.Promise
 import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 
-interface PgcEventProjector {
+interface PgcDomainEventProjector {
 
   fun handle(pgTx: Transaction, targetId: Int, event: DomainEvent): Future<Void>
 

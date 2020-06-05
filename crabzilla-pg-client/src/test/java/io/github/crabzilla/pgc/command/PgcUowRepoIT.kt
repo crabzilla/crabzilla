@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.command.COMMAND_SERIALIZER
-import io.github.crabzilla.core.command.EVENT_SERIALIZER
+import io.github.crabzilla.core.command.DOMAIN_EVENT_SERIALIZER
 import io.github.crabzilla.core.command.UnitOfWorkJournal
 import io.github.crabzilla.core.command.UnitOfWorkRepository
 import io.github.crabzilla.pgc.command.PgcUowJournal.Companion.SQL_APPEND_UOW
@@ -44,12 +44,12 @@ class PgcUowRepoIT {
   private lateinit var testRepo: PgcUowTestRepo
   private lateinit var journal: UnitOfWorkJournal
 
-  val eventsJsonArray = example1Json.stringify(EVENT_SERIALIZER.list, listOf(created1))
+  val eventsJsonArray = example1Json.stringify(DOMAIN_EVENT_SERIALIZER.list, listOf(created1))
   val commandJsonObject = example1Json.stringify(COMMAND_SERIALIZER, createCmd1)
   val tuple1 = Tuple.of(JsonArray(eventsJsonArray), createdUow1.commandId, JsonObject(commandJsonObject),
     CUSTOMER_ENTITY, customerId1, 1)
 
-  val eventsJsonArray2 = example1Json.stringify(EVENT_SERIALIZER.list, listOf(activated1))
+  val eventsJsonArray2 = example1Json.stringify(DOMAIN_EVENT_SERIALIZER.list, listOf(activated1))
   val commandJsonObject2 = example1Json.stringify(COMMAND_SERIALIZER, activateCmd1)
   val tuple2 = Tuple.of(JsonArray(eventsJsonArray2), activatedUow1.commandId, JsonObject(commandJsonObject2),
     CUSTOMER_ENTITY, customerId1, 2)
@@ -175,7 +175,7 @@ class PgcUowRepoIT {
               tc.failNow(event2.cause())
               return@execute
             }
-            repo.selectByEntityId(customerId1)
+            repo.selectByAggregateRootId(customerId1)
               .onFailure { err -> tc.failNow(err) }
               .onSuccess { uowList ->
                 tc.verify { assertThat(uowList.size).isEqualTo(2) }

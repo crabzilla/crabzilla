@@ -1,8 +1,8 @@
 package io.github.crabzilla.web.command
 
+import io.github.crabzilla.core.command.AggregateRoot
 import io.github.crabzilla.core.command.Command
 import io.github.crabzilla.core.command.CommandMetadata
-import io.github.crabzilla.core.command.Entity
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
@@ -11,10 +11,10 @@ import io.vertx.ext.web.RoutingContext
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
-class WebResourceDeployer<E : Entity>(
+class WebResourceDeployer<A : AggregateRoot>(
   private val resourceName: String,
   private val cmdTypeMap: Map<String, String>,
-  private val component: EntityComponent<E>,
+  private val helper: AggregateRootWebHelper<A>,
   private val router: Router
 ) {
 
@@ -51,15 +51,15 @@ class WebResourceDeployer<E : Entity>(
       val commandId = it.request().getHeader(COMMAND_ID_PARAMETER)
       val commandMetadata =
         if (commandId == null) {
-          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), component.entityName(),
+          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), helper.entityName(),
                   it.pathParam(COMMAND_NAME_PARAMETER))
         } else {
-          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), component.entityName(),
+          CommandMetadata(it.pathParam(ENTITY_ID_PARAMETER).toInt(), helper.entityName(),
                   it.pathParam(COMMAND_NAME_PARAMETER), UUID.fromString(commandId))
         }
       val commandType = cmdTypeMap[commandMetadata.commandName]
       val command: Command? = try {
-        component.cmdFromJson(it.bodyAsJson.put("type", commandType))
+        helper.cmdFromJson(it.bodyAsJson.put("type", commandType))
       } catch (e: Exception) {
         null
       }
@@ -68,7 +68,7 @@ class WebResourceDeployer<E : Entity>(
         return@handler
       }
       if (log.isDebugEnabled) log.debug("Handling $command $commandMetadata")
-      component.handleCommand(commandMetadata, command)
+      helper.handleCommand(commandMetadata, command)
         .onSuccess { result ->
           val end = System.currentTimeMillis()
           if (log.isDebugEnabled) log.debug("handled command in " + (end - begin) + " ms")
@@ -91,14 +91,14 @@ class WebResourceDeployer<E : Entity>(
     router.get(getSnapshot).produces(JSON).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
       val httpResp = it.response()
-      component.getSnapshot(entityId).onComplete { event ->
+      helper.getSnapshot(entityId).onComplete { event ->
         if (event.failed() || event.result() == null) {
           httpResp.statusCode = if (event.result() == null) 404 else 500
           httpResp.end()
         } else {
           val snapshot = event.result()
           val snapshotJson = JsonObject()
-            .put("state", component.toJson(snapshot.state))
+            .put("state", helper.toJson(snapshot.state))
             .put("version", snapshot.version)
           if (snapshot.version > 0) {
             httpResp
@@ -115,7 +115,7 @@ class WebResourceDeployer<E : Entity>(
     router.get(getAllUow).produces(JSON).handler {
       val entityId = it.pathParam(ENTITY_ID_PARAMETER).toInt()
       val httpResp = it.response()
-      component.getAllUowByEntityId(entityId).onComplete { event ->
+      helper.getAllUowByEntityId(entityId).onComplete { event ->
         if (event.failed() || event.result() == null) {
           httpResp.statusCode = if (event.result() == null) 404 else 500
           httpResp.end()
@@ -133,7 +133,7 @@ class WebResourceDeployer<E : Entity>(
     router.get(getUow).produces(JSON).handler {
       val uowId = it.pathParam(UNIT_OF_WORK_ID_PARAMETER).toLong()
       val httpResp = it.response()
-      component.getUowByUowId(uowId).onComplete { uowResult ->
+      helper.getUowByUowId(uowId).onComplete { uowResult ->
         if (uowResult.failed() || uowResult.result() == null) {
           httpResp.statusCode = if (uowResult.result() == null) 404 else 500
           httpResp.end()

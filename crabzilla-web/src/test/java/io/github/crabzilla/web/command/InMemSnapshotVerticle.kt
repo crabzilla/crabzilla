@@ -7,6 +7,7 @@ import io.github.crabzilla.pgc.command.PgcUowJournal.FullPayloadPublisher
 import io.github.crabzilla.pgc.command.PgcUowRepo
 import io.github.crabzilla.web.boilerplate.listenHandler
 import io.github.crabzilla.web.boilerplate.writeModelPgPool
+import io.github.crabzilla.web.command.AggregateRootWebHelper.Companion.subRouteOf
 import io.github.crabzilla.web.example1.ActivateCustomer
 import io.github.crabzilla.web.example1.CreateActivateCustomer
 import io.github.crabzilla.web.example1.CreateCustomer
@@ -50,8 +51,7 @@ class InMemSnapshotVerticle : AbstractVerticle() {
     val cmdAware = CustomerCommandAware()
     val snapshotRepo = InMemorySnapshotRepository(vertx.sharedData(), example1Json, cmdAware)
 
-    WebResourcesRegistry()
-      .add(router, ctx, WebResourceContext(cmdTypeMapOfCustomer, cmdAware, snapshotRepo))
+    subRouteOf(router, ctx, WebResourceContext(cmdTypeMapOfCustomer, cmdAware, snapshotRepo))
 
     // vertx http
     server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))

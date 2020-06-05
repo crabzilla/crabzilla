@@ -1,11 +1,11 @@
 package io.github.crabzilla.web.command
 
-import io.github.crabzilla.core.command.Entity
-import io.github.crabzilla.core.command.EntityCommandAware
+import io.github.crabzilla.core.command.AggregateRoot
+import io.github.crabzilla.core.command.AggregateRootCommandAware
 import io.github.crabzilla.core.command.SnapshotRepository
 
-class WebResourceContext<E : Entity>(
+class WebResourceContext<A : AggregateRoot>(
   val cmdTypeMap: Map<String, String>,
-  val cmdAware: EntityCommandAware<E>,
-  val snapshotRepo: SnapshotRepository<E>
+  val cmdAware: AggregateRootCommandAware<A>,
+  val snapshotRepo: SnapshotRepository<A>
 )

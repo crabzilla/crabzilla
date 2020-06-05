@@ -2,8 +2,8 @@ package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.command.COMMAND_SERIALIZER
 import io.github.crabzilla.core.command.Command
+import io.github.crabzilla.core.command.DOMAIN_EVENT_SERIALIZER
 import io.github.crabzilla.core.command.DomainEvent
-import io.github.crabzilla.core.command.EVENT_SERIALIZER
 import io.github.crabzilla.core.command.UnitOfWork
 import io.github.crabzilla.core.command.UnitOfWorkRepository
 import io.vertx.core.Future
@@ -70,7 +70,7 @@ class PgcUowRepo(private val writeModelDb: PgPool, private val json: Json) : Uni
       val commandAsJson: JsonObject = row.get(JsonObject::class.java, 3)
       val command: Command = json.parse(COMMAND_SERIALIZER, commandAsJson.encode())
       val eventsAsJsonArray: JsonArray = row.get(JsonArray::class.java, 1)
-      val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJsonArray.encode())
+      val events: List<DomainEvent> = json.parse(DOMAIN_EVENT_SERIALIZER.list, eventsAsJsonArray.encode())
       val uowId = row.getLong(UOW_ID)
       val uow = UnitOfWork(row.getString(AR_NAME), row.getInteger(AR_ID), row.getUUID(CMD_ID), command,
         row.getInteger(VERSION)!!, events)
@@ -97,7 +97,7 @@ class PgcUowRepo(private val writeModelDb: PgPool, private val json: Json) : Uni
       val commandAsJson: JsonObject = row.get(JsonObject::class.java, 3)
       val command: Command = json.parse(COMMAND_SERIALIZER, commandAsJson.encode())
       val eventsAsJson: JsonArray = row.get(JsonArray::class.java, 1)
-      val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson.encode())
+      val events: List<DomainEvent> = json.parse(DOMAIN_EVENT_SERIALIZER.list, eventsAsJson.encode())
       val uow = UnitOfWork(row.getString(AR_NAME), row.getInteger(AR_ID), row.getUUID(CMD_ID), command,
         row.getInteger(VERSION)!!, events)
       promise.complete(uow)
@@ -106,7 +106,7 @@ class PgcUowRepo(private val writeModelDb: PgPool, private val json: Json) : Uni
   }
 
   // TODO replace with a stream and a consumer impl
-  override fun selectByEntityId(id: Int): Future<List<UnitOfWork>> {
+  override fun selectByAggregateRootId(id: Int): Future<List<UnitOfWork>> {
     val promise = Promise.promise<List<UnitOfWork>>()
     val params = Tuple.of(id)
     writeModelDb.preparedQuery(SELECT_UOW_BY_ENTITY_ID)
@@ -121,7 +121,7 @@ class PgcUowRepo(private val writeModelDb: PgPool, private val json: Json) : Uni
         val commandAsJson: JsonObject = row.get(JsonObject::class.java, 3)
         val command: Command = json.parse(COMMAND_SERIALIZER, commandAsJson.encode())
         val eventsAsJson: JsonArray = row.get(JsonArray::class.java, 1)
-        val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson.encode())
+        val events: List<DomainEvent> = json.parse(DOMAIN_EVENT_SERIALIZER.list, eventsAsJson.encode())
         val uow = UnitOfWork(row.getString(AR_NAME), row.getInteger(AR_ID), row.getUUID(CMD_ID), command,
           row.getInteger(VERSION)!!, events)
         result.add(uow)

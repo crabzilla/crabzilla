@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc.command
 
+import io.github.crabzilla.core.command.DOMAIN_EVENT_SERIALIZER
 import io.github.crabzilla.core.command.DomainEvent
-import io.github.crabzilla.core.command.EVENT_SERIALIZER
 import io.github.crabzilla.core.command.UnitOfWorkEvents
 import io.github.crabzilla.core.command.Version
 import io.vertx.core.Future
@@ -49,7 +49,7 @@ class PgcUowTestRepo(private val pgPool: PgPool, private val json: Json) {
           // Use the stream
           stream.handler { row ->
             val eventsAsJson: JsonArray = row.get(JsonArray::class.java, 0)
-            val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson.encode())
+            val events: List<DomainEvent> = json.parse(DOMAIN_EVENT_SERIALIZER.list, eventsAsJson.encode())
             val snapshotData = RangeOfEvents(version, row.getInteger(VERSION)!!, events)
             list.add(snapshotData)
           }
@@ -94,7 +94,7 @@ class PgcUowTestRepo(private val pgPool: PgPool, private val json: Json) {
         val uowSeq = row.getLong(UOW_ID)
         val targetId = row.getInteger(AR_ID)
         val eventsAsJson: JsonArray = row.get(JsonArray::class.java, 2)
-        val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJson.encode())
+        val events: List<DomainEvent> = json.parse(DOMAIN_EVENT_SERIALIZER.list, eventsAsJson.encode())
         val projectionData = UnitOfWorkEvents(uowSeq.toLong(), targetId, events)
         list.add(projectionData)
       }

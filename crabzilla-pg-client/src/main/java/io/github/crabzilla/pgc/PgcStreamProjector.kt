@@ -1,9 +1,9 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.core.command.DOMAIN_EVENT_SERIALIZER
 import io.github.crabzilla.core.command.DomainEvent
-import io.github.crabzilla.core.command.EVENT_SERIALIZER
 import io.github.crabzilla.core.command.UnitOfWorkEvents
-import io.github.crabzilla.pgc.query.PgcUowProjector
+import io.github.crabzilla.pgc.query.PgcUnitOfWorkProjector
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonArray
@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory
 class PgcStreamProjector(
   private val writeModelDb: PgPool,
   private val json: Json,
-  private val projector: PgcUowProjector
+  private val projector: PgcUnitOfWorkProjector
 ) {
 
   companion object {
@@ -66,7 +66,7 @@ class PgcStreamProjector(
           val currentUowId = row.getLong(UOW_ID)
           val currentEntityId = row.getInteger(AR_ID)
           val eventsAsJsonArray: JsonArray = row.get(JsonArray::class.java, 1)
-          val events: List<DomainEvent> = json.parse(EVENT_SERIALIZER.list, eventsAsJsonArray.encode())
+          val events: List<DomainEvent> = json.parse(DOMAIN_EVENT_SERIALIZER.list, eventsAsJsonArray.encode())
           val sideEffect: Future<Void> = projector.handle(UnitOfWorkEvents(currentUowId, currentEntityId, events))
             .onFailure { err -> log.error("When projecting uowId $currentUowId", err) }
           if (sideEffect.failed()) {

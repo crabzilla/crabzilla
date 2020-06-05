@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.command.COMMAND_SERIALIZER
-import io.github.crabzilla.core.command.EVENT_SERIALIZER
+import io.github.crabzilla.core.command.DOMAIN_EVENT_SERIALIZER
 import io.github.crabzilla.core.command.EventBusChannels
 import io.github.crabzilla.core.command.UnitOfWork
 import io.github.crabzilla.core.command.UnitOfWorkJournal
@@ -41,7 +41,7 @@ class PgcUowJournal(
         return@begin
       }
       val tx = event0.result()
-      val params1 = Tuple.of(unitOfWork.entityId, unitOfWork.entityName)
+      val params1 = Tuple.of(unitOfWork.aggregateRootId, unitOfWork.entityName)
       tx.preparedQuery(SQL_SELECT_CURRENT_VERSION)
         .execute(params1) { event1 ->
           if (event1.failed()) {
@@ -58,9 +58,9 @@ class PgcUowJournal(
           }
           // if version is OK, then insert
           val cmdAsJsonObject: String = json.stringify(COMMAND_SERIALIZER, unitOfWork.command)
-          val eventsListAsJsonObject: String = json.stringify(EVENT_SERIALIZER.list, unitOfWork.events)
+          val eventsListAsJsonObject: String = json.stringify(DOMAIN_EVENT_SERIALIZER.list, unitOfWork.events)
           val params2 = Tuple.of(JsonArray(eventsListAsJsonObject), unitOfWork.commandId, JsonObject(cmdAsJsonObject),
-            unitOfWork.entityName, unitOfWork.entityId, unitOfWork.version)
+            unitOfWork.entityName, unitOfWork.aggregateRootId, unitOfWork.version)
           tx.preparedQuery(SQL_APPEND_UOW)
             .execute(params2) { event2 ->
               if (event2.failed()) {
@@ -81,7 +81,7 @@ class PgcUowJournal(
                 val message = JsonObject()
                   .put("uowId", uowId)
                   .put(UnitOfWork.JsonMetadata.ENTITY_NAME, unitOfWork.entityName)
-                  .put(UnitOfWork.JsonMetadata.ENTITY_ID, unitOfWork.entityId)
+                  .put(UnitOfWork.JsonMetadata.ENTITY_ID, unitOfWork.aggregateRootId)
                   .put(UnitOfWork.JsonMetadata.VERSION, unitOfWork.version)
                   .put(UnitOfWork.JsonMetadata.EVENTS, JsonArray(eventsListAsJsonObject))
                 uowPublisher.publish(message)

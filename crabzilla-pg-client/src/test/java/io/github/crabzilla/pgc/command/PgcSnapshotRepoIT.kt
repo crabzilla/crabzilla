@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.command.COMMAND_SERIALIZER
-import io.github.crabzilla.core.command.EVENT_SERIALIZER
+import io.github.crabzilla.core.command.DOMAIN_EVENT_SERIALIZER
 import io.github.crabzilla.core.command.Snapshot
 import io.github.crabzilla.core.command.SnapshotRepository
 import io.github.crabzilla.pgc.command.PgcUowJournal.Companion.SQL_APPEND_UOW
@@ -99,7 +99,7 @@ class PgcSnapshotRepoIT {
   @Test
   @DisplayName("given none snapshot and a created event, it can retrieve correct snapshot")
   fun a1(tc: VertxTestContext) {
-    val eventsJsonArray: String = example1Json.stringify(EVENT_SERIALIZER.list, listOf(created1))
+    val eventsJsonArray: String = example1Json.stringify(DOMAIN_EVENT_SERIALIZER.list, listOf(created1))
     val commandJsonObject: String = example1Json.stringify(COMMAND_SERIALIZER, createCmd1)
     val tuple = Tuple.of(eventsJsonArray, UUID.randomUUID(), commandJsonObject, CUSTOMER_ENTITY, customerId1, 1)
     writeDb.preparedQuery(SQL_APPEND_UOW)
@@ -128,7 +128,7 @@ class PgcSnapshotRepoIT {
   @Test
   @DisplayName("given none snapshot and both created and an activated events, it can retrieve correct snapshot")
   fun a2(tc: VertxTestContext) {
-    val eventsJsonArray: String = example1Json.stringify(EVENT_SERIALIZER.list, listOf(created1, activated1))
+    val eventsJsonArray: String = example1Json.stringify(DOMAIN_EVENT_SERIALIZER.list, listOf(created1, activated1))
     val commandJsonObject: String = example1Json.stringify(COMMAND_SERIALIZER, createCmd1)
     val tuple1 = Tuple.of(eventsJsonArray, UUID.randomUUID(), commandJsonObject, CUSTOMER_ENTITY, customerId1, 1)
     writeDb.preparedQuery(SQL_APPEND_UOW).execute(tuple1) { ar1 ->
@@ -137,7 +137,7 @@ class PgcSnapshotRepoIT {
         tc.failNow(ar1.cause())
         return@execute
       }
-      val eventsJsonArray2: String = example1Json.stringify(EVENT_SERIALIZER.list, listOf(activated1))
+      val eventsJsonArray2: String = example1Json.stringify(DOMAIN_EVENT_SERIALIZER.list, listOf(activated1))
       val commandJsonObject2: String = example1Json.stringify(COMMAND_SERIALIZER, activateCmd1)
       val tuple2 = Tuple.of(eventsJsonArray2, UUID.randomUUID(), commandJsonObject2, CUSTOMER_ENTITY, customerId1, 2)
       writeDb.preparedQuery(SQL_APPEND_UOW).execute(tuple2) { ar2 ->

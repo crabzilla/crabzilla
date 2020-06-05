@@ -1,9 +1,9 @@
 package io.github.crabzilla.web.example1
 
+import io.github.crabzilla.core.command.AggregateRoot
+import io.github.crabzilla.core.command.AggregateRootCommandAware
 import io.github.crabzilla.core.command.Command
 import io.github.crabzilla.core.command.DomainEvent
-import io.github.crabzilla.core.command.Entity
-import io.github.crabzilla.core.command.EntityCommandAware
 import io.github.crabzilla.core.command.StateTransitionsTracker
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
@@ -30,7 +30,7 @@ data class Customer(
   val name: String? = null,
   val isActive: Boolean? = false,
   val reason: String? = null
-) : Entity()
+) : AggregateRoot()
 
 fun Customer.create(id: CustomerId, name: String): Future<List<DomainEvent>> {
   require(this.customerId == null) { "customer already created" }
@@ -53,7 +53,7 @@ private fun Customer.customerMustExist() {
 
 // command aware
 
-class CustomerCommandAware : EntityCommandAware<Customer> {
+class CustomerCommandAware : AggregateRootCommandAware<Customer> {
 
   override val entityName = "customer"
 
@@ -111,7 +111,7 @@ class CustomerCommandAware : EntityCommandAware<Customer> {
 // kotlinx.serialization
 
 val customerModule = SerializersModule {
-  polymorphic(Entity::class) {
+  polymorphic(AggregateRoot::class) {
     Customer::class with Customer.serializer()
   }
   polymorphic(Command::class) {

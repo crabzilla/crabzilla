@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.command.COMMAND_SERIALIZER
-import io.github.crabzilla.core.command.EVENT_SERIALIZER
+import io.github.crabzilla.core.command.DOMAIN_EVENT_SERIALIZER
 import io.github.crabzilla.core.command.UnitOfWorkJournal
 import io.github.crabzilla.core.command.UnitOfWorkRepository
 import io.github.crabzilla.pgc.command.PgcUowJournal.Companion.SQL_APPEND_UOW
@@ -46,12 +46,12 @@ class PgcUowTestRepoIT {
   private lateinit var testRepo: PgcUowTestRepo
   private lateinit var journal: UnitOfWorkJournal
 
-  val eventsJsonArray = example1Json.stringify(EVENT_SERIALIZER.list, listOf(created1))
+  val eventsJsonArray = example1Json.stringify(DOMAIN_EVENT_SERIALIZER.list, listOf(created1))
   val commandJsonObject = example1Json.stringify(COMMAND_SERIALIZER, createCmd1)
   val tuple1 = Tuple.of(JsonArray(eventsJsonArray), createdUow1.commandId, JsonObject(commandJsonObject),
     CUSTOMER_ENTITY, customerId1, 1)
 
-  val eventsJsonArray2 = example1Json.stringify(EVENT_SERIALIZER.list, listOf(activated1))
+  val eventsJsonArray2 = example1Json.stringify(DOMAIN_EVENT_SERIALIZER.list, listOf(activated1))
   val commandJsonObject2 = example1Json.stringify(COMMAND_SERIALIZER, activateCmd1)
   val tuple2 = Tuple.of(JsonArray(eventsJsonArray2), activatedUow1.commandId, JsonObject(commandJsonObject2),
     CUSTOMER_ENTITY, customerId1, 2)
@@ -244,7 +244,7 @@ class PgcUowTestRepoIT {
             tc.failNow(event2.cause())
             return@execute
           }
-          repo.selectByEntityId(customerId1).onComplete { event3 ->
+          repo.selectByAggregateRootId(customerId1).onComplete { event3 ->
             if (event3.failed()) {
               tc.failNow(event2.cause())
               return@onComplete
@@ -406,7 +406,7 @@ class PgcUowTestRepoIT {
         val uowId = event2.result()
         tc.verify { assertThat(uowId).isGreaterThan(2) }
         // get only above version 1
-        testRepo.selectAfterVersion(activatedUow1.entityId, 1, CUSTOMER_ENTITY).onComplete { event3 ->
+        testRepo.selectAfterVersion(activatedUow1.aggregateRootId, 1, CUSTOMER_ENTITY).onComplete { event3 ->
           if (event3.failed()) {
             tc.failNow(event3.cause())
             return@onComplete

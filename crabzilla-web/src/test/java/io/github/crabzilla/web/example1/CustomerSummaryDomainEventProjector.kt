@@ -1,13 +1,13 @@
 package io.github.crabzilla.web.example1
 
 import io.github.crabzilla.core.command.DomainEvent
-import io.github.crabzilla.pgc.query.PgcEventProjector
+import io.github.crabzilla.pgc.query.PgcDomainEventProjector
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 
-class CustomerSummaryProjector : PgcEventProjector {
+class CustomerSummaryDomainEventProjector : PgcDomainEventProjector {
 
   override fun handle(pgTx: Transaction, targetId: Int, event: DomainEvent): Future<Void> {
     return when (event) {

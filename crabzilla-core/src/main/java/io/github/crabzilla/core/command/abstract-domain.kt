@@ -14,9 +14,9 @@ open class DomainEvent
 
 @Serializable
 @Polymorphic
-open class Entity
+open class AggregateRoot
 
-interface EntityCommandAware<E : Entity> {
+interface AggregateRootCommandAware<E : AggregateRoot> {
   val entityName: String
   val initialState: E
   val applyEvent: (event: DomainEvent, state: E) -> E

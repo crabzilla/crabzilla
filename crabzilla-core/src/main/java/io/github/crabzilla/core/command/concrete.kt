@@ -14,9 +14,9 @@ object EventBusChannels {
   val entityChannel = { entityName: String -> "crabzilla.entity.$entityName" }
 }
 
-val ENTITY_SERIALIZER = PolymorphicSerializer(Entity::class)
+val AGGREGATE_ROOT_SERIALIZER = PolymorphicSerializer(AggregateRoot::class)
 val COMMAND_SERIALIZER = PolymorphicSerializer(Command::class)
-val EVENT_SERIALIZER = PolymorphicSerializer(DomainEvent::class)
+val DOMAIN_EVENT_SERIALIZER = PolymorphicSerializer(DomainEvent::class)
 
 typealias Version = Int
 
@@ -28,23 +28,23 @@ class CrabzillaContext(
   val uowJournal: UnitOfWorkJournal
 )
 
-typealias CommandContext<E> = Triple<CommandMetadata, Command, Snapshot<E>>
-
 data class CommandMetadata(
-  val entityId: Int,
+  val aggregateRootId: Int,
   val entityName: String,
   val commandName: String,
   val commandId: UUID = UUID.randomUUID()
 )
 
-data class Snapshot<E : Entity>(
-  val state: E,
+data class Snapshot<A : AggregateRoot>(
+  val state: A,
   val version: Version
 )
 
+typealias CommandContext<A> = Triple<CommandMetadata, Command, Snapshot<A>>
+
 data class UnitOfWork(
   val entityName: String,
-  val entityId: Int,
+  val aggregateRootId: Int,
   val commandId: UUID,
   val command: Command,
   val version: Version,
@@ -55,7 +55,7 @@ data class UnitOfWork(
   }
   object JsonMetadata {
     const val ENTITY_NAME = "entityName"
-    const val ENTITY_ID = "entityId"
+    const val ENTITY_ID = "aggregateRootId"
     const val COMMAND_ID = "commandId"
     const val COMMAND = "command"
     const val VERSION = "version"
@@ -63,7 +63,7 @@ data class UnitOfWork(
   }
 }
 
-class StateTransitionsTracker<A : Entity>(originalState: A, private val stateFn: (DomainEvent, A) -> A) {
+class StateTransitionsTracker<A : AggregateRoot>(originalState: A, private val stateFn: (DomainEvent, A) -> A) {
   val appliedEvents = mutableListOf<DomainEvent>()
   var currentState: A = originalState
   fun applyEvents(events: List<DomainEvent>): StateTransitionsTracker<A> {
@@ -79,16 +79,16 @@ class StateTransitionsTracker<A : Entity>(originalState: A, private val stateFn:
   }
 }
 
-class CommandController<E : Entity>(
-  private val commandAware: EntityCommandAware<E>,
-  private val snapshotRepo: SnapshotRepository<E>,
+class CommandController<A : AggregateRoot>(
+  private val commandAware: AggregateRootCommandAware<A>,
+  private val snapshotRepo: SnapshotRepository<A>,
   private val uowJournal: UnitOfWorkJournal
 ) {
   companion object {
     internal val log = LoggerFactory.getLogger(CommandController::class.java)
   }
   fun handle(metadata: CommandMetadata, command: Command): Future<Pair<UnitOfWork, Long>> {
-    fun toUnitOfWork(ctx: CommandContext<E>, events: List<DomainEvent>): UnitOfWork {
+    fun toUnitOfWork(ctx: CommandContext<A>, events: List<DomainEvent>): UnitOfWork {
       val (cmdMetadata, _, snapshot) = ctx
       val (entityId, entityName, _, commandId) = cmdMetadata
       return UnitOfWork(entityName, entityId, commandId, command, snapshot.version + 1, events)
@@ -101,15 +101,15 @@ class CommandController<E : Entity>(
       promise.fail(constraints.toString())
       return promise.future()
     }
-    val snapshotValue: AtomicReference<Snapshot<E>> = AtomicReference()
+    val snapshotValue: AtomicReference<Snapshot<A>> = AtomicReference()
     val uowValue: AtomicReference<UnitOfWork> = AtomicReference()
     val uowIdValue: AtomicReference<Long> = AtomicReference()
-    snapshotRepo.retrieve(metadata.entityId)
+    snapshotRepo.retrieve(metadata.aggregateRootId)
       .compose { snapshot ->
         if (log.isDebugEnabled) log.debug("got snapshot $snapshot")
         val cachedSnapshot = snapshot ?: Snapshot(commandAware.initialState, 0)
         snapshotValue.set(cachedSnapshot)
-        commandAware.handleCmd(metadata.entityId, cachedSnapshot.state, command)
+        commandAware.handleCmd(metadata.aggregateRootId, cachedSnapshot.state, command)
       }
       .compose { eventsList ->
         val request = Triple(metadata, command, snapshotValue.get())
@@ -128,7 +128,7 @@ class CommandController<E : Entity>(
           .fold(snapshotValue.get().state) { state, event -> commandAware.applyEvent.invoke(event, state) }
         val newSnapshot = Snapshot(newInstance, uowValue.get().version)
         if (log.isDebugEnabled) log.debug("now will store snapshot $newSnapshot")
-        snapshotRepo.upsert(metadata.entityId, newSnapshot)
+        snapshotRepo.upsert(metadata.aggregateRootId, newSnapshot)
       }
       .onSuccess {
         val pair: Pair<UnitOfWork, Long> = Pair(uowValue.get(), uowIdValue.get())
@@ -140,17 +140,17 @@ class CommandController<E : Entity>(
   }
 }
 
-class InMemorySnapshotRepository<E : Entity>(
+class InMemorySnapshotRepository<A : AggregateRoot>(
   private val sharedData: SharedData,
   private val json: Json,
-  private val commandAware: EntityCommandAware<E>
-) : SnapshotRepository<E> {
+  private val commandAware: AggregateRootCommandAware<A>
+) : SnapshotRepository<A> {
 
   companion object {
     internal val log = LoggerFactory.getLogger(InMemorySnapshotRepository::class.java)
   }
 
-  override fun upsert(entityId: Int, snapshot: Snapshot<E>): Future<Void> {
+  override fun upsert(id: Int, snapshot: Snapshot<A>): Future<Void> {
     val promise = Promise.promise<Void>()
     sharedData.getAsyncMap<Int, String>(commandAware.entityName) { event1 ->
       if (event1.failed()) {
@@ -158,11 +158,11 @@ class InMemorySnapshotRepository<E : Entity>(
         promise.fail(event1.cause())
         return@getAsyncMap
       }
-      val stateAsJson = JsonObject(json.stringify(ENTITY_SERIALIZER, snapshot.state))
+      val stateAsJson = JsonObject(json.stringify(AGGREGATE_ROOT_SERIALIZER, snapshot.state))
       val mapEntryAsJson = JsonObject().put("version", snapshot.version).put("state", stateAsJson)
-      event1.result().put(entityId, mapEntryAsJson.encode()) { event2 ->
+      event1.result().put(id, mapEntryAsJson.encode()) { event2 ->
         if (event2.failed()) {
-          log.error("Failed to put $entityId on map ${commandAware.entityName}")
+          log.error("Failed to put $id on map ${commandAware.entityName}")
           promise.fail(event2.cause())
           return@put
         }
@@ -172,8 +172,8 @@ class InMemorySnapshotRepository<E : Entity>(
     return promise.future()
   }
 
-  override fun retrieve(entityId: Int): Future<Snapshot<E>> {
-    val promise = Promise.promise<Snapshot<E>>()
+  override fun retrieve(id: Int): Future<Snapshot<A>> {
+    val promise = Promise.promise<Snapshot<A>>()
     val defaultSnapshot = Snapshot(commandAware.initialState, 0)
     sharedData.getAsyncMap<Int, String>(commandAware.entityName) { event1 ->
       if (event1.failed()) {
@@ -181,16 +181,16 @@ class InMemorySnapshotRepository<E : Entity>(
         promise.fail(event1.cause())
         return@getAsyncMap
       }
-      event1.result().get(entityId) { event2 ->
+      event1.result().get(id) { event2 ->
         if (event2.failed()) {
-          log.error("Failed to get $entityId on map ${commandAware.entityName}")
+          log.error("Failed to get $id on map ${commandAware.entityName}")
           promise.fail(event2.cause())
           return@get
         }
         val result = event2.result()
         if (result == null) {
           if (log.isDebugEnabled) {
-            log.debug("Returning default snapshot for $entityId on map ${commandAware.entityName}")
+            log.debug("Returning default snapshot for $id on map ${commandAware.entityName}")
           }
           promise.complete(defaultSnapshot)
           return@get
@@ -198,7 +198,7 @@ class InMemorySnapshotRepository<E : Entity>(
         val mapEntryAsJson = JsonObject(event2.result())
         val version = mapEntryAsJson.getInteger("version")
         val stateAsJson = mapEntryAsJson.getJsonObject("state")
-        val state = json.parse(ENTITY_SERIALIZER, stateAsJson.encode()) as E
+        val state = json.parse(AGGREGATE_ROOT_SERIALIZER, stateAsJson.encode()) as A
         promise.complete(Snapshot(state, version))
       }
     }

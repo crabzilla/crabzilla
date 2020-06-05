@@ -1,19 +1,19 @@
 package io.github.crabzilla.web.example1
 
 import io.github.crabzilla.core.command.CrabzillaContext
-import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.github.crabzilla.pgc.PgcStreamProjector
+import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.github.crabzilla.pgc.command.PgcUowJournal
 import io.github.crabzilla.pgc.command.PgcUowJournal.EmptyPayloadPublisher
 import io.github.crabzilla.pgc.command.PgcUowRepo
 import io.github.crabzilla.pgc.query.PgcProjectionsRepo
-import io.github.crabzilla.pgc.query.PgcUowProjector
+import io.github.crabzilla.pgc.query.PgcUnitOfWorkProjector
 import io.github.crabzilla.pgc.query.startProjection
 import io.github.crabzilla.web.boilerplate.listenHandler
 import io.github.crabzilla.web.boilerplate.readModelPgPool
 import io.github.crabzilla.web.boilerplate.writeModelPgPool
+import io.github.crabzilla.web.command.AggregateRootWebHelper.Companion.subRouteOf
 import io.github.crabzilla.web.command.WebResourceContext
-import io.github.crabzilla.web.command.WebResourcesRegistry
 import io.github.crabzilla.web.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.web.example1.Example1Fixture.CUSTOMER_SUMMARY_STREAM
 import io.vertx.core.AbstractVerticle
@@ -59,11 +59,11 @@ class CustomerVerticle2 : AbstractVerticle() {
     val snapshotRepoDb = PgcSnapshotRepo(writeDb, example1Json, cmdAware) // TO write snapshots to db
     // val snapshotRepo = InMemorySnapshotRepository(vertx.sharedData(), example1Json, cmdAware)
 
-    WebResourcesRegistry()
-      .add(router, ctx, WebResourceContext(cmdTypeMapOfCustomer, cmdAware, snapshotRepoDb))
+    subRouteOf(router, ctx, WebResourceContext(cmdTypeMapOfCustomer, cmdAware, snapshotRepoDb))
 
     // projections
-    val uowProjector = PgcUowProjector(readDb, CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM, CustomerSummaryProjector())
+    val uowProjector =
+      PgcUnitOfWorkProjector(readDb, CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM, CustomerSummaryDomainEventProjector())
     val streamProjector = PgcStreamProjector(writeDb, example1Json, uowProjector)
     startProjection(vertx, PgcProjectionsRepo(readDb), streamProjector)
       .onFailure { err -> promise.fail(err) }

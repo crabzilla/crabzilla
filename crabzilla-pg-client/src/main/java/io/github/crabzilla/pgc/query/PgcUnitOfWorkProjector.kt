@@ -7,15 +7,15 @@ import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
-class PgcUowProjector(
+class PgcUnitOfWorkProjector(
   private val pgPool: PgPool,
   val entityName: String,
   val streamId: String,
-  private val projector: PgcEventProjector
+  private val domainEventProjector: PgcDomainEventProjector
 ) {
 
   companion object {
-    internal val log = LoggerFactory.getLogger(PgcUowProjector::class.java)
+    internal val log = LoggerFactory.getLogger(PgcUnitOfWorkProjector::class.java)
     const val SQL_UPDATE_PROJECTIONS =
       """insert into projections (entityName, streamId, last_uow) values ($1, $2, $3) on conflict (entityName, streamId)
       do update set last_uow = $3"""
@@ -33,7 +33,7 @@ class PgcUowProjector(
       val transaction = event1.result()
 
       val toFuture: (Int) -> () -> Future<Void> = { index ->
-        { projector.handle(transaction, uowEvents.entityId, uowEvents.events[index]) }
+        { domainEventProjector.handle(transaction, uowEvents.entityId, uowEvents.events[index]) }
       }
       val futures: List<() -> Future<Void>> = List(uowEvents.events.size, toFuture)
       val future = futures.fold(Future.succeededFuture()) { previousFuture: Future<Void>,
