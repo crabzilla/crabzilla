@@ -6,10 +6,10 @@ import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
-class PgcProjectionRepo(private val readModelDb: PgPool) {
+class PgcProjectionsRepo(private val readModelDb: PgPool) {
 
   companion object {
-    internal val log = LoggerFactory.getLogger(PgcProjectionRepo::class.java)
+    internal val log = LoggerFactory.getLogger(PgcProjectionsRepo::class.java)
     const val SQL_SELECT_LAST_UOW_ID =
       "select max(last_uow) from projections where entityName = $1 and streamId = $2"
   }

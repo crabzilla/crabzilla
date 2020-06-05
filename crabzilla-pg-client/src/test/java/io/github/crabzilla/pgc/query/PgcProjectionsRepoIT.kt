@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(VertxExtension::class)
-class PgcProjectionRepoIT {
+class PgcProjectionsRepoIT {
 
   // TODO
   @Disabled

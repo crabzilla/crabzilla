@@ -2,11 +2,11 @@ package io.github.crabzilla.web.example1
 
 import io.github.crabzilla.core.command.CrabzillaContext
 import io.github.crabzilla.pgc.command.PgcSnapshotRepo
-import io.github.crabzilla.pgc.command.PgcStreamProjector
+import io.github.crabzilla.pgc.PgcStreamProjector
 import io.github.crabzilla.pgc.command.PgcUowJournal
 import io.github.crabzilla.pgc.command.PgcUowJournal.EmptyPayloadPublisher
 import io.github.crabzilla.pgc.command.PgcUowRepo
-import io.github.crabzilla.pgc.query.PgcProjectionRepo
+import io.github.crabzilla.pgc.query.PgcProjectionsRepo
 import io.github.crabzilla.pgc.query.PgcUowProjector
 import io.github.crabzilla.pgc.query.startProjection
 import io.github.crabzilla.web.boilerplate.listenHandler
@@ -65,7 +65,7 @@ class CustomerVerticle2 : AbstractVerticle() {
     // projections
     val uowProjector = PgcUowProjector(readDb, CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM, CustomerSummaryProjector())
     val streamProjector = PgcStreamProjector(writeDb, example1Json, uowProjector)
-    startProjection(vertx, PgcProjectionRepo(readDb), streamProjector)
+    startProjection(vertx, PgcProjectionsRepo(readDb), streamProjector)
       .onFailure { err -> promise.fail(err) }
       .onSuccess {
         // read model routes

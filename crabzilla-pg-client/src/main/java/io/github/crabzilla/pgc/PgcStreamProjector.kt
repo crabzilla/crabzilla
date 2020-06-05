@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.command
+package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.command.DomainEvent
 import io.github.crabzilla.core.command.EVENT_SERIALIZER

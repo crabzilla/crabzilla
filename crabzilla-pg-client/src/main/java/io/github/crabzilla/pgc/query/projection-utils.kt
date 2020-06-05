@@ -5,7 +5,7 @@ import io.github.crabzilla.core.command.EVENT_SERIALIZER
 import io.github.crabzilla.core.command.EventBusChannels
 import io.github.crabzilla.core.command.UnitOfWork
 import io.github.crabzilla.core.command.UnitOfWorkEvents
-import io.github.crabzilla.pgc.command.PgcStreamProjector
+import io.github.crabzilla.pgc.PgcStreamProjector
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
@@ -51,7 +51,7 @@ fun startProjection(
 
 fun startProjection(
   vertx: Vertx,
-  projectionRepo: PgcProjectionRepo,
+  projectionsRepo: PgcProjectionsRepo,
   streamProjector: PgcStreamProjector
 ): Future<Void> {
   val promise0 = Promise.promise<Void>()
@@ -61,7 +61,7 @@ fun startProjection(
   fun react(): Future<Long> {
     val promise = Promise.promise<Long>()
     isRunning.set(true)
-    projectionRepo.selectLastUowId(entityName, streamId)
+    projectionsRepo.selectLastUowId(entityName, streamId)
       .onFailure { err ->
         isRunning.set(false)
         promise.fail(err)
@@ -85,7 +85,7 @@ fun startProjection(
   log.info("starting db pooling projector for entity $entityName streamId $streamId")
   // on startup, get latest projected uowId
   // TODO sinalize command handler with dependency to this stream in order to avoid commands until it's done
-  projectionRepo.selectLastUowId(entityName, streamId)
+  projectionsRepo.selectLastUowId(entityName, streamId)
     .onFailure { err ->
       promise0.fail(err)
       log.error("On projectionRepo.selectLastUowId for entity $entityName streamId $streamId", err) }
