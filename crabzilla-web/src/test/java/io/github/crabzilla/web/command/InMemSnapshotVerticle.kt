@@ -5,8 +5,8 @@ import io.github.crabzilla.core.command.InMemorySnapshotRepository
 import io.github.crabzilla.pgc.command.PgcUowJournal
 import io.github.crabzilla.pgc.command.PgcUowJournal.FullPayloadPublisher
 import io.github.crabzilla.pgc.command.PgcUowRepo
-import io.github.crabzilla.web.boilerplate.listenHandler
-import io.github.crabzilla.web.boilerplate.writeModelPgPool
+import io.github.crabzilla.web.boilerplate.HttpSupport.listenHandler
+import io.github.crabzilla.web.boilerplate.PgClientSupport.writeModelPgPool
 import io.github.crabzilla.web.command.WebResourceContext.Companion.subRouteOf
 import io.github.crabzilla.web.example1.ActivateCustomer
 import io.github.crabzilla.web.example1.CreateActivateCustomer

@@ -18,9 +18,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class AggregateRootWebHandler<A : AggregateRoot>(
-        private val crabzillaContext: CrabzillaContext,
-        private val snapshotRepo: SnapshotRepository<A>,
-        private val cmdAware: AggregateRootCommandAware<A>
+  private val crabzillaContext: CrabzillaContext,
+  private val snapshotRepo: SnapshotRepository<A>,
+  private val cmdAware: AggregateRootCommandAware<A>
 ) {
 
   companion object {

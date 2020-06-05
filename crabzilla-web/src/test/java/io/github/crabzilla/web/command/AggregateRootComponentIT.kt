@@ -7,13 +7,13 @@ import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.github.crabzilla.pgc.command.PgcUowJournal
 import io.github.crabzilla.pgc.command.PgcUowJournal.FullPayloadPublisher
 import io.github.crabzilla.pgc.command.PgcUowRepo
-import io.github.crabzilla.web.boilerplate.cleanDatabase
-import io.github.crabzilla.web.boilerplate.writeModelPgPool
+import io.github.crabzilla.web.boilerplate.PgClientSupport.writeModelPgPool
 import io.github.crabzilla.web.example1.CreateCustomer
 import io.github.crabzilla.web.example1.Customer
 import io.github.crabzilla.web.example1.CustomerCommandAware
 import io.github.crabzilla.web.example1.Example1Fixture
 import io.github.crabzilla.web.example1.Example1Fixture.createActivateCmd1
+import io.github.crabzilla.web.example1.cleanDatabase
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions

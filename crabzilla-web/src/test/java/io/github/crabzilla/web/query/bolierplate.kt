@@ -17,7 +17,7 @@ val cmdTypeMapOfCustomer = mapOf(
   Pair("deactivate", DeactivateCustomer::class.qualifiedName as String),
   Pair("create-activate", CreateActivateCustomer::class.qualifiedName as String))
 
-
+// query routes
 fun customersQueryHandler(rc: RoutingContext, readDb: PgPool) {
   val sql = """SELECT id, name, is_active FROM customer_summary where id = $1""".trimMargin()
   val id = rc.request().getParam("id").toInt()

@@ -6,10 +6,10 @@ import io.github.crabzilla.core.command.UnitOfWork.JsonMetadata.ENTITY_ID
 import io.github.crabzilla.core.command.UnitOfWork.JsonMetadata.ENTITY_NAME
 import io.github.crabzilla.core.command.UnitOfWork.JsonMetadata.EVENTS
 import io.github.crabzilla.core.command.UnitOfWork.JsonMetadata.VERSION
-import io.github.crabzilla.web.boilerplate.cleanDatabase
-import io.github.crabzilla.web.boilerplate.deploy
-import io.github.crabzilla.web.boilerplate.findFreeHttpPort
-import io.github.crabzilla.web.boilerplate.getConfig
+import io.github.crabzilla.web.boilerplate.ConfigSupport.getConfig
+import io.github.crabzilla.web.boilerplate.DeploySupport.deploy
+import io.github.crabzilla.web.boilerplate.HttpSupport.findFreeHttpPort
+import io.github.crabzilla.web.example1.cleanDatabase
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer

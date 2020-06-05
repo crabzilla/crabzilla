@@ -35,9 +35,11 @@ class PgcStreamProjector(
     return projector.streamId
   }
 
-  // TODO use maxRows and test
-  fun handle(uowId: Long, maxRowsPerPage: Int, entityName: String, maxRows: Int): Future<Long> {
-    val promise = Promise.promise<Long>()
+  // TODO use maxRows and test edge cases
+  fun handle(uowId: Long, maxRowsPerPage: Int, entityName: String, maxRows: Int):
+    Future<Pair<Pair<Throwable, Long>?, Int>> {
+
+    val promise = Promise.promise<Pair<Pair<Throwable, Long>?, Int>>()
     log.debug("Starting after $uowId for $entityName using page size $maxRowsPerPage ")
     writeModelDb.begin { event0 ->
       if (event0.failed()) {
@@ -46,7 +48,9 @@ class PgcStreamProjector(
         return@begin
       }
       val tx = event0.result()
-      var rows = 0L
+      var rows = 0
+      var throwable: Throwable? = null
+      var uowIdWithError: Long? = null
       // get committed events after uowId
       tx.prepare(SELECT_AFTER_UOW_ID) { event1 ->
         if (event1.failed()) {
@@ -58,20 +62,28 @@ class PgcStreamProjector(
         // Fetch N rows at a time
         val stream = pq.createStream(maxRowsPerPage, Tuple.of(uowId, entityName))
         stream.exceptionHandler { err ->
+          log.error("Stream error", err)
           promise.fail(err)
-          log.error("Stream error", err) }
+        }
         stream.handler { row ->
-          rows++
-          log.info(row.deepToString())
           val currentUowId = row.getLong(UOW_ID)
           val currentEntityId = row.getInteger(AR_ID)
           val eventsAsJsonArray: JsonArray = row.get(JsonArray::class.java, 1)
           val events: List<DomainEvent> = json.parse(DOMAIN_EVENT_SERIALIZER.list, eventsAsJsonArray.encode())
-          val sideEffect: Future<Void> = projector.handle(UnitOfWorkEvents(currentUowId, currentEntityId, events))
-            .onFailure { err -> log.error("When projecting uowId $currentUowId", err) }
-          if (sideEffect.failed()) {
-            throw sideEffect.cause() // fail immediately and hopefully abort the transaction // TODO test this
-          }
+          projector.handle(UnitOfWorkEvents(currentUowId, currentEntityId, events))
+            .onFailure { err ->
+              log.error("When projecting uowId $currentUowId", err)
+              stream.close { wasClosed -> // commit previous successes and stop immediately
+                if (wasClosed.failed()) {
+                  log.error("When closing stream uowId $currentUowId", wasClosed.cause())
+                }
+                log.info("Stream closed since previous error")
+                throwable = err
+                uowIdWithError = currentUowId
+              } }
+            .onSuccess {
+              rows++
+            }
         }
         stream.endHandler {
           if (log.isDebugEnabled) log.debug("End of stream")
@@ -82,7 +94,11 @@ class PgcStreamProjector(
               promise.fail(ar.cause())
             } else {
               log.debug("tx.commit successfully")
-              promise.complete(rows)
+              if (throwable == null) {
+                promise.complete(Pair(null, rows))
+              } else {
+                promise.complete(Pair(Pair(throwable!!, uowIdWithError!!), rows))
+              }
             }
           }
         }

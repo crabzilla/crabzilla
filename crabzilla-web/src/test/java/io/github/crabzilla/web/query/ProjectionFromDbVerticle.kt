@@ -9,9 +9,9 @@ import io.github.crabzilla.pgc.command.PgcUowRepo
 import io.github.crabzilla.pgc.query.PgcProjectionsRepo
 import io.github.crabzilla.pgc.query.PgcUnitOfWorkProjector
 import io.github.crabzilla.pgc.query.startProjectionConsumingFromDatabase
-import io.github.crabzilla.web.boilerplate.listenHandler
-import io.github.crabzilla.web.boilerplate.readModelPgPool
-import io.github.crabzilla.web.boilerplate.writeModelPgPool
+import io.github.crabzilla.web.boilerplate.HttpSupport.listenHandler
+import io.github.crabzilla.web.boilerplate.PgClientSupport.readModelPgPool
+import io.github.crabzilla.web.boilerplate.PgClientSupport.writeModelPgPool
 import io.github.crabzilla.web.command.WebResourceContext
 import io.github.crabzilla.web.command.WebResourceContext.Companion.subRouteOf
 import io.github.crabzilla.web.example1.CustomerCommandAware
@@ -66,5 +66,4 @@ class ProjectionFromDbVerticle : AbstractVerticle() {
         server.requestHandler(router).listen(listenHandler(promise))
       }
   }
-
 }

@@ -33,7 +33,7 @@ fun startProjectionConsumingFromEventbus(
     val events: List<DomainEvent> = json.parse(DOMAIN_EVENT_SERIALIZER.list, eventsAsString)
     return UnitOfWorkEvents(uowId, entityId, events)
   }
-
+  // TODO add startup behaviour like startProjectionConsumingFromDatabase does
   val channel = EventBusChannels.aggregateRootChannel(entityName)
   log.info("adding projector for $streamId subscribing on $channel")
   val (vertx, json, readDb) = readContext
@@ -58,8 +58,8 @@ fun startProjectionConsumingFromDatabase(
   val isRunning = AtomicBoolean(false)
   val entityName = streamProjector.entityName()
   val streamId = streamProjector.streamId()
-  fun react(): Future<Long> {
-    val promise = Promise.promise<Long>()
+  fun react(): Future<Pair<Pair<Throwable, Long>?, Int>> {
+    val promise = Promise.promise<Pair<Pair<Throwable, Long>?, Int>>()
     isRunning.set(true)
     projectionsRepo.selectLastUowId(entityName, streamId)
       .onFailure { err ->
@@ -92,27 +92,37 @@ fun startProjectionConsumingFromDatabase(
     .onSuccess { lastStreamUow1 ->
       streamProjector.handle(lastStreamUow1, 100, entityName, Int.MAX_VALUE)
         .onFailure { err ->
-//          promise0.fail(err) // TODO no need to wait?
           log.error("On streamProjector.handle for entity $entityName streamId $streamId ", err) }
-        .onSuccess { rows ->
-          log.info("$rows units of work successfully projected on startup phase")
+        .onSuccess { startupResult: Pair<Pair<Throwable, Long>?, Int> ->
+          log.info("${startupResult.second} units of work successfully projected on startup phase")
+          val startupError = startupResult.first
+          if (startupError != null) {
+            log.error("There was an error with uowId ${startupError.second}. Will retry latter", startupError.first)
+            // TODO retry later means query model is not fully updated, should we fail new commands until
+            //  it's the stream became fully updated?
+          }
           // after projecting missing events, react to repeat the operation given any event on this entityName
           val channel = EventBusChannels.aggregateRootChannel(entityName)
           log.info("db pooling projector for entity $entityName streamId $streamId is now ready")
-          vertx.eventBus().consumer<JsonObject>(channel) {
+          vertx.eventBus().consumer<Void>(channel) {
             log.info("Got message")
             if (isRunning.get()) {
               log.info("StreamProjector is already running. Skipping for now.")
               return@consumer
             }
-            // TODO implement some backoff policy here (perhaps using CircuitBreaker (triggered on first fail)
+            // TODO implement some backoff policy here perhaps using CircuitBreaker (triggered on first fail)
+            // TODO or a rx Flow able
             react()
-              .onSuccess { rows ->
-                log.info("$rows were projected on react phase") }
+              .onSuccess { reactResult: Pair<Pair<Throwable, Long>?, Int> ->
+                log.info("${reactResult.second} units of work successfully projected on startup phase")
+                val reactError = reactResult.first
+                if (reactError != null) {
+                  log.error("There was an error with uowId ${reactError.second}. Will retry latter", reactError.first)
+                }
+              }
               .onFailure { err ->
                 log.error("when trying to project event", err) }
           }
-//          promise0.fail(err) // TODO no need to wait?
         }
       promise0.complete()
     }
