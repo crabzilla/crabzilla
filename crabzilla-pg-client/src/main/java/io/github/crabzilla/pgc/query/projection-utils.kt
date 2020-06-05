@@ -84,6 +84,7 @@ fun startProjection(
   }
   log.info("starting db pooling projector for entity $entityName streamId $streamId")
   // on startup, get latest projected uowId
+  // TODO sinalize command handler with dependency to this stream in order to avoid commands until it's done
   projectionRepo.selectLastUowId(entityName, streamId)
     .onFailure { err ->
       promise0.fail(err)

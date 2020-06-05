@@ -5,6 +5,7 @@ import io.github.crabzilla.core.command.CrabzillaContext
 import io.github.crabzilla.core.command.SnapshotRepository
 import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.github.crabzilla.pgc.command.PgcUowJournal
+import io.github.crabzilla.pgc.command.PgcUowJournal.FullPayloadPublisher
 import io.github.crabzilla.pgc.command.PgcUowRepo
 import io.github.crabzilla.web.boilerplate.cleanDatabase
 import io.github.crabzilla.web.boilerplate.writeModelPgPool
@@ -41,7 +42,7 @@ class EntityComponentIT {
       { vertx: Vertx, writeDb: PgPool ->
         val cmdAware = CustomerCommandAware()
         val uowRepo = PgcUowRepo(writeDb, Example1Fixture.example1Json)
-        val uowJournal = PgcUowJournal(vertx, writeDb, Example1Fixture.example1Json)
+        val uowJournal = PgcUowJournal(writeDb, Example1Fixture.example1Json, FullPayloadPublisher(vertx))
         val snapshotRepo:
                 SnapshotRepository<Customer> = PgcSnapshotRepo(writeDb, Example1Fixture.example1Json, CustomerCommandAware())
         val ctx = CrabzillaContext(Example1Fixture.example1Json, uowRepo, uowJournal)

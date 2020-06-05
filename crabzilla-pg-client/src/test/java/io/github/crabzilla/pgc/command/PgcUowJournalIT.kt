@@ -3,6 +3,7 @@ package io.github.crabzilla.pgc.command
 import io.github.crabzilla.core.command.UnitOfWork
 import io.github.crabzilla.core.command.UnitOfWorkJournal
 import io.github.crabzilla.core.command.UnitOfWorkRepository
+import io.github.crabzilla.pgc.command.PgcUowJournal.FullPayloadPublisher
 import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activatedUow1
@@ -58,7 +59,7 @@ class PgcUowJournalIT {
       val config = configFuture.result()
       writeDb = writeModelPgPool(vertx, config)
       repo = PgcUowRepo(writeDb, example1Json)
-      journal = PgcUowJournal(vertx, writeDb, example1Json)
+      journal = PgcUowJournal(writeDb, example1Json, FullPayloadPublisher(vertx))
       testRepo = PgcUowTestRepo(writeDb, example1Json)
       writeDb.query("delete from units_of_work").execute { deleteResult1 ->
         if (deleteResult1.failed()) {

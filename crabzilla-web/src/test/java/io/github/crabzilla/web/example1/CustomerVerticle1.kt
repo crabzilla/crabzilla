@@ -3,6 +3,7 @@ package io.github.crabzilla.web.example1
 import io.github.crabzilla.core.command.CrabzillaContext
 import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.github.crabzilla.pgc.command.PgcUowJournal
+import io.github.crabzilla.pgc.command.PgcUowJournal.FullPayloadPublisher
 import io.github.crabzilla.pgc.command.PgcUowRepo
 import io.github.crabzilla.pgc.query.PgcReadContext
 import io.github.crabzilla.pgc.query.startProjection
@@ -41,7 +42,7 @@ class CustomerVerticle1 : AbstractVerticle() {
     router.route().handler(BodyHandler.create())
 
     val example1Json = Json(context = customerModule)
-    val uowJournal = PgcUowJournal(vertx, writeDb, example1Json)
+    val uowJournal = PgcUowJournal(writeDb, example1Json, FullPayloadPublisher(vertx))
     val uowRepository = PgcUowRepo(writeDb, example1Json)
     val ctx = CrabzillaContext(example1Json, uowRepository, uowJournal)
 

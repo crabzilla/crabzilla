@@ -3,6 +3,7 @@ package io.github.crabzilla.web.command
 import io.github.crabzilla.core.command.CrabzillaContext
 import io.github.crabzilla.core.command.InMemorySnapshotRepository
 import io.github.crabzilla.pgc.command.PgcUowJournal
+import io.github.crabzilla.pgc.command.PgcUowJournal.FullPayloadPublisher
 import io.github.crabzilla.pgc.command.PgcUowRepo
 import io.github.crabzilla.web.boilerplate.listenHandler
 import io.github.crabzilla.web.boilerplate.writeModelPgPool
@@ -35,7 +36,7 @@ class InMemSnapshotVerticle : AbstractVerticle() {
     router.route().handler(BodyHandler.create())
 
     val example1Json = Json(context = customerModule)
-    val uowJournal = PgcUowJournal(vertx, writeDb, example1Json)
+    val uowJournal = PgcUowJournal(writeDb, example1Json, FullPayloadPublisher(vertx))
     val uowRepository = PgcUowRepo(writeDb, example1Json)
     val ctx = CrabzillaContext(example1Json, uowRepository, uowJournal)
 

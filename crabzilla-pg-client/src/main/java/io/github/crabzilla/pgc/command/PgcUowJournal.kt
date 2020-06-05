@@ -2,7 +2,7 @@ package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.command.COMMAND_SERIALIZER
 import io.github.crabzilla.core.command.EVENT_SERIALIZER
-import io.github.crabzilla.core.command.EventBusUowPublisher
+import io.github.crabzilla.core.command.EventBusChannels
 import io.github.crabzilla.core.command.UnitOfWork
 import io.github.crabzilla.core.command.UnitOfWorkJournal
 import io.github.crabzilla.core.command.UnitOfWorkPublisher
@@ -18,10 +18,9 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 
 class PgcUowJournal(
-  private val vertx: Vertx,
   private val writeModelDb: PgPool,
   private val json: Json,
-  private val uowPublisher: UnitOfWorkPublisher = EventBusUowPublisher(vertx)
+  private val uowPublisher: UnitOfWorkPublisher
 ) : UnitOfWorkJournal {
 
   companion object {
@@ -85,12 +84,26 @@ class PgcUowJournal(
                   .put(UnitOfWork.JsonMetadata.ENTITY_ID, unitOfWork.entityId)
                   .put(UnitOfWork.JsonMetadata.VERSION, unitOfWork.version)
                   .put(UnitOfWork.JsonMetadata.EVENTS, JsonArray(eventsListAsJsonObject))
-                uowPublisher.publish(unitOfWork.entityName, message)
+                uowPublisher.publish(message)
                 promise.complete(uowId)
               }
             }
         }
     }
     return promise.future()
+  }
+
+  class FullPayloadPublisher(private val vertx: Vertx) : UnitOfWorkPublisher {
+    override fun publish(events: JsonObject) {
+      vertx.eventBus()
+        .publish(EventBusChannels.entityChannel(events.getString(UnitOfWork.JsonMetadata.ENTITY_NAME)), events)
+    }
+  }
+
+  class EmptyPayloadPublisher(private val vertx: Vertx) : UnitOfWorkPublisher {
+    override fun publish(events: JsonObject) {
+      vertx.eventBus()
+        .publish(EventBusChannels.entityChannel(events.getString(UnitOfWork.JsonMetadata.ENTITY_NAME)), null)
+    }
   }
 }

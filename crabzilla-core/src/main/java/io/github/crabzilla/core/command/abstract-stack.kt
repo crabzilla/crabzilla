@@ -10,7 +10,7 @@ interface SnapshotRepository<E : Entity> {
 }
 
 interface UnitOfWorkPublisher {
-  fun publish(entityName: String, events: JsonObject)
+  fun publish(events: JsonObject)
 }
 
 interface UnitOfWorkJournal {

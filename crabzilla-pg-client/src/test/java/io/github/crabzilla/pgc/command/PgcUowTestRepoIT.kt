@@ -5,6 +5,7 @@ import io.github.crabzilla.core.command.EVENT_SERIALIZER
 import io.github.crabzilla.core.command.UnitOfWorkJournal
 import io.github.crabzilla.core.command.UnitOfWorkRepository
 import io.github.crabzilla.pgc.command.PgcUowJournal.Companion.SQL_APPEND_UOW
+import io.github.crabzilla.pgc.command.PgcUowJournal.FullPayloadPublisher
 import io.github.crabzilla.pgc.command.PgcUowTestRepo.RangeOfEvents
 import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
 import io.github.crabzilla.pgc.example1.Example1Fixture.activateCmd1
@@ -73,7 +74,7 @@ class PgcUowTestRepoIT {
       writeDb = writeModelPgPool(vertx, config)
       repo = PgcUowRepo(writeDb, example1Json)
       testRepo = PgcUowTestRepo(writeDb, example1Json)
-      journal = PgcUowJournal(vertx, writeDb, example1Json)
+      journal = PgcUowJournal(writeDb, example1Json, FullPayloadPublisher(vertx))
       writeDb.query("delete from units_of_work")
         .execute { deleteResult1 ->
           if (deleteResult1.failed()) {

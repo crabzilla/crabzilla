@@ -2,14 +2,13 @@ package io.github.crabzilla.core.command
 
 import io.vertx.core.Future
 import io.vertx.core.Promise
-import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.core.shareddata.SharedData
-import java.util.UUID
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 
 object EventBusChannels {
   val entityChannel = { entityName: String -> "crabzilla.entity.$entityName" }
@@ -138,16 +137,6 @@ class CommandController<E : Entity>(
       }.onFailure { err -> promise.fail(err) }
 
     return promise.future()
-  }
-}
-
-class EventBusUowPublisher(private val vertx: Vertx) : UnitOfWorkPublisher {
-  companion object {
-    private val log = LoggerFactory.getLogger(EventBusUowPublisher::class.java)
-  }
-  override fun publish(entityName: String, events: JsonObject) {
-    if (log.isDebugEnabled) log.debug("will publish $events")
-    vertx.eventBus().publish(EventBusChannels.entityChannel(entityName), events)
   }
 }
 
