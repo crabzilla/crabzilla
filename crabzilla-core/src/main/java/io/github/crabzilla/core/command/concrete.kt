@@ -128,7 +128,7 @@ class CommandController<A : AggregateRoot>(
           .fold(snapshotValue.get().state) { state, event -> commandAware.applyEvent.invoke(event, state) }
         val newSnapshot = Snapshot(newInstance, uowValue.get().version)
         if (log.isDebugEnabled) log.debug("now will store snapshot $newSnapshot")
-        snapshotRepo.upsert(metadata.aggregateRootId, newSnapshot)
+        snapshotRepo.upsert(metadata.aggregateRootId, newSnapshot) // TODO what if only this side effect fail?
       }
       .onSuccess {
         val pair: Pair<UnitOfWork, Long> = Pair(uowValue.get(), uowIdValue.get())
@@ -141,7 +141,7 @@ class CommandController<A : AggregateRoot>(
 }
 
 class InMemorySnapshotRepository<A : AggregateRoot>(
-  private val sharedData: SharedData,
+  private val sharedData: SharedData, // TODO how to avoid to get the map on every time?
   private val json: Json,
   private val commandAware: AggregateRootCommandAware<A>
 ) : SnapshotRepository<A> {
