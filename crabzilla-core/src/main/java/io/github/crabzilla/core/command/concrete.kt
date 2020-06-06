@@ -4,11 +4,11 @@ import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.core.shareddata.SharedData
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-import java.util.UUID
-import java.util.concurrent.atomic.AtomicReference
 
 object EventBusChannels {
   val aggregateRootChannel = { entityName: String -> "crabzilla.aggregate.$entityName" }

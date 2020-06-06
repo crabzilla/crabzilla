@@ -30,9 +30,10 @@ import kotlinx.serialization.json.Json
 
 class ProjectionFromDbVerticle : AbstractVerticle() {
 
-  val httpPort: Int by lazy { config().getInteger("HTTP_PORT") }
   val readDb: PgPool by lazy { readModelPgPool(vertx, config()) }
   val writeDb: PgPool by lazy { writeModelPgPool(vertx, config()) }
+
+  val httpPort: Int by lazy { config().getInteger("HTTP_PORT") }
   lateinit var server: HttpServer
 
   override fun start(promise: Promise<Void>) {

@@ -85,6 +85,7 @@ class PgcUowJournal(
                   .put(UnitOfWork.JsonMetadata.VERSION, unitOfWork.version)
                   .put(UnitOfWork.JsonMetadata.EVENTS, JsonArray(eventsListAsJsonObject))
                 uowPublisher.publish(message)
+                log.info("Message published to ${unitOfWork.entityName}")
                 promise.complete(uowId)
               }
             }

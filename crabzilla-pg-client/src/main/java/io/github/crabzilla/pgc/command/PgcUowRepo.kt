@@ -12,11 +12,11 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
+import java.util.ArrayList
+import java.util.UUID
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-import java.util.ArrayList
-import java.util.UUID
 
 class PgcUowRepo(private val writeModelDb: PgPool, private val json: Json) : UnitOfWorkRepository {
 

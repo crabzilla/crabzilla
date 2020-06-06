@@ -11,9 +11,9 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
+import java.util.UUID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 class WebResourceContext<A : AggregateRoot>(
   val cmdTypeMap: Map<String, String>,

@@ -26,6 +26,9 @@ import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.junit5.web.TestRequest.statusCode
 import io.vertx.junit5.web.TestRequest.testRequest
+import java.util.Random
+import java.util.UUID
+import java.util.function.Consumer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
@@ -36,9 +39,6 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
-import java.util.Random
-import java.util.UUID
-import java.util.function.Consumer
 
 /**
  * Integration test

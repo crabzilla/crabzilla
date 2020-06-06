@@ -4,9 +4,9 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 import io.vertx.core.Promise
 import io.vertx.core.http.HttpServer
+import java.net.ServerSocket
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.net.ServerSocket
 
 object HttpSupport {
 

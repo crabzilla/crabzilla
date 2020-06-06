@@ -11,10 +11,10 @@ import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory.getLogger
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal val log = getLogger("startProjection")
 
@@ -68,7 +68,7 @@ fun startProjectionConsumingFromDatabase(
         log.error("On projectionRepo.selectLastUowId for entity $entityName streamId $streamId", err)
       }
       .onSuccess { lastStreamUow1 ->
-        streamProjector.handle(lastStreamUow1, 10, entityName, 10)
+        streamProjector.handle(lastStreamUow1, 100, entityName, 1000)
           .onFailure { err ->
             isRunning.set(false)
             promise.fail(err)

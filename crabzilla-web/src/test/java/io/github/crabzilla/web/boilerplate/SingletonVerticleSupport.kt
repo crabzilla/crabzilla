@@ -7,9 +7,9 @@ import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.core.json.jsonObjectOf
+import java.lang.management.ManagementFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.lang.management.ManagementFactory
 
 object SingletonVerticleSupport {
 
