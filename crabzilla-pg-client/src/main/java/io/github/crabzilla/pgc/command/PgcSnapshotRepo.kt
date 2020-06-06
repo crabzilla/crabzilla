@@ -24,15 +24,15 @@ class PgcSnapshotRepo<A : AggregateRoot>(
 
   companion object {
     private val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
-    private const val SELECT_EVENTS_VERSION_AFTER_VERSION = "SELECT uow_events, version FROM units_of_work " +
+    private const val SELECT_EVENTS_VERSION_AFTER_VERSION = "SELECT uow_events, version FROM crabz_units_of_work " +
       "WHERE ar_id = $1 and ar_name = $2 and version > $3 ORDER BY version "
     private const val ROWS_PER_TIME = 1000
   }
   private fun selectSnapshot(): String {
-    return "SELECT version, json_content FROM ${commandAware.entityName}_snapshots WHERE ar_id = $1"
+    return "SELECT version, json_content FROM crabz_${commandAware.entityName}_snapshots WHERE ar_id = $1"
   }
   private fun upsertSnapshot(): String {
-    return "INSERT INTO ${commandAware.entityName}_snapshots (ar_id, version, json_content) " +
+    return "INSERT INTO crabz_${commandAware.entityName}_snapshots (ar_id, version, json_content) " +
       " VALUES ($1, $2, $3) " +
       " ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"
   }

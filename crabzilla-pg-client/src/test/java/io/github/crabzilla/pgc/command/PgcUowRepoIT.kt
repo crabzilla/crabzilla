@@ -73,13 +73,13 @@ class PgcUowRepoIT {
       repo = PgcUowRepo(writeDb, example1Json)
       testRepo = PgcUowTestRepo(writeDb, example1Json)
       journal = PgcUowJournal(writeDb, example1Json, FullPayloadPublisher(vertx))
-      writeDb.query("delete from units_of_work")
+      writeDb.query("delete from crabz_units_of_work")
         .execute { deleteResult1 ->
           if (deleteResult1.failed()) {
             tc.failNow(deleteResult1.cause())
             return@execute
           }
-          writeDb.query("delete from customer_snapshots")
+          writeDb.query("delete from crabz_customer_snapshots")
             .execute { deleteResult2 ->
               if (deleteResult2.failed()) {
                 tc.failNow(deleteResult2.cause())

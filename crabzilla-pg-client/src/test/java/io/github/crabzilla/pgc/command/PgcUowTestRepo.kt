@@ -21,7 +21,7 @@ class PgcUowTestRepo(private val pgPool: PgPool, private val json: Json) {
     private const val UOW_ID = "uow_id"
     private const val AR_ID = "ar_id"
     private const val VERSION = "version"
-    private const val SQL_SELECT_AFTER_VERSION = "select uow_events, version from units_of_work " +
+    private const val SQL_SELECT_AFTER_VERSION = "select uow_events, version from crabz_units_of_work " +
       "where ar_id = $1 and ar_name = $2 and version > $3 order by version"
     private const val STREAM_ROWS_PER_PAGE = 1000
   }
@@ -73,7 +73,7 @@ class PgcUowTestRepo(private val pgPool: PgPool, private val json: Json) {
     val promise = Promise.promise<List<UnitOfWorkEvents>>()
     log.debug("will load after uowId [{}]", uowId)
     val selectAfterUowIdSql = "select uow_id, ar_id, uow_events " +
-      "  from units_of_work " +
+      "  from crabz_units_of_work " +
       " where uow_id > $1 " +
       if (entityName == null) "" else "and ar_name = '$entityName'" +
       " order by uow_id " +

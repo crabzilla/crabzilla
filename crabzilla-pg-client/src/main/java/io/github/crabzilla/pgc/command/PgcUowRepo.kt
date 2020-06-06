@@ -30,11 +30,11 @@ class PgcUowRepo(private val writeModelDb: PgPool, private val json: Json) : Uni
     private const val AR_NAME = "ar_name"
     private const val VERSION = "version"
 
-    private const val SELECT_LAST_UOW_ID = "select max(uow_id) from units_of_work"
+    private const val SELECT_LAST_UOW_ID = "select max(uow_id) from crabz_units_of_work"
     private const val SELECT_FIELDS = "select uow_id, uow_events, cmd_id, cmd_data, ar_id, ar_name, version"
-    private const val SELECT_UOW_BY_CMD_ID = "$SELECT_FIELDS from units_of_work where cmd_id = $1"
-    private const val SELECT_UOW_BY_UOW_ID = "$SELECT_FIELDS from units_of_work where uow_id = $1"
-    private const val SELECT_UOW_BY_ENTITY_ID = "$SELECT_FIELDS from units_of_work where ar_id = $1 order by version"
+    private const val SELECT_UOW_BY_CMD_ID = "$SELECT_FIELDS from crabz_units_of_work where cmd_id = $1"
+    private const val SELECT_UOW_BY_UOW_ID = "$SELECT_FIELDS from crabz_units_of_work where uow_id = $1"
+    private const val SELECT_UOW_BY_ENTITY_ID = "$SELECT_FIELDS from crabz_units_of_work where ar_id = $1 order by version"
   }
 
   override fun selectLastUowId(): Future<Long> {

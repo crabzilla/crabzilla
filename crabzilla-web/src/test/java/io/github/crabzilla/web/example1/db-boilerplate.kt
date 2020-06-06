@@ -14,12 +14,12 @@ fun cleanDatabase(vertx: Vertx, config: JsonObject): Future<Void> {
   val promise = Promise.promise<Void>()
   val read = readModelPgPool(vertx, config)
   val write = writeModelPgPool(vertx, config)
-  write.query("delete from units_of_work").execute { event1: AsyncResult<RowSet<Row?>?> ->
+  write.query("delete from crabz_units_of_work").execute { event1: AsyncResult<RowSet<Row?>?> ->
     if (event1.failed()) {
       promise.fail(event1.cause())
       return@execute
     }
-    write.query("delete from customer_snapshots").execute { event2: AsyncResult<RowSet<Row?>?> ->
+    write.query("delete from crabz_customer_snapshots").execute { event2: AsyncResult<RowSet<Row?>?> ->
       if (event2.failed()) {
         promise.fail(event2.cause())
         return@execute

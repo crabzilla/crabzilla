@@ -23,7 +23,7 @@ class PgcStreamProjector(
     internal val log = LoggerFactory.getLogger(PgcStreamProjector::class.java)
     private const val UOW_ID = "uow_id"
     private const val AR_ID = "ar_id"
-    private const val SELECT_AFTER_UOW_ID = "select uow_id, uow_events, ar_id from units_of_work " +
+    private const val SELECT_AFTER_UOW_ID = "select uow_id, uow_events, ar_id from crabz_units_of_work " +
       " where UOW_ID > $1 and ar_name = $2 order by uow_id"
   }
 

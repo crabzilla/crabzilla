@@ -11,7 +11,7 @@ class PgcProjectionsRepo(private val readModelDb: PgPool) {
   companion object {
     internal val log = LoggerFactory.getLogger(PgcProjectionsRepo::class.java)
     const val SQL_SELECT_LAST_UOW_ID =
-      "select max(last_uow) from projections where entityName = $1 and streamId = $2"
+      "select max(last_uow) from crabz_projections where ar_name = $1 and stream_name = $2"
   }
 
   fun selectLastUowId(entityName: String, streamId: String): Future<Long> {

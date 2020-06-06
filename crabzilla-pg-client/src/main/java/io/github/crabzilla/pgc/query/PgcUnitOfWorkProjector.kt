@@ -17,8 +17,8 @@ class PgcUnitOfWorkProjector(
   companion object {
     internal val log = LoggerFactory.getLogger(PgcUnitOfWorkProjector::class.java)
     const val SQL_UPDATE_PROJECTIONS =
-      """insert into projections (entityName, streamId, last_uow) values ($1, $2, $3) on conflict (entityName, streamId)
-      do update set last_uow = $3"""
+      """insert into crabz_projections (ar_name, stream_name, last_uow) values ($1, $2, $3)
+         on conflict (ar_name, stream_name) do update set last_uow = $3"""
   }
 
   fun handle(uowEvents: UnitOfWorkEvents): Future<Void> {
@@ -52,7 +52,7 @@ class PgcUnitOfWorkProjector(
             .execute(Tuple.of(entityName, streamId, uowEvents.uowId)) { event3 ->
               if (event3.failed()) {
                 promise.fail(event3.cause())
-                log.error("Error while updating projections table. Will perform rollback.", event3.cause())
+                log.error("Error while updating crabz_projections table. Will perform rollback.", event3.cause())
 //                transaction.rollback { result -> if (result.failed()) log.error("Doing rollback ", result.cause()) }
                 return@execute
               }
