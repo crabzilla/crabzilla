@@ -25,12 +25,14 @@ class PgcProjectionsRepo(private val readModelDb: PgPool) {
         }
         val result = event.result()
         if (result == null || result.size() == 0) {
-          promise.fail("Projection fo entity $entityName stream $streamId was not found")
+          log.warn("Projection for entity $entityName stream $streamId was not found")
+          promise.complete(0)
           return@execute
         }
         val finalResult = result.first().getLong(0)
         if (finalResult == null) {
-          promise.fail("Projection fo entity $entityName stream $streamId was not found: $finalResult")
+          log.warn("Projection for entity $entityName stream $streamId was not found: $finalResult")
+          promise.complete(0)
           return@execute
         }
         log.info("Result for entity $entityName stream $streamId, final = $finalResult")

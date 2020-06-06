@@ -49,18 +49,27 @@ private class WebResourceDeployer<A : AggregateRoot>(
     const val ENTITY_ID_PARAMETER = "entityId"
     const val UNIT_OF_WORK_ID_PARAMETER = "unitOfWorkId"
     const val JSON = "application/json"
+    val JSON_ERROR_MSG = { command: String -> "Cannot decode the json for command $command" }
     private val log = LoggerFactory.getLogger(WebResourceDeployer::class.java)
   }
 
   fun deployWebRoutes() {
     fun errorHandler(paramName: String): Handler<RoutingContext> {
       return Handler {
-        log.error(it.failure().message, it.failure())
         when (it.failure()) {
-          is NumberFormatException -> it.response().setStatusCode(400).end("path param $paramName must be a number")
+          is NumberFormatException -> {
+            val msg = "path param $paramName must be a number"
+            it.response()
+              .setStatusCode(400)
+              .setStatusMessage(msg)
+              .end()
+          }
           else -> {
-            it.failure().printStackTrace()
-            it.response().setStatusCode(500).end("server error")
+            val msg = "server error"
+            it.response()
+              .setStatusCode(500)
+              .setStatusMessage(msg)
+              .end()
           }
         }
       }
@@ -84,7 +93,10 @@ private class WebResourceDeployer<A : AggregateRoot>(
         null
       }
       if (command == null) {
-        it.response().setStatusCode(400).setStatusMessage("Cannot decode the json for this Command").end()
+        it.response()
+          .setStatusCode(400)
+          .setStatusMessage(JSON_ERROR_MSG.invoke(commandMetadata.commandName))
+          .end()
         return@handler
       }
       if (log.isDebugEnabled) log.debug("Handling $command $commandMetadata")
@@ -102,8 +114,10 @@ private class WebResourceDeployer<A : AggregateRoot>(
               .end()
           }
         }.onFailure { error ->
-          log.error(error.message)
-          it.response().setStatusCode(400).setStatusMessage(error.message).end()
+          it.response()
+            .setStatusCode(400)
+            .setStatusMessage(error.message)
+            .end()
         }
     }.failureHandler(errorHandler(ENTITY_ID_PARAMETER))
 
@@ -125,7 +139,7 @@ private class WebResourceDeployer<A : AggregateRoot>(
               .putHeader("Content-Type", JSON)
               .end(snapshotJson.encode())
           } else {
-            httpResp.setStatusCode(404).end("Entity not found")
+            httpResp.setStatusCode(404).end()
           }
         }
       }

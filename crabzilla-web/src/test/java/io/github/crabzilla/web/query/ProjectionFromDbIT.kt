@@ -308,12 +308,11 @@ internal class ProjectionFromDbIT {
   @DisplayName("When GET to an invalid UnitOfWork (bad number) You get a 400")
   fun a4(tc: VertxTestContext) {
     client["/commands/customer/units-of-work/dddd"]
-      .`as`(BodyCodec.string())
+      .`as`(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .send(tc.succeeding { response: HttpResponse<String> ->
+      .send(tc.succeeding { response: HttpResponse<JsonObject> ->
         tc.verify {
-          val result = response.body()
-          assertThat(result).isEqualTo("path param unitOfWorkId must be a number")
+          assertThat(response.statusMessage()).isEqualTo("path param unitOfWorkId must be a number")
           tc.completeNow()
         }
       })

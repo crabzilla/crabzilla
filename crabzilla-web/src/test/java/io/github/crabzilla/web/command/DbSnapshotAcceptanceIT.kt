@@ -31,7 +31,6 @@ import java.util.UUID
 import java.util.function.Consumer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -235,9 +234,14 @@ internal class DbSnapshotAcceptanceIT {
   fun a1(tc: VertxTestContext) {
     val invalidCommand = JsonObject()
     client.post("/commands/customer/1/create")
-      .`as`(BodyCodec.none())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .sendJson(invalidCommand, tc.succeeding { response: HttpResponse<Void>? -> tc.verify { tc.completeNow() } }
+      .`as`(BodyCodec.jsonObject())
+      .sendJsonObject(invalidCommand,
+        tc.succeeding { response: HttpResponse<JsonObject> ->
+          tc.verify {
+            assertThat(response.statusMessage()).isEqualTo("Cannot decode the json for command create")
+            tc.completeNow() }
+        }
       )
   }
 
@@ -247,25 +251,26 @@ internal class DbSnapshotAcceptanceIT {
     val cmdAsJson = JsonObject("{\"type\":\"io.github.crabzilla.example1.CreateCustomer\",\"name\":\"a bad name\"}")
     log.info("/commands/customer/{}/create with json \n {}", customerId2, cmdAsJson.encodePrettily())
     client.post("/commands/customer/$nextInt/create")
-      .`as`(BodyCodec.none())
+      .`as`(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .sendJson(cmdAsJson, tc.succeeding { response: HttpResponse<Void>? -> tc.verify { tc.completeNow() } }
+      .sendJson(cmdAsJson,
+        tc.succeeding { response: HttpResponse<JsonObject>? -> tc.verify { tc.completeNow() } }
       )
   }
 
   @Test
   @DisplayName("When sending a command with invalid type")
-  @Disabled // TODO it should fail on deploy instead
   fun a3(tc: VertxTestContext) {
     val invalidCommand = JsonObject()
     val commandWithoutType = "doSomething"
     client.post("/commands/customer/1/$commandWithoutType")
-      .`as`(BodyCodec.none())
-      .expect(ResponsePredicate.SC_NOT_FOUND)
-      .sendJson(invalidCommand, tc.succeeding {
-        response: HttpResponse<Void>? -> tc.verify {
-          assertThat(response?.statusCode()).isEqualTo(404)
-        }
+      .`as`(BodyCodec.jsonObject())
+      .expect(ResponsePredicate.SC_BAD_REQUEST)
+      .sendJsonObject(invalidCommand, tc.succeeding { response: HttpResponse<JsonObject> ->
+          tc.verify {
+            assertThat(response.statusMessage()).isEqualTo("Cannot decode the json for command doSomething")
+            tc.completeNow()
+          }
       }
     )
   }
@@ -274,12 +279,11 @@ internal class DbSnapshotAcceptanceIT {
   @DisplayName("When GET to an invalid UnitOfWork (bad number) You get a 400")
   fun a4(tc: VertxTestContext) {
     client["/commands/customer/units-of-work/dddd"]
-      .`as`(BodyCodec.string())
+      .`as`(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .send(tc.succeeding { response: HttpResponse<String> ->
+      .send(tc.succeeding { response: HttpResponse<JsonObject> ->
         tc.verify {
-          val result = response.body()
-          assertThat(result).isEqualTo("path param unitOfWorkId must be a number")
+          assertThat(response.statusMessage()).isEqualTo("path param unitOfWorkId must be a number")
           tc.completeNow()
         }
       })
