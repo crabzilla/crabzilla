@@ -6,7 +6,8 @@ import io.github.crabzilla.pgc.command.PgcUowJournal
 import io.github.crabzilla.pgc.command.PgcUowJournal.FullPayloadPublisher
 import io.github.crabzilla.pgc.command.PgcUowRepo
 import io.github.crabzilla.pgc.query.PgcReadContext
-import io.github.crabzilla.pgc.query.startProjectionConsumingFromEventbus
+import io.github.crabzilla.pgc.query.startStreamProjectionBroker
+import io.github.crabzilla.pgc.query.startStreamProjectionConsumer
 import io.github.crabzilla.web.boilerplate.HttpSupport.listenHandler
 import io.github.crabzilla.web.boilerplate.PgClientSupport.readModelPgPool
 import io.github.crabzilla.web.boilerplate.PgClientSupport.writeModelPgPool
@@ -50,10 +51,14 @@ class ProjectionFromEventbusVerticle : AbstractVerticle() {
 
     subRouteOf(router, ctx, WebResourceContext(cmdTypeMapOfCustomer, cmdAware, snapshotRepoDb))
 
-    // projections
+    // aggregate root projections brokers
+
+    startStreamProjectionBroker(vertx, CUSTOMER_ENTITY, listOf(CUSTOMER_SUMMARY_STREAM))
     val readContext = PgcReadContext(vertx, example1Json, readDb)
-    startProjectionConsumingFromEventbus(CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM, readContext,
-      CustomerSummaryEventProjector())
+
+    // stream projectors
+    startStreamProjectionConsumer(CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM,
+      readContext, CustomerSummaryEventProjector())
 
     // read model routes
     router.get("/customers/:id").handler { rc -> customersQueryHandler(rc, readDb) }

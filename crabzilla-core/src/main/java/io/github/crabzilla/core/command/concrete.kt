@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory
 
 object EventBusChannels {
   val aggregateRootChannel = { entityName: String -> "crabzilla.aggregate.$entityName" }
+  fun streamChannel(entityName: String, streamId: String): String {
+    return "crabzilla.stream.$entityName.$streamId"
+  }
 }
 
 val AGGREGATE_ROOT_SERIALIZER = PolymorphicSerializer(AggregateRoot::class)

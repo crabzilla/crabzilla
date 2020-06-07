@@ -25,15 +25,11 @@ import io.vertx.ext.web.client.predicate.ResponsePredicate
 import io.vertx.ext.web.codec.BodyCodec
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.junit5.web.TestRequest
 import io.vertx.junit5.web.TestRequest.statusCode
 import io.vertx.junit5.web.TestRequest.testRequest
-import java.util.Random
-import java.util.UUID
-import java.util.function.Consumer
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.StringAssert
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -41,6 +37,9 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
+import java.util.Random
+import java.util.UUID
+import java.util.function.Consumer
 
 /**
  * Integration test
@@ -119,7 +118,6 @@ internal class ProjectionFromEventbusIT {
         .send(tc.succeeding { response2: HttpResponse<JsonObject> ->
           tc.verify {
             val jo = response2.body()
-            log.info("UnitOfWork {}", jo.encodePrettily())
             assertThat(jo.getInteger("version")).isEqualTo(1)
             val state = jo.getJsonObject("state")
             assertThat(state.getInteger("customerId")).isEqualTo(customerId2)
@@ -137,11 +135,7 @@ internal class ProjectionFromEventbusIT {
       val expected = JsonObject("{\"id\":$customerId2,\"name\":\"customer#$customerId2\",\"is_active\":false}")
       testRequest(client, GET, route)
         .expect(statusCode(200))
-        .expect(Consumer { obj: HttpResponse<Buffer?> -> obj.bodyAsJsonObject() })
-        .expect(Consumer { response: HttpResponse<Buffer?> -> println(response.bodyAsString()) })
-        .expect(Consumer { response: HttpResponse<Buffer?> ->
-          StringAssert(response.bodyAsJsonObject().encode()).isEqualToIgnoringWhitespace(expected.encode())
-        })
+        .expect(TestRequest.jsonBodyResponse(expected))
         .send(tc)
     }
 
@@ -284,19 +278,18 @@ internal class ProjectionFromEventbusIT {
 
   @Test
   @DisplayName("When sending a command with invalid type")
-  @Disabled // TODO it should fail on deploy instead
   fun a3(tc: VertxTestContext) {
     val invalidCommand = JsonObject()
     val commandWithoutType = "doSomething"
     client.post("/commands/customer/1/$commandWithoutType")
-      .`as`(BodyCodec.none())
-      .expect(ResponsePredicate.SC_NOT_FOUND)
-      .sendJson(invalidCommand, tc.succeeding {
-        response: HttpResponse<Void>? -> tc.verify {
-          assertThat(response?.statusCode()).isEqualTo(404)
+      .`as`(BodyCodec.jsonObject())
+      .expect(ResponsePredicate.SC_BAD_REQUEST)
+      .send(tc.succeeding { response: HttpResponse<JsonObject> ->
+        tc.verify {
+          assertThat(response.statusMessage()).isEqualTo("Bad Request")
+          tc.completeNow()
         }
-      }
-    )
+      })
   }
 
   @Test

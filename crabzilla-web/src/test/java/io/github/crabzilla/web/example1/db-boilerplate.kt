@@ -9,6 +9,10 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+private val log: Logger = LoggerFactory.getLogger("database-cleaner")
 
 fun cleanDatabase(vertx: Vertx, config: JsonObject): Future<Void> {
   val promise = Promise.promise<Void>()
@@ -29,6 +33,7 @@ fun cleanDatabase(vertx: Vertx, config: JsonObject): Future<Void> {
           promise.fail(event3.cause())
           return@execute
         }
+        log.info("*** Database cleaned")
         promise.complete()
       }
     }

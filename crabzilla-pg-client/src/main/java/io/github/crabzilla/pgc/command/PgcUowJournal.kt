@@ -100,11 +100,4 @@ class PgcUowJournal(
         .publish(EventBusChannels.aggregateRootChannel(events.getString(UnitOfWork.JsonMetadata.ENTITY_NAME)), events)
     }
   }
-
-  class EmptyPayloadPublisher(private val vertx: Vertx) : UnitOfWorkPublisher {
-    override fun publish(events: JsonObject) {
-      vertx.eventBus()
-        .publish(EventBusChannels.aggregateRootChannel(events.getString(UnitOfWork.JsonMetadata.ENTITY_NAME)), null)
-    }
-  }
 }

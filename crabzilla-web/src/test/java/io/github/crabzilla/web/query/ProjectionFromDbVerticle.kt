@@ -4,11 +4,12 @@ import io.github.crabzilla.core.command.CrabzillaContext
 import io.github.crabzilla.pgc.PgcStreamProjector
 import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.github.crabzilla.pgc.command.PgcUowJournal
-import io.github.crabzilla.pgc.command.PgcUowJournal.EmptyPayloadPublisher
+import io.github.crabzilla.pgc.command.PgcUowJournal.FullPayloadPublisher
 import io.github.crabzilla.pgc.command.PgcUowRepo
 import io.github.crabzilla.pgc.query.PgcProjectionsRepo
-import io.github.crabzilla.pgc.query.PgcUnitOfWorkProjector
-import io.github.crabzilla.pgc.query.startProjectionConsumingFromDatabase
+import io.github.crabzilla.pgc.query.PgcReadContext
+import io.github.crabzilla.pgc.query.startStreamProjectionConsumer
+import io.github.crabzilla.pgc.query.startStreamProjectionDbPoolingProducer
 import io.github.crabzilla.web.boilerplate.HttpSupport.listenHandler
 import io.github.crabzilla.web.boilerplate.PgClientSupport.readModelPgPool
 import io.github.crabzilla.web.boilerplate.PgClientSupport.writeModelPgPool
@@ -42,8 +43,12 @@ class ProjectionFromDbVerticle : AbstractVerticle() {
     router.route().handler(LoggerHandler.create())
     router.route().handler(BodyHandler.create())
 
+    // query routes
+    router.get("/customers/:id").handler { rc -> customersQueryHandler(rc, readDb) }
+
+    // command routes
     val example1Json = Json(context = customerModule)
-    val uowJournal = PgcUowJournal(writeDb, example1Json, EmptyPayloadPublisher(vertx))
+    val uowJournal = PgcUowJournal(writeDb, example1Json, FullPayloadPublisher(vertx))
     val uowRepository = PgcUowRepo(writeDb, example1Json)
     val ctx = CrabzillaContext(example1Json, uowRepository, uowJournal)
 
@@ -53,15 +58,16 @@ class ProjectionFromDbVerticle : AbstractVerticle() {
 
     subRouteOf(router, ctx, WebResourceContext(cmdTypeMapOfCustomer, cmdAware, snapshotRepoDb))
 
-    // projections
-    val uowProjector =
-      PgcUnitOfWorkProjector(readDb, CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM, CustomerSummaryEventProjector())
-    val streamProjector = PgcStreamProjector(writeDb, example1Json, uowProjector)
-    startProjectionConsumingFromDatabase(vertx, PgcProjectionsRepo(readDb), streamProjector)
+    // projection consumer
+    val readContext = PgcReadContext(vertx, example1Json, readDb)
+    startStreamProjectionConsumer(CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM,
+      readContext, CustomerSummaryEventProjector())
+
+    // projection producer
+    val streamProjector = PgcStreamProjector(vertx, writeDb, CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM)
+    startStreamProjectionDbPoolingProducer(vertx, PgcProjectionsRepo(readDb), streamProjector)
       .onFailure { err -> promise.fail(err) }
       .onSuccess {
-        // read model routes
-        router.get("/customers/:id").handler { rc -> customersQueryHandler(rc, readDb) }
         // vertx http
         server = vertx.createHttpServer(HttpServerOptions().setPort(httpPort).setHost("0.0.0.0"))
         server.requestHandler(router).listen(listenHandler(promise))

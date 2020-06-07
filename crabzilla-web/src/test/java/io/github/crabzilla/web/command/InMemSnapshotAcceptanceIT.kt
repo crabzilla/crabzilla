@@ -26,12 +26,9 @@ import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.junit5.web.TestRequest.statusCode
 import io.vertx.junit5.web.TestRequest.testRequest
-import java.util.Random
-import java.util.UUID
-import java.util.function.Consumer
+import io.vertx.kotlin.core.json.jsonObjectOf
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -39,6 +36,9 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
+import java.util.Random
+import java.util.UUID
+import java.util.function.Consumer
 
 /**
  * Integration test
@@ -244,30 +244,33 @@ internal class InMemSnapshotAcceptanceIT {
   @Test
   @DisplayName("When sending an invalid CreateCommand expecting uow id")
   fun a2(tc: VertxTestContext) {
-    val cmdAsJson = JsonObject("{\"type\":\"io.github.crabzilla.example1.CreateCustomer\",\"name\":\"a bad name\"}")
+    val cmdAsJson = jsonObjectOf(Pair("name", "a bad name"))
     log.info("/commands/customer/{}/create with json \n {}", customerId2, cmdAsJson.encodePrettily())
     client.post("/commands/customer/$nextInt/create")
-      .`as`(BodyCodec.none())
+      .`as`(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_BAD_REQUEST)
-      .sendJson(cmdAsJson, tc.succeeding { response: HttpResponse<Void>? -> tc.verify { tc.completeNow() } }
-      )
+      .sendJsonObject(cmdAsJson, tc.succeeding { response: HttpResponse<JsonObject> ->
+        tc.verify {
+          assertThat(response.statusMessage()).isEqualTo("[Invalid name: a bad name]")
+          tc.completeNow()
+        }
+      })
   }
 
   @Test
   @DisplayName("When sending a command with invalid type")
-  @Disabled // TODO it should fail on deploy instead
   fun a3(tc: VertxTestContext) {
     val invalidCommand = JsonObject()
     val commandWithoutType = "doSomething"
     client.post("/commands/customer/1/$commandWithoutType")
-      .`as`(BodyCodec.none())
-      .expect(ResponsePredicate.SC_NOT_FOUND)
-      .sendJson(invalidCommand, tc.succeeding {
-        response: HttpResponse<Void>? -> tc.verify {
-          assertThat(response?.statusCode()).isEqualTo(404)
+      .`as`(BodyCodec.jsonObject())
+      .expect(ResponsePredicate.SC_BAD_REQUEST)
+      .sendJsonObject(invalidCommand, tc.succeeding { response: HttpResponse<JsonObject> ->
+        tc.verify {
+          assertThat(response.statusMessage()).isEqualTo("Cannot decode the json for command doSomething")
+          tc.completeNow()
         }
-      }
-    )
+      })
   }
 
   @Test

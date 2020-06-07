@@ -36,8 +36,17 @@ fun customersQueryHandler(rc: RoutingContext, readDb: PgPool) {
         JsonObject().put("id", row.getInteger(0)).put("name", row.getString(1)).put("is_active", row.getBoolean(2))
       array.add(jo)
     }
-    rc.response()
-      .putHeader("Content-type", "application/json")
-      .end(array.getJsonObject(0).encode())
+    if (array.isEmpty) {
+      println("** NOT found id $id")
+      rc.response()
+        .putHeader("Content-type", "application/json")
+        .setStatusCode(404)
+        .end()
+    } else {
+      println("** found id $id: ${array.getJsonObject(0)}")
+      rc.response()
+        .putHeader("Content-type", "application/json")
+        .end(array.getJsonObject(0).encode())
+    }
   }
 }

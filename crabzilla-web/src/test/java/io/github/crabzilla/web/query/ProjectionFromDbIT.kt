@@ -25,23 +25,22 @@ import io.vertx.ext.web.client.predicate.ResponsePredicate
 import io.vertx.ext.web.codec.BodyCodec
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.junit5.web.TestRequest.jsonBodyResponse
 import io.vertx.junit5.web.TestRequest.statusCode
 import io.vertx.junit5.web.TestRequest.testRequest
-import java.util.Random
-import java.util.UUID
-import java.util.function.Consumer
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.StringAssert
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junitpioneer.jupiter.RepeatFailedTest
 import org.slf4j.LoggerFactory
+import java.util.Random
+import java.util.UUID
+import java.util.function.Consumer
 
 /**
  * Integration test
@@ -89,7 +88,6 @@ internal class ProjectionFromDbIT {
   internal inner class When1 {
     @Test
     @DisplayName("You get a correspondent UnitOfWork as JSON")
-    @Order(1)
     fun a1(tc: VertxTestContext) {
       val cmdAsJson = JsonObject("{\"name\":\"customer#$customerId2\"}")
       val route = "/commands/customer/$customerId2/create"
@@ -113,7 +111,6 @@ internal class ProjectionFromDbIT {
 
     @Test
     @DisplayName("You get a correspondent snapshot (write model)")
-    @Order(2)
     fun a2(tc: VertxTestContext) {
       client["/commands/customer/$customerId2"]
         .`as`(BodyCodec.jsonObject())
@@ -135,23 +132,19 @@ internal class ProjectionFromDbIT {
 
     @Test
     @DisplayName("You get a correspondent company summary (read model)")
-    @Order(3)
+    @RepeatFailedTest(3)
     fun a3(tc: VertxTestContext?) {
+      Thread.sleep(1000) // to wait for projection
       val route = "/customers/$customerId2"
       val expected = JsonObject("{\"id\":$customerId2,\"name\":\"customer#$customerId2\",\"is_active\":false}")
       testRequest(client, GET, route)
         .expect(statusCode(200))
-        .expect(Consumer { obj: HttpResponse<Buffer?> -> obj.bodyAsJsonObject() })
-        .expect(Consumer { response: HttpResponse<Buffer?> -> println(response.bodyAsString()) })
-        .expect(Consumer { response: HttpResponse<Buffer?> ->
-          StringAssert(response.bodyAsJsonObject().encode()).isEqualToIgnoringWhitespace(expected.encode())
-        })
+        .expect(jsonBodyResponse(expected))
         .send(tc)
     }
 
     @Test
     @DisplayName("You get a correspondent entity tracking")
-    @Order(4)
     fun a4(tc: VertxTestContext) {
       client["/commands/customer/$customerId2/units-of-work"]
         .`as`(BodyCodec.jsonArray())
@@ -237,7 +230,9 @@ internal class ProjectionFromDbIT {
 
     @Test
     @DisplayName("You get a correspondent company summary (read model)")
+    @RepeatFailedTest(3)
     fun a3(tc: VertxTestContext?) {
+      Thread.sleep(1000) // to wait for projection
       val route = "/customers/$customerId3"
       val expected = "{\"id\":$customerId3,\"name\":\"customer#$customerId3\",\"is_active\":false}"
       testRequest(client, GET, route)
@@ -289,16 +284,16 @@ internal class ProjectionFromDbIT {
 
   @Test
   @DisplayName("When sending a command with invalid type")
-  @Disabled // TODO it should fail on deploy instead
   fun a3(tc: VertxTestContext) {
     val invalidCommand = JsonObject()
     val commandWithoutType = "doSomething"
     client.post("/commands/customer/1/$commandWithoutType")
-      .`as`(BodyCodec.none())
-      .expect(ResponsePredicate.SC_NOT_FOUND)
+      .`as`(BodyCodec.jsonObject())
+      .expect(ResponsePredicate.SC_BAD_REQUEST)
       .sendJson(invalidCommand, tc.succeeding {
-        response: HttpResponse<Void>? -> tc.verify {
-          assertThat(response?.statusCode()).isEqualTo(404)
+        response: HttpResponse<JsonObject> -> tc.verify {
+          assertThat(response.statusMessage()).isEqualTo("Cannot decode the json for command doSomething")
+          tc.completeNow()
         }
       }
     )
