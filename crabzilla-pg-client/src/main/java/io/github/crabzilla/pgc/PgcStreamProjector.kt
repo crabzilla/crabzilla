@@ -10,8 +10,8 @@ import io.vertx.core.json.JsonObject
 import io.vertx.core.shareddata.AsyncMap
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
-import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean
+import org.slf4j.LoggerFactory
 
 class PgcStreamProjector(
   private val vertx: Vertx,
@@ -39,74 +39,87 @@ class PgcStreamProjector(
     getMap("$entityName.$streamId.producer.map")
       .onFailure { err -> promise.fail(err) }
       .onSuccess { streamIdempotentMap ->
-        writeModelDb.begin { event0 ->
-          if (event0.failed()) {
-            log.error("when starting transaction", event0.cause())
-            promise.fail(event0.cause())
+        streamIdempotentMap.get(uowId) { attemptsFuture ->
+          if (attemptsFuture.failed()) {
+            log.error("Stream error", attemptsFuture.cause())
             isRunning.set(false)
-            return@begin
+            promise.fail(attemptsFuture.cause())
+            return@get
           }
-          val tx = event0.result()
-          var rows = 0
-          // get committed events after uowId
-          tx.prepare("$SELECT_AFTER_UOW_ID limit $maxRows") { event1 ->
-            if (event1.failed()) {
-              log.error("when getting committed events after snapshot version", event1.cause())
-              promise.fail(event1.cause())
+          val attempts: Int? = attemptsFuture.result()
+          if (attempts != null && attempts > 0) {
+            promise.complete(0)
+            return@get
+          }
+          writeModelDb.begin { event0 ->
+            if (event0.failed()) {
+              log.error("when starting transaction", event0.cause())
+              promise.fail(event0.cause())
               isRunning.set(false)
-              return@prepare
+              return@begin
             }
-            val pq = event1.result()
-            // Fetch N rows at a time
-            val stream = pq.createStream(maxRowsPerPage, Tuple.of(uowId, entityName))
-            stream.exceptionHandler { err ->
-              log.error("Stream error", err)
-              isRunning.set(false)
-              promise.fail(err)
-            }
-            stream.handler { row ->
-              val currentUowId = row.getLong(UOW_ID)
-              val currentEntityId = row.getInteger(AR_ID)
-              val eventsAsJsonArray: JsonArray = row.get(JsonArray::class.java, 1)
-              streamIdempotentMap.get(currentUowId) { attemptsFuture ->
-                if (attemptsFuture.failed()) {
-                  log.error("Stream error", attemptsFuture.cause())
-                  isRunning.set(false)
-                  promise.fail(attemptsFuture.cause())
-                  stream.close()
-                  return@get
-                }
-                val attempts = attemptsFuture.result()
-                if (attempts != null && attempts > 0) {
-                  return@get
-                }
-                val message = JsonObject()
-                  .put("uowId", currentUowId)
-                  .put(UnitOfWork.JsonMetadata.ENTITY_NAME, entityName)
-                  .put(UnitOfWork.JsonMetadata.ENTITY_ID, currentEntityId)
-                  .put(UnitOfWork.JsonMetadata.VERSION, row.getInteger("version"))
-                  .put(UnitOfWork.JsonMetadata.EVENTS, eventsAsJsonArray)
-                vertx.eventBus().publish(EventBusChannels.streamChannel(entityName, streamId), message)
-                rows++
-                streamIdempotentMap.put(currentUowId, 1) { putFuture ->
-                  if (putFuture.failed()) {
-                    log.error("Failed to put $currentUowId on idempotent map")
+            val tx = event0.result()
+            var rows = 0
+            // get committed events after uowId
+            tx.prepare("$SELECT_AFTER_UOW_ID limit $maxRows") { event1 ->
+              if (event1.failed()) {
+                log.error("when getting committed events after snapshot version", event1.cause())
+                promise.fail(event1.cause())
+                isRunning.set(false)
+                return@prepare
+              }
+              val pq = event1.result()
+              // Fetch N rows at a time
+              val stream = pq.createStream(maxRowsPerPage, Tuple.of(uowId, entityName))
+              stream.exceptionHandler { err ->
+                log.error("Stream error", err)
+                isRunning.set(false)
+                promise.fail(err)
+              }
+              stream.handler { row ->
+                val currentUowId = row.getLong(UOW_ID)
+                val currentEntityId = row.getInteger(AR_ID)
+                val eventsAsJsonArray: JsonArray = row.get(JsonArray::class.java, 1)
+                streamIdempotentMap.get(currentUowId) { attemptsFuture ->
+                  if (attemptsFuture.failed()) {
+                    log.error("Stream error", attemptsFuture.cause())
+                    isRunning.set(false)
+                    promise.fail(attemptsFuture.cause())
+                    stream.close()
+                    return@get
+                  }
+                  val attempts = attemptsFuture.result()
+                  if (attempts != null && attempts > 0) {
+                    return@get
+                  }
+                  val message = JsonObject()
+                    .put("uowId", currentUowId)
+                    .put(UnitOfWork.JsonMetadata.ENTITY_NAME, entityName)
+                    .put(UnitOfWork.JsonMetadata.ENTITY_ID, currentEntityId)
+                    .put(UnitOfWork.JsonMetadata.VERSION, row.getInteger("version"))
+                    .put(UnitOfWork.JsonMetadata.EVENTS, eventsAsJsonArray)
+                  vertx.eventBus().publish(EventBusChannels.streamChannel(entityName, streamId), message)
+                  rows++
+                  streamIdempotentMap.put(currentUowId, 1) { putFuture ->
+                    if (putFuture.failed()) {
+                      log.error("Failed to put $currentUowId on idempotent map")
+                    }
                   }
                 }
               }
-            }
-            stream.endHandler {
-              if (log.isDebugEnabled) log.debug("End of stream")
-              // Attempt to commit the transaction
-              tx.commit { ar ->
-                if (ar.failed()) {
-                  log.error("tx.commit", ar.cause())
-                  promise.fail(ar.cause())
-                  isRunning.set(false)
-                } else {
-                  if (log.isDebugEnabled) log.debug("tx.commit successfully")
-                  isRunning.set(false)
-                  promise.complete(rows)
+              stream.endHandler {
+                if (log.isDebugEnabled) log.debug("End of stream")
+                // Attempt to commit the transaction
+                tx.commit { ar ->
+                  if (ar.failed()) {
+                    log.error("tx.commit", ar.cause())
+                    promise.fail(ar.cause())
+                    isRunning.set(false)
+                  } else {
+                    if (log.isDebugEnabled) log.debug("tx.commit successfully")
+                    isRunning.set(false)
+                    promise.complete(rows)
+                  }
                 }
               }
             }
