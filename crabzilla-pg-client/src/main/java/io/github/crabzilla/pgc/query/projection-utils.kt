@@ -72,7 +72,7 @@ fun startStreamProjectionDbPoolingProducer(
         log.error("On projectionRepo.selectLastUowId for entity $entityName streamId $streamId", err)
       }
       .onSuccess { lastStreamUow1 ->
-        streamProjector.handle(lastStreamUow1, 10, entityName, 100)
+        streamProjector.handle(lastStreamUow1, 100, entityName, 1000) // TODO Fix there magic numbers
           .onFailure { err ->
             promise.fail(err)
             log.error("On streamProjector.handle for entity $entityName streamId $streamId ", err)
