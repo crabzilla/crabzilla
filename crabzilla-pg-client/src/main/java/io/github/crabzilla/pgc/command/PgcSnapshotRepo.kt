@@ -9,6 +9,7 @@ import io.github.crabzilla.core.command.Snapshot
 import io.github.crabzilla.core.command.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.pgclient.PgPool
@@ -94,8 +95,8 @@ class PgcSnapshotRepo<A : AggregateRoot>(
             stream.exceptionHandler { err -> log.error("Stream error", err) }
             stream.handler { row ->
               currentVersion = row.getInteger(1)
-              val eventsJsonString: String = row.get(String::class.java, 0)
-              val events: List<DomainEvent> = json.parse(DOMAIN_EVENT_SERIALIZER.list, eventsJsonString)
+              val jsonArray: JsonArray = row.get(JsonArray::class.java, 0)
+              val events: List<DomainEvent> = json.parse(DOMAIN_EVENT_SERIALIZER.list, jsonArray.encode())
               currentInstance =
                 events.fold(currentInstance) { state, event -> commandAware.applyEvent.invoke(event, state) }
               if (log.isDebugEnabled) {

@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.0.9-snapshot</version>
+    <version>0.0.9-snapshot-3</version>
   </parent>
 
   <artifactId>crabzilla-core</artifactId>

@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.0.9-snapshot</version>
+    <version>0.0.9-snapshot-3</version>
   </parent>
 
   <artifactId>coverage-report</artifactId>
@@ -37,10 +37,11 @@
 <!--      <groupId>io.github.crabzilla</groupId>-->
 <!--      <artifactId>crabzilla-rabbitmq</artifactId>-->
 <!--    </dependency>-->
-<!--    <dependency>-->
-<!--      <groupId>io.github.crabzilla</groupId>-->
-<!--      <artifactId>crabzilla-hazelcast</artifactId>-->
-<!--    </dependency>-->
+
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-hazelcast</artifactId>
+    </dependency>
 
   </dependencies>
 

@@ -5,7 +5,7 @@
 
   <groupId>io.github.crabzilla</groupId>
   <artifactId>crabzilla</artifactId>
-  <version>0.0.9-snapshot</version>
+  <version>0.0.9-snapshot-3</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -79,7 +79,7 @@
     <module>crabzilla-web</module>
 <!--    <module>crabzilla-jooq</module>-->
 <!--    <module>crabzilla-rabbitmq</module>-->
-<!--    <module>crabzilla-hazelcast</module>-->
+    <module>crabzilla-hazelcast</module>
     <module>coverage-report</module>
   </modules>
 

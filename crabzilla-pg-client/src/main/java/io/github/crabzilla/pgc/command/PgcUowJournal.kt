@@ -85,8 +85,11 @@ class PgcUowJournal(
                   .put(UnitOfWork.JsonMetadata.VERSION, unitOfWork.version)
                   .put(UnitOfWork.JsonMetadata.EVENTS, JsonArray(eventsListAsJsonObject))
                 uowPublisher.publish(message)
-                log.info("Message published to ${unitOfWork.entityName}")
-                promise.complete(uowId)
+                  .onFailure { err -> log.error("publishing events", err); promise.fail(err) }
+                  .onSuccess { result ->
+                    log.info("Message published to ${unitOfWork.entityName} result $result")
+                    promise.complete(uowId)
+                  }
               }
             }
         }
@@ -95,9 +98,10 @@ class PgcUowJournal(
   }
 
   class FullPayloadPublisher(private val vertx: Vertx) : UnitOfWorkPublisher {
-    override fun publish(events: JsonObject) {
+    override fun publish(events: JsonObject): Future<Long> {
       vertx.eventBus()
         .publish(EventBusChannels.aggregateRootChannel(events.getString(UnitOfWork.JsonMetadata.ENTITY_NAME)), events)
+      return Future.succeededFuture(1)
     }
   }
 }

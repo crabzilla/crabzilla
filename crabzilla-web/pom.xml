@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.0.9-snapshot</version>
+    <version>0.0.9-snapshot-3</version>
   </parent>
 
   <artifactId>crabzilla-web</artifactId>
@@ -48,6 +48,12 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-pg-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-hazelcast</artifactId>
       <scope>test</scope>
     </dependency>
 

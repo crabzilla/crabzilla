@@ -9,6 +9,7 @@ import io.github.crabzilla.pgc.PgcStreamProjector
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
+import io.vertx.core.eventbus.MessageConsumer
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import kotlinx.serialization.builtins.list
@@ -19,12 +20,15 @@ internal val log = getLogger("startProjection")
 
 typealias PgcReadContext = Triple<Vertx, Json, PgPool>
 
-fun startStreamProjectionBroker(vertx: Vertx, entityName: String, streams: List<String>) {
-  vertx.eventBus().consumer<JsonObject>(EventBusChannels.aggregateRootChannel(entityName)) { msg ->
+@Deprecated("do not use")
+fun startStreamProjectionBroker(vertx: Vertx, entityName: String, streams: List<String>): MessageConsumer<JsonObject> {
+  val consumer = vertx.eventBus().consumer<JsonObject>(EventBusChannels.aggregateRootChannel(entityName))
+  consumer.handler { msg ->
     streams.forEach { stream ->
       vertx.eventBus().publish(EventBusChannels.streamChannel(entityName, stream), msg.body())
     }
   }
+  return consumer
 }
 
 fun startStreamProjectionConsumer(
@@ -32,7 +36,7 @@ fun startStreamProjectionConsumer(
   streamId: String,
   readContext: PgcReadContext,
   projectorDomain: PgcDomainEventProjector
-) {
+): MessageConsumer<JsonObject> {
   fun toUnitOfWorkEvents(jsonObject: JsonObject, json: Json): UnitOfWorkEvents {
     val uowId = jsonObject.getLong("uowId")
     val entityId = jsonObject.getInteger(UnitOfWork.JsonMetadata.ENTITY_ID)
@@ -41,11 +45,12 @@ fun startStreamProjectionConsumer(
     return UnitOfWorkEvents(uowId, entityId, events)
   }
   // TODO add startup behaviour like startProjectionConsumingFromDatabase does?
-  val channel = EventBusChannels.streamChannel(entityName, streamId)
+  val channel = EventBusChannels.aggregateRootChannel(entityName)
   log.info("adding projector subscribing on $channel")
   val (vertx, json, readDb) = readContext
   val uolProjector = PgcUnitOfWorkProjector(readDb, entityName, streamId, projectorDomain)
-  vertx.eventBus().consumer<JsonObject>(channel) { message ->
+  val consumer = vertx.eventBus().consumer<JsonObject>(channel)
+  consumer.handler { message ->
     val uowEvents = toUnitOfWorkEvents(message.body(), json)
     log.info("Got $uowEvents")
     uolProjector.handle(uowEvents).onComplete { result ->
@@ -54,14 +59,15 @@ fun startStreamProjectionConsumer(
       }
     }
   }
+  return consumer
 }
 
 fun startStreamProjectionDbPoolingProducer(
   vertx: Vertx,
   projectionsRepo: PgcProjectionsRepo,
   streamProjector: PgcStreamProjector
-): Future<Void> {
-  val promise0 = Promise.promise<Void>()
+): Future<Long> {
+  val promise0 = Promise.promise<Long>()
   val entityName = streamProjector.entityName
   val streamId = streamProjector.streamId
   fun react(): Future<Int> {
@@ -87,27 +93,30 @@ fun startStreamProjectionDbPoolingProducer(
   log.info("starting db pooling projector for entity $entityName streamId $streamId")
   // on startup, get latest projected uowId
   // TODO signalize command handler with dependency to this stream in order to avoid commands until it's done
+  var timerId = 0L
   projectionsRepo.selectLastUowId(entityName, streamId)
     .onFailure { err ->
       promise0.fail(err)
-      log.error("On projectionRepo.selectLastUowId for entity $entityName streamId $streamId", err) }
+      log.error("On projectionRepo.selectLastUowId for entity $entityName streamId $streamId", err)
+    }
     .onSuccess { lastStreamUow1 ->
       streamProjector.handle(lastStreamUow1, 100, entityName, Int.MAX_VALUE)
         .onFailure { err ->
-          log.error("On streamProjector.handle for entity $entityName streamId $streamId ", err) }
+          log.error("On streamProjector.handle for entity $entityName streamId $streamId ", err)
+        }
         .onSuccess { startupResult: Int ->
           log.info("$startupResult units of work successfully projected on startup phase")
-          val timerId = vertx.setPeriodic(1000) { tick ->
-            // TODO implement a backoff mechanism here
+          timerId = vertx.setPeriodic(1000) { tick -> // TODO devolver timerId
             react()
               .onSuccess { reactResult: Int ->
                 log.info("$reactResult units of work successfully projected on startup phase")
               }
               .onFailure { err ->
-                log.error("when trying to project event", err) }
+                log.error("when trying to project event", err)
               }
+          }
         }
-      promise0.complete()
+      promise0.complete(timerId)
     }
   return promise0.future()
 }

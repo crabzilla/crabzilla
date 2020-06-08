@@ -10,7 +10,7 @@ interface SnapshotRepository<A : AggregateRoot> {
 }
 
 interface UnitOfWorkPublisher {
-  fun publish(events: JsonObject)
+  fun publish(events: JsonObject): Future<Long>
 }
 
 interface UnitOfWorkJournal {
