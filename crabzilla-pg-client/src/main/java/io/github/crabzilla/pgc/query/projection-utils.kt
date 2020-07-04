@@ -20,17 +20,6 @@ internal val log = getLogger("startProjection")
 
 typealias PgcReadContext = Triple<Vertx, Json, PgPool>
 
-@Deprecated("do not use")
-fun startStreamProjectionBroker(vertx: Vertx, entityName: String, streams: List<String>): MessageConsumer<JsonObject> {
-  val consumer = vertx.eventBus().consumer<JsonObject>(EventBusChannels.aggregateRootChannel(entityName))
-  consumer.handler { msg ->
-    streams.forEach { stream ->
-      vertx.eventBus().publish(EventBusChannels.streamChannel(entityName, stream), msg.body())
-    }
-  }
-  return consumer
-}
-
 fun startStreamProjectionConsumer(
   entityName: String,
   streamId: String,
@@ -78,6 +67,7 @@ fun startStreamProjectionDbPoolingProducer(
         log.error("On projectionRepo.selectLastUowId for entity $entityName streamId $streamId", err)
       }
       .onSuccess { lastStreamUow1 ->
+        // TODO stream projector must set selectLastUowId for each row
         streamProjector.handle(lastStreamUow1, 100, entityName, 1000) // TODO Fix there magic numbers
           .onFailure { err ->
             promise.fail(err)
@@ -106,7 +96,7 @@ fun startStreamProjectionDbPoolingProducer(
         }
         .onSuccess { startupResult: Int ->
           log.info("$startupResult units of work successfully projected on startup phase")
-          timerId = vertx.setPeriodic(1000) { tick -> // TODO devolver timerId
+          timerId = vertx.setPeriodic(1000) { tick -> // TODO save timerId
             react()
               .onSuccess { reactResult: Int ->
                 log.info("$reactResult units of work successfully projected on startup phase")

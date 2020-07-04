@@ -21,6 +21,7 @@ import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -101,7 +102,8 @@ class PgcSnapshotRepoIT {
   fun a1(tc: VertxTestContext) {
     val eventsJsonArray: String = example1Json.stringify(DOMAIN_EVENT_SERIALIZER.list, listOf(created1))
     val commandJsonObject: String = example1Json.stringify(COMMAND_SERIALIZER, createCmd1)
-    val tuple = Tuple.of(eventsJsonArray, UUID.randomUUID(), commandJsonObject, CUSTOMER_ENTITY, customerId1, 1)
+    val tuple = Tuple
+      .of(JsonArray(eventsJsonArray), UUID.randomUUID(), JsonObject(commandJsonObject), CUSTOMER_ENTITY, customerId1, 1)
     writeDb.preparedQuery(SQL_APPEND_UOW)
       .execute(tuple) { event1 ->
       if (event1.failed()) {
@@ -130,7 +132,8 @@ class PgcSnapshotRepoIT {
   fun a2(tc: VertxTestContext) {
     val eventsJsonArray: String = example1Json.stringify(DOMAIN_EVENT_SERIALIZER.list, listOf(created1, activated1))
     val commandJsonObject: String = example1Json.stringify(COMMAND_SERIALIZER, createCmd1)
-    val tuple1 = Tuple.of(eventsJsonArray, UUID.randomUUID(), commandJsonObject, CUSTOMER_ENTITY, customerId1, 1)
+    val tuple1 = Tuple
+      .of(JsonArray(eventsJsonArray), UUID.randomUUID(), JsonObject(commandJsonObject), CUSTOMER_ENTITY, customerId1, 1)
     writeDb.preparedQuery(SQL_APPEND_UOW).execute(tuple1) { ar1 ->
       if (ar1.failed()) {
         ar1.cause().printStackTrace()
@@ -139,7 +142,9 @@ class PgcSnapshotRepoIT {
       }
       val eventsJsonArray2: String = example1Json.stringify(DOMAIN_EVENT_SERIALIZER.list, listOf(activated1))
       val commandJsonObject2: String = example1Json.stringify(COMMAND_SERIALIZER, activateCmd1)
-      val tuple2 = Tuple.of(eventsJsonArray2, UUID.randomUUID(), commandJsonObject2, CUSTOMER_ENTITY, customerId1, 2)
+      val tuple2 = Tuple
+        .of(JsonArray(eventsJsonArray2), UUID.randomUUID(), JsonObject(commandJsonObject2), CUSTOMER_ENTITY,
+          customerId1, 2)
       writeDb.preparedQuery(SQL_APPEND_UOW).execute(tuple2) { ar2 ->
         if (ar2.failed()) {
           tc.failNow(ar2.cause())

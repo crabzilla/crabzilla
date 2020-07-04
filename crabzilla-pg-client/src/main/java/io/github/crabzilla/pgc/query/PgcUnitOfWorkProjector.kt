@@ -63,7 +63,7 @@ class PgcUnitOfWorkProjector(
                   promise.fail(event4.cause())
                   return@commit
                 }
-                if (log.isDebugEnabled) log.debug("Transaction succeeded")
+                if (log.isTraceEnabled) log.trace("Transaction succeeded")
                 promise.complete()
               }
             }

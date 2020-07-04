@@ -100,7 +100,7 @@ class PgcStreamProjector(
               }
             }
             stream.endHandler {
-              if (log.isDebugEnabled) log.debug("End of stream")
+              if (log.isDebugEnabled && rows > 0) log.debug("End of stream")
               // Attempt to commit the transaction
               tx.commit { ar ->
                 if (ar.failed()) {
@@ -108,7 +108,7 @@ class PgcStreamProjector(
                   promise.fail(ar.cause())
                   isRunning.set(false)
                 } else {
-                  if (log.isDebugEnabled) log.debug("tx.commit successfully")
+                  if (log.isDebugEnabled && rows > 0) log.debug("tx.commit successfully")
                   isRunning.set(false)
                   promise.complete(rows)
                 }
