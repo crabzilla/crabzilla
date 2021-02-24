@@ -11,8 +11,10 @@ After many months, I'm back active working on this project. I just got a job wor
 * Dependencies upgrade (Vert.x, Kotlin, etc)
 * Refactor unit of work table: splitting it into 2 tables: 1 for events and another for commands - The current model doesn't not have a true event store. Also: the events table will have only one event per row instead of a json with N events given a command. The command table will have reference to the respective events. This will allow to correct events within the event store.
 * I will keep with Kotlin Serialization but still wondering about an approach I've used before: https://einarwh.wordpress.com/2020/05/08/on-the-complexity-of-json-serialization/
-* I will avoid trying integrations with RabbitMq, Hazelcast, etc like I did before: this far behind the scope of Crabzilla. 
+* I will avoid trying integrations with RabbitMq, Hazelcast, etc like I did before: it isn't within the scope of Crabzilla. 
+* I will rewrite Accounts example app with Quarkus (I'm just waiting Quarkus to reach Vertx 4   
 * May be the adoption of some parts of https://arrow-kt.io/ Using optics instead of plain Kotlin copy for aggregates, for example.
+
 
 ### Goal for version 1.0.0
 
