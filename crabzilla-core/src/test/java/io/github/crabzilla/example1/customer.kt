@@ -8,8 +8,17 @@ import io.github.crabzilla.core.command.StateTransitionsTracker
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.serializer
 
 typealias CustomerId = Int
 
@@ -112,19 +121,46 @@ class CustomerCommandAware : AggregateRootCommandAware<Customer> {
 
 // kotlinx.serialization
 
+@Serializer(forClass = LocalDateTime::class)
+object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
+  override fun serialize(encoder: Encoder, value: LocalDateTime) {
+    encoder.encodeString(value.format(DateTimeFormatter.ISO_DATE_TIME))
+  }
+  override fun deserialize(decoder: Decoder): LocalDateTime {
+    return LocalDateTime.parse(decoder.decodeString(), DateTimeFormatter.ISO_DATE_TIME)
+  }
+}
+
+@Serializer(forClass = LocalDate::class)
+object LocalDateSerializer : KSerializer<LocalDate> {
+  override fun serialize(encoder: Encoder, value: LocalDate) {
+    encoder.encodeString(value.toString())
+  }
+  override fun deserialize(decoder: Decoder): LocalDate {
+    return LocalDate.parse(decoder.decodeString())
+  }
+}
+
+val javaModule = SerializersModule {
+  contextual(LocalDateTime::class, LocalDateTimeSerializer)
+  contextual(LocalDate::class, LocalDateSerializer)
+}
+
 val customerModule = SerializersModule {
+  include(javaModule)
   polymorphic(AggregateRoot::class) {
-    Customer::class with Customer.serializer()
+    subclass(Customer::class, Customer.serializer())
   }
   polymorphic(Command::class) {
-    CreateCustomer::class with CreateCustomer.serializer()
-    ActivateCustomer::class with ActivateCustomer.serializer()
-    DeactivateCustomer::class with DeactivateCustomer.serializer()
-    CreateActivateCustomer::class with CreateActivateCustomer.serializer()
+    subclass(CreateCustomer::class, CreateCustomer.serializer())
+    subclass(ActivateCustomer::class, ActivateCustomer.serializer())
+    subclass(DeactivateCustomer::class, DeactivateCustomer.serializer())
+    subclass(CreateActivateCustomer::class, CreateActivateCustomer.serializer())
   }
   polymorphic(DomainEvent::class) {
-    CustomerCreated::class with CustomerCreated.serializer()
-    CustomerActivated::class with CustomerActivated.serializer()
-    CustomerDeactivated::class with CustomerDeactivated.serializer()
+    subclass(CustomerCreated::class, CustomerCreated.serializer())
+    subclass(CustomerActivated::class, CustomerActivated.serializer())
+    subclass(CustomerDeactivated::class, CustomerDeactivated.serializer())
+    default { DomainEvent.serializer() }
   }
 }

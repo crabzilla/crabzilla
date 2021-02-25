@@ -1,7 +1,6 @@
 package io.github.crabzilla.core.command
 
 import io.vertx.core.Future
-import io.vertx.core.json.JsonObject
 import java.util.UUID
 
 interface SnapshotRepository<A : AggregateRoot> {
@@ -9,12 +8,8 @@ interface SnapshotRepository<A : AggregateRoot> {
   fun upsert(id: Int, snapshot: Snapshot<A>): Future<Void>
 }
 
-interface UnitOfWorkPublisher {
-  fun publish(events: JsonObject): Future<Long>
-}
-
 interface UnitOfWorkJournal {
-  fun append(unitOfWork: UnitOfWork): Future<Long>
+  fun append(unitOfWork: UnitOfWork): Future<Void>
 }
 
 interface UnitOfWorkRepository {

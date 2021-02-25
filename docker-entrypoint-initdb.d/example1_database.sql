@@ -26,35 +26,39 @@ CREATE DATABASE example1_write OWNER user1;
 
 -- write model (in production, it could be a different database instance)
 
-CREATE TABLE crabz_units_of_work (
-      uow_id BIGSERIAL,
-      uow_events JSONB NOT NULL,
+CREATE TABLE crabz_commands (
       cmd_id UUID NOT NULL,
-      cmd_data JSONB NOT NULL,
+      cmd_payload JSONB NOT NULL,
+      inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (cmd_id)
+    )
+ ;
+
+CREATE TABLE crabz_events (
+      event_id BIGSERIAL,
+      event_payload JSONB NOT NULL,
       ar_name VARCHAR(36) NOT NULL,
       ar_id INTEGER NOT NULL,
       version INTEGER NOT NULL,
+      cmd_id UUID,
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (ar_id, ar_name, version),
-      UNIQUE (ar_id, uow_id),
-      UNIQUE (ar_id, cmd_id)
+      PRIMARY KEY (event_id, ar_id),
+      UNIQUE (ar_id, ar_name, version)
     )
       PARTITION BY hash(ar_id) -- all related events within same partition
     ;
 
 -- indexes
 
-CREATE INDEX idx_cmd_id ON crabz_units_of_work (cmd_id);
-CREATE INDEX idx_uow_id ON crabz_units_of_work (uow_id);
-CREATE INDEX idx_ar ON crabz_units_of_work (ar_id, ar_name);
+CREATE INDEX idx_cmd_id ON crabz_events (cmd_id);
 
 -- 3 partitions
 
-CREATE TABLE crabz_units_of_work_0 PARTITION OF crabz_units_of_work
+CREATE TABLE crabz_events_0 PARTITION OF crabz_events
     FOR VALUES WITH (MODULUS 3, REMAINDER 0);
-CREATE TABLE crabz_units_of_work_1 PARTITION OF crabz_units_of_work
+CREATE TABLE crabz_events_1 PARTITION OF crabz_events
     FOR VALUES WITH (MODULUS 3, REMAINDER 1);
-CREATE TABLE crabz_units_of_work_2 PARTITION OF crabz_units_of_work
+CREATE TABLE crabz_events_2 PARTITION OF crabz_events
     FOR VALUES WITH (MODULUS 3, REMAINDER 2);
 
 --  snapshots tables

@@ -10,6 +10,7 @@ import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
 
 typealias CustomerId = Int
 
@@ -114,17 +115,17 @@ class CustomerCommandAware : AggregateRootCommandAware<Customer> {
 
 val customerModule = SerializersModule {
   polymorphic(AggregateRoot::class) {
-    Customer::class with Customer.serializer()
+    subclass(Customer::class, Customer.serializer())
   }
   polymorphic(Command::class) {
-    CreateCustomer::class with CreateCustomer.serializer()
-    ActivateCustomer::class with ActivateCustomer.serializer()
-    DeactivateCustomer::class with DeactivateCustomer.serializer()
-    CreateActivateCustomer::class with CreateActivateCustomer.serializer()
+    subclass(CreateCustomer::class, CreateCustomer.serializer())
+    subclass(ActivateCustomer::class, ActivateCustomer.serializer())
+    subclass(DeactivateCustomer::class, DeactivateCustomer.serializer())
+    subclass(CreateActivateCustomer::class, CreateActivateCustomer.serializer())
   }
   polymorphic(DomainEvent::class) {
-    CustomerCreated::class with CustomerCreated.serializer()
-    CustomerActivated::class with CustomerActivated.serializer()
-    CustomerDeactivated::class with CustomerDeactivated.serializer()
+    subclass(CustomerCreated::class, CustomerCreated.serializer())
+    subclass(CustomerActivated::class, CustomerActivated.serializer())
+    subclass(CustomerDeactivated::class, CustomerDeactivated.serializer())
   }
 }

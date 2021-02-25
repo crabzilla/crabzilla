@@ -22,5 +22,5 @@ object Example1Fixture {
 
   val deactivated1 = CustomerDeactivated("a good reason")
 
-  val example1Json = Json(context = customerModule)
+  val example1Json = Json { serializersModule = customerModule }
 }

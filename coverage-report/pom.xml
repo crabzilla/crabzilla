@@ -24,24 +24,10 @@
       <artifactId>crabzilla-pg-client</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-web</artifactId>
-    </dependency>
-
 <!--    <dependency>-->
 <!--      <groupId>io.github.crabzilla</groupId>-->
-<!--      <artifactId>crabzilla-jooq</artifactId>-->
+<!--      <artifactId>crabzilla-web</artifactId>-->
 <!--    </dependency>-->
-<!--    <dependency>-->
-<!--      <groupId>io.github.crabzilla</groupId>-->
-<!--      <artifactId>crabzilla-rabbitmq</artifactId>-->
-<!--    </dependency>-->
-
-    <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-hazelcast</artifactId>
-    </dependency>
 
   </dependencies>
 

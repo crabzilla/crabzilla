@@ -1,14 +1,11 @@
 package io.github.crabzilla.pgc.command
 
-import io.github.crabzilla.core.command.COMMAND_SERIALIZER
 import io.github.crabzilla.core.command.DOMAIN_EVENT_SERIALIZER
 import io.github.crabzilla.core.command.Snapshot
 import io.github.crabzilla.core.command.SnapshotRepository
-import io.github.crabzilla.pgc.command.PgcUowJournal.Companion.SQL_APPEND_UOW
 import io.github.crabzilla.pgc.example1.Customer
 import io.github.crabzilla.pgc.example1.CustomerCommandAware
 import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
-import io.github.crabzilla.pgc.example1.Example1Fixture.activateCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
 import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
 import io.github.crabzilla.pgc.example1.Example1Fixture.created1
@@ -21,14 +18,13 @@ import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
-import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
 import java.util.UUID
-import kotlinx.serialization.builtins.list
+import kotlinx.serialization.encodeToString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -43,6 +39,10 @@ class PgcSnapshotRepoIT {
   private lateinit var vertx: Vertx
   private lateinit var writeDb: PgPool
   private lateinit var repo: SnapshotRepository<Customer>
+
+  val SQL_APPEND_UOW =
+  """ insert into crabz_events (event_payload, ar_name, ar_id, version, cmd_id) values
+     ($1, $2, $3, $4, $5) returning event_id"""
 
   @BeforeEach
   fun setup(tc: VertxTestContext) {
@@ -63,7 +63,7 @@ class PgcSnapshotRepoIT {
       val config = configFuture.result()
       writeDb = writeModelPgPool(vertx, config)
       repo = PgcSnapshotRepo(writeDb, example1Json, CustomerCommandAware())
-      writeDb.query("delete from crabz_units_of_work").execute { deleteResult1 ->
+      writeDb.query("delete from crabz_events").execute { deleteResult1 ->
         if (deleteResult1.failed()) {
           deleteResult1.cause().printStackTrace()
           tc.failNow(deleteResult1.cause())
@@ -100,10 +100,8 @@ class PgcSnapshotRepoIT {
   @Test
   @DisplayName("given none snapshot and a created event, it can retrieve correct snapshot")
   fun a1(tc: VertxTestContext) {
-    val eventsJsonArray: String = example1Json.stringify(DOMAIN_EVENT_SERIALIZER.list, listOf(created1))
-    val commandJsonObject: String = example1Json.stringify(COMMAND_SERIALIZER, createCmd1)
-    val tuple = Tuple
-      .of(JsonArray(eventsJsonArray), UUID.randomUUID(), JsonObject(commandJsonObject), CUSTOMER_ENTITY, customerId1, 1)
+    val eventJson: String = example1Json.encodeToString(DOMAIN_EVENT_SERIALIZER, created1)
+    val tuple = Tuple.of(JsonObject(eventJson), CUSTOMER_ENTITY, customerId1, 1, UUID.randomUUID())
     writeDb.preparedQuery(SQL_APPEND_UOW)
       .execute(tuple) { event1 ->
       if (event1.failed()) {
@@ -111,8 +109,8 @@ class PgcSnapshotRepoIT {
         tc.failNow(event1.cause())
         return@execute
       }
-      val uowId = event1.result().first().getLong(0)
-      tc.verify { assertThat(uowId).isGreaterThan(0) }
+      val eventId = event1.result().first().getLong(0)
+      tc.verify { assertThat(eventId).isGreaterThan(0) }
       repo.retrieve(customerId1).onComplete { event2 ->
         if (event2.failed()) {
           event2.cause().printStackTrace()
@@ -130,21 +128,16 @@ class PgcSnapshotRepoIT {
   @Test
   @DisplayName("given none snapshot and both created and an activated events, it can retrieve correct snapshot")
   fun a2(tc: VertxTestContext) {
-    val eventsJsonArray: String = example1Json.stringify(DOMAIN_EVENT_SERIALIZER.list, listOf(created1, activated1))
-    val commandJsonObject: String = example1Json.stringify(COMMAND_SERIALIZER, createCmd1)
-    val tuple1 = Tuple
-      .of(JsonArray(eventsJsonArray), UUID.randomUUID(), JsonObject(commandJsonObject), CUSTOMER_ENTITY, customerId1, 1)
+    val createdJson: String = example1Json.encodeToString(DOMAIN_EVENT_SERIALIZER, created1)
+    val activatedJson: String = example1Json.encodeToString(DOMAIN_EVENT_SERIALIZER, activated1)
+    val tuple1 = Tuple.of(JsonObject(createdJson), CUSTOMER_ENTITY, customerId1, 1, UUID.randomUUID())
     writeDb.preparedQuery(SQL_APPEND_UOW).execute(tuple1) { ar1 ->
       if (ar1.failed()) {
         ar1.cause().printStackTrace()
         tc.failNow(ar1.cause())
         return@execute
       }
-      val eventsJsonArray2: String = example1Json.stringify(DOMAIN_EVENT_SERIALIZER.list, listOf(activated1))
-      val commandJsonObject2: String = example1Json.stringify(COMMAND_SERIALIZER, activateCmd1)
-      val tuple2 = Tuple
-        .of(JsonArray(eventsJsonArray2), UUID.randomUUID(), JsonObject(commandJsonObject2), CUSTOMER_ENTITY,
-          customerId1, 2)
+      val tuple2 = Tuple.of(JsonObject(activatedJson), CUSTOMER_ENTITY, customerId1, 2, UUID.randomUUID())
       writeDb.preparedQuery(SQL_APPEND_UOW).execute(tuple2) { ar2 ->
         if (ar2.failed()) {
           tc.failNow(ar2.cause())

@@ -1,20 +1,16 @@
 package io.github.crabzilla.core.command
 
 import io.vertx.core.Future
-import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 
 @Serializable
-@Polymorphic
 abstract class Command
 
 @Serializable
-@Polymorphic
-open class DomainEvent
+abstract class DomainEvent
 
 @Serializable
-@Polymorphic
-open class AggregateRoot
+abstract class AggregateRoot
 
 interface AggregateRootCommandAware<A : AggregateRoot> {
   val entityName: String

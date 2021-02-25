@@ -47,13 +47,13 @@
 
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-pg-client</artifactId>
+      <artifactId>vertx-junit5-web-client</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-hazelcast</artifactId>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-pg-client</artifactId>
       <scope>test</scope>
     </dependency>
 

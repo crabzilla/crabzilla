@@ -1,3 +1,21 @@
+        /**
+         *
+         * TODO https://zimarev.com/blog/event-sourcing/myth-busting/2020-07-09-overselling-event-sourcing/
+         * TODO db is the truth : events notifications using https://vertx.io/docs/vertx-pg-client/java/#_pub_sub
+         * TODO cada projeção consome a sua stream.
+         * TODO https://www.youtube.com/watch?v=GzrZworHpIk : events as JSON SCHEMA (usando Kotlin map backed classes)
+         * TODO https://twitter.com/lukaseder/status/1284419336963330048  make it a library, not a framework
+         * TODO kotlin.serialization DateTime lib https://github.com/Kotlin/kotlinx-datetime#using-in-your-projects
+         */
+
+        // TODO snapshot upsert should be async
+        // TODO move publish events logic from uowJOurnal to here
+        // TODO each events subscriber should have a circuit breaker
+        // TODO and this controller should request all subscribers endpoints
+
+        // TODO comprar 2 lean books: EventStorming e Kotlin Style
+
+
 // TODO command id idempotency
 // TODO PgcEntityTestDeployment (with BDD assertions)
 

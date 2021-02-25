@@ -1,14 +1,65 @@
 package io.github.crabzilla.core.command
 
+import io.github.crabzilla.core.command.UserCommand.ActivateUser
+import io.github.crabzilla.core.command.UserCommand.CreateUser
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.core.shareddata.SharedData
+import io.vertx.kotlin.core.json.jsonObjectOf
+import java.time.LocalDateTime
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+
+interface JsonCmd
+
+sealed class UserCommand : JsonCmd {
+
+  class CreateUser(val map: Map<String, Any?>) : UserCommand() {
+    val name: String by map
+    val age: Int by map
+  }
+
+  class ActivateUser(val map: Map<String, Any?>) : UserCommand() {
+    val name: String by map
+  }
+}
+
+fun main() {
+
+  val create = CreateUser(mapOf(
+    "name" to "John Doe",
+    "age" to 25
+  ))
+
+  val activate = ActivateUser(mapOf(
+    "name" to "John Doe",
+    "moment" to LocalDateTime.now()
+  ))
+
+  println(create.map) // Prints map
+  println(create.name) // Prints "John Doe"
+  println(create.age) // Prints 25
+  println("0- " + JsonObject.mapFrom(create).encodePrettily())
+
+  val jo = jsonObjectOf(Pair("name", "Rod"), Pair("age", 53))
+  println("1- " + jo.encodePrettily())
+
+  val us = CreateUser(jo.map)
+  println("2- " + us.map)
+  println("3- " + JsonObject.mapFrom(us).encodePrettily())
+
+  listOf(create, activate)
+    .forEach { it ->
+      when (it) {
+        is CreateUser -> println("create")
+        is ActivateUser -> println("activate")
+      }
+    }
+}
 
 object EventBusChannels {
   val aggregateRootChannel = { entityName: String -> "crabzilla.aggregate.$entityName" }
@@ -122,9 +173,7 @@ class CommandController<A : AggregateRoot>(
         uowValue.set(uow)
         uowJournal.append(uow)
       }
-      .compose { uowId ->
-        if (log.isDebugEnabled) log.debug("got uowId $uowId")
-        uowIdValue.set(uowId)
+      .compose {
         // compute new snapshot
         if (log.isDebugEnabled) log.debug("computing new snapshot")
         val newInstance = uowValue.get().events
@@ -161,7 +210,7 @@ class InMemorySnapshotRepository<A : AggregateRoot>(
         promise.fail(event1.cause())
         return@getAsyncMap
       }
-      val stateAsJson = JsonObject(json.stringify(AGGREGATE_ROOT_SERIALIZER, snapshot.state))
+      val stateAsJson = JsonObject(json.encodeToString(AGGREGATE_ROOT_SERIALIZER, snapshot.state))
       val mapEntryAsJson = JsonObject().put("version", snapshot.version).put("state", stateAsJson)
       event1.result().put(id, mapEntryAsJson.encode()) { event2 ->
         if (event2.failed()) {
@@ -201,7 +250,7 @@ class InMemorySnapshotRepository<A : AggregateRoot>(
         val mapEntryAsJson = JsonObject(event2.result())
         val version = mapEntryAsJson.getInteger("version")
         val stateAsJson = mapEntryAsJson.getJsonObject("state")
-        val state = json.parse(AGGREGATE_ROOT_SERIALIZER, stateAsJson.encode()) as A
+        val state = json.decodeFromString(AGGREGATE_ROOT_SERIALIZER, stateAsJson.encode()) as A
         promise.complete(Snapshot(state, version))
       }
     }
