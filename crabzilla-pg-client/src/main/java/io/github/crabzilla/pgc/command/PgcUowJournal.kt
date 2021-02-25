@@ -97,7 +97,7 @@ class PgcUowJournal(private val writeModelDb: PgPool, private val json: Json) : 
             }
             .onSuccess {
               // TODO fix to support more than 6 events per command
-              val futures = uow.events.map { event -> appendEvent(client, event) }
+              val futures: List<Future<Void>> = uow.events.map { event -> appendEvent(client, event) }
               CompositeFuture.all(futures).onComplete { ar ->
                 if (ar.succeeded()) {
                   promise.complete()
