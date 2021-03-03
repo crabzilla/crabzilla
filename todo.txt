@@ -1,4 +1,111 @@
+** presentation
+
+-- falar sobre resumo capitulo ms intergation do sam newman
+
+Micro services : CRUD + (RPC / REST / MOM) vs Event Sourcing + CQRS
+
+ - even after seeing marajá monolito ppt, imagine you decide you need microservices
+ - "Give me your reasons" pedir por alguns motivos (já fiz, funcionou E valeu a pena, escopo muito grande, varios times, etc)
+ - rpc -> mostrar tres quadrinhos de servicos client->api-gateway->service1->service2
+   - perguntar quem já viu a ppt do marajá sobre resiliência
+   - explicar o que pode falhar em apenas uma requisição:
+     - falhas na rede
+     - outro servico esta sobrecarregado ou fora
+     - o banco de dados local ou do outro serviço está fora
+     - outro serviço demora demais pra responder
+      - (terrível em requisições com side effect (PUT, POST, PATCH) e sem idempotência na outra ponta)
+      - (consumindo 1 thread esperando ID terminar em cada serviço, sobrecarregando os serviços em cascata)
+ - MOM (request/reply, pub-sub e garanties (at least once, at most once, etc) mensagens
+     - mostrar 3 quadrinhos client -> crud service -> banco de dados -> broker
+     - se o banco esta for, vc pode retentar e eventualmente devolver um erro
+     - mas e se o broker falhar e o retry não funcionar? = inconsistência que impacta no negócio
+        - uma possível solução: se postar no broker falhar, pode-se fazer o rollback da transação no banco
+          - Errado: eventualmente o broker vai funcionar mas o commit da transação no banco pode falhar...
+     - two fase commit transactions
+       - mas vale a pena e funciona mesmo?
+          - problema dos 2 generais e o ataque a cidade: impossível
+          - sim, já usei e deu certo mas por 50k US per cpu naquela época. hoje já tem até OSS mas estamos na era cloud
+           -x from cloud era back to je22? really?
+           -x sai de foxpro fui pra java começando como pre venda BEA e depois IB (só pocs, etc) so que tinha que usar terno e gravata
+ - a gente não pode ser mais naive: na verdade, usando approach CRUD + RPC our Mensagens tradicional estamos adicionando mais problemas:
+    - inconsistencia mais que eventual (piada irônica aqui) pois dependendo do que ocorre na infra, é certeza que vai falhar
+    - alto acoplamento entre os serviços. se tem um serviço que é meio central (customer) e ele cai, todos os outros ficam falhando
+    - além dos problemas normais que qualquer solução já tem...
+- solução:
+  - otimizações
+    - reactive (vertx, quarkus)
+      - pode aliviar o problema com non blocking io (tarde offs)
+    - grpc ?
+      - tem muitas vantagens mas no final, apenas otimiza serialização
+ - voltar pra monolito?
+  - provavelmente inviável: imagina um ecommerce inteiro (catalog, inventory, checkout, payments, order, etc) em apenas um monolito...
+ - Lá vem hype: CQRS Event Sourcing e consistência na mensageria utilizando poolers que consomer os eventos direto no banco dos serviços upstream
+   - mostrar diagrama dos seviços e exemplo de falhas
+   - event store greg young foi desenhado assim : append and subscribe using offsets via ATOM
+   - chama o rafa ponte : ele vai fazer aquela palestra sobre filas em banco de dados e isto é o martelo que vai nos salvar...
+- Explicar opções de integração entre micro serviços:
+    - explicar o que um evento de integração
+    - publicar eventos via http em todos os downstream services
+       (mas isso acoplaria teu servico com N subscribers)
+       se vc tiver N  instancias do seu serviço, todos eles vão publilcar? (o producer tem que ser um singleton)
+    - publicar eventos em um broker usando publish subscribe
+
+    - REST endpoint usado pelo services dowstream "get events since offset N)"
+      - por que não ir direto no banco com os eventos do serviço de interesse?
+        - discutir trade offs:
+         - simplicidade
+         - mais resiliente: se o serviço cair (e o endpoint rest junto) mas o db está on, os outros serviços continuam consumindo
+         - os eventos podem ser consumidos outra vez (via offset) se necessário
+      -- ja usei sim: falar do mr. krabs brevemente (2014)
+         nem sabia o que era uma api gateway mas já sabia que microserviços se comunicam por mensagens
+         e assim foi feito usávamos cluster hazelcast pra cache e mensageria e camel pra consumir com idempotencia, trotle, etc
+         guice, JDBI (e depois hibernate) e oracle.. e new relic com metricas de negócio
+         mas eu queria.. eventos
+           Event Sourcing pois era proxy de pagamentos - 200K milhões no primeiro dia de uma black friday
+           - e funcionou super bem: qualquer dúvida tinhamos uma url com todos os eventos de um pedido
+         overengginering: consegui quebrar payments em alguns serviços
+            (1 pra cada adquirente/integração pra 1 não afetar as outras)
+            hoje provavelmente faria monolito (só nosso time)
+            os serviços compartilhava o mesmo banco de dados (não queríamos estressar o time de DBAs)
+            payments enviava mensagens commit pre auth ou estorna para serviços de adquirentes via queues
+         nosso erro: chaos monkey só manual em sysint. Mas tudo ok: bulletproof e consistente.
+         teste de carga sem chaos monkey antes de ir pra prod
+         em pord, depois de 2 meses o time de sec fez uma atualização na política do firewall...
+            - começamos com sintomas split brain no hazelcat (vc perde a ordem dos eventos, as mensagens, etc)
+            - uma semana de horror, sem dormir
+            - depois de 3 "fixes" que falharam
+            - resolvi fazer old school:
+              solução: approach apresentado acima (subscribers dos eventos by offset direto no banco do service de interesse )
+              funcionou como um reloginho. Com back off policy (apache camel)
+      -- conclusão
+        - por usarmos event sourcing, conseguimos resolver um problema de infra que tivemos em prod
+         - as mensagens não recebidas
+
+-- falar sobre ppt futura do marajá sobre filas em banco de dados
+-- falar sobre transação no bd e publicar no broker (kafka, rabbitmq, activemq, nats, etc)
+   - event store greg young foi desenhado assim : append and subscribe using offsets via ATOM
+      -
+-- cqrs - falar sobre impedância entre UI crud e comandos
+-- falar sobre versionamento de eventos :
+    compensating actions instead of change past events
+    but in real world a stored event just can't be immutable: GPDR, anonymization, etc
+-- falar sobre event storming
+
+
+1 - command subscribers will subscribe to aggregate-name.command-name in plain quarkus subscriber
+2 -
+
+
         /**
+
+         * TODO 2 kind of event subscribers (query projectors and integration events projection)
+         * TODO event subscribers will subscribe to aggregate-name.event-name in plain quarkus subscriber
+         * TODO crabzilla subscriber controller will pull from event store and make a request to eventbus endpoint
+         *   using mutiny to retry, backpressure, etc
+         *   so then it can have only 1 thread (verticle) pulling events from all entities / event name from event store
+         *   interested consumers (other services) can query the integration event store via database (instead of http)
+         * TODO events and aggregates as classes backed by maps: to avoid versioning them
+
          *
          * TODO https://zimarev.com/blog/event-sourcing/myth-busting/2020-07-09-overselling-event-sourcing/
          * TODO db is the truth : events notifications using https://vertx.io/docs/vertx-pg-client/java/#_pub_sub

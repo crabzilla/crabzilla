@@ -1,11 +1,11 @@
 package io.github.crabzilla.pgc.command
 
-import io.github.crabzilla.core.command.AGGREGATE_ROOT_SERIALIZER
-import io.github.crabzilla.core.command.AggregateRoot
-import io.github.crabzilla.core.command.AggregateRootCommandAware
-import io.github.crabzilla.core.command.DomainEvent
-import io.github.crabzilla.core.command.Snapshot
-import io.github.crabzilla.core.command.SnapshotRepository
+import io.github.crabzilla.core.AGGREGATE_ROOT_SERIALIZER
+import io.github.crabzilla.core.AggregateRoot
+import io.github.crabzilla.core.AggregateRootCommandAware
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.Snapshot
+import io.github.crabzilla.core.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject

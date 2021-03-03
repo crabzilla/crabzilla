@@ -211,10 +211,10 @@
       <artifactId>vertx-core</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-lang-kotlin</artifactId>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>io.vertx</groupId>-->
+<!--      <artifactId>vertx-lang-kotlin</artifactId>-->
+<!--    </dependency>-->
 
     <dependency>
       <groupId>org.jetbrains.kotlinx</groupId>

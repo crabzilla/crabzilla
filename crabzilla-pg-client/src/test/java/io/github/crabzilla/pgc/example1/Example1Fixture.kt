@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgc.example1
 
-import io.github.crabzilla.core.command.UnitOfWork
+import io.github.crabzilla.core.UnitOfWork
 import java.util.UUID
 import kotlinx.serialization.json.Json
 

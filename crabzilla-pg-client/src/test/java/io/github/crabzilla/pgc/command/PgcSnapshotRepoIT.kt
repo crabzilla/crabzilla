@@ -1,8 +1,8 @@
 package io.github.crabzilla.pgc.command
 
-import io.github.crabzilla.core.command.DOMAIN_EVENT_SERIALIZER
-import io.github.crabzilla.core.command.Snapshot
-import io.github.crabzilla.core.command.SnapshotRepository
+import io.github.crabzilla.core.DOMAIN_EVENT_SERIALIZER
+import io.github.crabzilla.core.Snapshot
+import io.github.crabzilla.core.SnapshotRepository
 import io.github.crabzilla.pgc.example1.Customer
 import io.github.crabzilla.pgc.example1.CustomerCommandAware
 import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
@@ -24,7 +24,6 @@ import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
 import java.util.UUID
-import kotlinx.serialization.encodeToString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName

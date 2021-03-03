@@ -12,4 +12,29 @@
   <artifactId>crabzilla-core</artifactId>
   <packaging>jar</packaging>
 
+  <dependencies>
+
+<!--        <dependency>-->
+<!--          <groupId>io.vertx</groupId>-->
+<!--          <artifactId>vertx-lang-kotlin</artifactId>-->
+<!--        </dependency>-->
+
+    <!-- json -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
 </project>

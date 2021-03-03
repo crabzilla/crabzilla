@@ -1,9 +1,10 @@
-package io.github.crabzilla.core.command
+package io.github.crabzilla
 
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.UnitOfWork
 import io.github.crabzilla.example1.CreateCustomer
 import io.github.crabzilla.example1.CustomerCreated
 import java.util.UUID
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
@@ -29,13 +30,5 @@ class UnitOfWorkTest {
       UnitOfWork("customer", 1, UUID.randomUUID(), CreateCustomer("cust#1"), -1,
               listOf<DomainEvent>(CustomerCreated(1, "cust#1")))
     }, "version should be >= 1")
-  }
-
-  @Test
-  fun targetIdIsEqualsToCommandTargetId() {
-    val command = CreateCustomer("cust#1")
-    val uow = UnitOfWork("customer", 1, UUID.randomUUID(), command, 1,
-            listOf<DomainEvent>(CustomerCreated(1, "cust#1")))
-    assertThat(uow.aggregateRootId).isEqualTo(uow.aggregateRootId)
   }
 }

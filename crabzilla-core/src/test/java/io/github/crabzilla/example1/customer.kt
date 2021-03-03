@@ -1,24 +1,17 @@
 package io.github.crabzilla.example1
 
-import io.github.crabzilla.core.command.AggregateRoot
-import io.github.crabzilla.core.command.AggregateRootCommandAware
-import io.github.crabzilla.core.command.Command
-import io.github.crabzilla.core.command.DomainEvent
-import io.github.crabzilla.core.command.StateTransitionsTracker
+import io.github.crabzilla.core.AggregateRoot
+import io.github.crabzilla.core.AggregateRootCommandAware
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.infra.StateTransitionsTracker
+import io.github.crabzilla.core.javaModule
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
-import kotlinx.serialization.serializer
 
 typealias CustomerId = Int
 
@@ -104,8 +97,8 @@ class CustomerCommandAware : AggregateRootCommandAware<Customer> {
     val promise = Promise.promise<List<DomainEvent>>()
     val tracker = StateTransitionsTracker(state, applyEvent)
     val cmd = command as CreateActivateCustomer
-    tracker.currentState
-      .create(id, cmd.name)
+    tracker
+      .currentState.create(id, cmd.name)
       .compose { eventsList ->
         tracker.applyEvents(eventsList)
         succeededFuture(tracker.currentState.activate(cmd.reason))
@@ -117,33 +110,6 @@ class CustomerCommandAware : AggregateRootCommandAware<Customer> {
       }
     return promise.future()
   }
-}
-
-// kotlinx.serialization
-
-@Serializer(forClass = LocalDateTime::class)
-object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
-  override fun serialize(encoder: Encoder, value: LocalDateTime) {
-    encoder.encodeString(value.format(DateTimeFormatter.ISO_DATE_TIME))
-  }
-  override fun deserialize(decoder: Decoder): LocalDateTime {
-    return LocalDateTime.parse(decoder.decodeString(), DateTimeFormatter.ISO_DATE_TIME)
-  }
-}
-
-@Serializer(forClass = LocalDate::class)
-object LocalDateSerializer : KSerializer<LocalDate> {
-  override fun serialize(encoder: Encoder, value: LocalDate) {
-    encoder.encodeString(value.toString())
-  }
-  override fun deserialize(decoder: Decoder): LocalDate {
-    return LocalDate.parse(decoder.decodeString())
-  }
-}
-
-val javaModule = SerializersModule {
-  contextual(LocalDateTime::class, LocalDateTimeSerializer)
-  contextual(LocalDate::class, LocalDateSerializer)
 }
 
 val customerModule = SerializersModule {
