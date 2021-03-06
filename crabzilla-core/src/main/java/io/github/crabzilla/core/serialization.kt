@@ -1,5 +1,6 @@
 package io.github.crabzilla.core
 
+import io.vertx.core.json.JsonObject
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -12,9 +13,18 @@ import kotlinx.serialization.modules.SerializersModule
 
 // kotlinx.serialization
 
+// to serialize events http://www.smartjava.org/content/kotlin-arrow-typeclasses/
+
+interface EventSerializer<E : Any> {
+  fun toJson(e: E): Try<JsonObject>
+}
+
+interface EventDeserializer<E : Any> {
+  fun fromJson(type: String, j: JsonObject): Try<E>
+}
+
 val AGGREGATE_ROOT_SERIALIZER = PolymorphicSerializer(AggregateRoot::class)
 val COMMAND_SERIALIZER = PolymorphicSerializer(Command::class)
-val DOMAIN_EVENT_SERIALIZER = PolymorphicSerializer(DomainEvent::class)
 
 @Serializer(forClass = LocalDateTime::class)
 object LocalDateTimeSerializer : KSerializer<LocalDateTime> {

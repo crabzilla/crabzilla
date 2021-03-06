@@ -7,7 +7,6 @@ import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EventDeserializer
 import io.github.crabzilla.core.EventSerializer
-import io.github.crabzilla.core.IntegrationEvent
 import io.github.crabzilla.core.Try
 import io.github.crabzilla.core.javaModule
 import io.github.crabzilla.example1.CustomerEvent.CustomerActivated
@@ -22,10 +21,17 @@ import kotlinx.serialization.modules.polymorphic
 
 typealias CustomerId = Int
 
-sealed class CustomerEvent : DomainEvent() {
-  class CustomerCreated(val customerId: Int, val name: String) : CustomerEvent()
-  class CustomerActivated(val reason: String) : CustomerEvent()
-  class CustomerDeactivated(val reason: String) : CustomerEvent()
+sealed class CustomerEvent : DomainEvent {
+  class CustomerCreated(val map: Map<String, Any?>) : CustomerEvent() {
+    val customerId: Int by map
+    val name: String by map
+  }
+  class CustomerActivated(val map: Map<String, Any?>) : CustomerEvent() {
+    val reason: String by map
+  }
+  class CustomerDeactivated(val map: Map<String, Any?>) : CustomerEvent() {
+    val reason: String by map
+  }
 }
 
 class CustomerEventSer : EventSerializer<CustomerEvent> {
@@ -34,6 +40,20 @@ class CustomerEventSer : EventSerializer<CustomerEvent> {
       is CustomerCreated -> jsonObjectOf(Pair("companyId", e.customerId), Pair("name", e.name))
       is CustomerActivated -> jsonObjectOf(Pair("reason", e.reason))
       is CustomerDeactivated -> jsonObjectOf(Pair("reason", e.reason))
+    } }
+  }
+}
+
+class CustomerEventDes : EventDeserializer<CustomerEvent> {
+  override fun fromJson(type: String, j: JsonObject): Try<CustomerEvent> {
+    return Try { when (type) {
+      CustomerCreated::class.simpleName ->
+        CustomerCreated(mapOf(Pair("companyId", j.getInteger("companyId")), Pair("name", j.getString("name"))))
+      CustomerActivated::class.simpleName ->
+        CustomerActivated(mapOf(Pair("reason", j.getString("reason"))))
+      CustomerDeactivated::class.simpleName ->
+        CustomerDeactivated(mapOf(Pair("reason", j.getString("reason"))))
+      else -> throw IllegalArgumentException("Unknown event type: $type")
     } }
   }
 }
@@ -52,26 +72,18 @@ sealed class CustomerCommand : Command() {
 
 @Serializable
 data class Customer(
-  val customerId: CustomerId,
-  var name: String? = null,
+  var customerId: CustomerId,
+  var name: String,
   var isActive: Boolean = false,
   var reason: String? = null
 ) : AggregateRoot() {
 
-  companion object {
-    // for command handler use
-  }
-
-  constructor(id: CustomerId) : this(customerId = id) {
-
-  }
-
   fun activate(reason: String) {
-    apply(CustomerActivated(reason))
+    apply(CustomerActivated(mapOf(Pair("reason", reason))))
   }
 
   fun deactivate(reason: String) {
-    apply(CustomerDeactivated(reason))
+    apply(CustomerDeactivated(mapOf(Pair("reason", reason))))
   }
 
   override fun id(): String {
@@ -110,18 +122,18 @@ val customerModule = SerializersModule {
   }
 }
 
+val EXAMPLE1_JSON = Json { serializersModule = customerModule }
+
 fun main() {
 
-  val json = Json { serializersModule = customerModule }
-
   val c = Customer(customerId = 1, name = "c1")
-  println(json.encodeToString(AGGREGATE_ROOT_SERIALIZER, c))
+  println(EXAMPLE1_JSON.encodeToString(AGGREGATE_ROOT_SERIALIZER, c))
 
   c.activate("don't ask!")
-  println(json.encodeToString(AGGREGATE_ROOT_SERIALIZER, c))
+  println(EXAMPLE1_JSON.encodeToString(AGGREGATE_ROOT_SERIALIZER, c))
 
   val cmd = CustomerCommand.CreateActivateCustomer(customerId = 1, name = "c1", reason = "i can")
-  println(json.encodeToString(COMMAND_SERIALIZER, cmd))
+  println(EXAMPLE1_JSON.encodeToString(COMMAND_SERIALIZER, cmd))
 
   // ex2
 
@@ -133,42 +145,3 @@ fun main() {
   val event2 = CustomerActivated(mapOf(Pair("reason", "because I can")))
   println(ser.toJson(event2))
 }
-
-// command aware
-
-// class CustomerCommandAware : AggregateRootCommandAware<CustomerCommand, Customer, CustomerEvent> {
-//
-//  override val entityName = "customer"
-//
-//  override fun initialState(event: CustomerEvent): Customer? {
-//    val c = when (event) {
-//      is CustomerCreated -> Customer(event.customerId, event.name)
-//      else -> null
-//    }
-//    c?.apply(event)
-//    return c
-//  }
-//
-//  override fun validateCmd(command: CustomerCommand): List<String> {
-//    return when (command) {
-//      is CreateCustomer ->
-//        if (command.name == "a bad name") listOf("Invalid name: ${command.name}") else listOf()
-//      is CreateActivateCustomer ->
-//        if (command.name == "a bad name") listOf("Invalid name: ${command.name}") else listOf()
-//      is ActivateCustomer, is DeactivateCustomer -> listOf()
-//      else -> listOf("invalid command ${command.javaClass.simpleName}") // all other commands are invalid
-//    }
-//  }
-//
-//  override fun handleCmd(id: Int, customer: Customer, command: CustomerCommand) {
-//    when (command) {
-//      is CreateCustomer -> customer.create(id, command.name)
-//      is ActivateCustomer -> succeededFuture(customer.activate(command.reason))
-//      is DeactivateCustomer -> customer.deactivate(command.reason)
-//      is CreateActivateCustomer -> createActivate(id, customer, command.name, command.reason)
-//      else -> println("${command::class.java} is a unknown command")
-//    }
-//  }
-// }
-
-// }

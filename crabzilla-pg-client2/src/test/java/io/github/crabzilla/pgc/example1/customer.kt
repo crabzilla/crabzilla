@@ -1,10 +1,10 @@
 package io.github.crabzilla.pgc.example1
 
-import io.github.crabzilla.core.AggregateRoot
-import io.github.crabzilla.core.AggregateRootCommandAware
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.infra.StateTransitionsTracker
+import io.github.crabzilla.core.command.AggregateRoot
+import io.github.crabzilla.core.command.AggregateRootCommandAware
+import io.github.crabzilla.core.command.Command
+import io.github.crabzilla.core.command.DomainEvent
+import io.github.crabzilla.core.command.StateTransitionsTracker
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise
