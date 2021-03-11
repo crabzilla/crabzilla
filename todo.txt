@@ -91,6 +91,7 @@ Micro services : CRUD + (RPC / REST / MOM) vs Event Sourcing + CQRS
     but in real world a stored event just can't be immutable: GPDR, anonymization, etc
 -- falar sobre event storming
 
+https://dev.to/sip3/how-to-extend-vert-x-eventbus-api-to-save-on-serialization-3akf
 
 1 - command subscribers will subscribe to aggregate-name.command-name in plain quarkus subscriber
 2 -
@@ -125,4 +126,10 @@ Micro services : CRUD + (RPC / REST / MOM) vs Event Sourcing + CQRS
 
 // TODO command id idempotency
 // TODO PgcEntityTestDeployment (with BDD assertions)
+// TODO https://github.com/thenativeweb/commands-events/issues/1
+// TODO e UUID como external id do aggregate root (internamente por Long)
 
+NATS
+
+sudo docker run -d --name=nats-stream -p 4222:4222 -p 6222:6222 -p 8222:8222 -v /home/alisson/docker_workspace/nats:/datastore  nats-streaming --user al --pass alisson -store file -dir datastore
+sudo docker run -d -p 4222:4222 -p 6222:6222 -p 8222:8222  nats-streaming

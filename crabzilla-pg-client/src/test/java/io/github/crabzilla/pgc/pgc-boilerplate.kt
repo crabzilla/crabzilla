@@ -34,17 +34,17 @@ fun cleanDatabase(vertx: Vertx, config: JsonObject): Future<Void> {
   val promise = Promise.promise<Void>()
   val read = readModelPgPool(vertx, config)
   val write = writeModelPgPool(vertx, config)
-  write.query("delete from crabz_events").execute { event1: AsyncResult<RowSet<Row?>?> ->
+  write.query("delete from events").execute { event1: AsyncResult<RowSet<Row?>?> ->
     if (event1.failed()) {
       promise.fail(event1.cause())
       return@execute
     }
-    write.query("delete from crabz_commands").execute { event2: AsyncResult<RowSet<Row?>?> ->
+    write.query("delete from commands").execute { event2: AsyncResult<RowSet<Row?>?> ->
       if (event2.failed()) {
         promise.fail(event2.cause())
         return@execute
       }
-      write.query("delete from crabz_customer_snapshots").execute { event3: AsyncResult<RowSet<Row?>?> ->
+      write.query("delete from customer_snapshots").execute { event3: AsyncResult<RowSet<Row?>?> ->
         if (event3.failed()) {
           promise.fail(event3.cause())
           return@execute

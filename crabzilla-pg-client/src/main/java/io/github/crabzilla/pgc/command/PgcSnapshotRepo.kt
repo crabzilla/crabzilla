@@ -1,30 +1,30 @@
-//package io.github.crabzilla.pgc.command
+// package io.github.crabzilla.pgc.command
 //
-//import io.github.crabzilla.core.AGGREGATE_ROOT_SERIALIZER
-//import io.github.crabzilla.core.AggregateRoot
-//import io.github.crabzilla.core.AggregateRootCommandAware
-//import io.github.crabzilla.core.DomainEvent
-//import io.github.crabzilla.core.Snapshot
-//import io.github.crabzilla.core.SnapshotRepository
-//import io.vertx.core.Future
-//import io.vertx.core.Promise
-//import io.vertx.core.json.JsonObject
-//import io.vertx.pgclient.PgPool
-//import io.vertx.sqlclient.PreparedStatement
-//import io.vertx.sqlclient.Row
-//import io.vertx.sqlclient.RowSet
-//import io.vertx.sqlclient.SqlConnection
-//import io.vertx.sqlclient.Transaction
-//import io.vertx.sqlclient.Tuple
-//import kotlinx.serialization.decodeFromString
-//import kotlinx.serialization.json.Json
-//import org.slf4j.LoggerFactory
+// import io.github.crabzilla.core.AGGREGATE_ROOT_SERIALIZER
+// import io.github.crabzilla.core.AggregateRoot
+// import io.github.crabzilla.core.AggregateRootCommandAware
+// import io.github.crabzilla.core.DomainEvent
+// import io.github.crabzilla.core.Snapshot
+// import io.github.crabzilla.core.SnapshotRepository
+// import io.vertx.core.Future
+// import io.vertx.core.Promise
+// import io.vertx.core.json.JsonObject
+// import io.vertx.pgclient.PgPool
+// import io.vertx.sqlclient.PreparedStatement
+// import io.vertx.sqlclient.Row
+// import io.vertx.sqlclient.RowSet
+// import io.vertx.sqlclient.SqlConnection
+// import io.vertx.sqlclient.Transaction
+// import io.vertx.sqlclient.Tuple
+// import kotlinx.serialization.decodeFromString
+// import kotlinx.serialization.json.Json
+// import org.slf4j.LoggerFactory
 //
-//class PgcSnapshotRepo<A : AggregateRoot>(
+// class PgcSnapshotRepo<A : AggregateRoot>(
 //  private val writeModelDb: PgPool,
 //  private val json: Json,
 //  private val commandAware: AggregateRootCommandAware<A>
-//) : SnapshotRepository<A> {
+// ) : SnapshotRepository<A> {
 //
 //  companion object {
 //    private val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
@@ -133,4 +133,4 @@
 //      .onFailure { err -> promise.fail(err) }
 //    return promise.future()
 //  }
-//}
+// }

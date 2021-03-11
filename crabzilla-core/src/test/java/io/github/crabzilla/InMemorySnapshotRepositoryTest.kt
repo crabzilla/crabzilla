@@ -1,7 +1,7 @@
 // package io.github.crabzilla
 //
 // import io.github.crabzilla.core.Snapshot
-// import io.github.crabzilla.example1.Customer
+// import io.github.crabzilla.core.example1.Customer
 // import io.github.crabzilla.example1.CustomerCommandAware
 // import io.github.crabzilla.example1.Example1Fixture.createCmd1
 // import io.github.crabzilla.example1.Example1Fixture.customerId1

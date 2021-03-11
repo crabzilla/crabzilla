@@ -1,39 +1,39 @@
-//package io.github.crabzilla.pgc.command
+// package io.github.crabzilla.pgc.command
 //
-//import io.github.crabzilla.core.DOMAIN_EVENT_SERIALIZER
-//import io.github.crabzilla.core.Snapshot
-//import io.github.crabzilla.core.SnapshotRepository
-//import io.github.crabzilla.pgc.example1.Customer
-//import io.github.crabzilla.pgc.example1.CustomerCommandAware
-//import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
-//import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
-//import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
-//import io.github.crabzilla.pgc.example1.Example1Fixture.created1
-//import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
-//import io.github.crabzilla.pgc.example1.Example1Fixture.example1Json
-//import io.github.crabzilla.pgc.writeModelPgPool
-//import io.vertx.config.ConfigRetriever
-//import io.vertx.config.ConfigRetrieverOptions
-//import io.vertx.config.ConfigStoreOptions
-//import io.vertx.core.Handler
-//import io.vertx.core.Vertx
-//import io.vertx.core.VertxOptions
-//import io.vertx.core.json.JsonObject
-//import io.vertx.junit5.VertxExtension
-//import io.vertx.junit5.VertxTestContext
-//import io.vertx.pgclient.PgPool
-//import io.vertx.sqlclient.Tuple
-//import java.util.UUID
-//import org.assertj.core.api.Assertions.assertThat
-//import org.junit.jupiter.api.BeforeEach
-//import org.junit.jupiter.api.DisplayName
-//import org.junit.jupiter.api.Test
-//import org.junit.jupiter.api.TestInstance
-//import org.junit.jupiter.api.extension.ExtendWith
+// import io.github.crabzilla.core.DOMAIN_EVENT_SERIALIZER
+// import io.github.crabzilla.core.Snapshot
+// import io.github.crabzilla.core.SnapshotRepository
+// import io.github.crabzilla.pgc.example1.Customer
+// import io.github.crabzilla.pgc.example1.CustomerCommandAware
+// import io.github.crabzilla.pgc.example1.Example1Fixture.CUSTOMER_ENTITY
+// import io.github.crabzilla.pgc.example1.Example1Fixture.activated1
+// import io.github.crabzilla.pgc.example1.Example1Fixture.createCmd1
+// import io.github.crabzilla.pgc.example1.Example1Fixture.created1
+// import io.github.crabzilla.pgc.example1.Example1Fixture.customerId1
+// import io.github.crabzilla.pgc.example1.Example1Fixture.example1Json
+// import io.github.crabzilla.pgc.writeModelPgPool
+// import io.vertx.config.ConfigRetriever
+// import io.vertx.config.ConfigRetrieverOptions
+// import io.vertx.config.ConfigStoreOptions
+// import io.vertx.core.Handler
+// import io.vertx.core.Vertx
+// import io.vertx.core.VertxOptions
+// import io.vertx.core.json.JsonObject
+// import io.vertx.junit5.VertxExtension
+// import io.vertx.junit5.VertxTestContext
+// import io.vertx.pgclient.PgPool
+// import io.vertx.sqlclient.Tuple
+// import java.util.UUID
+// import org.assertj.core.api.Assertions.assertThat
+// import org.junit.jupiter.api.BeforeEach
+// import org.junit.jupiter.api.DisplayName
+// import org.junit.jupiter.api.Test
+// import org.junit.jupiter.api.TestInstance
+// import org.junit.jupiter.api.extension.ExtendWith
 //
-//@ExtendWith(VertxExtension::class)
-//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-//class PgcSnapshotRepoIT {
+// @ExtendWith(VertxExtension::class)
+// @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+// class PgcSnapshotRepoIT {
 //
 //  private lateinit var vertx: Vertx
 //  private lateinit var writeDb: PgPool
@@ -162,4 +162,4 @@
 //
 //  // TODO given a snapshot and none events
 //  // TODO given a snapshot and some events, etc
-//}
+// }

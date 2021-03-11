@@ -1,31 +1,22 @@
 package io.github.crabzilla.core
 
-import io.vertx.core.json.JsonObject
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 // kotlinx.serialization
 
-// to serialize events http://www.smartjava.org/content/kotlin-arrow-typeclasses/
-
-interface EventSerializer<E : Any> {
-  fun toJson(e: E): Try<JsonObject>
-}
-
-interface EventDeserializer<E : Any> {
-  fun fromJson(type: String, j: JsonObject): Try<E>
-}
-
 val AGGREGATE_ROOT_SERIALIZER = PolymorphicSerializer(AggregateRoot::class)
 val COMMAND_SERIALIZER = PolymorphicSerializer(Command::class)
+val DOMAIN_EVENT_SERIALIZER = PolymorphicSerializer(DomainEvent::class)
 
+@kotlinx.serialization.ExperimentalSerializationApi
 @Serializer(forClass = LocalDateTime::class)
 object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
   override fun serialize(encoder: Encoder, value: LocalDateTime) {
@@ -36,6 +27,7 @@ object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
   }
 }
 
+@kotlinx.serialization.ExperimentalSerializationApi
 @Serializer(forClass = LocalDate::class)
 object LocalDateSerializer : KSerializer<LocalDate> {
   override fun serialize(encoder: Encoder, value: LocalDate) {
@@ -46,6 +38,7 @@ object LocalDateSerializer : KSerializer<LocalDate> {
   }
 }
 
+@kotlinx.serialization.ExperimentalSerializationApi
 val javaModule = SerializersModule {
   contextual(LocalDateTime::class, LocalDateTimeSerializer)
   contextual(LocalDate::class, LocalDateSerializer)
