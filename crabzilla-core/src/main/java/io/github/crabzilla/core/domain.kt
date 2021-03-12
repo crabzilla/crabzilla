@@ -21,7 +21,7 @@ abstract class ProcessManager
  * To apply an event to an aggregate root state
  */
 fun interface EventHandler<A : AggregateRoot, E : DomainEvent> {
-  fun handleEvent(state: A, event: E): A
+  fun handleEvent(state: A?, event: E): A
 }
 
 /**
@@ -123,13 +123,19 @@ data class CommandMetadata(
 /**
  * An exception informing an concurrency violation
  */
-class OptimisticConcurrencyConflict(expectedVersion: Int, currentVersion: Int) :
-  IllegalStateException("expected version is $expectedVersion but current version is $currentVersion")
+class OptimisticConcurrencyConflict(message: String) : IllegalStateException(message)
 
 /**
- * An event store, after all
+ * An event store to append new events
  */
 interface EventStore<A : AggregateRoot, C : Command, E : DomainEvent> {
-  fun get(id: Int): Future<Snapshot<A>?>
   fun append(command: C, metadata: CommandMetadata, session: AggregateRootSession<A, E>): Future<Void>
+}
+
+/**
+ * A repository for snapshots
+ */
+interface SnapshotRepository<A : AggregateRoot, C : Command, E : DomainEvent> {
+  fun get(id: Int): Future<Snapshot<A>?>
+  fun upsert(id: Int, snapshot: Snapshot<A>): Future<Void>
 }

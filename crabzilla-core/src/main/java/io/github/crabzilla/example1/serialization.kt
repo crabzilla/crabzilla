@@ -37,19 +37,17 @@ val customerJson = Json { serializersModule = customerModule }
 @kotlinx.serialization.ExperimentalSerializationApi
 fun main() {
 
-  val json = Json { serializersModule = customerModule }
-
   val pair = Customer.create(id = 1, name = "c1")
 
   val c = pair.state
 
-  println(json.encodeToString(AGGREGATE_ROOT_SERIALIZER, c))
+  println(customerJson.encodeToString(AGGREGATE_ROOT_SERIALIZER, c))
 
   c.activate("don't ask!")
-  println(json.encodeToString(AGGREGATE_ROOT_SERIALIZER, c))
+  println(customerJson.encodeToString(AGGREGATE_ROOT_SERIALIZER, c))
 
   val cmd = CustomerCommand.RegisterAndActivateCustomer(customerId = 1, name = "c1", reason = "i can")
-  println(json.encodeToString(COMMAND_SERIALIZER, cmd))
+  println(customerJson.encodeToString(COMMAND_SERIALIZER, cmd))
 
   val event = CustomerEvent.CustomerRegistered(id = 1, name = "c1")
   println(customerEventSer.toJson(event))

@@ -71,8 +71,8 @@ sealed class CustomerCommand : Command() {
 data class Customer(
   val id: Int,
   val name: String,
-  var isActive: Boolean = false,
-  var reason: String? = null
+  val isActive: Boolean = false,
+  val reason: String? = null
 ) : AggregateRoot() {
 
   companion object {
@@ -96,8 +96,8 @@ data class Customer(
 val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event ->
   when (event) {
     is CustomerRegistered -> Customer.create(id = event.id, name = event.name).state
-    is CustomerActivated -> state.copy(isActive = true, reason = event.reason)
-    is CustomerDeactivated -> state.copy(isActive = false, reason = event.reason)
+    is CustomerActivated -> state!!.copy(isActive = true, reason = event.reason)
+    is CustomerDeactivated -> state!!.copy(isActive = false, reason = event.reason)
   }
 }
 

@@ -9,7 +9,6 @@ import io.github.crabzilla.core.DOMAIN_EVENT_SERIALIZER
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EventStore
 import io.github.crabzilla.core.OptimisticConcurrencyConflict
-import io.github.crabzilla.core.Snapshot
 import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
 import io.vertx.core.Promise
@@ -25,8 +24,7 @@ import org.slf4j.LoggerFactory
 class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val writeModelDb: PgPool,
   private val json: Json
-) // TODO usar um vertx schema validator antes de salvar
-  : EventStore<A, C, E> {
+) : EventStore<A, C, E> {
 
   companion object {
     private val log = LoggerFactory.getLogger(PgcEventStore::class.java)
@@ -55,8 +53,16 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         .onFailure { err -> promise0.fail(err) }
         .onSuccess { event1 ->
           val currentVersion = event1.first()?.getInteger("last_version") ?: 0
-          if (currentVersion > expectedVersionAfterAppend) {
-            promise0.fail(OptimisticConcurrencyConflict(expectedVersionAfterAppend, currentVersion))
+
+          if (currentVersion == expectedVersionAfterAppend) {
+            val message = "The current version is already the expected new version $expectedVersionAfterAppend"
+            promise0.fail(OptimisticConcurrencyConflict(message))
+          } else if (currentVersion > expectedVersionAfterAppend) {
+            val message = "The current version [$currentVersion] is ahead of the expected new version [$expectedVersionAfterAppend]"
+            promise0.fail(OptimisticConcurrencyConflict(message))
+          } else if (currentVersion != expectedVersionAfterAppend - 1) {
+            val message = "The current version [$currentVersion] should be [${expectedVersionAfterAppend - 1}]"
+            promise0.fail(OptimisticConcurrencyConflict(message))
           } else {
             log.info("Version ok")
             promise0.complete()
@@ -65,7 +71,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       return promise0.future()
     }
 
-    fun appendCommand(conn: SqlConnection): Future<Long> {
+    fun appendCommand(conn: SqlConnection): Future<Long> { // TODO receber expectedVersion e currentVersion
       val promise0 = Promise.promise<Long>()
       val cmdAsJsonObject: String = json.encodeToString(COMMAND_SERIALIZER, command)
       val params = Tuple.of(
@@ -143,9 +149,5 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           }
       }
     return promise.future()
-  }
-
-  override fun get(id: Int): Future<Snapshot<A>?> {
-    TODO("Not yet implemented")
   }
 }

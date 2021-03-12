@@ -16,6 +16,7 @@ CREATE TABLE commands (
       causation_id UUID NOT NULL,
       cmd_payload JSONB NOT NULL,
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (external_cmd_id),
       PRIMARY KEY (cmd_id)
     )
  ;
@@ -35,8 +36,7 @@ CREATE TABLE events (
       cmd_id BIGINT,
       -- TODO correlation and causation ids
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (ar_id, event_id),
-      UNIQUE (ar_name, ar_id, version)
+      PRIMARY KEY (ar_id, event_id)
     )
       PARTITION BY hash(ar_id) -- all related events within same partition
     ;
