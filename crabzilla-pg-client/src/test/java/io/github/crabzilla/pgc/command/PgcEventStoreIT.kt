@@ -12,18 +12,22 @@ import io.github.crabzilla.pgc.writeModelPgPool
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions
+import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.pgclient.PgConnection
 import io.vertx.pgclient.PgPool
+import io.vertx.sqlclient.SqlConnection
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
+import java.util.concurrent.atomic.AtomicInteger
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -33,6 +37,8 @@ class PgcEventStoreIT {
 
   private lateinit var writeDb: PgPool
   private lateinit var eventStore: PgcEventStore<Customer, CustomerCommand, CustomerEvent>
+
+  val notifications = AtomicInteger()
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
@@ -51,11 +57,20 @@ class PgcEventStoreIT {
         }
         val config = configFuture.result()
         writeDb = writeModelPgPool(vertx, config)
-        eventStore = PgcEventStore(writeDb, customerJson)
+        eventStore = PgcEventStore("example1", writeDb, customerJson)
         cleanDatabase(vertx, config)
           .onSuccess {
-            tc.completeNow()
-            println("ok")
+            writeDb.getConnection { c: AsyncResult<SqlConnection> ->
+              val pgConn = c.result() as PgConnection
+              pgConn
+                .query("LISTEN ${eventStore.channel}")
+                .execute { ar -> println("Subscribed to channel ${eventStore.channel} $ar") }
+              pgConn.notificationHandler {
+                println("Received a notification #${notifications.incrementAndGet()} from channel ${it.channel}")
+              }
+              tc.completeNow()
+              println("ok")
+            }
           }
           .onFailure { err ->
             tc.failNow(err)

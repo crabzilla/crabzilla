@@ -1,6 +1,5 @@
-package io.github.crabzilla.infra
+package io.github.crabzilla.core
 
-import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerEvent

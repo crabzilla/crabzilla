@@ -22,6 +22,7 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 
 class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
+  val channel: String,
   private val writeModelDb: PgPool,
   private val json: Json
 ) : EventStore<A, C, E> {
@@ -129,6 +130,10 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       return promise0.future()
     }
 
+    fun notifyPgChannel(conn: SqlConnection): Future<RowSet<Row>>? {
+      return conn.query("NOTIFY $channel").execute()
+    }
+
     val promise = Promise.promise<Void>()
     writeModelDb.connection
       .onSuccess { conn ->
@@ -137,6 +142,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
             checkVersion(conn)
               .compose { appendCommand(conn) }
               .compose { commandId -> appendEvents(conn, commandId) }
+              .compose { notifyPgChannel(conn) }
               .onSuccess {
                 tx.commit()
                 promise.complete()

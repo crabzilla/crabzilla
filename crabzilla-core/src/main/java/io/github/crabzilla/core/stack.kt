@@ -1,17 +1,89 @@
-package io.github.crabzilla.infra
+package io.github.crabzilla.core
 
-import io.github.crabzilla.core.AGGREGATE_ROOT_SERIALIZER
-import io.github.crabzilla.core.AggregateRoot
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.core.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.core.shareddata.SharedData
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import java.util.UUID
+
+// es/cqrs infra stack
+
+/**
+ * A metadata for the command. The REST/RPC controller should know how to instantiate it.
+ */
+data class CommandMetadata(
+  val aggregateRootId: Int,
+  val id: UUID = UUID.randomUUID(),
+  val causationId: UUID = id,
+  val correlationID: UUID = id
+)
+
+/**
+ * An event store to append new events
+ */
+interface EventStore<A : AggregateRoot, C : Command, E : DomainEvent> {
+  fun append(command: C, metadata: CommandMetadata, session: StatefulSession<A, E>): Future<Void>
+}
+
+/**
+ * A repository for snapshots
+ */
+interface SnapshotRepository<A : AggregateRoot, C : Command, E : DomainEvent> {
+  fun get(id: Int): Future<Snapshot<A>?>
+  fun upsert(id: Int, snapshot: Snapshot<A>): Future<Void>
+}
+
+/**
+ * To perform aggregate root business methods and track it's events and state
+ */
+class StatefulSession<A : AggregateRoot, E : DomainEvent> {
+  val originalVersion: Int
+  private val originalState: A
+  private val eventHandler: EventHandler<A, E>
+  private val appliedEvents = mutableListOf<E>()
+  var currentState: A
+
+  constructor(version: Int, state: A, eventHandler: EventHandler<A, E>) {
+    this.originalVersion = version
+    this.originalState = state
+    this.eventHandler = eventHandler
+    this.currentState = originalState
+  }
+
+  constructor(constructorResult: CommandHandler.ConstructorResult<A, E>, eventHandler: EventHandler<A, E>) {
+    this.originalVersion = 1
+    this.originalState = constructorResult.state
+    this.eventHandler = eventHandler
+    this.currentState = originalState
+    constructorResult.events.forEach {
+      appliedEvents.add(it)
+    }
+  }
+
+  fun appliedEvents(): List<E> {
+    return appliedEvents
+  }
+
+  fun apply(events: List<E>): StatefulSession<A, E> {
+    events.forEach { domainEvent ->
+      currentState = eventHandler.handleEvent(currentState, domainEvent)
+      appliedEvents.add(domainEvent)
+    }
+    return this
+  }
+
+  inline fun execute(fn: (A) -> List<E>): StatefulSession<A, E> {
+    val newEvents = fn.invoke(currentState)
+    return apply(newEvents)
+  }
+}
+
+/**
+ * An exception informing an concurrency violation
+ */
+class OptimisticConcurrencyConflict(message: String) : IllegalStateException(message)
 
 class InMemorySnapshotRepository<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val sharedData: SharedData, // TODO how to avoid to get the map on every time?
