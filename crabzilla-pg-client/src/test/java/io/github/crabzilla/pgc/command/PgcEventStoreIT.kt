@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc.command
 
-import io.github.crabzilla.core.AggregateRootSession
 import io.github.crabzilla.core.CommandMetadata
+import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerEvent
@@ -71,7 +71,7 @@ class PgcEventStoreIT {
     val customer = Customer.create(id = 1, name = "c1") // AggregateRootSession needs a non null state
     val cmd = CustomerCommand.ActivateCustomer("is needed")
     val metadata = CommandMetadata(1)
-    val session = AggregateRootSession(0, customer.state, customerEventHandler)
+    val session = StatefulSession(0, customer.state, customerEventHandler)
     session.execute { it.activate(cmd.reason) }
     eventStore.append(cmd, metadata, session)
       .onFailure { tc.failNow(it) }
@@ -85,12 +85,12 @@ class PgcEventStoreIT {
 
     val cmd1 = CustomerCommand.ActivateCustomer("is needed")
     val metadata1 = CommandMetadata(1)
-    val session1 = AggregateRootSession(0, customer.state, customerEventHandler)
+    val session1 = StatefulSession(0, customer.state, customerEventHandler)
     session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
     val metadata2 = CommandMetadata(1)
-    val session2 = AggregateRootSession(1, customer.state, customerEventHandler)
+    val session2 = StatefulSession(1, customer.state, customerEventHandler)
     session2.execute { it.deactivate(cmd1.reason) }
 
     eventStore.append(cmd1, metadata1, session1)
@@ -109,12 +109,12 @@ class PgcEventStoreIT {
 
     val cmd1 = CustomerCommand.ActivateCustomer("is needed")
     val metadata1 = CommandMetadata(1)
-    val session1 = AggregateRootSession(0, customer.state, customerEventHandler)
+    val session1 = StatefulSession(0, customer.state, customerEventHandler)
     session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
     val metadata2 = CommandMetadata(1)
-    val session2 = AggregateRootSession(0, customer.state, customerEventHandler)
+    val session2 = StatefulSession(0, customer.state, customerEventHandler)
     session2.execute { it.deactivate(cmd1.reason) }
 
     eventStore.append(cmd1, metadata1, session1)
@@ -136,12 +136,12 @@ class PgcEventStoreIT {
 
     val cmd1 = CustomerCommand.ActivateCustomer("is needed")
     val metadata1 = CommandMetadata(1)
-    val session1 = AggregateRootSession(0, customer.state, customerEventHandler)
+    val session1 = StatefulSession(0, customer.state, customerEventHandler)
     session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
     val metadata2 = CommandMetadata(1)
-    val session2 = AggregateRootSession(2, customer.state, customerEventHandler)
+    val session2 = StatefulSession(2, customer.state, customerEventHandler)
     session2.execute { it.deactivate(cmd1.reason) }
 
     eventStore.append(cmd1, metadata1, session1)

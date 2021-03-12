@@ -14,8 +14,8 @@ abstract class Command
 @Serializable
 abstract class AggregateRoot
 
-@Serializable
-abstract class ProcessManager
+// @Serializable
+// abstract class ProcessManager
 
 /**
  * To apply an event to an aggregate root state
@@ -32,16 +32,16 @@ interface CommandHandler<A : AggregateRoot, C : Command, E : DomainEvent> {
   class ConstructorResult<A, E>(val state: A, vararg val events: E)
 
   fun <A : AggregateRoot, E : DomainEvent> with(create: ConstructorResult<A, E>, applier: EventHandler<A, E>):
-    AggregateRootSession<A, E> {
-      return AggregateRootSession(create, applier)
+    StatefulSession<A, E> {
+      return StatefulSession(create, applier)
     }
 
   fun <A : AggregateRoot, E : DomainEvent> with(snapshot: Snapshot<A>, applier: EventHandler<A, E>):
-    AggregateRootSession<A, E> {
-      return AggregateRootSession(snapshot.version, snapshot.state, applier)
+    StatefulSession<A, E> {
+      return StatefulSession(snapshot.version, snapshot.state, applier)
     }
 
-  fun handleCommand(command: C, snapshot: Snapshot<A>?): Result<AggregateRootSession<A, E>>
+  fun handleCommand(command: C, snapshot: Snapshot<A>?): Result<StatefulSession<A, E>>
 }
 
 /**
@@ -63,7 +63,7 @@ interface EventDeserializer<E : DomainEvent> {
 /**
  * To perform aggregate root business methods and track it's events and state
  */
-class AggregateRootSession<A : AggregateRoot, E : DomainEvent> {
+class StatefulSession<A : AggregateRoot, E : DomainEvent> {
   val originalVersion: Int
   private val originalState: A
   private val eventHandler: EventHandler<A, E>
@@ -91,7 +91,7 @@ class AggregateRootSession<A : AggregateRoot, E : DomainEvent> {
     return appliedEvents
   }
 
-  fun apply(events: List<E>): AggregateRootSession<A, E> {
+  fun apply(events: List<E>): StatefulSession<A, E> {
     events.forEach { domainEvent ->
       currentState = eventHandler.handleEvent(currentState, domainEvent)
       appliedEvents.add(domainEvent)
@@ -99,7 +99,7 @@ class AggregateRootSession<A : AggregateRoot, E : DomainEvent> {
     return this
   }
 
-  inline fun execute(fn: (A) -> List<E>): AggregateRootSession<A, E> {
+  inline fun execute(fn: (A) -> List<E>): StatefulSession<A, E> {
     val newEvents = fn.invoke(currentState)
     return apply(newEvents)
   }
@@ -111,7 +111,7 @@ class AggregateRootSession<A : AggregateRoot, E : DomainEvent> {
 data class Snapshot<A : AggregateRoot>(val state: A, val version: Int)
 
 /**
- * A metadata for the command
+ * A metadata for the command. The REST/RPC controller should know how to instantiate it.
  */
 data class CommandMetadata(
   val aggregateRootId: Int,
@@ -129,7 +129,7 @@ class OptimisticConcurrencyConflict(message: String) : IllegalStateException(mes
  * An event store to append new events
  */
 interface EventStore<A : AggregateRoot, C : Command, E : DomainEvent> {
-  fun append(command: C, metadata: CommandMetadata, session: AggregateRootSession<A, E>): Future<Void>
+  fun append(command: C, metadata: CommandMetadata, session: StatefulSession<A, E>): Future<Void>
 }
 
 /**

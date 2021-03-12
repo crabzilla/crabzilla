@@ -45,10 +45,12 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
     }
     val promise = Promise.promise<Void>()
     val json = JsonObject(json.encodeToString(AGGREGATE_ROOT_SERIALIZER, snapshot.state))
-    writeModelDb.preparedQuery(upsertSnapshot())
-      .execute(Tuple.of(id, snapshot.version, json)) { insert ->
+    val insertSql = upsertSnapshot()
+    val tuple = Tuple.of(id, snapshot.version, json)
+    writeModelDb.preparedQuery(insertSql)
+      .execute(tuple) { insert ->
         if (insert.failed()) {
-          log.error("upsert snapshot query error")
+          log.error("upsert snapshot query error", insert.cause())
           promise.fail(insert.cause())
         } else {
           log.debug("upsert snapshot success")
@@ -100,7 +102,7 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
           if (ar1.succeeded()) {
             val tx: Transaction = ar1.result()
             // Fetch ROWS_PER_TIME
-            val stream = pq.createStream(ROWS_PER_TIME, Tuple.of(id, aggregateRootName, snapshot ?: 0))
+            val stream = pq.createStream(ROWS_PER_TIME, Tuple.of(id, aggregateRootName, snapshot?.version ?: 0))
             // Use the stream
             stream.exceptionHandler { err -> log.error("Stream error", err) }
             stream.handler { row ->

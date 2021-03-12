@@ -1,7 +1,6 @@
 package io.github.crabzilla.example1
 
 import io.github.crabzilla.core.AggregateRoot
-import io.github.crabzilla.core.AggregateRootSession
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandHandler.ConstructorResult
@@ -9,6 +8,7 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.core.EventSerializer
 import io.github.crabzilla.core.Snapshot
+import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.CustomerCommand.RegisterAndActivateCustomer
@@ -111,7 +111,7 @@ class CustomerAlreadyExists(val id: Int) : IllegalStateException("Customer $id a
  */
 object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, CustomerEvent> {
   override fun handleCommand(command: CustomerCommand, snapshot: Snapshot<Customer>?):
-    Result<AggregateRootSession<Customer, CustomerEvent>> {
+    Result<StatefulSession<Customer, CustomerEvent>> {
 
       return runCatching {
         when (command) {
@@ -119,6 +119,13 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
           is RegisterCustomer -> {
             if (snapshot == null)
               with(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
+            else throw CustomerAlreadyExists(command.customerId)
+          }
+
+          is RegisterAndActivateCustomer -> {
+            if (snapshot == null)
+              with(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
+                .execute { it.activate(command.reason) }
             else throw CustomerAlreadyExists(command.customerId)
           }
 
@@ -130,13 +137,6 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
           is DeactivateCustomer -> {
             with(snapshot!!, customerEventHandler)
               .execute { it.deactivate(command.reason) }
-          }
-
-          is RegisterAndActivateCustomer -> {
-            if (snapshot == null)
-              with(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
-                .execute { it.activate(command.reason) }
-            else throw CustomerAlreadyExists(command.customerId)
           }
         }
       }

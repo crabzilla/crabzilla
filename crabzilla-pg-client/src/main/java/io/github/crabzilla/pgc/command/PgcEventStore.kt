@@ -1,7 +1,6 @@
 package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.AggregateRoot
-import io.github.crabzilla.core.AggregateRootSession
 import io.github.crabzilla.core.COMMAND_SERIALIZER
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandMetadata
@@ -9,6 +8,7 @@ import io.github.crabzilla.core.DOMAIN_EVENT_SERIALIZER
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EventStore
 import io.github.crabzilla.core.OptimisticConcurrencyConflict
+import io.github.crabzilla.core.StatefulSession
 import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
 import io.vertx.core.Promise
@@ -41,7 +41,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         values ($1, $2, $3, $4, $5)"""
   }
 
-  override fun append(command: C, metadata: CommandMetadata, session: AggregateRootSession<A, E>): Future<Void> {
+  override fun append(command: C, metadata: CommandMetadata, session: StatefulSession<A, E>): Future<Void> {
 
     val expectedVersionAfterAppend = session.originalVersion + 1
 
