@@ -11,7 +11,7 @@ import java.util.UUID
 // es/cqrs infra stack
 
 /**
- * A metadata for the command. The REST/RPC controller should know how to instantiate it.
+ * The REST/RPC controller must knows how to instantiate it.
  */
 data class CommandMetadata(
   val aggregateRootId: Int,
@@ -85,14 +85,17 @@ class StatefulSession<A : AggregateRoot, E : DomainEvent> {
  */
 class OptimisticConcurrencyConflict(message: String) : IllegalStateException(message)
 
-class InMemorySnapshotRepository<A : AggregateRoot, C : Command, E : DomainEvent>(
+/**
+ * A simple SnapshotRepo in memory implementation
+ */
+class DefaultSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val sharedData: SharedData, // TODO how to avoid to get the map on every time?
   private val json: Json,
   private val entityName: String
 ) : SnapshotRepository<A, C, E> {
 
   companion object {
-    internal val log = LoggerFactory.getLogger(InMemorySnapshotRepository::class.java)
+    internal val log = LoggerFactory.getLogger(DefaultSnapshotRepo::class.java)
   }
 
   override fun upsert(id: Int, snapshot: Snapshot<A>): Future<Void> {

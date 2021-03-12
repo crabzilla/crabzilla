@@ -13,13 +13,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(VertxExtension::class)
-class InMemorySnapshotRepositoryTest {
+class DefaultSnapshotRepoTest {
 
   @Test
-  @DisplayName("given none snapshot, it can retrieve correct snapshot")
+  @DisplayName("given none snapshot, it must retrieve a null snapshot")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val repo =
-      InMemorySnapshotRepository<Customer, CustomerCommand, CustomerEvent>(vertx.sharedData(), customerJson, "customer")
+      DefaultSnapshotRepo<Customer, CustomerCommand, CustomerEvent>(vertx.sharedData(), customerJson, "customer")
     repo.get(-1)
       .onFailure { err -> tc.failNow(err) }
       .onSuccess { snapshot ->
@@ -32,21 +32,14 @@ class InMemorySnapshotRepositoryTest {
   @DisplayName("when appending it can retrieve correct snapshot")
   fun a1(tc: VertxTestContext, vertx: Vertx) {
     val repo =
-      InMemorySnapshotRepository<Customer, CustomerCommand, CustomerEvent>(vertx.sharedData(), customerJson, "customer")
+      DefaultSnapshotRepo<Customer, CustomerCommand, CustomerEvent>(vertx.sharedData(), customerJson, "customer")
     repo.upsert(1, Snapshot(Customer(id = 1, name = "c1", isActive = false), 1))
+      .compose { repo.get(1) }
       .onFailure { err -> tc.failNow(err) }
-      .onSuccess {
-        repo.get(1).onComplete { event2 ->
-          if (event2.failed()) {
-            event2.cause().printStackTrace()
-            tc.failNow(event2.cause())
-            return@onComplete
-          }
-          val snapshot: Snapshot<Customer>? = event2.result()
-          tc.verify { assertThat(snapshot!!.version).isEqualTo(1) }
-          tc.verify { assertThat(snapshot!!.state).isEqualTo(Customer(1, "c1", false, null)) }
-          tc.completeNow()
-        }
+      .onSuccess { snapshot ->
+        tc.verify { assertThat(snapshot!!.version).isEqualTo(1) }
+        tc.verify { assertThat(snapshot!!.state).isEqualTo(Customer(1, "c1", false, null)) }
+        tc.completeNow()
       }
   }
 }

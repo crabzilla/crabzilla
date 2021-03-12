@@ -66,8 +66,8 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
       return "SELECT version, json_content FROM $snapshotTableName WHERE ar_id = $1"
     }
 
-    fun currentSnapshot(conn: SqlConnection): Future<Snapshot<A>?> {
-      val promise = Promise.promise<Snapshot<A>?>()
+    fun currentSnapshot(conn: SqlConnection): Future<Pair<SqlConnection, Snapshot<A>?>> {
+      val promise = Promise.promise<Pair<SqlConnection, Snapshot<A>?>>()
       fun snapshot(rowSet: RowSet<Row>): Snapshot<A>? {
         return if (rowSet.size() == 0) {
           null
@@ -79,10 +79,10 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
       }
       conn.preparedQuery(selectSnapshot())
         .execute(Tuple.of(id))
-        .onSuccess { pgRow -> promise.complete(snapshot(pgRow)) }
+        .onSuccess { pgRow -> promise.complete(Pair(conn, snapshot(pgRow))) }
         .onFailure {
           log.error(it.message)
-          promise.complete(null)
+          promise.complete(Pair(conn, null))
         }
       return promise.future()
     }
@@ -142,13 +142,10 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
     }
 
     val promise = Promise.promise<Snapshot<A>>()
-    writeModelDb.connection // Transaction must use a connection
-      .onSuccess { conn: SqlConnection ->
-        currentSnapshot(conn)
-          .compose { currentSnapshot -> newSnapshot(conn, currentSnapshot) }
-          .onSuccess { newSnapshot -> promise.complete(newSnapshot) }
-          .onFailure { err -> promise.fail(err) }
-      }
+    writeModelDb.connection
+      .compose { conn: SqlConnection -> currentSnapshot(conn) }
+      .compose { pair -> newSnapshot(pair.first, pair.second) }
+      .onSuccess { newSnapshot -> promise.complete(newSnapshot) }
       .onFailure { err -> promise.fail(err) }
     return promise.future()
   }
