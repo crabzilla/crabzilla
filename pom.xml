@@ -288,6 +288,9 @@
         <version>${kotlin.version}</version>
         <configuration>
           <jvmTarget>1.8</jvmTarget>
+          <args>
+            <arg>-Xallow-result-return-type</arg>
+          </args>
           <compilerPlugins>
             <plugin>kotlinx-serialization</plugin>
           </compilerPlugins>

@@ -41,21 +41,21 @@ interface CommandHandler<A : AggregateRoot, C : Command, E : DomainEvent> {
       return AggregateRootSession(snapshot.version, snapshot.state, applier)
     }
 
-  fun handleCommand(command: C, snapshot: Snapshot<A>?): Try<AggregateRootSession<A, E>>
+  fun handleCommand(command: C, snapshot: Snapshot<A>?): Result<AggregateRootSession<A, E>>
 }
 
 /**
  * To serialize events into plain JSON (integration events)
  */
-fun interface EventSerializer<E : Any> {
-  fun toJson(e: E): Try<JsonObject>
+interface EventSerializer<E : Any> {
+  fun toJson(e: E): Result<JsonObject>
 }
 
 /**
  * To deserialize integration events from upstream services
  */
-fun interface EventDeserializer<E : DomainEvent> {
-  fun fromJson(type: String, j: JsonObject): Try<E>
+interface EventDeserializer<E : DomainEvent> {
+  fun fromJson(type: String, j: JsonObject): Result<E>
 }
 
 // es/cqrs infra

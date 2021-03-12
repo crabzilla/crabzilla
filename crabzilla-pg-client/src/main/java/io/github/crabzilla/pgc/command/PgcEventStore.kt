@@ -53,19 +53,19 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         .onFailure { err -> promise0.fail(err) }
         .onSuccess { event1 ->
           val currentVersion = event1.first()?.getInteger("last_version") ?: 0
-
-          if (currentVersion == expectedVersionAfterAppend) {
-            val message = "The current version is already the expected new version $expectedVersionAfterAppend"
-            promise0.fail(OptimisticConcurrencyConflict(message))
-          } else if (currentVersion > expectedVersionAfterAppend) {
-            val message = "The current version [$currentVersion] is ahead of the expected new version [$expectedVersionAfterAppend]"
-            promise0.fail(OptimisticConcurrencyConflict(message))
-          } else if (currentVersion != expectedVersionAfterAppend - 1) {
-            val message = "The current version [$currentVersion] should be [${expectedVersionAfterAppend - 1}]"
-            promise0.fail(OptimisticConcurrencyConflict(message))
-          } else {
-            log.info("Version ok")
-            promise0.complete()
+          when {
+            currentVersion == expectedVersionAfterAppend -> {
+              val message = "The current version is already the expected new version $expectedVersionAfterAppend"
+              promise0.fail(OptimisticConcurrencyConflict(message))
+            }
+            currentVersion != expectedVersionAfterAppend - 1 -> {
+              val message = "The current version [$currentVersion] should be [${expectedVersionAfterAppend - 1}]"
+              promise0.fail(OptimisticConcurrencyConflict(message))
+            }
+            else -> {
+              log.info("Version ok")
+              promise0.complete()
+            }
           }
         }
       return promise0.future()

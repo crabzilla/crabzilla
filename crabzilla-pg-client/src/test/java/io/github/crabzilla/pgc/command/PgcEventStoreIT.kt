@@ -68,7 +68,7 @@ class PgcEventStoreIT {
   @Test
   @DisplayName("can append version 1")
   fun s1(tc: VertxTestContext) {
-    val customer = Customer.create(id = 1, name = "c1")
+    val customer = Customer.create(id = 1, name = "c1") // AggregateRootSession needs a non null state
     val cmd = CustomerCommand.ActivateCustomer("is needed")
     val metadata = CommandMetadata(1)
     val session = AggregateRootSession(0, customer.state, customerEventHandler)

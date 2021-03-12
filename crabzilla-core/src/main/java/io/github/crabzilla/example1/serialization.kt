@@ -49,6 +49,8 @@ fun main() {
   val cmd = CustomerCommand.RegisterAndActivateCustomer(customerId = 1, name = "c1", reason = "i can")
   println(customerJson.encodeToString(COMMAND_SERIALIZER, cmd))
 
+  val customerEventSer = CustomerEventSer()
+
   val event = CustomerEvent.CustomerRegistered(id = 1, name = "c1")
   println(customerEventSer.toJson(event))
 
