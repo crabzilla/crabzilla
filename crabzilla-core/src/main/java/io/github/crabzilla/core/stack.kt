@@ -5,7 +5,6 @@ import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.core.shareddata.SharedData
 import kotlinx.serialization.json.Json
-import org.slf4j.LoggerFactory
 import java.util.UUID
 
 // es/cqrs infra stack
@@ -89,14 +88,10 @@ class OptimisticConcurrencyConflict(message: String) : IllegalStateException(mes
  * A simple SnapshotRepo in memory implementation
  */
 class DefaultSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
-  private val sharedData: SharedData, // TODO how to avoid to get the map on every time?
+  private val sharedData: SharedData,
   private val json: Json,
   private val entityName: String
 ) : SnapshotRepository<A, C, E> {
-
-  companion object {
-    internal val log = LoggerFactory.getLogger(DefaultSnapshotRepo::class.java)
-  }
 
   override fun upsert(id: Int, snapshot: Snapshot<A>): Future<Void> {
     val promise = Promise.promise<Void>()
