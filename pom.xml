@@ -19,7 +19,6 @@
     <vertx.jooq.version>5.1.1</vertx.jooq.version>
     <jooq.version>3.13.1</jooq.version>
     <postgresql.version>42.2.10</postgresql.version>
-    <jackson.version>2.11.3</jackson.version>
     <slf4j.version>1.7.25</slf4j.version>
 
     <!-- tests-->
@@ -98,19 +97,19 @@
         <version>${project.version}</version>
       </dependency>
 
-      <dependency>
-        <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-jooq</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-web</artifactId>
-        <version>${project.version}</version>
-      </dependency>
+<!--      <dependency>-->
+<!--        <groupId>io.github.crabzilla</groupId>-->
+<!--        <artifactId>crabzilla-web</artifactId>-->
+<!--        <version>${project.version}</version>-->
+<!--      </dependency>-->
 
       <!-- vertx -->
+
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-lang-kotlin</artifactId>
+        <version>${vertx.version}</version>
+      </dependency>
 
       <dependency>
         <groupId>io.vertx</groupId>
@@ -120,43 +119,12 @@
         <scope>import</scope>
       </dependency>
 
-      <!-- vertx-jooq -->
-
-      <dependency>
-        <groupId>io.github.jklingsporn</groupId>
-        <artifactId>vertx-jooq-classic-reactive</artifactId>
-        <version>${vertx.jooq.version}</version>
-      </dependency>
-
       <!-- util -->
-
-      <dependency>
-        <groupId>javax.inject</groupId>
-        <artifactId>javax.inject</artifactId>
-        <version>1</version>
-      </dependency>
 
       <dependency>
         <groupId>org.jetbrains.kotlinx</groupId>
         <artifactId>kotlinx-serialization-json</artifactId>
         <version>${serialization.version}</version>
-      </dependency>
-
-      <!-- json -->
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jdk8</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-annotations</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jsr310</artifactId>
-        <version>${jackson.version}</version>
       </dependency>
 
       <!-- test -->
@@ -166,20 +134,6 @@
         <artifactId>junit-bom</artifactId>
         <version>${junit.jupiter.version}</version>
         <type>pom</type>
-        <scope>test</scope>
-      </dependency>
-
-<!--      <dependency>-->
-<!--        <groupId>io.github.crabzilla</groupId>-->
-<!--        <artifactId>crabzilla-core</artifactId>-->
-<!--        <version>${project.version}</version>-->
-<!--        <type>test-jar</type>-->
-<!--      </dependency>-->
-
-      <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-core</artifactId>
-        <version>2.13.0</version>
         <scope>test</scope>
       </dependency>
 
@@ -196,11 +150,6 @@
   <dependencies>
 
     <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
@@ -211,10 +160,10 @@
       <artifactId>vertx-core</artifactId>
     </dependency>
 
-<!--    <dependency>-->
-<!--      <groupId>io.vertx</groupId>-->
-<!--      <artifactId>vertx-lang-kotlin</artifactId>-->
-<!--    </dependency>-->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-kotlin</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.jetbrains.kotlinx</groupId>
@@ -244,12 +193,6 @@
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
       <version>${junit.jupiter.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
 

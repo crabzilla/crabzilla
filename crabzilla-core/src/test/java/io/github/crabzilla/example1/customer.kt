@@ -21,8 +21,6 @@ import io.vertx.kotlin.core.json.jsonObjectOf
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// TODO move this file to test scope. it's here just to show test coverage
-
 /**
  * Customer events
  */

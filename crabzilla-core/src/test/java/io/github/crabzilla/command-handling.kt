@@ -1,47 +1,45 @@
-package io.github.crabzilla
+// package io.github.crabzilla
 //
+// import io.github.crabzilla.core.AggregateRoot
+// import io.github.crabzilla.core.Command
+// import io.github.crabzilla.core.CommandHandler
+// import io.github.crabzilla.core.CommandMetadata
+// import io.github.crabzilla.core.DomainEvent
+// import io.github.crabzilla.core.EventHandler
+// import io.github.crabzilla.core.EventStore
+// import io.github.crabzilla.core.Snapshot
+// import io.github.crabzilla.core.SnapshotRepository
+// import io.github.crabzilla.core.StatefulSession
 // import io.vertx.core.Future
 // import io.vertx.core.Promise
-// import java.util.UUID
-// import java.util.concurrent.atomic.AtomicReference
 // import org.slf4j.LoggerFactory
 //
-// data class CommandMetadata(
-//  val aggregateRootId: Int,
-//  val entityName: String,
-//  val commandName: String,
-//  val commandId: UUID = UUID.randomUUID()
-// )
-//
-// typealias CommandContext<A> = Triple<CommandMetadata, Command, Snapshot<A>>
-//
-// class CommandController<A : AggregateRoot>(
-//  private val commandAware: AggregateRootCommandAware<A, >,
-//  private val snapshotRepo: SnapshotRepository<A>,
-//  private val uowJournal: UnitOfWorkJournal
+// class CommandController<A : AggregateRoot, C: Command, E: DomainEvent>(
+//  private val handler: CommandHandler<A, C, E>,
+//  private val snapshotRepo: SnapshotRepository<A, C, E>,
+//  private val eventStore: EventStore<A, C, E>
 // ) {
 //  companion object {
 //    internal val log = LoggerFactory.getLogger(CommandController::class.java)
 //  }
-//  fun handle(metadata: CommandMetadata, command: Command): Future<Pair<UnitOfWork, Long>> {
-//    fun toUnitOfWork(ctx: CommandContext<A>, events: List<DomainEvent>): UnitOfWork {
-//      val (cmdMetadata, _, snapshot) = ctx
-//      val (entityId, entityName, _, commandId) = cmdMetadata
-//      return UnitOfWork(entityName, entityId, commandId, command, snapshot.version + 1, events)
-//    }
-//    val promise = Promise.promise<Pair<UnitOfWork, Long>>()
+//  fun handle(metadata: CommandMetadata, command: C): Future<Void> { // TODO return snapshot, events and metadata
+//    val promise = Promise.promise<Void>()
 //    if (log.isDebugEnabled) log.debug("received $metadata\n $command")
-//    val constraints = commandAware.validateCmd(command)
-//    if (constraints.isNotEmpty()) {
-//      log.error("Command is invalid: $constraints")
-//      promise.fail(constraints.toString())
-//      return promise.future()
-//    }
-//    val snapshotValue: AtomicReference<Snapshot<A>> = AtomicReference()
-//    val uowValue: AtomicReference<UnitOfWork> = AtomicReference()
-//    val uowIdValue: AtomicReference<Long> = AtomicReference()
-//    snapshotRepo.retrieve(metadata.aggregateRootId)
+//    snapshotRepo.get(metadata.aggregateRootId)
 //      .compose { snapshot ->
+//        handler.handleCommand(command, snapshot)
+//          .fold { result -> 1 }}
+//      }
+//
+//        .onFailure { promise.fail(it.cause) }
+//
+//
+//
+//
+//
+//
+//
+//      .compose { snapshot: Snapshot<A>? ->
 //        if (log.isDebugEnabled) log.debug("got snapshot $snapshot")
 //        val cachedSnapshot = snapshot ?: Snapshot(commandAware.initialState, 0)
 //        snapshotValue.set(cachedSnapshot)
@@ -53,22 +51,11 @@ package io.github.crabzilla
 //        if (log.isDebugEnabled) log.debug("got unitOfWork $uow")
 //        // append to journal
 //        uowValue.set(uow)
-//        uowJournal.append(uow)
-//      }
-//      .compose {
-//        // compute new snapshot
-//        if (log.isDebugEnabled) log.debug("computing new snapshot")
-//        uowValue.get().events.forEach { e ->
-//          snapshotValue.get().state.apply(e)
-//        }
-//        val newSnapshot = Snapshot(snapshotValue.get().state, uowValue.get().version)
-//        if (log.isDebugEnabled) log.debug("now will store snapshot $newSnapshot")
-//        snapshotRepo.upsert(metadata.aggregateRootId, newSnapshot)
+//        eventStore.append(uow)
 //      }
 //      .onSuccess {
-//        val pair: Pair<UnitOfWork, Long> = Pair(uowValue.get(), uowIdValue.get())
 //        if (log.isDebugEnabled) log.debug("command handling success: $pair")
-//        promise.complete(pair)
+//        promise.complete()
 //      }.onFailure { err -> promise.fail(err) }
 //
 //    return promise.future()
