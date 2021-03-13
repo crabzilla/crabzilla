@@ -1,106 +1,117 @@
 package io.github.crabzilla.pgc.command
 
-import io.github.crabzilla.core.command.AGGREGATE_ROOT_SERIALIZER
-import io.github.crabzilla.core.command.AggregateRoot
-import io.github.crabzilla.core.command.AggregateRootCommandAware
-import io.github.crabzilla.core.command.DOMAIN_EVENT_SERIALIZER
-import io.github.crabzilla.core.command.DomainEvent
-import io.github.crabzilla.core.command.Snapshot
-import io.github.crabzilla.core.command.SnapshotRepository
+import io.github.crabzilla.core.AGGREGATE_ROOT_SERIALIZER
+import io.github.crabzilla.core.AggregateRoot
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.EventHandler
+import io.github.crabzilla.core.Snapshot
+import io.github.crabzilla.core.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
-import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import io.vertx.core.logging.LoggerFactory
 import io.vertx.pgclient.PgPool
+import io.vertx.sqlclient.PreparedStatement
+import io.vertx.sqlclient.Row
+import io.vertx.sqlclient.RowSet
+import io.vertx.sqlclient.SqlConnection
+import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
-import kotlinx.serialization.builtins.list
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import org.slf4j.LoggerFactory
 
-class PgcSnapshotRepo<A : AggregateRoot>(
+class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
+  private val eventHandler: EventHandler<A, E>,
+  private val aggregateRootName: String,
+  private val snapshotTableName: String,
   private val writeModelDb: PgPool,
-  private val json: Json,
-  private val commandAware: AggregateRootCommandAware<A>
-) : SnapshotRepository<A> {
+  private val json: Json
+) : SnapshotRepository<A, C, E> {
 
   companion object {
     private val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
-    private const val SELECT_EVENTS_VERSION_AFTER_VERSION = "SELECT uow_events, version FROM crabz_units_of_work " +
-      "WHERE ar_id = $1 and ar_name = $2 and version > $3 ORDER BY version "
+    private const val SELECT_EVENTS_VERSION_AFTER_VERSION = "SELECT event_payload, version FROM events " +
+      "WHERE ar_id = $1 and ar_name = $2 and version > $3 ORDER BY event_id "
     private const val ROWS_PER_TIME = 1000
   }
-  private fun selectSnapshot(): String {
-    return "SELECT version, json_content FROM crabz_${commandAware.entityName}_snapshots WHERE ar_id = $1"
-  }
-  private fun upsertSnapshot(): String {
-    return "INSERT INTO crabz_${commandAware.entityName}_snapshots (ar_id, version, json_content) " +
-      " VALUES ($1, $2, $3) " +
-      " ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"
-  }
+
   override fun upsert(id: Int, snapshot: Snapshot<A>): Future<Void> {
-    val promise = Promise.promise<Void>()
-    val json = JsonObject(json.stringify(AGGREGATE_ROOT_SERIALIZER, snapshot.state))
-    writeModelDb.preparedQuery(upsertSnapshot())
-      .execute(Tuple.of(id, snapshot.version, json)) { insert ->
-      if (insert.failed()) {
-        log.error("upsert snapshot query error")
-        promise.fail(insert.cause())
-      } else {
-        log.debug("upsert snapshot success")
-        promise.complete()
-      }
+
+    fun upsertSnapshot(): String {
+      return "INSERT INTO $snapshotTableName (ar_id, version, json_content) " +
+        " VALUES ($1, $2, $3) " +
+        " ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"
     }
+    val promise = Promise.promise<Void>()
+    val json = JsonObject(json.encodeToString(AGGREGATE_ROOT_SERIALIZER, snapshot.state))
+    val insertSql = upsertSnapshot()
+    val tuple = Tuple.of(id, snapshot.version, json)
+    writeModelDb.preparedQuery(insertSql)
+      .execute(tuple) { insert ->
+        if (insert.failed()) {
+          log.error("upsert snapshot query error", insert.cause())
+          promise.fail(insert.cause())
+        } else {
+          log.debug("upsert snapshot success")
+          promise.complete()
+        }
+      }
     return promise.future()
   }
 
-  override fun retrieve(id: Int): Future<Snapshot<A>> {
-    val promise = Promise.promise<Snapshot<A>>()
-    writeModelDb.begin { event0 ->
-      if (event0.failed()) {
-        log.error("when starting transaction", event0.cause())
-        promise.fail(event0.cause())
-        return@begin
+  override fun get(id: Int): Future<Snapshot<A>?> {
+
+    fun selectSnapshot(): String {
+      return "SELECT version, json_content FROM $snapshotTableName WHERE ar_id = $1"
+    }
+
+    fun currentSnapshot(conn: SqlConnection): Future<Pair<SqlConnection, Snapshot<A>?>> {
+      val promise = Promise.promise<Pair<SqlConnection, Snapshot<A>?>>()
+      fun snapshot(rowSet: RowSet<Row>): Snapshot<A>? {
+        return if (rowSet.size() == 0) {
+          null
+        } else {
+          val stateAsJson: JsonObject = rowSet.first().get(JsonObject::class.java, 1)
+          val state = json.decodeFromString(AGGREGATE_ROOT_SERIALIZER, stateAsJson.encode()) as A
+          Snapshot(state, rowSet.first().getInteger("version"))
+        }
       }
-      val tx = event0.result()
-      // get current snapshot
-      tx.preparedQuery(selectSnapshot())
-        .execute(Tuple.of(id)) { event1 ->
-          if (event1.failed()) {
-            promise.fail(event1.cause())
-            return@execute
-          }
-          val pgRow = event1.result()
-          val cachedInstance: A
-          val cachedVersion: Int
-          if (pgRow == null || pgRow.size() == 0) {
-            cachedInstance = commandAware.initialState
-            cachedVersion = 0
-          } else {
-            val stateAsJson: JsonObject = pgRow.first().get(JsonObject::class.java, 1)
-            cachedInstance = json.parse(AGGREGATE_ROOT_SERIALIZER, stateAsJson.encode()) as A
-            cachedVersion = pgRow.first().getInteger("version")
-          }
-          // get committed events after snapshot version
-          tx.prepare(SELECT_EVENTS_VERSION_AFTER_VERSION) { event2 ->
-            if (event2.failed()) {
-              log.error("when gettting committed events after snapshot version", event2.cause())
-              promise.fail(event2.cause())
-              return@prepare
-            }
-            var currentInstance = cachedInstance
-            var currentVersion = cachedVersion
-            val pq = event2.result()
-            // Fetch N rows at a time
-            val stream = pq.createStream(ROWS_PER_TIME, Tuple.of(id, commandAware.entityName, cachedVersion))
+      conn.preparedQuery(selectSnapshot())
+        .execute(Tuple.of(id))
+        .onSuccess { pgRow -> promise.complete(Pair(conn, snapshot(pgRow))) }
+        .onFailure {
+          log.error(it.message)
+          promise.complete(Pair(conn, null))
+        }
+      return promise.future()
+    }
+
+    fun newSnapshot(conn: SqlConnection, snapshot: Snapshot<A>?): Future<Snapshot<A>?> {
+      val promise = Promise.promise<Snapshot<A>>()
+      val events = mutableListOf<E>()
+      var currentVersion = 0
+      conn.prepare(SELECT_EVENTS_VERSION_AFTER_VERSION) { ar0 ->
+        if (ar0.failed()) {
+          promise.fail(ar0.cause())
+          return@prepare
+        }
+        val pq: PreparedStatement = ar0.result()
+        // Streams require to run within a transaction
+        conn.begin { ar1 ->
+          if (ar1.succeeded()) {
+            val tx: Transaction = ar1.result()
+            // Fetch ROWS_PER_TIME
+            val stream = pq.createStream(ROWS_PER_TIME, Tuple.of(id, aggregateRootName, snapshot?.version ?: 0))
+            // Use the stream
             stream.exceptionHandler { err -> log.error("Stream error", err) }
             stream.handler { row ->
+              val jsonObject: JsonObject = row.get(JsonObject::class.java, 0)
+              val event: DomainEvent = json.decodeFromString(jsonObject.encode())
               currentVersion = row.getInteger(1)
-              val jsonArray: JsonArray = row.get(JsonArray::class.java, 0)
-              val events: List<DomainEvent> = json.parse(DOMAIN_EVENT_SERIALIZER.list, jsonArray.encode())
-              currentInstance =
-                events.fold(currentInstance) { state, event -> commandAware.applyEvent.invoke(event, state) }
+              events.add(event as E)
               if (log.isDebugEnabled) {
-                log.debug("Events: $events \n version: $currentVersion \n instance $currentInstance")
+                log.debug("Event: $event version: $currentVersion")
               }
             }
             stream.endHandler {
@@ -112,14 +123,30 @@ class PgcSnapshotRepo<A : AggregateRoot>(
                   promise.fail(ar.cause())
                 } else {
                   if (log.isDebugEnabled) log.debug("tx.commit successfully")
-                  val result = Snapshot(currentInstance, currentVersion)
-                  promise.complete(result)
+                  if (events.size == 0) {
+                    promise.complete(snapshot)
+                  } else {
+                    val currentInstance = events.fold(
+                      snapshot!!.state,
+                      { state, event -> eventHandler.handleEvent(state, event) }
+                    )
+                    promise.complete(Snapshot(currentInstance, currentVersion))
+                  }
                 }
               }
             }
           }
         }
+      }
+      return promise.future()
     }
+
+    val promise = Promise.promise<Snapshot<A>>()
+    writeModelDb.connection
+      .compose { conn: SqlConnection -> currentSnapshot(conn) }
+      .compose { pair -> newSnapshot(pair.first, pair.second) }
+      .onSuccess { newSnapshot -> promise.complete(newSnapshot) }
+      .onFailure { err -> promise.fail(err) }
     return promise.future()
   }
 }

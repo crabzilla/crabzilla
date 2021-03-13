@@ -31,8 +31,12 @@ import io.vertx.junit5.web.TestRequest.jsonBodyResponse
 import io.vertx.junit5.web.TestRequest.statusCode
 import io.vertx.junit5.web.TestRequest.testRequest
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
+import java.util.Random
+import java.util.UUID
+import java.util.function.Consumer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -41,15 +45,13 @@ import org.junit.jupiter.api.TestInstance.Lifecycle
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junitpioneer.jupiter.RepeatFailedTest
 import org.slf4j.LoggerFactory
-import java.util.Random
-import java.util.UUID
-import java.util.function.Consumer
 
 /**
  * Integration test
  */
 @ExtendWith(VertxExtension::class)
 @TestInstance(Lifecycle.PER_CLASS)
+@Disabled
 internal class ProjectionFromHzRbIT {
 
   val random = Random()
@@ -98,7 +100,6 @@ internal class ProjectionFromHzRbIT {
             }
         }
     }
-
   }
 
   @Nested

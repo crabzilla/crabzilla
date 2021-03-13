@@ -9,7 +9,7 @@
     <version>0.0.9-snapshot-3</version>
   </parent>
 
-  <artifactId>crabzilla-web</artifactId>
+  <artifactId>crabzilla-pg-client2</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -19,47 +19,26 @@
       <artifactId>crabzilla-core</artifactId>
     </dependency>
 
-    <!-- vertx -->
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-config</artifactId>
     </dependency>
 
-    <!-- jackson json -->
-
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-circuit-breaker</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>com.fasterxml.jackson.datatype</groupId>
-      <artifactId>jackson-datatype-jdk8</artifactId>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-pg-client</artifactId>
     </dependency>
 
     <!-- test -->
 
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-junit5-web-client</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-pg-client</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-pg-client</artifactId>
+      <artifactId>vertx-health-check</artifactId>
       <scope>test</scope>
     </dependency>
 

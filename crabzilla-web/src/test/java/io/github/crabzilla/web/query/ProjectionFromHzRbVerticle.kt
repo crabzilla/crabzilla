@@ -3,7 +3,7 @@ package io.github.crabzilla.web.query
 import com.hazelcast.core.HazelcastInstance
 import com.hazelcast.ringbuffer.Ringbuffer
 import io.github.crabzilla.core.command.CrabzillaContext
-import io.github.crabzilla.hazelcast.command.HzRingBufferPublisher
+import io.github.crabzilla.hazelcast.command.HzRingBufferSyncPublisher
 import io.github.crabzilla.hazelcast.query.HzProjectionRepo
 import io.github.crabzilla.hazelcast.query.HzStreamConsumer
 import io.github.crabzilla.pgc.command.PgcSnapshotRepo
@@ -57,11 +57,11 @@ class ProjectionFromHzRbVerticle : AbstractVerticle() {
     // command routes
     val example1Json = Json(context = customerModule)
 
-    createRingBuffer(CUSTOMER_ENTITY)
+    createUowRingBuffer(CUSTOMER_ENTITY)
       .onFailure { err -> log.error("createRingBuffer", err); promise.fail(err) }
       .onSuccess { rb ->
 
-        val uowJournal = PgcUowJournal(writeDb, example1Json, HzRingBufferPublisher(vertx, rb))
+        val uowJournal = PgcUowJournal(writeDb, example1Json, HzRingBufferSyncPublisher(vertx, rb))
         val uowRepository = PgcUowRepo(writeDb, example1Json)
         val ctx = CrabzillaContext(example1Json, uowRepository, uowJournal)
 
@@ -73,7 +73,7 @@ class ProjectionFromHzRbVerticle : AbstractVerticle() {
         val uolProjector = PgcUnitOfWorkProjector(readDb, CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM,
           CustomerSummaryEventProjector())
 
-        createMap(CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM)
+        createSequenceMap(CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM)
           .onFailure { err -> log.error("createMap", err); promise.fail(err) }
           .onSuccess { map ->
             HzStreamConsumer(vertx, CUSTOMER_ENTITY, CUSTOMER_SUMMARY_STREAM, uolProjector,
@@ -85,7 +85,7 @@ class ProjectionFromHzRbVerticle : AbstractVerticle() {
       }
   }
 
-  private fun createRingBuffer(entityName: String): Future<Ringbuffer<String>> {
+  private fun createUowRingBuffer(entityName: String): Future<Ringbuffer<String>> {
     val promise = Promise.promise<Ringbuffer<String>>()
     vertx.executeBlocking<Ringbuffer<String>>({ promise1 ->
       val result = hz.getRingbuffer<String>("$entityName")
@@ -102,7 +102,7 @@ class ProjectionFromHzRbVerticle : AbstractVerticle() {
     return promise.future()
   }
 
-  private fun createMap(entityName: String, streamId: String): Future<AsyncMap<String, Long>> {
+  private fun createSequenceMap(entityName: String, streamId: String): Future<AsyncMap<String, Long>> {
     val promise = Promise.promise<AsyncMap<String, Long>>()
     vertx.sharedData().getAsyncMap<String, Long>("$entityName-$streamId") { event1 ->
       if (event1.failed()) {
