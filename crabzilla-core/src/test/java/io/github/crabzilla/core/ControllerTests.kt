@@ -43,9 +43,10 @@ class ControllerTests : BehaviorSpec({
             when (either) {
               is Either.Left -> fail(either.value.toString())
               is Either.Right -> {
-                either.value.currentState shouldBe Customer(id = 1, name = "customer#1")
-                either.value.originalVersion shouldBe 0
-                either.value.appliedEvents() shouldContainInOrder
+                val session = either.value
+                session.originalVersion shouldBe 0
+                session.currentState shouldBe Customer(id = 1, name = "customer#1")
+                session.appliedEvents() shouldContainInOrder
                   listOf(CustomerEvent.CustomerRegistered(id = 1, name = "customer#1"))
               }
             }
