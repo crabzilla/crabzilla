@@ -1,8 +1,6 @@
 package io.github.crabzilla.example1
 
-import io.github.crabzilla.core.AGGREGATE_ROOT_SERIALIZER
 import io.github.crabzilla.core.AggregateRoot
-import io.github.crabzilla.core.COMMAND_SERIALIZER
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.javaModule
@@ -34,26 +32,26 @@ val customerModule = SerializersModule {
 
 val customerJson = Json { serializersModule = customerModule }
 
-@kotlinx.serialization.ExperimentalSerializationApi
-fun main() {
-
-  val pair = Customer.create(id = 1, name = "c1")
-
-  val c = pair.state
-
-  println(customerJson.encodeToString(AGGREGATE_ROOT_SERIALIZER, c))
-
-  c.activate("don't ask!")
-  println(customerJson.encodeToString(AGGREGATE_ROOT_SERIALIZER, c))
-
-  val cmd = CustomerCommand.RegisterAndActivateCustomer(customerId = 1, name = "c1", reason = "i can")
-  println(customerJson.encodeToString(COMMAND_SERIALIZER, cmd))
-
-  val customerEventSer = CustomerEventSer()
-
-  val event = CustomerEvent.CustomerRegistered(id = 1, name = "c1")
-  println(customerEventSer.toJson(event))
-
-  val event2 = CustomerEvent.CustomerActivated("because I can")
-  println(customerEventSer.toJson(event2))
-}
+// @kotlinx.serialization.ExperimentalSerializationApi
+// fun main() {
+//
+//  val pair = Customer.create(id = 1, name = "c1")
+//
+//  val c = pair.state
+//
+//  println(customerJson.encodeToString(AGGREGATE_ROOT_SERIALIZER, c))
+//
+//  c.activate("don't ask!")
+//  println(customerJson.encodeToString(AGGREGATE_ROOT_SERIALIZER, c))
+//
+//  val cmd = CustomerCommand.RegisterAndActivateCustomer(customerId = 1, name = "c1", reason = "i can")
+//  println(customerJson.encodeToString(COMMAND_SERIALIZER, cmd))
+//
+//  val customerEventSer = CustomerEventSer()
+//
+//  val event = CustomerEvent.CustomerRegistered(id = 1, name = "c1")
+//  println(customerEventSer.toJson(event))
+//
+//  val event2 = CustomerEvent.CustomerActivated("because I can")
+//  println(customerEventSer.toJson(event2))
+// }

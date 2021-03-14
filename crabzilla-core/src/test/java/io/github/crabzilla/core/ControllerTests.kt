@@ -1,0 +1,56 @@
+package io.github.crabzilla.core
+
+import io.github.crabzilla.example1.Customer
+import io.github.crabzilla.example1.CustomerCommand
+import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.CustomerEvent
+import io.github.crabzilla.example1.customerConfig
+import io.kotest.assertions.fail
+import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.collections.shouldContainInOrder
+import io.kotest.matchers.shouldBe
+import io.mockk.every
+import io.mockk.mockk
+import io.vertx.core.Future
+
+// to run from ide: kotest-intellij-plugin
+
+class ControllerTests : BehaviorSpec({
+
+  lateinit var snapshotRepo: SnapshotRepository<Customer, CustomerCommand, CustomerEvent>
+  lateinit var eventStore: EventStore<Customer, CustomerCommand, CustomerEvent>
+
+  beforeTest {
+    snapshotRepo = mockk()
+    eventStore = mockk()
+  }
+
+  Given("a controller for Customer") {
+
+    every { snapshotRepo.get(1) } returns Future.succeededFuture(null)
+    every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
+    every { snapshotRepo.upsert(1, any()) } returns Future.succeededFuture()
+
+    val controller =
+      CommandController(customerConfig.commandValidator, customerConfig.commandHandler, snapshotRepo, eventStore)
+
+    When("I send a register command") {
+      val result = controller.handle(CommandMetadata(1), RegisterCustomer(1, "customer#1"))
+      Then("It should have the expected StatefulSession") {
+        result
+          .onFailure { err -> fail(err.message ?: "wtf?") }
+          .onSuccess { either ->
+            when (either) {
+              is Either.Left -> fail(either.value.toString())
+              is Either.Right -> {
+                either.value.currentState shouldBe Customer(id = 1, name = "customer#1")
+                either.value.originalVersion shouldBe 0
+                either.value.appliedEvents() shouldContainInOrder
+                  listOf(CustomerEvent.CustomerRegistered(id = 1, name = "customer#1"))
+              }
+            }
+          }
+      }
+    }
+  }
+})

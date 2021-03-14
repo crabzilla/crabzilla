@@ -1,13 +1,17 @@
 package io.github.crabzilla.example1
 
 import io.github.crabzilla.core.AggregateRoot
+import io.github.crabzilla.core.AggregateRootConfig
+import io.github.crabzilla.core.AggregateRootName
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandHandler.ConstructorResult
+import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.core.EventSerializer
 import io.github.crabzilla.core.Snapshot
+import io.github.crabzilla.core.SnapshotTableName
 import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.CustomerCommand.DeactivateCustomer
@@ -89,6 +93,18 @@ data class Customer(
 }
 
 /**
+ * A command validator. You could use https://github.com/konform-kt/konform
+ */
+val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
+  when (command) {
+    is RegisterCustomer -> listOf()
+    is RegisterAndActivateCustomer -> listOf()
+    is ActivateCustomer -> listOf()
+    is DeactivateCustomer -> listOf()
+  }
+}
+
+/**
  * This function will apply an event to customer state
  */
 val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event ->
@@ -158,3 +174,8 @@ class CustomerEventSer : EventSerializer<CustomerEvent> {
 }
 
 // TODO class CustomerEventDes : EventDeserializer<IntegrationEvent>
+
+val customerConfig = AggregateRootConfig(
+  AggregateRootName("customer"), SnapshotTableName("customer_snapshot"),
+  customerEventHandler, customerCmdValidator, CustomerCommandHandler, customerJson
+)

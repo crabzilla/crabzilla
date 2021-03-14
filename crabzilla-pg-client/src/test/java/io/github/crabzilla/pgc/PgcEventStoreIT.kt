@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.command
+package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.CommandMetadata
 import io.github.crabzilla.core.StatefulSession
@@ -7,8 +7,6 @@ import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerEventHandler
 import io.github.crabzilla.example1.customerJson
-import io.github.crabzilla.pgc.cleanDatabase
-import io.github.crabzilla.pgc.writeModelPgPool
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.config.ConfigStoreOptions

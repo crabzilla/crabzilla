@@ -5,19 +5,8 @@ import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.core.shareddata.SharedData
 import kotlinx.serialization.json.Json
-import java.util.UUID
 
 // es/cqrs infra stack
-
-/**
- * The REST/RPC controller must knows how to instantiate it.
- */
-data class CommandMetadata(
-  val aggregateRootId: Int,
-  val id: UUID = UUID.randomUUID(),
-  val causationId: UUID = id,
-  val correlationID: UUID = id
-)
 
 /**
  * An event store to append new events
@@ -52,7 +41,7 @@ class StatefulSession<A : AggregateRoot, E : DomainEvent> {
   }
 
   constructor(constructorResult: CommandHandler.ConstructorResult<A, E>, eventHandler: EventHandler<A, E>) {
-    this.originalVersion = 1
+    this.originalVersion = 0
     this.originalState = constructorResult.state
     this.eventHandler = eventHandler
     this.currentState = originalState

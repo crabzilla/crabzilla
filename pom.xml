@@ -16,8 +16,6 @@
     <kotlin.version>1.4.30</kotlin.version>
     <serialization.version>1.1.0</serialization.version>
     <vertx.version>4.0.2</vertx.version>
-    <vertx.jooq.version>5.1.1</vertx.jooq.version>
-    <jooq.version>3.13.1</jooq.version>
     <postgresql.version>42.2.10</postgresql.version>
     <slf4j.version>1.7.25</slf4j.version>
 
@@ -76,7 +74,6 @@
     <module>crabzilla-core</module>
     <module>crabzilla-pg-client</module>
 <!--    <module>crabzilla-web</module>-->
-<!--    <module>crabzilla-jooq</module>-->
     <module>coverage-report</module>
   </modules>
   <dependencyManagement>
@@ -206,6 +203,20 @@
       <groupId>org.junit-pioneer</groupId>
       <artifactId>junit-pioneer</artifactId>
       <version>0.6.0</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.kotest</groupId>
+      <artifactId>kotest-runner-junit5-jvm</artifactId>
+      <version>4.4.3</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.mockk</groupId>
+      <artifactId>mockk</artifactId>
+      <version>1.10.6</version>
       <scope>test</scope>
     </dependency>
 

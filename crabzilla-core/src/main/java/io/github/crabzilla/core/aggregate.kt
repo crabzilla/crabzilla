@@ -15,6 +15,10 @@ abstract class AggregateRoot
 // @Serializable
 // abstract class ProcessManager
 
+fun interface CommandValidator<C : Command> {
+  fun validate(command: C): List<String>
+}
+
 /**
  * To apply an event to an aggregate root state
  */
@@ -57,6 +61,6 @@ interface EventSerializer<E : Any> {
 /**
  * To deserialize integration events from upstream services
  */
-// interface EventDeserializer<E : DomainEvent> { // sagas / process managers will need it
-//  fun fromJson(type: String, j: JsonObject): Result<E>
-// }
+interface EventDeserializer<E : DomainEvent> { // sagas / process managers will need it
+  fun fromJson(type: String, j: JsonObject): Result<E>
+}

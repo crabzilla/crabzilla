@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.command
+package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.AGGREGATE_ROOT_SERIALIZER
 import io.github.crabzilla.core.AggregateRoot
