@@ -31,33 +31,28 @@ class PgcEventStoreIT {
   private lateinit var writeDb: PgPool
   private lateinit var eventStore: PgcEventStore<Customer, CustomerCommand, CustomerEvent>
 
-  val notifications = AtomicInteger()
+  private val notifications = AtomicInteger()
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     getConfig(vertx)
-      .onFailure { tc.failNow(it.cause) }
-      .onSuccess { config ->
+      .compose { config ->
         writeDb = writeModelPgPool(vertx, config)
-        eventStore = PgcEventStore("example1", writeDb, customerJson)
+        eventStore = PgcEventStore("customer", writeDb, customerJson)
         cleanDatabase(vertx, config)
-          .onSuccess {
-            writeDb.getConnection { c: AsyncResult<SqlConnection> ->
-              val pgConn = c.result() as PgConnection
-              pgConn
-                .query("LISTEN ${eventStore.channel}")
-                .execute { ar -> println("Subscribed to channel ${eventStore.channel} $ar") }
-              pgConn.notificationHandler {
-                println("Received a notification #${notifications.incrementAndGet()} from channel ${it.channel}")
-              }
-              tc.completeNow()
-              println("ok")
-            }
+      }
+      .onFailure { tc.failNow(it.cause) }
+      .onSuccess {
+        writeDb.getConnection { c: AsyncResult<SqlConnection> ->
+          val pgConn = c.result() as PgConnection
+          pgConn
+            .query("LISTEN ${eventStore.channel}")
+            .execute { ar -> println("Subscribed to channel ${eventStore.channel} $ar") }
+          pgConn.notificationHandler {
+            println("Received a notification #${notifications.incrementAndGet()} from channel ${it.channel}")
           }
-          .onFailure { err ->
-            tc.failNow(err)
-            err.printStackTrace()
-          }
+          tc.completeNow()
+        }
       }
   }
 

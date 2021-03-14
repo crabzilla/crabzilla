@@ -19,19 +19,12 @@ class CommandControllerFactoryTests {
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     getConfig(vertx)
-      .onFailure { tc.failNow(it.cause) }
-      .onSuccess { config ->
+      .compose { config ->
         writeDb = writeModelPgPool(vertx, config)
         cleanDatabase(vertx, config)
-          .onSuccess {
-            tc.completeNow()
-            println("ok")
-          }
-          .onFailure { err ->
-            tc.failNow(err)
-            err.printStackTrace()
-          }
       }
+      .onFailure { tc.failNow(it.cause) }
+      .onSuccess { tc.completeNow() }
   }
 
   @Test
