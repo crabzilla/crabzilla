@@ -43,7 +43,10 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
               .onSuccess {
                 val newSnapshot = Snapshot(result.currentState, result.originalVersion + 1)
                 snapshotRepo.upsert(metadata.aggregateRootId, newSnapshot)
-                  .onFailure { err -> log.error("When upserting snapshot", err) }
+                  .onFailure { err ->
+                    log.error("When saving new snapshot", err)
+                    promise.fail(err.cause)
+                   }
                   .onComplete { promise.complete(Either.Right(result)) }
               }
           }
