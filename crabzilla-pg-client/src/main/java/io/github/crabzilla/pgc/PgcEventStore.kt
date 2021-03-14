@@ -85,7 +85,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         .onSuccess {
           val rowSet: RowSet<Row> = it.value()
           if (rowSet.size() == 0) {
-            promise0.fail("cannot get cmd_id")
+            promise0.fail("Append command error: missing cmd_id")
           } else {
             promise0.complete(rowSet.first().getLong("cmd_id"))
             log.info("Append command ok")
@@ -116,7 +116,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       }
 
       val promise0 = Promise.promise<Void>()
-      // TODO fix to support more than 6 events per command
+      // TODO fix to support more than 6 events per command (using fold)
       val futures: List<Future<Void>> = session.appliedEvents().map { event -> appendEvent(conn, event) }
       CompositeFuture.all(futures).onComplete { ar ->
         if (ar.succeeded()) {

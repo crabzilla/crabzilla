@@ -9,9 +9,10 @@ import java.util.UUID
 /**
  * Given a command
  *  1 - validates it
- *  2 - find the snapshot
+ *  2 - find the target snapshot
  *  3 - call it's command handler
- *  4 - save the resulting events
+ *  4 - save the resulting events in eventstore
+ *  5 - save the new snapshot
  */
 class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val validator: CommandValidator<C>,
@@ -45,10 +46,11 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
                 snapshotRepo.upsert(metadata.aggregateRootId, newSnapshot)
                   .onFailure { err ->
                     log.error("When saving new snapshot", err)
-                   }
+                  }
                   .onComplete {
                     // let's just ignore snapshot error (the principal side effect is on eventSTore, anyway)
-                    promise.complete(Either.Right(result)) }
+                    promise.complete(Either.Right(result))
+                  }
               }
           }
       }

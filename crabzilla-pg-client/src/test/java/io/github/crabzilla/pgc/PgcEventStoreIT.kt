@@ -7,13 +7,8 @@ import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerEventHandler
 import io.github.crabzilla.example1.customerJson
-import io.vertx.config.ConfigRetriever
-import io.vertx.config.ConfigRetrieverOptions
-import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.AsyncResult
-import io.vertx.core.Handler
 import io.vertx.core.Vertx
-import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgConnection
@@ -40,20 +35,9 @@ class PgcEventStoreIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val envOptions = ConfigStoreOptions()
-      .setType("file")
-      .setFormat("properties")
-      .setConfig(JsonObject().put("path", "../example1.env"))
-    val options = ConfigRetrieverOptions().addStore(envOptions)
-    val retriever = ConfigRetriever.create(vertx, options)
-    retriever.getConfig(
-      Handler { configFuture ->
-        if (configFuture.failed()) {
-          println("Failed to get configuration")
-          tc.failNow(configFuture.cause())
-          return@Handler
-        }
-        val config = configFuture.result()
+    getConfig(vertx)
+      .onFailure { tc.failNow(it.cause) }
+      .onSuccess { config ->
         writeDb = writeModelPgPool(vertx, config)
         eventStore = PgcEventStore("example1", writeDb, customerJson)
         cleanDatabase(vertx, config)
@@ -75,7 +59,6 @@ class PgcEventStoreIT {
             err.printStackTrace()
           }
       }
-    )
   }
 
   @Test

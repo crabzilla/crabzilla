@@ -1,5 +1,8 @@
 package io.github.crabzilla.pgc
 
+import io.vertx.config.ConfigRetriever
+import io.vertx.config.ConfigRetrieverOptions
+import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Promise
@@ -10,6 +13,16 @@ import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.PoolOptions
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
+
+fun getConfig(vertx: Vertx): Future<JsonObject> {
+  val envOptions = ConfigStoreOptions()
+    .setType("file")
+    .setFormat("properties")
+    .setConfig(JsonObject().put("path", "../example1.env"))
+  val options = ConfigRetrieverOptions().addStore(envOptions)
+  val retriever = ConfigRetriever.create(vertx, options)
+  return retriever.config
+}
 
 fun writeModelPgPool(vertx: Vertx, config: JsonObject): PgPool {
   return pgPool(vertx, config, "WRITE")
