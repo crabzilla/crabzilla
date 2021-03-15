@@ -1,5 +1,6 @@
 package io.github.crabzilla.core
 
+import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import kotlinx.serialization.Serializable
 
@@ -63,4 +64,11 @@ interface EventSerializer<E : Any> {
  */
 interface EventDeserializer<E : DomainEvent> { // sagas / process managers will need it
   fun fromJson(type: String, j: JsonObject): Result<E>
+}
+
+/**
+ * To publish an event to read model, messaging broker, etc (any side effect)
+ */
+interface EventPublisher<E : DomainEvent> {
+  fun project(id: Int, event: E): Future<Void>
 }

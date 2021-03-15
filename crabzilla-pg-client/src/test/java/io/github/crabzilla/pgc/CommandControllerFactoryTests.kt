@@ -1,6 +1,15 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.core.CommandMetadata
+import io.github.crabzilla.core.Either
+import io.github.crabzilla.core.StatefulSession
+import io.github.crabzilla.example1.Customer
+import io.github.crabzilla.example1.CustomerCommand
+import io.github.crabzilla.example1.CustomerEvent
+import io.github.crabzilla.example1.CustomerReadModelProjector
+import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.customerConfig
+import io.github.crabzilla.example1.customerJson
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -15,23 +24,45 @@ import org.junit.jupiter.api.extension.ExtendWith
 class CommandControllerFactoryTests {
 
   private lateinit var writeDb: PgPool
+  private lateinit var readDb: PgPool
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     getConfig(vertx)
       .compose { config ->
         writeDb = writeModelPgPool(vertx, config)
+        readDb = readModelPgPool(vertx, config)
         cleanDatabase(vertx, config)
       }
       .onFailure { tc.failNow(it.cause) }
       .onSuccess { tc.completeNow() }
   }
 
-  @Test
-  @DisplayName("it can create a command controller")
+  @Test // TODO break it into smaller steps/assertions
+  @DisplayName("it can create a command controller, send a command and have both write and read model side effects ")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val controller = CommandControllerFactory.create(customerConfig, writeDb)
     assertThat(controller).isNotNull
-    tc.completeNow()
+    controller.handle(CommandMetadata(1), CustomerCommand.RegisterCustomer(1, "cust#1"))
+      .onFailure { tc.failNow(it.cause) }
+      .onSuccess { ok: Either<List<String>, StatefulSession<Customer, CustomerEvent>> ->
+        when (ok) {
+          is Either.Left -> println(ok.value.toString())
+          is Either.Right -> {
+            println(ok.value)
+            val publisher = CustomerReadModelProjector(CustomerRepository(readDb))
+            val listener = PgcEventsPublisher(publisher, "customer", writeDb, customerJson)
+            listener.scan()
+              .onFailure { err ->
+                err.printStackTrace()
+                tc.failNow(err.cause)
+              }
+              .onSuccess {
+                tc.completeNow()
+                println("Cool! $it")
+              }
+          }
+        }
+      }
   }
 }

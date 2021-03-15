@@ -176,6 +176,6 @@ class CustomerEventSer : EventSerializer<CustomerEvent> {
 // TODO class CustomerEventDes : EventDeserializer<IntegrationEvent>
 
 val customerConfig = AggregateRootConfig(
-  AggregateRootName("customer"), SnapshotTableName("customer_snapshot"),
+  AggregateRootName("customer"), SnapshotTableName("customer_snapshots"),
   customerEventHandler, customerCmdValidator, CustomerCommandHandler, customerJson
 )
