@@ -45,9 +45,9 @@ class PgcEventsPublisher<E : DomainEvent>(
       pgConn = c.result() as PgConnection
       pgConn
         .query("LISTEN $aggregateRootName")
-        .execute { ar -> println("Subscribed to channel $aggregateRootName $ar") }
+        .execute { ar -> log.info("Subscribed to channel $aggregateRootName $ar") }
       pgConn.notificationHandler {
-        println("Received a notification #${notifications.incrementAndGet()} from channel ${it.channel}")
+        log.info("Received a notification #${notifications.incrementAndGet()} from channel ${it.channel}")
         scan()
       }
     }
@@ -108,7 +108,7 @@ class PgcEventsPublisher<E : DomainEvent>(
       .onFailure { promise.fail(it.cause) }
       .onSuccess { listOfTriple ->
         val futures = listOfTriple.map { eventPublisher.project(it.first, it.second) }
-        CompositeFuture.join(futures)
+        CompositeFuture.join(futures) // TODO fix it to support more than 6 events - using fold or kotlin continuation
           .onFailure { promise.fail(it.cause) }
           .onSuccess {
             if (listOfTriple.isNotEmpty()) {
