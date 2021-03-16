@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong
  * 1) Read model
  * 2) Downstream services. In this case the EventPublisher implementation should apply a function to export
  * an Integration Event instead. And also transform it into plain JSON. The publisher and consumers should agree
- * on a JSON schema to reduce libraries coupling and reduce the versioning overhead.
+ * on a JSON schema to reduce libraries coupling and the versioning overhead.
  */
 class PgcEventsPublisher<E : DomainEvent>(
   private val eventPublisher: EventPublisher<E>,
