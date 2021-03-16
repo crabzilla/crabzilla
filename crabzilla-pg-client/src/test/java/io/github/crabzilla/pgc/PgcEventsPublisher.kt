@@ -19,6 +19,13 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
+/**
+ * This component will be triggered using a Postgres LISTEN command. Then it can publish the domain events to
+ * 1) Read model
+ * 2) Downstream services. In this case the EventPublisher implementation should apply a function to export
+ * an Integration Event instead. And also transform it into plain JSON. The publisher and consumers should agree
+ * on a JSON schema to reduce libraries coupling and reduce the versioning overhead.
+ */
 class PgcEventsPublisher<E : DomainEvent>(
   private val eventPublisher: EventPublisher<E>,
   private val aggregateRootName: String,
@@ -37,7 +44,7 @@ class PgcEventsPublisher<E : DomainEvent>(
   }
 
   private val notifications = AtomicInteger()
-  private val lastEventId = AtomicLong()
+  private val lastEventId = AtomicLong() // TODO persist this offset into a control table
   private lateinit var pgConn: PgConnection
 
   init {
