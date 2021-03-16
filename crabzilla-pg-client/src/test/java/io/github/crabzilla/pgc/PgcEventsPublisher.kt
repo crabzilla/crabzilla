@@ -62,7 +62,7 @@ class PgcEventsPublisher<E : DomainEvent>(
 
   fun scan(): Future<Void> {
 
-    fun events(conn: SqlConnection): Future<List<Triple<Int, E, Long>>> {
+    fun scanForNewEvents(conn: SqlConnection): Future<List<Triple<Int, E, Long>>> {
       val promise = Promise.promise<List<Triple<Int, E, Long>>>()
       val events = mutableListOf<Triple<Int, E, Long>>()
       conn.prepare(SELECT_EVENTS_VERSION_AFTER_VERSION) { ar0 ->
@@ -107,17 +107,25 @@ class PgcEventsPublisher<E : DomainEvent>(
       return promise.future()
     }
 
-    log.info("Will scan $aggregateRootName since $lastEventId")
+    log.info("Will scan $aggregateRootName events since $lastEventId")
 
     val promise = Promise.promise<Void>()
     writeModelDb.connection
-      .compose { conn: SqlConnection -> events(conn) }
-      .onFailure { promise.fail(it.cause) }
+      .compose { conn: SqlConnection -> scanForNewEvents(conn) }
+      .onFailure {
+        log.error("When pulling new events", it.cause)
+        promise.fail(it.cause)
+      }
       .onSuccess { listOfTriple ->
-        val futures = listOfTriple.map { eventPublisher.project(it.first, it.second) }
+        val futures: List<Future<Void>> = listOfTriple.map { eventPublisher.project(it.first, it.second) }
+        log.info("Found $listOfTriple")
         CompositeFuture.join(futures) // TODO fix it to support more than 6 events - using fold or kotlin continuation
-          .onFailure { promise.fail(it.cause) }
+          .onFailure {
+            log.error("Error: ", it.cause)
+            promise.fail(it.cause)
+          }
           .onSuccess {
+            log.info("Fine")
             if (listOfTriple.isNotEmpty()) {
               lastEventId.set(listOfTriple.last().third)
             }
