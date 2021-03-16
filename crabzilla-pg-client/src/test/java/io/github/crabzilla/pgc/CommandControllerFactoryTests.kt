@@ -38,8 +38,9 @@ class CommandControllerFactoryTests {
       .onSuccess { tc.completeNow() }
   }
 
-  @Test // TODO break it into smaller steps/assertions: check both write and real models persistence, etc
-  @DisplayName("it can create a command controller, send a command and have both write and read model side effects ")
+  @Test
+  @DisplayName("it can create a command controller, send a command and have both write and read model side effects")
+  // TODO break it into smaller steps/assertions: check both write and real models persistence after handling a command
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val controller = CommandControllerFactory.create(customerConfig, writeDb)
     assertThat(controller).isNotNull
