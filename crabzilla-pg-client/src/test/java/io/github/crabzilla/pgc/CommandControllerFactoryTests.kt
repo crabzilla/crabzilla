@@ -52,7 +52,7 @@ class CommandControllerFactoryTests {
             println(ok.value)
             val publisher = CustomerReadModelProjector(CustomerRepository(readDb))
             val listener = PgcEventsPublisher(publisher, "customer", writeDb, customerJson)
-            listener.scan()
+            listener.scan() // to force the scan of new events
               .onFailure { err ->
                 err.printStackTrace()
                 tc.failNow(err.cause)
