@@ -28,22 +28,37 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
   fun handle(metadata: CommandMetadata, command: C): Future<Either<List<String>, StatefulSession<A, E>>> {
     // TODO also return metadata (internal ids)
     val promise = Promise.promise<Either<List<String>, StatefulSession<A, E>>>()
-    if (log.isDebugEnabled) log.debug("received $metadata\n $command")
+    log.info("received $metadata\n $command")
     val validationErrors = validator.validate(command)
     if (validationErrors.isNotEmpty()) {
       promise.complete(Either.Left(validationErrors))
+      log.error("Invalid command $metadata\n $command \n$validationErrors")
       return promise.future()
     }
+    log.info("Will get snapshot for aggregate ${metadata.aggregateRootId}")
     snapshotRepo.get(metadata.aggregateRootId)
-      .onFailure { err -> promise.fail(err.cause) }
+      .onFailure { err ->
+        log.error("Could not get snapshot", err)
+        promise.fail(err.cause)
+      }
       .onSuccess { snapshot ->
+        log.info("Got snapshot $snapshot. Now let's handle the command")
         handler.handleCommand(command, snapshot)
-          .onFailure { err -> promise.fail(err.cause) }
+          .onFailure { err ->
+            log.error("Command error", err)
+            promise.fail(err.cause)
+          }
           .onSuccess { result: StatefulSession<A, E> ->
+            log.info("Command handled. $result Now let's append events")
             eventStore.append(command, metadata, result)
-              .onFailure { err -> promise.fail(err.cause) }
+              .onFailure { err ->
+                log.error("When appending events", err)
+                promise.fail(err.cause)
+              }
               .onSuccess {
+                log.info("Events successfully appended. Now let's save the resulting snapshot")
                 val newSnapshot = Snapshot(result.currentState, result.originalVersion + 1)
+                promise.complete(Either.Right(result))
                 snapshotRepo.upsert(metadata.aggregateRootId, newSnapshot)
                   .onFailure { err ->
                     log.error("When saving new snapshot", err)
@@ -52,7 +67,6 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
                   .onSuccess {
                     log.info("Snapshot upsert done: $result")
                   }
-                promise.complete(Either.Right(result))
               }
           }
       }

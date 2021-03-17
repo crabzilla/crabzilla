@@ -53,7 +53,7 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
           log.error("upsert snapshot query error", insert.cause())
           promise.fail(insert.cause())
         } else {
-          log.debug("upsert snapshot success $id ${json.encodePrettily()}")
+          log.info("upsert snapshot success $id ${json.encodePrettily()}")
           promise.complete()
         }
       }
@@ -99,7 +99,10 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
         val pq: PreparedStatement = ar0.result()
         // Streams require to run within a transaction
         conn.begin { ar1 ->
-          if (ar1.succeeded()) {
+          if (ar1.failed()) {
+            log.error("When starting transaction", ar1.cause())
+            promise.fail(ar1.cause())
+          } else {
             val tx: Transaction = ar1.result()
             // Fetch ROWS_PER_TIME
             val stream = pq.createStream(ROWS_PER_TIME, Tuple.of(id, aggregateRootName, snapshot?.version ?: 0))
@@ -110,19 +113,17 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
               val event: DomainEvent = json.decodeFromString(jsonObject.encode())
               currentVersion = row.getInteger(1)
               events.add(event as E)
-              if (log.isDebugEnabled) {
-                log.debug("Event: $event version: $currentVersion")
-              }
+              log.info("Event: $event version: $currentVersion")
             }
             stream.endHandler {
-              if (log.isDebugEnabled) log.debug("End of stream")
+              log.info("End of stream")
               // Attempt to commit the transaction
               tx.commit { ar ->
                 if (ar.failed()) {
                   log.error("tx.commit", ar.cause())
                   promise.fail(ar.cause())
                 } else {
-                  if (log.isDebugEnabled) log.debug("tx.commit successfully")
+                  log.info("tx.commit successfully")
                   if (events.size == 0) {
                     promise.complete(snapshot)
                   } else {
