@@ -73,7 +73,10 @@ class PgcEventsPublisher<E : DomainEvent>(
         val pq: PreparedStatement = ar0.result()
         // Streams require to run within a transaction
         conn.begin { ar1 ->
-          if (ar1.succeeded()) {
+          if (ar1.failed()) {
+            promise.fail(ar1.cause())
+            return@begin
+          } else {
             val tx: Transaction = ar1.result()
             // Fetch ROWS_PER_TIME
             val stream = pq.createStream(ROWS_PER_TIME, Tuple.of(aggregateRootName, lastEventId))

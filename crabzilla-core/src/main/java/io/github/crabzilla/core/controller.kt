@@ -49,7 +49,7 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
             promise.fail(err.cause)
           }
           .onSuccess { result: StatefulSession<A, E> ->
-            log.info("Command handled. $result Now let's append events")
+            log.info("Command handled. ${result.currentState} \nNow let's append events ${result.appliedEvents()}")
             eventStore.append(command, metadata, result)
               .onFailure { err ->
                 log.error("When appending events", err)
@@ -65,7 +65,7 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
                     // let's just ignore snapshot error (the principal side effect is on eventSTore, anyway)
                   }
                   .onSuccess {
-                    log.info("Snapshot upsert done: $result")
+                    log.info("Snapshot upsert done: $newSnapshot")
                   }
               }
           }
