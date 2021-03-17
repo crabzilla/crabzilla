@@ -70,5 +70,5 @@ interface EventDeserializer<E : DomainEvent> { // sagas / process managers will 
  * To publish an event to read model, messaging broker, etc (any side effect)
  */
 interface EventPublisher<E : DomainEvent> {
-  fun project(id: Int, event: E): Future<Void>
+  fun publish(id: Int, event: E): Future<Void>
 }

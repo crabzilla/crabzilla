@@ -15,7 +15,7 @@ import io.vertx.sqlclient.Tuple
  * To update customer read model given events
  */
 class CustomerReadModelProjector(private val repo: CustomerRepository) : EventPublisher<CustomerEvent> {
-  override fun project(id: Int, event: CustomerEvent): Future<Void> {
+  override fun publish(id: Int, event: CustomerEvent): Future<Void> {
     return when (event) {
       is CustomerRegistered -> repo.upsert(id, event.name, false)
       is CustomerActivated -> repo.updateStatus(id, true)

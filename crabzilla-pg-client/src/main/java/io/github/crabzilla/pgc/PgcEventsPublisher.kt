@@ -120,7 +120,7 @@ class PgcEventsPublisher<E : DomainEvent>(
         promise.fail(it.cause)
       }
       .onSuccess { listOfTriple ->
-        val futures: List<Future<Void>> = listOfTriple.map { eventPublisher.project(it.first, it.second) }
+        val futures: List<Future<Void>> = listOfTriple.map { eventPublisher.publish(it.first, it.second) }
         log.info("Found $listOfTriple")
         CompositeFuture.join(futures) // TODO fix it to support more than 6 events - using fold or kotlin continuation
           .onFailure {
