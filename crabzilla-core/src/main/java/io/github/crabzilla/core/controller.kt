@@ -35,6 +35,7 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
       return promise.future()
     }
     snapshotRepo.get(metadata.aggregateRootId)
+      .onFailure { err -> promise.fail(err.cause) }
       .onSuccess { snapshot ->
         handler.handleCommand(command, snapshot)
           .onFailure { err -> promise.fail(err.cause) }
@@ -46,11 +47,12 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
                 snapshotRepo.upsert(metadata.aggregateRootId, newSnapshot)
                   .onFailure { err ->
                     log.error("When saving new snapshot", err)
-                  }
-                  .onComplete {
                     // let's just ignore snapshot error (the principal side effect is on eventSTore, anyway)
-                    promise.complete(Either.Right(result))
                   }
+                  .onSuccess {
+                    log.info("Snapshot upsert done: $result")
+                  }
+                promise.complete(Either.Right(result))
               }
           }
       }

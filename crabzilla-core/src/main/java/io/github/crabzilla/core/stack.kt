@@ -66,6 +66,15 @@ class StatefulSession<A : AggregateRoot, E : DomainEvent> {
     val newEvents = fn.invoke(currentState)
     return apply(newEvents)
   }
+
+//  override fun toString(): String {
+//    return jsonObjectOf(
+//      Pair("originalVersion", originalVersion),
+//      Pair("originalState", originalState),
+//      Pair("currentState", currentState),
+//      Pair("appliedEvents", appliedEvents)
+//    ).encodePrettily()
+//  }
 }
 
 /**
