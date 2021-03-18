@@ -67,6 +67,10 @@ class StatefulSession<A : AggregateRoot, E : DomainEvent> {
     return apply(newEvents)
   }
 
+  fun toSessionData(): SessionData {
+    return SessionData(originalVersion, originalState, appliedEvents, currentState)
+  }
+
 //  override fun toString(): String {
 //    return jsonObjectOf(
 //      Pair("originalVersion", originalVersion),
@@ -76,6 +80,13 @@ class StatefulSession<A : AggregateRoot, E : DomainEvent> {
 //    ).encodePrettily()
 //  }
 }
+
+data class SessionData(
+  val originalVersion: Int,
+  val originalState: AggregateRoot,
+  val events: List<DomainEvent>,
+  val newState: AggregateRoot
+)
 
 /**
  * An exception informing an concurrency violation

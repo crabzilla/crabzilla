@@ -114,25 +114,35 @@ class PgcEventsPublisher<E : DomainEvent>(
 
     val promise = Promise.promise<Void>()
     writeModelDb.connection
-      .compose { conn: SqlConnection -> scanForNewEvents(conn) }
       .onFailure {
-        log.error("When pulling new events", it.cause)
+        log.error("When getting a db connection", it.cause)
         promise.fail(it.cause)
       }
-      .onSuccess { listOfTriple ->
-        val futures: List<Future<Void>> = listOfTriple.map { eventPublisher.publish(it.first, it.second) }
-        log.info("Found $listOfTriple")
-        CompositeFuture.join(futures) // TODO fix it to support more than 6 events - using fold or kotlin continuation
+      .onSuccess { conn: SqlConnection ->
+        scanForNewEvents(conn)
           .onFailure {
-            log.error("Error: ", it.cause)
+            log.error("When pulling new events", it.cause)
             promise.fail(it.cause)
           }
-          .onSuccess {
-            log.info("Fine")
-            if (listOfTriple.isNotEmpty()) {
-              lastEventId.set(listOfTriple.last().third)
-            }
-            promise.complete()
+          .onSuccess { listOfTriple ->
+            val futures: List<Future<Void>> = listOfTriple.map { eventPublisher.publish(it.first, it.second) }
+            log.info("Found $listOfTriple")
+            CompositeFuture.join(futures) // TODO fix it to support more than 6 events - using fold or kotlin continuation
+              .onFailure {
+                log.error("When publishing events: ", it.cause)
+                promise.fail(it.cause)
+              }
+              .onSuccess {
+                log.info("Events sucessfully published")
+                if (listOfTriple.isNotEmpty()) {
+                  lastEventId.set(listOfTriple.last().third)
+                }
+                promise.complete()
+              }
+          }.onComplete {
+            conn.close()
+              .onFailure { log.error("When closing the db connection", it.cause) }
+              .onSuccess { log.info("Database connection closed") }
           }
       }
     return promise.future()

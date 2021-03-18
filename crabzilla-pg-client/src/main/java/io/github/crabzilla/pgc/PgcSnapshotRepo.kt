@@ -43,6 +43,7 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
         " VALUES ($1, $2, $3) " +
         " ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"
     }
+
     val promise = Promise.promise<Void>()
     val json = JsonObject(json.encodeToString(AGGREGATE_ROOT_SERIALIZER, snapshot.state))
     val insertSql = upsertSnapshot()
@@ -144,10 +145,26 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
 
     val promise = Promise.promise<Snapshot<A>>()
     writeModelDb.connection
-      .compose { conn: SqlConnection -> currentSnapshot(conn) }
-      .compose { pair -> newSnapshot(pair.first, pair.second) }
-      .onSuccess { newSnapshot -> promise.complete(newSnapshot) }
-      .onFailure { err -> promise.fail(err) }
+      .onFailure {
+        log.error("When getting connection", it)
+      }
+      .onSuccess { conn: SqlConnection ->
+        currentSnapshot(conn)
+          .compose { pair -> newSnapshot(pair.first, pair.second) }
+          .onSuccess { newSnapshot -> promise.complete(newSnapshot) }
+          .onFailure {
+            log.error("When getting new snapshot", it)
+          }
+          .onComplete {
+            conn.close()
+              .onFailure {
+                log.error("When closing connection", it)
+              }
+              .onSuccess {
+                log.info("Connection was closed")
+              }
+          }
+      }
     return promise.future()
   }
 }
