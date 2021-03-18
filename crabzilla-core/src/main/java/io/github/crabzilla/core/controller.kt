@@ -28,7 +28,7 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
   fun handle(metadata: CommandMetadata, command: C): Future<Either<List<String>, StatefulSession<A, E>>> {
     // TODO also return metadata (internal ids)
     val promise = Promise.promise<Either<List<String>, StatefulSession<A, E>>>()
-    log.info("received $metadata\n $command")
+    log.info("received $command")
     val validationErrors = validator.validate(command)
     if (validationErrors.isNotEmpty()) {
       promise.complete(Either.Left(validationErrors))
@@ -49,7 +49,8 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
             promise.fail(err.cause)
           }
           .onSuccess { result: StatefulSession<A, E> ->
-            log.info("Command handled. ${result.currentState} \nNow let's append events ${result.appliedEvents()}")
+            log.info("Command handled. ${result.currentState}")
+            log.info("Now let's append events ${result.appliedEvents()}")
             eventStore.append(command, metadata, result)
               .onFailure { err ->
                 log.error("When appending events", err)

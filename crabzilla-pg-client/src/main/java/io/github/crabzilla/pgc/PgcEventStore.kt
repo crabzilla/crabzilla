@@ -51,9 +51,13 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       val params0 = Tuple.of(metadata.aggregateRootId, session.currentState::class.simpleName)
       conn.preparedQuery(SQL_SELECT_CURRENT_VERSION)
         .execute(params0)
-        .onFailure { err -> promise0.fail(err) }
+        .onFailure { err ->
+          log.error("When preparing query $SQL_SELECT_CURRENT_VERSION", err.cause)
+          promise0.fail(err)
+        }
         .onSuccess { event1 ->
           val currentVersion = event1.first()?.getInteger("last_version") ?: 0
+          log.info("Got current version: $currentVersion")
           when {
             currentVersion == expectedVersionAfterAppend -> {
               val message = "The current version is already the expected new version $expectedVersionAfterAppend"
@@ -136,22 +140,51 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
 
     val promise = Promise.promise<Void>()
     writeModelDb.connection
+      .onFailure {
+        log.error("When getting the db connection", it)
+        promise.fail(it)
+      }
       .onSuccess { conn ->
         conn.begin()
           .compose { tx ->
             checkVersion(conn)
-              .compose { appendCommand(conn) }
-              .compose { commandId -> appendEvents(conn, commandId) }
-              .compose { notifyPgChannel(conn) }
+              .onFailure {
+                log.error("Version error", it)
+                promise.fail(it)
+              }
               .onSuccess {
-                tx.commit()
-                promise.complete()
+                appendCommand(conn)
+                  .compose { commandId -> appendEvents(conn, commandId) }
+                  .compose { notifyPgChannel(conn) }
+                  .onSuccess {
+                    log.info("Will commit transaction")
+                    tx.commit()
+                      .onFailure {
+                        log.error("When committing the transaction", it.cause)
+                        promise.fail(it.cause)
+                      }
+                      .onSuccess {
+                        log.info("Transaction committed")
+                        promise.complete()
+                      }
+                      .onFailure { err ->
+                        log.error("Will rollback transaction given", err)
+                        tx.rollback()
+                          .onFailure {
+                            log.error("When rollback the transaction", it.cause)
+                          }
+                          .onSuccess {
+                            log.info("Transaction rolledback")
+                          }
+                      }
+                      .onComplete {
+                        log.info("Will close the db connection **")
+                        conn.close()
+                          .onFailure { log.error("When closing db connection") }
+                          .onSuccess { log.info("Connection closed") }
+                      }
+                  }
               }
-              .onFailure { err ->
-                tx.rollback()
-                promise.fail(err)
-              }
-              .eventually { conn.close() }
           }
       }
     return promise.future()
