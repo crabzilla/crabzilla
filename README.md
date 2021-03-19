@@ -10,9 +10,6 @@ To help writing CQRS and Event Sourcing applications with [Vert.x](http://vertx.
 
 It's still in very early development stage. Do not use release 0.0.5, master branch is very different from that.
 
-### Example
-* [Accounts Example - old version](https://github.com/crabzilla/accounts)
-
 ### Building
 
 ###### Requirements

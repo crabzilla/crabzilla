@@ -71,14 +71,6 @@ class StatefulSession<A : AggregateRoot, E : DomainEvent> {
     return SessionData(originalVersion, originalState, appliedEvents, currentState)
   }
 
-//  override fun toString(): String {
-//    return jsonObjectOf(
-//      Pair("originalVersion", originalVersion),
-//      Pair("originalState", originalState),
-//      Pair("currentState", currentState),
-//      Pair("appliedEvents", appliedEvents)
-//    ).encodePrettily()
-//  }
 }
 
 data class SessionData(
