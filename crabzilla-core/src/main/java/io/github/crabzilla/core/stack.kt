@@ -70,7 +70,6 @@ class StatefulSession<A : AggregateRoot, E : DomainEvent> {
   fun toSessionData(): SessionData {
     return SessionData(originalVersion, originalState, appliedEvents, currentState)
   }
-
 }
 
 data class SessionData(

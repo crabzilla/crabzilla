@@ -9,7 +9,7 @@ services:
 #      - 8080:8080
 
   db:
-    image: postgres:11-alpine
+    image: postgres:13.2-alpine
     environment:
       POSTGRES_USER: user1
       POSTGRES_PASSWORD: pwd1

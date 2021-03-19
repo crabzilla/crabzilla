@@ -105,7 +105,8 @@ val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
 }
 
 /**
- * This function will apply an event to customer state
+ * This function will apply an event to customer state.
+ * Just in case: https://www.47deg.com/academy/2020-07-14-looking-into-immutable-data-with-optics-talk/
  */
 val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event ->
   when (event) {
