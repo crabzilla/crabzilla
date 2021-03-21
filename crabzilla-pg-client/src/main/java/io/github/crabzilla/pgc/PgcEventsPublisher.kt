@@ -2,6 +2,8 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EventPublisher
+import io.github.crabzilla.pgc.PgcClient.close
+import io.github.crabzilla.pgc.PgcClient.commit
 import io.vertx.core.AsyncResult
 import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
@@ -9,9 +11,7 @@ import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnection
 import io.vertx.pgclient.PgPool
-import io.vertx.sqlclient.PreparedStatement
 import io.vertx.sqlclient.SqlConnection
-import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -65,48 +65,36 @@ class PgcEventsPublisher<E : DomainEvent>(
     fun scanForNewEvents(conn: SqlConnection): Future<List<Triple<Int, E, Long>>> {
       val promise = Promise.promise<List<Triple<Int, E, Long>>>()
       val events = mutableListOf<Triple<Int, E, Long>>()
-      conn.prepare(SELECT_EVENTS_VERSION_AFTER_VERSION) { ar0 ->
-        if (ar0.failed()) {
-          promise.fail(ar0.cause())
-          return@prepare
-        }
-        val pq: PreparedStatement = ar0.result()
-        // Streams require to run within a transaction
-        conn.begin { ar1 ->
-          if (ar1.failed()) {
-            promise.fail(ar1.cause())
-            return@begin
-          } else {
-            val tx: Transaction = ar1.result()
-            // Fetch ROWS_PER_TIME
-            val stream = pq.createStream(ROWS_PER_TIME, Tuple.of(aggregateRootName, lastEventId))
-            // Use the stream
-            stream.exceptionHandler { err -> log.error("Stream error", err) }
-            stream.handler { row ->
-              val jsonObject: JsonObject = row.get(JsonObject::class.java, 0)
-              val event: DomainEvent = json.decodeFromString(jsonObject.encode())
-              val triple = Triple(row.getInteger(1), event as E, row.getLong(2))
-              events.add(triple)
-              if (log.isDebugEnabled) {
-                log.debug("$triple")
-              }
+      conn.prepare(SELECT_EVENTS_VERSION_AFTER_VERSION)
+        .onFailure { promise.fail(it) }
+        .onSuccess { preparedStatement ->
+          // Streams require to run within a transaction
+          conn.begin()
+            .onFailure {
+              promise.fail(it)
             }
-            stream.endHandler {
-              if (log.isDebugEnabled) log.debug("End of stream")
-              // Attempt to commit the transaction
-              tx.commit { ar ->
-                if (ar.failed()) {
-                  log.error("tx.commit", ar.cause())
-                  promise.fail(ar.cause())
-                } else {
-                  if (log.isDebugEnabled) log.debug("tx.commit successfully")
-                  promise.complete(events)
+            .onSuccess { tx ->
+              // Fetch ROWS_PER_TIME
+              val stream = preparedStatement.createStream(ROWS_PER_TIME, Tuple.of(aggregateRootName, lastEventId))
+              // Use the stream
+              stream.exceptionHandler { err -> log.error("Stream error", err) }
+              stream.handler { row ->
+                val jsonObject: JsonObject = row.get(JsonObject::class.java, 0)
+                val event: DomainEvent = json.decodeFromString(jsonObject.encode())
+                val triple = Triple(row.getInteger(1), event as E, row.getLong(2))
+                events.add(triple)
+                if (log.isDebugEnabled) {
+                  log.debug("$triple")
                 }
               }
+              stream.endHandler {
+                if (log.isDebugEnabled) log.debug("End of stream")
+                commit(tx)
+                  .onFailure { promise.fail(it) }
+                  .onSuccess { promise.complete(events) }
+              }
             }
-          }
         }
-      }
       return promise.future()
     }
 
@@ -140,9 +128,7 @@ class PgcEventsPublisher<E : DomainEvent>(
                 promise.complete()
               }
           }.onComplete {
-            conn.close()
-              .onFailure { log.error("When closing the db connection", it.cause) }
-              .onSuccess { log.info("Database connection closed") }
+            close(conn)
           }
       }
     return promise.future()

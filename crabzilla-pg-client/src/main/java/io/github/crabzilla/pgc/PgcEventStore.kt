@@ -9,6 +9,9 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EventStore
 import io.github.crabzilla.core.OptimisticConcurrencyConflict
 import io.github.crabzilla.core.StatefulSession
+import io.github.crabzilla.pgc.PgcClient.close
+import io.github.crabzilla.pgc.PgcClient.commit
+import io.github.crabzilla.pgc.PgcClient.rollback
 import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
 import io.vertx.core.Promise
@@ -17,6 +20,7 @@ import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlConnection
+import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
@@ -146,42 +150,37 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       }
       .onSuccess { conn ->
         conn.begin()
-          .compose { tx ->
+          .onFailure {
+            log.error("When starting transaction", it)
+            promise.fail(it)
+            close(conn)
+          }
+          .onSuccess { tx: Transaction ->
             checkVersion(conn)
               .onFailure {
                 log.error("Version error", it)
+                rollback(tx, it)
+                close(conn)
                 promise.fail(it)
               }
               .onSuccess {
                 appendCommand(conn)
                   .compose { commandId -> appendEvents(conn, commandId) }
                   .compose { notifyPgChannel(conn) }
+                  .onFailure {
+                    rollback(tx, it)
+                    close(conn)
+                    promise.fail(it)
+                  }
                   .onSuccess {
-                    log.info("Will commit transaction")
-                    tx.commit()
+                    commit(tx)
                       .onFailure {
-                        log.error("When committing the transaction", it.cause)
-                        promise.fail(it.cause)
-                      }
-                      .onSuccess {
-                        log.info("Transaction committed")
+                        rollback(tx, it)
+                        close(conn)
+                        promise.fail(it)
+                      }.onSuccess {
                         promise.complete()
-                      }
-                      .onFailure { err ->
-                        log.error("Will rollback transaction given", err)
-                        tx.rollback()
-                          .onFailure {
-                            log.error("When rollback the transaction", it.cause)
-                          }
-                          .onSuccess {
-                            log.info("Transaction rolledback")
-                          }
-                      }
-                      .onComplete {
-                        log.info("Will close the db connection **")
-                        conn.close()
-                          .onFailure { log.error("When closing db connection") }
-                          .onSuccess { log.info("Connection closed") }
+                        close(conn)
                       }
                   }
               }

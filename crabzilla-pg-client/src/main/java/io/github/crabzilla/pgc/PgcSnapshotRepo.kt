@@ -7,6 +7,7 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.SnapshotRepository
+import io.github.crabzilla.pgc.PgcClient.close
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
@@ -147,6 +148,7 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
     writeModelDb.connection
       .onFailure {
         log.error("When getting connection", it)
+        promise.fail(it)
       }
       .onSuccess { conn: SqlConnection ->
         currentSnapshot(conn)
@@ -156,13 +158,7 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
             log.error("When getting new snapshot", it)
           }
           .onComplete {
-            conn.close()
-              .onFailure {
-                log.error("When closing connection", it)
-              }
-              .onSuccess {
-                log.info("Connection was closed")
-              }
+            close(conn)
           }
       }
     return promise.future()
