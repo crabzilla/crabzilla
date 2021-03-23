@@ -68,13 +68,13 @@ class StatefulSession<A : AggregateRoot, E : DomainEvent> {
   }
 
   fun toSessionData(): SessionData {
-    return SessionData(originalVersion, originalState, appliedEvents, currentState)
+    return SessionData(originalVersion, if (originalVersion == 0) null else originalState, appliedEvents, currentState)
   }
 }
 
 data class SessionData(
   val originalVersion: Int,
-  val originalState: AggregateRoot,
+  val originalState: AggregateRoot?,
   val events: List<DomainEvent>,
   val newState: AggregateRoot
 )

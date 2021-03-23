@@ -1,22 +1,26 @@
 package io.github.crabzilla.example1
 
-import io.github.crabzilla.core.EventPublisher
+import io.github.crabzilla.core.DOMAIN_EVENT_SERIALIZER
+import io.github.crabzilla.core.JsonEventPublisher
 import io.github.crabzilla.example1.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.CustomerEvent.CustomerRegistered
 import io.vertx.core.Future
 import io.vertx.core.Promise
+import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
+import kotlinx.serialization.json.Json
 
 /**
  * To update customer read model given events
  */
-class CustomerReadModelProjector(private val repo: CustomerRepository) : EventPublisher<CustomerEvent> {
-  override fun publish(id: Int, event: CustomerEvent): Future<Void> {
-    return when (event) {
+class CustomerReadModelProjector(private val json: Json, private val repo: CustomerRepository) : JsonEventPublisher {
+
+  override fun publish(eventId: Long, id: Int, eventAsJson: JsonObject): Future<Void> {
+    return when (val event = json.decodeFromString(DOMAIN_EVENT_SERIALIZER, eventAsJson.toString()) as CustomerEvent) {
       is CustomerRegistered -> repo.upsert(id, event.name, false)
       is CustomerActivated -> repo.updateStatus(id, true)
       is CustomerDeactivated -> repo.updateStatus(id, false)

@@ -9,7 +9,6 @@ import io.github.crabzilla.core.CommandHandler.ConstructorResult
 import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EventHandler
-import io.github.crabzilla.core.EventSerializer
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.SnapshotTableName
 import io.github.crabzilla.core.StatefulSession
@@ -20,8 +19,6 @@ import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.CustomerEvent.CustomerRegistered
-import io.vertx.core.json.JsonObject
-import io.vertx.kotlin.core.json.jsonObjectOf
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -162,17 +159,17 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
  * To export domain events into integration events
  */
 
-class CustomerEventSer : EventSerializer<CustomerEvent> {
-  override fun toJson(e: CustomerEvent): Result<JsonObject> {
-    return runCatching {
-      when (e) {
-        is CustomerRegistered -> jsonObjectOf(Pair("companyId", e.id), Pair("name", e.name))
-        is CustomerActivated -> jsonObjectOf(Pair("reason", e.reason))
-        is CustomerDeactivated -> jsonObjectOf(Pair("reason", e.reason))
-      }
-    }
-  }
-}
+// class CustomerEventSer : EventSerializer<CustomerEvent> {
+//  override fun toJson(e: CustomerEvent): Result<JsonObject> {
+//    return runCatching {
+//      when (e) {
+//        is CustomerRegistered -> jsonObjectOf(Pair("companyId", e.id), Pair("name", e.name))
+//        is CustomerActivated -> jsonObjectOf(Pair("reason", e.reason))
+//        is CustomerDeactivated -> jsonObjectOf(Pair("reason", e.reason))
+//      }
+//    }
+//  }
+// }
 
 // TODO class CustomerEventDes : EventDeserializer<IntegrationEvent>
 

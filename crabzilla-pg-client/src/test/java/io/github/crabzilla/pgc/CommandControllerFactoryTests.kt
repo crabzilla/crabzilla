@@ -51,8 +51,8 @@ class CommandControllerFactoryTests {
           is Either.Left -> println(ok.value.toString())
           is Either.Right -> {
             println(ok.value)
-            val projector = CustomerReadModelProjector(CustomerRepository(readDb))
-            val publisher = PgcEventsPublisher(projector, customerConfig.name.value, writeDb, customerJson)
+            val projector = CustomerReadModelProjector(customerJson, CustomerRepository(readDb))
+            val publisher = PgcEventsJsonPublisher(projector, customerConfig.name, writeDb)
             publisher.scan() // to force the scan of new events
               .onFailure { err ->
                 err.printStackTrace()

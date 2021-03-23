@@ -52,23 +52,30 @@ interface CommandHandler<A : AggregateRoot, C : Command, E : DomainEvent> {
   fun handleCommand(command: C, snapshot: Snapshot<A>?): Result<StatefulSession<A, E>>
 }
 
-/**
- * To serialize events into plain JSON (integration events)
- */
-interface EventSerializer<E : Any> {
-  fun toJson(e: E): Result<JsonObject>
-}
+// /**
+// * To serialize events into plain JSON (integration events)
+// */
+// interface EventSerializer<E : Any> {
+//  fun toJson(e: E): Result<JsonObject>
+// }
+//
+// /**
+// * To deserialize integration events from upstream services
+// */
+// interface EventDeserializer<E : DomainEvent> { // sagas / process managers will need it
+//  fun fromJson(type: String, j: JsonObject): Result<E>
+// }
+
+// /**
+// * To publish an domain event to read model, messaging broker, etc (any side effect)
+// */
+// interface TypedEventPublisher<E : DomainEvent> {
+//  fun publish(eventId: Long, id: Int, event: E): Future<Void> // what about correlation id, etc?
+// }
 
 /**
- * To deserialize integration events from upstream services
+ * To publish an event as JSON to read model, messaging broker, etc (any side effect)
  */
-interface EventDeserializer<E : DomainEvent> { // sagas / process managers will need it
-  fun fromJson(type: String, j: JsonObject): Result<E>
-}
-
-/**
- * To publish an event to read model, messaging broker, etc (any side effect)
- */
-interface EventPublisher<E : DomainEvent> {
-  fun publish(id: Int, event: E): Future<Void>
+interface JsonEventPublisher {
+  fun publish(eventId: Long, id: Int, eventAsJson: JsonObject): Future<Void> // what about correlation id, etc?
 }
