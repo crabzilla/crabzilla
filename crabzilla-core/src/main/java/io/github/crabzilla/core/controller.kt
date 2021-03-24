@@ -5,7 +5,7 @@ import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-import java.util.*
+import java.util.UUID
 
 /**
  * Given a command
@@ -101,7 +101,6 @@ interface JsonEventPublisher {
 }
 
 class AggregateRootConfig<A : AggregateRoot, C : Command, E : DomainEvent> (
-  val boundedContextName: BoundedContextName,
   val name: AggregateRootName,
   val snapshotTableName: SnapshotTableName,
   val eventHandler: EventHandler<A, E>,
