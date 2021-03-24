@@ -3,6 +3,7 @@ package io.github.crabzilla.example1
 import io.github.crabzilla.core.AggregateRoot
 import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.AggregateRootName
+import io.github.crabzilla.core.BoundedContextName
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandHandler.ConstructorResult
@@ -154,25 +155,14 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
     }
 }
 
-/**
- * To export domain events into integration events
- */
-
-// class CustomerEventSer : EventSerializer<CustomerEvent> {
-//  override fun toJson(e: CustomerEvent): Result<JsonObject> {
-//    return runCatching {
-//      when (e) {
-//        is CustomerRegistered -> jsonObjectOf(Pair("companyId", e.id), Pair("name", e.name))
-//        is CustomerActivated -> jsonObjectOf(Pair("reason", e.reason))
-//        is CustomerDeactivated -> jsonObjectOf(Pair("reason", e.reason))
-//      }
-//    }
-//  }
-// }
-
 // TODO class CustomerEventDes : EventDeserializer<IntegrationEvent>
 
 val customerConfig = AggregateRootConfig(
-  AggregateRootName("Customer"), SnapshotTableName("customer_snapshots"),
-  customerEventHandler, customerCmdValidator, CustomerCommandHandler, customerJson
+  BoundedContextName("example1"),
+  AggregateRootName("Customer"),
+  SnapshotTableName("customer_snapshots"),
+  customerEventHandler,
+  customerCmdValidator,
+  CustomerCommandHandler,
+  customerJson
 )

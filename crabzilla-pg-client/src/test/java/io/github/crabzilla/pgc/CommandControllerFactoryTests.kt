@@ -42,7 +42,8 @@ class CommandControllerFactoryTests {
   @DisplayName("it can create a command controller, send a command and have both write and read model side effects")
   // TODO break it into smaller steps/assertions: check both write and real models persistence after handling a command
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val controller = CommandControllerFactory.create(customerConfig, writeDb)
+    val topic = "example1"
+    val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, writeDb)
     assertThat(controller).isNotNull
     controller.handle(CommandMetadata(1), CustomerCommand.RegisterCustomer(1, "cust#1"))
       .onFailure { tc.failNow(it.cause) }
@@ -52,11 +53,11 @@ class CommandControllerFactoryTests {
           is Either.Right -> {
             println(ok.value)
             val projector = CustomerReadModelProjector(customerJson, CustomerRepository(readDb))
-            val publisher = PgcEventsJsonPublisher(projector, customerConfig.name, writeDb)
+            val publisher = PgcOutboxPublisher("example1", projector, writeDb)
             publisher.scan() // to force the scan of new events
               .onFailure { err ->
                 err.printStackTrace()
-                tc.failNow(err.cause)
+                tc.failNow(err)
               }
               .onSuccess {
                 tc.completeNow()

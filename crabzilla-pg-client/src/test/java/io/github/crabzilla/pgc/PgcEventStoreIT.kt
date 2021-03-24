@@ -1,5 +1,6 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.core.BoundedContextName
 import io.github.crabzilla.core.CommandMetadata
 import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.example1.Customer
@@ -37,8 +38,9 @@ class PgcEventStoreIT {
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     getConfig(vertx)
       .compose { config ->
+        val boundedContextName = BoundedContextName("example1")
         writeDb = writeModelPgPool(vertx, config)
-        eventStore = PgcEventStore("customer", writeDb, customerJson)
+        eventStore = PgcEventStore(boundedContextName.name, writeDb, customerJson)
         cleanDatabase(vertx, config)
       }
       .onFailure { tc.failNow(it.cause) }
@@ -46,8 +48,8 @@ class PgcEventStoreIT {
         writeDb.getConnection { c: AsyncResult<SqlConnection> ->
           val pgConn = c.result() as PgConnection
           pgConn
-            .query("LISTEN ${eventStore.channel}")
-            .execute { ar -> println("Subscribed to channel ${eventStore.channel} $ar") }
+            .query("LISTEN ${eventStore.topic}")
+            .execute { ar -> println("Subscribed to channel ${eventStore.topic} $ar") }
           pgConn.notificationHandler {
             println("Received a notification #${notifications.incrementAndGet()} from channel ${it.channel}")
           }

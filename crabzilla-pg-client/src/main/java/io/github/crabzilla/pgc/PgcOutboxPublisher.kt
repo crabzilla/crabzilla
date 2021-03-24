@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.core.AggregateRootName
+import io.github.crabzilla.core.EventRecord
 import io.github.crabzilla.core.JsonEventPublisher
 import io.github.crabzilla.pgc.PgcClient.close
 import io.github.crabzilla.pgc.PgcClient.commit
@@ -19,22 +19,20 @@ import java.util.concurrent.atomic.AtomicLong
 
 /**
  * This component will be triggered using a Postgres LISTEN command. Then it can publish the domain events to
- * 1) Read model
- * 2) Downstream services. In this case the EventPublisher implementation should apply a function to export
- * an Integration Event instead. And also transform it into plain JSON. The publisher and consumers should agree
- * on a JSON schema to reduce libraries coupling and the versioning overhead.
+ * a JsonEventPublisher (may be a outbox publisher to any broker).
  */
-class PgcEventsJsonPublisher(
+class PgcOutboxPublisher(
+  private val topic: String,
   private val jsonEventPublisher: JsonEventPublisher,
-  private val aggregateRootName: AggregateRootName,
   private val writeModelDb: PgPool
 ) {
 
   companion object {
-    private val log = LoggerFactory.getLogger(PgcEventsJsonPublisher::class.java)
+    private val log = LoggerFactory.getLogger(PgcOutboxPublisher::class.java)
     private const val SELECT_EVENTS_VERSION_AFTER_VERSION =
-      "SELECT event_payload, ar_id, event_id FROM events " +
-        "WHERE ar_name = $1 and event_id > $2 " +
+      "SELECT ar_name, ar_id, event_payload, event_id " +
+        "FROM events " +
+        "WHERE event_id > $1 " +
         "ORDER BY event_id " +
         "LIMIT 6 " // TODO fix it to support more than 6 events per scan
     private const val ROWS_PER_TIME = 1000
@@ -48,8 +46,8 @@ class PgcEventsJsonPublisher(
     writeModelDb.getConnection { c: AsyncResult<SqlConnection> ->
       pgConn = c.result() as PgConnection
       pgConn
-        .query("LISTEN ${aggregateRootName.value}")
-        .execute { ar -> log.info("Subscribed to channel ${aggregateRootName.value} $ar") }
+        .query("LISTEN $topic")
+        .execute { ar -> log.info("Subscribed to channel $topic ${ar.result()}") }
       pgConn.notificationHandler {
         log.info("Received a notification #${notifications.incrementAndGet()} from channel ${it.channel}")
         scan()
@@ -59,28 +57,27 @@ class PgcEventsJsonPublisher(
 
   fun scan(): Future<Void> {
 
-    fun scanForNewEvents(conn: SqlConnection): Future<List<Triple<Int, JsonObject, Long>>> {
-      val promise = Promise.promise<List<Triple<Int, JsonObject, Long>>>()
-      val events = mutableListOf<Triple<Int, JsonObject, Long>>()
+    fun scanForNewEvents(conn: SqlConnection): Future<List<EventRecord>> {
+      val promise = Promise.promise<List<EventRecord>>()
+      val events = mutableListOf<EventRecord>()
       conn.prepare(SELECT_EVENTS_VERSION_AFTER_VERSION)
         .onFailure { promise.fail(it) }
         .onSuccess { preparedStatement ->
           // Streams require to run within a transaction
           conn.begin()
-            .onFailure {
-              promise.fail(it)
-            }
+            .onFailure { promise.fail(it) }
             .onSuccess { tx ->
               // Fetch ROWS_PER_TIME
-              val stream = preparedStatement.createStream(ROWS_PER_TIME, Tuple.of(aggregateRootName.value, lastEventId))
+              val stream = preparedStatement.createStream(ROWS_PER_TIME, Tuple.of(lastEventId))
               // Use the stream
               stream.exceptionHandler { err -> log.error("Stream error", err) }
               stream.handler { row ->
-                val jsonObject: JsonObject = row.get(JsonObject::class.java, 0)
-                val triple = Triple(row.getInteger(1), jsonObject, row.getLong(2))
-                events.add(triple)
+                log.info(row.deepToString())
+                val jsonObject: JsonObject = row.get(JsonObject::class.java, 2)
+                val record = EventRecord(row.getString(0), row.getInteger(1), jsonObject, row.getLong(3))
+                events.add(record)
                 if (log.isDebugEnabled) {
-                  log.debug("$triple")
+                  log.debug("$record")
                 }
               }
               stream.endHandler {
@@ -94,27 +91,24 @@ class PgcEventsJsonPublisher(
       return promise.future()
     }
 
-    log.info("Will scan ${aggregateRootName.value} events since $lastEventId")
+    log.info("Will scan $topic events since $lastEventId")
 
     val promise = Promise.promise<Void>()
     writeModelDb.connection
       .onFailure { promise.fail(it) }
       .onSuccess { conn: SqlConnection ->
         scanForNewEvents(conn)
-          .onFailure {
-            promise.fail(it)
-          }
-          .onSuccess { listOfTriple ->
-            val futures: List<Future<Void>> = listOfTriple.map { jsonEventPublisher.publish(it.third, it.first, it.second) }
-            log.info("Found $listOfTriple")
+          .onFailure { promise.fail(it) }
+          .onSuccess { eventsList ->
+            val futures: List<Future<Void>> = eventsList
+              .map { jsonEventPublisher.publish(it) }
+            log.info("Found $eventsList")
             CompositeFuture.join(futures) // TODO fix it to support more than 6 events - using fold or kotlin continuation
-              .onFailure {
-                promise.fail(it)
-              }
+              .onFailure { promise.fail(it) }
               .onSuccess {
                 log.info("Events successfully published")
-                if (listOfTriple.isNotEmpty()) {
-                  lastEventId.set(listOfTriple.last().third)
+                if (eventsList.isNotEmpty()) {
+                  lastEventId.set(eventsList.last().eventId)
                 }
                 promise.complete()
               }

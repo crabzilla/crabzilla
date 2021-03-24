@@ -37,7 +37,7 @@ object PgcClient {
   }
 
   fun close(conn: SqlConnection) {
-    log.info("Will close the db connection **")
+    log.info("Will close db connection")
     conn.close()
       .onFailure { log.error("When closing db connection") }
       .onSuccess { log.info("Connection closed") }

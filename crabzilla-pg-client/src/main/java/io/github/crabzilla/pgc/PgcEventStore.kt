@@ -26,7 +26,7 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 
 class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
-  val channel: String,
+  val topic: String,
   private val writeModelDb: PgPool,
   private val json: Json
 ) : EventStore<A, C, E> {
@@ -139,7 +139,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
     }
 
     fun notifyPgChannel(conn: SqlConnection): Future<RowSet<Row>>? {
-      return conn.query("NOTIFY $channel").execute()
+      return conn.query("NOTIFY $topic").execute()
     }
 
     val promise = Promise.promise<Void>()
@@ -173,6 +173,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
                     promise.fail(it)
                   }
                   .onSuccess {
+                    log.info("Notified pg topic $topic")
                     commit(tx)
                       .onFailure {
                         rollback(tx, it)

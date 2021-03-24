@@ -98,6 +98,10 @@ https://dev.to/sip3/how-to-extend-vert-x-eventbus-api-to-save-on-serialization-3
 
 
         /**
+         * https://eventuate.io/docs/manual/eventuate-tram/latest/cdc-configuration.html - singleton process
+          * https://domaincentric.net/blog/event-sourcing-projections-patterns-consumer-scaling
+          *  https://eventuate.io/docs/manual/eventuate-tram/latest/cdc-configuration.html
+          *  https://github.com/amelbakry/kubernetes-active-passive
          TODO crabzilla-pg-nats-producer (eventuate tram) para publicar eventos no nats tendo como  gatilho o PG sql messaging mechanism
           usar um vertx schema validator antes de publicar
 

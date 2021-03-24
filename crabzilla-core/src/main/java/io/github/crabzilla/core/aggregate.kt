@@ -1,7 +1,5 @@
 package io.github.crabzilla.core
 
-import io.vertx.core.Future
-import io.vertx.core.json.JsonObject
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -50,32 +48,4 @@ interface CommandHandler<A : AggregateRoot, C : Command, E : DomainEvent> {
     }
 
   fun handleCommand(command: C, snapshot: Snapshot<A>?): Result<StatefulSession<A, E>>
-}
-
-// /**
-// * To serialize events into plain JSON (integration events)
-// */
-// interface EventSerializer<E : Any> {
-//  fun toJson(e: E): Result<JsonObject>
-// }
-//
-// /**
-// * To deserialize integration events from upstream services
-// */
-// interface EventDeserializer<E : DomainEvent> { // sagas / process managers will need it
-//  fun fromJson(type: String, j: JsonObject): Result<E>
-// }
-
-// /**
-// * To publish an domain event to read model, messaging broker, etc (any side effect)
-// */
-// interface TypedEventPublisher<E : DomainEvent> {
-//  fun publish(eventId: Long, id: Int, event: E): Future<Void> // what about correlation id, etc?
-// }
-
-/**
- * To publish an event as JSON to read model, messaging broker, etc (any side effect)
- */
-interface JsonEventPublisher {
-  fun publish(eventId: Long, id: Int, eventAsJson: JsonObject): Future<Void> // what about correlation id, etc?
 }

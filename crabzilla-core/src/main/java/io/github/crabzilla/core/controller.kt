@@ -2,9 +2,10 @@ package io.github.crabzilla.core
 
 import io.vertx.core.Future
 import io.vertx.core.Promise
+import io.vertx.core.json.JsonObject
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-import java.util.UUID
+import java.util.*
 
 /**
  * Given a command
@@ -85,10 +86,22 @@ data class CommandMetadata(
   val correlationID: UUID = id
 )
 
+inline class BoundedContextName(val name: String)
 inline class AggregateRootName(val value: String)
 inline class SnapshotTableName(val value: String)
 
+data class EventRecord(val aggregateName: String, val aggregateId: Int, val eventAsjJson: JsonObject, val eventId: Long)
+
+/**
+ * To publish an event as JSON to read model, messaging broker, etc (any side effect)
+ */
+interface JsonEventPublisher {
+  fun publish(eventRecord: EventRecord): Future<Void>
+  // what about correlation id, etc?
+}
+
 class AggregateRootConfig<A : AggregateRoot, C : Command, E : DomainEvent> (
+  val boundedContextName: BoundedContextName,
   val name: AggregateRootName,
   val snapshotTableName: SnapshotTableName,
   val eventHandler: EventHandler<A, E>,
