@@ -19,10 +19,11 @@ class EventBusEventsPublisher(private val topic: String, private val eventbus: E
     var error = false
     for (event in eventRecords) {
       try {
-        eventbus.publish(topic, event)
+        eventbus.publish(topic, event.toJsonObject())
         if (log.isDebugEnabled) log.debug("Published $event to $topic")
         lastPublished = event.eventId
       } catch (e: Exception) {
+        log.error("When publishing $event", e)
         promise.fail(e)
         error = true
         break
