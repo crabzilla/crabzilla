@@ -80,7 +80,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       return promise0.future()
     }
 
-    fun appendCommand(conn: SqlConnection): Future<Long> { // TODO receber expectedVersion e currentVersion
+    fun appendCommand(conn: SqlConnection): Future<Long> {
       val promise0 = Promise.promise<Long>()
       val cmdAsJsonObject: String = json.encodeToString(COMMAND_SERIALIZER, command)
       val params = Tuple.of(
@@ -122,24 +122,18 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           }
         return promise0.future()
       }
-
       val promise0 = Promise.promise<Void>()
-      // TODO fix to support more than 6 events per command (using fold)
       val futures: List<Future<Void>> = session.appliedEvents().map { event -> appendEvent(conn, event) }
-      CompositeFuture.all(futures).onComplete { ar ->
+      CompositeFuture.all(futures).onComplete { ar -> // TODO support more than 6 events per command
         if (ar.succeeded()) {
           promise0.complete()
           log.info("Append events ok")
         } else {
           promise0.fail(ar.cause())
-          log.error("Transaction failed 3: " + ar.cause().message)
+          log.error("Transaction failed", ar.cause())
         }
       }
       return promise0.future()
-    }
-
-    fun notifyPgChannel(conn: SqlConnection): Future<RowSet<Row>>? {
-      return conn.query("NOTIFY $topic").execute()
     }
 
     val promise = Promise.promise<Void>()
@@ -166,7 +160,6 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
               .onSuccess {
                 appendCommand(conn)
                   .compose { commandId -> appendEvents(conn, commandId) }
-                  .compose { notifyPgChannel(conn) }
                   .onFailure {
                     rollback(tx, it)
                     close(conn)

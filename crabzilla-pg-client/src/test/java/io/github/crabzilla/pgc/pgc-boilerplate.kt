@@ -10,6 +10,7 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.pgclient.PgPool
+import io.vertx.pgclient.pubsub.PgSubscriber
 import io.vertx.sqlclient.PoolOptions
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
@@ -32,15 +33,22 @@ fun readModelPgPool(vertx: Vertx, config: JsonObject): PgPool {
   return pgPool(vertx, config, "READ")
 }
 
-fun pgPool(vertx: Vertx, config: JsonObject, id: String): PgPool {
-  val readOptions = PgConnectOptions()
+fun pgSubscriber(vertx: Vertx, config: JsonObject): PgSubscriber {
+  return PgSubscriber.subscriber(vertx, pgConnectionOptions(vertx, config, "WRITE"))
+}
+
+fun pgConnectionOptions(vertx: Vertx, config: JsonObject, id: String): PgConnectOptions {
+  return PgConnectOptions()
     .setPort(config.getInteger("${id}_DATABASE_PORT"))
     .setHost(config.getString("${id}_DATABASE_HOST"))
     .setDatabase(config.getString("${id}_DATABASE_NAME"))
     .setUser(config.getString("${id}_DATABASE_USER"))
     .setPassword(config.getString("${id}_DATABASE_PASSWORD"))
+}
+
+fun pgPool(vertx: Vertx, config: JsonObject, id: String): PgPool {
   val pgPoolOptions = PoolOptions().setMaxSize(config.getInteger("${id}_DATABASE_POOL_MAX_SIZE"))
-  return PgPool.pool(vertx, readOptions, pgPoolOptions)
+  return PgPool.pool(vertx, pgConnectionOptions(vertx, config, id), pgPoolOptions)
 }
 
 fun cleanDatabase(vertx: Vertx, config: JsonObject): Future<Void> {
@@ -67,7 +75,15 @@ fun cleanDatabase(vertx: Vertx, config: JsonObject): Future<Void> {
             promise.fail(event4.cause())
             return@execute
           }
-          promise.complete()
+          write.query("update events_offset set last_offset = 0 where id = true")
+            .execute { event5: AsyncResult<RowSet<Row?>?> ->
+              if (event5.failed()) {
+                promise.fail(event5.cause())
+                return@execute
+              }
+              println("*** database is now clean")
+              promise.complete()
+            }
         }
       }
     }

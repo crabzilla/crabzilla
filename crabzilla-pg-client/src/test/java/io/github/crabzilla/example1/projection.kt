@@ -2,28 +2,48 @@ package io.github.crabzilla.example1
 
 import io.github.crabzilla.core.DOMAIN_EVENT_SERIALIZER
 import io.github.crabzilla.core.EventRecord
-import io.github.crabzilla.core.JsonEventPublisher
 import io.github.crabzilla.example1.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.CustomerEvent.CustomerRegistered
+import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.Promise
+import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
 import kotlinx.serialization.json.Json
+import org.slf4j.LoggerFactory
 
 /**
  * To update customer read model given events
  */
-class CustomerReadModelProjector(private val json: Json, private val repo: CustomerRepository) : JsonEventPublisher {
+class CustomerReadModelProjectorVerticle(private val json: Json, private val repo: CustomerRepository) :
+  AbstractVerticle() {
 
-  override fun publish(eventRecord: EventRecord): Future<Void> {
+  companion object {
+    private val log = LoggerFactory.getLogger(CustomerReadModelProjectorVerticle::class.java)
+    private const val topic = "example1"
+  }
 
-    return when (
-      val event = json.decodeFromString(DOMAIN_EVENT_SERIALIZER, eventRecord.eventAsjJson.toString()) as CustomerEvent
-    ) {
+  override fun start() {
+    vertx.eventBus().consumer<JsonObject>(topic) { eventRecordAsJson ->
+      val eventRecord = EventRecord.fromJsonObject(eventRecordAsJson.body())
+      publish(eventRecord)
+    }
+    log.info("Started consuming from topic [$topic]")
+  }
+
+  override fun stop() {
+    log.info("Stopped")
+  }
+
+  private fun publish(eventRecord: EventRecord): Future<Void> {
+    log.info("Will project $eventRecord")
+    val event = json.decodeFromString(DOMAIN_EVENT_SERIALIZER, eventRecord.eventAsjJson.toString()) as CustomerEvent
+    log.info("The event is $event")
+    return when (event) {
       is CustomerRegistered -> repo.upsert(eventRecord.aggregateId, event.name, false)
       is CustomerActivated -> repo.updateStatus(eventRecord.aggregateId, true)
       is CustomerDeactivated -> repo.updateStatus(eventRecord.aggregateId, false)

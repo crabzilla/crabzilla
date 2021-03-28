@@ -4,6 +4,7 @@ import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.core.shareddata.SharedData
+import io.vertx.kotlin.core.json.jsonObjectOf
 import kotlinx.serialization.json.Json
 
 // es/cqrs infra stack
@@ -24,60 +25,36 @@ interface SnapshotRepository<A : AggregateRoot, C : Command, E : DomainEvent> {
 }
 
 /**
- * To perform aggregate root business methods and track it's events and state
+ * An event record
  */
-class StatefulSession<A : AggregateRoot, E : DomainEvent> {
-  val originalVersion: Int
-  private val originalState: A
-  private val eventHandler: EventHandler<A, E>
-  private val appliedEvents = mutableListOf<E>()
-  var currentState: A
-
-  constructor(version: Int, state: A, eventHandler: EventHandler<A, E>) {
-    this.originalVersion = version
-    this.originalState = state
-    this.eventHandler = eventHandler
-    this.currentState = originalState
-  }
-
-  constructor(constructorResult: CommandHandler.ConstructorResult<A, E>, eventHandler: EventHandler<A, E>) {
-    this.originalVersion = 0
-    this.originalState = constructorResult.state
-    this.eventHandler = eventHandler
-    this.currentState = originalState
-    constructorResult.events.forEach {
-      appliedEvents.add(it)
+data class EventRecord(val aggregateName: String, val aggregateId: Int, val eventAsjJson: JsonObject, val eventId: Long) {
+  companion object {
+    fun fromJsonObject(asJsonObject: JsonObject): EventRecord {
+      return EventRecord(
+        asJsonObject.getString("aggregateName"),
+        asJsonObject.getInteger("aggregateId"),
+        asJsonObject.getJsonObject("eventAsjJson"),
+        asJsonObject.getLong("eventId")
+      )
     }
   }
-
-  fun appliedEvents(): List<E> {
-    return appliedEvents
-  }
-
-  fun apply(events: List<E>): StatefulSession<A, E> {
-    events.forEach { domainEvent ->
-      currentState = eventHandler.handleEvent(currentState, domainEvent)
-      appliedEvents.add(domainEvent)
-    }
-    return this
-  }
-
-  inline fun execute(fn: (A) -> List<E>): StatefulSession<A, E> {
-    val newEvents = fn.invoke(currentState)
-    return apply(newEvents)
-  }
-
-  fun toSessionData(): SessionData {
-    return SessionData(originalVersion, if (originalVersion == 0) null else originalState, appliedEvents, currentState)
+  fun toJsonObject(): JsonObject {
+    return jsonObjectOf(
+      Pair("aggregateName", aggregateName),
+      Pair("aggregateId", aggregateId),
+      Pair("eventAsjJson", eventAsjJson),
+      Pair("eventId", eventId)
+    )
   }
 }
 
-data class SessionData(
-  val originalVersion: Int,
-  val originalState: AggregateRoot?,
-  val events: List<DomainEvent>,
-  val newState: AggregateRoot
-)
+/**
+ * To publish an event as JSON to read model, messaging broker, etc (any side effect)
+ */
+interface EventsPublisher {
+  fun publish(eventRecords: List<EventRecord>): Future<Long>
+  // what about correlation id, etc?
+}
 
 /**
  * An exception informing an concurrency violation

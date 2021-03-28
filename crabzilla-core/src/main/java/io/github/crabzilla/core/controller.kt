@@ -2,8 +2,6 @@ package io.github.crabzilla.core
 
 import io.vertx.core.Future
 import io.vertx.core.Promise
-import io.vertx.core.json.JsonObject
-import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
@@ -86,30 +84,63 @@ data class CommandMetadata(
   val correlationID: UUID = id
 )
 
-inline class BoundedContextName(val name: String)
-inline class AggregateRootName(val value: String)
-inline class SnapshotTableName(val value: String)
-
-data class EventRecord(val aggregateName: String, val aggregateId: Int, val eventAsjJson: JsonObject, val eventId: Long)
-
-/**
- * To publish an event as JSON to read model, messaging broker, etc (any side effect)
- */
-interface JsonEventPublisher {
-  fun publish(eventRecord: EventRecord): Future<Void>
-  // what about correlation id, etc?
-}
-
-class AggregateRootConfig<A : AggregateRoot, C : Command, E : DomainEvent> (
-  val name: AggregateRootName,
-  val snapshotTableName: SnapshotTableName,
-  val eventHandler: EventHandler<A, E>,
-  val commandValidator: CommandValidator<C>,
-  val commandHandler: CommandHandler<A, C, E>,
-  val json: Json
-)
-
 sealed class Either<out A, out B> {
   class Left<A>(val value: A) : Either<A, Nothing>()
   class Right<B>(val value: B) : Either<Nothing, B>()
 }
+
+/**
+ * To perform aggregate root business methods and track it's events and state
+ */
+class StatefulSession<A : AggregateRoot, E : DomainEvent> {
+  val originalVersion: Int
+  private val originalState: A
+  private val eventHandler: EventHandler<A, E>
+  private val appliedEvents = mutableListOf<E>()
+  var currentState: A
+
+  constructor(version: Int, state: A, eventHandler: EventHandler<A, E>) {
+    this.originalVersion = version
+    this.originalState = state
+    this.eventHandler = eventHandler
+    this.currentState = originalState
+  }
+
+  constructor(constructorResult: CommandHandler.ConstructorResult<A, E>, eventHandler: EventHandler<A, E>) {
+    this.originalVersion = 0
+    this.originalState = constructorResult.state
+    this.eventHandler = eventHandler
+    this.currentState = originalState
+    constructorResult.events.forEach {
+      appliedEvents.add(it)
+    }
+  }
+
+  fun appliedEvents(): List<E> {
+    return appliedEvents
+  }
+
+  fun apply(events: List<E>): StatefulSession<A, E> {
+    events.forEach { domainEvent ->
+      currentState = eventHandler.handleEvent(currentState, domainEvent)
+      appliedEvents.add(domainEvent)
+    }
+    return this
+  }
+
+  inline fun execute(fn: (A) -> List<E>): StatefulSession<A, E> {
+    val newEvents = fn.invoke(currentState)
+    return apply(newEvents)
+  }
+
+  fun toSessionData(): SessionData {
+    return SessionData(originalVersion, if (originalVersion == 0) null else originalState, appliedEvents, currentState)
+  }
+}
+
+data class SessionData(
+  val originalVersion: Int,
+  val originalState: AggregateRoot?,
+  val events: List<DomainEvent>,
+  val newState: AggregateRoot
+)

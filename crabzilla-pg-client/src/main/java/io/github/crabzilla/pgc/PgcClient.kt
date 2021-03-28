@@ -13,12 +13,17 @@ object PgcClient {
   fun rollback(tx: Transaction, throwable: Throwable) {
     log.error("Will rollback transaction given", throwable)
     tx.rollback()
-      .onFailure {
-        log.error("On transaction rollback", it.cause)
-      }
+      .onFailure { log.error("On transaction rollback", it.cause) }
       .onSuccess {
         log.info("Transaction successfully rolled back")
       }
+  }
+
+  fun close(conn: SqlConnection) {
+    log.info("Will close db connection")
+    conn.close()
+      .onFailure { log.error("When closing db connection") }
+      .onSuccess { log.info("Connection closed") }
   }
 
   fun commit(tx: Transaction): Future<Void> {
@@ -36,10 +41,4 @@ object PgcClient {
     return promise.future()
   }
 
-  fun close(conn: SqlConnection) {
-    log.info("Will close db connection")
-    conn.close()
-      .onFailure { log.error("When closing db connection") }
-      .onSuccess { log.info("Connection closed") }
-  }
 }
