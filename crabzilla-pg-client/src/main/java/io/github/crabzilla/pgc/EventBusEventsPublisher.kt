@@ -15,7 +15,7 @@ class EventBusEventsPublisher(private val topic: String, private val eventbus: E
 
   override fun publish(eventRecords: List<EventRecord>): Future<Long> {
     val promise = Promise.promise<Long>()
-    var lastPublished : Long? = null
+    var lastPublished: Long? = null
     var error = false
     for (event in eventRecords) {
       try {
@@ -23,8 +23,8 @@ class EventBusEventsPublisher(private val topic: String, private val eventbus: E
         if (log.isDebugEnabled) log.debug("Published $event to $topic")
         lastPublished = event.eventId
       } catch (e: Exception) {
-        promise.fail(e);
-        error = true;
+        promise.fail(e)
+        error = true
         break
       }
     }

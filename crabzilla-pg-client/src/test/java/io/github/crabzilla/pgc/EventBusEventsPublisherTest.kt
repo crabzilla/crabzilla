@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 
 internal class EventBusEventsPublisherTest {
 
-  private val topic =  "example1"
+  private val topic = "example1"
 
   @Test
   fun it_should_publish() {
@@ -29,7 +29,5 @@ internal class EventBusEventsPublisherTest {
         eventbus.publish(topic, r)
       }
     }
-
   }
-
 }

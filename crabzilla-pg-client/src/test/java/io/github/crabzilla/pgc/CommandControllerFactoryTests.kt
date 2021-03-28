@@ -11,7 +11,6 @@ import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
 import io.vertx.core.Vertx
-import io.vertx.junit5.Timeout
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool

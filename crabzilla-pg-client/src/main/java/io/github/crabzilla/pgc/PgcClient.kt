@@ -40,5 +40,4 @@ object PgcClient {
       }
     return promise.future()
   }
-
 }
