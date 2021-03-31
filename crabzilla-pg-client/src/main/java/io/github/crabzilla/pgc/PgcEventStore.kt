@@ -61,7 +61,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         }
         .onSuccess { event1 ->
           val currentVersion = event1.first()?.getInteger("last_version") ?: 0
-          log.info("Got current version: $currentVersion")
+          if (log.isDebugEnabled) log.debug("Got current version: $currentVersion")
           when {
             currentVersion == expectedVersionAfterAppend -> {
               val message = "The current version is already the expected new version $expectedVersionAfterAppend"
@@ -72,7 +72,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
               promise0.fail(OptimisticConcurrencyConflict(message))
             }
             else -> {
-              log.info("Version ok")
+              if (log.isDebugEnabled) log.debug("Version ok")
               promise0.complete()
             }
           }
@@ -80,7 +80,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       return promise0.future()
     }
 
-    fun appendCommand(conn: SqlConnection): Future<Long> { // TODO receber expectedVersion e currentVersion
+    fun appendCommand(conn: SqlConnection): Future<Long> {
       val promise0 = Promise.promise<Long>()
       val cmdAsJsonObject: String = json.encodeToString(COMMAND_SERIALIZER, command)
       val params = Tuple.of(
@@ -96,7 +96,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
             promise0.fail("Append command error: missing cmd_id")
           } else {
             promise0.complete(rowSet.first().getLong("cmd_id"))
-            log.info("Append command ok")
+            if (log.isDebugEnabled) log.debug("Append command ok")
           }
         }
       return promise0.future()
@@ -117,29 +117,23 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           .execute(params)
           .onFailure { err -> promise0.fail(err) }
           .onSuccess {
-            log.info("Append event ok $event")
+            if (log.isDebugEnabled) log.debug("Append event ok $event")
             promise0.complete()
           }
         return promise0.future()
       }
-
       val promise0 = Promise.promise<Void>()
-      // TODO fix to support more than 6 events per command (using fold)
       val futures: List<Future<Void>> = session.appliedEvents().map { event -> appendEvent(conn, event) }
-      CompositeFuture.all(futures).onComplete { ar ->
+      CompositeFuture.all(futures).onComplete { ar -> // TODO support more than 6 events per command
         if (ar.succeeded()) {
           promise0.complete()
-          log.info("Append events ok")
+          if (log.isDebugEnabled) log.debug("Append events ok")
         } else {
           promise0.fail(ar.cause())
-          log.error("Transaction failed 3: " + ar.cause().message)
+          log.error("Transaction failed", ar.cause())
         }
       }
       return promise0.future()
-    }
-
-    fun notifyPgChannel(conn: SqlConnection): Future<RowSet<Row>>? {
-      return conn.query("NOTIFY $topic").execute()
     }
 
     val promise = Promise.promise<Void>()
@@ -166,20 +160,19 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
               .onSuccess {
                 appendCommand(conn)
                   .compose { commandId -> appendEvents(conn, commandId) }
-                  .compose { notifyPgChannel(conn) }
                   .onFailure {
                     rollback(tx, it)
                     close(conn)
                     promise.fail(it)
                   }
                   .onSuccess {
-                    log.info("Notified pg topic $topic")
                     commit(tx)
                       .onFailure {
                         rollback(tx, it)
                         close(conn)
                         promise.fail(it)
                       }.onSuccess {
+                        if (log.isDebugEnabled) log.debug("Events sucessful commited $topic")
                         promise.complete()
                         close(conn)
                       }

@@ -28,7 +28,7 @@ CREATE INDEX idx_ext_cmd_id ON commands (external_cmd_id);
 -- events
 
 CREATE TABLE events (
-      event_id BIGSERIAL,
+      event_id BIGSERIAL NOT NULL,
       event_payload JSONB NOT NULL,
       ar_name VARCHAR(36) NOT NULL,
       ar_id INTEGER NOT NULL,
@@ -55,6 +55,14 @@ CREATE TABLE events_1 PARTITION OF events
 CREATE TABLE events_2 PARTITION OF events
     FOR VALUES WITH (MODULUS 3, REMAINDER 2);
 
+CREATE TABLE events_offset (
+   id bool PRIMARY KEY DEFAULT TRUE,
+   last_offset BIGINT,
+   CONSTRAINT id CHECK (id)
+);
+
+INSERT INTO events_offset (last_offset) VALUES (0);
+
 --  snapshots tables
 
 CREATE TABLE customer_snapshots (
@@ -67,15 +75,6 @@ CREATE TABLE customer_snapshots (
 \connect example1_read ;
 
 -- read model
-
-CREATE TABLE projections (
-    ar_name VARCHAR(36) NOT NULL,
-    stream_name VARCHAR(36) NOT NULL,
-    last_uow INTEGER ,
-    PRIMARY KEY (ar_name, stream_name)
-);
-
-CREATE INDEX idx_stream ON projections (ar_name, stream_name);
 
 CREATE TABLE customer_summary (
     id INTEGER NOT NULL,

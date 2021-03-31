@@ -56,7 +56,7 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
           log.error("upsert snapshot query error", insert.cause())
           promise.fail(insert.cause())
         } else {
-          log.info("upsert snapshot success $id $json")
+          if (log.isDebugEnabled) log.debug("upsert snapshot success $id $json")
           promise.complete()
         }
       }
@@ -117,25 +117,25 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
               val event: DomainEvent = config.json.decodeFromString(jsonObject.encode())
               currentVersion = row.getInteger(1)
               events.add(event as E)
-              log.info("Event: $event version: $currentVersion")
+              if (log.isDebugEnabled) log.debug("Event: $event version: $currentVersion")
             }
             stream.endHandler {
-              log.info("End of stream")
+              if (log.isDebugEnabled) log.debug("End of stream")
               // Attempt to commit the transaction
               tx.commit { ar ->
                 if (ar.failed()) {
                   log.error("tx.commit", ar.cause())
                   promise.fail(ar.cause())
                 } else {
-                  log.info("tx.commit successfully")
+                  if (log.isDebugEnabled) log.debug("tx.commit successfully")
                   if (events.size == 0) {
                     promise.complete(snapshot)
                   } else {
                     val currentInstance = events.fold(
-                      snapshot!!.state,
+                      snapshot?.state,
                       { state, event -> config.eventHandler.handleEvent(state, event) }
                     )
-                    promise.complete(Snapshot(currentInstance, currentVersion))
+                    promise.complete(Snapshot(currentInstance!!, currentVersion))
                   }
                 }
               }

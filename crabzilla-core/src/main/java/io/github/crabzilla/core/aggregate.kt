@@ -1,6 +1,7 @@
 package io.github.crabzilla.core
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 @Serializable
 abstract class DomainEvent
@@ -14,6 +15,9 @@ abstract class AggregateRoot
 // @Serializable
 // abstract class ProcessManager
 
+/**
+ * To validate a command
+ */
 fun interface CommandValidator<C : Command> {
   fun validate(command: C): List<String>
 }
@@ -49,3 +53,19 @@ interface CommandHandler<A : AggregateRoot, C : Command, E : DomainEvent> {
 
   fun handleCommand(command: C, snapshot: Snapshot<A>?): Result<StatefulSession<A, E>>
 }
+
+/**
+ * A configuration for an aggregate root
+ */
+class AggregateRootConfig<A : AggregateRoot, C : Command, E : DomainEvent> (
+  val name: AggregateRootName,
+  val snapshotTableName: SnapshotTableName,
+  val eventHandler: EventHandler<A, E>,
+  val commandValidator: CommandValidator<C>,
+  val commandHandler: CommandHandler<A, C, E>,
+  val json: Json
+)
+
+inline class BoundedContextName(val name: String)
+inline class AggregateRootName(val value: String)
+inline class SnapshotTableName(val value: String)
