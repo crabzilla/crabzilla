@@ -24,48 +24,49 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
     internal val log = LoggerFactory.getLogger(CommandController::class.java)
   }
 
-  fun handle(metadata: CommandMetadata, command: C): Future<Either<List<String>, StatefulSession<A, E>>> {
+  fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<A, E>> {
     // TODO also return metadata (internal ids)
-    val promise = Promise.promise<Either<List<String>, StatefulSession<A, E>>>()
-    log.info("received $command")
+    val promise = Promise.promise<StatefulSession<A, E>>()
+    if (log.isDebugEnabled()) log.debug("received $command")
     val validationErrors = validator.validate(command)
+
+    // TODO remover o Either. Criar uma exeption com list<String>
     if (validationErrors.isNotEmpty()) {
-      promise.complete(Either.Left(validationErrors))
+      promise.fail(ValidationException(validationErrors))
       log.error("Invalid command $metadata\n $command \n$validationErrors")
       return promise.future()
     }
-    log.info("Will get snapshot for aggregate ${metadata.aggregateRootId}")
+    if (log.isDebugEnabled()) log.debug("Will get snapshot for aggregate ${metadata.aggregateRootId}")
     snapshotRepo.get(metadata.aggregateRootId)
       .onFailure { err ->
         log.error("Could not get snapshot", err)
-        promise.fail(err.cause)
+        promise.fail(err)
       }
       .onSuccess { snapshot ->
-        log.info("Got snapshot $snapshot. Now let's handle the command")
+        if (log.isDebugEnabled()) log.debug("Got snapshot $snapshot. Now let's handle the command")
         handler.handleCommand(command, snapshot)
           .onFailure { err ->
             log.error("Command error", err)
-            promise.fail(err.cause)
+            promise.fail(err)
           }
           .onSuccess { result: StatefulSession<A, E> ->
-            log.info("Command handled. ${result.currentState}")
-            log.info("Now let's append events ${result.appliedEvents()}")
+            if (log.isDebugEnabled()) log.debug("Command handled. ${result.toSessionData()}. Now let's append it events")
             eventStore.append(command, metadata, result)
               .onFailure { err ->
                 log.error("When appending events", err)
-                promise.fail(err.cause)
+                promise.fail(err)
               }
               .onSuccess {
-                log.info("Events successfully appended. Now let's save the resulting snapshot")
+                if (log.isDebugEnabled()) log.debug("Events successfully appended. Now let's save the resulting snapshot")
                 val newSnapshot = Snapshot(result.currentState, result.originalVersion + 1)
-                promise.complete(Either.Right(result))
+                promise.complete(result)
                 snapshotRepo.upsert(metadata.aggregateRootId, newSnapshot)
                   .onFailure { err ->
                     log.error("When saving new snapshot", err)
                     // let's just ignore snapshot error (the principal side effect is on eventSTore, anyway)
                   }
                   .onSuccess {
-                    log.info("Snapshot upsert done: $newSnapshot")
+                    if (log.isDebugEnabled()) log.debug("Snapshot upsert done: $newSnapshot")
                   }
               }
           }
@@ -73,6 +74,8 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
     return promise.future()
   }
 }
+
+data class ValidationException(val errors: List<String>) : RuntimeException(errors.toString())
 
 /**
  * The client must knows how to instantiate it.
@@ -83,11 +86,6 @@ data class CommandMetadata(
   val causationId: UUID = id,
   val correlationID: UUID = id
 )
-
-sealed class Either<out A, out B> {
-  class Left<A>(val value: A) : Either<A, Nothing>()
-  class Right<B>(val value: B) : Either<Nothing, B>()
-}
 
 /**
  * To perform aggregate root business methods and track it's events and state

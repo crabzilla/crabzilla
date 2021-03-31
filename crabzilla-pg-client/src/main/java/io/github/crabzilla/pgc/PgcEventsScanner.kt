@@ -31,7 +31,7 @@ class PgcEventsScanner(private val writeModelDb: PgPool) {
         .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(numberOfRows)) }
         .map { rowSet: RowSet<Row> ->
           rowSet.iterator().asSequence().map { row: Row ->
-            log.info("Found ${row.deepToString()}")
+            if (log.isDebugEnabled) log.debug("Found ${row.deepToString()}")
             val jsonObject: JsonObject = row.get(JsonObject::class.java, 2)
             EventRecord(row.getString(0), row.getInteger(1), jsonObject, row.getLong(3))
           }.toList()

@@ -18,20 +18,24 @@ class PgcPoolingPublisherVerticle(
   companion object {
     private val log = LoggerFactory.getLogger(PgcPoolingPublisherVerticle::class.java)
     const val PUBLISHER_ENDPOINT = "publisher.verticle"
-    private const val MILLISECONDS = 250L
+    private const val MILLISECONDS = 1000L
     private const val NUMBER_OF_ROWS = 1000
   }
 
   override fun start() {
+    val eventbus = vertx.eventBus()
     vertx.setPeriodic(intervalInMilliseconds) { tick: Long ->
       if (log.isDebugEnabled) log.debug("Received a notification #$tick")
       scanAndPublish(numberOfRows)
+        .onFailure { log.error("When scanning for new events", it) }
+        .onSuccess { if (log.isDebugEnabled) log.debug("$it events were scanned") }
     }
-    vertx.eventBus().consumer<Int>(PUBLISHER_ENDPOINT) { msg ->
+    eventbus.consumer<Int>(PUBLISHER_ENDPOINT) { msg ->
       scanAndPublish(msg.body())
-      msg.reply(1L) // TODO
+        .onFailure { msg.fail(500, it.message) }
+        .onSuccess { msg.reply(it) }
     }
-    log.info("Started pooling for at most ${numberOfRows }each $intervalInMilliseconds milliseconds")
+    log.info("Started pooling for at most $numberOfRows rows each $intervalInMilliseconds milliseconds")
   }
 
   override fun stop() {

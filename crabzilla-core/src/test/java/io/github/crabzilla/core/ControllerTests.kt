@@ -39,17 +39,11 @@ class ControllerTests : BehaviorSpec({
       Then("It should have the expected StatefulSession") {
         result
           .onFailure { err -> fail(err.message ?: "wtf?") }
-          .onSuccess { either ->
-            when (either) {
-              is Either.Left -> fail(either.value.toString())
-              is Either.Right -> {
-                val session = either.value
-                session.originalVersion shouldBe 0
-                session.currentState shouldBe Customer(id = 1, name = "customer#1")
-                session.appliedEvents() shouldContainInOrder
-                  listOf(CustomerEvent.CustomerRegistered(id = 1, name = "customer#1"))
-              }
-            }
+          .onSuccess { session ->
+            session.originalVersion shouldBe 0
+            session.currentState shouldBe Customer(id = 1, name = "customer#1")
+            session.appliedEvents() shouldContainInOrder
+              listOf(CustomerEvent.CustomerRegistered(id = 1, name = "customer#1"))
           }
       }
     }

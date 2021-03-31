@@ -53,7 +53,7 @@ data class EventRecord(val aggregateName: String, val aggregateId: Int, val even
  */
 interface EventsPublisher {
   fun publish(eventRecords: List<EventRecord>): Future<Long>
-  // what about correlation id, etc?
+  // TODO what about correlation id, etc?
 }
 
 /**
