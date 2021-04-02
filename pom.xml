@@ -72,8 +72,9 @@
 
   <modules>
     <module>crabzilla-core</module>
+    <module>crabzilla-stack</module>
     <module>crabzilla-pg-client</module>
-<!--    <module>crabzilla-web</module>-->
+    <!--    <module>crabzilla-web</module>-->
     <module>coverage-report</module>
   </modules>
   <dependencyManagement>
@@ -85,6 +86,12 @@
       <dependency>
         <groupId>io.github.crabzilla</groupId>
         <artifactId>crabzilla-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.github.crabzilla</groupId>
+        <artifactId>crabzilla-stack</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -153,23 +160,17 @@
     </dependency>
 
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-lang-kotlin</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>org.jetbrains.kotlinx</groupId>
       <artifactId>kotlinx-serialization-json</artifactId>
       <version>${serialization.version}</version>
     </dependency>
 
     <!-- test -->
-
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-core</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-config</artifactId>

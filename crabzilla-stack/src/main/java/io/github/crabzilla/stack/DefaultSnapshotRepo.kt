@@ -1,65 +1,15 @@
-package io.github.crabzilla.core
+package io.github.crabzilla.stack
 
+import io.github.crabzilla.core.AGGREGATE_ROOT_SERIALIZER
+import io.github.crabzilla.core.AggregateRoot
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.Snapshot
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.core.shareddata.SharedData
-import io.vertx.kotlin.core.json.jsonObjectOf
 import kotlinx.serialization.json.Json
-
-// es/cqrs infra stack
-
-/**
- * An event store to append new events
- */
-interface EventStore<A : AggregateRoot, C : Command, E : DomainEvent> {
-  fun append(command: C, metadata: CommandMetadata, session: StatefulSession<A, E>): Future<Void>
-}
-
-/**
- * A repository for snapshots
- */
-interface SnapshotRepository<A : AggregateRoot, C : Command, E : DomainEvent> {
-  fun get(id: Int): Future<Snapshot<A>?>
-  fun upsert(id: Int, snapshot: Snapshot<A>): Future<Void>
-}
-
-/**
- * An event record
- */
-data class EventRecord(val aggregateName: String, val aggregateId: Int, val eventAsjJson: JsonObject, val eventId: Long) {
-  companion object {
-    fun fromJsonObject(asJsonObject: JsonObject): EventRecord {
-      return EventRecord(
-        asJsonObject.getString("aggregateName"),
-        asJsonObject.getInteger("aggregateId"),
-        asJsonObject.getJsonObject("eventAsjJson"),
-        asJsonObject.getLong("eventId")
-      )
-    }
-  }
-  fun toJsonObject(): JsonObject {
-    return jsonObjectOf(
-      Pair("aggregateName", aggregateName),
-      Pair("aggregateId", aggregateId),
-      Pair("eventAsjJson", eventAsjJson),
-      Pair("eventId", eventId)
-    )
-  }
-}
-
-/**
- * To publish an event as JSON to read model, messaging broker, etc (any side effect)
- */
-interface EventsPublisher {
-  fun publish(eventRecords: List<EventRecord>): Future<Long>
-  // TODO what about correlation id, etc?
-}
-
-/**
- * An exception informing an concurrency violation
- */
-class OptimisticConcurrencyConflict(message: String) : IllegalStateException(message)
 
 /**
  * A simple SnapshotRepo in memory implementation

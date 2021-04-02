@@ -6,46 +6,48 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.0.9-snapshot-4</version>
+    <version>0.0.6-SNAPSHOT</version>
   </parent>
 
-  <artifactId>crabzilla-pg-client</artifactId>
+  <artifactId>crabzilla-core</artifactId>
   <packaging>jar</packaging>
+
+  <properties>
+  </properties>
 
   <dependencies>
 
+    <!-- jackson json -->
+
     <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-stack</artifactId>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+    </dependency>
+
+    <!--Vertx -->
 
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-pg-client</artifactId>
-    </dependency>
-
     <!-- test -->
-
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-health-check</artifactId>
+      <artifactId>vertx-junit5</artifactId>
       <scope>test</scope>
+      <version>${vertx.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-config</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-circuit-breaker</artifactId>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-test</artifactId>
+      <version>${kotlin.version}</version>
       <scope>test</scope>
     </dependency>
 

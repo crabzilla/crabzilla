@@ -9,14 +9,14 @@
     <version>0.0.9-snapshot-4</version>
   </parent>
 
-  <artifactId>crabzilla-pg-client</artifactId>
+  <artifactId>crabzilla-stack</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-stack</artifactId>
+      <artifactId>crabzilla-core</artifactId>
     </dependency>
 
     <dependency>
@@ -26,29 +26,8 @@
 
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-pg-client</artifactId>
+      <artifactId>vertx-lang-kotlin</artifactId>
     </dependency>
-
-    <!-- test -->
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-health-check</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-config</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-circuit-breaker</artifactId>
-      <scope>test</scope>
-    </dependency>
-
   </dependencies>
 
 </project>
