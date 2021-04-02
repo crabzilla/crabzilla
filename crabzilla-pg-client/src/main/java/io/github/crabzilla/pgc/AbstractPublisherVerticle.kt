@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.core.EventsPublisher
+import io.github.crabzilla.stack.EventsPublisher
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.Promise

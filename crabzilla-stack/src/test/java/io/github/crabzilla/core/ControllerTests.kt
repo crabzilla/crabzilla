@@ -5,6 +5,10 @@ import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerConfig
+import io.github.crabzilla.stack.CommandController
+import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.EventStore
+import io.github.crabzilla.stack.SnapshotRepository
 import io.kotest.assertions.fail
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldContainInOrder

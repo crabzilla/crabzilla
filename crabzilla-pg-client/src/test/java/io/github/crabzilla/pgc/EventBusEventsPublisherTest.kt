@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.core.EventRecord
+import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension

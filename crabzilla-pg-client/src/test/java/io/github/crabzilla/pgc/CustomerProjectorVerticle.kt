@@ -1,9 +1,9 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.DOMAIN_EVENT_SERIALIZER
-import io.github.crabzilla.core.EventRecord
 import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.CustomerRepository
+import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject

@@ -1,9 +1,9 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.core.CommandMetadata
 import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.pgc.CustomerVerticle.Companion.topic
+import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.Timeout
 import io.vertx.junit5.VertxExtension

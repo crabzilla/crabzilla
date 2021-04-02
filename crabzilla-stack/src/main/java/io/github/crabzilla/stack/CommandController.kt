@@ -1,9 +1,15 @@
-package io.github.crabzilla.core
+package io.github.crabzilla.stack
 
+import io.github.crabzilla.core.AggregateRoot
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandHandler
+import io.github.crabzilla.core.CommandValidator
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.Snapshot
+import io.github.crabzilla.core.StatefulSession
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 /**
  * Given a command
@@ -74,71 +80,3 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
     return promise.future()
   }
 }
-
-data class ValidationException(val errors: List<String>) : RuntimeException(errors.toString())
-
-/**
- * The client must knows how to instantiate it.
- */
-data class CommandMetadata(
-  val aggregateRootId: Int,
-  val id: UUID = UUID.randomUUID(),
-  val causationId: UUID = id,
-  val correlationID: UUID = id
-)
-
-/**
- * To perform aggregate root business methods and track it's events and state
- */
-class StatefulSession<A : AggregateRoot, E : DomainEvent> {
-  val originalVersion: Int
-  private val originalState: A
-  private val eventHandler: EventHandler<A, E>
-  private val appliedEvents = mutableListOf<E>()
-  var currentState: A
-
-  constructor(version: Int, state: A, eventHandler: EventHandler<A, E>) {
-    this.originalVersion = version
-    this.originalState = state
-    this.eventHandler = eventHandler
-    this.currentState = originalState
-  }
-
-  constructor(constructorResult: CommandHandler.ConstructorResult<A, E>, eventHandler: EventHandler<A, E>) {
-    this.originalVersion = 0
-    this.originalState = constructorResult.state
-    this.eventHandler = eventHandler
-    this.currentState = originalState
-    constructorResult.events.forEach {
-      appliedEvents.add(it)
-    }
-  }
-
-  fun appliedEvents(): List<E> {
-    return appliedEvents
-  }
-
-  fun apply(events: List<E>): StatefulSession<A, E> {
-    events.forEach { domainEvent ->
-      currentState = eventHandler.handleEvent(currentState, domainEvent)
-      appliedEvents.add(domainEvent)
-    }
-    return this
-  }
-
-  inline fun execute(fn: (A) -> List<E>): StatefulSession<A, E> {
-    val newEvents = fn.invoke(currentState)
-    return apply(newEvents)
-  }
-
-  fun toSessionData(): SessionData {
-    return SessionData(originalVersion, if (originalVersion == 0) null else originalState, appliedEvents, currentState)
-  }
-}
-
-data class SessionData(
-  val originalVersion: Int,
-  val originalState: AggregateRoot?,
-  val events: List<DomainEvent>,
-  val newState: AggregateRoot
-)

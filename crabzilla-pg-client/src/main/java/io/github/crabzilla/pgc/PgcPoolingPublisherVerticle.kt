@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.core.EventsPublisher
+import io.github.crabzilla.stack.EventsPublisher
 import org.slf4j.LoggerFactory
 
 /**

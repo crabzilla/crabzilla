@@ -1,13 +1,13 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.BoundedContextName
-import io.github.crabzilla.core.CommandMetadata
 import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerEventHandler
 import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.AsyncResult
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension

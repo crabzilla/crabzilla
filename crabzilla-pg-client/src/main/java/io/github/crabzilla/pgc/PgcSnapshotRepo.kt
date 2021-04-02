@@ -6,8 +6,8 @@ import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.core.SnapshotRepository
 import io.github.crabzilla.pgc.PgcClient.close
+import io.github.crabzilla.stack.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
