@@ -25,6 +25,7 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
         writeDb = writeModelPgPool(vertx, config)
         readDb = readModelPgPool(vertx, config)
         cleanDatabase(vertx, config)
+          .onFailure { promise.fail(it) }
           .onSuccess {
             // val publisherVerticle =
             // PgcSubscriberPublisherVerticle(topic, pgSubscriber(vertx, config), pgcEventsScanner, publisherVerticle)
@@ -35,16 +36,26 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
               defaultInterval
             )
             val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))
+            log.info("Will deploy publisherVerticle")
             vertx.deployVerticle(publisherVerticle)
-              .compose { vertx.deployVerticle(projectorVerticle) }
               .onFailure { err ->
+                log.error("When deploying publisherVerticle", it)
                 promise.fail(err)
               }
               .onSuccess {
-                log.info("Started")
-                promise.complete()
+                log.info("publisherVerticle started")
+                log.info("Now will deploy projectorVerticle")
+                vertx.deployVerticle(projectorVerticle)
+                  .onFailure {
+                    log.error("When deploying projectorVerticle", it)
+                    promise.fail(it)
+                  }
+                  .onSuccess {
+                    log.info("projectorVerticle started")
+                    promise.complete()
+                  }
               }
-          }.onFailure { promise.fail(it) }
+          }
       }
   }
 
