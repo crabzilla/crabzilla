@@ -1,6 +1,7 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.stack.EventsPublisher
+import io.vertx.circuitbreaker.CircuitBreaker
 import org.slf4j.LoggerFactory
 
 /**
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory
 class PgcPoolingPublisherVerticle(
   eventsScanner: PgcEventsScanner,
   eventsPublisher: EventsPublisher,
+  private val breaker: CircuitBreaker,
   private val intervalInMilliseconds: Long = MILLISECONDS,
   private val numberOfRows: Int = NUMBER_OF_ROWS
 
@@ -26,9 +28,30 @@ class PgcPoolingPublisherVerticle(
     val eventbus = vertx.eventBus()
     vertx.setPeriodic(intervalInMilliseconds) { tick: Long ->
       if (log.isDebugEnabled) log.debug("Received a notification #$tick")
-      scanAndPublish(numberOfRows)
-        .onFailure { log.error("When scanning for new events", it) }
-        .onSuccess { if (log.isDebugEnabled) log.debug("$it events were scanned") }
+      breaker.execute<Void> { promise ->
+        scanAndPublish(numberOfRows)
+          .onFailure {
+            log.error("When scanning for new events", it)
+            promise.fail(it)
+          }
+          .onSuccess {
+            if (log.isDebugEnabled) log.debug("$it events were scanned")
+            when (it) {
+              -1L -> {
+                if (log.isDebugEnabled) log.debug("Still busy")
+                promise.fail("Still busy")
+              }
+              0L -> {
+                if (log.isDebugEnabled) log.debug("No new events")
+                promise.fail("No new events")
+              }
+              else -> {
+                if (log.isDebugEnabled) log.debug("Found $it events")
+                promise.complete()
+              }
+            }
+          }
+      }
     }
     eventbus.consumer<Int>(PUBLISHER_ENDPOINT) { msg ->
       scanAndPublish(msg.body())

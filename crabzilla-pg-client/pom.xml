@@ -29,6 +29,11 @@
       <artifactId>vertx-pg-client</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-circuit-breaker</artifactId>
+    </dependency>
+
     <!-- test -->
 
     <dependency>
@@ -47,6 +52,12 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-circuit-breaker</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-circuit-breaker</artifactId>
+      <version>4.0.3</version>
+      <scope>compile</scope>
     </dependency>
 
   </dependencies>

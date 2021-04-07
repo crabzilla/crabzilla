@@ -1,5 +1,3 @@
-CREATE DATABASE example1_read OWNER user1;
-
 CREATE DATABASE example1_write OWNER user1;
 
 \connect example1_write ;
@@ -72,14 +70,4 @@ CREATE TABLE customer_snapshots (
       PRIMARY KEY (ar_id)
     );
 
-\connect example1_read ;
-
--- read model
-
-CREATE TABLE customer_summary (
-    id INTEGER NOT NULL,
-    name VARCHAR(36) NOT NULL,
-    is_active BOOLEAN NOT NULL,
-    PRIMARY KEY (id)
-);
 

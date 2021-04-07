@@ -2,6 +2,8 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.customerJson
+import io.vertx.circuitbreaker.CircuitBreaker
+import io.vertx.circuitbreaker.CircuitBreakerOptions
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.pgclient.PgPool
@@ -29,6 +31,7 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
             val publisherVerticle = PgcPoolingPublisherVerticle(
               PgcEventsScanner(writeDb),
               EventBusEventsPublisher(topic, vertx.eventBus()),
+              cb(),
               defaultInterval
             )
             val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))
@@ -47,5 +50,21 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
 
   override fun stop() {
     log.info("Stopped")
+  }
+
+  fun cb(): CircuitBreaker {
+    return CircuitBreaker.create(
+      "pgc-pooling-circuit-breaker", vertx,
+      CircuitBreakerOptions()
+        .setMaxFailures(100) // number of failure before opening the circuit
+        .setTimeout(1000) // consider a failure if the operation does not succeed in time
+        .setFallbackOnFailure(false) // do we call the fallback on failure
+        .setResetTimeout(1000) // time spent in open state before attempting to re-try
+      // TODO jitter
+    ).openHandler {
+      log.warn("Circuit opened")
+    }.closeHandler {
+      log.warn("Circuit closed")
+    }.retryPolicy { retryCount -> retryCount * 100L }
   }
 }
