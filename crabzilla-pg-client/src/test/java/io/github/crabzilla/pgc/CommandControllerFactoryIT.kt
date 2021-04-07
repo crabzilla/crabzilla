@@ -13,16 +13,15 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.concurrent.TimeUnit
 
 @ExtendWith(VertxExtension::class)
-//@Timeout(10000)
+@Timeout(10000)
 class CommandControllerFactoryIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
 
-  val verticle = CustomerVerticle(1)
+  val verticle = CustomerVerticle(1000)
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     vertx.deployVerticle(verticle)
@@ -49,15 +48,15 @@ class CommandControllerFactoryIT {
           .onFailure { tc.failNow(it.cause) }
           .onSuccess { session2 ->
             println(session2.toSessionData())
-//            tc.awaitCompletion(7, TimeUnit.SECONDS)
-//            vertx.eventBus().request<Long>(PgcPoolingPublisherVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
-//              if (resp.failed()) {
-//                tc.failNow(resp.cause())
-//              } else {
-//                println("Result ${resp.result()}")
-//                tc.completeNow()
-//              }
-//            }
+//            tc.awaitCompletion(10, TimeUnit.SECONDS)
+            vertx.eventBus().request<Long>(PgcPoolingPublisherVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
+              if (resp.failed()) {
+                tc.failNow(resp.cause())
+              } else {
+                println("Result ${resp.result()}")
+                tc.completeNow()
+              }
+            }
           }
       }
   }
