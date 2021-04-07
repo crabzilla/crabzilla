@@ -27,7 +27,7 @@ cache:
   - "$HOME/.m2"
 
 install:
-  mvn clean verify
+  mvn clean compile
 
 script:
   - sleep 1
