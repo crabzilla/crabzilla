@@ -5,6 +5,7 @@ import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.pgc.CustomerProjectorVerticle.Companion.topic
 import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
+import io.vertx.junit5.Timeout
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import org.assertj.core.api.Assertions.assertThat
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.TimeUnit
 
 @ExtendWith(VertxExtension::class)
+@Timeout(7000)
 class CommandControllerFactoryIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
@@ -47,7 +49,7 @@ class CommandControllerFactoryIT {
           .onFailure { tc.failNow(it.cause) }
           .onSuccess { session2 ->
             println(session2.toSessionData())
-            tc.awaitCompletion(2, TimeUnit.SECONDS)
+            tc.awaitCompletion(4, TimeUnit.SECONDS)
             vertx.eventBus().request<Long>(PgcPoolingPublisherVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
               if (resp.failed()) {
                 tc.failNow(resp.cause())
