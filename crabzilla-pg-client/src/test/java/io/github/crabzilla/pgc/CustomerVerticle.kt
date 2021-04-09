@@ -2,8 +2,6 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.customerJson
-import io.vertx.circuitbreaker.CircuitBreaker
-import io.vertx.circuitbreaker.CircuitBreakerOptions
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.pgclient.PgPool
@@ -42,16 +40,17 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
               }
               .onSuccess {
                 log.info("publisherVerticle started")
-                log.info("Now will deploy projectorVerticle")
-                vertx.deployVerticle(projectorVerticle)
-                  .onFailure {
-                    log.error("When deploying projectorVerticle", it)
-                    promise.fail(it)
-                  }
-                  .onSuccess {
-                    log.info("projectorVerticle started")
-                    promise.complete()
-                  }
+                promise.complete()
+//                log.info("Now will deploy projectorVerticle")
+//                vertx.deployVerticle(projectorVerticle)
+//                  .onFailure {
+//                    log.error("When deploying projectorVerticle", it)
+//                    promise.fail(it)
+//                  }
+//                  .onSuccess {
+//                    log.info("projectorVerticle started")
+//                    promise.complete()
+//                  }
               }
           }
       }
@@ -60,5 +59,4 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
   override fun stop() {
     log.info("Stopped")
   }
-
 }
