@@ -48,15 +48,16 @@ class CommandControllerFactoryIT {
           .onFailure { tc.failNow(it.cause) }
           .onSuccess { session2 ->
             println(session2.toSessionData())
+            tc.completeNow()
 //            tc.awaitCompletion(10, TimeUnit.SECONDS)
-            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
-              if (resp.failed()) {
-                tc.failNow(resp.cause())
-              } else {
-                println("Result ${resp.result()}")
-                tc.completeNow()
-              }
-            }
+//            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
+//              if (resp.failed()) {
+//                tc.failNow(resp.cause())
+//              } else {
+//                println("Result ${resp.result()}")
+//                tc.completeNow()
+//              }
+//            }
           }
       }
   }
