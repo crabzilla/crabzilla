@@ -19,9 +19,7 @@ abstract class AbstractProjectionVerticle(
   private val eventsPublisher: EventsPublisher
 ) : AbstractVerticle() {
 
-  companion object {
-    private val log = LoggerFactory.getLogger(AbstractProjectionVerticle::class.java)
-  }
+  private val log = LoggerFactory.getLogger(eventsScanner.streamName)
 
   protected fun scanAndPublish(numberOfRows: Int): Future<Long> {
     val promise = Promise.promise<Long>()

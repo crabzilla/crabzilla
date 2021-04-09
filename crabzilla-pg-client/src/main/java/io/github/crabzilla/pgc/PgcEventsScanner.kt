@@ -10,7 +10,7 @@ import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
-class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName: String) {
+class PgcEventsScanner(private val writeModelDb: PgPool, val streamName: String) {
   companion object {
     private val log = LoggerFactory.getLogger(PgcEventsScanner::class.java)
     private const val ROWS_PER_TIME = 100

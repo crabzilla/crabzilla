@@ -22,12 +22,13 @@ class PgcPoolingProjectionVerticle(
 ) : AbstractProjectionVerticle(PgcEventsScanner(pgPool, streamName), eventsPublisher) {
 
   companion object {
-    private val log = LoggerFactory.getLogger(PgcPoolingProjectionVerticle::class.java)
     const val PUBLISHER_ENDPOINT = "publisher.verticle"
     private const val DEFAULT_INTERVAL = 1000L
     private const val DEFAULT_NUMBER_OF_ROWS = 500
     private const val DEFAULT_MAX_INTERVAL = 10000L
   }
+
+  private val log = LoggerFactory.getLogger(streamName)
 
   private val action = handler()
   private val failures = AtomicLong(0)
@@ -46,7 +47,7 @@ class PgcPoolingProjectionVerticle(
 
   fun handler(): Handler<Long?> {
     return Handler { tick ->
-      log.info("Tick $tick")
+      if (log.isDebugEnabled) log.debug("Tick $tick")
       scanAndPublish(numberOfRows)
         .onFailure {
           log.error("When scanning for new events", it)
