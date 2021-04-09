@@ -46,6 +46,7 @@ class CommandControllerFactoryIT {
           .onFailure { tc.failNow(it.cause) }
           .onSuccess { session2 ->
             println(session2.toSessionData())
+            vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1)
             tc.completeNow()
 //            tc.awaitCompletion(10, TimeUnit.SECONDS)
 //            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
