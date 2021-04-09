@@ -10,16 +10,16 @@ import java.util.concurrent.atomic.AtomicLong
  * This component will be triggered using a Postgres LISTEN command. Then it can publish the domain events to
  * a EventsPublisher.
  */
-class PgcSubscriberPublisherVerticle(
+class PgcSubscriberProjectionVerticle(
   private val channel: String,
   private val pgSubscriber: PgSubscriber,
   eventsScanner: PgcEventsScanner,
   eventsPublisher: EventsPublisher,
   private val numberOfRows: Int = NUMBER_OF_ROWS
-) : AbstractPublisherVerticle(eventsScanner, eventsPublisher) {
+) : AbstractProjectionVerticle(eventsScanner, eventsPublisher) {
 
   companion object {
-    private val log = LoggerFactory.getLogger(PgcSubscriberPublisherVerticle::class.java)
+    private val log = LoggerFactory.getLogger(PgcSubscriberProjectionVerticle::class.java)
     private const val NUMBER_OF_ROWS = 1000
   }
 

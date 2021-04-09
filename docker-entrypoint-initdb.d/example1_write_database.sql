@@ -53,13 +53,16 @@ CREATE TABLE events_1 PARTITION OF events
 CREATE TABLE events_2 PARTITION OF events
     FOR VALUES WITH (MODULUS 3, REMAINDER 2);
 
-CREATE TABLE events_offset (
-   id bool PRIMARY KEY DEFAULT TRUE,
-   last_offset BIGINT,
-   CONSTRAINT id CHECK (id)
+-- projections
+
+CREATE TABLE projections (
+   name VARCHAR(36) PRIMARY KEY NOT NULL,
+   last_offset BIGINT
 );
 
-INSERT INTO events_offset (last_offset) VALUES (0);
+INSERT INTO projections (name, last_offset) values ('nats-domain-events', 0);
+INSERT INTO projections (name, last_offset) values ('nats-integration-events', 0);
+INSERT INTO projections (name, last_offset) values ('customers', 0);
 
 --  snapshots tables
 

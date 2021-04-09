@@ -10,25 +10,30 @@ import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
-class PgcEventsScanner(private val writeModelDb: PgPool) {
+class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName: String) {
   companion object {
     private val log = LoggerFactory.getLogger(PgcEventsScanner::class.java)
     private const val ROWS_PER_TIME = 100
-    private const val SELECT_EVENTS_AFTER_OFFSET =
-      "SELECT ar_name, ar_id, event_payload, event_id " +
-        "FROM events, events_offset " +
-        "WHERE event_id > events_offset.last_offset " +
-        "ORDER BY event_id " +
-        "LIMIT $1 "
-    private const val UPDATE_EVENT_OFFSET = "UPDATE events_offset SET last_offset = $1"
   }
+
+  private val SELECT_EVENTS_AFTER_OFFSET =
+    """
+      SELECT ar_name, ar_id, event_payload, event_id
+      FROM events
+      WHERE event_id > (select last_offset from projections where name = $1)
+      ORDER BY event_id
+      limit $2
+    """.trimIndent()
+
+  private val UPDATE_EVENT_OFFSET =
+    "UPDATE projections SET last_offset = $1 where projections.name = $2"
 
   fun scanPendingEvents(numberOfRows: Int = ROWS_PER_TIME): Future<List<EventRecord>> {
     if (log.isDebugEnabled) log.debug("Will scan for new events")
     val promise = Promise.promise<List<EventRecord>>()
     writeModelDb.withTransaction { client ->
       client.prepare(SELECT_EVENTS_AFTER_OFFSET)
-        .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(numberOfRows)) }
+        .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(streamName, numberOfRows)) }
         .map { rowSet: RowSet<Row> ->
           rowSet.iterator().asSequence().map { row: Row ->
             if (log.isDebugEnabled) log.debug("Found ${row.deepToString()}")
@@ -52,7 +57,7 @@ class PgcEventsScanner(private val writeModelDb: PgPool) {
       client.prepare(UPDATE_EVENT_OFFSET)
     }
       .compose { ps2 ->
-        ps2.query().execute(Tuple.of(eventId))
+        ps2.query().execute(Tuple.of(eventId, streamName))
       }
       .onFailure { promise.fail(it) }
       .onSuccess { promise.complete() }

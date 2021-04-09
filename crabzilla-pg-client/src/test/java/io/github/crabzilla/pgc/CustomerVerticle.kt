@@ -29,11 +29,9 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
           .onSuccess {
             // val publisherVerticle =
             // PgcSubscriberPublisherVerticle(topic, pgSubscriber(vertx, config), pgcEventsScanner, publisherVerticle)
-            val publisherVerticle = PgcPoolingPublisherVerticle(
-              PgcEventsScanner(writeDb),
-              EventBusEventsPublisher(topic, vertx.eventBus()),
-              cb(),
-              defaultInterval
+            val publisherVerticle = PgcPoolingProjectionVerticle(
+              "customers", writeDb,
+              EventBusEventsPublisher(topic, vertx.eventBus()), defaultInterval
             )
             val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))
             log.info("Will deploy publisherVerticle")

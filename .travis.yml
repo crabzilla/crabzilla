@@ -32,7 +32,7 @@ install:
 script:
   - sleep 1
   - ls -la
-  - mvn clean verify -DskipTests=false
+  - mvn verify -DskipTests=false
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

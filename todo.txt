@@ -48,6 +48,7 @@ https://dev.to/sip3/how-to-extend-vert-x-eventbus-api-to-save-on-serialization-3
 // TODO PgcEntityTestDeployment (with BDD assertions)
 // TODO https://github.com/thenativeweb/commands-events/issues/1
 // TODO e UUID como external id do aggregate root (internamente por Long)
+  // https://stackoverflow.com/questions/53207723/sequential-composition-for-arbitrary-number-of-calls-in-vertx-with-futures
 
 NATS
 

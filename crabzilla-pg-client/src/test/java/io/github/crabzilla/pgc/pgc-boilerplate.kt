@@ -75,7 +75,7 @@ fun cleanDatabase(vertx: Vertx, config: JsonObject): Future<Void> {
             promise.fail(event4.cause())
             return@execute
           }
-          write.query("update events_offset set last_offset = 0 where id = true")
+          write.query("update projections set last_offset = 0")
             .execute { event5: AsyncResult<RowSet<Row?>?> ->
               if (event5.failed()) {
                 promise.fail(event5.cause())
