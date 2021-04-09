@@ -19,7 +19,7 @@ class CommandControllerFactoryIT {
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
 
-  val verticle = CustomerVerticle(3000)
+  val verticle = CustomerVerticle(500)
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     vertx.deployVerticle(verticle)
