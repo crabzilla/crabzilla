@@ -61,19 +61,4 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
     log.info("Stopped")
   }
 
-  fun cb(): CircuitBreaker {
-    return CircuitBreaker.create(
-      "pgc-pooling-circuit-breaker", vertx,
-      CircuitBreakerOptions()
-        .setMaxFailures(100) // number of failure before opening the circuit
-        .setTimeout(100) // consider a failure if the operation does not succeed in time
-        .setFallbackOnFailure(false) // do we call the fallback on failure
-        .setResetTimeout(100) // time spent in open state before attempting to re-try
-      // TODO jitter
-    ).openHandler {
-      log.warn("Circuit opened")
-    }.closeHandler {
-      log.warn("Circuit closed")
-    }.retryPolicy { retryCount -> retryCount * 1000L }
-  }
 }

@@ -5,6 +5,7 @@ import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.pgc.CustomerProjectorVerticle.Companion.topic
 import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
+import io.vertx.junit5.Timeout
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import org.assertj.core.api.Assertions.assertThat
@@ -14,14 +15,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(VertxExtension::class)
-// @Timeout(10000)
-
+@Timeout(40_000)
 class CommandControllerFactoryIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
 
-  val verticle = CustomerVerticle(1000)
+  val verticle = CustomerVerticle(3000)
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     vertx.deployVerticle(verticle)
