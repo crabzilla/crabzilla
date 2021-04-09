@@ -15,15 +15,19 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
   lateinit var writeDb: PgPool
   lateinit var readDb: PgPool
 
-  override fun start(promise: Promise<Void>) {
+  override fun start() {
     getConfig(vertx)
       .compose { config ->
         writeDb = writeModelPgPool(vertx, config)
         readDb = readModelPgPool(vertx, config)
         cleanDatabase(vertx, config)
-          .onFailure { promise.fail(it) }
+          .onFailure {
+            log.error("Cleaning db", it)
+            //promise.fail(it)
+          }
           .onSuccess {
-            promise.complete()
+            log.info("Success")
+            //promise.complete()
             return@onSuccess
 //            val publisherVerticle = PgcPoolingProjectionVerticle(
 //              "customers", writeDb,
