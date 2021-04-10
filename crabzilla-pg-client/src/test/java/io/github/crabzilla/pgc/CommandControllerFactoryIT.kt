@@ -24,7 +24,7 @@ class CommandControllerFactoryIT {
 
   companion object {
     private val log = LoggerFactory.getLogger(CustomerProjectorVerticle::class.java)
-    val verticle = CustomerVerticle(200)
+    val verticle = CustomerVerticle(500)
     @BeforeAll
     @JvmStatic
     fun setup(vertx: Vertx, tc: VertxTestContext) {
@@ -65,7 +65,7 @@ class CommandControllerFactoryIT {
           .onFailure { tc.failNow(it) }
           .onSuccess { session2 ->
             log.info("Got ${session2.toSessionData()}")
-            vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
+ //           vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
 //            tc.awaitCompletion(2, TimeUnit.SECONDS)
             tc.completeNow()
 //            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
