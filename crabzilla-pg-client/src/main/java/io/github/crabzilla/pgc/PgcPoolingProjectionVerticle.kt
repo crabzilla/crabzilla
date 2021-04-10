@@ -2,33 +2,30 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.stack.EventsPublisher
 import io.vertx.core.Handler
-import io.vertx.pgclient.PgPool
-// import io.vertx.circuitbreaker.CircuitBreaker
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
 /**
  * This component will be triggered using a Vertx periodic task. Then it can publish the domain events to
- * a EventsPublisher.
+ * an EventsPublisher.
  */
 class PgcPoolingProjectionVerticle(
-  streamName: String,
-  pgPool: PgPool,
+  eventsScanner: PgcEventsScanner,
   eventsPublisher: EventsPublisher,
   private val intervalInMilliseconds: Long = DEFAULT_INTERVAL,
   private val numberOfRows: Int = DEFAULT_NUMBER_OF_ROWS
 
-) : AbstractProjectionVerticle(PgcEventsScanner(pgPool, streamName), eventsPublisher) {
+) : AbstractProjectionVerticle(eventsScanner, eventsPublisher) {
 
   companion object {
     const val PUBLISHER_ENDPOINT = "publisher.verticle"
-    private const val DEFAULT_INTERVAL = 1000L
-    private const val DEFAULT_NUMBER_OF_ROWS = 500
-    private const val DEFAULT_MAX_INTERVAL = 10000L
+    private const val DEFAULT_INTERVAL = 1_000L
+    private const val DEFAULT_NUMBER_OF_ROWS = 1_000
+    private const val DEFAULT_MAX_INTERVAL = 10_000L
   }
 
-  private val log = LoggerFactory.getLogger(streamName)
+  private val log = LoggerFactory.getLogger(eventsScanner.streamName)
 
   private val action = handler()
   private val failures = AtomicLong(0)
@@ -73,13 +70,13 @@ class PgcPoolingProjectionVerticle(
     }
   }
 
-  fun registerFailure() {
+  private fun registerFailure() {
     val nextInterval = min(DEFAULT_MAX_INTERVAL, intervalInMilliseconds * failures.incrementAndGet())
     vertx.setTimer(nextInterval, action)
     if (log.isDebugEnabled) log.debug("Rescheduled")
   }
 
-  fun registerSuccess() {
+  private fun registerSuccess() {
     failures.set(0)
     vertx.setTimer(intervalInMilliseconds, action)
     if (log.isDebugEnabled) log.debug("Rescheduled")

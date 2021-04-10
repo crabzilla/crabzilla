@@ -3,7 +3,6 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.customerJson
 import io.vertx.core.AbstractVerticle
-import io.vertx.core.Promise
 import io.vertx.pgclient.PgPool
 import org.slf4j.LoggerFactory
 
@@ -25,21 +24,21 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
         cleanDatabase(vertx, config)
           .onFailure {
             log.error("Cleaning db", it)
-            //promise.fail(it)
+            // promise.fail(it)
           }
           .onSuccess {
             log.info("Success")
-            //promise.complete()
+            // promise.complete()
 //            return@onSuccess
+            val eventsScanner = PgcEventsScanner(writeDb, "customers")
             val publisherVerticle = PgcPoolingProjectionVerticle(
-              "customers", writeDb,
-              EventBusEventsPublisher(topic, vertx.eventBus()), defaultInterval
+              eventsScanner, EventBusEventsPublisher(topic, vertx.eventBus()), defaultInterval
             )
             val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))
             log.info("Will deploy publisherVerticle")
             vertx.deployVerticle(publisherVerticle)
               .onFailure { err ->
-                log.error("When deploying publisherVerticle", it)
+                log.error("When deploying publisherVerticle", err)
                 // promise.fail(err)
               }
               .onSuccess {
@@ -49,11 +48,11 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
                 vertx.deployVerticle(projectorVerticle)
                   .onFailure {
                     log.error("When deploying projectorVerticle", it)
-                    //promise.fail(it)
+                    // promise.fail(it)
                   }
                   .onSuccess {
                     log.info("projectorVerticle started")
-                    //promise.complete()
+                    // promise.complete()
                   }
               }
           }

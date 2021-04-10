@@ -57,7 +57,6 @@ class CommandControllerFactoryIT {
 //                tc.completeNow()
 //              }
 //            }
-
           }
       }
   }
