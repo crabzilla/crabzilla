@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
 
 @ExtendWith(VertxExtension::class)
-@Timeout(10_000)
+@Timeout(3_000)
 class CommandControllerFactoryIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
@@ -66,7 +66,7 @@ class CommandControllerFactoryIT {
           .onSuccess { session2 ->
             log.info("Got ${session2.toSessionData()}")
             vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
-            tc.awaitCompletion(5, TimeUnit.SECONDS)
+            tc.awaitCompletion(2, TimeUnit.SECONDS)
             tc.completeNow()
 //            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
 //              if (resp.failed()) {
