@@ -7,9 +7,7 @@ import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.pgclient.PgPool
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -23,36 +21,34 @@ class CommandControllerFactoryIT {
 
   companion object {
     private val log = LoggerFactory.getLogger(CustomerProjectorVerticle::class.java)
+    val verticle = CustomerVerticle(10_000)
+    @BeforeAll
+    @JvmStatic
+    fun setup(vertx: Vertx, tc: VertxTestContext) {
+      getConfig(vertx)
+        .compose { config ->
+          val writeDb = writeModelPgPool(vertx, config)
+          val readDb = readModelPgPool(vertx, config)
+          cleanDatabase(vertx, config)
+            .onFailure {
+              log.error("Cleaning db", it)
+              tc.failNow(it)
+            }
+            .onSuccess {
+              log.info("Success")
+              vertx.deployVerticle(verticle)
+                .onFailure { err ->
+                  tc.failNow(err)
+                }
+                .onSuccess {
+                  tc.completeNow()
+                }
+            }
+        }
+    }
   }
 
   val id = (0..10_000).random()
-  val verticle = CustomerVerticle(10_000)
-  lateinit var writeDb: PgPool
-  lateinit var readDb: PgPool
-
-  @BeforeEach
-  fun setup(vertx: Vertx, tc: VertxTestContext) {
-    getConfig(vertx)
-      .compose { config ->
-        writeDb = writeModelPgPool(vertx, config)
-        readDb = readModelPgPool(vertx, config)
-        cleanDatabase(vertx, config)
-          .onFailure {
-            log.error("Cleaning db", it)
-            tc.failNow(it)
-          }
-          .onSuccess {
-            log.info("Success")
-            vertx.deployVerticle(verticle)
-              .onFailure { err ->
-                tc.failNow(err)
-              }
-              .onSuccess {
-                tc.completeNow()
-              }
-          }
-      }
-  }
 
   // https://github.com/smallrye/smallrye-reactive-utils/blob/8798a76943afba436634d3c55ca47c00e26d52ca/vertx-mutiny-clients/vertx-mutiny-core/src/test/java/io/vertx/mutiny/test/EventbusTest.java#L47
   @Test
@@ -60,27 +56,25 @@ class CommandControllerFactoryIT {
   // TODO break it into smaller steps/assertions: check both write and real models persistence after handling a command
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, verticle.writeDb)
-    assertThat(controller).isNotNull
-    controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#1"))
+    controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
       .onFailure { tc.failNow(it) }
       .onSuccess { session1 ->
-        println(session1.toSessionData())
-//        controller.handle(CommandMetadata(1), CustomerCommand.ActivateCustomer("don't ask"))
-//          .onFailure { tc.failNow(it) }
-//          .onSuccess { session2 ->
-//            println(session2.toSessionData())
-//            vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1)
+        log.info("Got ${session1.toSessionData()}")
+        controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("don't ask"))
+          .onFailure { tc.failNow(it) }
+          .onSuccess { session2 ->
+            log.info("Got ${session2.toSessionData()}")
+            vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0) //            tc.awaitCompletion(10, TimeUnit.SECONDS)
             tc.completeNow()
-//            tc.awaitCompletion(10, TimeUnit.SECONDS)
 //            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
 //              if (resp.failed()) {
 //                tc.failNow(resp.cause())
 //              } else {
-//                println("Result ${resp.result()}")
+//                log.info("Result ${resp.result()}")
 //                tc.completeNow()
 //              }
 //            }
-//          }
+          }
       }
   }
 }

@@ -30,11 +30,13 @@ class PgcPoolingProjectionVerticle(
   private val action = handler()
   private val failures = AtomicLong(0)
 
-  override fun start() {
-    val eventbus = vertx.eventBus()
+  fun startTimer() {
     // Schedule the first execution
     vertx.setTimer(intervalInMilliseconds, action)
-    eventbus.consumer<Int>(PUBLISHER_ENDPOINT) { msg ->
+  }
+
+  override fun start() {
+    vertx.eventBus().consumer<Int>(PUBLISHER_ENDPOINT) { msg ->
       scanAndPublish(msg.body())
         .onFailure { msg.fail(500, it.message) }
         .onSuccess { msg.reply(it) }

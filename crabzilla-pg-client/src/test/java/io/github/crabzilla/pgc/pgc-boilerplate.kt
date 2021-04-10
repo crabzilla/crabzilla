@@ -52,17 +52,29 @@ fun cleanDatabase(vertx: Vertx, config: JsonObject): Future<Void> {
   val promise = Promise.promise<Void>()
   val read = readModelPgPool(vertx, config)
   val write = writeModelPgPool(vertx, config)
-  write.withTransaction { client ->
-    client.query("delete from commands").execute()
-      .compose { client.query("delete from events").execute() }
-      .compose { client.query("delete from customer_snapshots").execute() }
-      .compose { client.query("update projections set last_offset = 0").execute() }
-      .compose {
-        read.withTransaction { readCLient ->
-          readCLient.query("delete from customer_summary").execute()
-        }
-      }.onSuccess { promise.complete()
-      }.onFailure { promise.fail(it) }
-  }
+  write.query("delete from commands").execute()
+    .compose { write.query("delete from events").execute() }
+    .compose { write.query("delete from customer_snapshots").execute() }
+    .compose { write.query("update projections set last_offset = 0").execute() }
+    .compose { read.query("delete from customer_summary").execute() }
+    .onSuccess {
+      println("** Database is now clean")
+      promise.complete()
+    }.onFailure { promise.fail(it) }
+
+//  write.withTransaction { client ->
+//    client.query("delete from commands").execute()
+//      .compose { client.query("delete from events").execute() }
+//      .compose { client.query("delete from customer_snapshots").execute() }
+//      .compose { client.query("update projections set last_offset = 0").execute() }
+//      .compose {
+//        read.withTransaction { readClient ->
+//          readClient.query("delete from customer_summary").execute()
+//        }
+//      }.onSuccess {
+//        println("** Database is now clean");
+//        promise.complete()
+//      }.onFailure { promise.fail(it) }
+//  }
   return promise.future()
 }

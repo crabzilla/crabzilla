@@ -172,7 +172,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
                         close(conn)
                         promise.fail(it)
                       }.onSuccess {
-                        if (log.isDebugEnabled) log.debug("Events sucessful commited $topic")
+                        if (log.isDebugEnabled) log.debug("Events successfully committed $topic")
                         promise.complete()
                         close(conn)
                       }
