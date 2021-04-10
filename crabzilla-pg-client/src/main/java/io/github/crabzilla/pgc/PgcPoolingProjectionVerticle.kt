@@ -30,16 +30,12 @@ class PgcPoolingProjectionVerticle(
   private val action = handler()
   private val failures = AtomicLong(0)
 
-  fun startTimer() {
-    // Schedule the first execution
-    vertx.setTimer(intervalInMilliseconds, action)
-  }
-
   override fun start() {
-    vertx.eventBus().consumer<Int>(PUBLISHER_ENDPOINT) { msg ->
-      scanAndPublish(msg.body())
-        .onFailure { msg.fail(500, it.message) }
-        .onSuccess { msg.reply(it) }
+    vertx.eventBus().consumer<Int>(PUBLISHER_ENDPOINT) {
+      vertx.setTimer(intervalInMilliseconds, action)
+//      scanAndPublish(msg.body())
+//        .onFailure { msg.fail(500, it.message) }
+//        .onSuccess { msg.reply(it) }
     }
     log.info("Started pooling for at most $numberOfRows rows each $intervalInMilliseconds milliseconds")
   }

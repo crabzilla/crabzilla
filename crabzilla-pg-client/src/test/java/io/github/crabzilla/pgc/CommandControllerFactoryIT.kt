@@ -27,8 +27,6 @@ class CommandControllerFactoryIT {
     fun setup(vertx: Vertx, tc: VertxTestContext) {
       getConfig(vertx)
         .compose { config ->
-          val writeDb = writeModelPgPool(vertx, config)
-          val readDb = readModelPgPool(vertx, config)
           cleanDatabase(vertx, config)
             .onFailure {
               log.error("Cleaning db", it)
@@ -64,7 +62,8 @@ class CommandControllerFactoryIT {
           .onFailure { tc.failNow(it) }
           .onSuccess { session2 ->
             log.info("Got ${session2.toSessionData()}")
-            vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0) //            tc.awaitCompletion(10, TimeUnit.SECONDS)
+            vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
+            //            tc.awaitCompletion(10, TimeUnit.SECONDS)
             tc.completeNow()
 //            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
 //              if (resp.failed()) {
