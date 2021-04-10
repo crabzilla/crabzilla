@@ -37,13 +37,14 @@ class CommandControllerFactoryIT {
             }
             .onSuccess {
               log.info("Success")
-              vertx.deployVerticle(verticle)
-                .onFailure { err ->
-                  tc.failNow(err)
-                }
-                .onSuccess {
-                  tc.completeNow()
-                }
+              tc.completeNow()
+//              vertx.deployVerticle(verticle)
+//                .onFailure { err ->
+//                  tc.failNow(err)
+//                }
+//                .onSuccess {
+//                  tc.completeNow()
+//                }
             }
         }
     }
@@ -65,9 +66,9 @@ class CommandControllerFactoryIT {
           .onFailure { tc.failNow(it) }
           .onSuccess { session2 ->
             log.info("Got ${session2.toSessionData()}")
+            tc.completeNow()
  //           vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
 //            tc.awaitCompletion(2, TimeUnit.SECONDS)
-            tc.completeNow()
 //            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
 //              if (resp.failed()) {
 //                tc.failNow(resp.cause())
