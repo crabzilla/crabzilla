@@ -25,6 +25,7 @@ class CommandControllerFactoryIT {
     private val log = LoggerFactory.getLogger(CustomerProjectorVerticle::class.java)
   }
 
+  val id = (0..10_000).random()
   val verticle = CustomerVerticle(10_000)
   lateinit var writeDb: PgPool
   lateinit var readDb: PgPool
@@ -60,7 +61,7 @@ class CommandControllerFactoryIT {
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, verticle.writeDb)
     assertThat(controller).isNotNull
-    controller.handle(CommandMetadata(1), CustomerCommand.RegisterCustomer(1, "cust#1"))
+    controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#1"))
       .onFailure { tc.failNow(it) }
       .onSuccess { session1 ->
         println(session1.toSessionData())
