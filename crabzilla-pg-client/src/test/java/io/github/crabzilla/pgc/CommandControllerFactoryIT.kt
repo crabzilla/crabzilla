@@ -5,6 +5,7 @@ import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.pgc.CustomerProjectorVerticle.Companion.topic
 import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
+import io.vertx.junit5.Timeout
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import org.junit.jupiter.api.BeforeAll
@@ -12,8 +13,10 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
+import java.util.concurrent.TimeUnit
 
 @ExtendWith(VertxExtension::class)
+@Timeout(10_000)
 class CommandControllerFactoryIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
@@ -21,7 +24,7 @@ class CommandControllerFactoryIT {
 
   companion object {
     private val log = LoggerFactory.getLogger(CustomerProjectorVerticle::class.java)
-    val verticle = CustomerVerticle(10_000)
+    val verticle = CustomerVerticle(1000)
     @BeforeAll
     @JvmStatic
     fun setup(vertx: Vertx, tc: VertxTestContext) {
@@ -63,7 +66,7 @@ class CommandControllerFactoryIT {
           .onSuccess { session2 ->
             log.info("Got ${session2.toSessionData()}")
             vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
-            //            tc.awaitCompletion(10, TimeUnit.SECONDS)
+            tc.awaitCompletion(5, TimeUnit.SECONDS)
             tc.completeNow()
 //            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
 //              if (resp.failed()) {
