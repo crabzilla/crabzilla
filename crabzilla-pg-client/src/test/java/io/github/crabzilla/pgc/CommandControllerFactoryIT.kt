@@ -8,12 +8,12 @@ import io.vertx.core.Vertx
 import io.vertx.junit5.Timeout
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import org.junit.jupiter.api.BeforeAll
+import io.vertx.pgclient.PgPool
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
-import java.util.concurrent.TimeUnit
 
 @ExtendWith(VertxExtension::class)
 @Timeout(3_000)
@@ -24,20 +24,26 @@ class CommandControllerFactoryIT {
 
   companion object {
     private val log = LoggerFactory.getLogger(CustomerProjectorVerticle::class.java)
-    val verticle = CustomerVerticle(500)
-    @BeforeAll
-    @JvmStatic
-    fun setup(vertx: Vertx, tc: VertxTestContext) {
-      getConfig(vertx)
-        .compose { config ->
-          cleanDatabase(vertx, config)
-            .onFailure {
-              log.error("Cleaning db", it)
-              tc.failNow(it)
-            }
-            .onSuccess {
-              log.info("Success")
-              tc.completeNow()
+    // val verticle = CustomerVerticle(500)
+  }
+
+  lateinit var writeDb: PgPool
+  lateinit var readDb: PgPool
+
+  @BeforeEach
+  fun setup(vertx: Vertx, tc: VertxTestContext) {
+    getConfig(vertx)
+      .compose { config ->
+        writeDb = writeModelPgPool(vertx, config)
+        readDb = readModelPgPool(vertx, config)
+        cleanDatabase(vertx, config)
+          .onFailure {
+            log.error("Cleaning db", it)
+            tc.failNow(it)
+          }
+          .onSuccess {
+            log.info("Success")
+            tc.completeNow()
 //              vertx.deployVerticle(verticle)
 //                .onFailure { err ->
 //                  tc.failNow(err)
@@ -45,29 +51,27 @@ class CommandControllerFactoryIT {
 //                .onSuccess {
 //                  tc.completeNow()
 //                }
-            }
-        }
-    }
-  }
+          }
+      }
 
-  val id = (0..10_000).random()
+    val id = (0..10_000).random()
 
-  // https://github.com/smallrye/smallrye-reactive-utils/blob/8798a76943afba436634d3c55ca47c00e26d52ca/vertx-mutiny-clients/vertx-mutiny-core/src/test/java/io/vertx/mutiny/test/EventbusTest.java#L47
-  @Test
-  @DisplayName("it can create a command controller, send a command and have both write and read model side effects")
-  // TODO break it into smaller steps/assertions: check both write and real models persistence after handling a command
-  fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, verticle.writeDb)
-    controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
-      .onFailure { tc.failNow(it) }
-      .onSuccess { session1 ->
-        log.info("Got ${session1.toSessionData()}")
-        controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("don't ask"))
-          .onFailure { tc.failNow(it) }
-          .onSuccess { session2 ->
-            log.info("Got ${session2.toSessionData()}")
-            tc.completeNow()
- //           vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
+    // https://github.com/smallrye/smallrye-reactive-utils/blob/8798a76943afba436634d3c55ca47c00e26d52ca/vertx-mutiny-clients/vertx-mutiny-core/src/test/java/io/vertx/mutiny/test/EventbusTest.java#L47
+    @Test
+    @DisplayName("it can create a command controller, send a command and have both write and read model side effects")
+    // TODO break it into smaller steps/assertions: check both write and real models persistence after handling a command
+    fun a0(tc: VertxTestContext, vertx: Vertx) {
+      val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, writeDb)
+      controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
+        .onFailure { tc.failNow(it) }
+        .onSuccess { session1 ->
+          log.info("Got ${session1.toSessionData()}")
+          controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("don't ask"))
+            .onFailure { tc.failNow(it) }
+            .onSuccess { session2 ->
+              log.info("Got ${session2.toSessionData()}")
+              tc.completeNow()
+              //           vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
 //            tc.awaitCompletion(2, TimeUnit.SECONDS)
 //            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
 //              if (resp.failed()) {
@@ -77,7 +81,8 @@ class CommandControllerFactoryIT {
 //                tc.completeNow()
 //              }
 //            }
-          }
-      }
+            }
+        }
+    }
   }
 }

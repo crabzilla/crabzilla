@@ -32,7 +32,7 @@ class PgcPoolingProjectionVerticle(
 
   override fun start() {
     vertx.setTimer(intervalInMilliseconds, action)
-    vertx.eventBus().consumer<Int>(PUBLISHER_ENDPOINT) { msg->
+    vertx.eventBus().consumer<Int>(PUBLISHER_ENDPOINT) { msg ->
       scanAndPublish(msg.body())
         .onFailure { msg.fail(500, it.message) }
         .onSuccess { msg.reply(it) }
