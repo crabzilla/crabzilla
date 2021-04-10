@@ -21,40 +21,20 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
       .compose { config ->
         writeDb = writeModelPgPool(vertx, config)
         readDb = readModelPgPool(vertx, config)
-        cleanDatabase(vertx, config)
+        val eventsScanner = PgcEventsScanner(writeDb, "customers")
+        val publisherVerticle = PgcPoolingProjectionVerticle(
+          eventsScanner, EventBusEventsPublisher(topic, vertx.eventBus()), defaultInterval
+        )
+        val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))
+        log.info("Will deploy publisherVerticle")
+        vertx.deployVerticle(publisherVerticle)
+          .compose { vertx.deployVerticle(projectorVerticle) }
           .onFailure {
-            log.error("Cleaning db", it)
-            // promise.fail(it)
+            log.error("When deploying verticles", it)
           }
           .onSuccess {
-            log.info("Success")
+            log.info("verticles started")
             // promise.complete()
-//            return@onSuccess
-            val eventsScanner = PgcEventsScanner(writeDb, "customers")
-            val publisherVerticle = PgcPoolingProjectionVerticle(
-              eventsScanner, EventBusEventsPublisher(topic, vertx.eventBus()), defaultInterval
-            )
-            val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))
-            log.info("Will deploy publisherVerticle")
-            vertx.deployVerticle(publisherVerticle)
-              .onFailure { err ->
-                log.error("When deploying publisherVerticle", err)
-                // promise.fail(err)
-              }
-              .onSuccess {
-                log.info("publisherVerticle started")
-                // promise.complete()
-                log.info("Now will deploy projectorVerticle")
-                vertx.deployVerticle(projectorVerticle)
-                  .onFailure {
-                    log.error("When deploying projectorVerticle", it)
-                    // promise.fail(it)
-                  }
-                  .onSuccess {
-                    log.info("projectorVerticle started")
-                    // promise.complete()
-                  }
-              }
           }
       }
   }

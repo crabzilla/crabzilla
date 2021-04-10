@@ -7,11 +7,13 @@ import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.pgclient.PgPool
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.slf4j.LoggerFactory
 
 @ExtendWith(VertxExtension::class)
 class CommandControllerFactoryIT {
@@ -19,15 +21,35 @@ class CommandControllerFactoryIT {
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
 
+  companion object {
+    private val log = LoggerFactory.getLogger(CustomerProjectorVerticle::class.java)
+  }
+
   val verticle = CustomerVerticle(10_000)
+  lateinit var writeDb: PgPool
+  lateinit var readDb: PgPool
+
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    vertx.deployVerticle(verticle)
-      .onFailure { err ->
-        tc.failNow(err)
-      }
-      .onSuccess {
-        tc.completeNow()
+    getConfig(vertx)
+      .compose { config ->
+        writeDb = writeModelPgPool(vertx, config)
+        readDb = readModelPgPool(vertx, config)
+        cleanDatabase(vertx, config)
+          .onFailure {
+            log.error("Cleaning db", it)
+            tc.failNow(it)
+          }
+          .onSuccess {
+            log.info("Success")
+            vertx.deployVerticle(verticle)
+              .onFailure { err ->
+                tc.failNow(err)
+              }
+              .onSuccess {
+                tc.completeNow()
+              }
+          }
       }
   }
 
@@ -39,14 +61,14 @@ class CommandControllerFactoryIT {
     val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, verticle.writeDb)
     assertThat(controller).isNotNull
     controller.handle(CommandMetadata(1), CustomerCommand.RegisterCustomer(1, "cust#1"))
-      .onFailure { tc.failNow(it.cause) }
+      .onFailure { tc.failNow(it) }
       .onSuccess { session1 ->
         println(session1.toSessionData())
-        controller.handle(CommandMetadata(1), CustomerCommand.ActivateCustomer("don't ask"))
-          .onFailure { tc.failNow(it.cause) }
-          .onSuccess { session2 ->
-            println(session2.toSessionData())
-            vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1)
+//        controller.handle(CommandMetadata(1), CustomerCommand.ActivateCustomer("don't ask"))
+//          .onFailure { tc.failNow(it) }
+//          .onSuccess { session2 ->
+//            println(session2.toSessionData())
+//            vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1)
             tc.completeNow()
 //            tc.awaitCompletion(10, TimeUnit.SECONDS)
 //            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
@@ -57,7 +79,7 @@ class CommandControllerFactoryIT {
 //                tc.completeNow()
 //              }
 //            }
-          }
+//          }
       }
   }
 }
