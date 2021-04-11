@@ -63,8 +63,7 @@ class CommandControllerFactoryIT {
     assertThat(controller).isNotNull
     controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
       .onSuccess {
-        vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, null)
-        Thread.sleep(2000)
+        vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) // actually it should be a request
         tc.completeNow()
       }
   }
