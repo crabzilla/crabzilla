@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
+import java.util.concurrent.TimeUnit
 
 @ExtendWith(VertxExtension::class)
 class CommandControllerFactoryIT {
@@ -26,7 +27,7 @@ class CommandControllerFactoryIT {
   }
 
   val id = (0..10_000).random()
-  val verticle = CustomerVerticle(10_000)
+  val verticle = CustomerVerticle(1_000)
   lateinit var writeDb: PgPool
   lateinit var readDb: PgPool
 
@@ -61,18 +62,18 @@ class CommandControllerFactoryIT {
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, verticle.writeDb)
     assertThat(controller).isNotNull
-    controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#1"))
+    controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
       .onFailure { tc.failNow(it) }
       .onSuccess { session1 ->
-        println(session1.toSessionData())
-//        controller.handle(CommandMetadata(1), CustomerCommand.ActivateCustomer("don't ask"))
-//          .onFailure { tc.failNow(it) }
-//          .onSuccess { session2 ->
-//            println(session2.toSessionData())
-//            vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1)
+        log.info("Result 1 ${session1.toSessionData()}")
+        controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("don't ask"))
+          .onFailure { tc.failNow(it) }
+          .onSuccess { session2 ->
+            log.info("Result 2 ${session2.toSessionData()}")
+//            vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
+            tc.awaitCompletion(2, TimeUnit.SECONDS)
             tc.completeNow()
-//            tc.awaitCompletion(10, TimeUnit.SECONDS)
-//            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1) { resp ->
+//            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0) { resp ->
 //              if (resp.failed()) {
 //                tc.failNow(resp.cause())
 //              } else {
@@ -80,7 +81,7 @@ class CommandControllerFactoryIT {
 //                tc.completeNow()
 //              }
 //            }
-//          }
+          }
       }
   }
 }

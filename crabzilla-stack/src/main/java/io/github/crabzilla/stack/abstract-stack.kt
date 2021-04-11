@@ -28,6 +28,6 @@ interface SnapshotRepository<A : AggregateRoot, C : Command, E : DomainEvent> {
  * To publish an event as JSON to read model, messaging broker, etc (any side effect)
  */
 interface EventsPublisher {
-  fun publish(eventRecord: EventRecord): Future<Long>
+  fun publish(eventRecord: EventRecord): Future<Void>
   // TODO what about correlation id, etc?
 }

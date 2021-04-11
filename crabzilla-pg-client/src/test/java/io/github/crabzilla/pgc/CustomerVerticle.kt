@@ -10,7 +10,7 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(CustomerVerticle::class.java)
-    const val topic = "example1"
+    const val topic = "customers"
   }
 
   lateinit var writeDb: PgPool
@@ -21,7 +21,7 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
       .compose { config ->
         writeDb = writeModelPgPool(vertx, config)
         readDb = readModelPgPool(vertx, config)
-        val eventsScanner = PgcEventsScanner(writeDb, "customers")
+        val eventsScanner = PgcEventsScanner(writeDb, topic)
         val publisherVerticle = PgcPoolingProjectionVerticle(
           eventsScanner, EventBusEventsPublisher(topic, vertx.eventBus()), defaultInterval
         )

@@ -12,7 +12,7 @@ class EventBusEventsPublisher(private val topic: String, private val eventbus: E
     val log = LoggerFactory.getLogger(EventBusEventsPublisher::class.simpleName)
   }
 
-  override fun publish(eventRecord: EventRecord): Future<Long> {
+  override fun publish(eventRecord: EventRecord): Future<Void> {
     eventbus.publish(topic, eventRecord.toJsonObject())
     return Future.succeededFuture()
   }
