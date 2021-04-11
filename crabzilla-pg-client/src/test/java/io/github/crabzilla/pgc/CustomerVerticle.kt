@@ -3,6 +3,7 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.customerJson
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.Promise
 import io.vertx.pgclient.PgPool
 import org.slf4j.LoggerFactory
 
@@ -16,7 +17,7 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
   lateinit var writeDb: PgPool
   lateinit var readDb: PgPool
 
-  override fun start() {
+  override fun start(promise: Promise<Void>) {
     getConfig(vertx)
       .compose { config ->
         writeDb = writeModelPgPool(vertx, config)
@@ -31,10 +32,11 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
           .compose { vertx.deployVerticle(projectorVerticle) }
           .onFailure {
             log.error("When deploying verticles", it)
+            promise.fail(it)
           }
           .onSuccess {
             log.info("verticles started")
-            // promise.complete()
+            promise.complete()
           }
       }
   }

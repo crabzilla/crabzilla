@@ -7,7 +7,6 @@ import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.pgclient.PgPool
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
 
 @ExtendWith(VertxExtension::class)
-class CommandControllerFactoryIT {
+class PgcFullStackIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
@@ -26,16 +25,12 @@ class CommandControllerFactoryIT {
   }
 
   val id = (0..10_000).random()
-  val verticle = CustomerVerticle(10_000)
-  lateinit var writeDb: PgPool
-  lateinit var readDb: PgPool
+  val verticle = CustomerVerticle(10_000) // TODO this seems to be related to failing
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     getConfig(vertx)
       .compose { config ->
-        writeDb = writeModelPgPool(vertx, config)
-        readDb = readModelPgPool(vertx, config)
         cleanDatabase(vertx, config)
           .onFailure {
             log.error("Cleaning db", it)
@@ -54,7 +49,6 @@ class CommandControllerFactoryIT {
       }
   }
 
-  // https://github.com/smallrye/smallrye-reactive-utils/blob/8798a76943afba436634d3c55ca47c00e26d52ca/vertx-mutiny-clients/vertx-mutiny-core/src/test/java/io/vertx/mutiny/test/EventbusTest.java#L47
   @Test
   @DisplayName("it can create a command controller, send a command and have both write and read model side effects")
   // TODO break it into smaller steps/assertions: check both write and real models persistence after handling a command
@@ -63,8 +57,12 @@ class CommandControllerFactoryIT {
     assertThat(controller).isNotNull
     controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
       .onSuccess {
-        vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) // actually it should be a request
+        // TODO a free book if you make this work
+        // TODO vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) // actually it should be a request
         tc.completeNow()
+      }
+      .onFailure {
+        tc.failNow(it)
       }
   }
 }
