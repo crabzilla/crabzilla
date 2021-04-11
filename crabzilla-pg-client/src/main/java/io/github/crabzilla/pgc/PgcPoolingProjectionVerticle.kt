@@ -25,8 +25,8 @@ class PgcPoolingProjectionVerticle(
 
   companion object {
     const val PUBLISHER_ENDPOINT = "publisher.verticle" // TODo add endpoint for pause, resume, restart from N, etc
-    private const val DEFAULT_INTERVAL = 1_000L
-    private const val DEFAULT_NUMBER_OF_ROWS = 1_000
+    private const val DEFAULT_INTERVAL = 100L
+    private const val DEFAULT_NUMBER_OF_ROWS = 100
     private const val DEFAULT_MAX_INTERVAL = 10_000L
   }
 
