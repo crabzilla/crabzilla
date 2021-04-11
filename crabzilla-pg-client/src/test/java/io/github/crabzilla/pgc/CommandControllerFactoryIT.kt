@@ -14,7 +14,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
-import java.util.concurrent.TimeUnit
 
 @ExtendWith(VertxExtension::class)
 class CommandControllerFactoryIT {
@@ -27,7 +26,7 @@ class CommandControllerFactoryIT {
   }
 
   val id = (0..10_000).random()
-  val verticle = CustomerVerticle(1_000)
+  val verticle = CustomerVerticle(120_000)
   lateinit var writeDb: PgPool
   lateinit var readDb: PgPool
 
@@ -70,17 +69,8 @@ class CommandControllerFactoryIT {
           .onFailure { tc.failNow(it) }
           .onSuccess { session2 ->
             log.info("Result 2 ${session2.toSessionData()}")
-//            vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
-            tc.awaitCompletion(2, TimeUnit.SECONDS)
+            vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
             tc.completeNow()
-//            vertx.eventBus().request<Long>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0) { resp ->
-//              if (resp.failed()) {
-//                tc.failNow(resp.cause())
-//              } else {
-//                println("Result ${resp.result()}")
-//                tc.completeNow()
-//              }
-//            }
           }
       }
   }

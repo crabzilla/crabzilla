@@ -36,6 +36,10 @@ class PgcPoolingProjectionVerticle(
   private val failures = AtomicLong(0)
 
   override fun start() {
+    // force scan endpoint
+    vertx.eventBus().consumer<Long>(PUBLISHER_ENDPOINT) { eventId ->
+      handler().handle(eventId.body())
+    }
     // Schedule the first execution
     vertx.setTimer(intervalInMilliseconds, action)
     log.info("Started pooling for at most $numberOfRows rows each $intervalInMilliseconds milliseconds")
