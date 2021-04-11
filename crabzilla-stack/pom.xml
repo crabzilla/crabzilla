@@ -29,10 +29,10 @@
       <artifactId>vertx-lang-kotlin</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-lang-kotlin-coroutines</artifactId>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>io.vertx</groupId>-->
+<!--      <artifactId>vertx-lang-kotlin-coroutines</artifactId>-->
+<!--    </dependency>-->
 
   </dependencies>
 

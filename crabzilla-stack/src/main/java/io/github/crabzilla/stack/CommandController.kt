@@ -42,37 +42,38 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
       log.error("Invalid command $metadata\n $command \n$validationErrors")
       return promise.future()
     }
-    if (log.isDebugEnabled()) log.debug("Will get snapshot for aggregate ${metadata.aggregateRootId}")
+    if (log.isDebugEnabled) log.debug("Will get snapshot for aggregate ${metadata.aggregateRootId}")
     snapshotRepo.get(metadata.aggregateRootId)
       .onFailure { err ->
         log.error("Could not get snapshot", err)
         promise.fail(err)
       }
       .onSuccess { snapshot ->
-        if (log.isDebugEnabled()) log.debug("Got snapshot $snapshot. Now let's handle the command")
+        if (log.isDebugEnabled) log.debug("Got snapshot $snapshot. Now let's handle the command")
         handler.handleCommand(command, snapshot)
           .onFailure { err ->
             log.error("Command error", err)
             promise.fail(err)
           }
           .onSuccess { result: StatefulSession<A, E> ->
-            if (log.isDebugEnabled()) log.debug("Command handled. ${result.toSessionData()}. Now let's append it events")
+            if (log.isDebugEnabled) log.debug("Command handled. ${result.toSessionData()}. Now let's append it events")
             eventStore.append(command, metadata, result)
               .onFailure { err ->
                 log.error("When appending events", err)
                 promise.fail(err)
               }
               .onSuccess {
-                if (log.isDebugEnabled()) log.debug("Events successfully appended. Now let's save the resulting snapshot")
+                if (log.isDebugEnabled) log.debug("Events successfully appended. Now let's save the resulting snapshot")
                 val newSnapshot = Snapshot(result.currentState, result.originalVersion + 1)
-                promise.complete(result)
                 snapshotRepo.upsert(metadata.aggregateRootId, newSnapshot)
                   .onFailure { err ->
                     log.error("When saving new snapshot", err)
                     // let's just ignore snapshot error (the principal side effect is on eventSTore, anyway)
                   }
                   .onSuccess {
-                    if (log.isDebugEnabled()) log.debug("Snapshot upsert done: $newSnapshot")
+                    if (log.isDebugEnabled) log.debug("Snapshot upsert done: $newSnapshot")
+                  }.onComplete {
+                    promise.complete(result)
                   }
               }
           }

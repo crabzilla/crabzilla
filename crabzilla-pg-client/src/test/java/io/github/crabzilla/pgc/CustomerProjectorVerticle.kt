@@ -18,7 +18,7 @@ class CustomerProjectorVerticle(private val json: Json, private val repo: Custom
 
   companion object {
     private val log = LoggerFactory.getLogger(CustomerProjectorVerticle::class.java)
-    const val topic = "example1"
+    const val topic = "customers"
   }
 
   override fun start() {
