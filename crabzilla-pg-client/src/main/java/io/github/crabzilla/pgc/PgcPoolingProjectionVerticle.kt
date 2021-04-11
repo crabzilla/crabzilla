@@ -37,8 +37,8 @@ class PgcPoolingProjectionVerticle(
 
   override fun start() {
     // force scan endpoint
-    vertx.eventBus().consumer<Long>(PUBLISHER_ENDPOINT) { eventId ->
-      handler().handle(eventId.body())
+    vertx.eventBus().consumer<Long>(PUBLISHER_ENDPOINT) {
+      handler().handle(0L)
     }
     // Schedule the first execution
     vertx.setTimer(intervalInMilliseconds, action)

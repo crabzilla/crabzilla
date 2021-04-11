@@ -27,7 +27,7 @@ class CommandControllerFactoryIT {
   }
 
   val id = (0..10_000).random()
-  val verticle = CustomerVerticle(500)
+  val verticle = CustomerVerticle(10_000)
   lateinit var writeDb: PgPool
   lateinit var readDb: PgPool
 
@@ -67,16 +67,14 @@ class CommandControllerFactoryIT {
       .onSuccess { session1 ->
         log.info("Result 1 ${session1.toSessionData()}")
         // vertx.eventBus().send(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0L)
-        tc.awaitCompletion(1, TimeUnit.SECONDS)
-        tc.completeNow()
-//        controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("don't ask"))
-//          .onFailure { tc.failNow(it) }
-//          .onSuccess { session2 ->
-//            log.info("Result 2 ${session2.toSessionData()}")
-//            tc.awaitCompletion(2, TimeUnit.SECONDS)
-//            vertx.eventBus().send(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
-//            tc.completeNow()
-//          }
+        controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("don't ask"))
+          .onFailure { tc.failNow(it) }
+          .onSuccess { session2 ->
+            log.info("Result 2 ${session2.toSessionData()}")
+            tc.awaitCompletion(2, TimeUnit.SECONDS)
+            // vertx.eventBus().send(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1L)
+            tc.completeNow()
+          }
       }
   }
 }
