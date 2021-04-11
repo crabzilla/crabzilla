@@ -33,7 +33,7 @@ class PgcPoolingProjectionVerticle(
   private val log = LoggerFactory.getLogger(eventsScanner.streamName)
 
   private val action: Handler<Long?> = handler()
-  private val failures = AtomicLong(0)
+  private val failures = AtomicLong(0L)
 
   override fun start() {
     // force scan endpoint
