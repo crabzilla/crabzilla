@@ -25,7 +25,7 @@ class PgcFullStackIT {
   }
 
   val id = (0..10_000).random()
-  val verticle = CustomerVerticle(20_000) // TODO this seems to be related to failing
+  val verticle = CustomerVerticle(20_000) // TODO decrease this to work each 1 second or...
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
@@ -51,14 +51,13 @@ class PgcFullStackIT {
 
   @Test
   @DisplayName("it can create a command controller, send a command and have both write and read model side effects")
-  // TODO break it into smaller steps/assertions: check both write and real models persistence after handling a command
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, verticle.writeDb)
     assertThat(controller).isNotNull
     controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
       .onSuccess {
-        // TODO a free book if you make this work
-        // TODO vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) // actually it should be a request
+        // TODO make bellow line to work without timeout (actually it should be a request instead of publish or send)
+        //  vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, null)
         tc.completeNow()
       }
       .onFailure {
