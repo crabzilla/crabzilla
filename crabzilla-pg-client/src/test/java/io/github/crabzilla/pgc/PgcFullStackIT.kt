@@ -25,7 +25,7 @@ class PgcFullStackIT {
   }
 
   val id = (0..10_000).random()
-  val verticle = CustomerVerticle(10_000) // TODO this seems to be related to failing
+  val verticle = CustomerVerticle(20_000) // TODO this seems to be related to failing
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
