@@ -69,7 +69,7 @@ class CommandControllerFactoryIT {
           .onFailure { tc.failNow(it) }
           .onSuccess { session2 ->
             log.info("Result 2 ${session2.toSessionData()}")
-            vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
+            vertx.eventBus().send(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
             tc.completeNow()
           }
       }

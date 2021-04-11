@@ -158,6 +158,7 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
           .onSuccess { newSnapshot -> promise.complete(newSnapshot) }
           .onFailure {
             log.error("When getting new snapshot", it)
+            promise.fail(it)
           }
           .onComplete {
             close(conn)
