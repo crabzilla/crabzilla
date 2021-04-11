@@ -36,15 +36,15 @@ class PgcFullStackIT {
             log.error("Cleaning db", it)
             tc.failNow(it)
           }
+      }
+      .onSuccess {
+        log.info("Success")
+        vertx.deployVerticle(verticle)
+          .onFailure { err ->
+            tc.failNow(err)
+          }
           .onSuccess {
-            log.info("Success")
-            vertx.deployVerticle(verticle)
-              .onFailure { err ->
-                tc.failNow(err)
-              }
-              .onSuccess {
-                tc.completeNow()
-              }
+            tc.completeNow()
           }
       }
   }
