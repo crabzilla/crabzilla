@@ -25,6 +25,7 @@ class PgcPoolingProjectionVerticle(
 
   companion object {
     const val PUBLISHER_ENDPOINT = "publisher.verticle" // TODo add endpoint for pause, resume, restart from N, etc
+    const val PUBLISHER_RESCHEDULED_ENDPOINT = "publisher.verticle.rescheduled"
     private const val DEFAULT_INTERVAL = 100L
     private const val DEFAULT_NUMBER_OF_ROWS = 100
     private const val DEFAULT_MAX_INTERVAL = 10_000L
@@ -38,11 +39,15 @@ class PgcPoolingProjectionVerticle(
   override fun start() {
     // force scan endpoint
     vertx.eventBus().consumer<Void>(PUBLISHER_ENDPOINT) { msg ->
+      log.info("Forced scan")
       val id = handler().handle(0L)
-      msg.reply(id)
+      log.info("Projected until $id")
+      // msg.reply(id)
     }
-    // Schedule the first execution
-    vertx.setTimer(intervalInMilliseconds, action)
+    vertx.eventBus().consumer<Long>(PUBLISHER_RESCHEDULED_ENDPOINT) { msg ->
+      val nextInterval = msg.body()
+      log.info("Rescheduled to next $nextInterval milliseconds")
+    }
     log.info("Started pooling for at most $numberOfRows rows each $intervalInMilliseconds milliseconds")
   }
 
@@ -95,13 +100,11 @@ class PgcPoolingProjectionVerticle(
     }
     fun registerFailure() {
       val nextInterval = min(DEFAULT_MAX_INTERVAL, intervalInMilliseconds * failures.incrementAndGet())
-      vertx.setTimer(nextInterval, action)
-      if (log.isDebugEnabled) log.debug("Rescheduled to next $nextInterval milliseconds")
+      vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, nextInterval)
     }
     fun registerSuccess() {
       failures.set(0)
-      vertx.setTimer(intervalInMilliseconds, action)
-      if (log.isDebugEnabled) log.debug("Rescheduled to next $intervalInMilliseconds milliseconds")
+      vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, intervalInMilliseconds)
     }
     fun scanAndPublish(numberOfRows: Int): Future<Long> {
       val promise = Promise.promise<Long>()
@@ -126,8 +129,11 @@ class PgcPoolingProjectionVerticle(
                 return@onSuccess
               }
               eventsScanner.updateOffSet(lastEventPublished)
-              log.info("Updated latest offset to $lastEventPublished")
-              promise.complete(lastEventPublished)
+                .onFailure { promise.fail(it) }
+                .onSuccess {
+                  log.info("Updated latest offset to $lastEventPublished")
+                  promise.complete(lastEventPublished)
+                }
             }
         }
         .onComplete {

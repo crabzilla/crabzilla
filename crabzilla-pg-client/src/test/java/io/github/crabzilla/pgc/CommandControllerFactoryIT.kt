@@ -4,7 +4,6 @@ import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.pgc.CustomerProjectorVerticle.Companion.topic
 import io.github.crabzilla.stack.CommandMetadata
-import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -15,7 +14,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
-import java.util.concurrent.TimeUnit
 
 @ExtendWith(VertxExtension::class)
 class CommandControllerFactoryIT {
@@ -64,44 +62,10 @@ class CommandControllerFactoryIT {
     val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, verticle.writeDb)
     assertThat(controller).isNotNull
     controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
-      .compose {
+      .onSuccess {
         vertx.eventBus().publish(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, null)
-        tc.awaitCompletion(2, TimeUnit.SECONDS)
-        Future.succeededFuture<Void>()
-//        val promise = Promise.promise<Void>()
-//        vertx.eventBus().request<Void>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) {
-//          if (it.failed()) {
-//            log.error("Failed", it)
-//            promise.fail(it.cause())
-//          } else {
-//            log.info("Success eventId ${it.result()}")
-//            promise.complete()
-//          }
-//        }
-//        promise.future()
+        Thread.sleep(2000)
+        tc.completeNow()
       }
-      .onComplete(tc.succeedingThenComplete())
-    assertThat(tc.awaitCompletion(5, TimeUnit.SECONDS)).isTrue
-    if (tc.failed()) {
-      log.error("Cause: ", tc.causeOfFailure())
-      throw tc.causeOfFailure()
-    } else {
-      tc.completeNow()
-    }
-
-//
-//      .onFailure { tc.failNow(it) }
-//      .onSuccess { session1 ->
-//        log.info("Result 1 ${session1.toSessionData()}")
-//        // vertx.eventBus().send(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0L)
-//        controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("don't ask"))
-//          .onFailure { tc.failNow(it) }
-//          .onSuccess { session2 ->
-//            log.info("Result 2 ${session2.toSessionData()}")
-// //            tc.awaitCompletion(2, TimeUnit.SECONDS)
-//            // vertx.eventBus().send(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 1L)
-//            tc.completeNow()
-//          }
-//      }
   }
 }
