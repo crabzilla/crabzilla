@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
+import java.util.concurrent.TimeUnit
 
 @ExtendWith(VertxExtension::class)
 class CommandControllerFactoryIT {
@@ -65,13 +66,17 @@ class CommandControllerFactoryIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { session1 ->
         log.info("Result 1 ${session1.toSessionData()}")
-        controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("don't ask"))
-          .onFailure { tc.failNow(it) }
-          .onSuccess { session2 ->
-            log.info("Result 2 ${session2.toSessionData()}")
-            vertx.eventBus().send(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
-            tc.completeNow()
-          }
+        vertx.eventBus().send(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
+        tc.awaitCompletion(1, TimeUnit.SECONDS)
+        tc.completeNow()
+//        controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("don't ask"))
+//          .onFailure { tc.failNow(it) }
+//          .onSuccess { session2 ->
+//            log.info("Result 2 ${session2.toSessionData()}")
+//            tc.awaitCompletion(2, TimeUnit.SECONDS)
+//            vertx.eventBus().send(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, 0)
+//            tc.completeNow()
+//          }
       }
   }
 }
