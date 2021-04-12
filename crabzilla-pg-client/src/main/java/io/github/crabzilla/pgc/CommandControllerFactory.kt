@@ -11,15 +11,12 @@ import io.vertx.pgclient.PgPool
 object CommandControllerFactory {
 
   fun <A : AggregateRoot, C : Command, E : DomainEvent>
-  createPublishingTo(
-    topic: String,
-    config: AggregateRootConfig<A, C, E>,
-    writeModelDb: PgPool
-  ): CommandController<A, C, E> {
-    val snapshotRepo = PgcSnapshotRepo(config, writeModelDb)
-    val eventStore = PgcEventStore<A, C, E>(topic, writeModelDb, config.json)
-    return CommandController(config.commandValidator, config.commandHandler, snapshotRepo, eventStore)
-  }
+  createPublishingTo(topic: String, config: AggregateRootConfig<A, C, E>, writeModelDb: PgPool):
+    CommandController<A, C, E> {
+      val snapshotRepo = PgcSnapshotRepo(config, writeModelDb)
+      val eventStore = PgcEventStore<A, C, E>(topic, writeModelDb, config.json)
+      return CommandController(config.commandValidator, config.commandHandler, snapshotRepo, eventStore)
+    }
 
   fun <A : AggregateRoot, C : Command, E : DomainEvent>
   createPublishingTo(

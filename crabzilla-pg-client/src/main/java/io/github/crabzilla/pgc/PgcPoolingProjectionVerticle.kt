@@ -26,9 +26,9 @@ class PgcPoolingProjectionVerticle(
   companion object {
     const val PUBLISHER_ENDPOINT = "publisher.verticle" // TODO add endpoint for pause, resume, restart from N, etc
     const val PUBLISHER_RESCHEDULED_ENDPOINT = "publisher.verticle.rescheduled"
-    private const val DEFAULT_INTERVAL = 100L
-    private const val DEFAULT_NUMBER_OF_ROWS = 100
-    private const val DEFAULT_MAX_INTERVAL = 10_000L
+    private const val DEFAULT_INTERVAL = 500L
+    private const val DEFAULT_NUMBER_OF_ROWS = 500
+    private const val DEFAULT_MAX_INTERVAL = 60_000L
   }
 
   private val log = LoggerFactory.getLogger(eventsScanner.streamName)
