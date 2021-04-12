@@ -11,9 +11,9 @@ object PgcClient {
   private val log = LoggerFactory.getLogger(PgcClient::class.java)
 
   fun rollback(tx: Transaction, throwable: Throwable) {
-    log.error("Will rollback transaction given", throwable)
+    log.error("Will rollback transaction given ${throwable.message}")
     tx.rollback()
-      .onFailure { log.error("On transaction rollback", it.cause) }
+      .onFailure { log.error("On transaction rollback", it) }
       .onSuccess {
         if (log.isDebugEnabled) log.debug("Transaction successfully rolled back")
       }
@@ -31,7 +31,7 @@ object PgcClient {
     if (log.isDebugEnabled) log.debug("Will commit transaction")
     tx.commit()
       .onFailure {
-        log.error("When committing the transaction", it.cause)
+        log.error("When committing the transaction", it)
         promise.fail(it.cause)
       }
       .onSuccess {

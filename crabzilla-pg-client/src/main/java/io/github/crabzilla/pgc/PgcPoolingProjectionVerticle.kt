@@ -24,7 +24,7 @@ class PgcPoolingProjectionVerticle(
 ) : AbstractVerticle() {
 
   companion object {
-    const val PUBLISHER_ENDPOINT = "publisher.verticle" // TODo add endpoint for pause, resume, restart from N, etc
+    const val PUBLISHER_ENDPOINT = "publisher.verticle" // TODO add endpoint for pause, resume, restart from N, etc
     const val PUBLISHER_RESCHEDULED_ENDPOINT = "publisher.verticle.rescheduled"
     private const val DEFAULT_INTERVAL = 100L
     private const val DEFAULT_NUMBER_OF_ROWS = 100
