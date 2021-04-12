@@ -8,13 +8,10 @@ import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerEventHandler
 import io.github.crabzilla.example1.customerJson
 import io.github.crabzilla.stack.CommandMetadata
-import io.vertx.core.AsyncResult
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.pgclient.PgConnection
 import io.vertx.pgclient.PgPool
-import io.vertx.sqlclient.SqlConnection
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -45,16 +42,16 @@ class PgcEventStoreIT {
       }
       .onFailure { tc.failNow(it.cause) }
       .onSuccess {
-        writeDb.getConnection { c: AsyncResult<SqlConnection> ->
-          val pgConn = c.result() as PgConnection
-          pgConn
-            .query("LISTEN ${eventStore.topic}")
-            .execute { ar -> println("Subscribed to channel ${eventStore.topic} $ar") }
-          pgConn.notificationHandler {
-            println("Received a notification #${notifications.incrementAndGet()} from channel ${it.channel}")
-          }
-          tc.completeNow()
-        }
+//        writeDb.getConnection { c: AsyncResult<SqlConnection> ->
+//          val pgConn = c.result() as PgConnection
+//          pgConn
+//            .query("LISTEN ${eventStore.topic}")
+//            .execute { ar -> println("Subscribed to channel ${eventStore.topic} $ar") }
+//          pgConn.notificationHandler {
+//            println("Received a notification #${notifications.incrementAndGet()} from channel ${it.channel}")
+//          }
+        tc.completeNow()
+//        }
       }
   }
 

@@ -28,7 +28,7 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
           eventsScanner, EventBusEventsPublisher(topic, vertx.eventBus()), defaultInterval
         )
         val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))
-        val deploymentOptions = DeploymentOptions().setInstances(1)
+        val deploymentOptions = DeploymentOptions().setInstances(1).setWorker(false)
         log.info("Will deploy publisherVerticle")
         vertx.deployVerticle(publisherVerticle, deploymentOptions)
           .compose {

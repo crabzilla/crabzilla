@@ -56,7 +56,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       conn.preparedQuery(SQL_SELECT_CURRENT_VERSION)
         .execute(params0)
         .onFailure { err ->
-          log.error("When preparing query $SQL_SELECT_CURRENT_VERSION", err.cause)
+          log.error("When preparing query $SQL_SELECT_CURRENT_VERSION ${err.message}")
           promise0.fail(err)
         }
         .onSuccess { event1 ->
@@ -152,7 +152,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           .onSuccess { tx: Transaction ->
             checkVersion(conn)
               .onFailure {
-                log.error("Version error", it)
+                log.error("Version error ${it.message}")
                 rollback(tx, it)
                 close(conn)
                 promise.fail(it)
@@ -172,7 +172,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
                         close(conn)
                         promise.fail(it)
                       }.onSuccess {
-                        if (log.isDebugEnabled) log.debug("Events sucessful commited $topic")
+                        if (log.isDebugEnabled) log.debug("Events successfully committed to $topic")
                         promise.complete()
                         close(conn)
                       }

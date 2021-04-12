@@ -24,11 +24,11 @@ class PgcPoolingProjectionVerticle(
 ) : AbstractVerticle() {
 
   companion object {
-    const val PUBLISHER_ENDPOINT = "publisher.verticle" // TODo add endpoint for pause, resume, restart from N, etc
+    const val PUBLISHER_ENDPOINT = "publisher.verticle" // TODO add endpoint for pause, resume, restart from N, etc
     const val PUBLISHER_RESCHEDULED_ENDPOINT = "publisher.verticle.rescheduled"
-    private const val DEFAULT_INTERVAL = 100L
-    private const val DEFAULT_NUMBER_OF_ROWS = 100
-    private const val DEFAULT_MAX_INTERVAL = 10_000L
+    private const val DEFAULT_INTERVAL = 500L
+    private const val DEFAULT_NUMBER_OF_ROWS = 500
+    private const val DEFAULT_MAX_INTERVAL = 60_000L
   }
 
   private val log = LoggerFactory.getLogger(eventsScanner.streamName)
@@ -42,13 +42,15 @@ class PgcPoolingProjectionVerticle(
     // force scan endpoint
     vertx.eventBus().consumer<Void>(PUBLISHER_ENDPOINT) { msg ->
       log.info("Forced scan")
-      val id = handler().handle(0L)
-      log.info("Projected until $id")
-      // msg.reply(id)
+      scanAndPublish(numberOfRows)
+        .onFailure { msg.fail(500, it.message) }
+        .onSuccess {
+          log.info("Finished scan")
+          msg.reply(true)
+        }
     }
     vertx.eventBus().consumer<Long>(PUBLISHER_RESCHEDULED_ENDPOINT) { msg ->
       val nextInterval = msg.body()
-      // Schedule the first execution
       vertx.setTimer(nextInterval, action)
       log.info("Rescheduled to next $nextInterval milliseconds")
     }
@@ -60,6 +62,42 @@ class PgcPoolingProjectionVerticle(
   }
 
   fun handler(): Handler<Long?> {
+    fun registerFailure() {
+      val nextInterval = min(DEFAULT_MAX_INTERVAL, intervalInMilliseconds * failures.incrementAndGet())
+      vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, nextInterval)
+    }
+    fun registerSuccess() {
+      failures.set(0)
+      vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, intervalInMilliseconds)
+    }
+    return Handler { tick ->
+      if (log.isDebugEnabled) log.debug("Tick $tick")
+      scanAndPublish(numberOfRows)
+        .onFailure {
+          log.error("When scanning for new events", it)
+          registerFailure()
+        }
+        .onSuccess {
+          if (log.isDebugEnabled) log.debug("$it events were scanned")
+          when (it) {
+            -1L -> {
+              if (log.isDebugEnabled) log.debug("Still busy")
+              registerFailure()
+            }
+            0L -> {
+              if (log.isDebugEnabled) log.debug("No new events")
+              registerFailure()
+            }
+            else -> {
+              if (log.isDebugEnabled) log.debug("Found $it events")
+              registerSuccess()
+            }
+          }
+        }
+    }
+  }
+
+  fun scanAndPublish(numberOfRows: Int): Future<Long> {
     fun publish(eventsList: List<EventRecord>): Future<Long> {
       fun action(eventRecord: EventRecord): Future<Boolean> {
         val promise = Promise.promise<Boolean>()
@@ -102,73 +140,38 @@ class PgcPoolingProjectionVerticle(
       }
       return promise.future()
     }
-    fun registerFailure() {
-      val nextInterval = min(DEFAULT_MAX_INTERVAL, intervalInMilliseconds * failures.incrementAndGet())
-      vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, nextInterval)
-    }
-    fun registerSuccess() {
-      failures.set(0)
-      vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, intervalInMilliseconds)
-    }
-    fun scanAndPublish(numberOfRows: Int): Future<Long> {
-      val promise = Promise.promise<Long>()
-      if (log.isDebugEnabled) log.debug("Will scan for new events")
-      eventsScanner.scanPendingEvents(numberOfRows)
-        .onFailure {
-          promise.fail(it)
-          log.error("When scanning new events", it)
+    val promise = Promise.promise<Long>()
+    if (log.isDebugEnabled) log.debug("Will scan for new events")
+    eventsScanner.scanPendingEvents(numberOfRows)
+      .onFailure {
+        promise.fail(it)
+        log.error("When scanning new events", it)
+      }
+      .onSuccess { eventsList ->
+        if (eventsList.isEmpty()) {
+          promise.complete(0)
+          return@onSuccess
         }
-        .onSuccess { eventsList ->
-          if (eventsList.isEmpty()) {
-            promise.complete(0)
-            return@onSuccess
-          }
-          if (log.isDebugEnabled) log.debug("Got ${eventsList.size} events")
-          publish(eventsList)
-            .onFailure { promise.fail(it) }
-            .onSuccess { lastEventPublished ->
-              log.info("After publishing  ${eventsList.size}, the latest published event id is $lastEventPublished")
-              if (lastEventPublished == 0L) {
-                promise.complete(0L)
-                return@onSuccess
+        if (log.isDebugEnabled) log.debug("Got ${eventsList.size} events")
+        publish(eventsList)
+          .onFailure { promise.fail(it) }
+          .onSuccess { lastEventPublished ->
+            log.info("After publishing  ${eventsList.size}, the latest published event id is $lastEventPublished")
+            if (lastEventPublished == 0L) {
+              promise.complete(0L)
+              return@onSuccess
+            }
+            eventsScanner.updateOffSet(lastEventPublished)
+              .onFailure { promise.fail(it) }
+              .onSuccess {
+                log.info("Updated latest offset to $lastEventPublished")
+                promise.complete(lastEventPublished)
               }
-              eventsScanner.updateOffSet(lastEventPublished)
-                .onFailure { promise.fail(it) }
-                .onSuccess {
-                  log.info("Updated latest offset to $lastEventPublished")
-                  promise.complete(lastEventPublished)
-                }
-            }
-        }
-        .onComplete {
-          if (log.isDebugEnabled) log.debug("Scan is now inactive until new request")
-        }
-      return promise.future()
-    }
-    return Handler { tick ->
-      if (log.isDebugEnabled) log.debug("Tick $tick")
-      scanAndPublish(numberOfRows)
-        .onFailure {
-          log.error("When scanning for new events", it)
-          registerFailure()
-        }
-        .onSuccess {
-          if (log.isDebugEnabled) log.debug("$it events were scanned")
-          when (it) {
-            -1L -> {
-              if (log.isDebugEnabled) log.debug("Still busy")
-              registerFailure()
-            }
-            0L -> {
-              if (log.isDebugEnabled) log.debug("No new events")
-              registerFailure()
-            }
-            else -> {
-              if (log.isDebugEnabled) log.debug("Found $it events")
-              registerSuccess()
-            }
           }
-        }
-    }
+      }
+      .onComplete {
+        if (log.isDebugEnabled) log.debug("Scan is now inactive until new request")
+      }
+    return promise.future()
   }
 }
