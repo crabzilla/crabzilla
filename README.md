@@ -40,6 +40,9 @@ docker-compose up
 mvn clean install -DskipTests=false
 ```
 
+## Dependencies overview
+
+![GitHub Logo](/crabzilla-packages.png)
 
 
 
