@@ -2,6 +2,7 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.stack.PoolingProjectionVerticle
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Promise
@@ -24,7 +25,7 @@ class CustomerVerticle(private val defaultInterval: Long) : AbstractVerticle() {
         writeDb = writeModelPgPool(vertx, config)
         readDb = readModelPgPool(vertx, config)
         val eventsScanner = PgcEventsScanner(writeDb, topic)
-        val publisherVerticle = PgcPoolingProjectionVerticle(
+        val publisherVerticle = PoolingProjectionVerticle(
           eventsScanner, EventBusEventsPublisher(topic, vertx.eventBus()), defaultInterval
         )
         val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))

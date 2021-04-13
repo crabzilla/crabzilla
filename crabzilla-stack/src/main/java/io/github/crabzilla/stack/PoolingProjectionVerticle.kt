@@ -1,7 +1,5 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.stack
 
-import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.EventsPublisher
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.Handler
@@ -15,8 +13,8 @@ import kotlin.math.min
  * This component will be triggered using a Vertx periodic task. Then it can publish the domain events to
  * an EventsPublisher.
  */
-class PgcPoolingProjectionVerticle(
-  private val eventsScanner: PgcEventsScanner,
+class PoolingProjectionVerticle(
+  private val eventsScanner: EventsScanner,
   private val eventsPublisher: EventsPublisher,
   private val intervalInMilliseconds: Long = DEFAULT_INTERVAL,
   private val numberOfRows: Int = DEFAULT_NUMBER_OF_ROWS
@@ -31,7 +29,7 @@ class PgcPoolingProjectionVerticle(
     private const val DEFAULT_MAX_INTERVAL = 60_000L
   }
 
-  private val log = LoggerFactory.getLogger(eventsScanner.streamName)
+  private val log = LoggerFactory.getLogger(eventsScanner.streamName())
 
   private val action: Handler<Long?> = handler()
   private val failures = AtomicLong(0L)

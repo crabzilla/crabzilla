@@ -25,6 +25,15 @@ interface SnapshotRepository<A : AggregateRoot, C : Command, E : DomainEvent> {
 }
 
 /**
+ * To sacan for new events
+ */
+interface EventsScanner {
+  fun streamName(): String
+  fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>>
+  fun updateOffSet(eventId: Long): Future<Void>
+}
+
+/**
  * To publish an event as JSON to read model, messaging broker, etc (any side effect)
  */
 interface EventsPublisher {
