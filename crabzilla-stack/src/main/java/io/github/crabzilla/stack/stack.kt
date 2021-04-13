@@ -6,4 +6,3 @@ package io.github.crabzilla.stack
 class OptimisticConcurrencyConflict(message: String) : IllegalStateException(message)
 
 data class ValidationException(val errors: List<String>) : RuntimeException(errors.toString())
-
