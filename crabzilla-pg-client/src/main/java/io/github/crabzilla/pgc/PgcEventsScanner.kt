@@ -1,6 +1,7 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.stack.EventRecord
+import io.github.crabzilla.stack.EventsScanner
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
@@ -10,10 +11,10 @@ import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
-class PgcEventsScanner(private val writeModelDb: PgPool, val streamName: String) {
+class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName: String) : EventsScanner {
+
   companion object {
     private val log = LoggerFactory.getLogger(PgcEventsScanner::class.java)
-    private const val ROWS_PER_TIME = 100
   }
 
   private val SELECT_EVENTS_AFTER_OFFSET =
@@ -28,7 +29,11 @@ class PgcEventsScanner(private val writeModelDb: PgPool, val streamName: String)
   private val UPDATE_EVENT_OFFSET =
     "UPDATE projections SET last_offset = $1 where projections.name = $2"
 
-  fun scanPendingEvents(numberOfRows: Int = ROWS_PER_TIME): Future<List<EventRecord>> {
+  override fun streamName(): String {
+    return streamName
+  }
+
+  override fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
     if (log.isDebugEnabled) log.debug("Will scan for new events")
     val promise = Promise.promise<List<EventRecord>>()
     writeModelDb.withTransaction { client ->
@@ -51,7 +56,7 @@ class PgcEventsScanner(private val writeModelDb: PgPool, val streamName: String)
     return promise.future()
   }
 
-  fun updateOffSet(eventId: Long): Future<Void> {
+  override fun updateOffSet(eventId: Long): Future<Void> {
     val promise = Promise.promise<Void>()
     writeModelDb.withTransaction { client ->
       client.prepare(UPDATE_EVENT_OFFSET)

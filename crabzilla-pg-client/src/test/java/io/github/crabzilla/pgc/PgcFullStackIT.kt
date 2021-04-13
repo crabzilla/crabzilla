@@ -4,6 +4,7 @@ import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.pgc.CustomerProjectorVerticle.Companion.topic
 import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.PoolingProjectionVerticle
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -54,7 +55,7 @@ class PgcFullStackIT {
     val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, verticle.writeDb)
     controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
       .onSuccess {
-        vertx.eventBus().request<Boolean>(PgcPoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) {
+        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) {
           if (it.failed()) {
             tc.failNow(it.cause())
           } else {
