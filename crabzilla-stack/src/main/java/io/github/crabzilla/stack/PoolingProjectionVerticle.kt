@@ -36,7 +36,7 @@ class PoolingProjectionVerticle(
 
   override fun start() {
     // Schedule the first execution
-    vertx.setTimer(intervalInMilliseconds, action)
+    // TODO just testing on travis vertx.setTimer(intervalInMilliseconds, action)
     // force scan endpoint
     vertx.eventBus().consumer<Void>(PUBLISHER_ENDPOINT) { msg ->
       log.info("Forced scan")
