@@ -157,14 +157,14 @@ class PoolingProjectionVerticle(
             log.info("After publishing  ${eventsList.size}, the latest published event id is $lastEventPublished")
             if (lastEventPublished == 0L) {
               promise.complete(0L)
-              return@onSuccess
+            } else {
+              eventsScanner.updateOffSet(lastEventPublished)
+                .onFailure { promise.fail(it) }
+                .onSuccess {
+                  log.info("Updated latest offset to $lastEventPublished")
+                  promise.complete(lastEventPublished)
+                }
             }
-            eventsScanner.updateOffSet(lastEventPublished)
-              .onFailure { promise.fail(it) }
-              .onSuccess {
-                log.info("Updated latest offset to $lastEventPublished")
-                promise.complete(lastEventPublished)
-              }
           }
       }
       .onComplete {
