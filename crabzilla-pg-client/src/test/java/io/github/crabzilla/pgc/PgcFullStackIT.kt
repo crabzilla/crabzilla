@@ -65,24 +65,43 @@ class PgcFullStackIT {
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val snapshotRepo = PgcSnapshotRepo(customerConfig, writeDb)
     val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, writeDb, snapshotRepo)
-    controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
-      .onSuccess {
-        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) { it ->
-          if (it.failed()) {
-            tc.failNow(it.cause())
-          } else {
-            snapshotRepo.get(id)
-              .onFailure { err -> tc.failNow(err) }
-              .onSuccess { snapshot ->
-                assert(1 == snapshot!!.version)
-                assert(Customer(id, "cust#$id") == snapshot.state)
-                tc.completeNow()
+    snapshotRepo.get(id)
+      .onFailure { tc.failNow(it) }
+      .onSuccess { snapshot0 ->
+        assert(snapshot0 == null)
+        controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
+          .onFailure { tc.failNow(it) }
+          .onSuccess {
+            vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) { it ->
+              if (it.failed()) {
+                tc.failNow(it.cause())
+              } else {
+                snapshotRepo.get(id)
+                  .onFailure { err -> tc.failNow(err) }
+                  .onSuccess { snapshot1 ->
+                    assert(1 == snapshot1!!.version)
+                    assert(Customer(id, "cust#$id") == snapshot1.state)
+                    controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("because yes"))
+                      .onFailure { tc.failNow(it) }
+                      .onSuccess {
+                        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) { it ->
+                          if (it.failed()) {
+                            tc.failNow(it.cause())
+                          } else {
+                            snapshotRepo.get(id)
+                              .onFailure { err -> tc.failNow(err) }
+                              .onSuccess { snapshot2 ->
+                                assert(2 == snapshot2!!.version)
+                                assert(Customer(id, "cust#$id", isActive = true, reason = "because yes") == snapshot2.state)
+                                tc.completeNow()
+                              }
+                          }
+                        }
+                      }
+                  }
               }
+            }
           }
-        }
-      }
-      .onFailure {
-        tc.failNow(it)
       }
   }
 
@@ -91,24 +110,50 @@ class PgcFullStackIT {
   fun a1(tc: VertxTestContext, vertx: Vertx) {
     val snapshotRepo = InMemorySnapshotRepo(vertx.sharedData(), customerConfig)
     val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, writeDb, snapshotRepo)
-    controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
-      .onSuccess {
-        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) {
-          if (it.failed()) {
-            tc.failNow(it.cause())
-          } else {
-            snapshotRepo.get(id)
-              .onFailure { err -> tc.failNow(err) }
-              .onSuccess { snapshot ->
-                assert(1 == snapshot!!.version)
-                assert(Customer(id, "cust#$id") == snapshot.state)
-                tc.completeNow()
+    snapshotRepo.get(id)
+      .onFailure { tc.failNow(it) }
+      .onSuccess { snapshot0 ->
+        assert(snapshot0 == null)
+        controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
+          .onFailure { tc.failNow(it) }
+          .onSuccess {
+            vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) { it ->
+              if (it.failed()) {
+                tc.failNow(it.cause())
+              } else {
+                snapshotRepo.get(id)
+                  .onFailure { err -> tc.failNow(err) }
+                  .onSuccess { snapshot1 ->
+                    assert(1 == snapshot1!!.version)
+                    assert(Customer(id, "cust#$id") == snapshot1.state)
+                    controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("because yes"))
+                      .onFailure { tc.failNow(it) }
+                      .onSuccess {
+                        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) { it ->
+                          if (it.failed()) {
+                            tc.failNow(it.cause())
+                          } else {
+                            snapshotRepo.get(id)
+                              .onFailure { err -> tc.failNow(err) }
+                              .onSuccess { snapshot2 ->
+                                assert(2 == snapshot2!!.version)
+                                assert(
+                                  Customer(
+                                    id,
+                                    "cust#$id",
+                                    isActive = true,
+                                    reason = "because yes"
+                                  ) == snapshot2.state
+                                )
+                                tc.completeNow()
+                              }
+                          }
+                        }
+                      }
+                  }
               }
+            }
           }
-        }
-      }
-      .onFailure {
-        tc.failNow(it)
       }
   }
 }
