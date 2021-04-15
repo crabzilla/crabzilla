@@ -5,6 +5,7 @@ import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.stack.CommandController
+import io.github.crabzilla.stack.SnapshotRepository
 import io.vertx.pgclient.PgPool
 
 object CommandControllerFactory {
@@ -17,14 +18,14 @@ object CommandControllerFactory {
       return CommandController(config.commandValidator, config.commandHandler, snapshotRepo, eventStore)
     }
 
-//  fun <A : AggregateRoot, C : Command, E : DomainEvent>
-//  createPublishingTo(
-//    topic: String,
-//    config: AggregateRootConfig<A, C, E>,
-//    writeModelDb: PgPool,
-//    snapshotRepo: SnapshotRepository<A, C, E>
-//  ): CommandController<A, C, E> {
-//    val eventStore = PgcEventStore<A, C, E>(topic, writeModelDb, config.json)
-//    return CommandController(config.commandValidator, config.commandHandler, snapshotRepo, eventStore)
-//  }
+  fun <A : AggregateRoot, C : Command, E : DomainEvent>
+  createPublishingTo(
+    topic: String,
+    config: AggregateRootConfig<A, C, E>,
+    writeModelDb: PgPool,
+    snapshotRepo: SnapshotRepository<A, C, E>
+  ): CommandController<A, C, E> {
+    val eventStore = PgcEventStore<A, C, E>(topic, writeModelDb, config.json)
+    return CommandController(config.commandValidator, config.commandHandler, snapshotRepo, eventStore)
+  }
 }

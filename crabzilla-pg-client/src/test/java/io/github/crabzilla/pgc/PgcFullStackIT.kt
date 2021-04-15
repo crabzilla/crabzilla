@@ -4,8 +4,8 @@ import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
-import io.github.crabzilla.pgc.CustomerProjectorVerticle.Companion.topic
 import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.InMemorySnapshotRepo
 import io.github.crabzilla.stack.PoolingProjectionVerticle
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -60,9 +60,29 @@ class PgcFullStackIT {
   }
 
   @Test
-  @DisplayName("it can create a command controller, send a command and have both write and read model side effects")
+  @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, writeDb)
+    controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
+      .onSuccess {
+        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) {
+          if (it.failed()) {
+            tc.failNow(it.cause())
+          } else {
+            tc.completeNow()
+          }
+        }
+      }
+      .onFailure {
+        tc.failNow(it)
+      }
+  }
+
+  @Test
+  @DisplayName("it can create a command controller and send a command using in memory snapshot repo")
+  fun a1(tc: VertxTestContext, vertx: Vertx) {
+    val snapshotRepo = InMemorySnapshotRepo(vertx.sharedData(), customerConfig)
+    val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, writeDb, snapshotRepo)
     controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
       .onSuccess {
         vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) {
