@@ -9,11 +9,12 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.Arrays.asList
+import java.util.function.Predicate
 
 @DisplayName("A StatefulSession")
 internal class StatefulSessionTest {
 
-  lateinit var tracker: StatefulSession<Customer, CustomerEvent>
+  lateinit var statefulSession: StatefulSession<Customer, CustomerEvent>
 
   val customer = Customer(id = 1, name = "c1")
 
@@ -35,17 +36,26 @@ internal class StatefulSessionTest {
 
     @BeforeEach
     fun instantiate() {
-      tracker = StatefulSession(1, customer, customerEventHandler)
+      statefulSession = StatefulSession(1, customer, customerEventHandler)
     }
 
     @Test
     fun is_empty() {
-      assertThat(tracker.appliedEvents().size).isEqualTo(0)
+      assertThat(statefulSession.appliedEvents().size).isEqualTo(0)
     }
 
     @Test
     fun has_empty_state() {
-      assertThat(tracker.currentState).isEqualTo(customer)
+      assertThat(statefulSession.currentState).isEqualTo(customer)
+    }
+
+    @Test
+    fun statusData_matches() {
+      val sessionData = statefulSession.toSessionData()
+      assertThat(sessionData.newState).isEqualTo(customer)
+      assertThat(sessionData.originalState).isEqualTo(customer)
+      assertThat(sessionData.originalVersion).isEqualTo(1)
+      assertThat(sessionData.events).isEmpty()
     }
 
     @Nested
@@ -58,18 +68,27 @@ internal class StatefulSessionTest {
 
       @BeforeEach
       fun apply_create_event() {
-        tracker.execute { customer -> listOf(customerCreated) }
+        statefulSession.execute { customer -> listOf(customerCreated) }
       }
 
       @Test
       fun has_new_state() {
-        assertThat(tracker.currentState).isEqualTo(expectedCustomer)
+        assertThat(statefulSession.currentState).isEqualTo(expectedCustomer)
       }
 
       @Test
       fun has_only_create_event() {
-        assertThat(tracker.appliedEvents()).contains(customerCreated)
-        assertThat(tracker.appliedEvents().size).isEqualTo(1)
+        assertThat(statefulSession.appliedEvents()).contains(customerCreated)
+        assertThat(statefulSession.appliedEvents().size).isEqualTo(1)
+      }
+
+      @Test
+      fun statusData_matches() {
+        val sessionData = statefulSession.toSessionData()
+        assertThat(sessionData.newState).isEqualTo(expectedCustomer)
+        assertThat(sessionData.originalState).isEqualTo(customer)
+        assertThat(sessionData.originalVersion).isEqualTo(1)
+        assertThat(sessionData.events).containsOnly(customerCreated)
       }
 
       @Nested
@@ -84,19 +103,19 @@ internal class StatefulSessionTest {
 
         @BeforeEach
         fun apply_activate_event() {
-          tracker.execute { customer -> listOf(customerActivated) }
+          statefulSession.execute { customer -> listOf(customerActivated) }
         }
 
         @Test
         fun has_new_state() {
-          assertThat(tracker.currentState).isEqualTo(expectedCustomer)
+          assertThat(statefulSession.currentState).isEqualTo(expectedCustomer)
         }
 
         @Test
         fun has_both_create_and_activated_evenst() {
-          assertThat(tracker.appliedEvents()[0]).isEqualTo(customerCreated)
-          assertThat(tracker.appliedEvents()[1]).isEqualTo(customerActivated)
-          assertThat(tracker.appliedEvents().size).isEqualTo(2)
+          assertThat(statefulSession.appliedEvents()[0]).isEqualTo(customerCreated)
+          assertThat(statefulSession.appliedEvents()[1]).isEqualTo(customerActivated)
+          assertThat(statefulSession.appliedEvents().size).isEqualTo(2)
         }
       }
     }
@@ -116,23 +135,23 @@ internal class StatefulSessionTest {
     @BeforeEach
     fun instantiate() {
       // given
-      tracker = StatefulSession(1, customer, customerEventHandler)
+      statefulSession = StatefulSession(1, customer, customerEventHandler)
       // when
-      tracker.execute { customer -> asList(customerCreated, customerActivated) }
+      statefulSession.execute { customer -> asList(customerCreated, customerActivated) }
     }
 
     // then
 
     @Test
     fun has_new_state() {
-      assertThat(tracker.currentState).isEqualTo(expectedCustomer)
+      assertThat(statefulSession.currentState).isEqualTo(expectedCustomer)
     }
 
     @Test
     fun has_both_event() {
-      assertThat(tracker.appliedEvents()).contains(customerCreated)
-      assertThat(tracker.appliedEvents()).contains(customerActivated)
-      assertThat(tracker.appliedEvents().size).isEqualTo(2)
+      assertThat(statefulSession.appliedEvents()).contains(customerCreated)
+      assertThat(statefulSession.appliedEvents()).contains(customerActivated)
+      assertThat(statefulSession.appliedEvents().size).isEqualTo(2)
     }
   }
 }

@@ -1,8 +1,5 @@
 package io.github.crabzilla.core
 
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-
 /**
  * To perform aggregate root business methods and track it's events and state
  */
@@ -47,14 +44,6 @@ class StatefulSession<A : AggregateRoot, E : DomainEvent> {
     return apply(newEvents)
   }
 
-  fun toJsonObject(): JsonObject {
-    val json = buildJsonObject {
-      Pair("", 2)
-    }
-    return json
-  }
-
-  // TODO to JsonObject instead
   fun toSessionData(): SessionData {
     return SessionData(originalVersion, if (originalVersion == 0) null else originalState, appliedEvents, currentState)
   }
