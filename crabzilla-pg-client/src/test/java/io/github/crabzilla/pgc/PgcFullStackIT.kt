@@ -1,5 +1,6 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.customerConfig
@@ -62,14 +63,21 @@ class PgcFullStackIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, writeDb)
+    val snapshotRepo = PgcSnapshotRepo(customerConfig, writeDb)
+    val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, writeDb, snapshotRepo)
     controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
       .onSuccess {
-        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) {
+        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) { it ->
           if (it.failed()) {
             tc.failNow(it.cause())
           } else {
-            tc.completeNow()
+            snapshotRepo.get(id)
+              .onFailure { err -> tc.failNow(err) }
+              .onSuccess { snapshot ->
+                assert(1 == snapshot!!.version)
+                assert(Customer(id, "cust#$id") == snapshot.state)
+                tc.completeNow()
+              }
           }
         }
       }
@@ -89,7 +97,13 @@ class PgcFullStackIT {
           if (it.failed()) {
             tc.failNow(it.cause())
           } else {
-            tc.completeNow()
+            snapshotRepo.get(id)
+              .onFailure { err -> tc.failNow(err) }
+              .onSuccess { snapshot ->
+                assert(1 == snapshot!!.version)
+                assert(Customer(id, "cust#$id") == snapshot.state)
+                tc.completeNow()
+              }
           }
         }
       }
