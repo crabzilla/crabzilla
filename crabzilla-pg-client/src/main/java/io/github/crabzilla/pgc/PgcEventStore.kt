@@ -31,8 +31,10 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val json: Json
 ) : EventStore<A, C, E> {
 
-  // TODO after committing events, it could use topic property to publish to it using eventbus. Just for observability,
-  // TODO not for transactional consumers
+  /**
+   TODO after committing events, it could use topic property to publish to it using eventbus.
+   Just for observability, not for transactional consumers
+   */
 
   companion object {
     private val log = LoggerFactory.getLogger(PgcEventStore::class.java)

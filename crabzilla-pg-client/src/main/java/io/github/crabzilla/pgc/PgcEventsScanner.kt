@@ -11,6 +11,7 @@ import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
+// TODO could receive also a list of aggregate root names to filter interesting events
 class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName: String) : EventsScanner {
 
   companion object {

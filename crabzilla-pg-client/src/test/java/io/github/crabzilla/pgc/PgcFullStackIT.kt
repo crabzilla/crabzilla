@@ -1,11 +1,12 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
-import io.github.crabzilla.pgc.CustomerProjectorVerticle.Companion.topic
 import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.InMemorySnapshotRepo
 import io.github.crabzilla.stack.PoolingProjectionVerticle
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -60,21 +61,99 @@ class PgcFullStackIT {
   }
 
   @Test
-  @DisplayName("it can create a command controller, send a command and have both write and read model side effects")
+  @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, writeDb)
-    controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
-      .onSuccess {
-        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) {
-          if (it.failed()) {
-            tc.failNow(it.cause())
-          } else {
-            tc.completeNow()
+    val snapshotRepo = PgcSnapshotRepo(customerConfig, writeDb)
+    val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, writeDb, snapshotRepo)
+    snapshotRepo.get(id)
+      .onFailure { tc.failNow(it) }
+      .onSuccess { snapshot0 ->
+        assert(snapshot0 == null)
+        controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
+          .onFailure { tc.failNow(it) }
+          .onSuccess {
+            vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) { it ->
+              if (it.failed()) {
+                tc.failNow(it.cause())
+              } else {
+                snapshotRepo.get(id)
+                  .onFailure { err -> tc.failNow(err) }
+                  .onSuccess { snapshot1 ->
+                    assert(1 == snapshot1!!.version)
+                    assert(Customer(id, "cust#$id") == snapshot1.state)
+                    controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("because yes"))
+                      .onFailure { tc.failNow(it) }
+                      .onSuccess {
+                        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) { it ->
+                          if (it.failed()) {
+                            tc.failNow(it.cause())
+                          } else {
+                            snapshotRepo.get(id)
+                              .onFailure { err -> tc.failNow(err) }
+                              .onSuccess { snapshot2 ->
+                                assert(2 == snapshot2!!.version)
+                                assert(Customer(id, "cust#$id", isActive = true, reason = "because yes") == snapshot2.state)
+                                tc.completeNow()
+                              }
+                          }
+                        }
+                      }
+                  }
+              }
+            }
           }
-        }
       }
-      .onFailure {
-        tc.failNow(it)
+  }
+
+  @Test
+  @DisplayName("it can create a command controller and send a command using in memory snapshot repo")
+  fun a1(tc: VertxTestContext, vertx: Vertx) {
+    val snapshotRepo = InMemorySnapshotRepo(vertx.sharedData(), customerConfig)
+    val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, writeDb, snapshotRepo)
+    snapshotRepo.get(id)
+      .onFailure { tc.failNow(it) }
+      .onSuccess { snapshot0 ->
+        assert(snapshot0 == null)
+        controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
+          .onFailure { tc.failNow(it) }
+          .onSuccess {
+            vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) { it ->
+              if (it.failed()) {
+                tc.failNow(it.cause())
+              } else {
+                snapshotRepo.get(id)
+                  .onFailure { err -> tc.failNow(err) }
+                  .onSuccess { snapshot1 ->
+                    assert(1 == snapshot1!!.version)
+                    assert(Customer(id, "cust#$id") == snapshot1.state)
+                    controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("because yes"))
+                      .onFailure { tc.failNow(it) }
+                      .onSuccess {
+                        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) { it ->
+                          if (it.failed()) {
+                            tc.failNow(it.cause())
+                          } else {
+                            snapshotRepo.get(id)
+                              .onFailure { err -> tc.failNow(err) }
+                              .onSuccess { snapshot2 ->
+                                assert(2 == snapshot2!!.version)
+                                assert(
+                                  Customer(
+                                    id,
+                                    "cust#$id",
+                                    isActive = true,
+                                    reason = "because yes"
+                                  ) == snapshot2.state
+                                )
+                                tc.completeNow()
+                              }
+                          }
+                        }
+                      }
+                  }
+              }
+            }
+          }
       }
   }
 }

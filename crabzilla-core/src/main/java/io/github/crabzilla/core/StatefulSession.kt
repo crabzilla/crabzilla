@@ -44,7 +44,6 @@ class StatefulSession<A : AggregateRoot, E : DomainEvent> {
     return apply(newEvents)
   }
 
-  // TODO to JsonObject instead
   fun toSessionData(): SessionData {
     return SessionData(originalVersion, if (originalVersion == 0) null else originalState, appliedEvents, currentState)
   }
