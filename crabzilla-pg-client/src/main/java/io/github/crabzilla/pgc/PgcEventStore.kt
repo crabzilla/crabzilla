@@ -7,7 +7,6 @@ import io.github.crabzilla.core.COMMAND_SERIALIZER
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DOMAIN_EVENT_SERIALIZER
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.pgc.PgcClient.close
 import io.github.crabzilla.pgc.PgcClient.commit
@@ -53,25 +52,22 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
 
     val expectedVersionAfterAppend = session.originalVersion + 1
 
-    fun getCurrentSnapshot(conn: SqlConnection): Future<Snapshot<A>?> {
+    fun getCurrentVersion(conn: SqlConnection): Future<Int?> {
       fun selectSnapshot(): String {
-        return "SELECT version, json_content FROM ${config.snapshotTableName.value} WHERE ar_id = $1 for share"
+        return "SELECT version FROM ${config.snapshotTableName.value} WHERE ar_id = $1 for share"
       }
-      fun snapshot(rowSet: RowSet<Row>): Snapshot<A>? {
+      fun extractVersion(rowSet: RowSet<Row>): Int {
         return if (rowSet.size() == 0) {
-          null
+          0
         } else {
-          val stateAsJson: JsonObject = rowSet.first().get(JsonObject::class.java, 1)
-          val state = config.json.decodeFromString(AGGREGATE_ROOT_SERIALIZER, stateAsJson.encode()) as A
-          Snapshot(state, rowSet.first().getInteger("version"))
+          rowSet.first().getInteger("version")
         }
       }
-      val promise0 = Promise.promise<Snapshot<A>?>()
+      val promise0 = Promise.promise<Int?>()
       conn.preparedQuery(selectSnapshot())
         .execute(Tuple.of(metadata.aggregateRootId))
         .onSuccess { pgRow ->
-          val snapshot = snapshot(pgRow)
-          val currentVersion = snapshot?.version ?: 0
+          val currentVersion = extractVersion(pgRow)
           if (log.isDebugEnabled) log.debug("Got current version: $currentVersion")
           when {
             currentVersion == expectedVersionAfterAppend -> {
@@ -85,8 +81,8 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
               promise0.fail(OptimisticConcurrencyConflict(message))
             }
             else -> {
-              if (log.isDebugEnabled) log.debug("Snapshot is $snapshot")
-              promise0.complete(snapshot)
+              if (log.isDebugEnabled) log.debug("Version is $currentVersion")
+              promise0.complete(currentVersion)
             }
           }
         }
@@ -126,8 +122,6 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         val params = Tuple.of(
           expectedVersionAfterAppend, JsonObject(newSTateAsJson), metadata.aggregateRootId, expectedVersionAfterAppend - 1
         )
-        log.info(update())
-        log.info(params.deepToString())
         conn.preparedQuery(update())
           .execute(params)
           .onFailure { err ->
@@ -207,12 +201,11 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       .onSuccess { conn ->
         conn.begin()
           .onFailure {
-            log.error(it.message, it)
             promise.fail(it)
             close(conn)
           }
           .onSuccess { tx: Transaction ->
-            getCurrentSnapshot(conn)
+            getCurrentVersion(conn)
               .onFailure {
                 rollback(tx, it)
                 close(conn)
