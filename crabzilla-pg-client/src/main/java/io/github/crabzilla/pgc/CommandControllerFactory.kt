@@ -25,7 +25,7 @@ object CommandControllerFactory {
     writeModelDb: PgPool,
     snapshotRepo: SnapshotRepository<A, C, E>
   ): CommandController<A, C, E> {
-    val eventStore = PgcEventStore<A, C, E>(topic, writeModelDb, config.json)
+    val eventStore = PgcEventStore<A, C, E>(topic, writeModelDb, config)
     return CommandController(config.commandValidator, config.commandHandler, snapshotRepo, eventStore)
   }
 }
