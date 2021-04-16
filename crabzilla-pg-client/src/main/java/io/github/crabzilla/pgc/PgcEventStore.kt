@@ -14,7 +14,6 @@ import io.github.crabzilla.pgc.PgcClient.rollback
 import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.EventStore
 import io.github.crabzilla.stack.OptimisticConcurrencyConflict
-import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
@@ -25,6 +24,7 @@ import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
+import java.util.function.BiFunction
 
 class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   val topic: String,
@@ -160,8 +160,8 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
     }
 
     fun appendEvents(conn: SqlConnection, commandId: Long): Future<Void> {
-      fun appendEvent(conn: SqlConnection, event: E): Future<Void> {
-        val promise0 = Promise.promise<Void>()
+      fun appendEvent(event: E): Future<Boolean> {
+        val promise0 = Promise.promise<Boolean>()
         val json = config.json.encodeToString(DOMAIN_EVENT_SERIALIZER, event)
         val params = Tuple.of(
           JsonObject(json),
@@ -172,22 +172,42 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         )
         conn.preparedQuery(SQL_APPEND_EVENT)
           .execute(params)
-          .onFailure { err -> promise0.fail(err) }
+          .onFailure { promise0.fail(it) }
           .onSuccess {
             if (log.isDebugEnabled) log.debug("Append event ok $event")
-            promise0.complete()
+            promise0.complete(true)
           }
         return promise0.future()
       }
+      fun <A, B> foldLeft(iterator: Iterator<A>, identity: B, bf: BiFunction<B, A, B>): B {
+        var result = identity
+        while (iterator.hasNext()) {
+          val next = iterator.next()
+          result = bf.apply(result, next)
+        }
+        return result
+      }
+
       val promise0 = Promise.promise<Void>()
-      val futures: List<Future<Void>> = session.appliedEvents().map { event -> appendEvent(conn, event) }
-      CompositeFuture.all(futures).onComplete { ar -> // TODO support more than 6 events per command
-        if (ar.succeeded()) {
-          promise0.complete()
-          if (log.isDebugEnabled) log.debug("Append events ok")
+      val initialFuture = Future.succeededFuture<Boolean>(true)
+
+      foldLeft(
+        session.appliedEvents().iterator(), initialFuture,
+        { currentFuture: Future<Boolean>,
+          event: E ->
+          currentFuture.compose { successful ->
+            if (successful) {
+              appendEvent(event)
+            } else {
+              Future.failedFuture("The latest successful event was $event")
+            }
+          }
+        }
+      ).onComplete {
+        if (it.failed()) {
+          promise0.fail(it.cause())
         } else {
-          promise0.fail(ar.cause())
-          log.error("Transaction failed", ar.cause())
+          promise0.complete()
         }
       }
       return promise0.future()
