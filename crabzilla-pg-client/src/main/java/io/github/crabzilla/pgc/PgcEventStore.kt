@@ -1,6 +1,8 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.core.AGGREGATE_ROOT_SERIALIZER
 import io.github.crabzilla.core.AggregateRoot
+import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.COMMAND_SERIALIZER
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DOMAIN_EVENT_SERIALIZER
@@ -22,13 +24,12 @@ import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
-import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 
 class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   val topic: String,
   private val writeModelDb: PgPool,
-  private val json: Json
+  private val config: AggregateRootConfig<A, C, E>
 ) : EventStore<A, C, E> {
 
   /**
@@ -38,10 +39,6 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
 
   companion object {
     private val log = LoggerFactory.getLogger(PgcEventStore::class.java)
-    const val SQL_SELECT_CURRENT_VERSION =
-      """ select max(version) as last_version
-            from events
-           where ar_id = $1 and ar_name = $2 """
     const val SQL_APPEND_CMD =
       """ insert into commands (ar_id, external_cmd_id, causation_id, correlation_id, cmd_payload)
           values ($1, $2, $3, $4, $5)
@@ -55,39 +52,94 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
 
     val expectedVersionAfterAppend = session.originalVersion + 1
 
-    fun checkVersion(conn: SqlConnection): Future<Void> {
-      val promise0 = Promise.promise<Void>()
-      val params0 = Tuple.of(metadata.aggregateRootId, session.currentState::class.simpleName)
-      conn.preparedQuery(SQL_SELECT_CURRENT_VERSION)
-        .execute(params0)
-        .onFailure { err ->
-          log.error("When preparing query $SQL_SELECT_CURRENT_VERSION ${err.message}")
-          promise0.fail(err)
+    fun getCurrentVersion(conn: SqlConnection): Future<Int?> {
+      fun selectSnapshot(): String {
+        return "SELECT version FROM ${config.snapshotTableName.value} WHERE ar_id = $1 for share"
+      }
+      fun extractVersion(rowSet: RowSet<Row>): Int {
+        return if (rowSet.size() == 0) {
+          0
+        } else {
+          rowSet.first().getInteger("version")
         }
-        .onSuccess { event1 ->
-          val currentVersion = event1.first()?.getInteger("last_version") ?: 0
+      }
+      val promise0 = Promise.promise<Int?>()
+      conn.preparedQuery(selectSnapshot())
+        .execute(Tuple.of(metadata.aggregateRootId))
+        .onSuccess { pgRow ->
+          val currentVersion = extractVersion(pgRow)
           if (log.isDebugEnabled) log.debug("Got current version: $currentVersion")
           when {
             currentVersion == expectedVersionAfterAppend -> {
               val message = "The current version is already the expected new version $expectedVersionAfterAppend"
+              if (log.isDebugEnabled) log.debug(message)
               promise0.fail(OptimisticConcurrencyConflict(message))
             }
             currentVersion != expectedVersionAfterAppend - 1 -> {
               val message = "The current version [$currentVersion] should be [${expectedVersionAfterAppend - 1}]"
+              if (log.isDebugEnabled) log.debug(message)
               promise0.fail(OptimisticConcurrencyConflict(message))
             }
             else -> {
-              if (log.isDebugEnabled) log.debug("Version ok")
-              promise0.complete()
+              if (log.isDebugEnabled) log.debug("Version is $currentVersion")
+              promise0.complete(currentVersion)
             }
           }
         }
+        .onFailure {
+          log.error("When get snapshot", it)
+          promise0.fail(it)
+        }
+      return promise0.future()
+    }
+
+    fun updateVersion(conn: SqlConnection): Future<Void> {
+      fun insert(): String {
+        return "insert into ${config.snapshotTableName.value} (version, json_content, ar_id) " +
+          " values ($1, $2, $3)"
+      }
+      fun update(): String {
+        return "update ${config.snapshotTableName.value} set version = $1, json_content = $2 " +
+          " where ar_id = $3 and version = $4"
+      }
+      val promise0 = Promise.promise<Void>()
+      val newSTateAsJson: String = config.json.encodeToString(AGGREGATE_ROOT_SERIALIZER, session.currentState)
+      if (session.originalVersion == 0) {
+        val params = Tuple.of(
+          expectedVersionAfterAppend, JsonObject(newSTateAsJson), metadata.aggregateRootId
+        )
+        conn.preparedQuery(insert())
+          .execute(params)
+          .onFailure { err ->
+            log.error(err.message, err)
+            promise0.fail(err)
+          }
+          .onSuccess {
+            promise0.complete()
+            if (log.isDebugEnabled) log.debug("Successfully inserted version")
+          }
+      } else {
+        val params = Tuple.of(
+          expectedVersionAfterAppend, JsonObject(newSTateAsJson), metadata.aggregateRootId, expectedVersionAfterAppend - 1
+        )
+        conn.preparedQuery(update())
+          .execute(params)
+          .onFailure { err ->
+            log.error(err.message, err)
+            promise0.fail(err)
+          }
+          .onSuccess {
+            promise0.complete()
+            if (log.isDebugEnabled) log.debug("Successfully updated version")
+          }
+      }
+
       return promise0.future()
     }
 
     fun appendCommand(conn: SqlConnection): Future<Long> {
       val promise0 = Promise.promise<Long>()
-      val cmdAsJsonObject: String = json.encodeToString(COMMAND_SERIALIZER, command)
+      val cmdAsJsonObject: String = config.json.encodeToString(COMMAND_SERIALIZER, command)
       val params = Tuple.of(
         metadata.aggregateRootId, metadata.id, metadata.causationId, metadata.correlationID,
         JsonObject(cmdAsJsonObject)
@@ -110,7 +162,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
     fun appendEvents(conn: SqlConnection, commandId: Long): Future<Void> {
       fun appendEvent(conn: SqlConnection, event: E): Future<Void> {
         val promise0 = Promise.promise<Void>()
-        val json = json.encodeToString(DOMAIN_EVENT_SERIALIZER, event)
+        val json = config.json.encodeToString(DOMAIN_EVENT_SERIALIZER, event)
         val params = Tuple.of(
           JsonObject(json),
           session.currentState::class.simpleName,
@@ -144,42 +196,47 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
     val promise = Promise.promise<Void>()
     writeModelDb.connection
       .onFailure {
-        log.error("When getting the db connection", it)
         promise.fail(it)
       }
       .onSuccess { conn ->
         conn.begin()
           .onFailure {
-            log.error("When starting transaction", it)
             promise.fail(it)
             close(conn)
           }
           .onSuccess { tx: Transaction ->
-            checkVersion(conn)
+            getCurrentVersion(conn)
               .onFailure {
-                log.error("Version error ${it.message}")
                 rollback(tx, it)
                 close(conn)
                 promise.fail(it)
               }
               .onSuccess {
-                appendCommand(conn)
-                  .compose { commandId -> appendEvents(conn, commandId) }
+                updateVersion(conn)
                   .onFailure {
                     rollback(tx, it)
                     close(conn)
                     promise.fail(it)
                   }
                   .onSuccess {
-                    commit(tx)
+                    appendCommand(conn)
+                      .compose { commandId -> appendEvents(conn, commandId) }
                       .onFailure {
                         rollback(tx, it)
                         close(conn)
                         promise.fail(it)
-                      }.onSuccess {
-                        if (log.isDebugEnabled) log.debug("Events successfully committed to $topic")
-                        promise.complete()
-                        close(conn)
+                      }
+                      .onSuccess {
+                        commit(tx)
+                          .onFailure {
+                            rollback(tx, it)
+                            close(conn)
+                            promise.fail(it)
+                          }.onSuccess {
+                            if (log.isDebugEnabled) log.debug("Events successfully committed to $topic")
+                            promise.complete()
+                            close(conn)
+                          }
                       }
                   }
               }

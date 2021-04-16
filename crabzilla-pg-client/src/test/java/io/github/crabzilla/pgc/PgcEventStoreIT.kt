@@ -5,8 +5,8 @@ import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerEvent
+import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerEventHandler
-import io.github.crabzilla.example1.customerJson
 import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -37,21 +37,12 @@ class PgcEventStoreIT {
       .compose { config ->
         val boundedContextName = BoundedContextName("example1")
         writeDb = writeModelPgPool(vertx, config)
-        eventStore = PgcEventStore(boundedContextName.name, writeDb, customerJson)
+        eventStore = PgcEventStore(boundedContextName.name, writeDb, customerConfig)
         cleanDatabase(vertx, config)
       }
       .onFailure { tc.failNow(it.cause) }
       .onSuccess {
-//        writeDb.getConnection { c: AsyncResult<SqlConnection> ->
-//          val pgConn = c.result() as PgConnection
-//          pgConn
-//            .query("LISTEN ${eventStore.topic}")
-//            .execute { ar -> println("Subscribed to channel ${eventStore.topic} $ar") }
-//          pgConn.notificationHandler {
-//            println("Received a notification #${notifications.incrementAndGet()} from channel ${it.channel}")
-//          }
         tc.completeNow()
-//        }
       }
   }
 

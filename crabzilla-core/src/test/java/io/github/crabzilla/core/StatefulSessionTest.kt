@@ -9,7 +9,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.Arrays.asList
-import java.util.function.Predicate
 
 @DisplayName("A StatefulSession")
 internal class StatefulSessionTest {
