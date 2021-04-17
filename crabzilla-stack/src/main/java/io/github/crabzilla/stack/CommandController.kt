@@ -5,7 +5,6 @@ import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.StatefulSession
 import io.vertx.core.Future
 import io.vertx.core.Promise
@@ -16,8 +15,7 @@ import org.slf4j.LoggerFactory
  *  1 - validates it
  *  2 - find the target snapshot
  *  3 - call it's command handler
- *  4 - save the resulting events in eventstore
- *  5 - save the new snapshot
+ *  4 - save the resulting events in event store
  */
 class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val validator: CommandValidator<C>,
@@ -36,7 +34,6 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
     if (log.isDebugEnabled) log.debug("received $command")
     val validationErrors = validator.validate(command)
 
-    // TODO remover o Either. Criar uma exeption com list<String>
     if (validationErrors.isNotEmpty()) {
       promise.fail(ValidationException(validationErrors))
       log.error("Invalid command $metadata\n $command \n$validationErrors")
@@ -63,18 +60,8 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
                 promise.fail(err)
               }
               .onSuccess {
-                if (log.isDebugEnabled) log.debug("Events successfully appended. Now let's save the resulting snapshot")
-                val newSnapshot = Snapshot(result.currentState, result.originalVersion + 1)
-                snapshotRepo.upsert(metadata.aggregateRootId, newSnapshot)
-                  .onFailure { err ->
-                    log.error("When saving new snapshot", err)
-                    // let's just ignore snapshot error (the principal side effect is on eventSTore, anyway)
-                  }
-                  .onSuccess {
-                    if (log.isDebugEnabled) log.debug("Snapshot upsert done: $newSnapshot")
-                  }.onComplete {
-                    promise.complete(result)
-                  }
+                if (log.isDebugEnabled) log.debug("Events successfully appended.")
+                promise.complete(result)
               }
           }
       }

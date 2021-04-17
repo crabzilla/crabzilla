@@ -33,7 +33,6 @@ class ControllerTests : BehaviorSpec({
 
     every { snapshotRepo.get(1) } returns Future.succeededFuture(null)
     every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
-    every { snapshotRepo.upsert(1, any()) } returns Future.succeededFuture()
 
     val controller =
       CommandController(customerConfig.commandValidator, customerConfig.commandHandler, snapshotRepo, eventStore)
