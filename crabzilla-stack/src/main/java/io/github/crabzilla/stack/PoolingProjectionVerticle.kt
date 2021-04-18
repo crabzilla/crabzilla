@@ -134,11 +134,7 @@ class PoolingProjectionVerticle(
           }
         }
       ).onComplete {
-        if (it.succeeded()) {
-          promise.complete(eventId.get())
-        } else {
-          promise.fail(it.cause())
-        }
+        promise.complete(eventId.get())
       }
       return promise.future()
     }

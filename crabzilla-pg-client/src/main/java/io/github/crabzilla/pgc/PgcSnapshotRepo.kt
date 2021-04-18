@@ -12,11 +12,9 @@ import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
-import io.vertx.sqlclient.PreparedStatement
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlConnection
-import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 import kotlinx.serialization.decodeFromString
 import org.slf4j.LoggerFactory
@@ -154,7 +152,7 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
       }
       .onSuccess { conn: SqlConnection ->
         currentSnapshot(conn)
-  //        .compose { pair -> newSnapshot(pair.first, pair.second) }
+          //        .compose { pair -> newSnapshot(pair.first, pair.second) }
           .onSuccess { newSnapshot -> promise.complete(newSnapshot.second) }
           .onFailure {
             log.error("When getting new snapshot", it)
