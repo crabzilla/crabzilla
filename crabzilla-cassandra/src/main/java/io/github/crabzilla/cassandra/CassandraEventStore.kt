@@ -91,17 +91,17 @@ class CassandraEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       .onFailure { promise.fail(it) }
       .onSuccess { resultSet: ResultSet ->
         val isNew = isNew(resultSet)
-        println("""*** is new $isNew""")
+        // println("""*** is new $isNew""")
         cassandra.execute(tryToUpdateStateAndVersion())
           .onFailure { promise.fail(it) }
           .onSuccess { rs ->
             if (rs.wasApplied()) {
               val batchStatement = BatchStatement.newInstance(BatchType.LOGGED)
                 .addAll(session.appliedEvents().map { SimpleStatement.newInstance(tryToAppendEvent(it)) })
-              println("""*** will append ${batchStatement.size()} events""")
+              // println("""*** will append ${batchStatement.size()} events""")
               cassandra.execute(batchStatement).map { it.wasApplied() }
             } else {
-              println("""*** will NOT append events""")
+              // println("""*** will NOT append events""")
               Future.succeededFuture(false)
             }
               .onFailure {
@@ -111,10 +111,10 @@ class CassandraEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
               }.onSuccess {
                 if (it) {
                   promise.complete()
-                  log.info("Events successfully appended")
+                  // log.info("Events successfully appended")
                 } else {
                   promise.fail("wasn't applied")
-                  log.info("Events NOT successfully appended")
+                  // log.info("Events NOT successfully appended")
                 }
               }
           }
