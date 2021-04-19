@@ -74,6 +74,7 @@
     <module>crabzilla-core</module>
     <module>crabzilla-stack</module>
     <module>crabzilla-pg-client</module>
+<!--    <module>crabzilla-cassandra</module>-->
     <!--    <module>crabzilla-web</module>-->
     <module>coverage-report</module>
   </modules>
@@ -102,6 +103,12 @@
       </dependency>
 
 <!--      <dependency>-->
+<!--        <groupId>io.github.crabzilla</groupId>-->
+<!--        <artifactId>crabzilla-cassandra</artifactId>-->
+<!--        <version>${project.version}</version>-->
+<!--      </dependency>-->
+
+      <!--      <dependency>-->
 <!--        <groupId>io.github.crabzilla</groupId>-->
 <!--        <artifactId>crabzilla-web</artifactId>-->
 <!--        <version>${project.version}</version>-->
