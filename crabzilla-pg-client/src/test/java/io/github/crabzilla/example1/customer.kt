@@ -12,6 +12,7 @@ import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.SnapshotTableName
 import io.github.crabzilla.core.StatefulSession
+import io.github.crabzilla.core.javaModule
 import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.CustomerCommand.RegisterAndActivateCustomer
@@ -19,8 +20,13 @@ import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.CustomerEvent.CustomerRegistered
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import java.util.UUID
 
 /**
  * Customer events
@@ -29,7 +35,7 @@ import kotlinx.serialization.Serializable
 sealed class CustomerEvent : DomainEvent() {
   @Serializable
   @SerialName("CustomerRegistered")
-  data class CustomerRegistered(val id: Int, val name: String) : CustomerEvent()
+  data class CustomerRegistered(@Contextual val id: UUID, val name: String) : CustomerEvent()
 
   @Serializable
   @SerialName("CustomerActivated")
@@ -47,7 +53,7 @@ sealed class CustomerEvent : DomainEvent() {
 sealed class CustomerCommand : Command() {
   @Serializable
   @SerialName("RegisterCustomer")
-  data class RegisterCustomer(val customerId: Int, val name: String) : CustomerCommand()
+  data class RegisterCustomer(@Contextual val customerId: UUID, val name: String) : CustomerCommand()
 
   @Serializable
   @SerialName("ActivateCustomer")
@@ -59,7 +65,11 @@ sealed class CustomerCommand : Command() {
 
   @Serializable
   @SerialName("RegisterAndActivateCustomer")
-  data class RegisterAndActivateCustomer(val customerId: Int, val name: String, val reason: String) : CustomerCommand()
+  data class RegisterAndActivateCustomer(
+    @Contextual val customerId: UUID,
+    val name: String,
+    val reason: String
+  ) : CustomerCommand()
 }
 
 /**
@@ -68,14 +78,14 @@ sealed class CustomerCommand : Command() {
 @Serializable
 @SerialName("Customer")
 data class Customer(
-  val id: Int,
+  @Contextual val id: UUID,
   val name: String,
   val isActive: Boolean = false,
   val reason: String? = null
 ) : AggregateRoot() {
 
   companion object {
-    fun create(id: Int, name: String): ConstructorResult<Customer, CustomerEvent> {
+    fun create(id: UUID, name: String): ConstructorResult<Customer, CustomerEvent> {
       return ConstructorResult(Customer(id = id, name = name), CustomerRegistered(id = id, name = name))
     }
   }
@@ -115,7 +125,7 @@ val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event 
 /**
  * Customer errors
  */
-class CustomerAlreadyExists(val id: Int) : IllegalStateException("Customer $id already exists")
+class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id already exists")
 
 /**
  * Customer command handler
@@ -154,7 +164,29 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
     }
 }
 
-// TODO class CustomerEventDes : EventDeserializer<IntegrationEvent>
+/**
+ * kotlinx.serialization
+ */
+@kotlinx.serialization.ExperimentalSerializationApi
+val customerModule = SerializersModule {
+  include(javaModule)
+  polymorphic(AggregateRoot::class) {
+    subclass(Customer::class, Customer.serializer())
+  }
+  polymorphic(Command::class) {
+    subclass(RegisterCustomer::class, RegisterCustomer.serializer())
+    subclass(ActivateCustomer::class, ActivateCustomer.serializer())
+    subclass(DeactivateCustomer::class, DeactivateCustomer.serializer())
+    subclass(RegisterAndActivateCustomer::class, RegisterAndActivateCustomer.serializer())
+  }
+  polymorphic(DomainEvent::class) {
+    subclass(CustomerRegistered::class, CustomerRegistered.serializer())
+    subclass(CustomerActivated::class, CustomerActivated.serializer())
+    subclass(CustomerDeactivated::class, CustomerDeactivated.serializer())
+  }
+}
+
+val customerJson = Json { serializersModule = customerModule }
 
 val customerConfig = AggregateRootConfig(
   AggregateRootName("Customer"),

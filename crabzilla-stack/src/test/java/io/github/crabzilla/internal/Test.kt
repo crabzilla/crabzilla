@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Serializable
 data class AValueObject(val x: String, val y: Int)
@@ -22,7 +23,7 @@ fun main() {
   println(customerJson.decodeFromString<Teste>(json))
 
   val list = listOf(
-    CustomerCommand.RegisterCustomer(customerId = 1, name = "name1"),
+    CustomerCommand.RegisterCustomer(customerId = UUID.randomUUID(), name = "name1"),
     CustomerCommand.ActivateCustomer("ya")
   )
   val asJson = customerJson.encodeToString(list)

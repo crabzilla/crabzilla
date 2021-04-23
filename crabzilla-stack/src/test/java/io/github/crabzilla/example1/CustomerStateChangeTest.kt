@@ -5,6 +5,7 @@ import io.github.crabzilla.example1.CustomerCommandHandler.handleCommand
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 /**
  * Not an exhaustive test. Just as an example on how to test a domain.
@@ -13,7 +14,7 @@ class CustomerStateChangeTest {
 
   @Nested
   inner class `Given a new Customer` {
-    val customerId = 1
+    val customerId = UUID.randomUUID()
     val name = "Bob"
     val result = Customer.create(id = customerId, name = name)
 

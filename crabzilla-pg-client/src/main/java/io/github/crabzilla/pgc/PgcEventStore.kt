@@ -40,9 +40,8 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   companion object {
     private val log = LoggerFactory.getLogger(PgcEventStore::class.java)
     const val SQL_APPEND_CMD =
-      """ insert into commands (ar_id, external_cmd_id, causation_id, correlation_id, cmd_payload)
-          values ($1, $2, $3, $4, $5)
-         returning cmd_id"""
+      """ insert into commands (cmd_id, ar_id, causation_id, correlation_id, cmd_payload)
+          values ($1, $2, $3, $4, $5)"""
     const val SQL_APPEND_EVENT =
       """ insert into events (event_payload, ar_name, ar_id, version, cmd_id)
         values ($1, $2, $3, $4, $5)"""
@@ -54,7 +53,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
 
     fun getCurrentVersion(conn: SqlConnection): Future<Int?> {
       fun selectSnapshot(): String {
-        return "SELECT version FROM ${config.snapshotTableName.value} WHERE ar_id = $1 for share"
+        return "SELECT version FROM ${config.snapshotTableName.value} WHERE ar_id = $1 FOR SHARE"
       }
       fun extractVersion(rowSet: RowSet<Row>): Int {
         return if (rowSet.size() == 0) {
@@ -65,7 +64,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       }
       val promise0 = Promise.promise<Int?>()
       conn.preparedQuery(selectSnapshot())
-        .execute(Tuple.of(metadata.aggregateRootId))
+        .execute(Tuple.of(metadata.aggregateRootId.id))
         .onSuccess { pgRow ->
           val currentVersion = extractVersion(pgRow)
           if (log.isDebugEnabled) log.debug("Got current version: $currentVersion")
@@ -106,7 +105,9 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       val newSTateAsJson: String = config.json.encodeToString(AGGREGATE_ROOT_SERIALIZER, session.currentState)
       if (session.originalVersion == 0) {
         val params = Tuple.of(
-          expectedVersionAfterAppend, JsonObject(newSTateAsJson), metadata.aggregateRootId
+          expectedVersionAfterAppend,
+          JsonObject(newSTateAsJson),
+          metadata.aggregateRootId.id
         )
         conn.preparedQuery(insert())
           .execute(params)
@@ -120,7 +121,10 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           }
       } else {
         val params = Tuple.of(
-          expectedVersionAfterAppend, JsonObject(newSTateAsJson), metadata.aggregateRootId, expectedVersionAfterAppend - 1
+          expectedVersionAfterAppend,
+          JsonObject(newSTateAsJson),
+          metadata.aggregateRootId.id,
+          expectedVersionAfterAppend - 1
         )
         conn.preparedQuery(update())
           .execute(params)
@@ -137,38 +141,36 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       return promise0.future()
     }
 
-    fun appendCommand(conn: SqlConnection): Future<Long> {
-      val promise0 = Promise.promise<Long>()
+    fun appendCommand(conn: SqlConnection): Future<Void> {
+      val promise0 = Promise.promise<Void>()
       val cmdAsJsonObject: String = config.json.encodeToString(COMMAND_SERIALIZER, command)
       val params = Tuple.of(
-        metadata.aggregateRootId, metadata.id, metadata.causationId, metadata.correlationID,
+        metadata.commandId.id,
+        metadata.aggregateRootId.id,
+        metadata.causationId.id,
+        metadata.correlationId.id,
         JsonObject(cmdAsJsonObject)
       )
       conn.preparedQuery(SQL_APPEND_CMD)
         .execute(params)
         .onFailure { err -> promise0.fail(err) }
         .onSuccess {
-          val rowSet: RowSet<Row> = it.value()
-          if (rowSet.size() == 0) {
-            promise0.fail("Append command error: missing cmd_id")
-          } else {
-            promise0.complete(rowSet.first().getLong("cmd_id"))
-            if (log.isDebugEnabled) log.debug("Append command ok")
-          }
+          promise0.complete()
+          if (log.isDebugEnabled) log.debug("Append command ok")
         }
       return promise0.future()
     }
 
-    fun appendEvents(conn: SqlConnection, commandId: Long): Future<Void> {
+    fun appendEvents(conn: SqlConnection): Future<Void> {
       fun appendEvent(event: E): Future<Boolean> {
         val promise0 = Promise.promise<Boolean>()
         val json = config.json.encodeToString(DOMAIN_EVENT_SERIALIZER, event)
         val params = Tuple.of(
           JsonObject(json),
           session.currentState::class.simpleName,
-          metadata.aggregateRootId,
+          metadata.aggregateRootId.id,
           expectedVersionAfterAppend,
-          commandId
+          metadata.commandId.id
         )
         conn.preparedQuery(SQL_APPEND_EVENT)
           .execute(params)
@@ -240,7 +242,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
                   }
                   .onSuccess {
                     appendCommand(conn)
-                      .compose { commandId -> appendEvents(conn, commandId) }
+                      .compose { appendEvents(conn) }
                       .onFailure {
                         rollback(tx, it)
                         close(conn)

@@ -7,6 +7,7 @@ import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerEventHandler
+import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
+import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -46,9 +48,10 @@ class PgcEventStoreIT {
   @Test
   @DisplayName("can append version 1")
   fun s1(tc: VertxTestContext) {
-    val customer = Customer.create(id = 1, name = "c1") // AggregateRootSession needs a non null state
+    val id = UUID.randomUUID()
+    val customer = Customer.create(id = id, name = "c1") // AggregateRootSession needs a non null state
     val cmd = CustomerCommand.ActivateCustomer("is needed")
-    val metadata = CommandMetadata(1)
+    val metadata = CommandMetadata(AggregateRootId(id))
     val session = StatefulSession(0, customer.state, customerEventHandler)
     session.execute { it.activate(cmd.reason) }
     eventStore.append(cmd, metadata, session)
@@ -59,15 +62,15 @@ class PgcEventStoreIT {
   @Test
   @DisplayName("can append version 1 then version 2")
   fun s11(tc: VertxTestContext) {
-    val customer = Customer.create(id = 1, name = "c1")
-
+    val id = UUID.randomUUID()
+    val customer = Customer.create(id = id, name = "c1")
     val cmd1 = CustomerCommand.ActivateCustomer("is needed")
-    val metadata1 = CommandMetadata(1)
+    val metadata1 = CommandMetadata(AggregateRootId(id))
     val session1 = StatefulSession(0, customer.state, customerEventHandler)
     session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(1)
+    val metadata2 = CommandMetadata(AggregateRootId(id))
     val session2 = StatefulSession(1, customer.state, customerEventHandler)
     session2.execute { it.deactivate(cmd1.reason) }
 
@@ -83,15 +86,15 @@ class PgcEventStoreIT {
   @Test
   @DisplayName("cannot append version 1 twice")
   fun s2(tc: VertxTestContext) {
-    val customer = Customer.create(id = 1, name = "c1")
-
+    val id = UUID.randomUUID()
+    val customer = Customer.create(id = id, name = "c1")
     val cmd1 = CustomerCommand.ActivateCustomer("is needed")
-    val metadata1 = CommandMetadata(1)
+    val metadata1 = CommandMetadata(AggregateRootId(id))
     val session1 = StatefulSession(0, customer.state, customerEventHandler)
     session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(1)
+    val metadata2 = CommandMetadata(AggregateRootId(id))
     val session2 = StatefulSession(0, customer.state, customerEventHandler)
     session2.execute { it.deactivate(cmd1.reason) }
 
@@ -110,15 +113,16 @@ class PgcEventStoreIT {
   @Test
   @DisplayName("cannot append version 3 after version 1")
   fun s22(tc: VertxTestContext) {
-    val customer = Customer.create(id = 1, name = "c1")
+    val id = UUID.randomUUID()
+    val customer = Customer.create(id = id, name = "c1")
 
     val cmd1 = CustomerCommand.ActivateCustomer("is needed")
-    val metadata1 = CommandMetadata(1)
+    val metadata1 = CommandMetadata(AggregateRootId(id))
     val session1 = StatefulSession(0, customer.state, customerEventHandler)
     session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(1)
+    val metadata2 = CommandMetadata(AggregateRootId(id))
     val session2 = StatefulSession(2, customer.state, customerEventHandler)
     session2.execute { it.deactivate(cmd1.reason) }
 

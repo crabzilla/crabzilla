@@ -6,8 +6,8 @@ import java.util.UUID
  * The client must knows how to instantiate it.
  */
 data class CommandMetadata(
-  val aggregateRootId: Int,
-  val id: UUID = UUID.randomUUID(),
-  val causationId: UUID = id,
-  val correlationID: UUID = id
+  val aggregateRootId: AggregateRootId,
+  val commandId: CommandId = CommandId(UUID.randomUUID()),
+  val causationId: CommandId = commandId,
+  val correlationId: CommandId = commandId
 )
