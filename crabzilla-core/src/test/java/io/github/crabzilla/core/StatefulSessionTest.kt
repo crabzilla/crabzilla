@@ -9,13 +9,14 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.Arrays.asList
+import java.util.UUID
 
 @DisplayName("A StatefulSession")
 internal class StatefulSessionTest {
 
   lateinit var statefulSession: StatefulSession<Customer, CustomerEvent>
 
-  val customer = Customer(id = 1, name = "c1")
+  val customer = Customer(id = UUID.randomUUID(), name = "c1")
 
   @Test
   fun can_be_instantiated() {
@@ -61,7 +62,7 @@ internal class StatefulSessionTest {
     @DisplayName("when adding a create customer event")
     internal inner class WhenAddingNewEvent {
 
-      val id = 1
+      val id = UUID.randomUUID()
       private val customerCreated = CustomerEvent.CustomerRegistered(id, "customer-1")
       private val expectedCustomer = Customer(id, "customer-1", false, null)
 
@@ -126,7 +127,7 @@ internal class StatefulSessionTest {
 
     val isOk = "is ok"
 
-    val id = 1
+    val id = UUID.randomUUID()
     private val customerCreated = CustomerEvent.CustomerRegistered(id, "customer-1")
     private val customerActivated = CustomerEvent.CustomerActivated(isOk)
     private val expectedCustomer = Customer(id, "customer-1", true, isOk)

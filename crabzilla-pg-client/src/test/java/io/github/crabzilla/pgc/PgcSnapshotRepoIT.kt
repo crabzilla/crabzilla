@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import java.util.UUID
 
 // TODO given a snapshot and none events
 // TODO given a snapshot and some events, etc
@@ -39,7 +40,7 @@ class PgcSnapshotRepoIT {
   @Test
   @DisplayName("given none snapshot, it can retrieve correct snapshot")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    repo.get(-1)
+    repo.get(UUID.randomUUID())
       .onFailure { err -> tc.failNow(err) }
       .onSuccess { snapshot ->
         tc.verify { assertThat(snapshot).isNull() }
@@ -50,12 +51,13 @@ class PgcSnapshotRepoIT {
   @Test
   @DisplayName("when appending it can retrieve correct snapshot")
   fun a1(tc: VertxTestContext, vertx: Vertx) {
-    repo.upsert(1, Snapshot(Customer(id = 1, name = "c1", isActive = false), 1))
-      .compose { repo.get(1) }
+    val id = UUID.randomUUID()
+    repo.upsert(id, Snapshot(Customer(id = id, name = "c1", isActive = false), 1))
+      .compose { repo.get(id) }
       .onFailure { err -> tc.failNow(err) }
       .onSuccess { snapshot ->
         tc.verify { assertThat(snapshot!!.version).isEqualTo(1) }
-        tc.verify { assertThat(snapshot!!.state).isEqualTo(Customer(1, "c1", false, null)) }
+        tc.verify { assertThat(snapshot!!.state).isEqualTo(Customer(id, "c1", false, null)) }
         tc.completeNow()
       }
   }

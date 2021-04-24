@@ -44,7 +44,7 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
           rowSet.iterator().asSequence().map { row: Row ->
             if (log.isDebugEnabled) log.debug("Found ${row.deepToString()}")
             val jsonObject: JsonObject = row.get(JsonObject::class.java, 2)
-            EventRecord(row.getString(0), row.getInteger(1), jsonObject, row.getLong(3))
+            EventRecord(row.getString(0), row.getUUID(1), jsonObject, row.getLong(3))
           }.toList()
         }
     }

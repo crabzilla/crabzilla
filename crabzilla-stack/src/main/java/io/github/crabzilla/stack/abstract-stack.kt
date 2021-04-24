@@ -6,8 +6,12 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.StatefulSession
 import io.vertx.core.Future
+import java.util.UUID
 
 // es/cqrs infra stack
+
+inline class AggregateRootId(val id: UUID = UUID.randomUUID())
+inline class CommandId(val id: UUID = UUID.randomUUID())
 
 /**
  * An event store to append new events
@@ -20,8 +24,8 @@ interface EventStore<A : AggregateRoot, C : Command, E : DomainEvent> {
  * A repository for snapshots
  */
 interface SnapshotRepository<A : AggregateRoot, C : Command, E : DomainEvent> {
-  fun get(id: Int): Future<Snapshot<A>?>
-  fun upsert(id: Int, snapshot: Snapshot<A>): Future<Void>
+  fun get(id: UUID): Future<Snapshot<A>?>
+  fun upsert(id: UUID, snapshot: Snapshot<A>): Future<Void>
 }
 
 /**

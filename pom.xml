@@ -102,26 +102,8 @@
         <version>${project.version}</version>
       </dependency>
 
-<!--      <dependency>-->
-<!--        <groupId>io.github.crabzilla</groupId>-->
-<!--        <artifactId>crabzilla-cassandra</artifactId>-->
-<!--        <version>${project.version}</version>-->
-<!--      </dependency>-->
-
-      <!--      <dependency>-->
-<!--        <groupId>io.github.crabzilla</groupId>-->
-<!--        <artifactId>crabzilla-web</artifactId>-->
-<!--        <version>${project.version}</version>-->
-<!--      </dependency>-->
-
       <!-- vertx -->
-
-<!--      <dependency>-->
-<!--        <groupId>io.vertx</groupId>-->
-<!--        <artifactId>vertx-lang-kotlin</artifactId>-->
-<!--        <version>${vertx.version}</version>-->
-<!--      </dependency>-->
-
+      
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-stack-depchain</artifactId>

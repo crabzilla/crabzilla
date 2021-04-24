@@ -1,10 +1,12 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerCommand
+import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.PoolingProjectionVerticle
 import io.vertx.core.Vertx
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
+import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 class PgcFullStackIT {
@@ -28,7 +31,7 @@ class PgcFullStackIT {
     const val topic = "customers"
   }
 
-  val id = (0..10_000).random()
+  val id = UUID.randomUUID()
 
   lateinit var writeDb: PgPool
   lateinit var readDb: PgPool
@@ -68,7 +71,7 @@ class PgcFullStackIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->
         assert(snapshot0 == null)
-        controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
+        controller.handle(CommandMetadata(AggregateRootId(id)), RegisterCustomer(id, "cust#$id"))
           .onFailure { tc.failNow(it) }
           .onSuccess {
             vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) { it ->
@@ -80,10 +83,10 @@ class PgcFullStackIT {
                   .onSuccess { snapshot1 ->
                     assert(1 == snapshot1!!.version)
                     assert(Customer(id, "cust#$id") == snapshot1.state)
-                    controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("because yes"))
+                    controller.handle(CommandMetadata(AggregateRootId(id)), ActivateCustomer("because yes"))
                       .onFailure { tc.failNow(it) }
                       .onSuccess {
-                        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) { it ->
+                        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) {
                           if (it.failed()) {
                             tc.failNow(it.cause())
                           } else {
@@ -91,7 +94,10 @@ class PgcFullStackIT {
                               .onFailure { err -> tc.failNow(err) }
                               .onSuccess { snapshot2 ->
                                 assert(2 == snapshot2!!.version)
-                                assert(Customer(id, "cust#$id", isActive = true, reason = "because yes") == snapshot2.state)
+                                assert(
+                                  Customer(id, "cust#$id", isActive = true, reason = "because yes")
+                                    == snapshot2.state
+                                )
                                 tc.completeNow()
                               }
                           }

@@ -40,7 +40,7 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
       return promise.future()
     }
     if (log.isDebugEnabled) log.debug("Will get snapshot for aggregate ${metadata.aggregateRootId}")
-    snapshotRepo.get(metadata.aggregateRootId)
+    snapshotRepo.get(metadata.aggregateRootId.id)
       .onFailure { err ->
         log.error("Could not get snapshot", err)
         promise.fail(err)

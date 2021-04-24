@@ -4,12 +4,13 @@ import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Tuple
+import java.util.UUID
 
 /**
  * Read model repository
  */
 class CustomerRepository(private val pool: PgPool) {
-  fun upsert(id: Int, name: String, isActive: Boolean): Future<Void> {
+  fun upsert(id: UUID, name: String, isActive: Boolean): Future<Void> {
     val promise = Promise.promise<Void>()
     pool
       .preparedQuery(
@@ -26,7 +27,7 @@ class CustomerRepository(private val pool: PgPool) {
     return promise.future()
   }
 
-  fun updateStatus(id: Int, isActive: Boolean): Future<Void> {
+  fun updateStatus(id: UUID, isActive: Boolean): Future<Void> {
     val promise = Promise.promise<Void>()
     pool
       .preparedQuery("UPDATE customer_summary set is_active = $2 where id = $1")
