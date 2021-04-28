@@ -7,13 +7,16 @@ import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandController
+import io.github.crabzilla.stack.CommandException.WriteConcurrencyException
 import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.EventStore
 import io.github.crabzilla.stack.SnapshotRepository
 import io.kotest.assertions.fail
+import io.kotest.assertions.shouldFail
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldContainInOrder
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.throwable.shouldHaveMessage
 import io.mockk.every
 import io.mockk.mockk
 import io.vertx.core.Future
@@ -50,6 +53,36 @@ class ControllerTests : BehaviorSpec({
             session.currentState shouldBe Customer(id = aggregateRootId.id, name = "customer#1")
             session.appliedEvents() shouldContainInOrder
               listOf(CustomerEvent.CustomerRegistered(id = aggregateRootId.id, name = "customer#1"))
+          }
+      }
+    }
+
+    When("I send an invalid register command") {
+      val aggregateRootId = AggregateRootId()
+      val result = controller
+        .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "bad customer"))
+      Then("It should have the expected StatefulSession") {
+        result
+          .onFailure { it shouldHaveMessage "[Bad customer!]" }
+          .onSuccess {
+            shouldFail { }
+          }
+      }
+    }
+
+    When("I send a register command but with Concurrency") {
+      every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
+      every { eventStore.append(any(), any(), any()) } returns Future.failedFuture(WriteConcurrencyException("Concurrency error"))
+      val controller =
+        CommandController(customerConfig.commandValidator, customerConfig.commandHandler, snapshotRepo, eventStore)
+      val aggregateRootId = AggregateRootId()
+      val result = controller
+        .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "good customer"))
+      Then("It should have the expected StatefulSession") {
+        result
+          .onFailure { it shouldHaveMessage "Concurrency error" }
+          .onSuccess {
+            shouldFail { }
           }
       }
     }

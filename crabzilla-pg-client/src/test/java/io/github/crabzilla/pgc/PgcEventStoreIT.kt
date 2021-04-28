@@ -1,6 +1,5 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.core.BoundedContextName
 import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand
@@ -34,9 +33,8 @@ class PgcEventStoreIT {
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     getConfig(vertx)
       .compose { config ->
-        val boundedContextName = BoundedContextName("example1")
         writeDb = writeModelPgPool(vertx, config)
-        eventStore = PgcEventStore(boundedContextName.name, writeDb, customerConfig)
+        eventStore = PgcEventStore(customerConfig, writeDb)
         cleanDatabase(vertx, config)
       }
       .onFailure { tc.failNow(it.cause) }
