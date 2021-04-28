@@ -66,7 +66,6 @@ class AggregateRootConfig<A : AggregateRoot, C : Command, E : DomainEvent> (
   val json: Json
 )
 
-inline class BoundedContextName(val name: String)
 inline class AggregateRootName(val value: String) {
   init {
     if (value.length > 16) {
