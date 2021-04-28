@@ -80,7 +80,6 @@ class PoolingProjectionVerticle(
           when (it) {
             -1L -> {
               if (log.isDebugEnabled) log.debug("Still busy")
-//              registerFailure()
               vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, intervalInMilliseconds)
             }
             0L -> {

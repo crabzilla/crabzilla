@@ -29,7 +29,6 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
   }
 
   fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<A, E>> {
-    // TODO also return metadata (internal ids)
     val promise = Promise.promise<StatefulSession<A, E>>()
     if (log.isDebugEnabled) log.debug("received $command")
     val validationErrors = validator.validate(command)
