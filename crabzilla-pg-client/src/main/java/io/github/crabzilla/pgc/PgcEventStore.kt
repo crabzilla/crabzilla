@@ -27,13 +27,12 @@ import org.slf4j.LoggerFactory
 import java.util.function.BiFunction
 
 class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
-  val topic: String,
   private val writeModelDb: PgPool,
   private val config: AggregateRootConfig<A, C, E>
 ) : EventStore<A, C, E> {
 
   /**
-   TODO after committing events, it could use topic property to publish to it using eventbus.
+   TODO after committing events, it could publish using eventbus.
    Just for observability, not for transactional consumers
    */
 
@@ -255,7 +254,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
                             close(conn)
                             promise.fail(it)
                           }.onSuccess {
-                            if (log.isDebugEnabled) log.debug("Events successfully committed to $topic")
+                            if (log.isDebugEnabled) log.debug("Events successfully committed")
                             promise.complete()
                             close(conn)
                           }

@@ -66,7 +66,7 @@ class PgcFullStackIT {
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val snapshotRepo = PgcSnapshotRepo(customerConfig, writeDb)
-    val controller = CommandControllerFactory.createPublishingTo(topic, customerConfig, writeDb)
+    val controller = CommandControllerFactory.createPublishingTo(customerConfig, writeDb)
     snapshotRepo.get(id)
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->
