@@ -34,7 +34,7 @@ class PgcEventStoreIT {
     getConfig(vertx)
       .compose { config ->
         writeDb = writeModelPgPool(vertx, config)
-        eventStore = PgcEventStore(writeDb, customerConfig)
+        eventStore = PgcEventStore(customerConfig, writeDb)
         cleanDatabase(vertx, config)
       }
       .onFailure { tc.failNow(it.cause) }

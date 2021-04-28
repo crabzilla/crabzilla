@@ -27,8 +27,8 @@ import org.slf4j.LoggerFactory
 import java.util.function.BiFunction
 
 class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
-  private val writeModelDb: PgPool,
-  private val config: AggregateRootConfig<A, C, E>
+  private val config: AggregateRootConfig<A, C, E>,
+  private val writeModelDb: PgPool
 ) : EventStore<A, C, E> {
 
   /**
