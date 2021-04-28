@@ -11,9 +11,9 @@ import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.pgc.PgcClient.close
 import io.github.crabzilla.pgc.PgcClient.commit
 import io.github.crabzilla.pgc.PgcClient.rollback
+import io.github.crabzilla.stack.CommandException
 import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.EventStore
-import io.github.crabzilla.stack.OptimisticConcurrencyConflict
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
@@ -71,12 +71,12 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
             currentVersion == expectedVersionAfterAppend -> {
               val message = "The current version is already the expected new version $expectedVersionAfterAppend"
               if (log.isDebugEnabled) log.debug(message)
-              promise0.fail(OptimisticConcurrencyConflict(message))
+              promise0.fail(CommandException.WriteConcurrencyException(message))
             }
             currentVersion != expectedVersionAfterAppend - 1 -> {
               val message = "The current version [$currentVersion] should be [${expectedVersionAfterAppend - 1}]"
               if (log.isDebugEnabled) log.debug(message)
-              promise0.fail(OptimisticConcurrencyConflict(message))
+              promise0.fail(CommandException.WriteConcurrencyException(message))
             }
             else -> {
               if (log.isDebugEnabled) log.debug("Version is $currentVersion")

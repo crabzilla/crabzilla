@@ -34,7 +34,7 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
     val validationErrors = validator.validate(command)
 
     if (validationErrors.isNotEmpty()) {
-      promise.fail(ValidationException(validationErrors))
+      promise.fail(CommandException.ValidationException(validationErrors))
       log.error("Invalid command $metadata\n $command \n$validationErrors")
       return promise.future()
     }

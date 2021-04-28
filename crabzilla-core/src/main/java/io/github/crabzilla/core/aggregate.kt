@@ -68,9 +68,7 @@ class AggregateRootConfig<A : AggregateRoot, C : Command, E : DomainEvent> (
 
 inline class AggregateRootName(val value: String) {
   init {
-    if (value.length > 16) {
-      throw IllegalArgumentException("Aggregate root names can be at most 16 characters")
-    }
+    if (value.length > 16) throw IllegalArgumentException("Aggregate root names can be at most 16 characters")
   }
 }
 inline class SnapshotTableName(val value: String)
