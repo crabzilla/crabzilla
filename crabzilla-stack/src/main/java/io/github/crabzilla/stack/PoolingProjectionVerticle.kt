@@ -64,7 +64,7 @@ class PoolingProjectionVerticle(
       val nextInterval = min(DEFAULT_MAX_INTERVAL, intervalInMilliseconds * failures.incrementAndGet())
       vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, nextInterval)
     }
-    fun registerSuccess() {
+    fun registerSuccessOrStillBusy() {
       failures.set(0)
       vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, intervalInMilliseconds)
     }
@@ -80,7 +80,7 @@ class PoolingProjectionVerticle(
           when (it) {
             -1L -> {
               if (log.isDebugEnabled) log.debug("Still busy")
-              vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, intervalInMilliseconds)
+              registerSuccessOrStillBusy()
             }
             0L -> {
               if (log.isDebugEnabled) log.debug("No new events")
@@ -88,7 +88,7 @@ class PoolingProjectionVerticle(
             }
             else -> {
               if (log.isDebugEnabled) log.debug("Found $it events")
-              registerSuccess()
+              registerSuccessOrStillBusy()
             }
           }
         }
@@ -124,11 +124,11 @@ class PoolingProjectionVerticle(
           eventRecord: EventRecord ->
           currentFuture.compose { successful: Boolean ->
             if (successful) {
-              log.info("Successfully projected ${eventRecord.eventId}")
+              if (log.isDebugEnabled) log.debug("Successfully projected ${eventRecord.eventId}")
               eventId.set(eventRecord.eventId)
               action(eventRecord)
             } else {
-              log.info("Skipped ${eventRecord.eventId} since the latest successful event was $eventId")
+              if (log.isDebugEnabled) log.debug("Skipped ${eventRecord.eventId} since the latest successful event was $eventId")
               Future.failedFuture("The latest successful event was $eventId")
             }
           }
@@ -154,14 +154,15 @@ class PoolingProjectionVerticle(
         publish(eventsList)
           .onFailure { promise.fail(it) }
           .onSuccess { lastEventPublished ->
-            log.info("After publishing  ${eventsList.size}, the latest published event id is $lastEventPublished")
+            if (log.isDebugEnabled)
+              log.debug("After publishing  ${eventsList.size}, the latest published event id is $lastEventPublished")
             if (lastEventPublished == 0L) {
               promise.complete(0L)
             } else {
               eventsScanner.updateOffSet(lastEventPublished)
                 .onFailure { promise.fail(it) }
                 .onSuccess {
-                  log.info("Updated latest offset to $lastEventPublished")
+                  if (log.isDebugEnabled) log.debug("Updated latest offset to $lastEventPublished")
                   promise.complete(lastEventPublished)
                 }
             }

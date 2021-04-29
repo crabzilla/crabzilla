@@ -49,7 +49,7 @@ class PgcFullStackIT {
             val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))
             val eventsScanner = PgcEventsScanner(writeDb, topic)
             val publisherVerticle = PoolingProjectionVerticle(
-              eventsScanner, EventBusEventsPublisher(topic, vertx.eventBus()), 120_000
+              eventsScanner, EventBusEventsPublisher(topic, vertx.eventBus()), 500
             )
             vertx.deployVerticle(projectorVerticle)
               .compose { vertx.deployVerticle(publisherVerticle) }
