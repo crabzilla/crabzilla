@@ -30,7 +30,7 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
 
   fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<A, E>> {
     val promise = Promise.promise<StatefulSession<A, E>>()
-    if (log.isDebugEnabled) log.debug("received $command")
+    log.debug("received {}", command)
     val validationErrors = validator.validate(command)
 
     if (validationErrors.isNotEmpty()) {
@@ -38,28 +38,28 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
       log.error("Invalid command $metadata\n $command \n$validationErrors")
       return promise.future()
     }
-    if (log.isDebugEnabled) log.debug("Will get snapshot for aggregate ${metadata.aggregateRootId}")
+    log.debug("Will get snapshot for aggregate {}", metadata.aggregateRootId)
     snapshotRepo.get(metadata.aggregateRootId.id)
       .onFailure { err ->
         log.error("Could not get snapshot", err)
         promise.fail(err)
       }
       .onSuccess { snapshot ->
-        if (log.isDebugEnabled) log.debug("Got snapshot $snapshot. Now let's handle the command")
+        log.debug("Got snapshot {}. Now let's handle the command", snapshot)
         handler.handleCommand(command, snapshot)
           .onFailure { err ->
             log.error("Command error", err)
             promise.fail(err)
           }
           .onSuccess { result: StatefulSession<A, E> ->
-            if (log.isDebugEnabled) log.debug("Command handled. ${result.toSessionData()}. Now let's append it events")
+            log.debug("Command handled. {}. Now let's append it events", result.toSessionData())
             eventStore.append(command, metadata, result)
               .onFailure { err ->
                 log.error("When appending events", err)
                 promise.fail(err)
               }
               .onSuccess {
-                if (log.isDebugEnabled) log.debug("Events successfully appended.")
+                log.debug("Events successfully appended.")
                 promise.complete(result)
               }
           }

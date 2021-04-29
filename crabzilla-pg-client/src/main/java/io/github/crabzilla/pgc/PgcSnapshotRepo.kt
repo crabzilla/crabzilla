@@ -46,7 +46,7 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
           log.error("upsert snapshot query error", insert.cause())
           promise.fail(insert.cause())
         } else {
-          if (log.isDebugEnabled) log.debug("upsert snapshot success $id $json")
+          log.debug("upsert snapshot success {} {}", id, json)
           promise.complete()
         }
       }

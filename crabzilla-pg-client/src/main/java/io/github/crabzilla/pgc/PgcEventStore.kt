@@ -66,20 +66,20 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         .execute(Tuple.of(metadata.aggregateRootId.id))
         .onSuccess { pgRow ->
           val currentVersion = extractVersion(pgRow)
-          if (log.isDebugEnabled) log.debug("Got current version: $currentVersion")
+          log.debug("Got current version: {}", currentVersion)
           when {
             currentVersion == expectedVersionAfterAppend -> {
               val message = "The current version is already the expected new version $expectedVersionAfterAppend"
-              if (log.isDebugEnabled) log.debug(message)
+              log.debug(message)
               promise0.fail(CommandException.WriteConcurrencyException(message))
             }
             currentVersion != expectedVersionAfterAppend - 1 -> {
               val message = "The current version [$currentVersion] should be [${expectedVersionAfterAppend - 1}]"
-              if (log.isDebugEnabled) log.debug(message)
+              log.debug(message)
               promise0.fail(CommandException.WriteConcurrencyException(message))
             }
             else -> {
-              if (log.isDebugEnabled) log.debug("Version is $currentVersion")
+              log.debug("Version is {}", currentVersion)
               promise0.complete(currentVersion)
             }
           }
@@ -116,7 +116,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           }
           .onSuccess {
             promise0.complete()
-            if (log.isDebugEnabled) log.debug("Successfully inserted version")
+            log.debug("Successfully inserted version")
           }
       } else {
         val params = Tuple.of(
@@ -133,7 +133,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           }
           .onSuccess {
             promise0.complete()
-            if (log.isDebugEnabled) log.debug("Successfully updated version")
+            log.debug("Successfully updated version")
           }
       }
 
@@ -155,7 +155,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         .onFailure { err -> promise0.fail(err) }
         .onSuccess {
           promise0.complete()
-          if (log.isDebugEnabled) log.debug("Append command ok")
+          log.debug("Append command ok")
         }
       return promise0.future()
     }
@@ -175,7 +175,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           .execute(params)
           .onFailure { promise0.fail(it) }
           .onSuccess {
-            if (log.isDebugEnabled) log.debug("Append event ok $event")
+            log.debug("Append event ok {}", event)
             promise0.complete(true)
           }
         return promise0.future()
@@ -254,7 +254,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
                             close(conn)
                             promise.fail(it)
                           }.onSuccess {
-                            if (log.isDebugEnabled) log.debug("Events successfully committed")
+                            log.debug("Events successfully committed")
                             promise.complete()
                             close(conn)
                           }
