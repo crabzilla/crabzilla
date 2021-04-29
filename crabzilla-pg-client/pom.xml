@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.0.9-snapshot-4</version>
+    <version>v0.1.1</version>
   </parent>
 
   <artifactId>crabzilla-pg-client</artifactId>
