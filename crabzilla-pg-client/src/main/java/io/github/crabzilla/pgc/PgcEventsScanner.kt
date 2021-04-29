@@ -35,14 +35,14 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
   }
 
   override fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
-    if (log.isDebugEnabled) log.debug("Will scan for new events")
+    log.debug("Will scan for new events")
     val promise = Promise.promise<List<EventRecord>>()
     writeModelDb.withTransaction { client ->
       client.prepare(SELECT_EVENTS_AFTER_OFFSET)
         .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(streamName, numberOfRows)) }
         .map { rowSet: RowSet<Row> ->
           rowSet.iterator().asSequence().map { row: Row ->
-            if (log.isDebugEnabled) log.debug("Found ${row.deepToString()}")
+            log.debug("Found {}", row.deepToString())
             val jsonObject: JsonObject = row.get(JsonObject::class.java, 2)
             EventRecord(row.getString(0), row.getUUID(1), jsonObject, row.getLong(3))
           }.toList()

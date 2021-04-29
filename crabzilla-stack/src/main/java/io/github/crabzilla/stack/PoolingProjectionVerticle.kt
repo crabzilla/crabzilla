@@ -50,9 +50,9 @@ class PoolingProjectionVerticle(
     vertx.eventBus().consumer<Long>(PUBLISHER_RESCHEDULED_ENDPOINT) { msg ->
       val nextInterval = msg.body()
       vertx.setTimer(nextInterval, action)
-      log.info("Rescheduled to next $nextInterval milliseconds")
+      log.info("Rescheduled to next {} milliseconds", nextInterval)
     }
-    log.info("Started pooling for at most $numberOfRows rows each $intervalInMilliseconds milliseconds")
+    log.info("Started pooling for at most {} rows each {} milliseconds", numberOfRows, intervalInMilliseconds)
   }
 
   override fun stop() {
@@ -69,25 +69,25 @@ class PoolingProjectionVerticle(
       vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, intervalInMilliseconds)
     }
     return Handler { tick ->
-      if (log.isDebugEnabled) log.debug("Tick $tick")
+      log.debug("Tick $tick")
       scanAndPublish(numberOfRows)
         .onFailure {
           log.error("When scanning for new events", it)
           registerFailure()
         }
         .onSuccess {
-          if (log.isDebugEnabled) log.debug("$it events were scanned")
+          log.debug("$it events were scanned")
           when (it) {
             -1L -> {
-              if (log.isDebugEnabled) log.debug("Still busy")
+              log.debug("Still busy")
               registerSuccessOrStillBusy()
             }
             0L -> {
-              if (log.isDebugEnabled) log.debug("No new events")
+              log.debug("No new events")
               registerFailure()
             }
             else -> {
-              if (log.isDebugEnabled) log.debug("Found $it events")
+              log.debug("Found {} events", it)
               registerSuccessOrStillBusy()
             }
           }
@@ -124,11 +124,11 @@ class PoolingProjectionVerticle(
           eventRecord: EventRecord ->
           currentFuture.compose { successful: Boolean ->
             if (successful) {
-              if (log.isDebugEnabled) log.debug("Successfully projected ${eventRecord.eventId}")
+              log.debug("Successfully projected {}", eventRecord.eventId)
               eventId.set(eventRecord.eventId)
               action(eventRecord)
             } else {
-              if (log.isDebugEnabled) log.debug("Skipped ${eventRecord.eventId} since the latest successful event was $eventId")
+              log.debug("Skipped {} since the latest successful event was {}", eventRecord.eventId, eventId)
               Future.failedFuture("The latest successful event was $eventId")
             }
           }
@@ -139,7 +139,7 @@ class PoolingProjectionVerticle(
       return promise.future()
     }
     val promise = Promise.promise<Long>()
-    if (log.isDebugEnabled) log.debug("Will scan for new events")
+    log.debug("Will scan for new events")
     eventsScanner.scanPendingEvents(numberOfRows)
       .onFailure {
         promise.fail(it)
@@ -150,26 +150,26 @@ class PoolingProjectionVerticle(
           promise.complete(0)
           return@onSuccess
         }
-        if (log.isDebugEnabled) log.debug("Got ${eventsList.size} events")
+        log.debug("Got ${eventsList.size} events")
         publish(eventsList)
           .onFailure { promise.fail(it) }
           .onSuccess { lastEventPublished ->
             if (log.isDebugEnabled)
-              log.debug("After publishing  ${eventsList.size}, the latest published event id is $lastEventPublished")
+              log.debug("After publishing {}, the latest published event id is {}", eventsList.size, lastEventPublished)
             if (lastEventPublished == 0L) {
               promise.complete(0L)
             } else {
               eventsScanner.updateOffSet(lastEventPublished)
                 .onFailure { promise.fail(it) }
                 .onSuccess {
-                  if (log.isDebugEnabled) log.debug("Updated latest offset to $lastEventPublished")
+                  log.debug("Updated latest offset to {}", lastEventPublished)
                   promise.complete(lastEventPublished)
                 }
             }
           }
       }
       .onComplete {
-        if (log.isDebugEnabled) log.debug("Scan is now inactive until new request")
+        log.debug("Scan is now inactive until new request")
       }
     return promise.future()
   }
