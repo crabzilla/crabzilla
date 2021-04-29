@@ -8,6 +8,7 @@ import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.EventBusPublisher
 import io.github.crabzilla.stack.PoolingProjectionVerticle
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -49,7 +50,7 @@ class PgcFullStackIT {
             val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))
             val eventsScanner = PgcEventsScanner(writeDb, topic)
             val publisherVerticle = PoolingProjectionVerticle(
-              eventsScanner, EventBusEventsPublisher(topic, vertx.eventBus()), 500
+              eventsScanner, EventBusPublisher(topic, vertx.eventBus()), 500
             )
             vertx.deployVerticle(projectorVerticle)
               .compose { vertx.deployVerticle(publisherVerticle) }
