@@ -47,10 +47,7 @@ class PgcFullStackIT {
             writeDb = writeModelPgPool(vertx, config)
             readDb = readModelPgPool(vertx, config)
             val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))
-            val eventsScanner = PgcEventsScanner(writeDb, topic)
-            val publisherVerticle = PoolingProjectionVerticle(
-              eventsScanner, EventBusEventsPublisher(topic, vertx.eventBus()), 500
-            )
+            val publisherVerticle = ProjectorVerticleFactory.create(topic, topic, vertx.eventBus(), writeDb)
             vertx.deployVerticle(projectorVerticle)
               .compose { vertx.deployVerticle(publisherVerticle) }
               .onFailure { tc.failNow(it.cause) }
