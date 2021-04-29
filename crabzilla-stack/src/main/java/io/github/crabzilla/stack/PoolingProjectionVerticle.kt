@@ -59,7 +59,7 @@ class PoolingProjectionVerticle(
     log.info("Stopped")
   }
 
-  fun handler(): Handler<Long?> {
+  private fun handler(): Handler<Long?> {
     fun registerFailure() {
       val nextInterval = min(DEFAULT_MAX_INTERVAL, intervalInMilliseconds * failures.incrementAndGet())
       vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, nextInterval)
@@ -95,17 +95,10 @@ class PoolingProjectionVerticle(
     }
   }
 
-  fun scanAndPublish(numberOfRows: Int): Future<Long> {
+  private fun scanAndPublish(numberOfRows: Int): Future<Long> {
     fun publish(eventsList: List<EventRecord>): Future<Long> {
-      fun action(eventRecord: EventRecord): Future<Boolean> {
-        val promise = Promise.promise<Boolean>()
-        eventsPublisher.publish(eventRecord)
-          .onSuccess { promise.complete(true) }
-          .onFailure {
-            log.error("When projecting event $eventRecord", it)
-            promise.complete(false)
-          }
-        return promise.future()
+      fun action(eventRecord: EventRecord): Future<Void> {
+        return eventsPublisher.publish(eventRecord).mapEmpty()
       }
       fun <A, B> foldLeft(iterator: Iterator<A>, identity: B, bf: BiFunction<B, A, B>): B {
         var result = identity
@@ -117,20 +110,16 @@ class PoolingProjectionVerticle(
       }
       val promise = Promise.promise<Long>()
       val eventId = AtomicLong(0)
-      val initialFuture = Future.succeededFuture<Boolean>(true)
+      val initialFuture = Future.succeededFuture<Void>()
       foldLeft(
         eventsList.iterator(), initialFuture,
-        { currentFuture: Future<Boolean>,
-          eventRecord: EventRecord ->
-          currentFuture.compose { successful: Boolean ->
-            if (successful) {
-              log.debug("Successfully projected {}", eventRecord.eventId)
-              eventId.set(eventRecord.eventId)
-              action(eventRecord)
-            } else {
-              log.debug("Skipped {} since the latest successful event was {}", eventRecord.eventId, eventId)
-              Future.failedFuture("The latest successful event was $eventId")
-            }
+        { currentFuture: Future<Void>, eventRecord: EventRecord ->
+          currentFuture.onSuccess {
+            log.debug("Successfully projected {}", eventRecord.eventId)
+            eventId.set(eventRecord.eventId)
+            action(eventRecord)
+          }.onFailure {
+            log.debug("Skipped {} since the latest successful event was {}", eventRecord.eventId, eventId)
           }
         }
       ).onComplete {
