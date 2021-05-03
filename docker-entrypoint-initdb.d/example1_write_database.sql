@@ -2,13 +2,12 @@ CREATE DATABASE example1_write OWNER user1;
 
 \connect example1_write ;
 
--- write model (in production, it could be a different database instance)
+CREATE TYPE AGGREGATES_ENUM AS ENUM ('Customer');
 
 -- commands
 
 CREATE TABLE commands (
       cmd_id UUID NOT NULL PRIMARY KEY,
-      ar_id UUID NOT NULL,
       causation_id UUID NOT NULL,
       correlation_id UUID NOT NULL,
       cmd_payload JSONB NOT NULL,
@@ -18,14 +17,14 @@ CREATE TABLE commands (
 
 -- indexes
 
-CREATE INDEX idx_ar_id ON commands (ar_id);
+-- TODO CREATE INDEX idx_causation_id ON commands (causation_id);
 
 -- events
 
 CREATE TABLE events (
       event_id BIGSERIAL NOT NULL,
       event_payload JSONB NOT NULL,
-      ar_name VARCHAR(16) NOT NULL,
+      ar_name AGGREGATES_ENUM NOT NULL,
       ar_id UUID NOT NULL,
       version INTEGER NOT NULL,
       cmd_id UUID,

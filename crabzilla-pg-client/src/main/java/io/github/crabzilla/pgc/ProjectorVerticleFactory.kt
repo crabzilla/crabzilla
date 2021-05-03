@@ -7,6 +7,7 @@ import io.vertx.pgclient.PgPool
 
 object ProjectorVerticleFactory {
 
+  // TODO Projector or Projection on name?
   fun create(
     projection: String,
     targetTopic: String,
@@ -15,7 +16,7 @@ object ProjectorVerticleFactory {
     interval: Long = 500,
     rows: Int = 500
   ): PoolingProjectionVerticle {
-    val eventsScanner = PgcEventsScanner(writeDb, projection)
+    val eventsScanner = PgcEventsScanner(writeDb, projection) // consider an additional optional param to filter events
     return PoolingProjectionVerticle(eventsScanner, EventBusPublisher(targetTopic, eventBus), interval, rows)
   }
 }

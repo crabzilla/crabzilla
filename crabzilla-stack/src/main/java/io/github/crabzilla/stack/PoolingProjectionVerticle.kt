@@ -143,8 +143,7 @@ class PoolingProjectionVerticle(
         publish(eventsList)
           .onFailure { promise.fail(it) }
           .onSuccess { lastEventPublished ->
-            if (log.isDebugEnabled)
-              log.debug("After publishing {}, the latest published event id is {}", eventsList.size, lastEventPublished)
+            log.debug("After publishing {}, the latest published event id is {}", eventsList.size, lastEventPublished)
             if (lastEventPublished == 0L) {
               promise.complete(0L)
             } else {

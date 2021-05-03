@@ -39,8 +39,8 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   companion object {
     private val log = LoggerFactory.getLogger(PgcEventStore::class.java)
     const val SQL_APPEND_CMD =
-      """ insert into commands (cmd_id, ar_id, causation_id, correlation_id, cmd_payload)
-          values ($1, $2, $3, $4, $5)"""
+      """ insert into commands (cmd_id, causation_id, correlation_id, cmd_payload)
+          values ($1, $2, $3, $4)"""
     const val SQL_APPEND_EVENT =
       """ insert into events (event_payload, ar_name, ar_id, version, cmd_id)
         values ($1, $2, $3, $4, $5)"""
@@ -145,7 +145,6 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       val cmdAsJsonObject: String = config.json.encodeToString(COMMAND_SERIALIZER, command)
       val params = Tuple.of(
         metadata.commandId.id,
-        metadata.aggregateRootId.id,
         metadata.causationId.id,
         metadata.correlationId.id,
         JsonObject(cmdAsJsonObject)
