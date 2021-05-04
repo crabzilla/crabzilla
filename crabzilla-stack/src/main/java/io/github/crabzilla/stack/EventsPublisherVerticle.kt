@@ -39,7 +39,6 @@ class EventsPublisherVerticle(
     // Schedule the first execution
     vertx.setTimer(intervalInMilliseconds, action)
     vertx.setPeriodic(DEFAULT_MAX_INTERVAL) {
-      log.info("* ")
       showStats.set(true)
     }
 
