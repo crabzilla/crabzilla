@@ -33,8 +33,8 @@ It's still in very early development stage. Do not use release 0.0.5, master bra
 
 ```xml
 <dependency>
-    <groupId>com.github.User</groupId>
-    <artifactId>crabzilla-pgc</artifactId>
+    <groupId>com.github.crabzilla</groupId>
+    <artifactId>crabzilla-pg-client</artifactId>
     <version>v0.1.3</version>
 </dependency>
 ```
