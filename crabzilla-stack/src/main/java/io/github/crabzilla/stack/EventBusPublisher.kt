@@ -6,6 +6,6 @@ import io.vertx.core.eventbus.EventBus
 class EventBusPublisher(private val targetTopic: String, private val eventbus: EventBus) : EventsPublisher {
 
   override fun publish(eventRecord: EventRecord): Future<Void> {
-    return eventbus.request<Boolean>(targetTopic, eventRecord.toJsonObject()).mapEmpty()
+    return eventbus.request<Void>(targetTopic, eventRecord.toJsonObject()).mapEmpty()
   }
 }

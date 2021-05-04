@@ -15,10 +15,11 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(VertxExtension::class)
 @Disabled
-class CoachIT {
+class CockroachIT {
 
   // https://www.cockroachlabs.com/docs/v20.2/build-a-java-app-with-cockroachdb.html?filters=local
   // https://forum.cockroachlabs.com/t/java-non-blocking-driver-for-vertx-io/1123/9
+  // cockroach demo --insecure
 
   val connectOptions = PgConnectOptions()
 //  .setPort(26257)

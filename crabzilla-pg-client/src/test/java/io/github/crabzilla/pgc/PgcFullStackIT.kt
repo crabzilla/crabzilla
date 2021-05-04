@@ -6,6 +6,7 @@ import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.pgc.CustomerProjectorVerticle.Companion.topic
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.EventsPublisherVerticle
@@ -28,7 +29,6 @@ class PgcFullStackIT {
 
   companion object {
     private val log = LoggerFactory.getLogger(PgcFullStackIT::class.java)
-    const val topic = "customers"
   }
 
   val id = UUID.randomUUID()
