@@ -7,10 +7,11 @@ CREATE TYPE AGGREGATES_ENUM AS ENUM ('Customer');
 -- commands
 
 CREATE TABLE commands (
-      cmd_id UUID NOT NULL PRIMARY KEY,
+      id UUID NOT NULL PRIMARY KEY,
       causation_id UUID NOT NULL,
       correlation_id UUID NOT NULL,
       cmd_payload JSONB NOT NULL,
+      resulting_version INTEGER NOT NULL,
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
  ;
@@ -22,21 +23,22 @@ CREATE TABLE commands (
 -- events
 
 CREATE TABLE events (
-      event_id BIGSERIAL NOT NULL,
+      sequence BIGSERIAL NOT NULL,
+      id UUID NOT NULL DEFAULT gen_random_uuid(),
       event_payload JSONB NOT NULL,
       ar_name AGGREGATES_ENUM NOT NULL,
       ar_id UUID NOT NULL,
-      version INTEGER NOT NULL,
-      cmd_id UUID,
+      causation_id UUID NOT NULL,
+      correlation_id UUID NOT NULL,
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (ar_id, event_id)
+      PRIMARY KEY (ar_id, sequence)
     )
       PARTITION BY hash(ar_id) -- all related events within same partition
     ;
 
 -- indexes
 
-CREATE INDEX idx_cmd_id ON events (cmd_id);
+-- CREATE INDEX idx_causation_id ON events (causation_id);
 CREATE INDEX idx_ar ON events (ar_name, ar_id);
 
 -- 3 partitions
