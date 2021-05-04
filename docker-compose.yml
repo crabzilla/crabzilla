@@ -22,19 +22,3 @@ services:
 #      networks:
 #        - postgres
     restart: unless-stopped
-
-#  rabbitmq:
-#    image: rabbitmq:3-management-alpine
-#    container_name: rabbitmq
-#    volumes:
-#      - ./.docker/rabbitmq/etc/:/.rabbitmq/etc/rabbitmq/
-#      - ./.docker/rabbitmq/data/:/.rabbitmq/var/lib/rabbitmq/
-#      - ./.docker/rabbitmq/logs/:/.rabbitmq/var/log/rabbitmq/
-#    environment:
-#      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE}
-#      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-#      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-#    ports:
-#      - "5672:5672"
-#      - "15672:15672"
-#    restart: unless-stopped

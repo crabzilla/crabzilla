@@ -1,13 +1,12 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.stack.EventBusPublisher
-import io.github.crabzilla.stack.PoolingProjectionVerticle
+import io.github.crabzilla.stack.EventsPublisherVerticle
 import io.vertx.core.eventbus.EventBus
 import io.vertx.pgclient.PgPool
 
-object ProjectorVerticleFactory {
+object EventsPublisherVerticleFactory {
 
-  // TODO Projector or Projection on name?
   fun create(
     projection: String,
     targetTopic: String,
@@ -15,8 +14,8 @@ object ProjectorVerticleFactory {
     writeDb: PgPool,
     interval: Long = 500,
     rows: Int = 500
-  ): PoolingProjectionVerticle {
+  ): EventsPublisherVerticle {
     val eventsScanner = PgcEventsScanner(writeDb, projection) // consider an additional optional param to filter events
-    return PoolingProjectionVerticle(eventsScanner, EventBusPublisher(targetTopic, eventBus), interval, rows)
+    return EventsPublisherVerticle(eventsScanner, EventBusPublisher(targetTopic, eventBus), interval, rows)
   }
 }
