@@ -20,10 +20,10 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
 
   private val SELECT_EVENTS_AFTER_OFFSET =
     """
-      SELECT ar_name, ar_id, event_payload, event_id
+      SELECT ar_name, ar_id, event_payload, sequence
       FROM events
-      WHERE event_id > (select last_offset from projections where name = $1)
-      ORDER BY event_id
+      WHERE sequence > (select last_offset from projections where name = $1)
+      ORDER BY sequence
       limit $2
     """.trimIndent()
 

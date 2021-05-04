@@ -6,9 +6,10 @@ import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.pgc.CustomerProjectorVerticle.Companion.topic
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
-import io.github.crabzilla.stack.PoolingProjectionVerticle
+import io.github.crabzilla.stack.EventsPublisherVerticle
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -28,7 +29,6 @@ class PgcFullStackIT {
 
   companion object {
     private val log = LoggerFactory.getLogger(PgcFullStackIT::class.java)
-    const val topic = "customers"
   }
 
   val id = UUID.randomUUID()
@@ -47,7 +47,7 @@ class PgcFullStackIT {
             writeDb = writeModelPgPool(vertx, config)
             readDb = readModelPgPool(vertx, config)
             val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))
-            val publisherVerticle = ProjectorVerticleFactory.create(topic, topic, vertx.eventBus(), writeDb)
+            val publisherVerticle = EventsPublisherVerticleFactory.create(topic, topic, vertx.eventBus(), writeDb)
             vertx.deployVerticle(projectorVerticle)
               .compose { vertx.deployVerticle(publisherVerticle) }
               .onFailure { tc.failNow(it.cause) }
@@ -71,7 +71,7 @@ class PgcFullStackIT {
         controller.handle(CommandMetadata(AggregateRootId(id)), RegisterCustomer(id, "cust#$id"))
           .onFailure { tc.failNow(it) }
           .onSuccess {
-            vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) { it ->
+            vertx.eventBus().request<Boolean>(EventsPublisherVerticle.PUBLISHER_ENDPOINT, null) { it ->
               if (it.failed()) {
                 tc.failNow(it.cause())
               } else {
@@ -83,7 +83,7 @@ class PgcFullStackIT {
                     controller.handle(CommandMetadata(AggregateRootId(id)), ActivateCustomer("because yes"))
                       .onFailure { tc.failNow(it) }
                       .onSuccess {
-                        vertx.eventBus().request<Boolean>(PoolingProjectionVerticle.PUBLISHER_ENDPOINT, null) {
+                        vertx.eventBus().request<Boolean>(EventsPublisherVerticle.PUBLISHER_ENDPOINT, null) {
                           if (it.failed()) {
                             tc.failNow(it.cause())
                           } else {

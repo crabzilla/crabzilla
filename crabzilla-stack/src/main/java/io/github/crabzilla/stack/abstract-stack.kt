@@ -12,6 +12,8 @@ import java.util.UUID
 
 inline class AggregateRootId(val id: UUID = UUID.randomUUID())
 inline class CommandId(val id: UUID = UUID.randomUUID())
+inline class CorrelationId(val id: UUID)
+inline class CausationId(val id: UUID)
 
 /**
  * An event store to append new events

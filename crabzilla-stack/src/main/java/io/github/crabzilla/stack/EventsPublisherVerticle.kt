@@ -5,15 +5,15 @@ import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Promise
 import org.slf4j.LoggerFactory
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
 import kotlin.math.min
 
 /**
- * This component will be triggered using a Vertx periodic task. Then it can publish the domain events to
- * an EventsPublisher.
+ * This component will publish the domain events to an EventsPublisher.
  */
-class PoolingProjectionVerticle(
+class EventsPublisherVerticle(
   private val eventsScanner: EventsScanner,
   private val eventsPublisher: EventsPublisher,
   private val intervalInMilliseconds: Long = DEFAULT_INTERVAL,
@@ -33,10 +33,15 @@ class PoolingProjectionVerticle(
 
   private val action: Handler<Long?> = handler()
   private val failures = AtomicLong(0L)
+  private val showStats = AtomicBoolean(true)
 
   override fun start() {
     // Schedule the first execution
     vertx.setTimer(intervalInMilliseconds, action)
+    vertx.setPeriodic(DEFAULT_MAX_INTERVAL) {
+      showStats.set(true)
+    }
+
     // force scan endpoint
     vertx.eventBus().consumer<Void>(PUBLISHER_ENDPOINT) { msg ->
       log.info("Forced scan")
@@ -50,7 +55,7 @@ class PoolingProjectionVerticle(
     vertx.eventBus().consumer<Long>(PUBLISHER_RESCHEDULED_ENDPOINT) { msg ->
       val nextInterval = msg.body()
       vertx.setTimer(nextInterval, action)
-      log.info("Rescheduled to next {} milliseconds", nextInterval)
+      log.debug("Rescheduled to next {} milliseconds", nextInterval)
     }
     log.info("Started pooling for at most {} rows each {} milliseconds", numberOfRows, intervalInMilliseconds)
   }
@@ -143,15 +148,17 @@ class PoolingProjectionVerticle(
         publish(eventsList)
           .onFailure { promise.fail(it) }
           .onSuccess { lastEventPublished ->
-            if (log.isDebugEnabled)
-              log.debug("After publishing {}, the latest published event id is {}", eventsList.size, lastEventPublished)
+            log.debug("After publishing {}, the latest published event id is {}", eventsList.size, lastEventPublished)
             if (lastEventPublished == 0L) {
               promise.complete(0L)
             } else {
               eventsScanner.updateOffSet(lastEventPublished)
                 .onFailure { promise.fail(it) }
                 .onSuccess {
-                  log.debug("Updated latest offset to {}", lastEventPublished)
+                  if (showStats.get()) {
+                    log.info("Updated latest offset to {}", lastEventPublished)
+                    showStats.set(false)
+                  }
                   promise.complete(lastEventPublished)
                 }
             }

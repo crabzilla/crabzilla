@@ -3,13 +3,41 @@
 [![](https://jitpack.io/v/io.github.crabzilla/crabzilla.svg)](https://jitpack.io/#io.github.crabzilla/crabzilla)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.crabzilla/crabzilla/badge.svg)](http://search.maven.org/#artifactdetails%7Cio.github.crabzilla%7Ccrabzilla%7C0.0.5%7C)
 
-### Goal for version 1.0.0
 
-To help writing CQRS and Event Sourcing applications with [Vert.x](http://vertx.io/)
+### Goals for version 1.0.0
+
+- [x] Command controller
+- [x] Events publisher
+- [ ] Getting started tutorial
+- [ ] Observability (publishing stats to eventbus)
+- [ ] Web interface to write model (to track commands, events, etc)
 
 ### Status
 
 It's still in very early development stage. Do not use release 0.0.5, master branch is very different from that.
+
+### Getting started
+
+1. Add the JitPack repository to your build file:
+
+```xml
+<repositories>
+  <repository>
+    <id>jitpack.io</id>
+    <url>https://jitpack.io</url>
+  </repository>
+</repositories>
+```
+
+2. Add the dependency:
+
+```xml
+<dependency>
+    <groupId>com.github.User</groupId>
+    <artifactId>crabzilla-pgc</artifactId>
+    <version>v0.1.3</version>
+</dependency>
+```
 
 ### Building
 

@@ -8,6 +8,6 @@ import java.util.UUID
 data class CommandMetadata(
   val aggregateRootId: AggregateRootId,
   val commandId: CommandId = CommandId(UUID.randomUUID()),
-  val causationId: CommandId = commandId,
-  val correlationId: CommandId = commandId
+  val correlationId: CorrelationId = CorrelationId(commandId.id),
+  val causationId: CausationId = CausationId(commandId.id)
 )

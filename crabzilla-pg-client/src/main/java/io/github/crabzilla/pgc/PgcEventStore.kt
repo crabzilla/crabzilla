@@ -24,6 +24,7 @@ import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
+import java.util.UUID
 import java.util.function.BiFunction
 
 class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
@@ -39,11 +40,11 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   companion object {
     private val log = LoggerFactory.getLogger(PgcEventStore::class.java)
     const val SQL_APPEND_CMD =
-      """ insert into commands (cmd_id, ar_id, causation_id, correlation_id, cmd_payload)
+      """ insert into commands (id, correlation_id, causation_id, cmd_payload, resulting_version)
           values ($1, $2, $3, $4, $5)"""
     const val SQL_APPEND_EVENT =
-      """ insert into events (event_payload, ar_name, ar_id, version, cmd_id)
-        values ($1, $2, $3, $4, $5)"""
+      """ insert into events (correlation_id, causation_id, event_payload, ar_name, ar_id)
+        values ($1, $2, $3, $4, $5) returning id"""
   }
 
   override fun append(command: C, metadata: CommandMetadata, session: StatefulSession<A, E>): Future<Void> {
@@ -145,10 +146,10 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       val cmdAsJsonObject: String = config.json.encodeToString(COMMAND_SERIALIZER, command)
       val params = Tuple.of(
         metadata.commandId.id,
-        metadata.aggregateRootId.id,
-        metadata.causationId.id,
         metadata.correlationId.id,
-        JsonObject(cmdAsJsonObject)
+        metadata.causationId.id,
+        JsonObject(cmdAsJsonObject),
+        expectedVersionAfterAppend
       )
       conn.preparedQuery(SQL_APPEND_CMD)
         .execute(params)
@@ -161,22 +162,22 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
     }
 
     fun appendEvents(conn: SqlConnection): Future<Void> {
-      fun appendEvent(event: E): Future<Boolean> {
-        val promise0 = Promise.promise<Boolean>()
+      fun appendEvent(event: E, causationId: UUID): Future<Pair<Boolean, UUID>> {
+        val promise0 = Promise.promise<Pair<Boolean, UUID>>()
         val json = config.json.encodeToString(DOMAIN_EVENT_SERIALIZER, event)
         val params = Tuple.of(
+          metadata.correlationId.id,
+          causationId,
           JsonObject(json),
-          session.currentState::class.simpleName,
-          metadata.aggregateRootId.id,
-          expectedVersionAfterAppend,
-          metadata.commandId.id
+          config.name.value,
+          metadata.aggregateRootId.id
         )
         conn.preparedQuery(SQL_APPEND_EVENT)
           .execute(params)
           .onFailure { promise0.fail(it) }
-          .onSuccess {
+          .onSuccess { rs ->
+            promise0.complete(Pair(true, rs.first().getUUID("id")))
             log.debug("Append event ok {}", event)
-            promise0.complete(true)
           }
         return promise0.future()
       }
@@ -190,15 +191,15 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       }
 
       val promise0 = Promise.promise<Void>()
-      val initialFuture = Future.succeededFuture<Boolean>(true)
+      val initialFuture = Future.succeededFuture(Pair(true, metadata.commandId.id))
 
       foldLeft(
         session.appliedEvents().iterator(), initialFuture,
-        { currentFuture: Future<Boolean>,
+        { currentFuture: Future<Pair<Boolean, UUID>>,
           event: E ->
-          currentFuture.compose { successful ->
-            if (successful) {
-              appendEvent(event)
+          currentFuture.compose { pair ->
+            if (pair.first) {
+              appendEvent(event, pair.second)
             } else {
               Future.failedFuture("The latest successful event was $event")
             }
