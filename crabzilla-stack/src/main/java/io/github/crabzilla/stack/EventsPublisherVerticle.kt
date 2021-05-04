@@ -33,12 +33,13 @@ class EventsPublisherVerticle(
 
   private val action: Handler<Long?> = handler()
   private val failures = AtomicLong(0L)
-  private val showStats = AtomicBoolean(false)
+  private val showStats = AtomicBoolean(true)
 
   override fun start() {
     // Schedule the first execution
     vertx.setTimer(intervalInMilliseconds, action)
     vertx.setPeriodic(DEFAULT_MAX_INTERVAL) {
+      log.info("* ")
       showStats.set(true)
     }
 
