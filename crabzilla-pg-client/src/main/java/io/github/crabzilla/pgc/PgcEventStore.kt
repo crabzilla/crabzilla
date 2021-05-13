@@ -101,7 +101,6 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         return "update ${config.snapshotTableName.value} set version = $1, json_content = $2 " +
           " where ar_id = $3 and version = $4"
       }
-      val promise0 = Promise.promise<Void>()
       val newSTateAsJson: String = config.json.encodeToString(AGGREGATE_ROOT_SERIALIZER, session.currentState)
       if (session.originalVersion == 0) {
         val params = Tuple.of(
@@ -109,16 +108,9 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           JsonObject(newSTateAsJson),
           metadata.aggregateRootId.id
         )
-        conn.preparedQuery(insert())
+        return conn.preparedQuery(insert())
           .execute(params)
-          .onFailure { err ->
-            log.error(err.message, err)
-            promise0.fail(err)
-          }
-          .onSuccess {
-            promise0.complete()
-            log.debug("Successfully inserted version")
-          }
+          .mapEmpty()
       } else {
         val params = Tuple.of(
           expectedVersionAfterAppend,
@@ -126,23 +118,13 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           metadata.aggregateRootId.id,
           expectedVersionAfterAppend - 1
         )
-        conn.preparedQuery(update())
+        return conn.preparedQuery(update())
           .execute(params)
-          .onFailure { err ->
-            log.error(err.message, err)
-            promise0.fail(err)
-          }
-          .onSuccess {
-            promise0.complete()
-            log.debug("Successfully updated version")
-          }
+          .mapEmpty()
       }
-
-      return promise0.future()
     }
 
     fun appendCommand(conn: SqlConnection): Future<Void> {
-      val promise0 = Promise.promise<Void>()
       val cmdAsJsonObject: String = config.json.encodeToString(COMMAND_SERIALIZER, command)
       val params = Tuple.of(
         metadata.commandId.id,
@@ -151,14 +133,9 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         JsonObject(cmdAsJsonObject),
         expectedVersionAfterAppend
       )
-      conn.preparedQuery(SQL_APPEND_CMD)
+      return conn.preparedQuery(SQL_APPEND_CMD)
         .execute(params)
-        .onFailure { err -> promise0.fail(err) }
-        .onSuccess {
-          promise0.complete()
-          log.debug("Append command ok")
-        }
-      return promise0.future()
+        .mapEmpty()
     }
 
     fun appendEvents(conn: SqlConnection): Future<Void> {
