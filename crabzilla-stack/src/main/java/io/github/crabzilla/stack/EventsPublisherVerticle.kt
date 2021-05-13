@@ -41,7 +41,6 @@ class EventsPublisherVerticle(
     vertx.setPeriodic(DEFAULT_MAX_INTERVAL) {
       showStats.set(true)
     }
-
     // force scan endpoint
     vertx.eventBus().consumer<Void>(PUBLISHER_ENDPOINT) { msg ->
       log.info("Forced scan")
@@ -74,14 +73,13 @@ class EventsPublisherVerticle(
       vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, intervalInMilliseconds)
     }
     return Handler { tick ->
-      log.debug("Tick $tick")
+      log.debug("Tick $tick - will scan at most $numberOfRows events")
       scanAndPublish(numberOfRows)
         .onFailure {
           log.error("When scanning for new events", it)
           registerFailure()
         }
         .onSuccess {
-          log.debug("$it events were scanned")
           when (it) {
             -1L -> {
               log.debug("Still busy")
@@ -92,7 +90,6 @@ class EventsPublisherVerticle(
               registerFailure()
             }
             else -> {
-              log.debug("Found {} events", it)
               registerSuccessOrStillBusy()
             }
           }
@@ -120,7 +117,7 @@ class EventsPublisherVerticle(
         eventsList.iterator(), initialFuture,
         { currentFuture: Future<Void>, eventRecord: EventRecord ->
           currentFuture.onSuccess {
-            log.debug("Successfully projected {}", eventRecord.eventId)
+            log.trace("Successfully projected event #{}", eventRecord.eventId)
             eventId.set(eventRecord.eventId)
             action(eventRecord)
           }.onFailure {
@@ -133,7 +130,6 @@ class EventsPublisherVerticle(
       return promise.future()
     }
     val promise = Promise.promise<Long>()
-    log.debug("Will scan for new events")
     eventsScanner.scanPendingEvents(numberOfRows)
       .onFailure {
         promise.fail(it)
@@ -144,11 +140,11 @@ class EventsPublisherVerticle(
           promise.complete(0)
           return@onSuccess
         }
-        log.debug("Got ${eventsList.size} events")
+        log.debug("Found {} new events. The last one is #{}", eventsList.size, eventsList.last().eventId)
         publish(eventsList)
           .onFailure { promise.fail(it) }
           .onSuccess { lastEventPublished ->
-            log.debug("After publishing {}, the latest published event id is {}", eventsList.size, lastEventPublished)
+            log.debug("After publishing {}, the latest published event id is #{}", eventsList.size, lastEventPublished)
             if (lastEventPublished == 0L) {
               promise.complete(0L)
             } else {
@@ -165,7 +161,7 @@ class EventsPublisherVerticle(
           }
       }
       .onComplete {
-        log.debug("Scan is now inactive until new request")
+        log.trace("Scan is now inactive until new request")
       }
     return promise.future()
   }

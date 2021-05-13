@@ -9,16 +9,11 @@ import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
-import org.slf4j.LoggerFactory
 
 // TODO could receive also a list of aggregate root names to filter interesting events
 class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName: String) : EventsScanner {
 
-  companion object {
-    private val log = LoggerFactory.getLogger(PgcEventsScanner::class.java)
-  }
-
-  private val SELECT_EVENTS_AFTER_OFFSET =
+  private val selectAfterOffset =
     """
       SELECT ar_name, ar_id, event_payload, sequence
       FROM events
@@ -27,7 +22,7 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
       limit $2
     """.trimIndent()
 
-  private val UPDATE_EVENT_OFFSET =
+  private val updateOffset =
     "UPDATE projections SET last_offset = $1 where projections.name = $2"
 
   override fun streamName(): String {
@@ -37,7 +32,7 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
   override fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
     val promise = Promise.promise<List<EventRecord>>()
     writeModelDb.withTransaction { client ->
-      client.prepare(SELECT_EVENTS_AFTER_OFFSET)
+      client.prepare(selectAfterOffset)
         .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(streamName, numberOfRows)) }
         .map { rowSet: RowSet<Row> ->
           rowSet.iterator().asSequence().map { row: Row ->
@@ -58,7 +53,7 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
   override fun updateOffSet(eventId: Long): Future<Void> {
     val promise = Promise.promise<Void>()
     writeModelDb.withTransaction { client ->
-      client.prepare(UPDATE_EVENT_OFFSET)
+      client.prepare(updateOffset)
     }
       .compose { ps2 ->
         ps2.query().execute(Tuple.of(eventId, streamName))
