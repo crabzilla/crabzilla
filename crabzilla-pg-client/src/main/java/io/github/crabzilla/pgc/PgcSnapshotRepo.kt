@@ -36,21 +36,10 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
         " ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"
     }
 
-    val promise = Promise.promise<Void>()
     val json = JsonObject(config.json.encodeToString(AGGREGATE_ROOT_SERIALIZER, snapshot.state))
     val insertSql = upsertSnapshot()
     val tuple = Tuple.of(id, snapshot.version, json)
-    writeModelDb.preparedQuery(insertSql)
-      .execute(tuple) { insert ->
-        if (insert.failed()) {
-          log.error("upsert snapshot query error", insert.cause())
-          promise.fail(insert.cause())
-        } else {
-          log.debug("upsert snapshot success {} {}", id, json)
-          promise.complete()
-        }
-      }
-    return promise.future()
+    return writeModelDb.preparedQuery(insertSql).execute(tuple).mapEmpty()
   }
 
   override fun get(id: UUID): Future<Snapshot<A>?> {
