@@ -134,34 +134,34 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
   override fun handleCommand(command: CustomerCommand, snapshot: Snapshot<Customer>?):
     Result<StatefulSession<Customer, CustomerEvent>> {
 
-      return runCatching {
-        when (command) {
+    return runCatching {
+      when (command) {
 
-          is RegisterCustomer -> {
-            if (snapshot == null)
-              with(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
-            else throw CustomerAlreadyExists(command.customerId)
-          }
+        is RegisterCustomer -> {
+          if (snapshot == null)
+            with(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
+          else throw CustomerAlreadyExists(command.customerId)
+        }
 
-          is RegisterAndActivateCustomer -> {
-            if (snapshot == null)
-              with(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
-                .execute { it.activate(command.reason) }
-            else throw CustomerAlreadyExists(command.customerId)
-          }
-
-          is ActivateCustomer -> {
-            with(snapshot!!, customerEventHandler)
+        is RegisterAndActivateCustomer -> {
+          if (snapshot == null)
+            with(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
               .execute { it.activate(command.reason) }
-          }
+          else throw CustomerAlreadyExists(command.customerId)
+        }
 
-          is DeactivateCustomer -> {
-            with(snapshot!!, customerEventHandler)
-              .execute { it.deactivate(command.reason) }
-          }
+        is ActivateCustomer -> {
+          with(snapshot!!, customerEventHandler)
+            .execute { it.activate(command.reason) }
+        }
+
+        is DeactivateCustomer -> {
+          with(snapshot!!, customerEventHandler)
+            .execute { it.deactivate(command.reason) }
         }
       }
     }
+  }
 }
 
 /**

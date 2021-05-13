@@ -10,10 +10,17 @@ import java.util.UUID
 
 // es/cqrs infra stack
 
-inline class AggregateRootId(val id: UUID = UUID.randomUUID())
-inline class CommandId(val id: UUID = UUID.randomUUID())
-inline class CorrelationId(val id: UUID)
-inline class CausationId(val id: UUID)
+@JvmInline
+value class AggregateRootId(val id: UUID = UUID.randomUUID())
+
+@JvmInline
+value class CommandId(val id: UUID = UUID.randomUUID())
+
+@JvmInline
+value class CorrelationId(val id: UUID)
+
+@JvmInline
+value class CausationId(val id: UUID)
 
 /**
  * An event store to append new events

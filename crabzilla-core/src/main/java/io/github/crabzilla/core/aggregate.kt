@@ -43,13 +43,13 @@ interface CommandHandler<A : AggregateRoot, C : Command, E : DomainEvent> {
 
   fun <A : AggregateRoot, E : DomainEvent> with(create: ConstructorResult<A, E>, applier: EventHandler<A, E>):
     StatefulSession<A, E> {
-      return StatefulSession(create, applier)
-    }
+    return StatefulSession(create, applier)
+  }
 
   fun <A : AggregateRoot, E : DomainEvent> with(snapshot: Snapshot<A>, applier: EventHandler<A, E>):
     StatefulSession<A, E> {
-      return StatefulSession(snapshot.version, snapshot.state, applier)
-    }
+    return StatefulSession(snapshot.version, snapshot.state, applier)
+  }
 
   fun handleCommand(command: C, snapshot: Snapshot<A>?): Result<StatefulSession<A, E>>
 }
@@ -66,9 +66,8 @@ class AggregateRootConfig<A : AggregateRoot, C : Command, E : DomainEvent> (
   val json: Json
 )
 
-inline class AggregateRootName(val value: String) {
-  init {
-    if (value.length > 16) throw IllegalArgumentException("Aggregate root names can be at most 16 characters")
-  }
-}
-inline class SnapshotTableName(val value: String)
+@JvmInline
+value class AggregateRootName(val value: String)
+
+@JvmInline
+value class SnapshotTableName(val value: String)
