@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.core.DOMAIN_EVENT_SERIALIZER
+import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.CustomerRepository
 import io.github.crabzilla.stack.EventRecord
@@ -40,7 +40,7 @@ class CustomerProjectorVerticle(private val json: Json, private val repo: Custom
 
   private fun publish(eventRecord: EventRecord): Future<Void> {
     log.info("Will project $eventRecord")
-    val event = json.decodeFromString(DOMAIN_EVENT_SERIALIZER, eventRecord.eventAsjJson.toString()) as CustomerEvent
+    val event = DomainEvent.fromJson<CustomerEvent>(json, eventRecord.eventAsjJson.toString())
     log.info("The event is $event")
     return when (event) {
       is CustomerEvent.CustomerRegistered -> repo.upsert(eventRecord.aggregateId, event.name, false)

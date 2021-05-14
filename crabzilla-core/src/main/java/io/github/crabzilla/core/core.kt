@@ -1,16 +1,47 @@
 package io.github.crabzilla.core
 
+import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 @Serializable
-abstract class DomainEvent
+abstract class DomainEvent {
+  companion object {
+    private val serDer = PolymorphicSerializer(DomainEvent::class)
+    fun <D : DomainEvent> fromJson(json: Json, asJson: String): D {
+      return json.decodeFromString(serDer, asJson) as D
+    }
+  }
+  fun toJson(json: Json): String {
+    return json.encodeToString(serDer, this)
+  }
+}
 
 @Serializable
-abstract class Command
+abstract class Command {
+  companion object {
+    private val serDer = PolymorphicSerializer(Command::class)
+    fun <C : Command> fromJson(json: Json, asJson: String): C {
+      return json.decodeFromString(serDer, asJson) as C
+    }
+  }
+  fun toJson(json: Json): String {
+    return json.encodeToString(serDer, this)
+  }
+}
 
 @Serializable
-abstract class AggregateRoot
+abstract class AggregateRoot {
+  companion object {
+    private val serDer = PolymorphicSerializer(AggregateRoot::class)
+    fun <A : AggregateRoot> fromJson(json: Json, asJson: String): A {
+      return json.decodeFromString(serDer, asJson) as A
+    }
+  }
+  fun toJson(json: Json): String {
+    return json.encodeToString(serDer, this)
+  }
+}
 
 // @Serializable
 // abstract class ProcessManager

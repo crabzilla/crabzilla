@@ -14,7 +14,7 @@
 
     <!-- crabzilla core -->
     <kotlin.version>1.5.0</kotlin.version>
-    <serialization.version>1.2.0</serialization.version>
+    <serialization.version>1.2.1</serialization.version>
     <vertx.version>4.1.0.Beta1</vertx.version>
     <postgresql.version>42.2.10</postgresql.version>
     <slf4j.version>1.7.25</slf4j.version>

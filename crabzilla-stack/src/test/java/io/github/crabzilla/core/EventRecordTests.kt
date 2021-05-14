@@ -12,7 +12,7 @@ class EventRecordTests {
 
   val id = UUID.fromString("c2aeadc1-d6b5-4df6-82a4-7dec4f1df429")
   val event = CustomerEvent.CustomerRegistered(id, "customer1")
-  val eventAsJson = JsonObject(customerJson.encodeToString(DOMAIN_EVENT_SERIALIZER, event))
+  val eventAsJson = JsonObject(event.toJson(customerJson))
   val eventRecord = EventRecord("Customer", id, eventAsJson, 1)
   val eventRecordAsJson = eventRecord.toJsonObject()
   val expected =
