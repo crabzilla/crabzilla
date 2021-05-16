@@ -11,7 +11,7 @@ import java.util.UUID
 // es/cqrs infra stack
 
 @JvmInline
-value class AggregateRootId(val id: UUID = UUID.randomUUID())
+value class AggregateRootId(val id: UUID)
 
 @JvmInline
 value class CommandId(val id: UUID = UUID.randomUUID())

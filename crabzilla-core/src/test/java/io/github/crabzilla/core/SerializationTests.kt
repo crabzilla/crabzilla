@@ -76,7 +76,7 @@ class SerializationTests {
   }
 
   @Test
-  @DisplayName("Command list ser/der")
+  @DisplayName("List ser/der")
   fun testx() {
     val c1 = RegisterCustomer(customerId = UUID.randomUUID(), name = "name1")
     val c2 = CustomerCommand.ActivateCustomer("ya")

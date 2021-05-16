@@ -1,8 +1,7 @@
-package io.github.crabzilla.core
+package io.github.crabzilla.stack
 
 import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerJson
-import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.json.JsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
