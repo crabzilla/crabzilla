@@ -162,7 +162,6 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
       }
     }
   }
-
 }
 
 /**

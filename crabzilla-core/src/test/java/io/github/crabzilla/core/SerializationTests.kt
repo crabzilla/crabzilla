@@ -23,7 +23,8 @@ class SerializationTests {
   fun testAggr() {
     val aggregate = Customer(UUID.randomUUID(), "name1")
     val expectedJson = """
-      {"type":"Customer","id":"${aggregate.id}","name":"${aggregate.name}"}""".trimIndent()
+      {"type":"Customer","id":"${aggregate.id}","name":"${aggregate.name}"}
+    """.trimIndent()
     assertThat(aggregate.toJson(customerJson)).isEqualTo(expectedJson)
     assertThat(AggregateRoot.fromJson<Customer>(customerJson, expectedJson)).isEqualTo(aggregate)
   }
@@ -33,7 +34,8 @@ class SerializationTests {
   fun testCmd() {
     val command = RegisterCustomer(customerId = UUID.randomUUID(), name = "name1")
     val expectedJson = """
-      {"type":"RegisterCustomer","customerId":"${command.customerId}","name":"${command.name}"}""".trimIndent()
+      {"type":"RegisterCustomer","customerId":"${command.customerId}","name":"${command.name}"}
+    """.trimIndent()
     assertThat(command.toJson(customerJson)).isEqualTo(expectedJson)
     assertThat(Command.fromJson<RegisterCustomer>(customerJson, expectedJson)).isEqualTo(command)
   }
@@ -43,7 +45,8 @@ class SerializationTests {
   fun testEvent() {
     val event = CustomerRegistered(UUID.randomUUID(), name = "name1")
     val expectedJson = """
-      {"type":"CustomerRegistered","id":"${event.id}","name":"${event.name}"}""".trimIndent()
+      {"type":"CustomerRegistered","id":"${event.id}","name":"${event.name}"}
+    """.trimIndent()
     assertThat(event.toJson(customerJson)).isEqualTo(expectedJson)
     assertThat(DomainEvent.fromJson<CustomerRegistered>(customerJson, expectedJson)).isEqualTo(event)
   }

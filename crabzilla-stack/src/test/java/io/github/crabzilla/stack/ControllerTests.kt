@@ -105,7 +105,7 @@ class ControllerTests : BehaviorSpec({
       every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
       every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
       val commandHandler: CommandHandler<Customer, CustomerCommand, CustomerEvent> = mockk()
-      every { commandHandler.handleCommand(any(), any())} throws RuntimeException("I got an error!")
+      every { commandHandler.handleCommand(any(), any()) } throws RuntimeException("I got an error!")
       val badController =
         CommandController(customerConfig.commandValidator, commandHandler, snapshotRepo, eventStore)
       val aggregateRootId = AggregateRootId(UUID.randomUUID())
@@ -119,6 +119,5 @@ class ControllerTests : BehaviorSpec({
           }
       }
     }
-
   }
 })
