@@ -1,8 +1,7 @@
-package io.github.crabzilla.core
+package io.github.crabzilla.stack
 
 import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerJson
-import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.json.JsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -12,7 +11,7 @@ class EventRecordTests {
 
   val id = UUID.fromString("c2aeadc1-d6b5-4df6-82a4-7dec4f1df429")
   val event = CustomerEvent.CustomerRegistered(id, "customer1")
-  val eventAsJson = JsonObject(customerJson.encodeToString(DOMAIN_EVENT_SERIALIZER, event))
+  val eventAsJson = JsonObject(event.toJson(customerJson))
   val eventRecord = EventRecord("Customer", id, eventAsJson, 1)
   val eventRecordAsJson = eventRecord.toJsonObject()
   val expected =

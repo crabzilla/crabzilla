@@ -1,11 +1,8 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.core.AGGREGATE_ROOT_SERIALIZER
 import io.github.crabzilla.core.AggregateRoot
 import io.github.crabzilla.core.AggregateRootConfig
-import io.github.crabzilla.core.COMMAND_SERIALIZER
 import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.DOMAIN_EVENT_SERIALIZER
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.pgc.PgcClient.close
@@ -101,24 +98,18 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         return "update ${config.snapshotTableName.value} set version = $1, json_content = $2 " +
           " where ar_id = $3 and version = $4"
       }
-      val promise0 = Promise.promise<Void>()
-      val newSTateAsJson: String = config.json.encodeToString(AGGREGATE_ROOT_SERIALIZER, session.currentState)
+      val promise = Promise.promise<Void>()
+      val newSTateAsJson = session.currentState.toJson(config.json)
+      log.debug("Will append snapshot {}", newSTateAsJson)
       if (session.originalVersion == 0) {
         val params = Tuple.of(
           expectedVersionAfterAppend,
           JsonObject(newSTateAsJson),
           metadata.aggregateRootId.id
         )
-        conn.preparedQuery(insert())
-          .execute(params)
-          .onFailure { err ->
-            log.error(err.message, err)
-            promise0.fail(err)
-          }
-          .onSuccess {
-            promise0.complete()
-            log.debug("Successfully inserted version")
-          }
+        conn.preparedQuery(insert()).execute(params)
+          .onSuccess { promise.complete() }
+          .onFailure { promise.fail(it) }
       } else {
         val params = Tuple.of(
           expectedVersionAfterAppend,
@@ -126,60 +117,46 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           metadata.aggregateRootId.id,
           expectedVersionAfterAppend - 1
         )
-        conn.preparedQuery(update())
-          .execute(params)
-          .onFailure { err ->
-            log.error(err.message, err)
-            promise0.fail(err)
-          }
-          .onSuccess {
-            promise0.complete()
-            log.debug("Successfully updated version")
-          }
+        conn.preparedQuery(update()).execute(params)
+          .onSuccess { promise.complete() }
+          .onFailure { promise.fail(it) }
       }
-
-      return promise0.future()
+      return promise.future()
     }
 
     fun appendCommand(conn: SqlConnection): Future<Void> {
-      val promise0 = Promise.promise<Void>()
-      val cmdAsJsonObject: String = config.json.encodeToString(COMMAND_SERIALIZER, command)
+      val cmdAsJson = command.toJson(config.json)
+      log.debug("Will append command {} as {}", command, cmdAsJson)
       val params = Tuple.of(
         metadata.commandId.id,
         metadata.correlationId.id,
         metadata.causationId.id,
-        JsonObject(cmdAsJsonObject),
+        JsonObject(cmdAsJson),
         expectedVersionAfterAppend
       )
-      conn.preparedQuery(SQL_APPEND_CMD)
-        .execute(params)
-        .onFailure { err -> promise0.fail(err) }
-        .onSuccess {
-          promise0.complete()
-          log.debug("Append command ok")
-        }
-      return promise0.future()
+      return conn.preparedQuery(SQL_APPEND_CMD).execute(params).mapEmpty()
     }
 
     fun appendEvents(conn: SqlConnection): Future<Void> {
       fun appendEvent(event: E, causationId: UUID): Future<Pair<Boolean, UUID>> {
-        val promise0 = Promise.promise<Pair<Boolean, UUID>>()
-        val json = config.json.encodeToString(DOMAIN_EVENT_SERIALIZER, event)
+        val aePromise = Promise.promise<Pair<Boolean, UUID>>()
+        val eventAsJson = event.toJson(config.json)
+        log.debug("Will append event {} as {}", event, eventAsJson)
         val params = Tuple.of(
           metadata.correlationId.id,
           causationId,
-          JsonObject(json),
+          JsonObject(eventAsJson),
           config.name.value,
           metadata.aggregateRootId.id
         )
         conn.preparedQuery(SQL_APPEND_EVENT)
           .execute(params)
-          .onFailure { promise0.fail(it) }
+          .onFailure { aePromise.fail(it) }
           .onSuccess { rs ->
-            promise0.complete(Pair(true, rs.first().getUUID("id")))
+            aePromise.complete(Pair(true, rs.first().getUUID("id")))
             log.debug("Append event ok {}", event)
           }
-        return promise0.future()
+        return aePromise.future()
       }
       fun <A, B> foldLeft(iterator: Iterator<A>, identity: B, bf: BiFunction<B, A, B>): B {
         var result = identity
@@ -190,7 +167,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         return result
       }
 
-      val promise0 = Promise.promise<Void>()
+      val aesPromise = Promise.promise<Void>()
       val initialFuture = Future.succeededFuture(Pair(true, metadata.commandId.id))
 
       foldLeft(
@@ -207,12 +184,12 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         }
       ).onComplete {
         if (it.failed()) {
-          promise0.fail(it.cause())
+          aesPromise.fail(it.cause())
         } else {
-          promise0.complete()
+          aesPromise.complete()
         }
       }
-      return promise0.future()
+      return aesPromise.future()
     }
 
     val promise = Promise.promise<Void>()

@@ -1,16 +1,12 @@
-package io.github.crabzilla.core
+package io.github.crabzilla.stack
 
+import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerConfig
-import io.github.crabzilla.stack.AggregateRootId
-import io.github.crabzilla.stack.CommandController
 import io.github.crabzilla.stack.CommandException.WriteConcurrencyException
-import io.github.crabzilla.stack.CommandMetadata
-import io.github.crabzilla.stack.EventStore
-import io.github.crabzilla.stack.SnapshotRepository
 import io.kotest.assertions.fail
 import io.kotest.assertions.shouldFail
 import io.kotest.core.spec.style.BehaviorSpec
@@ -20,6 +16,7 @@ import io.kotest.matchers.throwable.shouldHaveMessage
 import io.mockk.every
 import io.mockk.mockk
 import io.vertx.core.Future
+import java.util.UUID
 
 // to run from ide: kotest-intellij-plugin
 
@@ -42,7 +39,7 @@ class ControllerTests : BehaviorSpec({
       CommandController(customerConfig.commandValidator, customerConfig.commandHandler, snapshotRepo, eventStore)
 
     When("I send a register command") {
-      val aggregateRootId = AggregateRootId()
+      val aggregateRootId = AggregateRootId(UUID.randomUUID())
       val result = controller
         .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "customer#1"))
       Then("It should have the expected StatefulSession") {
@@ -58,10 +55,10 @@ class ControllerTests : BehaviorSpec({
     }
 
     When("I send an invalid register command") {
-      val aggregateRootId = AggregateRootId()
+      val aggregateRootId = AggregateRootId(UUID.randomUUID())
       val result = controller
         .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "bad customer"))
-      Then("It should have the expected StatefulSession") {
+      Then("It should fail") {
         result
           .onFailure { it shouldHaveMessage "[Bad customer!]" }
           .onSuccess {
@@ -75,12 +72,48 @@ class ControllerTests : BehaviorSpec({
       every { eventStore.append(any(), any(), any()) } returns Future.failedFuture(WriteConcurrencyException("Concurrency error"))
       val controller =
         CommandController(customerConfig.commandValidator, customerConfig.commandHandler, snapshotRepo, eventStore)
-      val aggregateRootId = AggregateRootId()
+      val aggregateRootId = AggregateRootId(UUID.randomUUID())
       val result = controller
         .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "good customer"))
-      Then("It should have the expected StatefulSession") {
+      Then("It should fail") {
         result
           .onFailure { it shouldHaveMessage "Concurrency error" }
+          .onSuccess {
+            shouldFail { }
+          }
+      }
+    }
+
+    When("I send a register command but with error on get") {
+      every { snapshotRepo.get(any()) } returns Future.failedFuture("db is down!")
+      every { eventStore.append(any(), any(), any()) } returns Future.failedFuture(WriteConcurrencyException("Concurrency error"))
+      val controller =
+        CommandController(customerConfig.commandValidator, customerConfig.commandHandler, snapshotRepo, eventStore)
+      val aggregateRootId = AggregateRootId(UUID.randomUUID())
+      val result = controller
+        .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "good customer"))
+      Then("It should fail") {
+        result
+          .onFailure { it shouldHaveMessage "db is down!" }
+          .onSuccess {
+            shouldFail { }
+          }
+      }
+    }
+
+    When("I send a register command but with error on handle") {
+      every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
+      every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
+      val commandHandler: CommandHandler<Customer, CustomerCommand, CustomerEvent> = mockk()
+      every { commandHandler.handleCommand(any(), any()) } throws RuntimeException("I got an error!")
+      val badController =
+        CommandController(customerConfig.commandValidator, commandHandler, snapshotRepo, eventStore)
+      val aggregateRootId = AggregateRootId(UUID.randomUUID())
+      val result = badController
+        .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "good customer"))
+      Then("It should fail") {
+        result
+          .onFailure { it shouldHaveMessage "I got an error!" }
           .onSuccess {
             shouldFail { }
           }

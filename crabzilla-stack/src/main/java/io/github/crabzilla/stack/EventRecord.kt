@@ -1,13 +1,17 @@
 package io.github.crabzilla.stack
 
 import io.vertx.core.json.JsonObject
-import io.vertx.kotlin.core.json.jsonObjectOf
 import java.util.UUID
 
 /**
  * An event record
  */
-data class EventRecord(val aggregateName: String, val aggregateId: UUID, val eventAsjJson: JsonObject, val eventId: Long) {
+data class EventRecord(
+  val aggregateName: String,
+  val aggregateId: UUID,
+  val eventAsjJson: JsonObject,
+  val eventId: Long
+) {
   companion object {
     fun fromJsonObject(asJsonObject: JsonObject): EventRecord {
       return EventRecord(
@@ -19,11 +23,10 @@ data class EventRecord(val aggregateName: String, val aggregateId: UUID, val eve
     }
   }
   fun toJsonObject(): JsonObject {
-    return jsonObjectOf(
-      Pair("aggregateName", aggregateName),
-      Pair("aggregateId", aggregateId.toString()),
-      Pair("eventAsjJson", eventAsjJson),
-      Pair("eventId", eventId)
-    )
+    return JsonObject()
+      .put("aggregateName", aggregateName)
+      .put("aggregateId", aggregateId.toString())
+      .put("eventAsjJson", eventAsjJson)
+      .put("eventId", eventId)
   }
 }

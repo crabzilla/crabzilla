@@ -27,17 +27,7 @@ object PgcClient {
   }
 
   fun commit(tx: Transaction): Future<Void> {
-    val promise = Promise.promise<Void>()
     log.debug("Will commit transaction")
-    tx.commit()
-      .onFailure {
-        log.error("When committing the transaction", it)
-        promise.fail(it.cause)
-      }
-      .onSuccess {
-        log.debug("Transaction committed")
-        promise.complete()
-      }
-    return promise.future()
+    return tx.commit().mapEmpty()
   }
 }

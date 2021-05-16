@@ -5,7 +5,7 @@
 
   <groupId>io.github.crabzilla</groupId>
   <artifactId>crabzilla</artifactId>
-  <version>v0.1.3</version>
+  <version>v0.1.4</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -13,9 +13,9 @@
     <java.version>1.8</java.version>
 
     <!-- crabzilla core -->
-    <kotlin.version>1.4.30</kotlin.version>
-    <serialization.version>1.1.0</serialization.version>
-    <vertx.version>4.0.3</vertx.version>
+    <kotlin.version>1.5.0</kotlin.version>
+    <serialization.version>1.2.1</serialization.version>
+    <vertx.version>4.1.0.Beta1</vertx.version>
     <postgresql.version>42.2.10</postgresql.version>
     <slf4j.version>1.7.25</slf4j.version>
 
@@ -30,11 +30,11 @@
     <maven-failsafe-plugin.version>2.22.2</maven-failsafe-plugin.version>
     <kotlin.compiler.incremental>false</kotlin.compiler.incremental>
 
-    <asciidoctor.maven.plugin.version>1.5.5</asciidoctor.maven.plugin.version>
-    <asciidoctorj.pdf.version>1.5.0-alpha.15</asciidoctorj.pdf.version>
-    <asciidoctorj.version>1.5.5</asciidoctorj.version>
+    <asciidoctor.maven.plugin.version>2.1.0</asciidoctor.maven.plugin.version>
+    <asciidoctorj.pdf.version>1.5.4</asciidoctorj.pdf.version>
+    <asciidoctorj.version>2.1.0</asciidoctorj.version>
 
-    <maven.jacoco.plugin.version>0.8.5</maven.jacoco.plugin.version>
+    <maven.jacoco.plugin.version>0.8.7</maven.jacoco.plugin.version>
     <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
     <sonar.jacoco.reportPath>${project.build.directory}/coverage-reports/jacoco.exec</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${project.build.directory}/coverage-reports/jacoco-it.exec</sonar.jacoco.itReportPath>
@@ -103,7 +103,7 @@
       </dependency>
 
       <!-- vertx -->
-      
+
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-stack-depchain</artifactId>
@@ -204,6 +204,13 @@
     </dependency>
 
     <dependency>
+      <groupId>io.kotest</groupId>
+      <artifactId>kotest-assertions-core-jvm</artifactId>
+      <version>4.4.3</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>io.mockk</groupId>
       <artifactId>mockk</artifactId>
       <version>1.11.0</version>
@@ -232,6 +239,8 @@
         <version>${kotlin.version}</version>
         <configuration>
           <jvmTarget>1.8</jvmTarget>
+          <languageVersion>1.5</languageVersion>
+          <apiVersion>1.5</apiVersion>
           <args>
             <arg>-Xallow-result-return-type</arg>
           </args>
@@ -387,7 +396,7 @@
       <plugin>
         <groupId>org.jetbrains.dokka</groupId>
         <artifactId>dokka-maven-plugin</artifactId>
-        <version>0.9.15</version>
+        <version>1.4.32</version>
         <executions>
           <execution>
             <phase>pre-site</phase>
@@ -482,7 +491,7 @@
       <plugin>
         <groupId>com.github.gantsign.maven</groupId>
         <artifactId>ktlint-maven-plugin</artifactId>
-        <version>1.7.0</version>
+        <version>1.9.0</version>
         <executions>
           <execution>
             <id>format-and-check</id>

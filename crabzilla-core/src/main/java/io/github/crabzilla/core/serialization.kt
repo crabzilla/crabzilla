@@ -1,7 +1,6 @@
 package io.github.crabzilla.core
 
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -12,12 +11,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
-
-// kotlinx.serialization
-
-val AGGREGATE_ROOT_SERIALIZER = PolymorphicSerializer(AggregateRoot::class)
-val COMMAND_SERIALIZER = PolymorphicSerializer(Command::class)
-val DOMAIN_EVENT_SERIALIZER = PolymorphicSerializer(DomainEvent::class)
 
 @kotlinx.serialization.ExperimentalSerializationApi
 @Serializer(forClass = LocalDateTime::class)

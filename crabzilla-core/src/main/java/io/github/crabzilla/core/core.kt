@@ -1,19 +1,47 @@
 package io.github.crabzilla.core
 
+import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 @Serializable
-abstract class DomainEvent
+abstract class DomainEvent {
+  companion object {
+    private val serDer = PolymorphicSerializer(DomainEvent::class)
+    fun <D : DomainEvent> fromJson(json: Json, asJson: String): D {
+      return json.decodeFromString(serDer, asJson) as D
+    }
+  }
+  fun toJson(json: Json): String {
+    return json.encodeToString(serDer, this)
+  }
+}
 
 @Serializable
-abstract class Command
+abstract class Command {
+  companion object {
+    private val serDer = PolymorphicSerializer(Command::class)
+    fun <C : Command> fromJson(json: Json, asJson: String): C {
+      return json.decodeFromString(serDer, asJson) as C
+    }
+  }
+  fun toJson(json: Json): String {
+    return json.encodeToString(serDer, this)
+  }
+}
 
 @Serializable
-abstract class AggregateRoot
-
-// @Serializable
-// abstract class ProcessManager
+abstract class AggregateRoot {
+  companion object {
+    private val serDer = PolymorphicSerializer(AggregateRoot::class)
+    fun <A : AggregateRoot> fromJson(json: Json, asJson: String): A {
+      return json.decodeFromString(serDer, asJson) as A
+    }
+  }
+  fun toJson(json: Json): String {
+    return json.encodeToString(serDer, this)
+  }
+}
 
 /**
  * To validate a command
@@ -43,15 +71,15 @@ interface CommandHandler<A : AggregateRoot, C : Command, E : DomainEvent> {
 
   fun <A : AggregateRoot, E : DomainEvent> with(create: ConstructorResult<A, E>, applier: EventHandler<A, E>):
     StatefulSession<A, E> {
-      return StatefulSession(create, applier)
-    }
+    return StatefulSession(create, applier)
+  }
 
   fun <A : AggregateRoot, E : DomainEvent> with(snapshot: Snapshot<A>, applier: EventHandler<A, E>):
     StatefulSession<A, E> {
-      return StatefulSession(snapshot.version, snapshot.state, applier)
-    }
+    return StatefulSession(snapshot.version, snapshot.state, applier)
+  }
 
-  fun handleCommand(command: C, snapshot: Snapshot<A>?): Result<StatefulSession<A, E>>
+  fun handleCommand(command: C, snapshot: Snapshot<A>?): StatefulSession<A, E>
 }
 
 /**
@@ -66,9 +94,8 @@ class AggregateRootConfig<A : AggregateRoot, C : Command, E : DomainEvent> (
   val json: Json
 )
 
-inline class AggregateRootName(val value: String) {
-  init {
-    if (value.length > 16) throw IllegalArgumentException("Aggregate root names can be at most 16 characters")
-  }
-}
-inline class SnapshotTableName(val value: String)
+@JvmInline
+value class AggregateRootName(val value: String)
+
+@JvmInline
+value class SnapshotTableName(val value: String)

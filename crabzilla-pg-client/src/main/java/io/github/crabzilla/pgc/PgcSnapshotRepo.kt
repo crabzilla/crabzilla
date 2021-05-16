@@ -1,6 +1,5 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.core.AGGREGATE_ROOT_SERIALIZER
 import io.github.crabzilla.core.AggregateRoot
 import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
@@ -36,21 +35,10 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
         " ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"
     }
 
-    val promise = Promise.promise<Void>()
-    val json = JsonObject(config.json.encodeToString(AGGREGATE_ROOT_SERIALIZER, snapshot.state))
+    val json = JsonObject(snapshot.state.toJson(config.json))
     val insertSql = upsertSnapshot()
     val tuple = Tuple.of(id, snapshot.version, json)
-    writeModelDb.preparedQuery(insertSql)
-      .execute(tuple) { insert ->
-        if (insert.failed()) {
-          log.error("upsert snapshot query error", insert.cause())
-          promise.fail(insert.cause())
-        } else {
-          log.debug("upsert snapshot success {} {}", id, json)
-          promise.complete()
-        }
-      }
-    return promise.future()
+    return writeModelDb.preparedQuery(insertSql).execute(tuple).mapEmpty()
   }
 
   override fun get(id: UUID): Future<Snapshot<A>?> {
@@ -66,7 +54,7 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
           null
         } else {
           val stateAsJson: JsonObject = rowSet.first().get(JsonObject::class.java, 1)
-          val state = config.json.decodeFromString(AGGREGATE_ROOT_SERIALIZER, stateAsJson.encode()) as A
+          val state = AggregateRoot.fromJson<A>(config.json, stateAsJson.encode())
           Snapshot(state, rowSet.first().getInteger("version"))
         }
       }
