@@ -43,9 +43,6 @@ abstract class AggregateRoot {
   }
 }
 
-// @Serializable
-// abstract class ProcessManager
-
 /**
  * To validate a command
  */

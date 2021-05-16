@@ -6,7 +6,10 @@ import java.util.UUID
 /**
  * An event record
  */
-data class EventRecord(val aggregateName: String, val aggregateId: UUID, val eventAsjJson: JsonObject, val eventId: Long) {
+data class EventRecord(val aggregateName: String,
+                       val aggregateId: UUID,
+                       val eventAsjJson: JsonObject,
+                       val eventId: Long) {
   companion object {
     fun fromJsonObject(asJsonObject: JsonObject): EventRecord {
       return EventRecord(
