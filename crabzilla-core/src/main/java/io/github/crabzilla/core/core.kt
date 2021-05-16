@@ -79,7 +79,7 @@ interface CommandHandler<A : AggregateRoot, C : Command, E : DomainEvent> {
     return StatefulSession(snapshot.version, snapshot.state, applier)
   }
 
-  fun handleCommand(command: C, snapshot: Snapshot<A>?): Result<StatefulSession<A, E>>
+  fun handleCommand(command: C, snapshot: Snapshot<A>?): StatefulSession<A, E>
 }
 
 /**

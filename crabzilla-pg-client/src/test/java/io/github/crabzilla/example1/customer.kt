@@ -132,10 +132,9 @@ class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id 
  */
 object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, CustomerEvent> {
   override fun handleCommand(command: CustomerCommand, snapshot: Snapshot<Customer>?):
-    Result<StatefulSession<Customer, CustomerEvent>> {
+          StatefulSession<Customer, CustomerEvent> {
 
-    return runCatching {
-      when (command) {
+    return when (command) {
 
         is RegisterCustomer -> {
           if (snapshot == null)
@@ -160,7 +159,6 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
             .execute { it.deactivate(command.reason) }
         }
       }
-    }
   }
 }
 

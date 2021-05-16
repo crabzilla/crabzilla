@@ -50,23 +50,23 @@ class CustomerStateChangeTest {
         inner class `Given a CustomerActivate command` {
           val reason = "because I need it again and again"
           val cmd = CustomerCommand.ActivateCustomer(reason)
-          val result = handleCommand(cmd, Snapshot(state3, 1)).getOrNull()
+          val result = handleCommand(cmd, Snapshot(state3, 1))
 
           @Test
           fun `Then Customer is activated`() {
-            assertThat(result!!.currentState)
+            assertThat(result.currentState)
               .isEqualTo(Customer(id = customerId, name = name, reason = reason, isActive = true))
           }
 
           @Test
           fun `Then the event is CustomerActivated`() {
-            assertThat(result!!.appliedEvents().first())
+            assertThat(result.appliedEvents().first())
               .isEqualTo(CustomerEvent.CustomerActivated(reason = reason))
           }
 
           @Test
           fun `Then the original version is 1`() {
-            assertThat(result!!.originalVersion)
+            assertThat(result.originalVersion)
               .isEqualTo(1)
           }
         }

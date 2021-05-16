@@ -25,7 +25,7 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
 ) {
   companion object {
     // TODO https://reactiverse.io/reactiverse-contextual-logging/
-    internal val log = LoggerFactory.getLogger(CommandController::class.java)
+    private val log = LoggerFactory.getLogger(CommandController::class.java)
   }
 
   fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<A, E>> {
@@ -46,23 +46,22 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
       }
       .onSuccess { snapshot ->
         log.debug("Got snapshot {}. Now let's handle the command", snapshot)
-        handler.handleCommand(command, snapshot)
-          .onFailure { err ->
-            log.error("Command error", err)
-            promise.fail(err)
-          }
-          .onSuccess { result: StatefulSession<A, E> ->
-            log.debug("Command handled. {}. Now let's append it events", result.toSessionData())
-            eventStore.append(command, metadata, result)
-              .onFailure { err ->
-                log.error("When appending events", err)
-                promise.fail(err)
-              }
-              .onSuccess {
-                log.debug("Events successfully appended.")
-                promise.complete(result)
-              }
-          }
+        try {
+          val session = handler.handleCommand(command, snapshot)
+          log.debug("Command handled. {}. Now let's append it events", session)
+          eventStore.append(command, metadata, session)
+            .onFailure { err ->
+              log.error("When appending events", err)
+              promise.fail(err)
+            }
+            .onSuccess {
+              log.debug("Events successfully appended.")
+              promise.complete(session)
+            }
+        } catch (e: Throwable) {
+          log.error("Command error", e)
+          promise.fail(e)
+        }
       }
     return promise.future()
   }
