@@ -35,7 +35,7 @@ It's still in very early development stage. Do not use release 0.0.5, master bra
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
     <artifactId>crabzilla-pg-client</artifactId>
-    <version>v0.1.4</version>
+    <version>v0.1.5</version>
 </dependency>
 ```
 
