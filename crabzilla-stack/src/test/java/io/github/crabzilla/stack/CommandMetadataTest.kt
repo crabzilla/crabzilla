@@ -29,5 +29,4 @@ class CommandMetadataTest {
     assertThat(metadata.correlationId).isEqualTo(correlationId)
     assertThat(metadata.causationId).isEqualTo(causationId)
   }
-
 }

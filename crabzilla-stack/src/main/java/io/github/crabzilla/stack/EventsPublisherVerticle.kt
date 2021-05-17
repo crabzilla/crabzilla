@@ -16,17 +16,12 @@ import kotlin.math.min
 class EventsPublisherVerticle(
   private val eventsScanner: EventsScanner,
   private val eventsPublisher: EventsPublisher,
-  private val intervalInMilliseconds: Long = DEFAULT_INTERVAL,
-  private val numberOfRows: Int = DEFAULT_NUMBER_OF_ROWS
-
+  private val options: EventsPublisherVerticleOptions
 ) : AbstractVerticle() {
 
   companion object {
     const val PUBLISHER_ENDPOINT = "publisher.verticle" // TODO add endpoint for pause, resume, restart from N, etc
     const val PUBLISHER_RESCHEDULED_ENDPOINT = "publisher.verticle.rescheduled"
-    private const val DEFAULT_INTERVAL = 500L
-    private const val DEFAULT_NUMBER_OF_ROWS = 500
-    private const val DEFAULT_MAX_INTERVAL = 60_000L
   }
 
   private val log = LoggerFactory.getLogger(eventsScanner.streamName())
@@ -37,14 +32,14 @@ class EventsPublisherVerticle(
 
   override fun start() {
     // Schedule the first execution
-    vertx.setTimer(intervalInMilliseconds, action)
-    vertx.setPeriodic(DEFAULT_MAX_INTERVAL) {
+    vertx.setTimer(options.interval, action)
+    vertx.setPeriodic(options.statsInterval) {
       showStats.set(true)
     }
     // force scan endpoint
     vertx.eventBus().consumer<Void>(PUBLISHER_ENDPOINT) { msg ->
       log.info("Forced scan")
-      scanAndPublish(numberOfRows)
+      scanAndPublish(options.maxNumberOfRows)
         .onFailure { msg.fail(500, it.message) }
         .onSuccess {
           log.info("Finished scan")
@@ -56,7 +51,7 @@ class EventsPublisherVerticle(
       vertx.setTimer(nextInterval, action)
       log.debug("Rescheduled to next {} milliseconds", nextInterval)
     }
-    log.info("Started pooling for at most {} rows each {} milliseconds", numberOfRows, intervalInMilliseconds)
+    log.info("Started pooling with options {}", options)
   }
 
   override fun stop() {
@@ -65,16 +60,15 @@ class EventsPublisherVerticle(
 
   private fun handler(): Handler<Long?> {
     fun registerFailure() {
-      val nextInterval = min(DEFAULT_MAX_INTERVAL, intervalInMilliseconds * failures.incrementAndGet())
+      val nextInterval = min(options.maxInterval, options.interval * failures.incrementAndGet())
       vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, nextInterval)
     }
     fun registerSuccessOrStillBusy() {
       failures.set(0)
-      vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, intervalInMilliseconds)
+      vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, options.interval)
     }
     return Handler { tick ->
-      log.debug("Tick $tick - will scan at most $numberOfRows events")
-      scanAndPublish(numberOfRows)
+      scanAndPublish(options.maxNumberOfRows)
         .onFailure {
           log.error("When scanning for new events", it)
           registerFailure()

@@ -9,8 +9,10 @@ import io.vertx.pgclient.PgPool
 
 object CommandControllerFactory {
 
-  fun <A : AggregateRoot, C : Command, E : DomainEvent>
-  create(config: AggregateRootConfig<A, C, E>, writeModelDb: PgPool): CommandController<A, C, E> {
+  fun <A : AggregateRoot, C : Command, E : DomainEvent> create(
+    config: AggregateRootConfig<A, C, E>,
+    writeModelDb: PgPool
+  ): CommandController<A, C, E> {
     val snapshotRepo = PgcSnapshotRepo(config, writeModelDb)
     val eventStore = PgcEventStore(config, writeModelDb)
     return CommandController(config.commandValidator, config.commandHandler, snapshotRepo, eventStore)

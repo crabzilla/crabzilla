@@ -10,6 +10,7 @@ import io.github.crabzilla.pgc.CustomerProjectorVerticle.Companion.topic
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.EventsPublisherVerticle
+import io.github.crabzilla.stack.EventsPublisherVerticleOptions
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -47,7 +48,15 @@ class PgcFullStackIT {
             writeDb = writeModelPgPool(vertx, config)
             readDb = readModelPgPool(vertx, config)
             val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))
-            val publisherVerticle = EventsPublisherVerticleFactory.create(topic, topic, vertx.eventBus(), writeDb)
+            val options = EventsPublisherVerticleOptions.Builder()
+              .targetEndpoint(topic)
+              .eventBus(vertx.eventBus())
+              .interval(500)
+              .maxInterval(60_000)
+              .maxNumberOfRows(1)
+              .statsInterval(30_000)
+              .build()
+            val publisherVerticle = EventsPublisherVerticleFactory.create(topic, writeDb, options)
             vertx.deployVerticle(projectorVerticle)
               .compose { vertx.deployVerticle(publisherVerticle) }
               .onFailure { tc.failNow(it.cause) }

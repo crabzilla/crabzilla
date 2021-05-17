@@ -1,7 +1,6 @@
 package io.github.crabzilla.pgc
 
 import io.vertx.core.Future
-import io.vertx.core.Promise
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Transaction
 import org.slf4j.LoggerFactory
