@@ -3,7 +3,6 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.EventsScanner
 import io.vertx.core.Future
-import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
@@ -30,8 +29,7 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
   }
 
   override fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
-    val promise = Promise.promise<List<EventRecord>>()
-    writeModelDb.withTransaction { client ->
+    return writeModelDb.withConnection { client ->
       client.prepare(selectAfterOffset)
         .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(streamName, numberOfRows)) }
         .map { rowSet: RowSet<Row> ->
@@ -41,25 +39,14 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
           }.toList()
         }
     }
-      .onFailure { err ->
-        promise.fail(err)
-      }
-      .onSuccess {
-        promise.complete(it)
-      }
-    return promise.future()
   }
 
   override fun updateOffSet(eventId: Long): Future<Void> {
-    val promise = Promise.promise<Void>()
-    writeModelDb.withTransaction { client ->
+    return writeModelDb.withConnection { client ->
       client.prepare(updateOffset)
     }
       .compose { ps2 ->
         ps2.query().execute(Tuple.of(eventId, streamName))
-      }
-      .onFailure { promise.fail(it) }
-      .onSuccess { promise.complete() }
-    return promise.future()
+      }.mapEmpty()
   }
 }
