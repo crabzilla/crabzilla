@@ -5,10 +5,8 @@ import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.pgc.PgcClient.close
 import io.github.crabzilla.stack.SnapshotRepository
 import io.vertx.core.Future
-import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
@@ -47,8 +45,7 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
       return "SELECT version, json_content FROM ${config.snapshotTableName.value} WHERE ar_id = $1"
     }
 
-    fun currentSnapshot(conn: SqlConnection): Future<Pair<SqlConnection, Snapshot<A>?>> {
-      val promise = Promise.promise<Pair<SqlConnection, Snapshot<A>?>>()
+    fun currentSnapshot(conn: SqlConnection): Future<Snapshot<A>?> {
       fun snapshot(rowSet: RowSet<Row>): Snapshot<A>? {
         return if (rowSet.size() == 0) {
           null
@@ -58,33 +55,12 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
           Snapshot(state, rowSet.first().getInteger("version"))
         }
       }
-      conn.preparedQuery(selectSnapshot())
+      return conn
+        .preparedQuery(selectSnapshot())
         .execute(Tuple.of(id))
-        .onSuccess { pgRow -> promise.complete(Pair(conn, snapshot(pgRow))) }
-        .onFailure {
-          log.error(it.message)
-          promise.complete(Pair(conn, null))
-        }
-      return promise.future()
+        .map { pgRow -> snapshot(pgRow) }
     }
 
-    val promise = Promise.promise<Snapshot<A>>()
-    writeModelDb.connection
-      .onFailure {
-        log.error("When getting connection", it)
-        promise.fail(it)
-      }
-      .onSuccess { conn: SqlConnection ->
-        currentSnapshot(conn)
-          .onSuccess { newSnapshot -> promise.complete(newSnapshot.second) }
-          .onFailure {
-            log.error("When getting new snapshot", it)
-            promise.fail(it)
-          }
-          .onComplete {
-            close(conn)
-          }
-      }
-    return promise.future()
+    return writeModelDb.withConnection { conn: SqlConnection -> currentSnapshot(conn) }
   }
 }
