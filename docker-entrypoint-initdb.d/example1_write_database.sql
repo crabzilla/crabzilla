@@ -6,12 +6,13 @@ CREATE TYPE AGGREGATES_ENUM AS ENUM ('Customer');
 
 -- commands
 
+-- https://github.com/thenativeweb/commands-events/issues/1#issuecomment-385862281
+
 CREATE TABLE commands (
       id UUID NOT NULL PRIMARY KEY,
       causation_id UUID NOT NULL,
       correlation_id UUID NOT NULL,
       cmd_payload JSONB NOT NULL,
-      resulting_version INTEGER NOT NULL,
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
  ;
@@ -28,6 +29,7 @@ CREATE TABLE events (
       event_payload JSONB NOT NULL,
       ar_name AGGREGATES_ENUM NOT NULL,
       ar_id UUID NOT NULL,
+      version INTEGER NOT NULL,
       causation_id UUID NOT NULL,
       correlation_id UUID NOT NULL,
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -37,11 +37,11 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   companion object {
     private val log = LoggerFactory.getLogger(PgcEventStore::class.java)
     const val SQL_APPEND_CMD =
-      """ insert into commands (id, correlation_id, causation_id, cmd_payload, resulting_version)
-          values ($1, $2, $3, $4, $5)"""
+      """ insert into commands (id, correlation_id, causation_id, cmd_payload)
+          values ($1, $2, $3, $4)"""
     const val SQL_APPEND_EVENT =
-      """ insert into events (correlation_id, causation_id, event_payload, ar_name, ar_id)
-        values ($1, $2, $3, $4, $5) returning id"""
+      """ insert into events (correlation_id, causation_id, event_payload, ar_name, ar_id, version)
+        values ($1, $2, $3, $4, $5, $6) returning id"""
   }
 
   override fun append(command: C, metadata: CommandMetadata, session: StatefulSession<A, E>): Future<Void> {
@@ -131,8 +131,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         metadata.commandId.id,
         metadata.correlationId.id,
         metadata.causationId.id,
-        JsonObject(cmdAsJson),
-        expectedVersionAfterAppend
+        JsonObject(cmdAsJson)
       )
       return conn.preparedQuery(SQL_APPEND_CMD).execute(params).mapEmpty()
     }
@@ -147,7 +146,8 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           causationId,
           JsonObject(eventAsJson),
           config.name.value,
-          metadata.aggregateRootId.id
+          metadata.aggregateRootId.id,
+          expectedVersionAfterAppend
         )
         conn.preparedQuery(SQL_APPEND_EVENT)
           .execute(params)
