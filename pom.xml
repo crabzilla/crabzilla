@@ -5,7 +5,7 @@
 
   <groupId>io.github.crabzilla</groupId>
   <artifactId>crabzilla</artifactId>
-  <version>v0.1.7</version>
+  <version>v0.1.6</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -13,7 +13,7 @@
     <java.version>1.8</java.version>
 
     <!-- crabzilla core -->
-    <kotlin.version>1.5.0</kotlin.version>
+    <kotlin.version>1.5.10</kotlin.version>
     <serialization.version>1.2.1</serialization.version>
     <vertx.version>4.1.0</vertx.version>
     <slf4j.version>1.7.25</slf4j.version>

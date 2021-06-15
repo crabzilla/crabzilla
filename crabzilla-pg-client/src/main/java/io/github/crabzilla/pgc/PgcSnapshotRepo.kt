@@ -23,23 +23,28 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
 
   companion object {
     private val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
-    const val SQL_UPSERT_VERSION =
-      """ INSERT INTO snapshots (ar_id, version, json_content)
-          VALUES ($1, $2, $3)
-          ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"""
-    const val SQL_SELECT_VERSION =
-      """ SELECT version, json_content
-          FROM SNAPSHOTS 
-          WHERE ar_id = $1"""
   }
 
   override fun upsert(id: UUID, snapshot: Snapshot<A>): Future<Void> {
+
+    fun upsertSnapshot(): String {
+      return "INSERT INTO ${config.snapshotTableName.value} (ar_id, version, json_content) " +
+        " VALUES ($1, $2, $3) " +
+        " ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"
+    }
+
     val json = JsonObject(snapshot.state.toJson(config.json))
+    val insertSql = upsertSnapshot()
     val tuple = Tuple.of(id, snapshot.version, json)
-    return writeModelDb.preparedQuery(SQL_UPSERT_VERSION).execute(tuple).mapEmpty()
+    return writeModelDb.preparedQuery(insertSql).execute(tuple).mapEmpty()
   }
 
   override fun get(id: UUID): Future<Snapshot<A>?> {
+
+    fun selectSnapshot(): String {
+      return "SELECT version, json_content FROM ${config.snapshotTableName.value} WHERE ar_id = $1"
+    }
+
     fun currentSnapshot(conn: SqlConnection): Future<Snapshot<A>?> {
       fun snapshot(rowSet: RowSet<Row>): Snapshot<A>? {
         return if (rowSet.size() == 0) {
@@ -51,10 +56,11 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
         }
       }
       return conn
-        .preparedQuery(SQL_SELECT_VERSION)
+        .preparedQuery(selectSnapshot())
         .execute(Tuple.of(id))
         .map { pgRow -> snapshot(pgRow) }
     }
+
     return writeModelDb.withConnection { conn: SqlConnection -> currentSnapshot(conn) }
   }
 }
