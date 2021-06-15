@@ -28,6 +28,7 @@ class PgcEventStoreIT {
 
   private lateinit var writeDb: PgPool
   private lateinit var eventStore: PgcEventStore<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var repo: PgcSnapshotRepo<Customer, CustomerCommand, CustomerEvent>
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
@@ -35,6 +36,7 @@ class PgcEventStoreIT {
       .compose { config ->
         writeDb = writeModelPgPool(vertx, config)
         eventStore = PgcEventStore(customerConfig, writeDb)
+        repo = PgcSnapshotRepo(customerConfig, writeDb)
         cleanDatabase(vertx, config)
       }
       .onFailure { tc.failNow(it.cause) }
@@ -54,7 +56,36 @@ class PgcEventStoreIT {
     session.execute { it.activate(cmd.reason) }
     eventStore.append(cmd, metadata, session)
       .onFailure { tc.failNow(it) }
-      .onSuccess { tc.completeNow() }
+      .onSuccess {
+        repo.get(id)
+          .onFailure { tc.failNow(it) }
+          .onSuccess {
+            assertThat(it!!.version).isEqualTo(1)
+            tc.completeNow()
+          }
+      }
+  }
+
+  @Test
+  @DisplayName("can append version 2 (session with 2 events)")
+  fun s12(tc: VertxTestContext) {
+    val id = UUID.randomUUID()
+    val customer = Customer.create(id = id, name = "c1") // AggregateRootSession needs a non null state
+    val cmd = CustomerCommand.RegisterAndActivateCustomer(id, customer.state.name, "is needed")
+    val metadata = CommandMetadata(AggregateRootId(id))
+    val constructorResult = Customer.create(id = id, name = customer.state.name)
+    val session = StatefulSession(constructorResult, customerEventHandler)
+    session.execute { it.activate(cmd.reason) }
+    eventStore.append(cmd, metadata, session)
+      .onFailure { tc.failNow(it) }
+      .onSuccess {
+        repo.get(id)
+          .onFailure { tc.failNow(it) }
+          .onSuccess {
+            assertThat(it!!.version).isEqualTo(2)
+            tc.completeNow()
+          }
+      }
   }
 
   @Test
@@ -77,7 +108,14 @@ class PgcEventStoreIT {
       .onSuccess {
         eventStore.append(cmd2, metadata2, session2)
           .onFailure { tc.failNow(it) }
-          .onSuccess { tc.completeNow() }
+          .onSuccess {
+            repo.get(id)
+              .onFailure { tc.failNow(it) }
+              .onSuccess {
+                assertThat(it!!.version).isEqualTo(2)
+                tc.completeNow()
+              }
+          }
       }
   }
 
