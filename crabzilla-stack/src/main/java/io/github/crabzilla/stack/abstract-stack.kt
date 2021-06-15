@@ -38,7 +38,7 @@ interface SnapshotRepository<A : AggregateRoot, C : Command, E : DomainEvent> {
 }
 
 /**
- * To sacan for new events
+ * To scan for new events
  */
 interface EventsScanner {
   fun streamName(): String
