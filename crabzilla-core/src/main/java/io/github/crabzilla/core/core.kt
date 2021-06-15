@@ -86,16 +86,9 @@ interface CommandHandler<A : AggregateRoot, C : Command, E : DomainEvent> {
  * A configuration for an aggregate root
  */
 class AggregateRootConfig<A : AggregateRoot, C : Command, E : DomainEvent> (
-  val name: AggregateRootName,
-  val snapshotTableName: SnapshotTableName,
+  val name: String,
   val eventHandler: EventHandler<A, E>,
   val commandValidator: CommandValidator<C>,
   val commandHandler: CommandHandler<A, C, E>,
   val json: Json
 )
-
-@JvmInline
-value class AggregateRootName(val value: String)
-
-@JvmInline
-value class SnapshotTableName(val value: String)
