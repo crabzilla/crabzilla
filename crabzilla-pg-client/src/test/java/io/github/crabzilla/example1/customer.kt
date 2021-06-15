@@ -2,7 +2,6 @@ package io.github.crabzilla.example1
 
 import io.github.crabzilla.core.AggregateRoot
 import io.github.crabzilla.core.AggregateRootConfig
-import io.github.crabzilla.core.AggregateRootName
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandHandler.ConstructorResult
@@ -10,7 +9,6 @@ import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.core.SnapshotTableName
 import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.core.javaModule
 import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
@@ -187,8 +185,7 @@ val customerModule = SerializersModule {
 val customerJson = Json { serializersModule = customerModule }
 
 val customerConfig = AggregateRootConfig(
-  AggregateRootName("Customer"),
-  SnapshotTableName("customer_snapshots"),
+  "Customer",
   customerEventHandler,
   customerCmdValidator,
   CustomerCommandHandler,

@@ -102,7 +102,7 @@ class PgcEventStoreIT {
         eventStore.append(cmd2, metadata2, session2)
           .onSuccess { tc.failNow("should fail") }
           .onFailure { err ->
-            tc.verify { assertThat(err.message).isEqualTo("The current version is already the expected new version 1") }
+            tc.verify { assertThat(err.message).isEqualTo("The current version [1] should be [0]") }
             tc.completeNow()
           }
       }

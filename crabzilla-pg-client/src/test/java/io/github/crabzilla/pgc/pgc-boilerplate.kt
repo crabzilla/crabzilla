@@ -54,7 +54,7 @@ fun cleanDatabase(vertx: Vertx, config: JsonObject): Future<Void> {
   val write = writeModelPgPool(vertx, config)
   write.query("delete from commands").execute()
     .compose { write.query("delete from events").execute() }
-    .compose { write.query("delete from customer_snapshots").execute() }
+    .compose { write.query("delete from snapshots").execute() }
     .compose { write.query("update projections set last_offset = 0").execute() }
     .compose { read.query("delete from customer_summary").execute() }
     .onSuccess {
