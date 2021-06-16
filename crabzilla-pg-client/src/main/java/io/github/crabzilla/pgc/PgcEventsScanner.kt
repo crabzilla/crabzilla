@@ -22,7 +22,7 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
     """.trimIndent()
 
   private val updateOffset =
-    "UPDATE projections SET last_offset = $1 where projections.name = $2"
+    "UPDATE projections SET last_offset = $1 WHERE projections.name = $2"
 
   override fun streamName(): String {
     return streamName
