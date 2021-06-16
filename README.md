@@ -35,7 +35,7 @@ It's still in very early development stage. Do not use release 0.0.5, master bra
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
     <artifactId>crabzilla-pg-client</artifactId>
-    <version>v0.1.6</version>
+    <version>see latest jitpack version</version>
 </dependency>
 ```
 
@@ -73,5 +73,7 @@ mvn clean install -DskipTests=false
 
 ![GitHub Logo](/crabzilla-packages.png)
 
+## Example
 
+I'm still working on a full Vertx demo. Anyway, there is an [Micronaut example](https://github.com/rodolfodpk/demo5) 
 
