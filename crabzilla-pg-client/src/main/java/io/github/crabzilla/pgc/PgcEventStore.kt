@@ -24,13 +24,9 @@ import java.util.function.BiFunction
 
 class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val config: AggregateRootConfig<A, C, E>,
-  private val writeModelDb: PgPool
+  private val writeModelDb: PgPool,
+  private val saveCommandOption: Boolean = true
 ) : EventStore<A, C, E> {
-
-  /**
-   TODO after committing events, it could publish using eventbus.
-   Just for observability, not for transactional consumers
-   */
 
   companion object {
     private val log = LoggerFactory.getLogger(PgcEventStore::class.java)
@@ -80,7 +76,10 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       return promise0.future()
     }
 
-    fun appendCommand(conn: SqlConnection): Future<Long> {
+    fun appendCommand(conn: SqlConnection): Future<Long?> {
+      if (!saveCommandOption) {
+        return Future.succeededFuture(null)
+      }
       val p = Promise.promise<Long>()
       val cmdAsJson = command.toJson(config.json)
       log.debug("Will append command {} as {}", command, cmdAsJson)
@@ -97,7 +96,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       return p.future()
     }
 
-    fun appendEvents(commandId: Long, conn: SqlConnection): Future<Int> {
+    fun appendEvents(commandId: Long?, conn: SqlConnection): Future<Int> {
       fun appendEvent(event: E, version: Int): Future<Pair<Boolean, Long>> {
         val aePromise = Promise.promise<Pair<Boolean, Long>>()
         val eventAsJson = event.toJson(config.json)

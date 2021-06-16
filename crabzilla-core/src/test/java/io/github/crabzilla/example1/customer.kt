@@ -129,6 +129,7 @@ class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id 
  * Customer command handler
  */
 object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, CustomerEvent> {
+
   override fun handleCommand(
     command: CustomerCommand,
     snapshot: Snapshot<Customer>?

@@ -11,10 +11,11 @@ object CommandControllerFactory {
 
   fun <A : AggregateRoot, C : Command, E : DomainEvent> create(
     config: AggregateRootConfig<A, C, E>,
-    writeModelDb: PgPool
+    writeModelDb: PgPool,
+    saveCommandOption: Boolean = true
   ): CommandController<A, C, E> {
     val snapshotRepo = PgcSnapshotRepo(config, writeModelDb)
-    val eventStore = PgcEventStore(config, writeModelDb)
+    val eventStore = PgcEventStore(config, writeModelDb, saveCommandOption)
     return CommandController(config.commandValidator, config.commandHandler, snapshotRepo, eventStore)
   }
 }
