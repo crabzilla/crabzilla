@@ -75,5 +75,5 @@ mvn clean install -DskipTests=false
 
 ## Example
 
-I'm still working on a full Vertx demo. Anyway, there is an [Micronaut example](https://github.com/rodolfodpk/demo5) 
+I'm still working on a full Vertx demo. Anyway, there is a [Micronaut example](https://github.com/rodolfodpk/demo5) 
 
