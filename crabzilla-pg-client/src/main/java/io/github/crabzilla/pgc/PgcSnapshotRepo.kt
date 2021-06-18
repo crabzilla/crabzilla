@@ -23,20 +23,10 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
 
   companion object {
     private val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
-    const val SQL_UPSERT_VERSION =
-      """ INSERT INTO snapshots (ar_id, version, json_content)
-          VALUES ($1, $2, $3)
-          ON CONFLICT (ar_id) DO UPDATE SET version = $2, json_content = $3"""
     const val SQL_SELECT_VERSION =
       """ SELECT version, json_content
           FROM SNAPSHOTS 
           WHERE ar_id = $1"""
-  }
-
-  override fun upsert(id: UUID, snapshot: Snapshot<A>): Future<Void> {
-    val json = JsonObject(snapshot.state.toJson(config.json))
-    val tuple = Tuple.of(id, snapshot.version, json)
-    return writeModelDb.preparedQuery(SQL_UPSERT_VERSION).execute(tuple).mapEmpty()
   }
 
   override fun get(id: UUID): Future<Snapshot<A>?> {
@@ -45,7 +35,7 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
         return if (rowSet.size() == 0) {
           null
         } else {
-          val stateAsJson: JsonObject = rowSet.first().get(JsonObject::class.java, 1)
+          val stateAsJson = JsonObject(rowSet.first().getValue(1).toString())
           val state = AggregateRoot.fromJson<A>(config.json, stateAsJson.encode())
           Snapshot(state, rowSet.first().getInteger("version"))
         }

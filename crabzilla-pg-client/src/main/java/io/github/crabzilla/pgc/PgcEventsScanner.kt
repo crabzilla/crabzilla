@@ -34,7 +34,7 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
         .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(streamName, numberOfRows)) }
         .map { rowSet: RowSet<Row> ->
           rowSet.iterator().asSequence().map { row: Row ->
-            val jsonObject: JsonObject = row.get(JsonObject::class.java, 2)
+            val jsonObject = JsonObject(row.getValue(2).toString())
             EventRecord(row.getString(0), row.getUUID(1), jsonObject, row.getLong(3))
           }.toList()
         }
@@ -44,9 +44,8 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
   override fun updateOffSet(eventId: Long): Future<Void> {
     return writeModelDb.withConnection { client ->
       client.prepare(updateOffset)
-    }
-      .compose { ps2 ->
-        ps2.query().execute(Tuple.of(eventId, streamName))
-      }.mapEmpty()
+    }.compose { ps2 ->
+      ps2.query().execute(Tuple.of(eventId, streamName))
+    }.mapEmpty()
   }
 }
