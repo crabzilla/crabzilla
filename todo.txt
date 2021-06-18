@@ -1,54 +1,10 @@
-
--- cqrs - falar sobre impedância entre UI crud e comandos
--- falar sobre versionamento de eventos :
-    compensating actions instead of change past events
-    but in real world a stored event just can't be immutable: GPDR, anonymization, etc
--- falar sobre event storming
-
-https://dev.to/sip3/how-to-extend-vert-x-eventbus-api-to-save-on-serialization-3akf
-
-1 - command subscribers will subscribe to aggregate-name.command-name in plain quarkus subscriber
-2 -
-
-
-        /**
-         * https://eventuate.io/docs/manual/eventuate-tram/latest/cdc-configuration.html - singleton process
-          * https://domaincentric.net/blog/event-sourcing-projections-patterns-consumer-scaling
-          *  https://eventuate.io/docs/manual/eventuate-tram/latest/cdc-configuration.html
-          *  https://github.com/amelbakry/kubernetes-active-passive
-         TODO crabzilla-pg-nats-producer (eventuate tram) para publicar eventos no nats tendo como  gatilho o PG sql messaging mechanism
-          usar um vertx schema validator antes de publicar
-
-         * TODO 2 kind of event subscribers (query projectors and integration events projection)
-         * TODO event subscribers will subscribe to aggregate-name.event-name in plain quarkus subscriber
-         * TODO crabzilla subscriber controller will pull from event store and make a request to eventbus endpoint
-         *   using mutiny to retry, backpressure, etc
-         *   so then it can have only 1 thread (verticle) pulling events from all entities / event name from event store
-         *   interested consumers (other services) can query the integration event store via database (instead of http)
-         * TODO events and aggregates as classes backed by maps: to avoid versioning them
-
-         *
-         * TODO https://zimarev.com/blog/event-sourcing/myth-busting/2020-07-09-overselling-event-sourcing/
-         * TODO db is the truth : events notifications using https://vertx.io/docs/vertx-pg-client/java/#_pub_sub
-         * TODO cada projeção consome a sua stream.
-         * TODO https://www.youtube.com/watch?v=GzrZworHpIk : events as JSON SCHEMA (usando Kotlin map backed classes)
-         * TODO https://twitter.com/lukaseder/status/1284419336963330048  make it a library, not a framework
-         * TODO kotlin.serialization DateTime lib https://github.com/Kotlin/kotlinx-datetime#using-in-your-projects
-         */
-
-        // TODO snapshot upsert should be async
-        // TODO move publish events logic from uowJOurnal to here
-        // TODO each events subscriber should have a circuit breaker
-        // TODO and this controller should request all subscribers endpoints
-
-        // TODO comprar 2 lean books: EventStorming e Kotlin Style
-
-
-// TODO command id idempotency
-// TODO PgcEntityTestDeployment (with BDD assertions)
-// TODO https://github.com/thenativeweb/commands-events/issues/1
-// TODO e UUID como external id do aggregate root (internamente por Long)
-  // https://stackoverflow.com/questions/53207723/sequential-composition-for-arbitrary-number-of-calls-in-vertx-with-futures
+-- events table
+-- it must have version so it accepts event patching
+-- a command generates N events
+-- an event can generate a command
+-- an event can generate another event (side effect handlers)
+-- events type: domainEvent, commandApplied and (idempotent) side effect applied
+-- https://stackoverflow.com/questions/53207723/sequential-composition-for-arbitrary-number-of-calls-in-vertx-with-futures
 
 NATS
 
