@@ -6,7 +6,7 @@ import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerConfig
-import io.github.crabzilla.stack.CommandException.WriteConcurrencyException
+import io.github.crabzilla.stack.CommandException.OptimisticLockingException
 import io.kotest.assertions.fail
 import io.kotest.assertions.shouldFail
 import io.kotest.core.spec.style.BehaviorSpec
@@ -69,7 +69,7 @@ class ControllerTests : BehaviorSpec({
 
     When("I send a register command but with Concurrency") {
       every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
-      every { eventStore.append(any(), any(), any()) } returns Future.failedFuture(WriteConcurrencyException("Concurrency error"))
+      every { eventStore.append(any(), any(), any()) } returns Future.failedFuture(OptimisticLockingException("Concurrency error"))
       val controller =
         CommandController(customerConfig.commandValidator, customerConfig.commandHandler, snapshotRepo, eventStore)
       val aggregateRootId = AggregateRootId(UUID.randomUUID())
@@ -86,7 +86,7 @@ class ControllerTests : BehaviorSpec({
 
     When("I send a register command but with error on get") {
       every { snapshotRepo.get(any()) } returns Future.failedFuture("db is down!")
-      every { eventStore.append(any(), any(), any()) } returns Future.failedFuture(WriteConcurrencyException("Concurrency error"))
+      every { eventStore.append(any(), any(), any()) } returns Future.failedFuture(OptimisticLockingException("Concurrency error"))
       val controller =
         CommandController(customerConfig.commandValidator, customerConfig.commandHandler, snapshotRepo, eventStore)
       val aggregateRootId = AggregateRootId(UUID.randomUUID())
