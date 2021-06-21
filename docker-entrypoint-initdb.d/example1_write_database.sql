@@ -47,10 +47,6 @@ CREATE TABLE commands (
     )
  ;
 
--- indexes
-
-CREATE UNIQUE INDEX cmd_id_idx ON commands (cmd_id);
-
 -- events
 
 CREATE TABLE events (

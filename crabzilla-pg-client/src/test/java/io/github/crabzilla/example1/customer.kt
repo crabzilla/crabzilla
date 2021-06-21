@@ -182,6 +182,7 @@ val customerModule = SerializersModule {
   }
 }
 
+// app scoped?
 val customerJson = Json { serializersModule = customerModule }
 
 val customerConfig = AggregateRootConfig(
@@ -189,5 +190,5 @@ val customerConfig = AggregateRootConfig(
   customerEventHandler,
   customerCmdValidator,
   CustomerCommandHandler,
-  customerJson
+  customerJson // instead of per aggregate?
 )

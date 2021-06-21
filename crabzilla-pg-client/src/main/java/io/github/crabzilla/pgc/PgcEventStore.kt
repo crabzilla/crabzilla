@@ -65,7 +65,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           if (currentVersion != session.originalVersion) {
             val message = "The current version [$currentVersion] should be [${session.originalVersion}]"
             log.debug(message)
-            promise0.fail(CommandException.WriteConcurrencyException(message))
+            promise0.fail(CommandException.OptimisticLockingException(message))
           } else {
             log.debug("Version is {}", currentVersion)
             promise0.complete()
