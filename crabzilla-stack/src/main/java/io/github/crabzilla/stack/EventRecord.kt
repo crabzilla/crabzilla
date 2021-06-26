@@ -7,26 +7,30 @@ import java.util.UUID
  * An event record
  */
 data class EventRecord(
-  val aggregateName: String,
-  val aggregateId: UUID,
+  val eventMetadata: EventMetadata,
   val eventAsjJson: JsonObject,
-  val eventId: Long
 ) {
   companion object {
     fun fromJsonObject(asJsonObject: JsonObject): EventRecord {
-      return EventRecord(
+      val eventMetadata = EventMetadata(
         asJsonObject.getString("aggregateName"),
-        UUID.fromString(asJsonObject.getString("aggregateId")),
-        asJsonObject.getJsonObject("eventAsjJson"),
-        asJsonObject.getLong("eventId")
+        AggregateRootId(UUID.fromString(asJsonObject.getString("aggregateId"))),
+        EventId(UUID.fromString(asJsonObject.getString("eventId"))),
+        CorrelationId(UUID.fromString(asJsonObject.getString("correlationId"))),
+        CausationId(UUID.fromString(asJsonObject.getString("causationId"))),
+        asJsonObject.getLong("eventSequence")
       )
+      return EventRecord(eventMetadata, asJsonObject.getJsonObject("eventAsjJson"))
     }
   }
   fun toJsonObject(): JsonObject {
     return JsonObject()
-      .put("aggregateName", aggregateName)
-      .put("aggregateId", aggregateId.toString())
       .put("eventAsjJson", eventAsjJson)
-      .put("eventId", eventId)
+      .put("aggregateName", eventMetadata.aggregateName)
+      .put("aggregateId", eventMetadata.aggregateRootId.id.toString())
+      .put("eventSequence", eventMetadata.eventSequence)
+      .put("eventId", eventMetadata.eventId.id.toString())
+      .put("causationId", eventMetadata.causationId.id.toString())
+      .put("correlationId", eventMetadata.correlationId.id.toString())
   }
 }

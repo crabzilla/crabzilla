@@ -147,7 +147,7 @@ class PgcEventStoreIT {
                     assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata1.commandId.id.toString())
                     // check activate event
                     val asJson2 = eventsList[1]
-                    // println(asJson2.encodePrettily())
+                    println(asJson2.encodePrettily())
                     assertThat(asJson2.getString("ar_name")).isEqualTo(customerConfig.name)
                     assertThat(asJson2.getString("ar_id")).isEqualTo(id.toString())
                     assertThat(asJson2.getInteger("version")).isEqualTo(2)
@@ -160,7 +160,7 @@ class PgcEventStoreIT {
                     assertThat(asJson2.getString("correlation_id")).isEqualTo(metadata1.commandId.id.toString())
                     // check deactivate events
                     val asJson3 = eventsList[2]
-                    // println(asJson3.encodePrettily())
+                    println(asJson3.encodePrettily())
                     assertThat(asJson3.getString("ar_name")).isEqualTo(customerConfig.name)
                     assertThat(asJson3.getString("ar_id")).isEqualTo(id.toString())
                     assertThat(asJson3.getInteger("version")).isEqualTo(3)

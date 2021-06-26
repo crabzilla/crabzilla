@@ -9,6 +9,7 @@ import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import java.util.UUID
 
 /**
  * To update customer read model given events
@@ -24,7 +25,8 @@ class CustomerProjectorVerticle(private val json: Json, private val repo: Custom
   override fun start() {
     vertx.eventBus().consumer<JsonObject>(topic) { msg ->
       val eventRecord = EventRecord.fromJsonObject(msg.body())
-      publish(eventRecord)
+      val id = eventRecord.eventMetadata.aggregateRootId.id
+      publish(id, eventRecord)
         .onFailure { msg.fail(500, it.message) }
         .onSuccess {
           log.info("Projected $eventRecord")
@@ -38,14 +40,14 @@ class CustomerProjectorVerticle(private val json: Json, private val repo: Custom
     log.info("Stopped")
   }
 
-  private fun publish(eventRecord: EventRecord): Future<Void> {
+  private fun publish(id: UUID, eventRecord: EventRecord): Future<Void> {
     log.info("Will project $eventRecord")
     val event = DomainEvent.fromJson<CustomerEvent>(json, eventRecord.eventAsjJson.toString())
     log.info("The event is $event")
     return when (event) {
-      is CustomerEvent.CustomerRegistered -> repo.upsert(eventRecord.aggregateId, event.name, false)
-      is CustomerEvent.CustomerActivated -> repo.updateStatus(eventRecord.aggregateId, true)
-      is CustomerEvent.CustomerDeactivated -> repo.updateStatus(eventRecord.aggregateId, false)
+      is CustomerEvent.CustomerRegistered -> repo.upsert(id, event.name, false)
+      is CustomerEvent.CustomerActivated -> repo.updateStatus(id, true)
+      is CustomerEvent.CustomerDeactivated -> repo.updateStatus(id, false)
     }
   }
 }

@@ -36,23 +36,6 @@ class PgcEventRepoTestHelper(private val writeModelDb: PgPool) {
         .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(afterSequence, numberOfRows)) }
         .map { rowSet: RowSet<Row> ->
           rowSet.iterator().asSequence().map { row: Row ->
-            /**
-             * {
-             "sequence" : 19,
-             "event_payload" : {
-             "id" : "21581486-8d89-4304-b0ad-6f681c650a2e",
-             "name" : "c1",
-             "type" : "CustomerRegistered"
-             },
-             "ar_name" : "Customer",
-             "ar_id" : "21581486-8d89-4304-b0ad-6f681c650a2e",
-             "version" : 1,
-             "id" : "7ddec748-95da-4005-8acb-a4d53b6f9226",
-             "causation_id" : "d045279c-9d80-424f-b39e-8769d76ca369",
-             "correlation_id" : "d045279c-9d80-424f-b39e-8769d76ca369",
-             "inserted_on" : "2021-06-18T18:42:16.535003"
-             }
-             */
             val json = JsonObject()
             json.put("sequence", row.getLong("sequence"))
             json.put("event_payload", row.getValue("event_payload").toString())

@@ -16,7 +16,7 @@ import kotlin.math.min
 class EventsPublisherVerticle(
   private val eventsScanner: EventsScanner,
   private val eventsPublisher: EventsPublisher,
-  private val options: EventsPublisherVerticleOptions
+  private val options: EventsPublisherVerticleOptions,
 ) : AbstractVerticle() {
 
   companion object {
@@ -31,6 +31,7 @@ class EventsPublisherVerticle(
   private val showStats = AtomicBoolean(true)
 
   override fun start() {
+
     // Schedule the first execution
     vertx.setTimer(options.interval, action)
     vertx.setPeriodic(options.statsInterval) {
@@ -51,7 +52,7 @@ class EventsPublisherVerticle(
       vertx.setTimer(nextInterval, action)
       log.debug("Rescheduled to next {} milliseconds", nextInterval)
     }
-    log.info("Started pooling with options {}", options)
+    log.info("Started pooling events")
   }
 
   override fun stop() {
@@ -67,7 +68,7 @@ class EventsPublisherVerticle(
       failures.set(0)
       vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, options.interval)
     }
-    return Handler { tick ->
+    return Handler { _ ->
       scanAndPublish(options.maxNumberOfRows)
         .onFailure {
           log.error("When scanning for new events", it)
@@ -105,21 +106,24 @@ class EventsPublisherVerticle(
         return result
       }
       val promise = Promise.promise<Long>()
-      val eventId = AtomicLong(0)
+      val eventSequence = AtomicLong(0)
       val initialFuture = Future.succeededFuture<Void>()
       foldLeft(
         eventsList.iterator(), initialFuture,
         { currentFuture: Future<Void>, eventRecord: EventRecord ->
           currentFuture.onSuccess {
-            log.trace("Successfully projected event #{}", eventRecord.eventId)
-            eventId.set(eventRecord.eventId)
+            log.trace("Successfully projected event #{}", eventRecord.eventMetadata.eventId)
+            eventSequence.set(eventRecord.eventMetadata.eventSequence)
             action(eventRecord)
           }.onFailure {
-            log.debug("Skipped {} since the latest successful event was {}", eventRecord.eventId, eventId)
+            log.debug(
+              "Skipped {} since the latest successful event was {}",
+              eventRecord.eventMetadata.eventId, eventSequence
+            )
           }
         }
       ).onComplete {
-        promise.complete(eventId.get())
+        promise.complete(eventSequence.get())
       }
       return promise.future()
     }
@@ -134,7 +138,7 @@ class EventsPublisherVerticle(
           promise.complete(0)
           return@onSuccess
         }
-        log.debug("Found {} new events. The last one is #{}", eventsList.size, eventsList.last().eventId)
+        log.debug("Found {} new events. The last one is #{}", eventsList.size, eventsList.last().eventMetadata.eventId)
         publish(eventsList)
           .onFailure { promise.fail(it) }
           .onSuccess { lastEventPublished ->

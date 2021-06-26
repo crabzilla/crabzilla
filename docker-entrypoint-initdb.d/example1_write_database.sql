@@ -7,12 +7,10 @@ CREATE DATABASE example1_write OWNER user1;
 -- projections
 
 CREATE TABLE projections (
-   name VARCHAR(36) PRIMARY KEY NOT NULL,
+   name TEXT PRIMARY KEY NOT NULL,
    last_offset BIGINT
 );
 
-INSERT INTO projections (name, last_offset) values ('nats-domain-events', 0);
-INSERT INTO projections (name, last_offset) values ('nats-integration-events', 0);
 INSERT INTO projections (name, last_offset) values ('customers', 0);
 
 --  snapshots table

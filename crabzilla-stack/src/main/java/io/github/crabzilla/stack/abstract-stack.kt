@@ -17,10 +17,29 @@ value class AggregateRootId(val id: UUID)
 value class CommandId(val id: UUID = UUID.randomUUID())
 
 @JvmInline
+value class EventId(val id: UUID)
+
+@JvmInline
 value class CorrelationId(val id: UUID)
 
 @JvmInline
 value class CausationId(val id: UUID)
+
+data class CommandMetadata(
+  val aggregateRootId: AggregateRootId,
+  val commandId: CommandId = CommandId(UUID.randomUUID()),
+  val correlationId: CorrelationId = CorrelationId(commandId.id),
+  val causationId: CausationId = CausationId(commandId.id)
+)
+
+data class EventMetadata(
+  val aggregateName: String,
+  val aggregateRootId: AggregateRootId,
+  val eventId: EventId,
+  val correlationId: CorrelationId,
+  val causationId: CausationId,
+  val eventSequence: Long
+)
 
 /**
  * An event store to append new events
@@ -42,7 +61,7 @@ interface SnapshotRepository<A : AggregateRoot, C : Command, E : DomainEvent> {
 interface EventsScanner {
   fun streamName(): String
   fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>>
-  fun updateOffSet(eventId: Long): Future<Void>
+  fun updateOffSet(eventSequence: Long): Future<Void>
 }
 
 /**
@@ -50,5 +69,4 @@ interface EventsScanner {
  */
 interface EventsPublisher {
   fun publish(eventRecord: EventRecord): Future<Void>
-  // TODO what about correlation id, etc?
 }
