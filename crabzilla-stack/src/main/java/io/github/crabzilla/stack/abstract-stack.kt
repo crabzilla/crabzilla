@@ -51,7 +51,7 @@ interface EventStore<A : AggregateRoot, C : Command, E : DomainEvent> {
 /**
  * A repository for snapshots
  */
-interface SnapshotRepository<A : AggregateRoot, C : Command, E : DomainEvent> {
+interface SnapshotRepository<A : AggregateRoot> {
   fun get(id: UUID): Future<Snapshot<A>?>
 }
 

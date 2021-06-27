@@ -1,9 +1,6 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.AggregateRoot
-import io.github.crabzilla.core.AggregateRootConfig
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.stack.SnapshotRepository
 import io.vertx.core.Future
@@ -17,11 +14,10 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
-class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
-  private val config: AggregateRootConfig<A, C, E>,
+class PgcSnapshotRepo<A : AggregateRoot>(
   private val pgPool: PgPool,
   private val json: Json
-) : SnapshotRepository<A, C, E> {
+) : SnapshotRepository<A> {
 
   companion object {
     private val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)

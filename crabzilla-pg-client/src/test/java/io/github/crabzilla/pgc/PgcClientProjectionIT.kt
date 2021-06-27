@@ -52,7 +52,7 @@ class PgcClientProjectionIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val snapshotRepo = PgcSnapshotRepo(customerConfig, pgPool, customerJson)
+    val snapshotRepo = PgcSnapshotRepo<Customer>(pgPool, customerJson)
     val controller = client.create(customerConfig, true, CustomerEventsProjector)
     snapshotRepo.get(id)
       .onFailure { tc.failNow(it) }

@@ -28,7 +28,7 @@ class PgcEventStoreIT {
 
   private lateinit var writeDb: PgPool
   private lateinit var eventStore: PgcEventStore<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var repo: PgcSnapshotRepo<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var repo: PgcSnapshotRepo<Customer>
   private lateinit var testRepo: PgcTestRepoHelper
 
   @BeforeEach
@@ -37,7 +37,7 @@ class PgcEventStoreIT {
       .compose { config ->
         writeDb = getPgPool(vertx, config)
         eventStore = PgcEventStore(customerConfig, writeDb, customerJson, false)
-        repo = PgcSnapshotRepo(customerConfig, writeDb, customerJson)
+        repo = PgcSnapshotRepo(writeDb, customerJson)
         testRepo = PgcTestRepoHelper(writeDb)
         cleanDatabase(vertx, config)
       }

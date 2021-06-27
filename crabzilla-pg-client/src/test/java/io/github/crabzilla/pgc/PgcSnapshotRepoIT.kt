@@ -1,8 +1,6 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerCommand
-import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
 import io.vertx.core.Vertx
@@ -24,7 +22,7 @@ import java.util.UUID
 class PgcSnapshotRepoIT {
 
   private lateinit var pgPool: PgPool
-  private lateinit var repo: PgcSnapshotRepo<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var repo: PgcSnapshotRepo<Customer>
   private lateinit var testRepoRepo: PgcTestRepoHelper
 
   @BeforeEach
@@ -32,7 +30,7 @@ class PgcSnapshotRepoIT {
     getConfig(vertx)
       .compose { config ->
         pgPool = getPgPool(vertx, config)
-        repo = PgcSnapshotRepo(customerConfig, pgPool, customerJson)
+        repo = PgcSnapshotRepo(pgPool, customerJson)
         testRepoRepo = PgcTestRepoHelper(pgPool)
         cleanDatabase(vertx, config)
       }

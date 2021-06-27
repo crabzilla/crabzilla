@@ -21,7 +21,7 @@ class PgcClient(val vertx: Vertx, val pgPool: PgPool, val json: Json) {
     config: AggregateRootConfig<A, C, E>,
     saveCommandOption: Boolean
   ): CommandController<A, C, E> {
-    val snapshotRepo = PgcSnapshotRepo(config, pgPool, json)
+    val snapshotRepo = PgcSnapshotRepo<A>(pgPool, json)
     val eventStore = PgcEventStore(config, pgPool, json, saveCommandOption)
     return CommandController(config.commandValidator, config.commandHandler, snapshotRepo, eventStore)
   }
@@ -34,7 +34,7 @@ class PgcClient(val vertx: Vertx, val pgPool: PgPool, val json: Json) {
     saveCommandOption: Boolean,
     projector: PgcEventsProjector<E>
   ): CommandController<A, C, E> {
-    val snapshotRepo = PgcSnapshotRepo(config, pgPool, json)
+    val snapshotRepo = PgcSnapshotRepo<A>(pgPool, json)
     val eventStore = PgcEventStore(config, pgPool, json, saveCommandOption, projector)
     return CommandController(config.commandValidator, config.commandHandler, snapshotRepo, eventStore)
   }

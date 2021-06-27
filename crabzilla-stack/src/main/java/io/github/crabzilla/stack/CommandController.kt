@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
 class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val validator: CommandValidator<C>,
   private val handler: CommandHandler<A, C, E>,
-  private val snapshotRepo: SnapshotRepository<A, C, E>,
+  private val snapshotRepo: SnapshotRepository<A>,
   private val eventStore: EventStore<A, C, E>
 ) {
   companion object {

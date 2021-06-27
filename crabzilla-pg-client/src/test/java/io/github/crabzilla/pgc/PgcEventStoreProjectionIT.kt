@@ -28,7 +28,7 @@ class PgcEventStoreProjectionIT {
 
   private lateinit var pgPool: PgPool
   private lateinit var eventStore: PgcEventStore<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var repo: PgcSnapshotRepo<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var repo: PgcSnapshotRepo<Customer>
   private lateinit var testRepo: PgcTestRepoHelper
 
   @BeforeEach
@@ -37,7 +37,7 @@ class PgcEventStoreProjectionIT {
       .compose { config ->
         pgPool = getPgPool(vertx, config)
         eventStore = PgcEventStore(customerConfig, pgPool, customerJson, false, CustomerEventsProjector)
-        repo = PgcSnapshotRepo(customerConfig, pgPool, customerJson)
+        repo = PgcSnapshotRepo(pgPool, customerJson)
         testRepo = PgcTestRepoHelper(pgPool)
         cleanDatabase(vertx, config)
       }

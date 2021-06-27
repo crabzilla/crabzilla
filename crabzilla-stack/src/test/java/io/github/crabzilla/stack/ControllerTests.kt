@@ -22,7 +22,7 @@ import java.util.UUID
 
 class ControllerTests : BehaviorSpec({
 
-  lateinit var snapshotRepo: SnapshotRepository<Customer, CustomerCommand, CustomerEvent>
+  lateinit var snapshotRepo: SnapshotRepository<Customer>
   lateinit var eventStore: EventStore<Customer, CustomerCommand, CustomerEvent>
 
   beforeTest {

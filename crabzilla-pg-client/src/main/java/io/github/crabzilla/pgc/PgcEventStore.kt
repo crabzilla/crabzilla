@@ -56,15 +56,6 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           AND version = $4"""
   }
 
-  private fun <A, B> foldLeft(iterator: Iterator<A>, identity: B, bf: BiFunction<B, A, B>): B {
-    var result = identity
-    while (iterator.hasNext()) {
-      val next = iterator.next()
-      result = bf.apply(result, next)
-    }
-    return result
-  }
-
   override fun append(command: C, metadata: CommandMetadata, session: StatefulSession<A, E>): Future<Void> {
 
     fun lockSnapshotIfVersionMatches(conn: SqlConnection): Future<Void> {
@@ -248,7 +239,16 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
     return promise.future()
   }
 
-  data class AppendedEvent<E>(val event: E, val causationId: UUID, val sequence: Long, val eventId: UUID)
+  private fun <A, B> foldLeft(iterator: Iterator<A>, identity: B, bf: BiFunction<B, A, B>): B {
+    var result = identity
+    while (iterator.hasNext()) {
+      val next = iterator.next()
+      result = bf.apply(result, next)
+    }
+    return result
+  }
 
-  data class AppendedEvents<E>(val events: List<AppendedEvent<E>>, val resultingVersion: Int)
+  private data class AppendedEvent<E>(val event: E, val causationId: UUID, val sequence: Long, val eventId: UUID)
+
+  private data class AppendedEvents<E>(val events: List<AppendedEvent<E>>, val resultingVersion: Int)
 }
