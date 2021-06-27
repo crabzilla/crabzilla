@@ -18,6 +18,7 @@ import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
+import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
@@ -26,7 +27,8 @@ import java.util.function.BiFunction
 class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val config: AggregateRootConfig<A, C, E>,
   private val pgPool: PgPool,
-  private val saveCommandOption: Boolean = false,
+  private val json: Json,
+  private val saveCommandOption: Boolean = true,
   private val eventsProjector: PgcEventsProjector<E>? = null,
 ) : EventStore<A, C, E> {
 
@@ -94,7 +96,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         return Future.succeededFuture(null)
       }
       val p = Promise.promise<Void>()
-      val cmdAsJson = command.toJson(config.json)
+      val cmdAsJson = command.toJson(json)
       log.debug("Will append command {} as {}", command, cmdAsJson)
       val params = Tuple.of(
         metadata.commandId.id,
@@ -112,7 +114,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
     fun appendEvents(conn: SqlConnection): Future<AppendedEvents<E>> {
       fun appendEvent(event: E, version: Int, causationId: CausationId): Future<AppendedEvent<E>> {
         val aePromise = Promise.promise<AppendedEvent<E>>()
-        val eventAsJson = event.toJson(config.json)
+        val eventAsJson = event.toJson(json)
         log.debug("Will append event {} as {}", event, eventAsJson)
         val params = Tuple.of(
           causationId.id,
@@ -166,7 +168,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
 
     fun updateVersion(conn: SqlConnection, resultingVersion: Int): Future<Void> {
       val promise = Promise.promise<Void>()
-      val newSTateAsJson = session.currentState.toJson(config.json)
+      val newSTateAsJson = session.currentState.toJson(json)
       log.debug("Will append snapshot {}", newSTateAsJson)
       if (session.originalVersion == 0) {
         val params = Tuple.of(

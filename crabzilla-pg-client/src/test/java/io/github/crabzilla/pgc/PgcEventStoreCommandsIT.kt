@@ -38,8 +38,8 @@ class PgcEventStoreCommandsIT {
     getConfig(vertx)
       .compose { config ->
         pgPool = getPgPool(vertx, config)
-        eventStore = PgcEventStore(customerConfig, pgPool, true)
-        repo = PgcSnapshotRepo(customerConfig, pgPool)
+        eventStore = PgcEventStore(customerConfig, pgPool, customerJson, true)
+        repo = PgcSnapshotRepo(customerConfig, pgPool, customerJson)
         testRepo = PgcTestRepoHelper(pgPool)
         cleanDatabase(vertx, config)
       }

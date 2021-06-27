@@ -36,8 +36,8 @@ class PgcEventStoreIT {
     getConfig(vertx)
       .compose { config ->
         writeDb = getPgPool(vertx, config)
-        eventStore = PgcEventStore(customerConfig, writeDb)
-        repo = PgcSnapshotRepo(customerConfig, writeDb)
+        eventStore = PgcEventStore(customerConfig, writeDb, customerJson, false)
+        repo = PgcSnapshotRepo(customerConfig, writeDb, customerJson)
         testRepo = PgcTestRepoHelper(writeDb)
         cleanDatabase(vertx, config)
       }

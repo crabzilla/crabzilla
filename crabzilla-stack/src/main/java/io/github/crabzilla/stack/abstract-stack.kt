@@ -6,7 +6,6 @@ import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.StatefulSession
 import io.vertx.core.Future
-import io.vertx.core.Vertx
 import java.util.UUID
 
 // es/cqrs infra stack
@@ -41,11 +40,6 @@ data class EventMetadata(
   val causationId: CausationId,
   val eventSequence: Long
 )
-
-class CrabzillaFactory(val vertx: Vertx) {
-  fun add(options: EventsPublisherOptions) {
-  }
-}
 
 /**
  * An event store to append new events

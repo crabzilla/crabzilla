@@ -6,6 +6,7 @@ import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerEventHandler
+import io.github.crabzilla.example1.customerJson
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
@@ -34,8 +35,8 @@ class PgcEventStoreRulesIT {
     getConfig(vertx)
       .compose { config ->
         pgPool = getPgPool(vertx, config)
-        eventStore = PgcEventStore(customerConfig, pgPool)
-        repo = PgcSnapshotRepo(customerConfig, pgPool)
+        eventStore = PgcEventStore(customerConfig, pgPool, customerJson, false)
+        repo = PgcSnapshotRepo(customerConfig, pgPool, customerJson)
         testRepo = PgcTestRepoHelper(pgPool)
         cleanDatabase(vertx, config)
       }

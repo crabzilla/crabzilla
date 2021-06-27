@@ -23,17 +23,18 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
-class PgcFullStackIT {
+class PgcClientIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
 
   companion object {
-    private val log = LoggerFactory.getLogger(PgcFullStackIT::class.java)
+    private val log = LoggerFactory.getLogger(PgcClientIT::class.java)
   }
 
   val id = UUID.randomUUID()
 
+  lateinit var client: PgcClient
   lateinit var pgPool: PgPool
 
   @BeforeEach
@@ -45,6 +46,7 @@ class PgcFullStackIT {
           .onFailure { tc.failNow(it.cause) }
           .compose {
             pgPool = getPgPool(vertx, config)
+            client = PgcClient(vertx, pgPool, customerJson)
             val projectorVerticle = CustomerEventsProjectorVerticle(customerJson, pgPool)
             val options = EventsPublisherOptions.Builder()
               .targetEndpoint(topic)
@@ -53,7 +55,7 @@ class PgcFullStackIT {
               .maxNumberOfRows(1)
               .statsInterval(30_000)
               .build()
-            val publisherVerticle = EventsPublisherVerticleFactory.create(topic, vertx.eventBus(), pgPool, options)
+            val publisherVerticle = client.create(topic, options)
             vertx.deployVerticle(projectorVerticle)
               .compose { vertx.deployVerticle(publisherVerticle) }
               .onFailure { tc.failNow(it.cause) }
@@ -68,8 +70,8 @@ class PgcFullStackIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val snapshotRepo = PgcSnapshotRepo(customerConfig, pgPool)
-    val controller = CommandControllerFactory.create(customerConfig, pgPool)
+    val snapshotRepo = PgcSnapshotRepo(customerConfig, pgPool, customerJson)
+    val controller = client.create(customerConfig, true)
     snapshotRepo.get(id)
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->

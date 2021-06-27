@@ -89,6 +89,5 @@ class AggregateRootConfig<A : AggregateRoot, C : Command, E : DomainEvent> (
   val name: String,
   val eventHandler: EventHandler<A, E>,
   val commandValidator: CommandValidator<C>,
-  val commandHandler: CommandHandler<A, C, E>,
-  val json: Json
+  val commandHandler: CommandHandler<A, C, E>
 )

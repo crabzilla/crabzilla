@@ -21,17 +21,12 @@ class CustomerEventsProjectorVerticle(private val json: Json, private val pgPool
   override fun start() {
     vertx.eventBus().consumer<JsonObject>(topic) { msg ->
       val eventRecord = EventRecord.fromJsonObject(msg.body())
-      pgPool.connection
+      pgPool.withConnection { conn ->
+        val event = DomainEvent.fromJson<CustomerEvent>(json, eventRecord.eventAsjJson.toString())
+        CustomerEventsProjector.project(conn, event, eventRecord.eventMetadata)
+      }
         .onFailure { msg.fail(500, it.message) }
-        .onSuccess {
-          val event = DomainEvent.fromJson<CustomerEvent>(json, eventRecord.eventAsjJson.toString())
-          CustomerEventsProjector.project(it, event, eventRecord.eventMetadata)
-            .onFailure { err -> msg.fail(500, err.message) }
-            .onSuccess {
-              log.info("Projected $eventRecord")
-              msg.reply(true)
-            }
-        }
+        .onSuccess { msg.reply(true) }
     }
     log.info("Started consuming from topic [$topic]")
   }
