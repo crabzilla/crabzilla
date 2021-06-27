@@ -37,9 +37,9 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
             
       - name: Docker for Postgress
-        run: docker-compose up
+        run: docker-compose up -d
       
       - name: Build
-        run: mvn clean install -DskipTests=true
+        run: mvn clean install
       
       
