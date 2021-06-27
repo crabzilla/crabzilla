@@ -1,6 +1,6 @@
-CREATE DATABASE example1_write OWNER user1;
+CREATE DATABASE ex1_crabzilla OWNER user1;
 
-\connect example1_write ;
+\connect ex1_crabzilla ;
 
 --- APP TABLES
 
@@ -10,8 +10,6 @@ CREATE TABLE projections (
    name TEXT PRIMARY KEY NOT NULL,
    last_offset BIGINT
 );
-
-INSERT INTO projections (name, last_offset) values ('customers', 0);
 
 --  snapshots table
 
@@ -73,4 +71,13 @@ CREATE TABLE events_1 PARTITION OF events
 CREATE TABLE events_2 PARTITION OF events
     FOR VALUES WITH (MODULUS 3, REMAINDER 2);
 
--- An implementation avoiding gaps in event sequence: https://dev.to/kspeakman/event-storage-in-postgres-4dk2
+-- application data
+
+CREATE TABLE customer_summary (
+    id UUID NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    is_active BOOLEAN NOT NULL,
+    PRIMARY KEY (id)
+);
+
+INSERT INTO projections (name, last_offset) values ('customers', 0);

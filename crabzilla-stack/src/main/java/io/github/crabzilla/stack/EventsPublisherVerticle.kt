@@ -16,7 +16,7 @@ import kotlin.math.min
 class EventsPublisherVerticle(
   private val eventsScanner: EventsScanner,
   private val eventsPublisher: EventsPublisher,
-  private val options: EventsPublisherVerticleOptions,
+  private val options: EventsPublisherOptions,
 ) : AbstractVerticle() {
 
   companion object {
@@ -52,7 +52,7 @@ class EventsPublisherVerticle(
       vertx.setTimer(nextInterval, action)
       log.debug("Rescheduled to next {} milliseconds", nextInterval)
     }
-    log.info("Started pooling events")
+    log.info("Started pooling events with {}", options)
   }
 
   override fun stop() {

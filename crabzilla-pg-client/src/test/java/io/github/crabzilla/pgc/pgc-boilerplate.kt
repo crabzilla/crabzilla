@@ -9,7 +9,6 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.pgclient.PgPool
-import io.vertx.pgclient.pubsub.PgSubscriber
 import io.vertx.sqlclient.PoolOptions
 
 fun getConfig(vertx: Vertx): Future<JsonObject> {
@@ -22,41 +21,32 @@ fun getConfig(vertx: Vertx): Future<JsonObject> {
   return retriever.config
 }
 
-fun writeModelPgPool(vertx: Vertx, config: JsonObject): PgPool {
-  return pgPool(vertx, config, "WRITE")
+fun getPgPool(vertx: Vertx, config: JsonObject): PgPool {
+  return pgPool(vertx, config)
 }
 
-fun readModelPgPool(vertx: Vertx, config: JsonObject): PgPool {
-  return pgPool(vertx, config, "READ")
-}
-
-fun pgSubscriber(vertx: Vertx, config: JsonObject): PgSubscriber {
-  return PgSubscriber.subscriber(vertx, pgConnectionOptions(vertx, config, "WRITE"))
-}
-
-fun pgConnectionOptions(vertx: Vertx, config: JsonObject, id: String): PgConnectOptions {
+fun pgConnectionOptions(vertx: Vertx, config: JsonObject): PgConnectOptions {
   return PgConnectOptions()
-    .setPort(config.getInteger("${id}_DATABASE_PORT"))
-    .setHost(config.getString("${id}_DATABASE_HOST"))
-    .setDatabase(config.getString("${id}_DATABASE_NAME"))
-    .setUser(config.getString("${id}_DATABASE_USER"))
-    .setPassword(config.getString("${id}_DATABASE_PASSWORD"))
+    .setPort(config.getInteger("DATABASE_PORT"))
+    .setHost(config.getString("DATABASE_HOST"))
+    .setDatabase(config.getString("DATABASE_NAME"))
+    .setUser(config.getString("DATABASE_USER"))
+    .setPassword(config.getString("DATABASE_PASSWORD"))
 }
 
-fun pgPool(vertx: Vertx, config: JsonObject, id: String): PgPool {
-  val pgPoolOptions = PoolOptions().setMaxSize(config.getInteger("${id}_DATABASE_POOL_MAX_SIZE"))
-  return PgPool.pool(vertx, pgConnectionOptions(vertx, config, id), pgPoolOptions)
+fun pgPool(vertx: Vertx, config: JsonObject): PgPool {
+  val pgPoolOptions = PoolOptions().setMaxSize(config.getInteger("DATABASE_POOL_MAX_SIZE"))
+  return PgPool.pool(vertx, pgConnectionOptions(vertx, config), pgPoolOptions)
 }
 
 fun cleanDatabase(vertx: Vertx, config: JsonObject): Future<Void> {
   val promise = Promise.promise<Void>()
-  val read = readModelPgPool(vertx, config)
-  val write = writeModelPgPool(vertx, config)
-  write.query("delete from commands").execute()
-    .compose { write.query("delete from events").execute() }
-    .compose { write.query("delete from snapshots").execute() }
-    .compose { write.query("update projections set last_offset = 0").execute() }
-    .compose { read.query("delete from customer_summary").execute() }
+  val pgPool = getPgPool(vertx, config)
+  pgPool.query("delete from commands").execute()
+    .compose { pgPool.query("delete from events").execute() }
+    .compose { pgPool.query("delete from snapshots").execute() }
+    .compose { pgPool.query("update projections set last_offset = 0").execute() }
+    .compose { pgPool.query("delete from customer_summary").execute() }
     .onSuccess {
       println("** Database is now clean")
       promise.complete()

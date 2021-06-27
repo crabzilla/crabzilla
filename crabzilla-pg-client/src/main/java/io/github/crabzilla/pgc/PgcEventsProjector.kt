@@ -9,5 +9,5 @@ import io.vertx.sqlclient.SqlConnection
  * To project events within the PgcEventStore (same db transaction)
  */
 interface PgcEventsProjector<E : DomainEvent> {
-  fun project(conn: SqlConnection, event: E, metadata: EventMetadata): Future<Void>
+  fun project(conn: SqlConnection, event: E, eventMetadata: EventMetadata): Future<Void>
 }

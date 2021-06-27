@@ -58,6 +58,15 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           AND version = $4"""
   }
 
+  private fun <A, B> foldLeft(iterator: Iterator<A>, identity: B, bf: BiFunction<B, A, B>): B {
+    var result = identity
+    while (iterator.hasNext()) {
+      val next = iterator.next()
+      result = bf.apply(result, next)
+    }
+    return result
+  }
+
   override fun append(command: C, metadata: CommandMetadata, session: StatefulSession<A, E>): Future<Void> {
 
     fun lockSnapshotIfVersionMatches(conn: SqlConnection): Future<Void> {
@@ -129,14 +138,6 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           }
         return aePromise.future()
       }
-      fun <A, B> foldLeft(iterator: Iterator<A>, identity: B, bf: BiFunction<B, A, B>): B {
-        var result = identity
-        while (iterator.hasNext()) {
-          val next = iterator.next()
-          result = bf.apply(result, next)
-        }
-        return result
-      }
 
       val aesPromise = Promise.promise<AppendedEvents<E>>()
       val initialFuture = Future.succeededFuture<AppendedEvent<E>?>(null)
@@ -191,14 +192,6 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
     }
 
     fun projectEvents(conn: SqlConnection, appendedEvents: AppendedEvents<E>): Future<Void> {
-      fun <A, B> foldLeft(iterator: Iterator<A>, identity: B, bf: BiFunction<B, A, B>): B {
-        var result = identity
-        while (iterator.hasNext()) {
-          val next = iterator.next()
-          result = bf.apply(result, next)
-        }
-        return result
-      }
       if (eventsProjector == null) {
         return Future.succeededFuture()
       }

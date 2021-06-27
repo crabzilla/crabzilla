@@ -22,17 +22,17 @@ import java.util.UUID
 @ExtendWith(VertxExtension::class)
 class PgcSnapshotRepoIT {
 
-  private lateinit var writeDb: PgPool
+  private lateinit var pgPool: PgPool
   private lateinit var repo: PgcSnapshotRepo<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var testRepo: PgcEventRepoTestHelper
+  private lateinit var testRepoRepo: PgcTestRepoHelper
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     getConfig(vertx)
       .compose { config ->
-        writeDb = writeModelPgPool(vertx, config)
-        repo = PgcSnapshotRepo(customerConfig, writeDb)
-        testRepo = PgcEventRepoTestHelper(writeDb)
+        pgPool = getPgPool(vertx, config)
+        repo = PgcSnapshotRepo(customerConfig, pgPool)
+        testRepoRepo = PgcTestRepoHelper(pgPool)
         cleanDatabase(vertx, config)
       }
       .onFailure { tc.failNow(it.cause) }
@@ -59,7 +59,7 @@ class PgcSnapshotRepoIT {
       .put("id", id.toString())
       .put("name", "c1")
       .put("isActive", false)
-    testRepo.upsert(id, customerConfig.name, 1, snapshotAsJson)
+    testRepoRepo.upsert(id, customerConfig.name, 1, snapshotAsJson)
       .compose { repo.get(id) }
       .onFailure { err -> tc.failNow(err) }
       .onSuccess { snapshot ->

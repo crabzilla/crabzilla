@@ -3,14 +3,14 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.CustomerRepository
+import io.github.crabzilla.example1.CustomerEventsProjectorVerticle
+import io.github.crabzilla.example1.CustomerEventsProjectorVerticle.Companion.topic
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
-import io.github.crabzilla.pgc.CustomerProjectorVerticle.Companion.topic
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.EventsPublisherOptions
 import io.github.crabzilla.stack.EventsPublisherVerticle
-import io.github.crabzilla.stack.EventsPublisherVerticleOptions
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -34,8 +34,7 @@ class PgcFullStackIT {
 
   val id = UUID.randomUUID()
 
-  lateinit var writeDb: PgPool
-  lateinit var readDb: PgPool
+  lateinit var pgPool: PgPool
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
@@ -45,18 +44,16 @@ class PgcFullStackIT {
         cleanDatabase(vertx, config)
           .onFailure { tc.failNow(it.cause) }
           .compose {
-            writeDb = writeModelPgPool(vertx, config)
-            readDb = readModelPgPool(vertx, config)
-            val projectorVerticle = CustomerProjectorVerticle(customerJson, CustomerRepository(readDb))
-            val options = EventsPublisherVerticleOptions.Builder()
+            pgPool = getPgPool(vertx, config)
+            val projectorVerticle = CustomerEventsProjectorVerticle(customerJson, pgPool)
+            val options = EventsPublisherOptions.Builder()
               .targetEndpoint(topic)
-              .eventBus(vertx.eventBus())
               .interval(500)
               .maxInterval(60_000)
               .maxNumberOfRows(1)
               .statsInterval(30_000)
               .build()
-            val publisherVerticle = EventsPublisherVerticleFactory.create(topic, writeDb, options)
+            val publisherVerticle = EventsPublisherVerticleFactory.create(topic, vertx.eventBus(), pgPool, options)
             vertx.deployVerticle(projectorVerticle)
               .compose { vertx.deployVerticle(publisherVerticle) }
               .onFailure { tc.failNow(it.cause) }
@@ -71,8 +68,8 @@ class PgcFullStackIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val snapshotRepo = PgcSnapshotRepo(customerConfig, writeDb)
-    val controller = CommandControllerFactory.create(customerConfig, writeDb)
+    val snapshotRepo = PgcSnapshotRepo(customerConfig, pgPool)
+    val controller = CommandControllerFactory.create(customerConfig, pgPool)
     snapshotRepo.get(id)
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->

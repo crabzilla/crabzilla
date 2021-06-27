@@ -24,7 +24,7 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
       WHERE sequence > (select last_offset from projections where name = $1)
       ORDER BY sequence
       limit $2
-    """.trimIndent()
+    """
 
   private val updateOffset =
     "UPDATE projections SET last_offset = $1 WHERE projections.name = $2"

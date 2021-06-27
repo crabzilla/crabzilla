@@ -5,6 +5,7 @@ import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand
 import io.github.crabzilla.example1.CustomerEvent
+import io.github.crabzilla.example1.CustomerEventsProjector
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerEventHandler
 import io.github.crabzilla.example1.customerJson
@@ -24,9 +25,9 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PgcEventStoreIT {
+class PgcEventStoreWithProjectorIT {
 
-  private lateinit var writeDb: PgPool
+  private lateinit var pgPool: PgPool
   private lateinit var eventStore: PgcEventStore<Customer, CustomerCommand, CustomerEvent>
   private lateinit var repo: PgcSnapshotRepo<Customer, CustomerCommand, CustomerEvent>
   private lateinit var testRepo: PgcTestRepoHelper
@@ -35,10 +36,10 @@ class PgcEventStoreIT {
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     getConfig(vertx)
       .compose { config ->
-        writeDb = getPgPool(vertx, config)
-        eventStore = PgcEventStore(customerConfig, writeDb)
-        repo = PgcSnapshotRepo(customerConfig, writeDb)
-        testRepo = PgcTestRepoHelper(writeDb)
+        pgPool = getPgPool(vertx, config)
+        eventStore = PgcEventStore(customerConfig, pgPool, true, CustomerEventsProjector)
+        repo = PgcSnapshotRepo(customerConfig, pgPool)
+        testRepo = PgcTestRepoHelper(pgPool)
         cleanDatabase(vertx, config)
       }
       .onFailure { tc.failNow(it.cause) }
