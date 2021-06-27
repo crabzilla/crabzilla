@@ -35,8 +35,14 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
+            
+      - name: Docker for Postgress
+        run: docker-compose up -d
       
-      - name: Build
-        run: mvn clean install -DskipTests=true
+      - name: Build and test
+        run: mvn clean install
+        
+      - name: Upload reports to codecov
+        run: bash <(curl -s https://codecov.io/bash)
       
       
