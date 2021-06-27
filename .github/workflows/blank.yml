@@ -39,7 +39,10 @@ jobs:
       - name: Docker for Postgress
         run: docker-compose up -d
       
-      - name: Build
+      - name: Build and test
         run: mvn clean install
+        
+      - name: Upload reports to codecov
+        run: bash <(curl -s https://codecov.io/bash)
       
       
