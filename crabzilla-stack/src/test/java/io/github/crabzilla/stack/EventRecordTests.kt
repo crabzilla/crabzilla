@@ -12,22 +12,35 @@ class EventRecordTests {
   val id = UUID.fromString("c2aeadc1-d6b5-4df6-82a4-7dec4f1df429")
   val event = CustomerEvent.CustomerRegistered(id, "customer1")
   val eventAsJson = JsonObject(event.toJson(customerJson))
-  val eventRecord = EventRecord("Customer", id, eventAsJson, 1)
+  val eventMetadata = EventMetadata(
+    "Customer", AggregateRootId(id),
+    EventId(UUID.randomUUID()), CorrelationId(UUID.randomUUID()), CausationId(UUID.randomUUID()),
+    1
+  )
+  val eventRecord = EventRecord(eventMetadata, eventAsJson)
   val eventRecordAsJson = eventRecord.toJsonObject()
-  val expected =
-    """{"aggregateName":"Customer",
-        |"aggregateId":"$id",
-        |"eventAsjJson"
-        |:{"type":"CustomerRegistered","id":"$id","name":"customer1"},"eventId":1}"""
-      .trimMargin()
+  val expectedAsJson =
+    JsonObject(
+      """{"aggregateName":"Customer",
+        "aggregateId":"$id",
+        "eventAsjJson":{"type":"CustomerRegistered","id":"$id","name":"customer1"},
+        "eventSequence":1,
+        "eventId":"${eventRecord.eventMetadata.eventId.id}",
+        "causationId":"${eventRecord.eventMetadata.causationId.id}",
+        "correlationId":"${eventRecord.eventMetadata.correlationId.id}"
+        }
+        """
+    )
 
   @Test
   fun toJson() {
-    assertThat(eventRecordAsJson).isEqualTo(JsonObject(expected))
+//    println(eventRecordAsJson.encodePrettily())
+//    println(expectedAsJson.encodePrettily())
+    assertThat(eventRecordAsJson).isEqualTo(expectedAsJson)
   }
 
   @Test
   fun fromJson() {
-    assertThat(EventRecord.fromJsonObject(JsonObject(expected))).isEqualTo(eventRecord)
+    assertThat(EventRecord.fromJsonObject(expectedAsJson)).isEqualTo(eventRecord)
   }
 }

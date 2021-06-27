@@ -1,32 +1,56 @@
 package io.github.crabzilla.pgc
 
-import io.vertx.core.Future
-import io.vertx.sqlclient.SqlConnection
-import io.vertx.sqlclient.Transaction
-import org.slf4j.LoggerFactory
+import io.github.crabzilla.core.AggregateRoot
+import io.github.crabzilla.core.AggregateRootConfig
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.stack.CommandController
+import io.github.crabzilla.stack.EventBusPublisher
+import io.github.crabzilla.stack.EventsPublisherOptions
+import io.github.crabzilla.stack.EventsPublisherVerticle
+import io.vertx.core.Vertx
+import io.vertx.pgclient.PgPool
+import kotlinx.serialization.json.Json
 
-object PgcClient {
+class PgcClient(val vertx: Vertx, val pgPool: PgPool, val json: Json) {
 
-  private val log = LoggerFactory.getLogger(PgcClient::class.java)
-
-  fun rollback(tx: Transaction, throwable: Throwable) {
-    log.error("Will rollback transaction given ${throwable.message}")
-    tx.rollback()
-      .onFailure { log.error("On transaction rollback", it) }
-      .onSuccess {
-        log.debug("Transaction successfully rolled back")
-      }
+  /**
+   * Creates a CommandController
+   */
+  fun <A : AggregateRoot, C : Command, E : DomainEvent> create(
+    config: AggregateRootConfig<A, C, E>,
+    saveCommandOption: Boolean
+  ): CommandController<A, C, E> {
+    val snapshotRepo = PgcSnapshotRepo<A>(pgPool, json)
+    val eventStore = PgcEventStore(config, pgPool, json, saveCommandOption)
+    return CommandController(config.commandValidator, config.commandHandler, snapshotRepo, eventStore)
   }
 
-  fun close(conn: SqlConnection) {
-    log.debug("Will close db connection")
-    conn.close()
-      .onFailure { log.error("When closing db connection") }
-      .onSuccess { log.debug("Connection closed") }
+  /**
+   * Creates a CommandController with support to an PgcEventsProjector
+   */
+  fun <A : AggregateRoot, C : Command, E : DomainEvent> create(
+    config: AggregateRootConfig<A, C, E>,
+    saveCommandOption: Boolean,
+    projector: PgcEventsProjector<E>
+  ): CommandController<A, C, E> {
+    val snapshotRepo = PgcSnapshotRepo<A>(pgPool, json)
+    val eventStore = PgcEventStore(config, pgPool, json, saveCommandOption, projector)
+    return CommandController(config.commandValidator, config.commandHandler, snapshotRepo, eventStore)
   }
 
-  fun commit(tx: Transaction): Future<Void> {
-    log.debug("Will commit transaction")
-    return tx.commit().mapEmpty()
+  /**
+   * Creates a EventsPublisherVerticle
+   */
+  fun create(
+    projection: String,
+    options: EventsPublisherOptions
+  ): EventsPublisherVerticle {
+    val eventsScanner = PgcEventsScanner(pgPool, projection)
+    // consider an additional optional param to filter events
+    return EventsPublisherVerticle(
+      eventsScanner,
+      EventBusPublisher(options.targetEndpoint, vertx.eventBus()), options
+    )
   }
 }

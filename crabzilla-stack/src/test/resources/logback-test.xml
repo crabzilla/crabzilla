@@ -1,17 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration debug="false">
 
-  <!--  <statusListener class="ch.qos.logback.core.status.NopStatusListener" />-->
+    <!--    <conversionRule conversionWord="vcl"-->
+    <!--                    converterClass="io.reactiverse.contextual.logging.LogbackConverter"/>-->
 
-  <!--  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">-->
-  <!--    <encoder>-->
-  <!--      <charset>UTF-8</charset>-->
-  <!--      <pattern>%d %-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>-->
-  <!--    </encoder>-->
-  <!--  </appender>-->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
 
-  <!--  <root level="DEBUG">-->
-  <!--    <appender-ref ref="STDOUT"/>-->
-  <!--  </root>-->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <charset>UTF-8</charset>
+            <!--        <pattern>%d %-4relative [%thread] %-5level [%vcl{commandId}] %logger{35} - %msg%n</pattern>-->
+            <pattern>%d %-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="DEBUG">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <logger name="io.netty" level="WARN"/>
+    <logger name="io.mockk" level="WARN"/>
 
 </configuration>

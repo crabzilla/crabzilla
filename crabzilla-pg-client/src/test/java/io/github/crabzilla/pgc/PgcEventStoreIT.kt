@@ -26,21 +26,19 @@ import java.util.UUID
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgcEventStoreIT {
 
-  // TODO check if appended data match
-
   private lateinit var writeDb: PgPool
   private lateinit var eventStore: PgcEventStore<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var repo: PgcSnapshotRepo<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var testRepo: PgcEventRepoTestHelper
+  private lateinit var repo: PgcSnapshotRepo<Customer>
+  private lateinit var testRepo: PgcTestRepoHelper
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     getConfig(vertx)
       .compose { config ->
-        writeDb = writeModelPgPool(vertx, config)
-        eventStore = PgcEventStore(customerConfig, writeDb)
-        repo = PgcSnapshotRepo(customerConfig, writeDb)
-        testRepo = PgcEventRepoTestHelper(writeDb)
+        writeDb = getPgPool(vertx, config)
+        eventStore = PgcEventStore(customerConfig, writeDb, customerJson, false)
+        repo = PgcSnapshotRepo(writeDb, customerJson)
+        testRepo = PgcTestRepoHelper(writeDb)
         cleanDatabase(vertx, config)
       }
       .onFailure { tc.failNow(it.cause) }
@@ -50,7 +48,7 @@ class PgcEventStoreIT {
   }
 
   @Test
-  @DisplayName("can append 1 command with 2 events resulting in version2")
+  @DisplayName("appending 1 command with 2 events results in version 2 ")
   fun s1(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
@@ -102,7 +100,7 @@ class PgcEventStoreIT {
   }
 
   @Test
-  @DisplayName("appending 2 commands with 2 and 1 event, respectively")
+  @DisplayName("appending 2 commands with 2 and 1 event, respectively results in version 3")
   fun s11(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")
@@ -135,7 +133,7 @@ class PgcEventStoreIT {
                     assertThat(eventsList.size).isEqualTo(3)
                     // check register event
                     val asJson1 = eventsList[0]
-                    println(asJson1.encodePrettily())
+                    // println(asJson1.encodePrettily())
                     assertThat(asJson1.getString("ar_name")).isEqualTo(customerConfig.name)
                     assertThat(asJson1.getString("ar_id")).isEqualTo(id.toString())
                     assertThat(asJson1.getInteger("version")).isEqualTo(1)
@@ -173,61 +171,6 @@ class PgcEventStoreIT {
                     tc.completeNow()
                   }
               }
-          }
-      }
-  }
-
-  @Test
-  @DisplayName("cannot append version 1 twice")
-  fun s2(tc: VertxTestContext) {
-    val id = UUID.randomUUID()
-    val customer = Customer.create(id = id, name = "c1")
-    val cmd1 = CustomerCommand.ActivateCustomer("is needed")
-    val metadata1 = CommandMetadata(AggregateRootId(id))
-    val session1 = StatefulSession(0, customer.state, customerEventHandler)
-    session1.execute { it.activate(cmd1.reason) }
-
-    val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(AggregateRootId(id))
-    val session2 = StatefulSession(0, customer.state, customerEventHandler)
-    session2.execute { it.deactivate(cmd1.reason) }
-
-    eventStore.append(cmd1, metadata1, session1)
-      .onFailure { tc.failNow(it) }
-      .onSuccess {
-        eventStore.append(cmd2, metadata2, session2)
-          .onSuccess { tc.failNow("should fail") }
-          .onFailure { err ->
-            tc.verify { assertThat(err.message).isEqualTo("The current version [1] should be [0]") }
-            tc.completeNow()
-          }
-      }
-  }
-
-  @Test
-  @DisplayName("cannot append version 3 after version 1")
-  fun s22(tc: VertxTestContext) {
-    val id = UUID.randomUUID()
-    val customer = Customer.create(id = id, name = "c1")
-
-    val cmd1 = CustomerCommand.ActivateCustomer("is needed")
-    val metadata1 = CommandMetadata(AggregateRootId(id))
-    val session1 = StatefulSession(0, customer.state, customerEventHandler)
-    session1.execute { it.activate(cmd1.reason) }
-
-    val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(AggregateRootId(id))
-    val session2 = StatefulSession(2, customer.state, customerEventHandler)
-    session2.execute { it.deactivate(cmd1.reason) }
-
-    eventStore.append(cmd1, metadata1, session1)
-      .onFailure { tc.failNow(it) }
-      .onSuccess {
-        eventStore.append(cmd2, metadata2, session2)
-          .onSuccess { tc.failNow("should fail") }
-          .onFailure { err ->
-            tc.verify { assertThat(err.message).isEqualTo("The current version [1] should be [2]") }
-            tc.completeNow()
           }
       }
   }

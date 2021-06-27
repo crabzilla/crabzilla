@@ -8,7 +8,7 @@ import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
 import java.util.UUID
 
-class PgcEventRepoTestHelper(private val writeModelDb: PgPool) {
+class PgcTestRepoHelper(private val pgPool: PgPool) {
 
   companion object {
     private const val SQL_UPSERT_VERSION =
@@ -27,32 +27,15 @@ class PgcEventRepoTestHelper(private val writeModelDb: PgPool) {
 
   fun upsert(id: UUID, type: String, version: Int, snapshotAsJson: JsonObject): Future<Void> {
     val tuple = Tuple.of(id, type, version, snapshotAsJson)
-    return writeModelDb.preparedQuery(SQL_UPSERT_VERSION).execute(tuple).mapEmpty()
+    return pgPool.preparedQuery(SQL_UPSERT_VERSION).execute(tuple).mapEmpty()
   }
 
   fun scanEvents(afterSequence: Long, numberOfRows: Int): Future<List<JsonObject>> {
-    return writeModelDb.withConnection { client ->
+    return pgPool.withConnection { client ->
       client.prepare(selectAfterOffset)
         .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(afterSequence, numberOfRows)) }
         .map { rowSet: RowSet<Row> ->
           rowSet.iterator().asSequence().map { row: Row ->
-            /**
-             * {
-             "sequence" : 19,
-             "event_payload" : {
-             "id" : "21581486-8d89-4304-b0ad-6f681c650a2e",
-             "name" : "c1",
-             "type" : "CustomerRegistered"
-             },
-             "ar_name" : "Customer",
-             "ar_id" : "21581486-8d89-4304-b0ad-6f681c650a2e",
-             "version" : 1,
-             "id" : "7ddec748-95da-4005-8acb-a4d53b6f9226",
-             "causation_id" : "d045279c-9d80-424f-b39e-8769d76ca369",
-             "correlation_id" : "d045279c-9d80-424f-b39e-8769d76ca369",
-             "inserted_on" : "2021-06-18T18:42:16.535003"
-             }
-             */
             val json = JsonObject()
             json.put("sequence", row.getLong("sequence"))
             json.put("event_payload", row.getValue("event_payload").toString())
@@ -66,5 +49,32 @@ class PgcEventRepoTestHelper(private val writeModelDb: PgPool) {
           }.toList()
         }
     }
+  }
+
+  fun getAllCustomers(): Future<List<JsonObject>> {
+    return pgPool.query("SELECT * FROM customer_summary")
+      .execute()
+      .map { rowSet: RowSet<Row> ->
+        rowSet.iterator().asSequence().map { row: Row ->
+          val json = JsonObject()
+          json.put("id", row.getUUID("id").toString())
+          json.put("name", row.getString("name"))
+          json.put("is_active", row.getBoolean("is_active"))
+          json
+        }.toList()
+      }
+  }
+
+  fun getAllCommands(): Future<List<JsonObject>> {
+    return pgPool.query("SELECT * FROM commands")
+      .execute()
+      .map { rowSet: RowSet<Row> ->
+        rowSet.iterator().asSequence().map { row: Row ->
+          val json = JsonObject()
+          json.put("cmd_id", row.getUUID("cmd_id").toString())
+          json.put("cmd_payload", row.getJsonObject("cmd_payload"))
+          json
+        }.toList()
+      }
   }
 }

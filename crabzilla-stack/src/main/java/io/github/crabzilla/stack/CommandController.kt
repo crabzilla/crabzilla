@@ -20,11 +20,10 @@ import org.slf4j.LoggerFactory
 class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val validator: CommandValidator<C>,
   private val handler: CommandHandler<A, C, E>,
-  private val snapshotRepo: SnapshotRepository<A, C, E>,
+  private val snapshotRepo: SnapshotRepository<A>,
   private val eventStore: EventStore<A, C, E>
 ) {
   companion object {
-    // TODO https://reactiverse.io/reactiverse-contextual-logging/
     private val log = LoggerFactory.getLogger(CommandController::class.java)
   }
 
@@ -32,26 +31,22 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
     val promise = Promise.promise<StatefulSession<A, E>>()
     log.debug("received {}", command)
     val validationErrors = validator.validate(command)
-
     if (validationErrors.isNotEmpty()) {
       promise.fail(CommandException.ValidationException(validationErrors))
-      log.error("Invalid command $metadata\n $command \n$validationErrors")
       return promise.future()
     }
     log.debug("Will get snapshot for aggregate {}", metadata.aggregateRootId)
     snapshotRepo.get(metadata.aggregateRootId.id)
       .onFailure { err ->
-        log.error("Could not get snapshot", err)
         promise.fail(err)
       }
       .onSuccess { snapshot ->
         log.debug("Got snapshot {}. Now let's handle the command", snapshot)
         try {
           val session = handler.handleCommand(command, snapshot)
-          log.debug("Command handled. {}. Now let's append it events", session)
+          log.debug("Command handled. {}. Now let's append it events", session.toSessionData())
           eventStore.append(command, metadata, session)
             .onFailure { err ->
-              log.error("When appending events", err)
               promise.fail(err)
             }
             .onSuccess {
@@ -59,7 +54,6 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
               promise.complete(session)
             }
         } catch (e: Throwable) {
-          log.error("Command error", e)
           promise.fail(e)
         }
       }

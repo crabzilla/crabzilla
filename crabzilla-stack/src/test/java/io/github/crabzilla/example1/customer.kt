@@ -182,12 +182,11 @@ val customerModule = SerializersModule {
   }
 }
 
-val customerJson = Json { serializersModule = customerModule }
-
 val customerConfig = AggregateRootConfig(
   "Customer",
   customerEventHandler,
   customerCmdValidator,
-  CustomerCommandHandler,
-  customerJson
+  CustomerCommandHandler
 )
+
+val customerJson = Json { serializersModule = customerModule }

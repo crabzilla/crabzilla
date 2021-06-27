@@ -1,5 +1,10 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.stack.AggregateRootId
+import io.github.crabzilla.stack.CausationId
+import io.github.crabzilla.stack.CorrelationId
+import io.github.crabzilla.stack.EventId
+import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.EventsScanner
 import io.vertx.core.Future
@@ -14,12 +19,12 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
 
   private val selectAfterOffset =
     """
-      SELECT ar_name, ar_id, event_payload, sequence
+      SELECT ar_name, ar_id, event_payload, sequence, id, causation_id, correlation_id
       FROM events
       WHERE sequence > (select last_offset from projections where name = $1)
       ORDER BY sequence
       limit $2
-    """.trimIndent()
+    """
 
   private val updateOffset =
     "UPDATE projections SET last_offset = $1 WHERE projections.name = $2"
@@ -34,18 +39,26 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
         .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(streamName, numberOfRows)) }
         .map { rowSet: RowSet<Row> ->
           rowSet.iterator().asSequence().map { row: Row ->
-            val jsonObject = JsonObject(row.getValue(2).toString())
-            EventRecord(row.getString(0), row.getUUID(1), jsonObject, row.getLong(3))
+            val eventMetadata = EventMetadata(
+              row.getString("ar_name"),
+              AggregateRootId(row.getUUID("ar_id")),
+              EventId(row.getUUID("id")),
+              CorrelationId(row.getUUID("correlation_id")),
+              CausationId(row.getUUID("causation_id")),
+              row.getLong("sequence")
+            )
+            val jsonObject = JsonObject(row.getValue("event_payload").toString())
+            EventRecord(eventMetadata, jsonObject)
           }.toList()
         }
     }
   }
 
-  override fun updateOffSet(eventId: Long): Future<Void> {
+  override fun updateOffSet(eventSequence: Long): Future<Void> {
     return writeModelDb.withConnection { client ->
       client.prepare(updateOffset)
     }.compose { ps2 ->
-      ps2.query().execute(Tuple.of(eventId, streamName))
+      ps2.query().execute(Tuple.of(eventSequence, streamName))
     }.mapEmpty()
   }
 }

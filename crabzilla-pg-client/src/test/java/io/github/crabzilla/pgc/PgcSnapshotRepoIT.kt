@@ -1,9 +1,8 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerCommand
-import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerConfig
+import io.github.crabzilla.example1.customerJson
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -22,17 +21,17 @@ import java.util.UUID
 @ExtendWith(VertxExtension::class)
 class PgcSnapshotRepoIT {
 
-  private lateinit var writeDb: PgPool
-  private lateinit var repo: PgcSnapshotRepo<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var testRepo: PgcEventRepoTestHelper
+  private lateinit var pgPool: PgPool
+  private lateinit var repo: PgcSnapshotRepo<Customer>
+  private lateinit var testRepoRepo: PgcTestRepoHelper
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     getConfig(vertx)
       .compose { config ->
-        writeDb = writeModelPgPool(vertx, config)
-        repo = PgcSnapshotRepo(customerConfig, writeDb)
-        testRepo = PgcEventRepoTestHelper(writeDb)
+        pgPool = getPgPool(vertx, config)
+        repo = PgcSnapshotRepo(pgPool, customerJson)
+        testRepoRepo = PgcTestRepoHelper(pgPool)
         cleanDatabase(vertx, config)
       }
       .onFailure { tc.failNow(it.cause) }
@@ -59,7 +58,7 @@ class PgcSnapshotRepoIT {
       .put("id", id.toString())
       .put("name", "c1")
       .put("isActive", false)
-    testRepo.upsert(id, customerConfig.name, 1, snapshotAsJson)
+    testRepoRepo.upsert(id, customerConfig.name, 1, snapshotAsJson)
       .compose { repo.get(id) }
       .onFailure { err -> tc.failNow(err) }
       .onSuccess { snapshot ->

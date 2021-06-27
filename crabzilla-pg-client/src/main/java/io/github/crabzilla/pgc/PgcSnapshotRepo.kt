@@ -1,9 +1,6 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.AggregateRoot
-import io.github.crabzilla.core.AggregateRootConfig
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.stack.SnapshotRepository
 import io.vertx.core.Future
@@ -13,13 +10,14 @@ import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
+import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
-class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
-  private val config: AggregateRootConfig<A, C, E>,
-  private val writeModelDb: PgPool
-) : SnapshotRepository<A, C, E> {
+class PgcSnapshotRepo<A : AggregateRoot>(
+  private val pgPool: PgPool,
+  private val json: Json
+) : SnapshotRepository<A> {
 
   companion object {
     private val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
@@ -36,7 +34,7 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
           null
         } else {
           val stateAsJson = JsonObject(rowSet.first().getValue(1).toString())
-          val state = AggregateRoot.fromJson<A>(config.json, stateAsJson.encode())
+          val state = AggregateRoot.fromJson<A>(json, stateAsJson.encode())
           Snapshot(state, rowSet.first().getInteger("version"))
         }
       }
@@ -45,6 +43,6 @@ class PgcSnapshotRepo<A : AggregateRoot, C : Command, E : DomainEvent>(
         .execute(Tuple.of(id))
         .map { pgRow -> snapshot(pgRow) }
     }
-    return writeModelDb.withConnection { conn: SqlConnection -> currentSnapshot(conn) }
+    return pgPool.withConnection { conn: SqlConnection -> currentSnapshot(conn) }
   }
 }

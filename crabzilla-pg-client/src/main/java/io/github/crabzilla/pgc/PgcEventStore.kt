@@ -5,19 +5,20 @@ import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.StatefulSession
-import io.github.crabzilla.pgc.PgcClient.close
-import io.github.crabzilla.pgc.PgcClient.commit
-import io.github.crabzilla.pgc.PgcClient.rollback
+import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CommandException
 import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.CorrelationId
+import io.github.crabzilla.stack.EventId
+import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventStore
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.SqlConnection
-import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
+import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
@@ -25,8 +26,10 @@ import java.util.function.BiFunction
 
 class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val config: AggregateRootConfig<A, C, E>,
-  private val writeModelDb: PgPool,
-  private val saveCommandOption: Boolean = true
+  private val pgPool: PgPool,
+  private val json: Json,
+  private val saveCommandOption: Boolean = true,
+  private val eventsProjector: PgcEventsProjector<E>? = null,
 ) : EventStore<A, C, E> {
 
   companion object {
@@ -41,8 +44,8 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       """ INSERT INTO commands (cmd_id, cmd_payload)
           VALUES ($1, $2)"""
     const val SQL_APPEND_EVENT =
-      """ INSERT INTO events (event_payload, ar_name, ar_id, version, correlation_id, causation_id)
-          VALUES ($1, $2, $3, $4, $5, $6) returning id"""
+      """ INSERT INTO events (causation_id, correlation_id, ar_name, ar_id, event_payload, version)
+          VALUES ($1, $2, $3, $4, $5, $6) returning id, causation_id, sequence"""
     const val SQL_INSERT_VERSION =
       """ INSERT INTO snapshots (version, json_content, ar_id, ar_type)
           VALUES ($1, $2, $3, $4)"""
@@ -60,19 +63,20 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       conn.preparedQuery(SQL_LOCK_VERSION)
         .execute(Tuple.of(metadata.aggregateRootId.id, config.name))
         .onSuccess { rowSet ->
-          val currentVersion = if (rowSet.size() == 0) { 0 } else { rowSet.first().getInteger("version") }
+          val currentVersion = if (rowSet.size() == 0) {
+            0
+          } else {
+            rowSet.first().getInteger("version")
+          }
           log.debug("Got current version: {}", currentVersion)
           if (currentVersion != session.originalVersion) {
             val message = "The current version [$currentVersion] should be [${session.originalVersion}]"
-            log.debug(message)
             promise0.fail(CommandException.OptimisticLockingException(message))
           } else {
-            log.debug("Version is {}", currentVersion)
             promise0.complete()
           }
         }
         .onFailure {
-          log.error("When get snapshot", it)
           promise0.fail(it)
         }
       return promise0.future()
@@ -83,7 +87,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         return Future.succeededFuture(null)
       }
       val p = Promise.promise<Void>()
-      val cmdAsJson = command.toJson(config.json)
+      val cmdAsJson = command.toJson(json)
       log.debug("Will append command {} as {}", command, cmdAsJson)
       val params = Tuple.of(
         metadata.commandId.id,
@@ -98,57 +102,56 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       return p.future()
     }
 
-    fun appendEvents(conn: SqlConnection): Future<Int> {
-      fun appendEvent(event: E, version: Int, causationId: UUID): Future<Pair<Boolean, UUID>> {
-        val aePromise = Promise.promise<Pair<Boolean, UUID>>()
-        val eventAsJson = event.toJson(config.json)
+    fun appendEvents(conn: SqlConnection): Future<AppendedEvents<E>> {
+      fun appendEvent(event: E, version: Int, causationId: CausationId): Future<AppendedEvent<E>> {
+        val aePromise = Promise.promise<AppendedEvent<E>>()
+        val eventAsJson = event.toJson(json)
         log.debug("Will append event {} as {}", event, eventAsJson)
         val params = Tuple.of(
-          JsonObject(eventAsJson),
+          causationId.id,
+          metadata.correlationId.id,
           config.name,
           metadata.aggregateRootId.id,
-          version,
-          metadata.correlationId.id,
-          causationId
+          JsonObject(eventAsJson),
+          version
         )
         conn.preparedQuery(SQL_APPEND_EVENT)
           .execute(params)
           .onFailure { aePromise.fail(it) }
           .onSuccess { rs ->
-            aePromise.complete(Pair(true, rs.first().getUUID("id")))
-            log.debug("Append event ok {}", event)
+            val appendedEvent = AppendedEvent(
+              event,
+              rs.first().getUUID("causation_id"),
+              rs.first().getLong("sequence"),
+              rs.first().getUUID("id")
+            )
+            aePromise.complete(appendedEvent)
+            log.debug("Append event ok {}", appendedEvent)
           }
         return aePromise.future()
       }
-      fun <A, B> foldLeft(iterator: Iterator<A>, identity: B, bf: BiFunction<B, A, B>): B {
-        var result = identity
-        while (iterator.hasNext()) {
-          val next = iterator.next()
-          result = bf.apply(result, next)
-        }
-        return result
-      }
 
-      val aesPromise = Promise.promise<Int>()
-      val initialFuture = Future.succeededFuture(Pair(true, metadata.commandId.id))
+      val aesPromise = Promise.promise<AppendedEvents<E>>()
+      val initialFuture = Future.succeededFuture<AppendedEvent<E>?>(null)
       val version = AtomicInteger(session.originalVersion)
+      val eventsAdded = mutableListOf<AppendedEvent<E>>()
       foldLeft(
         session.appliedEvents().iterator(), initialFuture,
-        { currentFuture: Future<Pair<Boolean, UUID>>,
-          event: E ->
-          currentFuture.compose { pair ->
-            if (pair.first) {
-              appendEvent(event, version.incrementAndGet(), pair.second)
-            } else {
-              Future.failedFuture("The latest successful event was $event")
-            }
+        {
+          currentFuture: Future<AppendedEvent<E>?>,
+          event: E,
+          ->
+          currentFuture.compose { appendedEvent: AppendedEvent<E>? ->
+            val causationId = if (eventsAdded.size == 0) metadata.commandId.id else appendedEvent!!.eventId
+            appendEvent(event, version.incrementAndGet(), CausationId(causationId))
+              .onSuccess { eventsAdded.add(it) }
           }
         }
       ).onComplete {
         if (it.failed()) {
           aesPromise.fail(it.cause())
         } else {
-          aesPromise.complete(version.get())
+          aesPromise.complete(AppendedEvents(eventsAdded, version.get()))
         }
       }
       return aesPromise.future()
@@ -156,7 +159,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
 
     fun updateVersion(conn: SqlConnection, resultingVersion: Int): Future<Void> {
       val promise = Promise.promise<Void>()
-      val newSTateAsJson = session.currentState.toJson(config.json)
+      val newSTateAsJson = session.currentState.toJson(json)
       log.debug("Will append snapshot {}", newSTateAsJson)
       if (session.originalVersion == 0) {
         val params = Tuple.of(
@@ -182,62 +185,70 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       return promise.future()
     }
 
+    fun projectEvents(conn: SqlConnection, appendedEvents: AppendedEvents<E>): Future<Void> {
+      if (eventsProjector == null) {
+        return Future.succeededFuture()
+      }
+      val projectorPromise = Promise.promise<Void>()
+      val initialFuture = Future.succeededFuture<Void>()
+      foldLeft(
+        appendedEvents.events.iterator(), initialFuture,
+        { currentFuture: Future<Void>, appendedEvent ->
+          currentFuture.compose {
+            val eventMetadata = EventMetadata(
+              config.name,
+              metadata.aggregateRootId,
+              EventId(appendedEvent.eventId),
+              CorrelationId(metadata.commandId.id),
+              CausationId(appendedEvent.causationId),
+              appendedEvent.sequence
+            )
+            eventsProjector.project(conn, appendedEvent.event, eventMetadata)
+          }
+        }
+      ).onComplete {
+        if (it.failed()) {
+          projectorPromise.fail(it.cause())
+        } else {
+          projectorPromise.complete()
+        }
+      }
+      return projectorPromise.future()
+    }
+
     val promise = Promise.promise<Void>()
-    writeModelDb.connection
+
+    pgPool.withTransaction { conn ->
+      lockSnapshotIfVersionMatches(conn)
+        .compose { appendCommand(conn) }
+        .compose {
+          appendEvents(conn)
+            .compose { eventsAppended ->
+              projectEvents(conn, eventsAppended)
+                .compose { updateVersion(conn, eventsAppended.resultingVersion) }
+            }
+        }
+    }.onSuccess {
+      log.debug("Events successfully committed")
+      promise.complete()
+    }
       .onFailure {
         promise.fail(it)
       }
-      .onSuccess { conn ->
-        conn.begin()
-          .onFailure { err ->
-            promise.fail(err)
-            close(conn)
-          }
-          .onSuccess { tx: Transaction ->
-            lockSnapshotIfVersionMatches(conn)
-              .onFailure { err ->
-                rollback(tx, err)
-                close(conn)
-                promise.fail(err)
-              }
-              .onSuccess {
-                appendCommand(conn)
-                  .onFailure { err ->
-                    rollback(tx, err)
-                    close(conn)
-                    promise.fail(err)
-                  }
-                  .onSuccess {
-                    appendEvents(conn)
-                      .onFailure { err ->
-                        rollback(tx, err)
-                        close(conn)
-                        promise.fail(err)
-                      }
-                      .onSuccess { resultingVersion ->
-                        updateVersion(conn, resultingVersion)
-                          .onFailure { err ->
-                            rollback(tx, err)
-                            close(conn)
-                            promise.fail(err)
-                          }
-                          .onSuccess {
-                            commit(tx)
-                              .onFailure { err ->
-                                rollback(tx, err)
-                                close(conn)
-                                promise.fail(err)
-                              }.onSuccess {
-                                log.debug("Events successfully committed")
-                                promise.complete()
-                                close(conn)
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-      }
+
     return promise.future()
   }
+
+  private fun <A, B> foldLeft(iterator: Iterator<A>, identity: B, bf: BiFunction<B, A, B>): B {
+    var result = identity
+    while (iterator.hasNext()) {
+      val next = iterator.next()
+      result = bf.apply(result, next)
+    }
+    return result
+  }
+
+  private data class AppendedEvent<E>(val event: E, val causationId: UUID, val sequence: Long, val eventId: UUID)
+
+  private data class AppendedEvents<E>(val events: List<AppendedEvent<E>>, val resultingVersion: Int)
 }
