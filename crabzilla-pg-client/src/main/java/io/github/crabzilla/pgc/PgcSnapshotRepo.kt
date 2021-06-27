@@ -34,7 +34,7 @@ class PgcSnapshotRepo<A : AggregateRoot>(
           null
         } else {
           val stateAsJson = JsonObject(rowSet.first().getValue(1).toString())
-          val state = AggregateRoot.fromJson<A>(json, stateAsJson.encode())
+          val state = AggregateRoot.fromJson<A>(json, stateAsJson.toString())
           Snapshot(state, rowSet.first().getInteger("version"))
         }
       }
