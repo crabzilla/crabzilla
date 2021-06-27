@@ -5,9 +5,6 @@ import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.StatefulSession
-import io.github.crabzilla.pgc.PgcClient.close
-import io.github.crabzilla.pgc.PgcClient.commit
-import io.github.crabzilla.pgc.PgcClient.rollback
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CommandException
 import io.github.crabzilla.stack.CommandMetadata
@@ -20,7 +17,6 @@ import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.SqlConnection
-import io.vertx.sqlclient.Transaction
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -29,9 +25,9 @@ import java.util.function.BiFunction
 
 class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val config: AggregateRootConfig<A, C, E>,
-  private val writeModelDb: PgPool,
-  private val saveCommandOption: Boolean = true,
-  private val eventsProjector: PgcEventsProjector<E>? = null
+  private val pgPool: PgPool,
+  private val saveCommandOption: Boolean = false,
+  private val eventsProjector: PgcEventsProjector<E>? = null,
 ) : EventStore<A, C, E> {
 
   companion object {
@@ -74,11 +70,14 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       conn.preparedQuery(SQL_LOCK_VERSION)
         .execute(Tuple.of(metadata.aggregateRootId.id, config.name))
         .onSuccess { rowSet ->
-          val currentVersion = if (rowSet.size() == 0) { 0 } else { rowSet.first().getInteger("version") }
+          val currentVersion = if (rowSet.size() == 0) {
+            0
+          } else {
+            rowSet.first().getInteger("version")
+          }
           log.debug("Got current version: {}", currentVersion)
           if (currentVersion != session.originalVersion) {
             val message = "The current version [$currentVersion] should be [${session.originalVersion}]"
-            log.debug(message)
             promise0.fail(CommandException.OptimisticLockingException(message))
           } else {
             promise0.complete()
@@ -145,8 +144,10 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       val eventsAdded = mutableListOf<AppendedEvent<E>>()
       foldLeft(
         session.appliedEvents().iterator(), initialFuture,
-        { currentFuture: Future<AppendedEvent<E>?>,
-          event: E ->
+        {
+          currentFuture: Future<AppendedEvent<E>?>,
+          event: E,
+          ->
           currentFuture.compose { appendedEvent: AppendedEvent<E>? ->
             val causationId = if (eventsAdded.size == 0) metadata.commandId.id else appendedEvent!!.eventId
             appendEvent(event, version.incrementAndGet(), CausationId(causationId))
@@ -223,69 +224,25 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
     }
 
     val promise = Promise.promise<Void>()
-    writeModelDb.connection
+
+    pgPool.withTransaction { conn ->
+      lockSnapshotIfVersionMatches(conn)
+        .compose { appendCommand(conn) }
+        .compose {
+          appendEvents(conn)
+            .compose { eventsAppended ->
+              projectEvents(conn, eventsAppended)
+                .compose { updateVersion(conn, eventsAppended.resultingVersion) }
+            }
+        }
+    }.onSuccess {
+      log.debug("Events successfully committed")
+      promise.complete()
+    }
       .onFailure {
         promise.fail(it)
       }
-      .onSuccess { conn ->
-        conn.begin()
-          .onFailure { err ->
-            promise.fail(err)
-            close(conn)
-          }
-          .onSuccess { tx: Transaction ->
-            lockSnapshotIfVersionMatches(conn)
-              .onFailure { err ->
-                rollback(tx, err)
-                close(conn)
-                promise.fail(err)
-              }
-              .onSuccess {
-                appendCommand(conn)
-                  .onFailure { err ->
-                    rollback(tx, err)
-                    close(conn)
-                    promise.fail(err)
-                  }
-                  .onSuccess {
-                    appendEvents(conn)
-                      .onFailure { err ->
-                        rollback(tx, err)
-                        close(conn)
-                        promise.fail(err)
-                      }
-                      .onSuccess { eventsAppended ->
-                        projectEvents(conn, eventsAppended)
-                          .onFailure { err ->
-                            rollback(tx, err)
-                            close(conn)
-                            promise.fail(err)
-                          }
-                          .onSuccess {
-                            updateVersion(conn, eventsAppended.resultingVersion)
-                              .onFailure { err ->
-                                rollback(tx, err)
-                                close(conn)
-                                promise.fail(err)
-                              }
-                              .onSuccess {
-                                commit(tx)
-                                  .onFailure { err ->
-                                    rollback(tx, err)
-                                    close(conn)
-                                    promise.fail(err)
-                                  }.onSuccess {
-                                    log.debug("Events successfully committed")
-                                    promise.complete()
-                                    close(conn)
-                                  }
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-      }
+
     return promise.future()
   }
 

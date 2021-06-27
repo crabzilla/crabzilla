@@ -8,7 +8,7 @@ import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
 import java.util.UUID
 
-class PgcTestRepoHelper(private val writeModelDb: PgPool) {
+class PgcTestRepoHelper(private val pgPool: PgPool) {
 
   companion object {
     private const val SQL_UPSERT_VERSION =
@@ -27,11 +27,11 @@ class PgcTestRepoHelper(private val writeModelDb: PgPool) {
 
   fun upsert(id: UUID, type: String, version: Int, snapshotAsJson: JsonObject): Future<Void> {
     val tuple = Tuple.of(id, type, version, snapshotAsJson)
-    return writeModelDb.preparedQuery(SQL_UPSERT_VERSION).execute(tuple).mapEmpty()
+    return pgPool.preparedQuery(SQL_UPSERT_VERSION).execute(tuple).mapEmpty()
   }
 
   fun scanEvents(afterSequence: Long, numberOfRows: Int): Future<List<JsonObject>> {
-    return writeModelDb.withConnection { client ->
+    return pgPool.withConnection { client ->
       client.prepare(selectAfterOffset)
         .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(afterSequence, numberOfRows)) }
         .map { rowSet: RowSet<Row> ->
@@ -49,5 +49,32 @@ class PgcTestRepoHelper(private val writeModelDb: PgPool) {
           }.toList()
         }
     }
+  }
+
+  fun getAllCustomers(): Future<List<JsonObject>> {
+    return pgPool.query("SELECT * FROM customer_summary")
+      .execute()
+      .map { rowSet: RowSet<Row> ->
+        rowSet.iterator().asSequence().map { row: Row ->
+          val json = JsonObject()
+          json.put("id", row.getUUID("id").toString())
+          json.put("name", row.getString("name"))
+          json.put("is_active", row.getBoolean("is_active"))
+          json
+        }.toList()
+      }
+  }
+
+  fun getAllCommands(): Future<List<JsonObject>> {
+    return pgPool.query("SELECT * FROM commands")
+      .execute()
+      .map { rowSet: RowSet<Row> ->
+        rowSet.iterator().asSequence().map { row: Row ->
+          val json = JsonObject()
+          json.put("cmd_id", row.getUUID("cmd_id").toString())
+          json.put("cmd_payload", row.getJsonObject("cmd_payload"))
+          json
+        }.toList()
+      }
   }
 }
