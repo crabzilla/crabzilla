@@ -3,11 +3,11 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.pgc.api.PgcClient
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.pgclient.PgPool
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -15,26 +15,20 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.UUID
 
-// TODO given a snapshot and none events
-// TODO given a snapshot and some events, etc
-
 @ExtendWith(VertxExtension::class)
 class PgcSnapshotRepoIT {
 
-  private lateinit var pgPool: PgPool
+  private lateinit var client: PgcClient
   private lateinit var repo: PgcSnapshotRepo<Customer>
-  private lateinit var testRepoRepo: PgcTestRepoHelper
+  private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    getConfig(vertx)
-      .compose { config ->
-        pgPool = getPgPool(vertx, config)
-        repo = PgcSnapshotRepo(pgPool, customerJson)
-        testRepoRepo = PgcTestRepoHelper(pgPool)
-        cleanDatabase(vertx, config)
-      }
-      .onFailure { tc.failNow(it.cause) }
+    client = PgcClient.create(vertx, customerJson, connectOptions, poolOptions)
+    repo = PgcSnapshotRepo(client.pgPool, client.json)
+    testRepo = TestRepository(client.pgPool)
+    cleanDatabase(client.sqlClient)
+      .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
 
@@ -58,7 +52,7 @@ class PgcSnapshotRepoIT {
       .put("id", id.toString())
       .put("name", "c1")
       .put("isActive", false)
-    testRepoRepo.upsert(id, customerConfig.name, 1, snapshotAsJson)
+    testRepo.upsert(id, customerConfig.name, 1, snapshotAsJson)
       .compose { repo.get(id) }
       .onFailure { err -> tc.failNow(err) }
       .onSuccess { snapshot ->

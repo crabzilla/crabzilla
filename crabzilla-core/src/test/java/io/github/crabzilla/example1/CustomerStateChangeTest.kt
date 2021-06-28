@@ -50,7 +50,7 @@ class CustomerStateChangeTest {
         inner class `Given a CustomerActivate command` {
           val reason = "because I need it again and again"
           val cmd = CustomerCommand.ActivateCustomer(reason)
-          val result = handleCommand(cmd, Snapshot(state3, 1))
+          val result = handleCommand(cmd, Snapshot(state3, 1), customerConfig.eventHandler)
 
           @Test
           fun `Then Customer is activated`() {

@@ -129,31 +129,35 @@ class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id 
  * Customer command handler
  */
 object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, CustomerEvent> {
-  override fun handleCommand(command: CustomerCommand, snapshot: Snapshot<Customer>?):
+  override fun handleCommand(
+    command: CustomerCommand,
+    snapshot: Snapshot<Customer>?,
+    eventHandler: EventHandler<Customer, CustomerEvent>
+  ):
     StatefulSession<Customer, CustomerEvent> {
 
     return when (command) {
 
       is RegisterCustomer -> {
         if (snapshot == null)
-          with(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
+          with(Customer.create(id = command.customerId, name = command.name), eventHandler)
         else throw CustomerAlreadyExists(command.customerId)
       }
 
       is RegisterAndActivateCustomer -> {
         if (snapshot == null)
-          with(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
+          with(Customer.create(id = command.customerId, name = command.name), eventHandler)
             .execute { it.activate(command.reason) }
         else throw CustomerAlreadyExists(command.customerId)
       }
 
       is ActivateCustomer -> {
-        with(snapshot!!, customerEventHandler)
+        with(snapshot!!, eventHandler)
           .execute { it.activate(command.reason) }
       }
 
       is DeactivateCustomer -> {
-        with(snapshot!!, customerEventHandler)
+        with(snapshot!!, eventHandler)
           .execute { it.deactivate(command.reason) }
       }
     }

@@ -8,12 +8,12 @@ import io.github.crabzilla.example1.CustomerEventsProjector
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerEventHandler
 import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.pgc.api.PgcClient
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.pgclient.PgPool
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -26,25 +26,20 @@ import java.util.UUID
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgcEventStoreProjectionIT {
 
-  private lateinit var pgPool: PgPool
+  private lateinit var client: PgcClient
   private lateinit var eventStore: PgcEventStore<Customer, CustomerCommand, CustomerEvent>
   private lateinit var repo: PgcSnapshotRepo<Customer>
-  private lateinit var testRepo: PgcTestRepoHelper
+  private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    getConfig(vertx)
-      .compose { config ->
-        pgPool = getPgPool(vertx, config)
-        eventStore = PgcEventStore(customerConfig, pgPool, customerJson, false, CustomerEventsProjector)
-        repo = PgcSnapshotRepo(pgPool, customerJson)
-        testRepo = PgcTestRepoHelper(pgPool)
-        cleanDatabase(vertx, config)
-      }
-      .onFailure { tc.failNow(it.cause) }
-      .onSuccess {
-        tc.completeNow()
-      }
+    client = PgcClient.create(vertx, customerJson, connectOptions, poolOptions)
+    eventStore = PgcEventStore(customerConfig, client.pgPool, client.json, false, CustomerEventsProjector)
+    repo = PgcSnapshotRepo(client.pgPool, client.json)
+    testRepo = TestRepository(client.pgPool)
+    cleanDatabase(client.sqlClient)
+      .onFailure { tc.failNow(it) }
+      .onSuccess { tc.completeNow() }
   }
 
   @Test

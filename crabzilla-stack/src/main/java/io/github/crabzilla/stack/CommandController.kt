@@ -1,9 +1,8 @@
 package io.github.crabzilla.stack
 
 import io.github.crabzilla.core.AggregateRoot
+import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.StatefulSession
 import io.vertx.core.Future
@@ -18,9 +17,8 @@ import org.slf4j.LoggerFactory
  *  4 - save the resulting events in event store
  */
 class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
-  private val validator: CommandValidator<C>,
-  private val handler: CommandHandler<A, C, E>,
-  private val snapshotRepo: SnapshotRepository<A>,
+  private val config: AggregateRootConfig<A, C, E>,
+  private val snapshotRepo: SnapshotRepository<A>, // could be public?
   private val eventStore: EventStore<A, C, E>
 ) {
   companion object {
@@ -30,7 +28,7 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
   fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<A, E>> {
     val promise = Promise.promise<StatefulSession<A, E>>()
     log.debug("received {}", command)
-    val validationErrors = validator.validate(command)
+    val validationErrors = config.commandValidator.validate(command)
     if (validationErrors.isNotEmpty()) {
       promise.fail(CommandException.ValidationException(validationErrors))
       return promise.future()
@@ -43,7 +41,7 @@ class CommandController<A : AggregateRoot, C : Command, E : DomainEvent>(
       .onSuccess { snapshot ->
         log.debug("Got snapshot {}. Now let's handle the command", snapshot)
         try {
-          val session = handler.handleCommand(command, snapshot)
+          val session = config.commandHandler.handleCommand(command, snapshot, config.eventHandler)
           log.debug("Command handled. {}. Now let's append it events", session.toSessionData())
           eventStore.append(command, metadata, session)
             .onFailure { err ->

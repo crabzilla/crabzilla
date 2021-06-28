@@ -1,5 +1,6 @@
 package io.github.crabzilla.stack
 
+import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand
@@ -35,8 +36,7 @@ class ControllerTests : BehaviorSpec({
     every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
     every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
 
-    val controller =
-      CommandController(customerConfig.commandValidator, customerConfig.commandHandler, snapshotRepo, eventStore)
+    val controller = CommandController(customerConfig, snapshotRepo, eventStore)
 
     When("I send a register command") {
       val aggregateRootId = AggregateRootId(UUID.randomUUID())
@@ -71,7 +71,7 @@ class ControllerTests : BehaviorSpec({
       every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
       every { eventStore.append(any(), any(), any()) } returns Future.failedFuture(OptimisticLockingException("Concurrency error"))
       val controller =
-        CommandController(customerConfig.commandValidator, customerConfig.commandHandler, snapshotRepo, eventStore)
+        CommandController(customerConfig, snapshotRepo, eventStore)
       val aggregateRootId = AggregateRootId(UUID.randomUUID())
       val result = controller
         .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "good customer"))
@@ -88,7 +88,7 @@ class ControllerTests : BehaviorSpec({
       every { snapshotRepo.get(any()) } returns Future.failedFuture("db is down!")
       every { eventStore.append(any(), any(), any()) } returns Future.failedFuture(OptimisticLockingException("Concurrency error"))
       val controller =
-        CommandController(customerConfig.commandValidator, customerConfig.commandHandler, snapshotRepo, eventStore)
+        CommandController(customerConfig, snapshotRepo, eventStore)
       val aggregateRootId = AggregateRootId(UUID.randomUUID())
       val result = controller
         .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "good customer"))
@@ -105,9 +105,12 @@ class ControllerTests : BehaviorSpec({
       every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
       every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
       val commandHandler: CommandHandler<Customer, CustomerCommand, CustomerEvent> = mockk()
-      every { commandHandler.handleCommand(any(), any()) } throws RuntimeException("I got an error!")
-      val badController =
-        CommandController(customerConfig.commandValidator, commandHandler, snapshotRepo, eventStore)
+      every { commandHandler.handleCommand(any(), any(), any()) } throws RuntimeException("I got an error!")
+      val mockedCustomerConfig = AggregateRootConfig(
+        customerConfig.name, customerConfig.eventHandler,
+        customerConfig.commandValidator, commandHandler
+      )
+      val badController = CommandController(mockedCustomerConfig, snapshotRepo, eventStore)
       val aggregateRootId = AggregateRootId(UUID.randomUUID())
       val result = badController
         .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "good customer"))

@@ -5,17 +5,16 @@ import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.stack.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
-import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
-import io.vertx.sqlclient.SqlConnection
+import io.vertx.sqlclient.SqlClient
 import io.vertx.sqlclient.Tuple
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
 class PgcSnapshotRepo<A : AggregateRoot>(
-  private val pgPool: PgPool,
+  private val sqlClient: SqlClient,
   private val json: Json
 ) : SnapshotRepository<A> {
 
@@ -28,21 +27,18 @@ class PgcSnapshotRepo<A : AggregateRoot>(
   }
 
   override fun get(id: UUID): Future<Snapshot<A>?> {
-    fun currentSnapshot(conn: SqlConnection): Future<Snapshot<A>?> {
-      fun snapshot(rowSet: RowSet<Row>): Snapshot<A>? {
-        return if (rowSet.size() == 0) {
-          null
-        } else {
-          val stateAsJson = JsonObject(rowSet.first().getValue(1).toString())
-          val state = AggregateRoot.fromJson<A>(json, stateAsJson.toString())
-          Snapshot(state, rowSet.first().getInteger("version"))
-        }
+    fun snapshot(rowSet: RowSet<Row>): Snapshot<A>? {
+      return if (rowSet.size() == 0) {
+        null
+      } else {
+        val stateAsJson = JsonObject(rowSet.first().getValue(1).toString())
+        val state = AggregateRoot.fromJson<A>(json, stateAsJson.toString())
+        Snapshot(state, rowSet.first().getInteger("version"))
       }
-      return conn
-        .preparedQuery(SQL_SELECT_VERSION)
-        .execute(Tuple.of(id))
-        .map { pgRow -> snapshot(pgRow) }
     }
-    return pgPool.withConnection { conn: SqlConnection -> currentSnapshot(conn) }
+    return sqlClient
+      .preparedQuery(SQL_SELECT_VERSION)
+      .execute(Tuple.of(id))
+      .map { pgRow -> snapshot(pgRow) }
   }
 }

@@ -9,13 +9,13 @@ import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.EventsScanner
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
-import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
+import io.vertx.sqlclient.SqlClient
 import io.vertx.sqlclient.Tuple
 
 // TODO could receive also a list of aggregate root names to filter interesting events
-class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName: String) : EventsScanner {
+class PgcEventsScanner(private val sqlClient: SqlClient, private val streamName: String) : EventsScanner {
 
   private val selectAfterOffset =
     """
@@ -34,31 +34,29 @@ class PgcEventsScanner(private val writeModelDb: PgPool, private val streamName:
   }
 
   override fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
-    return writeModelDb.withConnection { client ->
-      client.prepare(selectAfterOffset)
-        .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(streamName, numberOfRows)) }
-        .map { rowSet: RowSet<Row> ->
-          rowSet.iterator().asSequence().map { row: Row ->
-            val eventMetadata = EventMetadata(
-              row.getString("ar_name"),
-              AggregateRootId(row.getUUID("ar_id")),
-              EventId(row.getUUID("id")),
-              CorrelationId(row.getUUID("correlation_id")),
-              CausationId(row.getUUID("causation_id")),
-              row.getLong("sequence")
-            )
-            val jsonObject = JsonObject(row.getValue("event_payload").toString())
-            EventRecord(eventMetadata, jsonObject)
-          }.toList()
-        }
-    }
+    return sqlClient
+      .preparedQuery(selectAfterOffset)
+      .execute(Tuple.of(streamName, numberOfRows))
+      .map { rowSet: RowSet<Row> ->
+        rowSet.iterator().asSequence().map { row: Row ->
+          val eventMetadata = EventMetadata(
+            row.getString("ar_name"),
+            AggregateRootId(row.getUUID("ar_id")),
+            EventId(row.getUUID("id")),
+            CorrelationId(row.getUUID("correlation_id")),
+            CausationId(row.getUUID("causation_id")),
+            row.getLong("sequence")
+          )
+          val jsonObject = JsonObject(row.getValue("event_payload").toString())
+          EventRecord(eventMetadata, jsonObject)
+        }.toList()
+      }
   }
 
   override fun updateOffSet(eventSequence: Long): Future<Void> {
-    return writeModelDb.withConnection { client ->
-      client.prepare(updateOffset)
-    }.compose { ps2 ->
-      ps2.query().execute(Tuple.of(eventSequence, streamName))
-    }.mapEmpty()
+    return sqlClient
+      .preparedQuery(updateOffset)
+      .execute(Tuple.of(eventSequence, streamName))
+      .mapEmpty()
   }
 }
