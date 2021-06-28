@@ -8,7 +8,7 @@ import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
 import java.util.UUID
 
-class PgcTestRepoHelper(private val pgPool: PgPool) {
+class TestRepository(private val pgPool: PgPool) {
 
   companion object {
     private const val SQL_UPSERT_VERSION =

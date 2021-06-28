@@ -132,36 +132,45 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
 
   override fun handleCommand(
     command: CustomerCommand,
-    snapshot: Snapshot<Customer>?
+    snapshot: Snapshot<Customer>?,
+    eventHandler: EventHandler<Customer, CustomerEvent>
   ): StatefulSession<Customer, CustomerEvent> {
 
     return when (command) {
 
       is RegisterCustomer -> {
         if (snapshot == null)
-          with(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
+          with(Customer.create(id = command.customerId, name = command.name), eventHandler)
         else throw CustomerAlreadyExists(command.customerId)
       }
 
       is RegisterAndActivateCustomer -> {
         if (snapshot == null)
-          with(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
+          with(Customer.create(id = command.customerId, name = command.name), eventHandler)
             .execute { it.activate(command.reason) }
         else throw CustomerAlreadyExists(command.customerId)
       }
 
       is ActivateCustomer -> {
-        with(snapshot!!, customerEventHandler)
+        with(snapshot!!, eventHandler)
           .execute { it.activate(command.reason) }
       }
 
       is DeactivateCustomer -> {
-        with(snapshot!!, customerEventHandler)
+        with(snapshot!!, eventHandler)
           .execute { it.deactivate(command.reason) }
       }
     }
   }
 }
+
+val customerConfig = AggregateRootConfig(
+  "Customer",
+  customerEventHandler,
+  customerCmdValidator,
+  CustomerCommandHandler
+)
+
 
 /**
  * kotlinx.serialization
@@ -184,12 +193,5 @@ val customerModule = SerializersModule {
     subclass(CustomerDeactivated::class, CustomerDeactivated.serializer())
   }
 }
-
-val customerConfig = AggregateRootConfig(
-  "Customer",
-  customerEventHandler,
-  customerCmdValidator,
-  CustomerCommandHandler
-)
 
 val customerJson = Json { serializersModule = customerModule }

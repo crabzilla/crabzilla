@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.api
 
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
@@ -6,12 +6,15 @@ import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.CustomerEventsProjector
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.pgc.PgcSnapshotRepo
+import io.github.crabzilla.pgc.cleanDatabase
+import io.github.crabzilla.pgc.connectOptions
+import io.github.crabzilla.pgc.poolOptions
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.pgclient.PgPool
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -20,40 +23,33 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
-class PgcClientProjectionIT {
+class PgcClientSyncProjectionIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
 
   companion object {
-    private val log = LoggerFactory.getLogger(PgcClientProjectionIT::class.java)
+    private val log = LoggerFactory.getLogger(PgcClientSyncProjectionIT::class.java)
   }
 
   val id = UUID.randomUUID()
 
   lateinit var client: PgcClient
-  lateinit var pgPool: PgPool
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    getConfig(vertx)
-      .onFailure { tc.failNow(it.cause) }
-      .compose { config ->
-        cleanDatabase(vertx, config)
-          .onFailure { tc.failNow(it.cause) }
-          .onSuccess {
-            pgPool = getPgPool(vertx, config)
-            client = PgcClient(vertx, pgPool, customerJson)
-            tc.completeNow()
-          }
-      }
+    client = PgcClient.create(vertx, customerJson, connectOptions, poolOptions)
+    cleanDatabase(client.sqlClient)
+      .onFailure { tc.failNow(it) }
+      .onSuccess { tc.completeNow() }
   }
 
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val snapshotRepo = PgcSnapshotRepo<Customer>(pgPool, customerJson)
-    val controller = client.create(customerConfig, true, CustomerEventsProjector)
+    val commandClient = PgcCommandClient(client)
+    val snapshotRepo = PgcSnapshotRepo<Customer>(client.pgPool, client.json)
+    val controller = commandClient.create(customerConfig, true, CustomerEventsProjector)
     snapshotRepo.get(id)
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->
