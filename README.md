@@ -15,7 +15,7 @@
 
 ### Status
 
-It's still in very early development stage. Do not use release 0.0.5, master branch is very different from that.
+It's still in very early development stage. 
 
 ### Getting started
 
