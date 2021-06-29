@@ -1,7 +1,8 @@
 [![CI](https://github.com/crabzilla/crabzilla/actions/workflows/blank.yml/badge.svg)](https://github.com/crabzilla/crabzilla/actions/workflows/blank.yml)
 [![codecov](https://codecov.io/gh/crabzilla/crabzilla/branch/master/graph/badge.svg)](https://codecov.io/gh/crabzilla/crabzilla)
+[![](https://www.code-inspector.com/project/24241/score/svg)](https://frontend.code-inspector.com/public/project/24241/crabzilla/dashboard)
+[![](https://www.code-inspector.com/project/24241/status/svg)](https://frontend.code-inspector.com/public/project/24241/crabzilla/dashboard)
 [![Jitpack](https://jitpack.io/v/io.github.crabzilla/crabzilla.svg)](https://jitpack.io/#io.github.crabzilla/crabzilla)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.crabzilla/crabzilla/badge.svg)](http://search.maven.org/#artifactdetails%7Cio.github.crabzilla%7Ccrabzilla%7C0.0.5%7C)
 
 
 ### Goals for version 1.0.0
@@ -14,7 +15,7 @@
 
 ### Status
 
-It's still in very early development stage. Do not use release 0.0.5, master branch is very different from that.
+It's still in very early development stage. 
 
 ### Getting started
 
