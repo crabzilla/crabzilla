@@ -1,19 +1,14 @@
-package io.github.crabzilla.pgc.api
+package io.github.crabzilla.pgc
 
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.CustomerEventsProjector
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
-import io.github.crabzilla.pgc.PgcSnapshotRepo
-import io.github.crabzilla.pgc.cleanDatabase
-import io.github.crabzilla.pgc.connectOptions
-import io.github.crabzilla.pgc.poolOptions
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
-import io.github.crabzilla.stack.EventsPublisherOptions
-import io.github.crabzilla.stack.EventsPublisherVerticle
+import io.github.crabzilla.stack.deployVerticles
+import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -36,16 +31,26 @@ class PgcClientAsyncProjectionIT {
 
   val id = UUID.randomUUID()
 
-  lateinit var client: PgcClient
+  lateinit var client: PgcCommandControllerClient
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = PgcClient.create(vertx, customerJson, connectOptions, poolOptions)
-    val verticlesClient = PgcVerticlesClient(client)
-    verticlesClient.addEventsPublisher("customers", options)
-    verticlesClient.addEventsProjector(options.targetEndpoint, CustomerEventsProjector)
+    client = PgcCommandControllerClient.create(vertx, customerJson, connectOptions, poolOptions)
+    val verticles = listOf(
+      "service:crabzilla.example1.CustomersEventsPublisher",
+      "service:crabzilla.example1.CustomersEventsProjector",
+    )
+    val options = DeploymentOptions().setConfig(config)
     cleanDatabase(client.sqlClient)
-      .compose { verticlesClient.deployVerticles() }
+      .compose { vertx.deployVerticles(verticles, options) }
+      .onFailure { tc.failNow(it) }
+      .onSuccess { tc.completeNow() }
+  }
+
+  @Test
+  @DisplayName("closing db connections")
+  fun cleanup(tc: VertxTestContext) {
+    client.close()
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -53,7 +58,7 @@ class PgcClientAsyncProjectionIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val commandClient = PgcCommandClient(client)
+    val commandClient = PgcCommandControllerFactory(client)
     val snapshotRepo = PgcSnapshotRepo<Customer>(client.pgPool, client.json)
     val controller = commandClient.create(customerConfig, true)
     snapshotRepo.get(id)
@@ -63,7 +68,7 @@ class PgcClientAsyncProjectionIT {
         controller.handle(CommandMetadata(AggregateRootId(id)), RegisterCustomer(id, "cust#$id"))
           .onFailure { tc.failNow(it) }
           .onSuccess {
-            vertx.eventBus().request<Boolean>(EventsPublisherVerticle.PUBLISHER_ENDPOINT, null) { it ->
+            vertx.eventBus().request<Boolean>(PgcEventsPublisherVerticle.PUBLISHER_ENDPOINT, null) { it ->
               if (it.failed()) {
                 tc.failNow(it.cause())
               } else {
@@ -80,7 +85,7 @@ class PgcClientAsyncProjectionIT {
                       .onSuccess {
                         vertx.eventBus()
                           .request<Boolean>(
-                            EventsPublisherVerticle.PUBLISHER_ENDPOINT,
+                            PgcEventsPublisherVerticle.PUBLISHER_ENDPOINT,
                             null
                           ) {
                             if (it.failed()) {
@@ -110,12 +115,4 @@ class PgcClientAsyncProjectionIT {
           }
       }
   }
-
-  private val options = EventsPublisherOptions.Builder()
-    .targetEndpoint("customers-events")
-    .interval(500)
-    .maxInterval(60_000)
-    .maxNumberOfRows(1)
-    .statsInterval(30_000)
-    .build()
 }

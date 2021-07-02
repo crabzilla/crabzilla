@@ -1,9 +1,11 @@
-package io.github.crabzilla.stack
+package io.github.crabzilla.pgc
 
-import io.vertx.core.AbstractVerticle
+import io.github.crabzilla.stack.EventBusPublisher
+import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Promise
+import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -13,24 +15,33 @@ import kotlin.math.min
 /**
  * This component will publish the domain events to an EventsPublisher.
  */
-class EventsPublisherVerticle(
-  private val eventsScanner: EventsScanner,
-  private val eventsPublisher: EventsPublisher,
-  private val options: EventsPublisherOptions,
-) : AbstractVerticle() {
+class PgcEventsPublisherVerticle : PgcAbstractVerticle() {
 
   companion object {
+    // TODO this must be by instance
     const val PUBLISHER_ENDPOINT = "publisher.verticle" // TODO add endpoint for pause, resume, restart from N, etc
     const val PUBLISHER_RESCHEDULED_ENDPOINT = "publisher.verticle.rescheduled"
   }
 
-  private val log = LoggerFactory.getLogger(eventsScanner.streamName())
+  private val log = LoggerFactory.getLogger(PgcEventsPublisherVerticle::class.java)
 
   private val action: Handler<Long?> = handler()
   private val failures = AtomicLong(0L)
   private val showStats = AtomicBoolean(true)
 
+  lateinit var scanner: PgcEventsScanner
+  lateinit var publisher: EventBusPublisher
+  private lateinit var options: Config
+
   override fun start() {
+
+    val config = Config.create(config())
+    log.info("Config {}", config().encodePrettily())
+
+    val sqlClient = sqlClient(config())
+    scanner = PgcEventsScanner(sqlClient, config.projectionId)
+    publisher = EventBusPublisher(config.targetEndpoint, vertx.eventBus())
+    options = Config.create(config())
 
     // Schedule the first execution
     vertx.setTimer(options.interval, action)
@@ -95,7 +106,7 @@ class EventsPublisherVerticle(
   private fun scanAndPublish(numberOfRows: Int): Future<Long> {
     fun publish(eventsList: List<EventRecord>): Future<Long> {
       fun action(eventRecord: EventRecord): Future<Void> {
-        return eventsPublisher.publish(eventRecord).mapEmpty()
+        return publisher.publish(eventRecord).mapEmpty()
       }
       fun <A, B> foldLeft(iterator: Iterator<A>, identity: B, bf: BiFunction<B, A, B>): B {
         var result = identity
@@ -128,7 +139,7 @@ class EventsPublisherVerticle(
       return promise.future()
     }
     val promise = Promise.promise<Long>()
-    eventsScanner.scanPendingEvents(numberOfRows)
+    scanner.scanPendingEvents(numberOfRows)
       .onFailure {
         promise.fail(it)
         log.error("When scanning new events", it)
@@ -146,7 +157,7 @@ class EventsPublisherVerticle(
             if (lastEventPublished == 0L) {
               promise.complete(0L)
             } else {
-              eventsScanner.updateOffSet(lastEventPublished)
+              scanner.updateOffSet(lastEventPublished)
                 .onFailure { promise.fail(it) }
                 .onSuccess {
                   if (showStats.get()) {
@@ -162,5 +173,26 @@ class EventsPublisherVerticle(
         log.trace("Scan is now inactive until new request")
       }
     return promise.future()
+  }
+
+  private class Config(
+    val projectionId: String,
+    val targetEndpoint: String,
+    val interval: Long,
+    val maxNumberOfRows: Int,
+    val maxInterval: Long,
+    val statsInterval: Long
+  ) {
+    companion object {
+      fun create(config: JsonObject): Config {
+        val projectionId = config.getString("projectionId")
+        val targetEndpoint = config.getString("targetEndpoint")
+        val interval = config.getLong("interval", 500)
+        val maxNumberOfRows = config.getInteger("maxNumberOfRows", 500)
+        val maxInterval = config.getLong("maxInterval", 60_000)
+        val statsInterval = config.getLong("statsInterval", 30_000)
+        return Config(projectionId, targetEndpoint, interval, maxNumberOfRows, maxInterval, statsInterval)
+      }
+    }
   }
 }

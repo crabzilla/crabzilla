@@ -1,0 +1,16 @@
+{
+  "main": "io.github.crabzilla.pgc.PgcEventsProjectorVerticle",
+  "options": {
+    "config" : {
+      "connectOptionsName": "ex1_crabzilla-config",
+      "poolOptions": {
+        "maxSize": 7
+      },
+      "jsonFactoryClassName": "io.github.crabzilla.example1.Example1JsonFactory",
+      "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.CustomersProjectorFactory",
+      "targetEndpoint" : "customers-projection"
+    },
+    "worker": false,
+    "instances": 1
+  }
+}
