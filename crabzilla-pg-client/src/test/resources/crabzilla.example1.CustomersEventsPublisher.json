@@ -11,7 +11,7 @@
       "projectionId": "customers",
       "targetEndpoint" : "customers-projection",
       "interval" : 500,
-      "maxNumberOfRows": 500,
+      "maxNumberOfRows": 1,
       "maxInterval" : 60000,
       "statsInterval" : 30000
     },
