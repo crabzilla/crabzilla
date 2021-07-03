@@ -4,10 +4,10 @@ import io.github.crabzilla.core.AggregateRoot
 import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.pgc.engines.PgcEventsProjectorApi
+import io.github.crabzilla.pgc.integration.EventsProjector
 import io.github.crabzilla.stack.CommandController
 
-class PgcCommandControllerFactory(private val commandControllerClient: PgcCommandControllerClient) {
+class CommandControllerFactory(private val commandControllerClient: CommandControllerClient) {
 
   /**
    * Creates a CommandController (agnostic about read model projections)
@@ -27,7 +27,7 @@ class PgcCommandControllerFactory(private val commandControllerClient: PgcComman
   fun <A : AggregateRoot, C : Command, E : DomainEvent> create(
     config: AggregateRootConfig<A, C, E>,
     saveCommandOption: Boolean,
-    projectorApi: PgcEventsProjectorApi
+    projectorApi: EventsProjector
   ): CommandController<A, C, E> {
     val snapshotRepo = PgcSnapshotRepo<A>(commandControllerClient.sqlClient, commandControllerClient.json)
     val eventStore = PgcEventStore(config, commandControllerClient.pgPool, commandControllerClient.json, saveCommandOption, projectorApi)

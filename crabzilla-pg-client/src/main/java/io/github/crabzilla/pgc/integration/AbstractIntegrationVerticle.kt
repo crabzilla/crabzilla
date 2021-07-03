@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.engines
+package io.github.crabzilla.pgc.integration
 
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.json.JsonObject
@@ -11,10 +11,10 @@ import kotlinx.serialization.json.Json
 /**
  * To update customer read model given events
  */
-open class PgcAbstractVerticle : AbstractVerticle() {
+open class AbstractIntegrationVerticle : AbstractVerticle() {
 
   fun json(config: JsonObject): Json {
-    val provider = JsonApiProviderFinder().create(config.getString("jsonFactoryClassName"))
+    val provider = JsonContextProviderFinder().create(config.getString("jsonFactoryClassName"))
     return provider!!.create().json()
   }
 

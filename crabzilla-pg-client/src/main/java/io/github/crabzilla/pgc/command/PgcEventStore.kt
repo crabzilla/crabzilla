@@ -5,7 +5,7 @@ import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.StatefulSession
-import io.github.crabzilla.pgc.engines.PgcEventsProjectorApi
+import io.github.crabzilla.pgc.integration.EventsProjector
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CommandException
 import io.github.crabzilla.stack.CommandMetadata
@@ -30,7 +30,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val pgPool: PgPool,
   private val json: Json,
   private val saveCommandOption: Boolean = true,
-  private val eventsProjectorApi: PgcEventsProjectorApi? = null,
+  private val eventsProjectorApi: EventsProjector? = null,
 ) : EventStore<A, C, E> {
 
   companion object {

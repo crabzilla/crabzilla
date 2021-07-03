@@ -1,5 +1,5 @@
 {
-  "main": "io.github.crabzilla.pgc.engines.PgcEventsProjectorVerticle",
+  "main": "io.github.crabzilla.pgc.integration.EventsProjectorVerticle",
   "options": {
     "config" : {
       "connectOptionsName": "ex1_crabzilla-config",
