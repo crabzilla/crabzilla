@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.engines
+package io.github.crabzilla.pgc.integration
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.stack.EventRecord
@@ -8,10 +8,10 @@ import org.slf4j.LoggerFactory
 /**
  * To update customer read model given events
  */
-class PgcEventsProjectorVerticle : PgcAbstractVerticle() {
+class EventsProjectorVerticle : AbstractIntegrationVerticle() {
 
   companion object {
-    private val log = LoggerFactory.getLogger(PgcEventsProjectorVerticle::class.java)
+    private val log = LoggerFactory.getLogger(EventsProjectorVerticle::class.java)
   }
 
   private lateinit var targetEndpoint: String
@@ -22,7 +22,7 @@ class PgcEventsProjectorVerticle : PgcAbstractVerticle() {
 
     val json = json(config())
     val pgPool = pgPool(config())
-    val provider = PgcEventsProjectorProviderFinder().create(config().getString("eventsProjectorFactoryClassName"))
+    val provider = EventsProjectorProviderFinder().create(config().getString("eventsProjectorFactoryClassName"))
     val eventsProjector = provider!!.create()
 
     vertx.eventBus().consumer<JsonObject>(targetEndpoint) { msg ->

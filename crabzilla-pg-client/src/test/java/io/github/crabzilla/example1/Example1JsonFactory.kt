@@ -1,14 +1,14 @@
 package io.github.crabzilla.example1
 
-import io.github.crabzilla.pgc.engines.JsonApi
-import io.github.crabzilla.pgc.engines.JsonApiProvider
+import io.github.crabzilla.pgc.integration.JsonContext
+import io.github.crabzilla.pgc.integration.JsonContextProvider
 import kotlinx.serialization.json.Json
 
-class Example1JsonFactory : JsonApiProvider {
-  override fun create(): JsonApi {
+class Example1JsonFactory : JsonContextProvider {
+  override fun create(): JsonContext {
     return DefaultJsonApi()
   }
-  class DefaultJsonApi : JsonApi {
+  class DefaultJsonApi : JsonContext {
     override fun json(): Json {
       return customerJson
     }

@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.engines
+package io.github.crabzilla.pgc.integration
 
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CausationId
@@ -15,8 +15,7 @@ import io.vertx.sqlclient.SqlClient
 import io.vertx.sqlclient.Tuple
 
 // TODO could receive also a list of aggregate root names to filter interesting events
-class PgcEventsScanner(private val sqlClient: SqlClient, private val projectionName: String) :
-  EventsScanner {
+class PgcEventsScanner(private val sqlClient: SqlClient, private val projectionName: String) : EventsScanner {
 
   private val selectAfterOffset =
     """

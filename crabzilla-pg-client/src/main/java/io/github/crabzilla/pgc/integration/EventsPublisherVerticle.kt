@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.engines
+package io.github.crabzilla.pgc.integration
 
 import io.github.crabzilla.stack.EventBusPublisher
 import io.github.crabzilla.stack.EventRecord
@@ -15,13 +15,13 @@ import kotlin.math.min
 /**
  * This component will publish the domain events to an EventsPublisher.
  */
-class PgcEventsPublisherVerticle : PgcAbstractVerticle() {
+class EventsPublisherVerticle : AbstractIntegrationVerticle() {
 
   companion object {
     // TODO this must be by instance: add endpoint for pause, resume, restart from N, etc
   }
 
-  private val log = LoggerFactory.getLogger(PgcEventsPublisherVerticle::class.java)
+  private val log = LoggerFactory.getLogger(EventsPublisherVerticle::class.java)
 
   private val action: Handler<Long?> = handler()
   private val failures = AtomicLong(0L)

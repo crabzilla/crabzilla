@@ -8,13 +8,13 @@ import io.vertx.sqlclient.PoolOptions
 import io.vertx.sqlclient.SqlClient
 import kotlinx.serialization.json.Json
 
-class PgcCommandControllerClient(val vertx: Vertx, val json: Json, val pgPool: PgPool, val sqlClient: SqlClient) {
+class CommandControllerClient(val vertx: Vertx, val json: Json, val pgPool: PgPool, val sqlClient: SqlClient) {
 
   companion object {
-    fun create(vertx: Vertx, json: Json, connectOptions: PgConnectOptions, poolOptions: PoolOptions): PgcCommandControllerClient {
+    fun create(vertx: Vertx, json: Json, connectOptions: PgConnectOptions, poolOptions: PoolOptions): CommandControllerClient {
       val thePgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
       val theSqlClient: SqlClient = PgPool.client(vertx, connectOptions, poolOptions)
-      return PgcCommandControllerClient(vertx, json, thePgPool, theSqlClient)
+      return CommandControllerClient(vertx, json, thePgPool, theSqlClient)
     }
   }
 

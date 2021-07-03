@@ -6,8 +6,8 @@ import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.CustomerEventsProjector
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
-import io.github.crabzilla.pgc.command.PgcCommandControllerClient
-import io.github.crabzilla.pgc.command.PgcCommandControllerFactory
+import io.github.crabzilla.pgc.command.CommandControllerClient
+import io.github.crabzilla.pgc.command.CommandControllerFactory
 import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
@@ -33,11 +33,11 @@ class PgcClientSyncProjectionIT {
 
   val id = UUID.randomUUID()
 
-  lateinit var client: PgcCommandControllerClient
+  lateinit var client: CommandControllerClient
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = PgcCommandControllerClient.create(vertx, customerJson, connectOptions, poolOptions)
+    client = CommandControllerClient.create(vertx, customerJson, connectOptions, poolOptions)
     cleanDatabase(client.sqlClient)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
@@ -54,7 +54,7 @@ class PgcClientSyncProjectionIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val commandClient = PgcCommandControllerFactory(client)
+    val commandClient = CommandControllerFactory(client)
     val snapshotRepo = PgcSnapshotRepo<Customer>(client.pgPool, client.json)
     val controller = commandClient.create(customerConfig, true, CustomerEventsProjector)
     snapshotRepo.get(id)
