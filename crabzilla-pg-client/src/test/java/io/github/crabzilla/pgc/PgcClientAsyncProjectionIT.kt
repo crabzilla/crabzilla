@@ -93,12 +93,12 @@ class PgcClientAsyncProjectionIT {
                             isActive = true,
                             reason = "because yes"
                           )
-                                  == snapshot2.state
+                            == snapshot2.state
                         )
                         tc.completeNow()
                       }
+                  }
               }
-            }
           }
       }
   }

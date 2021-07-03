@@ -135,8 +135,8 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       foldLeft(
         session.appliedEvents().iterator(), initialFuture,
         {
-            currentFuture: Future<AppendedEvent<E>?>,
-            event: E,
+          currentFuture: Future<AppendedEvent<E>?>,
+          event: E,
           ->
           currentFuture.compose { appendedEvent: AppendedEvent<E>? ->
             val causationId = if (eventsAdded.size == 0) metadata.commandId.id else appendedEvent!!.eventId
