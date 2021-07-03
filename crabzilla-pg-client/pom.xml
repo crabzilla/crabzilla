@@ -33,13 +33,7 @@
 
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-health-check</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-config</artifactId>
+      <artifactId>vertx-service-factory</artifactId>
       <scope>test</scope>
     </dependency>
 

@@ -1,10 +1,11 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.AggregateRoot
 import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.StatefulSession
+import io.github.crabzilla.pgc.engines.PgcEventsProjectorApi
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CommandException
 import io.github.crabzilla.stack.CommandMetadata
@@ -12,6 +13,7 @@ import io.github.crabzilla.stack.CorrelationId
 import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventStore
+import io.github.crabzilla.stack.foldLeft
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
@@ -22,18 +24,17 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.function.BiFunction
 
 class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val config: AggregateRootConfig<A, C, E>,
   private val pgPool: PgPool,
   private val json: Json,
   private val saveCommandOption: Boolean = true,
-  private val eventsProjector: PgcEventsProjector<E>? = null,
+  private val eventsProjectorApi: PgcEventsProjectorApi? = null,
 ) : EventStore<A, C, E> {
 
   companion object {
-    private val log = LoggerFactory.getLogger(PgcEventStore::class.java)
+    private val log = LoggerFactory.getLogger(EventStore::class.java)
     const val SQL_LOCK_VERSION =
       """ SELECT version 
           FROM SNAPSHOTS 
@@ -86,20 +87,15 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       if (!saveCommandOption) {
         return Future.succeededFuture(null)
       }
-      val p = Promise.promise<Void>()
       val cmdAsJson = command.toJson(json)
       log.debug("Will append command {} as {}", command, cmdAsJson)
       val params = Tuple.of(
         metadata.commandId.id,
         JsonObject(cmdAsJson)
       )
-      conn.preparedQuery(SQL_APPEND_CMD)
+      return conn.preparedQuery(SQL_APPEND_CMD)
         .execute(params)
-        .onFailure { p.fail(it) }
-        .onSuccess {
-          p.complete()
-        }
-      return p.future()
+        .mapEmpty()
     }
 
     fun appendEvents(conn: SqlConnection): Future<AppendedEvents<E>> {
@@ -135,6 +131,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       val initialFuture = Future.succeededFuture<AppendedEvent<E>?>(null)
       val version = AtomicInteger(session.originalVersion)
       val eventsAdded = mutableListOf<AppendedEvent<E>>()
+
       foldLeft(
         session.appliedEvents().iterator(), initialFuture,
         {
@@ -158,19 +155,16 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
     }
 
     fun updateVersion(conn: SqlConnection, resultingVersion: Int): Future<Void> {
-      val promise = Promise.promise<Void>()
       val newSTateAsJson = session.currentState.toJson(json)
       log.debug("Will append snapshot {}", newSTateAsJson)
-      if (session.originalVersion == 0) {
+      return if (session.originalVersion == 0) {
         val params = Tuple.of(
           resultingVersion,
           JsonObject(newSTateAsJson),
           metadata.aggregateRootId.id,
           config.name
         )
-        conn.preparedQuery(SQL_INSERT_VERSION).execute(params)
-          .onSuccess { promise.complete() }
-          .onFailure { promise.fail(it) }
+        conn.preparedQuery(SQL_INSERT_VERSION).execute(params).mapEmpty()
       } else {
         val params = Tuple.of(
           resultingVersion,
@@ -178,15 +172,12 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           metadata.aggregateRootId.id,
           session.originalVersion
         )
-        conn.preparedQuery(SQL_UPDATE_VERSION).execute(params)
-          .onSuccess { promise.complete() }
-          .onFailure { promise.fail(it) }
+        conn.preparedQuery(SQL_UPDATE_VERSION).execute(params).mapEmpty()
       }
-      return promise.future()
     }
 
     fun projectEvents(conn: SqlConnection, appendedEvents: AppendedEvents<E>): Future<Void> {
-      if (eventsProjector == null) {
+      if (eventsProjectorApi == null) {
         return Future.succeededFuture()
       }
       val projectorPromise = Promise.promise<Void>()
@@ -203,7 +194,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
               CausationId(appendedEvent.causationId),
               appendedEvent.sequence
             )
-            eventsProjector.project(conn, appendedEvent.event, eventMetadata)
+            eventsProjectorApi.project(conn, appendedEvent.event, eventMetadata)
           }
         }
       ).onComplete {
@@ -237,15 +228,6 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       }
 
     return promise.future()
-  }
-
-  private fun <A, B> foldLeft(iterator: Iterator<A>, identity: B, bf: BiFunction<B, A, B>): B {
-    var result = identity
-    while (iterator.hasNext()) {
-      val next = iterator.next()
-      result = bf.apply(result, next)
-    }
-    return result
   }
 
   private data class AppendedEvent<E>(val event: E, val causationId: UUID, val sequence: Long, val eventId: UUID)

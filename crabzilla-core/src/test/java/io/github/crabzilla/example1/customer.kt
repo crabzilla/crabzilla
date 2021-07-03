@@ -140,13 +140,13 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
 
       is RegisterCustomer -> {
         if (snapshot == null)
-          with(Customer.create(id = command.customerId, name = command.name), eventHandler)
+          withNew(Customer.create(id = command.customerId, name = command.name), eventHandler)
         else throw CustomerAlreadyExists(command.customerId)
       }
 
       is RegisterAndActivateCustomer -> {
         if (snapshot == null)
-          with(Customer.create(id = command.customerId, name = command.name), eventHandler)
+          withNew(Customer.create(id = command.customerId, name = command.name), eventHandler)
             .execute { it.activate(command.reason) }
         else throw CustomerAlreadyExists(command.customerId)
       }
@@ -170,7 +170,6 @@ val customerConfig = AggregateRootConfig(
   customerCmdValidator,
   CustomerCommandHandler
 )
-
 
 /**
  * kotlinx.serialization

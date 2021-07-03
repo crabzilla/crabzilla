@@ -3,7 +3,8 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
-import io.github.crabzilla.pgc.api.PgcClient
+import io.github.crabzilla.pgc.command.PgcCommandControllerClient
+import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -18,13 +19,13 @@ import java.util.UUID
 @ExtendWith(VertxExtension::class)
 class PgcSnapshotRepoIT {
 
-  private lateinit var client: PgcClient
+  private lateinit var client: PgcCommandControllerClient
   private lateinit var repo: PgcSnapshotRepo<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = PgcClient.create(vertx, customerJson, connectOptions, poolOptions)
+    client = PgcCommandControllerClient.create(vertx, customerJson, connectOptions, poolOptions)
     repo = PgcSnapshotRepo(client.pgPool, client.json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)

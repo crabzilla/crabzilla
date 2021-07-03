@@ -69,7 +69,7 @@ interface CommandHandler<A : AggregateRoot, C : Command, E : DomainEvent> {
 
   class ConstructorResult<A, E>(val state: A, vararg val events: E)
 
-  fun <A : AggregateRoot, E : DomainEvent> with(create: ConstructorResult<A, E>, applier: EventHandler<A, E>):
+  fun <A : AggregateRoot, E : DomainEvent> withNew(create: ConstructorResult<A, E>, applier: EventHandler<A, E>):
     StatefulSession<A, E> {
     return StatefulSession(create, applier)
   }

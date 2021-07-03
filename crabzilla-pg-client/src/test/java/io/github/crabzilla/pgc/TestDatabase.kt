@@ -1,9 +1,20 @@
 package io.github.crabzilla.pgc
 
 import io.vertx.core.Future
+import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.sqlclient.PoolOptions
 import io.vertx.sqlclient.SqlClient
+
+val connectOptionsConfig: JsonObject = JsonObject()
+  .put("port", 5432)
+  .put("host", "0.0.0.0")
+  .put("database", "ex1_crabzilla")
+  .put("user", "user1")
+  .put("password", "pwd1")
+
+val config = JsonObject()
+  .put("ex1_crabzilla-config", connectOptionsConfig)
 
 val connectOptions: PgConnectOptions = PgConnectOptions()
   .setPort(5432)
@@ -25,4 +36,12 @@ fun cleanDatabase(sqlClient: SqlClient): Future<Void> {
     .compose { sqlClient.query("update projections set last_offset = 0").execute() }
     .compose { sqlClient.query("delete from customer_summary").execute() }
     .mapEmpty()
+}
+
+fun main() {
+  println(connectOptionsConfig.encodePrettily())
+
+  println(connectOptions.toJson().encodePrettily())
+
+  println(poolOptions.toJson().encodePrettily())
 }

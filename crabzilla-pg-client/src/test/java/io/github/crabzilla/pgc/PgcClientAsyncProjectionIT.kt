@@ -1,17 +1,17 @@
-package io.github.crabzilla.pgc.api
+package io.github.crabzilla.pgc
 
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.CustomerEventsProjector
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
-import io.github.crabzilla.pgc.PgcSnapshotRepo
-import io.github.crabzilla.pgc.cleanDatabase
-import io.github.crabzilla.pgc.connectOptions
-import io.github.crabzilla.pgc.poolOptions
+import io.github.crabzilla.pgc.command.PgcCommandControllerClient
+import io.github.crabzilla.pgc.command.PgcCommandControllerFactory
+import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.deployVerticles
+import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -23,23 +23,37 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
-class PgcClientSyncProjectionIT {
+class PgcClientAsyncProjectionIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
 
   companion object {
-    private val log = LoggerFactory.getLogger(PgcClientSyncProjectionIT::class.java)
+    private val log = LoggerFactory.getLogger(PgcClientAsyncProjectionIT::class.java)
   }
 
   val id = UUID.randomUUID()
 
-  lateinit var client: PgcClient
+  lateinit var client: PgcCommandControllerClient
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = PgcClient.create(vertx, customerJson, connectOptions, poolOptions)
+    client = PgcCommandControllerClient.create(vertx, customerJson, connectOptions, poolOptions)
+    val verticles = listOf(
+      "service:crabzilla.example1.CustomersEventsPublisher",
+      "service:crabzilla.example1.CustomersEventsProjector",
+    )
+    val options = DeploymentOptions().setConfig(config)
     cleanDatabase(client.sqlClient)
+      .compose { vertx.deployVerticles(verticles, options) }
+      .onFailure { tc.failNow(it) }
+      .onSuccess { tc.completeNow() }
+  }
+
+  @Test
+  @DisplayName("closing db connections")
+  fun cleanup(tc: VertxTestContext) {
+    client.close()
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -47,9 +61,9 @@ class PgcClientSyncProjectionIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val commandClient = PgcCommandClient(client)
+    val commandClient = PgcCommandControllerFactory(client)
     val snapshotRepo = PgcSnapshotRepo<Customer>(client.pgPool, client.json)
-    val controller = commandClient.create(customerConfig, true, CustomerEventsProjector)
+    val controller = commandClient.create(customerConfig, true)
     snapshotRepo.get(id)
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->
@@ -61,16 +75,26 @@ class PgcClientSyncProjectionIT {
               .onFailure { err -> tc.failNow(err) }
               .onSuccess { snapshot1 ->
                 assert(1 == snapshot1!!.version)
-                assert(snapshot1.state == Customer(id, "cust#$id"))
-                controller.handle(CommandMetadata(AggregateRootId(id)), ActivateCustomer("because yes"))
+                assert(Customer(id, "cust#$id") == snapshot1.state)
+                controller.handle(
+                  CommandMetadata(AggregateRootId(id)),
+                  ActivateCustomer("because yes")
+                )
                   .onFailure { tc.failNow(it) }
                   .onSuccess {
                     snapshotRepo.get(id)
                       .onFailure { err -> tc.failNow(err) }
                       .onSuccess { snapshot2 ->
                         assert(2 == snapshot2!!.version)
-                        val expected = Customer(id, "cust#$id", isActive = true, reason = "because yes")
-                        assert(snapshot2.state == expected)
+                        assert(
+                          Customer(
+                            id,
+                            "cust#$id",
+                            isActive = true,
+                            reason = "because yes"
+                          )
+                            == snapshot2.state
+                        )
                         tc.completeNow()
                       }
                   }

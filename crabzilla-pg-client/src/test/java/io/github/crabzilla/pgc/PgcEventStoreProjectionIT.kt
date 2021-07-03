@@ -8,7 +8,9 @@ import io.github.crabzilla.example1.CustomerEventsProjector
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerEventHandler
 import io.github.crabzilla.example1.customerJson
-import io.github.crabzilla.pgc.api.PgcClient
+import io.github.crabzilla.pgc.command.PgcCommandControllerClient
+import io.github.crabzilla.pgc.command.PgcEventStore
+import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
@@ -26,14 +28,14 @@ import java.util.UUID
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgcEventStoreProjectionIT {
 
-  private lateinit var client: PgcClient
+  private lateinit var client: PgcCommandControllerClient
   private lateinit var eventStore: PgcEventStore<Customer, CustomerCommand, CustomerEvent>
   private lateinit var repo: PgcSnapshotRepo<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = PgcClient.create(vertx, customerJson, connectOptions, poolOptions)
+    client = PgcCommandControllerClient.create(vertx, customerJson, connectOptions, poolOptions)
     eventStore = PgcEventStore(customerConfig, client.pgPool, client.json, false, CustomerEventsProjector)
     repo = PgcSnapshotRepo(client.pgPool, client.json)
     testRepo = TestRepository(client.pgPool)

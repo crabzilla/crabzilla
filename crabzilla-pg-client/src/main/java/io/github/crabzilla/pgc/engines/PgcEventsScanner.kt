@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.engines
 
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CausationId
@@ -15,7 +15,8 @@ import io.vertx.sqlclient.SqlClient
 import io.vertx.sqlclient.Tuple
 
 // TODO could receive also a list of aggregate root names to filter interesting events
-class PgcEventsScanner(private val sqlClient: SqlClient, private val streamName: String) : EventsScanner {
+class PgcEventsScanner(private val sqlClient: SqlClient, private val projectionName: String) :
+  EventsScanner {
 
   private val selectAfterOffset =
     """
@@ -30,13 +31,13 @@ class PgcEventsScanner(private val sqlClient: SqlClient, private val streamName:
     "UPDATE projections SET last_offset = $1 WHERE projections.name = $2"
 
   override fun streamName(): String {
-    return streamName
+    return projectionName
   }
 
   override fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
     return sqlClient
       .preparedQuery(selectAfterOffset)
-      .execute(Tuple.of(streamName, numberOfRows))
+      .execute(Tuple.of(projectionName, numberOfRows))
       .map { rowSet: RowSet<Row> ->
         rowSet.iterator().asSequence().map { row: Row ->
           val eventMetadata = EventMetadata(
@@ -56,7 +57,7 @@ class PgcEventsScanner(private val sqlClient: SqlClient, private val streamName:
   override fun updateOffSet(eventSequence: Long): Future<Void> {
     return sqlClient
       .preparedQuery(updateOffset)
-      .execute(Tuple.of(eventSequence, streamName))
+      .execute(Tuple.of(eventSequence, projectionName))
       .mapEmpty()
   }
 }
