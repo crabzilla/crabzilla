@@ -1,7 +1,7 @@
 package io.github.crabzilla.example1
 
-import io.github.crabzilla.pgc.PgcEventsProjectorApi
-import io.github.crabzilla.pgc.PgcEventsProjectorProvider
+import io.github.crabzilla.pgc.engines.PgcEventsProjectorApi
+import io.github.crabzilla.pgc.engines.PgcEventsProjectorProvider
 
 class CustomersProjectorFactory : PgcEventsProjectorProvider {
   override fun create(): PgcEventsProjectorApi {

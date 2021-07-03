@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.command
 
 import io.vertx.core.Future
 import io.vertx.core.Vertx

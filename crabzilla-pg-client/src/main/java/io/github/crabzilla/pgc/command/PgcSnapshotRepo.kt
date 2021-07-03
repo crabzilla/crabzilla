@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.AggregateRoot
 import io.github.crabzilla.core.Snapshot

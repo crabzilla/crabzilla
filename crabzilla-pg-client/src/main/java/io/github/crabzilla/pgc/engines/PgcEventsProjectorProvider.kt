@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.engines
 
 interface PgcEventsProjectorProvider {
   fun create(): PgcEventsProjectorApi

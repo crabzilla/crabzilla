@@ -7,13 +7,12 @@
         "maxSize": 7
       },
       "jsonFactoryClassName": "io.github.crabzilla.example1.Example1JsonFactory",
-      "eventsProjectorFactoryClassName": "",
       "projectionId": "customers",
       "targetEndpoint" : "customers-projection",
-      "interval" : 500,
-      "maxNumberOfRows": 1,
-      "maxInterval" : 60000,
-      "statsInterval" : 30000
+      "interval" : 10,
+      "maxNumberOfRows": 10,
+      "maxInterval" : 100,
+      "statsInterval" : 100
     },
     "worker": false,
     "instances": 1

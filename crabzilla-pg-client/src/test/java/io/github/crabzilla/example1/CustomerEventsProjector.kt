@@ -1,7 +1,7 @@
 package io.github.crabzilla.example1
 
 import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.pgc.PgcEventsProjectorApi
+import io.github.crabzilla.pgc.engines.PgcEventsProjectorApi
 import io.github.crabzilla.stack.EventMetadata
 import io.vertx.core.Future
 import io.vertx.sqlclient.SqlConnection

@@ -1,10 +1,11 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.AggregateRoot
 import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.StatefulSession
+import io.github.crabzilla.pgc.engines.PgcEventsProjectorApi
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CommandException
 import io.github.crabzilla.stack.CommandMetadata
@@ -134,8 +135,8 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       foldLeft(
         session.appliedEvents().iterator(), initialFuture,
         {
-          currentFuture: Future<AppendedEvent<E>?>,
-          event: E,
+            currentFuture: Future<AppendedEvent<E>?>,
+            event: E,
           ->
           currentFuture.compose { appendedEvent: AppendedEvent<E>? ->
             val causationId = if (eventsAdded.size == 0) metadata.commandId.id else appendedEvent!!.eventId

@@ -8,6 +8,9 @@ import io.github.crabzilla.example1.CustomerEvent
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerEventHandler
 import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.pgc.command.PgcCommandControllerClient
+import io.github.crabzilla.pgc.command.PgcEventStore
+import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx

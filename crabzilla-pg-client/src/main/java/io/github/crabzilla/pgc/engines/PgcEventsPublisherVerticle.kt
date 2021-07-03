@@ -1,7 +1,8 @@
-package io.github.crabzilla.pgc
+package io.github.crabzilla.pgc.engines
 
 import io.github.crabzilla.stack.EventBusPublisher
 import io.github.crabzilla.stack.EventRecord
+import io.github.crabzilla.stack.foldLeft
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Promise
@@ -9,7 +10,6 @@ import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-import java.util.function.BiFunction
 import kotlin.math.min
 
 /**
@@ -18,9 +18,7 @@ import kotlin.math.min
 class PgcEventsPublisherVerticle : PgcAbstractVerticle() {
 
   companion object {
-    // TODO this must be by instance
-    const val PUBLISHER_ENDPOINT = "publisher.verticle" // TODO add endpoint for pause, resume, restart from N, etc
-    const val PUBLISHER_RESCHEDULED_ENDPOINT = "publisher.verticle.rescheduled"
+    // TODO this must be by instance: add endpoint for pause, resume, restart from N, etc
   }
 
   private val log = LoggerFactory.getLogger(PgcEventsPublisherVerticle::class.java)
@@ -29,18 +27,17 @@ class PgcEventsPublisherVerticle : PgcAbstractVerticle() {
   private val failures = AtomicLong(0L)
   private val showStats = AtomicBoolean(true)
 
+  private lateinit var options: Config
   lateinit var scanner: PgcEventsScanner
   lateinit var publisher: EventBusPublisher
-  private lateinit var options: Config
 
   override fun start() {
 
-    val config = Config.create(config())
-    log.info("Config {}", config().encodePrettily())
+    options = Config.create(config())
 
     val sqlClient = sqlClient(config())
-    scanner = PgcEventsScanner(sqlClient, config.projectionId)
-    publisher = EventBusPublisher(config.targetEndpoint, vertx.eventBus())
+    scanner = PgcEventsScanner(sqlClient, options.projectionId)
+    publisher = EventBusPublisher(options.targetEndpoint, vertx.eventBus())
     options = Config.create(config())
 
     // Schedule the first execution
@@ -48,21 +45,7 @@ class PgcEventsPublisherVerticle : PgcAbstractVerticle() {
     vertx.setPeriodic(options.statsInterval) {
       showStats.set(true)
     }
-    // force scan endpoint
-    vertx.eventBus().consumer<Void>(PUBLISHER_ENDPOINT) { msg ->
-      log.info("Forced scan")
-      scanAndPublish(options.maxNumberOfRows)
-        .onFailure { msg.fail(500, it.message) }
-        .onSuccess {
-          log.info("Finished scan")
-          msg.reply(true)
-        }
-    }
-    vertx.eventBus().consumer<Long>(PUBLISHER_RESCHEDULED_ENDPOINT) { msg ->
-      val nextInterval = msg.body()
-      vertx.setTimer(nextInterval, action)
-      log.debug("Rescheduled to next {} milliseconds", nextInterval)
-    }
+
     log.info("Started pooling events with {}", options)
   }
 
@@ -73,11 +56,13 @@ class PgcEventsPublisherVerticle : PgcAbstractVerticle() {
   private fun handler(): Handler<Long?> {
     fun registerFailure() {
       val nextInterval = min(options.maxInterval, options.interval * failures.incrementAndGet())
-      vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, nextInterval)
+      vertx.setTimer(nextInterval, action)
+      log.debug("Rescheduled to next {} milliseconds", nextInterval)
     }
     fun registerSuccessOrStillBusy() {
       failures.set(0)
-      vertx.eventBus().send(PUBLISHER_RESCHEDULED_ENDPOINT, options.interval)
+      vertx.setTimer(options.interval, action)
+      log.debug("Rescheduled to next {} milliseconds", options.interval)
     }
     return Handler { _ ->
       scanAndPublish(options.maxNumberOfRows)
@@ -108,14 +93,6 @@ class PgcEventsPublisherVerticle : PgcAbstractVerticle() {
       fun action(eventRecord: EventRecord): Future<Void> {
         return publisher.publish(eventRecord).mapEmpty()
       }
-      fun <A, B> foldLeft(iterator: Iterator<A>, identity: B, bf: BiFunction<B, A, B>): B {
-        var result = identity
-        while (iterator.hasNext()) {
-          val next = iterator.next()
-          result = bf.apply(result, next)
-        }
-        return result
-      }
       val promise = Promise.promise<Long>()
       val eventSequence = AtomicLong(0)
       val initialFuture = Future.succeededFuture<Void>()
@@ -138,6 +115,7 @@ class PgcEventsPublisherVerticle : PgcAbstractVerticle() {
       }
       return promise.future()
     }
+
     val promise = Promise.promise<Long>()
     scanner.scanPendingEvents(numberOfRows)
       .onFailure {
@@ -175,7 +153,7 @@ class PgcEventsPublisherVerticle : PgcAbstractVerticle() {
     return promise.future()
   }
 
-  private class Config(
+  private data class Config(
     val projectionId: String,
     val targetEndpoint: String,
     val interval: Long,

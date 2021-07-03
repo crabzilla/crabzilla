@@ -5,6 +5,9 @@ import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.pgc.command.PgcCommandControllerClient
+import io.github.crabzilla.pgc.command.PgcCommandControllerFactory
+import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.deployVerticles
@@ -68,48 +71,32 @@ class PgcClientAsyncProjectionIT {
         controller.handle(CommandMetadata(AggregateRootId(id)), RegisterCustomer(id, "cust#$id"))
           .onFailure { tc.failNow(it) }
           .onSuccess {
-            vertx.eventBus().request<Boolean>(PgcEventsPublisherVerticle.PUBLISHER_ENDPOINT, null) { it ->
-              if (it.failed()) {
-                tc.failNow(it.cause())
-              } else {
-                snapshotRepo.get(id)
-                  .onFailure { err -> tc.failNow(err) }
-                  .onSuccess { snapshot1 ->
-                    assert(1 == snapshot1!!.version)
-                    assert(Customer(id, "cust#$id") == snapshot1.state)
-                    controller.handle(
-                      CommandMetadata(AggregateRootId(id)),
-                      ActivateCustomer("because yes")
-                    )
-                      .onFailure { tc.failNow(it) }
-                      .onSuccess {
-                        vertx.eventBus()
-                          .request<Boolean>(
-                            PgcEventsPublisherVerticle.PUBLISHER_ENDPOINT,
-                            null
-                          ) {
-                            if (it.failed()) {
-                              tc.failNow(it.cause())
-                            } else {
-                              snapshotRepo.get(id)
-                                .onFailure { err -> tc.failNow(err) }
-                                .onSuccess { snapshot2 ->
-                                  assert(2 == snapshot2!!.version)
-                                  assert(
-                                    Customer(
-                                      id,
-                                      "cust#$id",
-                                      isActive = true,
-                                      reason = "because yes"
-                                    )
-                                      == snapshot2.state
-                                  )
-                                  tc.completeNow()
-                                }
-                            }
-                          }
+            snapshotRepo.get(id)
+              .onFailure { err -> tc.failNow(err) }
+              .onSuccess { snapshot1 ->
+                assert(1 == snapshot1!!.version)
+                assert(Customer(id, "cust#$id") == snapshot1.state)
+                controller.handle(
+                  CommandMetadata(AggregateRootId(id)),
+                  ActivateCustomer("because yes")
+                )
+                  .onFailure { tc.failNow(it) }
+                  .onSuccess {
+                    snapshotRepo.get(id)
+                      .onFailure { err -> tc.failNow(err) }
+                      .onSuccess { snapshot2 ->
+                        assert(2 == snapshot2!!.version)
+                        assert(
+                          Customer(
+                            id,
+                            "cust#$id",
+                            isActive = true,
+                            reason = "because yes"
+                          )
+                                  == snapshot2.state
+                        )
+                        tc.completeNow()
                       }
-                  }
               }
             }
           }

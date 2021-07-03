@@ -3,6 +3,8 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.pgc.command.PgcCommandControllerClient
+import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
