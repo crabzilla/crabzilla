@@ -1,6 +1,5 @@
 package io.github.crabzilla.stack
 
-import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.example1.Customer
 import io.github.crabzilla.example1.CustomerCommand

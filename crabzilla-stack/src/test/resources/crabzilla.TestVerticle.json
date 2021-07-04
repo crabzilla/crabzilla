@@ -1,5 +1,5 @@
 {
-  "main": "io.github.crabzilla.stack.TestVerticle",
+  "main": "io.github.crabzilla.spi.TestVerticle",
   "options": {
     "config" : {
       "connectOptionsName": "ex1_crabzilla",

@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.integration
+package io.github.crabzilla.pgc
 
 import java.nio.file.ProviderNotFoundException
 import java.util.ServiceLoader

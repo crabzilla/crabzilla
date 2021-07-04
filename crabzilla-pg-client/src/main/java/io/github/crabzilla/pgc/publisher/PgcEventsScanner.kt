@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.integration
+package io.github.crabzilla.pgc.publisher
 
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CausationId

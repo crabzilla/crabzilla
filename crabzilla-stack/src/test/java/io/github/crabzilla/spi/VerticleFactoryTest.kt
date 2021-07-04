@@ -1,4 +1,4 @@
-package io.github.crabzilla.stack
+package io.github.crabzilla.spi
 
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx

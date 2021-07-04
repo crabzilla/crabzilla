@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.integration
+package io.github.crabzilla.pgc.projector
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.stack.EventMetadata

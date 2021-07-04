@@ -6,7 +6,6 @@ import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customerConfig
 import io.github.crabzilla.example1.customerJson
 import io.github.crabzilla.pgc.command.CommandControllerClient
-import io.github.crabzilla.pgc.command.CommandControllerFactory
 import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CommandMetadata
@@ -61,9 +60,8 @@ class PgcClientAsyncProjectionIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val commandClient = CommandControllerFactory(client)
     val snapshotRepo = PgcSnapshotRepo<Customer>(client.pgPool, client.json)
-    val controller = commandClient.create(customerConfig, true)
+    val controller = client.create(customerConfig)
     snapshotRepo.get(id)
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->

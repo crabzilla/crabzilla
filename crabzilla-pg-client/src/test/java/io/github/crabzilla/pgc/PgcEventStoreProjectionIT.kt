@@ -36,7 +36,12 @@ class PgcEventStoreProjectionIT {
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     client = CommandControllerClient.create(vertx, customerJson, connectOptions, poolOptions)
-    eventStore = PgcEventStore(customerConfig, client.pgPool, client.json, false, CustomerEventsProjector)
+    eventStore = PgcEventStore(
+      customerConfig, client.pgPool, client.json,
+      saveCommandOption = true,
+      optimisticLockOption = true,
+      eventsProjectorApi = CustomerEventsProjector
+    )
     repo = PgcSnapshotRepo(client.pgPool, client.json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)

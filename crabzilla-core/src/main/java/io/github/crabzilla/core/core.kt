@@ -81,13 +81,3 @@ interface CommandHandler<A : AggregateRoot, C : Command, E : DomainEvent> {
 
   fun handleCommand(command: C, snapshot: Snapshot<A>?, eventHandler: EventHandler<A, E>): StatefulSession<A, E>
 }
-
-/**
- * A configuration for an aggregate root
- */
-class AggregateRootConfig<A : AggregateRoot, C : Command, E : DomainEvent> (
-  val name: String,
-  val eventHandler: EventHandler<A, E>,
-  val commandValidator: CommandValidator<C>,
-  val commandHandler: CommandHandler<A, C, E>
-)
