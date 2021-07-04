@@ -1,5 +1,6 @@
-package io.github.crabzilla.pgc.integration
+package io.github.crabzilla.pgc.publisher
 
+import io.github.crabzilla.pgc.PgcAbstractVerticle
 import io.github.crabzilla.stack.EventBusPublisher
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.foldLeft
@@ -15,7 +16,7 @@ import kotlin.math.min
 /**
  * This component will publish the domain events to an EventsPublisher.
  */
-class EventsPublisherVerticle : AbstractIntegrationVerticle() {
+class EventsPublisherVerticle : PgcAbstractVerticle() {
 
   companion object {
     // TODO this must be by instance: add endpoint for pause, resume, restart from N, etc

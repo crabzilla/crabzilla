@@ -1,7 +1,6 @@
 package io.github.crabzilla.example1
 
 import io.github.crabzilla.core.AggregateRoot
-import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandHandler.ConstructorResult
@@ -163,13 +162,6 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
     }
   }
 }
-
-val customerConfig = AggregateRootConfig(
-  "Customer",
-  customerEventHandler,
-  customerCmdValidator,
-  CustomerCommandHandler
-)
 
 /**
  * kotlinx.serialization

@@ -21,13 +21,13 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
-class PgcClientSyncProjectionIT {
+class PgcClientOptionsProjectionIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
 
   companion object {
-    private val log = LoggerFactory.getLogger(PgcClientSyncProjectionIT::class.java)
+    private val log = LoggerFactory.getLogger(PgcClientOptionsProjectionIT::class.java)
   }
 
   val id = UUID.randomUUID()
@@ -56,8 +56,8 @@ class PgcClientSyncProjectionIT {
     val snapshotRepo = PgcSnapshotRepo<Customer>(client.pgPool, client.json)
     val controller = client.create(
       customerConfig,
-      saveCommandOption = true,
-      optimisticLockOption = true,
+      saveCommandOption = false,
+      optimisticLockOption = false,
       projectorApi = CustomerEventsProjector
     )
     snapshotRepo.get(id)

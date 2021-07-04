@@ -1,7 +1,6 @@
 package io.github.crabzilla.example1
 
 import io.github.crabzilla.core.AggregateRoot
-import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandHandler.ConstructorResult
@@ -18,6 +17,7 @@ import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.stack.AggregateRootConfig
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

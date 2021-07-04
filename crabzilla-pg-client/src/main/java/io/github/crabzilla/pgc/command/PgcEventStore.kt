@@ -1,11 +1,11 @@
 package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.AggregateRoot
-import io.github.crabzilla.core.AggregateRootConfig
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.StatefulSession
-import io.github.crabzilla.pgc.integration.EventsProjector
+import io.github.crabzilla.pgc.projector.EventsProjector
+import io.github.crabzilla.stack.AggregateRootConfig
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CommandException
 import io.github.crabzilla.stack.CommandMetadata
@@ -30,6 +30,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   private val pgPool: PgPool,
   private val json: Json,
   private val saveCommandOption: Boolean = true,
+  private val optimisticLockOption: Boolean = true, // only use false if you have a singleton command handler verticle
   private val eventsProjectorApi: EventsProjector? = null,
 ) : EventStore<A, C, E> {
 
@@ -60,6 +61,9 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
   override fun append(command: C, metadata: CommandMetadata, session: StatefulSession<A, E>): Future<Void> {
 
     fun lockSnapshotIfVersionMatches(conn: SqlConnection): Future<Void> {
+      if (!optimisticLockOption) {
+        return Future.succeededFuture()
+      }
       val promise0 = Promise.promise<Void>()
       conn.preparedQuery(SQL_LOCK_VERSION)
         .execute(Tuple.of(metadata.aggregateRootId.id, config.name))

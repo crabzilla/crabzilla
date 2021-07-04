@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.integration
+package io.github.crabzilla.pgc
 
 import kotlinx.serialization.json.Json
 

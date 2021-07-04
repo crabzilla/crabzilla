@@ -1,6 +1,7 @@
-package io.github.crabzilla.pgc.integration
+package io.github.crabzilla.pgc.projector
 
 import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.pgc.PgcAbstractVerticle
 import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
@@ -8,7 +9,7 @@ import org.slf4j.LoggerFactory
 /**
  * To update customer read model given events
  */
-class EventsProjectorVerticle : AbstractIntegrationVerticle() {
+class EventsProjectorVerticle : PgcAbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(EventsProjectorVerticle::class.java)
