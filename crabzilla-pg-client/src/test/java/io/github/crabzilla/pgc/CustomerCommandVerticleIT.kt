@@ -40,9 +40,9 @@ class CustomerCommandVerticleIT {
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     client = CommandControllerClient.create(vertx, example1Json, connectOptions, poolOptions)
     val verticles = listOf(
-//      "service:crabzilla.example1.CustomersEventsPublisher",
-//      "service:crabzilla.example1.CustomersEventsProjector",
-      "service:crabzilla.example1.CustomersCommandVerticle"
+//      "service:crabzilla.example1.customer.CustomersEventsPublisher",
+//      "service:crabzilla.example1.customer.CustomersEventsProjector",
+      "service:crabzilla.example1.customer.CustomersCommandVerticle"
     )
     val options = DeploymentOptions().setConfig(config)
     cleanDatabase(client.sqlClient)
