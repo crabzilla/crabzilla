@@ -22,7 +22,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
-import java.math.BigDecimal
 import java.util.UUID
 
 @Serializable
@@ -32,7 +31,7 @@ sealed class PaymentEvent : DomainEvent() {
   data class PaymentRequested(
     @Contextual val id: UUID,
     val creditCardNo: String,
-    @Contextual val amount: BigDecimal,
+    @Contextual val amount: Double,
   ) : PaymentEvent()
 
   @Serializable
@@ -45,14 +44,14 @@ sealed class PaymentEvent : DomainEvent() {
 
   @Serializable
   @SerialName("PaymentRefunded")
-  data class PaymentRefunded(val reason: String, @Contextual val amount: BigDecimal) : PaymentEvent()
+  data class PaymentRefunded(val reason: String, @Contextual val amount: Double) : PaymentEvent()
 }
 
 @Serializable
 sealed class PaymentCommand : Command() {
   @Serializable
   @SerialName("Pay")
-  data class Pay(@Contextual val id: UUID, val creditCardNo: String, @Contextual val amount: BigDecimal) :
+  data class Pay(@Contextual val id: UUID, val creditCardNo: String, @Contextual val amount: Double) :
     PaymentCommand()
 
   @Serializable
@@ -71,13 +70,13 @@ enum class Status {
 data class Payment(
   @Contextual val id: UUID,
   val creditCardNo: String,
-  @Contextual val amount: BigDecimal,
+  @Contextual val amount: Double,
   val status: Status? = null,
   val reason: String? = null,
 ) : DomainState() {
 
   companion object {
-    fun create(id: UUID, creditCardNo: String, amount: BigDecimal): ConstructorResult<Payment, PaymentEvent> {
+    fun create(id: UUID, creditCardNo: String, amount: Double): ConstructorResult<Payment, PaymentEvent> {
       return ConstructorResult(Payment(id, creditCardNo, amount), PaymentRequested(id, creditCardNo, amount))
     }
   }

@@ -18,7 +18,6 @@ import io.mockk.every
 import io.mockk.mockk
 import io.vertx.core.Future
 import io.vertx.core.Vertx
-import java.math.BigDecimal
 import java.util.UUID
 
 // to run from ide: kotest-intellij-plugin
@@ -45,7 +44,7 @@ class CommandControllerPaymentTest : BehaviorSpec({
       val result = controller
         .handle(
           CommandMetadata(domainStateId),
-          PaymentCommand.Pay(domainStateId.id, "000", BigDecimal(10))
+          PaymentCommand.Pay(domainStateId.id, "000", 10.00)
         )
       Then("It should have the expected StatefulSession") {
         result
@@ -53,10 +52,10 @@ class CommandControllerPaymentTest : BehaviorSpec({
           .onSuccess { session ->
             session.originalVersion shouldBe 0
             session.currentState shouldBe
-              Payment(domainStateId.id, "000", BigDecimal(10), Status.Approved, "ok")
+              Payment(domainStateId.id, "000", 10.00, Status.Approved, "ok")
             session.appliedEvents() shouldBe
               listOf(
-                PaymentRequested(domainStateId.id, "000", BigDecimal(10)),
+                PaymentRequested(domainStateId.id, "000", 10.00),
                 PaymentApproved("ok")
               )
           }
@@ -92,7 +91,7 @@ class CommandControllerPaymentTest : BehaviorSpec({
 //          .onSuccess {
 //            shouldFail { }
 //          }
-//      }
+//      }payment.kt
 //    }
 //
 //    When("I send a register command but with error on get") {
