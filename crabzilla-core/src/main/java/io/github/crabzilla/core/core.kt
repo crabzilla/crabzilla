@@ -31,10 +31,10 @@ abstract class Command {
 }
 
 @Serializable
-abstract class AggregateRoot {
+abstract class DomainState {
   companion object {
-    private val serDer = PolymorphicSerializer(AggregateRoot::class)
-    fun <A : AggregateRoot> fromJson(json: Json, asJson: String): A {
+    private val serDer = PolymorphicSerializer(DomainState::class)
+    fun <A : DomainState> fromJson(json: Json, asJson: String): A {
       return json.decodeFromString(serDer, asJson) as A
     }
   }
@@ -53,31 +53,34 @@ fun interface CommandValidator<C : Command> {
 /**
  * To apply an event to an aggregate root state
  */
-fun interface EventHandler<A : AggregateRoot, E : DomainEvent> {
+fun interface EventHandler<A : DomainState, E : DomainEvent> {
   fun handleEvent(state: A?, event: E): A
 }
 
 /**
  * A Snapshot is an aggregate state with a version
  */
-data class Snapshot<A : AggregateRoot>(val state: A, val version: Int)
+data class Snapshot<A : DomainState>(val state: A, val version: Int)
 
-/**
- * To handle commands
- */
-interface CommandHandler<A : AggregateRoot, C : Command, E : DomainEvent> {
+interface CommandHandlerApi<A : DomainState, C : Command, E : DomainEvent> {
 
   class ConstructorResult<A, E>(val state: A, vararg val events: E)
 
-  fun <A : AggregateRoot, E : DomainEvent> withNew(create: ConstructorResult<A, E>, applier: EventHandler<A, E>):
+  fun <A : DomainState, E : DomainEvent> withNew(create: ConstructorResult<A, E>, applier: EventHandler<A, E>):
     StatefulSession<A, E> {
     return StatefulSession(create, applier)
   }
 
-  fun <A : AggregateRoot, E : DomainEvent> with(snapshot: Snapshot<A>, applier: EventHandler<A, E>):
+  fun <A : DomainState, E : DomainEvent> with(snapshot: Snapshot<A>, applier: EventHandler<A, E>):
     StatefulSession<A, E> {
     return StatefulSession(snapshot.version, snapshot.state, applier)
   }
+}
 
-  fun handleCommand(command: C, snapshot: Snapshot<A>?, eventHandler: EventHandler<A, E>): StatefulSession<A, E>
+/**
+ * To handle commands
+ */
+interface CommandHandler<A : DomainState, C : Command, E : DomainEvent> : CommandHandlerApi<A, C, E> {
+
+  fun handleCommand(command: C, eventHandler: EventHandler<A, E>, snapshot: Snapshot<A>?): StatefulSession<A, E>
 }

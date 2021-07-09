@@ -1,7 +1,7 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.example1.CustomerCommandHandler.handleCommand
+import io.github.crabzilla.example1.customer.CustomerCommandHandler.handleCommand
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -50,7 +50,7 @@ class CustomerStateChangeTest {
         inner class `Given a CustomerActivate command` {
           val reason = "because I need it again and again"
           val cmd = CustomerCommand.ActivateCustomer(reason)
-          val result = handleCommand(cmd, Snapshot(state3, 1), customerConfig.eventHandler)
+          val result = handleCommand(cmd, customerConfig.eventHandler, Snapshot(state3, 1))
 
           @Test
           fun `Then Customer is activated`() {

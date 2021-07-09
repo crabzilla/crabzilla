@@ -1,8 +1,8 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.customerConfig
-import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.command.CommandControllerClient
 import io.github.crabzilla.pgc.command.PgcSnapshotRepo
 import io.vertx.core.Vertx
@@ -25,7 +25,7 @@ class PgcSnapshotRepoIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = CommandControllerClient.create(vertx, customerJson, connectOptions, poolOptions)
+    client = CommandControllerClient.create(vertx, example1Json, connectOptions, poolOptions)
     repo = PgcSnapshotRepo(client.pgPool, client.json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)

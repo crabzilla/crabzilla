@@ -26,7 +26,7 @@ class SerializationTests {
       {"type":"Customer","id":"${aggregate.id}","name":"${aggregate.name}"}
     """.trimIndent()
     assertThat(aggregate.toJson(customerJson)).isEqualTo(expectedJson)
-    assertThat(AggregateRoot.fromJson<Customer>(customerJson, expectedJson)).isEqualTo(aggregate)
+    assertThat(DomainState.fromJson<Customer>(customerJson, expectedJson)).isEqualTo(aggregate)
   }
 
   @Test

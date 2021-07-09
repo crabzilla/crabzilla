@@ -1,15 +1,15 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.CustomerEventsProjector
-import io.github.crabzilla.example1.customerConfig
-import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerEventsProjector
+import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.command.CommandControllerClient
 import io.github.crabzilla.pgc.command.PgcSnapshotRepo
-import io.github.crabzilla.stack.AggregateRootId
-import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.DomainStateId
+import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -36,7 +36,7 @@ class PgcClientSyncProjectionIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = CommandControllerClient.create(vertx, customerJson, connectOptions, poolOptions)
+    client = CommandControllerClient.create(vertx, example1Json, connectOptions, poolOptions)
     cleanDatabase(client.sqlClient)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
@@ -64,7 +64,7 @@ class PgcClientSyncProjectionIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->
         assert(snapshot0 == null)
-        controller.handle(CommandMetadata(AggregateRootId(id)), RegisterCustomer(id, "cust#$id"))
+        controller.handle(CommandMetadata(DomainStateId(id)), RegisterCustomer(id, "cust#$id"))
           .onFailure { tc.failNow(it) }
           .onSuccess {
             snapshotRepo.get(id)
@@ -72,7 +72,7 @@ class PgcClientSyncProjectionIT {
               .onSuccess { snapshot1 ->
                 assert(1 == snapshot1!!.version)
                 assert(snapshot1.state == Customer(id, "cust#$id"))
-                controller.handle(CommandMetadata(AggregateRootId(id)), ActivateCustomer("because yes"))
+                controller.handle(CommandMetadata(DomainStateId(id)), ActivateCustomer("because yes"))
                   .onFailure { tc.failNow(it) }
                   .onSuccess {
                     snapshotRepo.get(id)

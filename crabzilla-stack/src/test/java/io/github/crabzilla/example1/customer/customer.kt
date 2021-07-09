@@ -1,23 +1,23 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.AggregateRoot
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.CommandHandler.ConstructorResult
+import io.github.crabzilla.core.CommandHandlerApi.ConstructorResult
 import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.core.javaModule
-import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.example1.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.example1.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.CustomerEvent.CustomerActivated
-import io.github.crabzilla.example1.CustomerEvent.CustomerDeactivated
-import io.github.crabzilla.example1.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.stack.AggregateRootConfig
+import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.stack.command.CommandControllerConfig
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -80,11 +80,14 @@ data class Customer(
   val name: String,
   val isActive: Boolean = false,
   val reason: String? = null
-) : AggregateRoot() {
+) : DomainState() {
 
   companion object {
     fun create(id: UUID, name: String): ConstructorResult<Customer, CustomerEvent> {
-      return ConstructorResult(Customer(id = id, name = name), CustomerRegistered(id = id, name = name))
+      return ConstructorResult(
+        Customer(id = id, name = name),
+        CustomerRegistered(id = id, name = name)
+      )
     }
   }
 
@@ -131,8 +134,8 @@ class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id 
 object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, CustomerEvent> {
   override fun handleCommand(
     command: CustomerCommand,
-    snapshot: Snapshot<Customer>?,
-    eventHandler: EventHandler<Customer, CustomerEvent>
+    eventHandler: EventHandler<Customer, CustomerEvent>,
+    snapshot: Snapshot<Customer>?
   ):
     StatefulSession<Customer, CustomerEvent> {
 
@@ -170,7 +173,7 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
 @kotlinx.serialization.ExperimentalSerializationApi
 val customerModule = SerializersModule {
   include(javaModule)
-  polymorphic(AggregateRoot::class) {
+  polymorphic(DomainState::class) {
     subclass(Customer::class, Customer.serializer())
   }
   polymorphic(Command::class) {
@@ -186,11 +189,11 @@ val customerModule = SerializersModule {
   }
 }
 
-val customerConfig = AggregateRootConfig(
+val customerConfig = CommandControllerConfig(
   "Customer",
   customerEventHandler,
-  customerCmdValidator,
-  CustomerCommandHandler
+  CustomerCommandHandler,
+  customerCmdValidator
 )
 
 val customerJson = Json { serializersModule = customerModule }

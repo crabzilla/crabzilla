@@ -1,12 +1,17 @@
 package io.github.crabzilla.stack
 
 import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerCommand
-import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.CustomerEvent
-import io.github.crabzilla.example1.customerConfig
-import io.github.crabzilla.stack.CommandException.OptimisticLockingException
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerEvent
+import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.stack.command.CommandController
+import io.github.crabzilla.stack.command.CommandControllerConfig
+import io.github.crabzilla.stack.command.CommandException.OptimisticLockingException
+import io.github.crabzilla.stack.command.CommandMetadata
+import io.github.crabzilla.stack.storage.EventStore
+import io.github.crabzilla.stack.storage.SnapshotRepository
 import io.kotest.assertions.fail
 import io.kotest.assertions.shouldFail
 import io.kotest.core.spec.style.BehaviorSpec
@@ -16,11 +21,12 @@ import io.kotest.matchers.throwable.shouldHaveMessage
 import io.mockk.every
 import io.mockk.mockk
 import io.vertx.core.Future
+import io.vertx.core.Vertx
 import java.util.UUID
 
 // to run from ide: kotest-intellij-plugin
 
-class ControllerTests : BehaviorSpec({
+class CommandControllerCustomerTest : BehaviorSpec({
 
   lateinit var snapshotRepo: SnapshotRepository<Customer>
   lateinit var eventStore: EventStore<Customer, CustomerCommand, CustomerEvent>
@@ -30,15 +36,17 @@ class ControllerTests : BehaviorSpec({
     eventStore = mockk()
   }
 
-  Given("a controller for Customer") {
+  val eventBus = Vertx.vertx().eventBus()
 
-    every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
-    every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
-
-    val controller = CommandController(customerConfig, snapshotRepo, eventStore)
+  Given("mocked snapshotRepo and EventStore") {
 
     When("I send a register command") {
-      val aggregateRootId = AggregateRootId(UUID.randomUUID())
+
+      every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
+      every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
+
+      val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
+      val aggregateRootId = DomainStateId(UUID.randomUUID())
       val result = controller
         .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "customer#1"))
       Then("It should have the expected StatefulSession") {
@@ -54,7 +62,12 @@ class ControllerTests : BehaviorSpec({
     }
 
     When("I send an invalid register command") {
-      val aggregateRootId = AggregateRootId(UUID.randomUUID())
+
+      every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
+      every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
+
+      val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
+      val aggregateRootId = DomainStateId(UUID.randomUUID())
       val result = controller
         .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "bad customer"))
       Then("It should fail") {
@@ -67,11 +80,12 @@ class ControllerTests : BehaviorSpec({
     }
 
     When("I send a register command but with Concurrency") {
-      every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
-      every { eventStore.append(any(), any(), any()) } returns Future.failedFuture(OptimisticLockingException("Concurrency error"))
-      val controller =
-        CommandController(customerConfig, snapshotRepo, eventStore)
-      val aggregateRootId = AggregateRootId(UUID.randomUUID())
+      every { snapshotRepo.get(any()) } returns
+        Future.succeededFuture(null)
+      every { eventStore.append(any(), any(), any()) } returns
+        Future.failedFuture(OptimisticLockingException("Concurrency error"))
+      val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
+      val aggregateRootId = DomainStateId(UUID.randomUUID())
       val result = controller
         .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "good customer"))
       Then("It should fail") {
@@ -84,11 +98,12 @@ class ControllerTests : BehaviorSpec({
     }
 
     When("I send a register command but with error on get") {
-      every { snapshotRepo.get(any()) } returns Future.failedFuture("db is down!")
-      every { eventStore.append(any(), any(), any()) } returns Future.failedFuture(OptimisticLockingException("Concurrency error"))
-      val controller =
-        CommandController(customerConfig, snapshotRepo, eventStore)
-      val aggregateRootId = AggregateRootId(UUID.randomUUID())
+      every { snapshotRepo.get(any()) } returns
+        Future.failedFuture("db is down!")
+      every { eventStore.append(any(), any(), any()) } returns
+        Future.failedFuture(OptimisticLockingException("Concurrency error"))
+      val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
+      val aggregateRootId = DomainStateId(UUID.randomUUID())
       val result = controller
         .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "good customer"))
       Then("It should fail") {
@@ -105,12 +120,12 @@ class ControllerTests : BehaviorSpec({
       every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
       val commandHandler: CommandHandler<Customer, CustomerCommand, CustomerEvent> = mockk()
       every { commandHandler.handleCommand(any(), any(), any()) } throws RuntimeException("I got an error!")
-      val mockedCustomerConfig = AggregateRootConfig(
+      val mockedCustomerConfig = CommandControllerConfig(
         customerConfig.name, customerConfig.eventHandler,
-        customerConfig.commandValidator, commandHandler
+        commandHandler, customerConfig.commandValidator
       )
-      val badController = CommandController(mockedCustomerConfig, snapshotRepo, eventStore)
-      val aggregateRootId = AggregateRootId(UUID.randomUUID())
+      val badController = CommandController(mockedCustomerConfig, snapshotRepo, eventStore, eventBus)
+      val aggregateRootId = DomainStateId(UUID.randomUUID())
       val result = badController
         .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "good customer"))
       Then("It should fail") {

@@ -1,11 +1,11 @@
 package io.github.crabzilla.example1
 
-import io.github.crabzilla.core.AggregateRoot
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.CommandHandler.ConstructorResult
+import io.github.crabzilla.core.CommandHandlerApi.ConstructorResult
 import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.StatefulSession
@@ -79,11 +79,14 @@ data class Customer(
   val name: String,
   val isActive: Boolean = false,
   val reason: String? = null
-) : AggregateRoot() {
+) : DomainState() {
 
   companion object {
     fun create(id: UUID, name: String): ConstructorResult<Customer, CustomerEvent> {
-      return ConstructorResult(Customer(id = id, name = name), CustomerRegistered(id = id, name = name))
+      return ConstructorResult(
+        Customer(id = id, name = name),
+        CustomerRegistered(id = id, name = name)
+      )
     }
   }
 
@@ -131,8 +134,8 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
 
   override fun handleCommand(
     command: CustomerCommand,
-    snapshot: Snapshot<Customer>?,
-    eventHandler: EventHandler<Customer, CustomerEvent>
+    eventHandler: EventHandler<Customer, CustomerEvent>,
+    snapshot: Snapshot<Customer>?
   ): StatefulSession<Customer, CustomerEvent> {
 
     return when (command) {
@@ -169,7 +172,7 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
 @kotlinx.serialization.ExperimentalSerializationApi
 val customerModule = SerializersModule {
   include(javaModule)
-  polymorphic(AggregateRoot::class) {
+  polymorphic(DomainState::class) {
     subclass(Customer::class, Customer.serializer())
   }
   polymorphic(Command::class) {

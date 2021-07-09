@@ -2,17 +2,17 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.StatefulSession
-import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerCommand
-import io.github.crabzilla.example1.CustomerEvent
-import io.github.crabzilla.example1.customerConfig
-import io.github.crabzilla.example1.customerEventHandler
-import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerEvent
+import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.example1.customer.customerEventHandler
+import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.command.CommandControllerClient
 import io.github.crabzilla.pgc.command.PgcEventStore
 import io.github.crabzilla.pgc.command.PgcSnapshotRepo
-import io.github.crabzilla.stack.AggregateRootId
-import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.DomainStateId
+import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -35,7 +35,7 @@ class PgcEventStoreIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = CommandControllerClient.create(vertx, customerJson, connectOptions, poolOptions)
+    client = CommandControllerClient.create(vertx, example1Json, connectOptions, poolOptions)
     eventStore = PgcEventStore(customerConfig, client.pgPool, client.json, false)
     repo = PgcSnapshotRepo(client.pgPool, client.json)
     testRepo = TestRepository(client.pgPool)
@@ -49,7 +49,7 @@ class PgcEventStoreIT {
   fun s1(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata(AggregateRootId(id))
+    val metadata = CommandMetadata(DomainStateId(id))
     val constructorResult = Customer.create(id, cmd.name)
     val session = StatefulSession(constructorResult, customerEventHandler)
     session.execute { it.activate(cmd.reason) }
@@ -73,7 +73,7 @@ class PgcEventStoreIT {
                 assertThat(asJson1.getInteger("version")).isEqualTo(1)
                 val expectedEvent1 = CustomerEvent.CustomerRegistered(id, cmd.name)
                 val json1 = asJson1.getString("event_payload")
-                val event1 = DomainEvent.fromJson<CustomerEvent.CustomerRegistered>(customerJson, json1)
+                val event1 = DomainEvent.fromJson<CustomerEvent.CustomerRegistered>(example1Json, json1)
                 assertThat(expectedEvent1).isEqualTo(event1)
                 assertThat(asJson1.getString("causation_id")).isEqualTo(metadata.commandId.id.toString())
                 assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata.commandId.id.toString())
@@ -85,7 +85,7 @@ class PgcEventStoreIT {
                 assertThat(asJson.getInteger("version")).isEqualTo(2)
                 val expectedEvent = CustomerEvent.CustomerActivated(cmd.reason)
                 val json = asJson.getString("event_payload")
-                val event = DomainEvent.fromJson<CustomerEvent.CustomerActivated>(customerJson, json)
+                val event = DomainEvent.fromJson<CustomerEvent.CustomerActivated>(example1Json, json)
                 assertThat(expectedEvent).isEqualTo(event)
                 val causationId = asJson1.getString("id")
                 assertThat(asJson.getString("causation_id")).isEqualTo(causationId)
@@ -101,13 +101,13 @@ class PgcEventStoreIT {
   fun s11(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")
-    val metadata1 = CommandMetadata(AggregateRootId(id))
+    val metadata1 = CommandMetadata(DomainStateId(id))
     val constructorResult = Customer.create(id, cmd1.name)
     val session1 = StatefulSession(constructorResult, customerEventHandler)
     session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(AggregateRootId(id))
+    val metadata2 = CommandMetadata(DomainStateId(id))
     val customer2 = Customer(id, cmd1.name, true, cmd2.reason)
     val session2 = StatefulSession(2, customer2, customerEventHandler)
     session2.execute { it.deactivate(cmd2.reason) }
@@ -136,7 +136,7 @@ class PgcEventStoreIT {
                     assertThat(asJson1.getInteger("version")).isEqualTo(1)
                     val expectedEvent1 = CustomerEvent.CustomerRegistered(id, cmd1.name)
                     val json1 = asJson1.getString("event_payload")
-                    val event1 = DomainEvent.fromJson<CustomerEvent.CustomerRegistered>(customerJson, json1)
+                    val event1 = DomainEvent.fromJson<CustomerEvent.CustomerRegistered>(example1Json, json1)
                     assertThat(expectedEvent1).isEqualTo(event1)
                     assertThat(asJson1.getString("causation_id")).isEqualTo(metadata1.commandId.id.toString())
                     assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata1.commandId.id.toString())
@@ -148,7 +148,7 @@ class PgcEventStoreIT {
                     assertThat(asJson2.getInteger("version")).isEqualTo(2)
                     val expectedEvent2 = CustomerEvent.CustomerActivated(cmd1.reason)
                     val json2 = asJson2.getString("event_payload")
-                    val event2 = DomainEvent.fromJson<CustomerEvent.CustomerActivated>(customerJson, json2)
+                    val event2 = DomainEvent.fromJson<CustomerEvent.CustomerActivated>(example1Json, json2)
                     assertThat(expectedEvent2).isEqualTo(event2)
                     val causationId2 = asJson1.getString("id")
                     assertThat(asJson2.getString("causation_id")).isEqualTo(causationId2)
@@ -161,7 +161,7 @@ class PgcEventStoreIT {
                     assertThat(asJson3.getInteger("version")).isEqualTo(3)
                     val expectedEvent3 = CustomerEvent.CustomerDeactivated(cmd2.reason)
                     val json3 = asJson3.getString("event_payload")
-                    val event3 = DomainEvent.fromJson<CustomerEvent.CustomerDeactivated>(customerJson, json3)
+                    val event3 = DomainEvent.fromJson<CustomerEvent.CustomerDeactivated>(example1Json, json3)
                     assertThat(expectedEvent3).isEqualTo(event3)
                     assertThat(asJson3.getString("causation_id")).isEqualTo(metadata2.commandId.id.toString())
                     assertThat(asJson3.getString("correlation_id")).isEqualTo(metadata2.commandId.id.toString())

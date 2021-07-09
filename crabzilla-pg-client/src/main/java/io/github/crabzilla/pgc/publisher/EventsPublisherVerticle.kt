@@ -1,9 +1,9 @@
 package io.github.crabzilla.pgc.publisher
 
 import io.github.crabzilla.pgc.PgcAbstractVerticle
-import io.github.crabzilla.stack.EventBusPublisher
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.foldLeft
+import io.github.crabzilla.stack.publisher.EventBusPublisher
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Promise

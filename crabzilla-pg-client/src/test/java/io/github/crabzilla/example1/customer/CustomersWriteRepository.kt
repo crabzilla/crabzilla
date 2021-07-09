@@ -1,4 +1,4 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.example1.customer
 
 import io.vertx.core.Future
 import io.vertx.sqlclient.SqlConnection

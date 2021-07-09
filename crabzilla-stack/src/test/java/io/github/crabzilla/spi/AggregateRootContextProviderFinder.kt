@@ -1,12 +1,12 @@
 package io.github.crabzilla.spi
 
-import io.github.crabzilla.core.AggregateRoot
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.DomainState
 import java.nio.file.ProviderNotFoundException
 import java.util.ServiceLoader
 
-class AggregateRootContextProviderFinder<A : AggregateRoot, C : Command, E : DomainEvent> {
+class AggregateRootContextProviderFinder<A : DomainState, C : Command, E : DomainEvent> {
 
   // provider by name
   fun create(providerName: String): AggregateRootContextProvider<A, C, E>? {

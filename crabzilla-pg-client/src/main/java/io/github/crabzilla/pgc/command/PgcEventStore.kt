@@ -1,19 +1,19 @@
 package io.github.crabzilla.pgc.command
 
-import io.github.crabzilla.core.AggregateRoot
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.pgc.projector.EventsProjector
-import io.github.crabzilla.stack.AggregateRootConfig
 import io.github.crabzilla.stack.CausationId
-import io.github.crabzilla.stack.CommandException
-import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.CorrelationId
 import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
-import io.github.crabzilla.stack.EventStore
+import io.github.crabzilla.stack.command.CommandControllerConfig
+import io.github.crabzilla.stack.command.CommandException
+import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.foldLeft
+import io.github.crabzilla.stack.storage.EventStore
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
@@ -25,8 +25,8 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
-class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
-  private val config: AggregateRootConfig<A, C, E>,
+class PgcEventStore<A : DomainState, C : Command, E : DomainEvent>(
+  private val config: CommandControllerConfig<A, C, E>,
   private val pgPool: PgPool,
   private val json: Json,
   private val saveCommandOption: Boolean = true,
@@ -66,7 +66,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
       }
       val promise0 = Promise.promise<Void>()
       conn.preparedQuery(SQL_LOCK_VERSION)
-        .execute(Tuple.of(metadata.aggregateRootId.id, config.name))
+        .execute(Tuple.of(metadata.domainStateId.id, config.name))
         .onSuccess { rowSet ->
           val currentVersion = if (rowSet.size() == 0) {
             0
@@ -111,7 +111,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           causationId.id,
           metadata.correlationId.id,
           config.name,
-          metadata.aggregateRootId.id,
+          metadata.domainStateId.id,
           JsonObject(eventAsJson),
           version
         )
@@ -165,7 +165,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         val params = Tuple.of(
           resultingVersion,
           JsonObject(newSTateAsJson),
-          metadata.aggregateRootId.id,
+          metadata.domainStateId.id,
           config.name
         )
         conn.preparedQuery(SQL_INSERT_VERSION).execute(params).mapEmpty()
@@ -173,7 +173,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
         val params = Tuple.of(
           resultingVersion,
           JsonObject(newSTateAsJson),
-          metadata.aggregateRootId.id,
+          metadata.domainStateId.id,
           session.originalVersion
         )
         conn.preparedQuery(SQL_UPDATE_VERSION).execute(params).mapEmpty()
@@ -192,7 +192,7 @@ class PgcEventStore<A : AggregateRoot, C : Command, E : DomainEvent>(
           currentFuture.compose {
             val eventMetadata = EventMetadata(
               config.name,
-              metadata.aggregateRootId,
+              metadata.domainStateId,
               EventId(appendedEvent.eventId),
               CorrelationId(metadata.commandId.id),
               CausationId(appendedEvent.causationId),
