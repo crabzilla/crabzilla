@@ -31,7 +31,7 @@ sealed class PaymentEvent : DomainEvent() {
   data class PaymentRequested(
     @Contextual val id: UUID,
     val creditCardNo: String,
-    @Contextual val amount: Double,
+    val amount: Double,
   ) : PaymentEvent()
 
   @Serializable
@@ -44,14 +44,14 @@ sealed class PaymentEvent : DomainEvent() {
 
   @Serializable
   @SerialName("PaymentRefunded")
-  data class PaymentRefunded(val reason: String, @Contextual val amount: Double) : PaymentEvent()
+  data class PaymentRefunded(val reason: String, val amount: Double) : PaymentEvent()
 }
 
 @Serializable
 sealed class PaymentCommand : Command() {
   @Serializable
   @SerialName("Pay")
-  data class Pay(@Contextual val id: UUID, val creditCardNo: String, @Contextual val amount: Double) :
+  data class Pay(@Contextual val id: UUID, val creditCardNo: String, val amount: Double) :
     PaymentCommand()
 
   @Serializable
@@ -70,7 +70,7 @@ enum class Status {
 data class Payment(
   @Contextual val id: UUID,
   val creditCardNo: String,
-  @Contextual val amount: Double,
+  val amount: Double,
   val status: Status? = null,
   val reason: String? = null,
 ) : DomainState() {
