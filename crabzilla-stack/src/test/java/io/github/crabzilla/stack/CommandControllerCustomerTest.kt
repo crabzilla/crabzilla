@@ -46,17 +46,17 @@ class CommandControllerCustomerTest : BehaviorSpec({
       every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
 
       val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
-      val aggregateRootId = DomainStateId(UUID.randomUUID())
+      val domainStateId = DomainStateId(UUID.randomUUID())
       val result = controller
-        .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "customer#1"))
+        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "customer#1"))
       Then("It should have the expected StatefulSession") {
         result
           .onFailure { err -> fail(err.message ?: "wtf?") }
           .onSuccess { session ->
             session.originalVersion shouldBe 0
-            session.currentState shouldBe Customer(id = aggregateRootId.id, name = "customer#1")
+            session.currentState shouldBe Customer(id = domainStateId.id, name = "customer#1")
             session.appliedEvents() shouldContainInOrder
-              listOf(CustomerEvent.CustomerRegistered(id = aggregateRootId.id, name = "customer#1"))
+              listOf(CustomerEvent.CustomerRegistered(id = domainStateId.id, name = "customer#1"))
           }
       }
     }
@@ -67,9 +67,9 @@ class CommandControllerCustomerTest : BehaviorSpec({
       every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
 
       val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
-      val aggregateRootId = DomainStateId(UUID.randomUUID())
+      val domainStateId = DomainStateId(UUID.randomUUID())
       val result = controller
-        .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "bad customer"))
+        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "bad customer"))
       Then("It should fail") {
         result
           .onFailure { it shouldHaveMessage "[Bad customer!]" }
@@ -85,9 +85,9 @@ class CommandControllerCustomerTest : BehaviorSpec({
       every { eventStore.append(any(), any(), any()) } returns
         Future.failedFuture(OptimisticLockingException("Concurrency error"))
       val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
-      val aggregateRootId = DomainStateId(UUID.randomUUID())
+      val domainStateId = DomainStateId(UUID.randomUUID())
       val result = controller
-        .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "good customer"))
+        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "good customer"))
       Then("It should fail") {
         result
           .onFailure { it shouldHaveMessage "Concurrency error" }
@@ -103,9 +103,9 @@ class CommandControllerCustomerTest : BehaviorSpec({
       every { eventStore.append(any(), any(), any()) } returns
         Future.failedFuture(OptimisticLockingException("Concurrency error"))
       val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
-      val aggregateRootId = DomainStateId(UUID.randomUUID())
+      val domainStateId = DomainStateId(UUID.randomUUID())
       val result = controller
-        .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "good customer"))
+        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "good customer"))
       Then("It should fail") {
         result
           .onFailure { it shouldHaveMessage "db is down!" }
@@ -125,9 +125,9 @@ class CommandControllerCustomerTest : BehaviorSpec({
         commandHandler, customerConfig.commandValidator
       )
       val badController = CommandController(mockedCustomerConfig, snapshotRepo, eventStore, eventBus)
-      val aggregateRootId = DomainStateId(UUID.randomUUID())
+      val domainStateId = DomainStateId(UUID.randomUUID())
       val result = badController
-        .handle(CommandMetadata(aggregateRootId), RegisterCustomer(aggregateRootId.id, "good customer"))
+        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "good customer"))
       Then("It should fail") {
         result
           .onFailure { it shouldHaveMessage "I got an error!" }

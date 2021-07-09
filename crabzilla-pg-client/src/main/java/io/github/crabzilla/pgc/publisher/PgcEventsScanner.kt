@@ -13,9 +13,14 @@ import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlClient
 import io.vertx.sqlclient.Tuple
+import org.slf4j.LoggerFactory
 
 // TODO could receive also a list of aggregate root names to filter interesting events
 class PgcEventsScanner(private val sqlClient: SqlClient, private val projectionName: String) : EventsScanner {
+
+  companion object {
+    private val log = LoggerFactory.getLogger(PgcEventsScanner::class.java)
+  }
 
   private val selectAfterOffset =
     """
@@ -34,6 +39,7 @@ class PgcEventsScanner(private val sqlClient: SqlClient, private val projectionN
   }
 
   override fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
+    log.debug("Scanning for new events on stream {}", streamName())
     return sqlClient
       .preparedQuery(selectAfterOffset)
       .execute(Tuple.of(projectionName, numberOfRows))

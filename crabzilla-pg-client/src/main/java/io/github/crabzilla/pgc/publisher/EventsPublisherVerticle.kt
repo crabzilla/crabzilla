@@ -19,10 +19,9 @@ import kotlin.math.min
 class EventsPublisherVerticle : PgcAbstractVerticle() {
 
   companion object {
+    private val log = LoggerFactory.getLogger(EventsPublisherVerticle::class.java)
     // TODO this must be by instance: add endpoint for pause, resume, restart from N, etc
   }
-
-  private val log = LoggerFactory.getLogger(EventsPublisherVerticle::class.java)
 
   private val action: Handler<Long?> = handler()
   private val failures = AtomicLong(0L)
@@ -67,12 +66,8 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
     }
     return Handler { _ ->
       scanAndPublish(options.maxNumberOfRows)
-        .onFailure {
-          log.error("When scanning for new events", it)
-          registerFailure()
-        }
-        .onSuccess {
-          when (it) {
+        .compose { retrievedRows ->
+          when (retrievedRows) {
             -1L -> {
               log.debug("Still busy")
               registerSuccessOrStillBusy()
@@ -85,6 +80,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
               registerSuccessOrStillBusy()
             }
           }
+          Future.succeededFuture(retrievedRows)
         }
     }
   }
@@ -98,20 +94,19 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
       val eventSequence = AtomicLong(0)
       val initialFuture = Future.succeededFuture<Void>()
       foldLeft(
-        eventsList.iterator(), initialFuture,
-        { currentFuture: Future<Void>, eventRecord: EventRecord ->
-          currentFuture.onSuccess {
-            log.trace("Successfully projected event #{}", eventRecord.eventMetadata.eventId)
-            eventSequence.set(eventRecord.eventMetadata.eventSequence)
-            action(eventRecord)
-          }.onFailure {
-            log.debug(
-              "Skipped {} since the latest successful event was {}",
-              eventRecord.eventMetadata.eventId, eventSequence
-            )
-          }
+        eventsList.iterator(), initialFuture
+      ) { currentFuture: Future<Void>, eventRecord: EventRecord ->
+        currentFuture.onSuccess {
+          log.trace("Successfully projected event #{}", eventRecord.eventMetadata.eventId)
+          eventSequence.set(eventRecord.eventMetadata.eventSequence)
+          action(eventRecord)
+        }.onFailure {
+          log.debug(
+            "Skipped {} since the latest successful event was {}",
+            eventRecord.eventMetadata.eventId, eventSequence
+          )
         }
-      ).onComplete {
+      }.onComplete {
         promise.complete(eventSequence.get())
       }
       return promise.future()
@@ -130,7 +125,6 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
         }
         log.debug("Found {} new events. The last one is #{}", eventsList.size, eventsList.last().eventMetadata.eventId)
         publish(eventsList)
-          .onFailure { promise.fail(it) }
           .onSuccess { lastEventPublished ->
             log.debug("After publishing {}, the latest published event id is #{}", eventsList.size, lastEventPublished)
             if (lastEventPublished == 0L) {
