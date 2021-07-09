@@ -1,10 +1,9 @@
-package io.github.crabzilla.stack.storage
+package io.github.crabzilla.stack.command
 
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.StatefulSession
-import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Future
 
 /**

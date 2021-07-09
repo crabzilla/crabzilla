@@ -1,4 +1,4 @@
-package io.github.crabzilla.stack.storage
+package io.github.crabzilla.stack.command
 
 import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.Snapshot

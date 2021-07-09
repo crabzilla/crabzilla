@@ -6,7 +6,7 @@ import io.github.crabzilla.stack.DomainStateId
 import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.storage.EventsScanner
+import io.github.crabzilla.stack.publisher.EventsScanner
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row

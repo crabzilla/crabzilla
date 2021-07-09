@@ -2,7 +2,7 @@ package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.stack.storage.SnapshotRepository
+import io.github.crabzilla.stack.command.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row

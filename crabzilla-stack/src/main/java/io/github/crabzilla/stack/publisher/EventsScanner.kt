@@ -1,4 +1,4 @@
-package io.github.crabzilla.stack.storage
+package io.github.crabzilla.stack.publisher
 
 import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.Future

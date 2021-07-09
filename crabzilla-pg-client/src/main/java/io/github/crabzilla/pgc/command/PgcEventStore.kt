@@ -12,8 +12,8 @@ import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.command.CommandControllerConfig
 import io.github.crabzilla.stack.command.CommandException
 import io.github.crabzilla.stack.command.CommandMetadata
+import io.github.crabzilla.stack.command.EventStore
 import io.github.crabzilla.stack.foldLeft
-import io.github.crabzilla.stack.storage.EventStore
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject

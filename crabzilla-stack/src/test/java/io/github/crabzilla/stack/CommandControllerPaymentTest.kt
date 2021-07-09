@@ -9,8 +9,8 @@ import io.github.crabzilla.example1.payment.Status
 import io.github.crabzilla.example1.payment.paymentConfig
 import io.github.crabzilla.stack.command.CommandController
 import io.github.crabzilla.stack.command.CommandMetadata
-import io.github.crabzilla.stack.storage.EventStore
-import io.github.crabzilla.stack.storage.SnapshotRepository
+import io.github.crabzilla.stack.command.EventStore
+import io.github.crabzilla.stack.command.SnapshotRepository
 import io.kotest.assertions.fail
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe

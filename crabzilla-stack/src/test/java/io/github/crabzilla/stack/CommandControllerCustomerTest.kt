@@ -10,8 +10,8 @@ import io.github.crabzilla.stack.command.CommandController
 import io.github.crabzilla.stack.command.CommandControllerConfig
 import io.github.crabzilla.stack.command.CommandException.OptimisticLockingException
 import io.github.crabzilla.stack.command.CommandMetadata
-import io.github.crabzilla.stack.storage.EventStore
-import io.github.crabzilla.stack.storage.SnapshotRepository
+import io.github.crabzilla.stack.command.EventStore
+import io.github.crabzilla.stack.command.SnapshotRepository
 import io.kotest.assertions.fail
 import io.kotest.assertions.shouldFail
 import io.kotest.core.spec.style.BehaviorSpec
