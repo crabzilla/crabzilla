@@ -118,17 +118,12 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
         publish(eventsList)
           .onSuccess { lastEventPublished ->
             log.debug("After publishing {}, the latest published event id is #{}", eventsList.size, lastEventPublished)
-            if (lastEventPublished == 0L) {
-              Future.succeededFuture(0L)
+            if (lastEventPublished <= 0L) {
+              Future.succeededFuture(lastEventPublished)
             } else {
-              scanner.updateOffSet(lastEventPublished)
-                .compose {
-                  if (showStats.get()) {
-                    log.info("Updated latest offset to {}", lastEventPublished)
-                    showStats.set(false)
-                  }
-                  Future.succeededFuture(lastEventPublished)
-                }
+              scanner
+                .updateOffSet(lastEventPublished)
+                .map { lastEventPublished }
             }
           }
       }
