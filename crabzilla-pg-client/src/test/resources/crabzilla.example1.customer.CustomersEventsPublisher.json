@@ -11,8 +11,8 @@
       "targetEndpoint" : "customers-projection",
       "interval" : 10,
       "maxNumberOfRows": 10,
-      "maxInterval" : 100,
-      "statsInterval" : 100
+      "maxInterval" : 10,
+      "statsInterval" : 10
     },
     "worker": false,
     "instances": 1
