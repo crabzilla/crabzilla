@@ -1,11 +1,11 @@
 package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.pgc.projector.EventsProjector
 import io.github.crabzilla.stack.command.CommandController
-import io.github.crabzilla.stack.command.CommandControllerConfig
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.pgclient.PgConnectOptions

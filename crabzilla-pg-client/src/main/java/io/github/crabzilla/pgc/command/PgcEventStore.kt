@@ -1,6 +1,7 @@
 package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.StatefulSession
@@ -9,7 +10,6 @@ import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CorrelationId
 import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
-import io.github.crabzilla.stack.command.CommandControllerConfig
 import io.github.crabzilla.stack.command.CommandException
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.command.EventStore

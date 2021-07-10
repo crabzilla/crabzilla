@@ -1,5 +1,6 @@
 package io.github.crabzilla.stack
 
+import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
@@ -7,7 +8,6 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.stack.command.CommandController
-import io.github.crabzilla.stack.command.CommandControllerConfig
 import io.github.crabzilla.stack.command.CommandException.OptimisticLockingException
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.command.EventStore

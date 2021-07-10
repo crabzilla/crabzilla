@@ -1,6 +1,7 @@
 package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandHandlerApi.ConstructorResult
 import io.github.crabzilla.core.CommandValidator
@@ -17,7 +18,6 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.stack.command.CommandControllerConfig
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

@@ -1,6 +1,7 @@
 package io.github.crabzilla.example1
 
 import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandHandlerApi.ConstructorResult
 import io.github.crabzilla.core.CommandValidator
@@ -165,6 +166,13 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
     }
   }
 }
+
+val customerConfig = CommandControllerConfig(
+  "Customer",
+  customerEventHandler,
+  CustomerCommandHandler,
+  customerCmdValidator
+)
 
 /**
  * kotlinx.serialization

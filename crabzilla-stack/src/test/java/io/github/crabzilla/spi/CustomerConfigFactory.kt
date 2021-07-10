@@ -1,10 +1,10 @@
 package io.github.crabzilla.spi
 
+import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.stack.command.CommandControllerConfig
 
 class CustomerConfigFactory : AggregateRootContextProvider<Customer, CustomerCommand, CustomerEvent> {
 

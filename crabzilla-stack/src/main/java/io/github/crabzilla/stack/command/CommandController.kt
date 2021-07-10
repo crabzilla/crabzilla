@@ -1,8 +1,10 @@
 package io.github.crabzilla.stack.command
 
 import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandHandlerApi
+import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.StatefulSession
@@ -30,8 +32,9 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
 
   fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<A, E>> {
     log.debug("received {}", command)
-    if (config.commandValidator != null) {
-      val validationErrors = config.commandValidator.validate(command)
+    val validator: CommandValidator<C>? = config.commandValidator
+    if (validator != null) {
+      val validationErrors = validator.validate(command)
       if (validationErrors.isNotEmpty()) {
         return Future.failedFuture(ValidationException(validationErrors))
       }
