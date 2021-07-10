@@ -20,6 +20,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(EventsPublisherVerticle::class.java)
+
     // TODO this must be by instance: add endpoint for pause, resume, restart from N, etc
   }
 
@@ -112,21 +113,40 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
       return promise.future()
     }
 
-    return scanner.scanPendingEvents(numberOfRows)
-      .compose { eventsList ->
+    val promise = Promise.promise<Long>()
+    scanner.scanPendingEvents(numberOfRows)
+      .onFailure {
+        promise.fail(it)
+        log.error("When scanning new events", it)
+      }
+      .onSuccess { eventsList ->
+        if (eventsList.isEmpty()) {
+          promise.complete(0)
+          return@onSuccess
+        }
         log.debug("Found {} new events. The last one is #{}", eventsList.size, eventsList.last().eventMetadata.eventId)
         publish(eventsList)
           .onSuccess { lastEventPublished ->
             log.debug("After publishing {}, the latest published event id is #{}", eventsList.size, lastEventPublished)
-            if (lastEventPublished <= 0L) {
-              Future.succeededFuture(lastEventPublished)
+            if (lastEventPublished == 0L) {
+              promise.complete(0L)
             } else {
-              scanner
-                .updateOffSet(lastEventPublished)
-                .map { lastEventPublished }
+              scanner.updateOffSet(lastEventPublished)
+                .onFailure { promise.fail(it) }
+                .onSuccess {
+                  if (showStats.get()) {
+                    log.info("Updated latest offset to {}", lastEventPublished)
+                    showStats.set(false)
+                  }
+                  promise.complete(lastEventPublished)
+                }
             }
           }
       }
+      .onComplete {
+        log.trace("Scan is now inactive until new request")
+      }
+    return promise.future()
   }
 
   private data class Config(
