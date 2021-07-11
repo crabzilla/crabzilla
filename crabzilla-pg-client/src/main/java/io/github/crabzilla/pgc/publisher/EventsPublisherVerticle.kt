@@ -69,10 +69,6 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
       scanAndPublish(options.maxNumberOfRows)
         .compose { retrievedRows ->
           when (retrievedRows) {
-            -1L -> {
-              log.debug("Still busy")
-              registerSuccessOrStillBusy()
-            }
             0L -> {
               log.debug("No new events")
               registerFailure()
@@ -91,10 +87,9 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
       fun action(eventRecord: EventRecord): Future<Void> {
         return publisher.publish(eventRecord).mapEmpty()
       }
-      val promise = Promise.promise<Long>()
       val eventSequence = AtomicLong(0)
       val initialFuture = Future.succeededFuture<Void>()
-      foldLeft(
+      return foldLeft(
         eventsList.iterator(), initialFuture
       ) { currentFuture: Future<Void>, eventRecord: EventRecord ->
         currentFuture.onSuccess {
@@ -107,10 +102,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
             eventRecord.eventMetadata.eventId, eventSequence
           )
         }
-      }.onComplete {
-        promise.complete(eventSequence.get())
-      }
-      return promise.future()
+      }.map { eventSequence.get() }
     }
 
     val promise = Promise.promise<Long>()
