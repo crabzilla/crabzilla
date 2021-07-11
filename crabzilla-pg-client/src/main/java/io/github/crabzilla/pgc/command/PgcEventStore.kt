@@ -18,6 +18,8 @@ import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
+import io.vertx.sqlclient.Row
+import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import kotlinx.serialization.json.Json
@@ -104,7 +106,6 @@ class PgcEventStore<A : DomainState, C : Command, E : DomainEvent>(
 
     fun appendEvents(conn: SqlConnection): Future<AppendedEvents<E>> {
       fun appendEvent(event: E, version: Int, causationId: CausationId): Future<AppendedEvent<E>> {
-        val aePromise = Promise.promise<AppendedEvent<E>>()
         val eventAsJson = event.toJson(json)
         log.debug("Will append event {} as {}", event, eventAsJson)
         val params = Tuple.of(
@@ -115,47 +116,34 @@ class PgcEventStore<A : DomainState, C : Command, E : DomainEvent>(
           JsonObject(eventAsJson),
           version
         )
-        conn.preparedQuery(SQL_APPEND_EVENT)
+        return conn.preparedQuery(SQL_APPEND_EVENT)
           .execute(params)
-          .onFailure { aePromise.fail(it) }
-          .onSuccess { rs ->
-            val appendedEvent = AppendedEvent(
+          .map { rs: RowSet<Row> ->
+            AppendedEvent(
               event,
               rs.first().getUUID("causation_id"),
               rs.first().getLong("sequence"),
               rs.first().getUUID("id")
             )
-            aePromise.complete(appendedEvent)
-            log.debug("Append event ok {}", appendedEvent)
           }
-        return aePromise.future()
       }
 
-      val aesPromise = Promise.promise<AppendedEvents<E>>()
       val initialFuture = Future.succeededFuture<AppendedEvent<E>?>(null)
       val version = AtomicInteger(session.originalVersion)
       val eventsAdded = mutableListOf<AppendedEvent<E>>()
 
-      foldLeft(
-        session.appliedEvents().iterator(), initialFuture,
-        {
-          currentFuture: Future<AppendedEvent<E>?>,
-          event: E,
-          ->
-          currentFuture.compose { appendedEvent: AppendedEvent<E>? ->
-            val causationId = if (eventsAdded.size == 0) metadata.commandId.id else appendedEvent!!.eventId
-            appendEvent(event, version.incrementAndGet(), CausationId(causationId))
-              .onSuccess { eventsAdded.add(it) }
-          }
+      return foldLeft(
+        session.appliedEvents().iterator(), initialFuture
+      ) {
+        currentFuture: Future<AppendedEvent<E>?>,
+        event: E,
+        ->
+        currentFuture.compose { appendedEvent: AppendedEvent<E>? ->
+          val causationId = if (eventsAdded.size == 0) metadata.commandId.id else appendedEvent!!.eventId
+          appendEvent(event, version.incrementAndGet(), CausationId(causationId))
+            .onSuccess { eventsAdded.add(it) }
         }
-      ).onComplete {
-        if (it.failed()) {
-          aesPromise.fail(it.cause())
-        } else {
-          aesPromise.complete(AppendedEvents(eventsAdded, version.get()))
-        }
-      }
-      return aesPromise.future()
+      }.map { AppendedEvents(eventsAdded, version.get()) }
     }
 
     fun updateVersion(conn: SqlConnection, resultingVersion: Int): Future<Void> {
@@ -184,36 +172,25 @@ class PgcEventStore<A : DomainState, C : Command, E : DomainEvent>(
       if (eventsProjectorApi == null) {
         return Future.succeededFuture()
       }
-      val projectorPromise = Promise.promise<Void>()
       val initialFuture = Future.succeededFuture<Void>()
-      foldLeft(
-        appendedEvents.events.iterator(), initialFuture,
-        { currentFuture: Future<Void>, appendedEvent ->
-          currentFuture.compose {
-            val eventMetadata = EventMetadata(
-              config.name,
-              metadata.domainStateId,
-              EventId(appendedEvent.eventId),
-              CorrelationId(metadata.commandId.id),
-              CausationId(appendedEvent.causationId),
-              appendedEvent.sequence
-            )
-            eventsProjectorApi.project(conn, appendedEvent.event, eventMetadata)
-          }
+      return foldLeft(
+        appendedEvents.events.iterator(), initialFuture
+      ) { currentFuture: Future<Void>, appendedEvent ->
+        currentFuture.compose {
+          val eventMetadata = EventMetadata(
+            config.name,
+            metadata.domainStateId,
+            EventId(appendedEvent.eventId),
+            CorrelationId(metadata.commandId.id),
+            CausationId(appendedEvent.causationId),
+            appendedEvent.sequence
+          )
+          eventsProjectorApi.project(conn, appendedEvent.event, eventMetadata)
         }
-      ).onComplete {
-        if (it.failed()) {
-          projectorPromise.fail(it.cause())
-        } else {
-          projectorPromise.complete()
-        }
-      }
-      return projectorPromise.future()
+      }.mapEmpty()
     }
 
-    val promise = Promise.promise<Void>()
-
-    pgPool.withTransaction { conn ->
+    return pgPool.withTransaction { conn ->
       lockSnapshotIfVersionMatches(conn)
         .compose { appendCommand(conn) }
         .compose {
@@ -223,15 +200,7 @@ class PgcEventStore<A : DomainState, C : Command, E : DomainEvent>(
                 .compose { updateVersion(conn, eventsAppended.resultingVersion) }
             }
         }
-    }.onSuccess {
-      log.debug("Events successfully committed")
-      promise.complete()
-    }
-      .onFailure {
-        promise.fail(it)
-      }
-
-    return promise.future()
+    }.mapEmpty()
   }
 
   private data class AppendedEvent<E>(val event: E, val causationId: UUID, val sequence: Long, val eventId: UUID)
