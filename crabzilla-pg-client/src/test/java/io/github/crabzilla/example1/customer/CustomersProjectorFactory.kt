@@ -1,4 +1,4 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.pgc.projector.EventsProjector
 import io.github.crabzilla.pgc.projector.EventsProjectorProvider

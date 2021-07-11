@@ -1,5 +1,6 @@
-package io.github.crabzilla.stack
+package io.github.crabzilla.stack.publisher
 
+import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.Future
 import io.vertx.core.eventbus.EventBus
 

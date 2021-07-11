@@ -1,5 +1,5 @@
 {
-  "main": "io.github.crabzilla.pgc.publisher.EventsPublisherVerticle",
+  "main": "io.github.crabzilla.pgc.projector.EventsProjectorVerticle",
   "options": {
     "config" : {
       "connectOptionsName": "ex1_crabzilla-config",
@@ -7,12 +7,8 @@
         "maxSize": 7
       },
       "jsonFactoryClassName": "io.github.crabzilla.example1.Example1JsonContextFactory",
-      "projectionId": "customers",
-      "targetEndpoint" : "customers-projection",
-      "interval" : 10,
-      "maxNumberOfRows": 10,
-      "maxInterval" : 100,
-      "statsInterval" : 100
+      "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
+      "targetEndpoint" : "customers-projection"
     },
     "worker": false,
     "instances": 1

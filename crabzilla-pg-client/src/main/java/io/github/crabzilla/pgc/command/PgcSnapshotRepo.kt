@@ -1,8 +1,8 @@
 package io.github.crabzilla.pgc.command
 
-import io.github.crabzilla.core.AggregateRoot
+import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.stack.SnapshotRepository
+import io.github.crabzilla.stack.command.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
-class PgcSnapshotRepo<A : AggregateRoot>(
+class PgcSnapshotRepo<A : DomainState>(
   private val sqlClient: SqlClient,
   private val json: Json
 ) : SnapshotRepository<A> {
@@ -32,7 +32,7 @@ class PgcSnapshotRepo<A : AggregateRoot>(
         null
       } else {
         val stateAsJson = JsonObject(rowSet.first().getValue(1).toString())
-        val state = AggregateRoot.fromJson<A>(json, stateAsJson.toString())
+        val state = DomainState.fromJson<A>(json, stateAsJson.toString())
         Snapshot(state, rowSet.first().getInteger("version"))
       }
     }

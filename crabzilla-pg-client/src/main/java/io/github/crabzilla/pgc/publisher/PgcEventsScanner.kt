@@ -1,21 +1,26 @@
 package io.github.crabzilla.pgc.publisher
 
-import io.github.crabzilla.stack.AggregateRootId
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CorrelationId
+import io.github.crabzilla.stack.DomainStateId
 import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.EventsScanner
+import io.github.crabzilla.stack.publisher.EventsScanner
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlClient
 import io.vertx.sqlclient.Tuple
+import org.slf4j.LoggerFactory
 
 // TODO could receive also a list of aggregate root names to filter interesting events
 class PgcEventsScanner(private val sqlClient: SqlClient, private val projectionName: String) : EventsScanner {
+
+  companion object {
+    private val log = LoggerFactory.getLogger(PgcEventsScanner::class.java)
+  }
 
   private val selectAfterOffset =
     """
@@ -34,6 +39,7 @@ class PgcEventsScanner(private val sqlClient: SqlClient, private val projectionN
   }
 
   override fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
+    log.debug("Scanning for new events on stream {}", streamName())
     return sqlClient
       .preparedQuery(selectAfterOffset)
       .execute(Tuple.of(projectionName, numberOfRows))
@@ -41,7 +47,7 @@ class PgcEventsScanner(private val sqlClient: SqlClient, private val projectionN
         rowSet.iterator().asSequence().map { row: Row ->
           val eventMetadata = EventMetadata(
             row.getString("ar_name"),
-            AggregateRootId(row.getUUID("ar_id")),
+            DomainStateId(row.getUUID("ar_id")),
             EventId(row.getUUID("id")),
             CorrelationId(row.getUUID("correlation_id")),
             CausationId(row.getUUID("causation_id")),

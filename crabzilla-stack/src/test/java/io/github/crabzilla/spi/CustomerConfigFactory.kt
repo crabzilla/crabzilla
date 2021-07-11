@@ -1,10 +1,10 @@
 package io.github.crabzilla.spi
 
-import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerCommand
-import io.github.crabzilla.example1.CustomerEvent
-import io.github.crabzilla.example1.customerConfig
-import io.github.crabzilla.stack.AggregateRootConfig
+import io.github.crabzilla.core.CommandControllerConfig
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerEvent
+import io.github.crabzilla.example1.customer.customerConfig
 
 class CustomerConfigFactory : AggregateRootContextProvider<Customer, CustomerCommand, CustomerEvent> {
 
@@ -13,7 +13,7 @@ class CustomerConfigFactory : AggregateRootContextProvider<Customer, CustomerCom
   }
 
   class CustomerAggregateRootContext : AggregateRootContext<Customer, CustomerCommand, CustomerEvent> {
-    override fun config(): AggregateRootConfig<Customer, CustomerCommand, CustomerEvent> {
+    override fun config(): CommandControllerConfig<Customer, CustomerCommand, CustomerEvent> {
       return customerConfig
     }
   }

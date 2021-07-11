@@ -1,5 +1,5 @@
 {
-  "main": "io.github.crabzilla.example1.CustomerCommandVerticle",
+  "main": "io.github.crabzilla.example1.customer.CustomerCommandVerticle",
   "options": {
     "config" : {
       "connectOptionsName": "ex1_crabzilla-config",

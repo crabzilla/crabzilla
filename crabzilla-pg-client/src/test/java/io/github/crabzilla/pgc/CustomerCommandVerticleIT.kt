@@ -1,14 +1,14 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.CustomerCommandVerticle
-import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerCommandVerticle
+import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.command.CommandControllerClient
 import io.github.crabzilla.pgc.command.PgcSnapshotRepo
-import io.github.crabzilla.stack.AggregateRootId
-import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.DomainStateId
+import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.deployVerticles
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
@@ -38,11 +38,11 @@ class CustomerCommandVerticleIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = CommandControllerClient.create(vertx, customerJson, connectOptions, poolOptions)
+    client = CommandControllerClient.create(vertx, example1Json, connectOptions, poolOptions)
     val verticles = listOf(
-//      "service:crabzilla.example1.CustomersEventsPublisher",
-//      "service:crabzilla.example1.CustomersEventsProjector",
-      "service:crabzilla.example1.CustomersCommandVerticle"
+//      "service:crabzilla.example1.customer.CustomersEventsPublisher",
+//      "service:crabzilla.example1.customer.CustomersEventsProjector",
+      "service:crabzilla.example1.customer.CustomersCommandVerticle"
     )
     val options = DeploymentOptions().setConfig(config)
     cleanDatabase(client.sqlClient)
@@ -67,11 +67,11 @@ class CustomerCommandVerticleIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->
         assert(snapshot0 == null)
-        val metadata1 = CommandMetadata(AggregateRootId(id))
+        val metadata1 = CommandMetadata(DomainStateId(id))
         val command1 = RegisterCustomer(id, "cust#$id")
         val msg1 = JsonObject()
           .put("metadata", metadata1.toJson())
-          .put("command", JsonObject(command1.toJson(customerJson)))
+          .put("command", JsonObject(command1.toJson(example1Json)))
         vertx
           .eventBus()
           .request<Boolean>(CustomerCommandVerticle.ENDPOINT, msg1)
@@ -83,11 +83,11 @@ class CustomerCommandVerticleIT {
                 assert(1 == snapshot1!!.version)
                 assert(Customer(id, "cust#$id") == snapshot1.state)
 
-                val metadata2 = CommandMetadata(AggregateRootId(id))
+                val metadata2 = CommandMetadata(DomainStateId(id))
                 val command2 = ActivateCustomer("because yes")
                 val msg2 = JsonObject()
                   .put("metadata", metadata2.toJson())
-                  .put("command", JsonObject(command2.toJson(customerJson)))
+                  .put("command", JsonObject(command2.toJson(example1Json)))
                 vertx
                   .eventBus()
                   .request<Boolean>(CustomerCommandVerticle.ENDPOINT, msg2)

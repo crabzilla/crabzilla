@@ -1,9 +1,11 @@
 package io.github.crabzilla.core
 
+import io.github.crabzilla.core.CommandHandlerApi.ConstructorResult
+
 /**
  * To perform aggregate root business methods and track it's events and state
  */
-class StatefulSession<A : AggregateRoot, E : DomainEvent> {
+class StatefulSession<A : DomainState, E : DomainEvent> {
   val originalVersion: Int
   private val originalState: A
   private val eventHandler: EventHandler<A, E>
@@ -17,7 +19,7 @@ class StatefulSession<A : AggregateRoot, E : DomainEvent> {
     this.currentState = originalState
   }
 
-  constructor(constructorResult: CommandHandler.ConstructorResult<A, E>, eventHandler: EventHandler<A, E>) {
+  constructor(constructorResult: ConstructorResult<A, E>, eventHandler: EventHandler<A, E>) {
     this.originalVersion = 0
     this.originalState = constructorResult.state
     this.eventHandler = eventHandler
@@ -44,14 +46,18 @@ class StatefulSession<A : AggregateRoot, E : DomainEvent> {
     return apply(newEvents)
   }
 
+  fun register(event: E): StatefulSession<A, E> {
+    return apply(listOf(event))
+  }
+
   fun toSessionData(): SessionData {
     return SessionData(originalVersion, if (originalVersion == 0) null else originalState, appliedEvents, currentState)
   }
 
   data class SessionData(
     val originalVersion: Int,
-    val originalState: AggregateRoot?,
+    val originalState: DomainState?,
     val events: List<DomainEvent>,
-    val newState: AggregateRoot
+    val newState: DomainState
   )
 }

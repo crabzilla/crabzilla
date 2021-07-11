@@ -1,4 +1,4 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.pgc.projector.EventsProjector
@@ -9,14 +9,15 @@ import io.vertx.sqlclient.SqlConnection
 object CustomerEventsProjector : EventsProjector {
 
   override fun project(conn: SqlConnection, event: DomainEvent, eventMetadata: EventMetadata): Future<Void> {
-    val id = eventMetadata.aggregateRootId.id
+    val id = eventMetadata.domainStateId.id
+    val repo = CustomersWriteRepository
     return when (val customerEvent = event as CustomerEvent) {
       is CustomerEvent.CustomerRegistered ->
-        CustomersWriteRepository.upsert(conn, id, customerEvent.name, false)
+        repo.upsert(conn, id, customerEvent.name, false)
       is CustomerEvent.CustomerActivated ->
-        CustomersWriteRepository.updateStatus(conn, id, true)
+        repo.updateStatus(conn, id, true)
       is CustomerEvent.CustomerDeactivated ->
-        CustomersWriteRepository.updateStatus(conn, id, false)
+        repo.updateStatus(conn, id, false)
     }
   }
 }

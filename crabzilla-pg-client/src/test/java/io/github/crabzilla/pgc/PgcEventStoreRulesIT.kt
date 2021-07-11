@@ -1,17 +1,17 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.StatefulSession
-import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerCommand
-import io.github.crabzilla.example1.CustomerEvent
-import io.github.crabzilla.example1.customerConfig
-import io.github.crabzilla.example1.customerEventHandler
-import io.github.crabzilla.example1.customerJson
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerEvent
+import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.example1.customer.customerEventHandler
+import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.command.CommandControllerClient
 import io.github.crabzilla.pgc.command.PgcEventStore
 import io.github.crabzilla.pgc.command.PgcSnapshotRepo
-import io.github.crabzilla.stack.AggregateRootId
-import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.DomainStateId
+import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -34,7 +34,7 @@ class PgcEventStoreRulesIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = CommandControllerClient.create(vertx, customerJson, connectOptions, poolOptions)
+    client = CommandControllerClient.create(vertx, example1Json, connectOptions, poolOptions)
     eventStore = PgcEventStore(customerConfig, client.pgPool, client.json, true)
     repo = PgcSnapshotRepo(client.pgPool, client.json)
     testRepo = TestRepository(client.pgPool)
@@ -49,12 +49,12 @@ class PgcEventStoreRulesIT {
     val id = UUID.randomUUID()
     val customer = Customer.create(id = id, name = "c1")
     val cmd1 = CustomerCommand.ActivateCustomer("is needed")
-    val metadata1 = CommandMetadata(AggregateRootId(id))
+    val metadata1 = CommandMetadata(DomainStateId(id))
     val session1 = StatefulSession(0, customer.state, customerEventHandler)
     session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(AggregateRootId(id))
+    val metadata2 = CommandMetadata(DomainStateId(id))
     val session2 = StatefulSession(0, customer.state, customerEventHandler)
     session2.execute { it.deactivate(cmd1.reason) }
 
@@ -77,12 +77,12 @@ class PgcEventStoreRulesIT {
     val customer = Customer.create(id = id, name = "c1")
 
     val cmd1 = CustomerCommand.ActivateCustomer("is needed")
-    val metadata1 = CommandMetadata(AggregateRootId(id))
+    val metadata1 = CommandMetadata(DomainStateId(id))
     val session1 = StatefulSession(0, customer.state, customerEventHandler)
     session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(AggregateRootId(id))
+    val metadata2 = CommandMetadata(DomainStateId(id))
     val session2 = StatefulSession(2, customer.state, customerEventHandler)
     session2.execute { it.deactivate(cmd1.reason) }
 

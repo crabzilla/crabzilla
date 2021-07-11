@@ -1,11 +1,11 @@
 package io.github.crabzilla.pgc.command
 
-import io.github.crabzilla.core.AggregateRoot
 import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.pgc.projector.EventsProjector
-import io.github.crabzilla.stack.AggregateRootConfig
-import io.github.crabzilla.stack.CommandController
+import io.github.crabzilla.stack.command.CommandController
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.pgclient.PgConnectOptions
@@ -27,8 +27,8 @@ class CommandControllerClient(val vertx: Vertx, val json: Json, val pgPool: PgPo
   /**
    * Creates a CommandController
    */
-  fun <A : AggregateRoot, C : Command, E : DomainEvent> create(
-    config: AggregateRootConfig<A, C, E>
+  fun <A : DomainState, C : Command, E : DomainEvent> create(
+    config: CommandControllerConfig<A, C, E>
   ): CommandController<A, C, E> {
     val snapshotRepo = PgcSnapshotRepo<A>(sqlClient, json)
     val eventStore = PgcEventStore(
@@ -37,21 +37,21 @@ class CommandControllerClient(val vertx: Vertx, val json: Json, val pgPool: PgPo
       optimisticLockOption = true,
       eventsProjectorApi = null
     )
-    return CommandController(config, snapshotRepo, eventStore)
+    return CommandController(config, snapshotRepo, eventStore, vertx.eventBus())
   }
 
   /**
    * Creates a more configurable CommandController
    */
-  fun <A : AggregateRoot, C : Command, E : DomainEvent> create(
-    config: AggregateRootConfig<A, C, E>,
+  fun <A : DomainState, C : Command, E : DomainEvent> create(
+    config: CommandControllerConfig<A, C, E>,
     saveCommandOption: Boolean,
     optimisticLockOption: Boolean,
     projectorApi: EventsProjector?
   ): CommandController<A, C, E> {
     val snapshotRepo = PgcSnapshotRepo<A>(sqlClient, json)
     val eventStore = PgcEventStore(config, pgPool, json, saveCommandOption, optimisticLockOption, projectorApi)
-    return CommandController(config, snapshotRepo, eventStore)
+    return CommandController(config, snapshotRepo, eventStore, vertx.eventBus())
   }
 
   fun close(): Future<Void> {
