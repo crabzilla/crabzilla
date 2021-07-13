@@ -1,6 +1,7 @@
 package io.github.crabzilla.stack
 
 import io.github.crabzilla.core.CommandControllerConfig
+import io.github.crabzilla.core.CommandException.OptimisticLockingException
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
@@ -8,7 +9,6 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.stack.command.CommandController
-import io.github.crabzilla.stack.command.CommandException.OptimisticLockingException
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.command.EventStore
 import io.github.crabzilla.stack.command.SnapshotRepository
@@ -45,7 +45,7 @@ class CommandControllerCustomerTest : BehaviorSpec({
       every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
       every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
 
-      val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
+      val controller = CommandController(customerConfig, snapshotRepo, eventStore)
       val domainStateId = DomainStateId(UUID.randomUUID())
       val result = controller
         .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "customer#1"))
@@ -66,7 +66,7 @@ class CommandControllerCustomerTest : BehaviorSpec({
       every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
       every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
 
-      val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
+      val controller = CommandController(customerConfig, snapshotRepo, eventStore)
       val domainStateId = DomainStateId(UUID.randomUUID())
       val result = controller
         .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "bad customer"))
@@ -84,7 +84,7 @@ class CommandControllerCustomerTest : BehaviorSpec({
         Future.succeededFuture(null)
       every { eventStore.append(any(), any(), any()) } returns
         Future.failedFuture(OptimisticLockingException("Concurrency error"))
-      val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
+      val controller = CommandController(customerConfig, snapshotRepo, eventStore)
       val domainStateId = DomainStateId(UUID.randomUUID())
       val result = controller
         .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "good customer"))
@@ -102,7 +102,7 @@ class CommandControllerCustomerTest : BehaviorSpec({
         Future.failedFuture("db is down!")
       every { eventStore.append(any(), any(), any()) } returns
         Future.failedFuture(OptimisticLockingException("Concurrency error"))
-      val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
+      val controller = CommandController(customerConfig, snapshotRepo, eventStore)
       val domainStateId = DomainStateId(UUID.randomUUID())
       val result = controller
         .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "good customer"))
@@ -124,7 +124,7 @@ class CommandControllerCustomerTest : BehaviorSpec({
         customerConfig.name, customerConfig.eventHandler,
         { commandHandler }, customerConfig.commandValidator
       )
-      val badController = CommandController(mockedCustomerConfig, snapshotRepo, eventStore, eventBus)
+      val badController = CommandController(mockedCustomerConfig, snapshotRepo, eventStore)
       val domainStateId = DomainStateId(UUID.randomUUID())
       val result = badController
         .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "good customer"))

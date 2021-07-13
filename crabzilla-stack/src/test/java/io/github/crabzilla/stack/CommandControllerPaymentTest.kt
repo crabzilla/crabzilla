@@ -48,7 +48,7 @@ class CommandControllerPaymentTest : BehaviorSpec({
     When("I send a pay command") {
       every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
       every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
-      val controller = CommandController(paymentConfig, snapshotRepo, eventStore, eventBus)
+      val controller = CommandController(paymentConfig, snapshotRepo, eventStore)
       val domainStateId = DomainStateId(UUID.randomUUID())
       val result = controller
         .handle(

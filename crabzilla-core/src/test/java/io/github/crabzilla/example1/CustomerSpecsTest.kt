@@ -1,5 +1,6 @@
 package io.github.crabzilla.example1
 
+import io.github.crabzilla.core.CommandException.ValidationException
 import io.github.crabzilla.core.TestSpecification
 import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.CustomerCommand.DeactivateCustomer
@@ -7,6 +8,7 @@ import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.CustomerEvent.CustomerRegistered
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
@@ -25,6 +27,16 @@ class CustomerSpecsTest {
 
     assertThat(spec.events())
       .isEqualTo(listOf(CustomerRegistered(id, "c1")))
+  }
+
+  @Test
+  fun `trying to register a bad customer will fail`() {
+
+    assertThatExceptionOfType(ValidationException::class.java)
+      .isThrownBy {
+        TestSpecification(customerConfig)
+          .whenCommand(RegisterCustomer(id, "bad customer"))
+      }.withMessage("[Bad customer!]")
   }
 
   @Test

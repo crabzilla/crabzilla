@@ -58,7 +58,7 @@ class PgcClientOptionsProjectionIT {
       customerConfig,
       saveCommandOption = false,
       optimisticLockOption = false,
-      projectorApi = CustomerEventsProjector
+      eventsProjector = CustomerEventsProjector
     )
     snapshotRepo.get(id)
       .onFailure { tc.failNow(it) }

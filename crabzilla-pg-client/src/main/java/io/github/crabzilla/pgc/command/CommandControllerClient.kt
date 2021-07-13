@@ -35,9 +35,9 @@ class CommandControllerClient(val vertx: Vertx, val json: Json, val pgPool: PgPo
       config, pgPool, json,
       saveCommandOption = true,
       optimisticLockOption = true,
-      eventsProjectorApi = null
+      eventsProjector = null
     )
-    return CommandController(config, snapshotRepo, eventStore, vertx.eventBus())
+    return CommandController(config, snapshotRepo, eventStore)
   }
 
   /**
@@ -47,11 +47,11 @@ class CommandControllerClient(val vertx: Vertx, val json: Json, val pgPool: PgPo
     config: CommandControllerConfig<A, C, E>,
     saveCommandOption: Boolean,
     optimisticLockOption: Boolean,
-    projectorApi: EventsProjector?
+    eventsProjector: EventsProjector?
   ): CommandController<A, C, E> {
     val snapshotRepo = PgcSnapshotRepo<A>(sqlClient, json)
-    val eventStore = PgcEventStore(config, pgPool, json, saveCommandOption, optimisticLockOption, projectorApi)
-    return CommandController(config, snapshotRepo, eventStore, vertx.eventBus())
+    val eventStore = PgcEventStore(config, pgPool, json, saveCommandOption, optimisticLockOption, eventsProjector)
+    return CommandController(config, snapshotRepo, eventStore)
   }
 
   fun close(): Future<Void> {
