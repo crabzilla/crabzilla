@@ -6,6 +6,7 @@ import io.github.crabzilla.stack.foldLeft
 import io.github.crabzilla.stack.publisher.EventBusPublisher
 import io.vertx.core.Future
 import io.vertx.core.Handler
+import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean
@@ -99,26 +100,40 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
       }.map { eventSequence.get() }
     }
 
-    return scanner.scanPendingEvents(numberOfRows)
-      .compose { eventsList ->
+    val promise = Promise.promise<Long>()
+    scanner.scanPendingEvents(numberOfRows)
+      .onFailure {
+        promise.fail(it)
+        log.error("When scanning new events", it)
+      }
+      .onSuccess { eventsList ->
         if (eventsList.isEmpty()) {
-          log.debug(
-            "Found {} new events. The last one is #{}",
-            eventsList.size,
-            eventsList.last().eventMetadata.eventId
-          )
+          promise.complete(0)
+          return@onSuccess
         }
+        log.debug("Found {} new events. The last one is #{}", eventsList.size, eventsList.last().eventMetadata.eventId)
         publish(eventsList)
-          .compose { lastEventPublished: Long ->
-            if (lastEventPublished > 0) {
-              log.debug("After publishing {}, the latest published event id is #{}", eventsList.size, lastEventPublished)
-              scanner.updateOffSet(lastEventPublished)
-                .map { lastEventPublished }
+          .onSuccess { lastEventPublished ->
+            log.debug("After publishing {}, the latest published event id is #{}", eventsList.size, lastEventPublished)
+            if (lastEventPublished == 0L) {
+              promise.complete(0L)
             } else {
-              Future.succeededFuture(0L)
+              scanner.updateOffSet(lastEventPublished)
+                .onFailure { promise.fail(it) }
+                .onSuccess {
+                  if (showStats.get()) {
+                    log.info("Updated latest offset to {}", lastEventPublished)
+                    showStats.set(false)
+                  }
+                  promise.complete(lastEventPublished)
+                }
             }
           }
       }
+      .onComplete {
+        log.trace("Scan is now inactive until new request")
+      }
+    return promise.future()
   }
 
   private data class Config(
