@@ -34,6 +34,7 @@ fun cleanDatabase(sqlClient: SqlClient): Future<Void> {
     .compose { sqlClient.query("delete from events").execute() }
     .compose { sqlClient.query("delete from snapshots").execute() }
     .compose { sqlClient.query("update projections set last_offset = 0").execute() }
+    .compose { sqlClient.query("alter sequence events_sequence_seq restart").execute() }
     .compose { sqlClient.query("delete from customer_summary").execute() }
     .mapEmpty()
 }

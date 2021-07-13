@@ -23,13 +23,13 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
-class PgcClientAsyncProjectionIT {
+class PgcClientAsyncFailedProjectionIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
 
   companion object {
-    private val log = LoggerFactory.getLogger(PgcClientAsyncProjectionIT::class.java)
+    private val log = LoggerFactory.getLogger(PgcClientAsyncFailedProjectionIT::class.java)
   }
 
   val id = UUID.randomUUID()
@@ -42,8 +42,7 @@ class PgcClientAsyncProjectionIT {
     client = CommandControllerClient.create(vertx, example1Json, connectOptions, poolOptions)
     testRepo = TestRepository(client.pgPool)
     val verticles = listOf(
-      "service:crabzilla.example1.customer.CustomersEventsPublisher",
-      "service:crabzilla.example1.customer.CustomersEventsProjector",
+      "service:crabzilla.example1.customer.CustomersEventsPublisher" // only publisher
     )
     val options = DeploymentOptions().setConfig(config)
     cleanDatabase(client.sqlClient)
@@ -100,7 +99,7 @@ class PgcClientAsyncProjectionIT {
                           .onFailure { tc.failNow(it) }
                           .onSuccess {
                             tc.verify {
-                              assertThat(it > 0)
+                              assertThat(it).isEqualTo(0)
                             }
                             tc.completeNow()
                           }

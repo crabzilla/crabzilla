@@ -77,4 +77,12 @@ class TestRepository(private val pgPool: PgPool) {
         }.toList()
       }
   }
+
+  fun getProjections(name: String): Future<Long> {
+    return pgPool.query("SELECT last_offset FROM projections where name = '$name'")
+      .execute()
+      .map { rowSet: RowSet<Row> ->
+        rowSet.first().getLong(0)
+      }
+  }
 }

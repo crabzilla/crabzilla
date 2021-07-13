@@ -6,7 +6,6 @@ import io.github.crabzilla.stack.foldLeft
 import io.github.crabzilla.stack.publisher.EventBusPublisher
 import io.vertx.core.Future
 import io.vertx.core.Handler
-import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean
@@ -85,60 +84,41 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
   private fun scanAndPublish(numberOfRows: Int): Future<Long> {
     fun publish(eventsList: List<EventRecord>): Future<Long> {
       fun action(eventRecord: EventRecord): Future<Void> {
-        return publisher.publish(eventRecord).mapEmpty()
+        return publisher.publish(eventRecord)
       }
       val eventSequence = AtomicLong(0)
       val initialFuture = Future.succeededFuture<Void>()
       return foldLeft(
         eventsList.iterator(), initialFuture
       ) { currentFuture: Future<Void>, eventRecord: EventRecord ->
-        currentFuture.onSuccess {
-          log.trace("Successfully projected event #{}", eventRecord.eventMetadata.eventId)
+        currentFuture.compose {
+          log.debug("Successfully projected event #{}", eventRecord.eventMetadata.eventId)
           eventSequence.set(eventRecord.eventMetadata.eventSequence)
           action(eventRecord)
-        }.onFailure {
-          log.debug(
-            "Skipped {} since the latest successful event was {}",
-            eventRecord.eventMetadata.eventId, eventSequence
-          )
         }
       }.map { eventSequence.get() }
     }
 
-    val promise = Promise.promise<Long>()
-    scanner.scanPendingEvents(numberOfRows)
-      .onFailure {
-        promise.fail(it)
-        log.error("When scanning new events", it)
-      }
-      .onSuccess { eventsList ->
+    return scanner.scanPendingEvents(numberOfRows)
+      .compose { eventsList ->
         if (eventsList.isEmpty()) {
-          promise.complete(0)
-          return@onSuccess
+          log.debug(
+            "Found {} new events. The last one is #{}",
+            eventsList.size,
+            eventsList.last().eventMetadata.eventId
+          )
         }
-        log.debug("Found {} new events. The last one is #{}", eventsList.size, eventsList.last().eventMetadata.eventId)
         publish(eventsList)
-          .onSuccess { lastEventPublished ->
-            log.debug("After publishing {}, the latest published event id is #{}", eventsList.size, lastEventPublished)
-            if (lastEventPublished == 0L) {
-              promise.complete(0L)
-            } else {
+          .compose { lastEventPublished: Long ->
+            if (lastEventPublished > 0) {
+              log.debug("After publishing {}, the latest published event id is #{}", eventsList.size, lastEventPublished)
               scanner.updateOffSet(lastEventPublished)
-                .onFailure { promise.fail(it) }
-                .onSuccess {
-                  if (showStats.get()) {
-                    log.info("Updated latest offset to {}", lastEventPublished)
-                    showStats.set(false)
-                  }
-                  promise.complete(lastEventPublished)
-                }
+                .map { lastEventPublished }
+            } else {
+              Future.succeededFuture(0L)
             }
           }
       }
-      .onComplete {
-        log.trace("Scan is now inactive until new request")
-      }
-    return promise.future()
   }
 
   private data class Config(
