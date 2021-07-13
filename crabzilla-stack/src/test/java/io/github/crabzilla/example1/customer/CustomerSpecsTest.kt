@@ -2,8 +2,12 @@ package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.CommandException.ValidationException
 import io.github.crabzilla.core.TestSpecification
-import io.github.crabzilla.example1.customer.CustomerCommand.*
-import io.github.crabzilla.example1.customer.CustomerEvent.*
+import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
@@ -76,5 +80,4 @@ class CustomerSpecsTest {
           .whenCommand(RegisterCustomer(id, "bad customer"))
       }.withMessage("[Bad customer!]")
   }
-
 }
