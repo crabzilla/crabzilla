@@ -40,7 +40,7 @@ class PgcEventStoreProjectionIT {
       customerConfig, client.pgPool, client.json,
       saveCommandOption = true,
       optimisticLockOption = true,
-      eventsProjectorApi = CustomerEventsProjector
+      eventsProjector = CustomerEventsProjector
     )
     repo = PgcSnapshotRepo(client.pgPool, client.json)
     testRepo = TestRepository(client.pgPool)

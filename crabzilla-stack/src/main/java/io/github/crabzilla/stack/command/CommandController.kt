@@ -2,15 +2,14 @@ package io.github.crabzilla.stack.command
 
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandControllerConfig
+import io.github.crabzilla.core.CommandException.ValidationException
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandHandlerApi
 import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.StatefulSession
-import io.github.crabzilla.stack.command.CommandException.ValidationException
 import io.vertx.core.Future
-import io.vertx.core.eventbus.EventBus
 import org.slf4j.LoggerFactory
 
 /**
@@ -24,7 +23,6 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
   private val config: CommandControllerConfig<A, C, E>,
   private val snapshotRepo: SnapshotRepository<A>, // could be public?
   private val eventStore: EventStore<A, C, E>,
-  private val eventBus: EventBus,
 ) {
   companion object {
     private val log = LoggerFactory.getLogger(CommandController::class.java)
@@ -43,7 +41,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
     return snapshotRepo.get(metadata.domainStateId.id)
       .compose { snapshot ->
         log.debug("Got snapshot {}. Now let's handle the command", snapshot)
-        when (val handler: CommandHandlerApi<A, C, E> = config.commandHandler) {
+        when (val handler: CommandHandlerApi<A, C, E> = config.commandHandlerFactory.invoke()) {
           is CommandHandler<A, C, E> -> {
             try {
               Future.succeededFuture(handler.handleCommand(command, config.eventHandler, snapshot))
@@ -51,8 +49,8 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
               Future.failedFuture(e)
             }
           }
-          is ExternalCommandHandler<A, C, E> -> {
-            handler.handleCommand(eventBus, command, config.eventHandler, snapshot)
+          is FutureCommandHandler<A, C, E> -> {
+            handler.handleCommand(command, config.eventHandler, snapshot)
           }
           else -> Future.failedFuture("Unknown command handler")
         }

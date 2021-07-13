@@ -14,6 +14,7 @@ import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -34,10 +35,12 @@ class PgcClientAsyncProjectionIT {
   val id = UUID.randomUUID()
 
   lateinit var client: CommandControllerClient
+  private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     client = CommandControllerClient.create(vertx, example1Json, connectOptions, poolOptions)
+    testRepo = TestRepository(client.pgPool)
     val verticles = listOf(
       "service:crabzilla.example1.customer.CustomersEventsPublisher",
       "service:crabzilla.example1.customer.CustomersEventsProjector",
@@ -93,7 +96,14 @@ class PgcClientAsyncProjectionIT {
                           )
                             == snapshot2.state
                         )
-                        tc.completeNow()
+                        testRepo.getProjections("customers")
+                          .onFailure { tc.failNow(it) }
+                          .onSuccess {
+                            tc.verify {
+                              assertThat(it > 0)
+                            }
+                            tc.completeNow()
+                          }
                       }
                   }
               }

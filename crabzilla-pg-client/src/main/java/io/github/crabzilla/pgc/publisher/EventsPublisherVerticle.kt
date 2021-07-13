@@ -85,22 +85,17 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
   private fun scanAndPublish(numberOfRows: Int): Future<Long> {
     fun publish(eventsList: List<EventRecord>): Future<Long> {
       fun action(eventRecord: EventRecord): Future<Void> {
-        return publisher.publish(eventRecord).mapEmpty()
+        return publisher.publish(eventRecord)
       }
       val eventSequence = AtomicLong(0)
       val initialFuture = Future.succeededFuture<Void>()
       return foldLeft(
         eventsList.iterator(), initialFuture
       ) { currentFuture: Future<Void>, eventRecord: EventRecord ->
-        currentFuture.onSuccess {
-          log.trace("Successfully projected event #{}", eventRecord.eventMetadata.eventId)
+        currentFuture.compose {
+          log.debug("Successfully projected event #{}", eventRecord.eventMetadata.eventId)
           eventSequence.set(eventRecord.eventMetadata.eventSequence)
           action(eventRecord)
-        }.onFailure {
-          log.debug(
-            "Skipped {} since the latest successful event was {}",
-            eventRecord.eventMetadata.eventId, eventSequence
-          )
         }
       }.map { eventSequence.get() }
     }

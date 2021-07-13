@@ -1,5 +1,7 @@
 package io.github.crabzilla.core
 
+import io.github.crabzilla.core.CommandException.ValidationException
+
 /**
  * A helper for basic specifications
  */
@@ -12,7 +14,13 @@ class TestSpecification<A : DomainState, C : Command, E : DomainEvent>(val confi
   fun events(): List<E> = events.toList()
 
   fun whenCommand(command: C): TestSpecification<A, C, E> {
-    val commandHandler = config.commandHandler as CommandHandler<A, C, E>
+    if (config.commandValidator != null) {
+      val validationErrors = config.commandValidator.validate(command)
+      if (validationErrors.isNotEmpty()) {
+        throw ValidationException(validationErrors)
+      }
+    }
+    val commandHandler = config.commandHandlerFactory.invoke() as CommandHandler<A, C, E>
     val snapshot = if (state == null) null else Snapshot(state!!, events.size)
     val session = commandHandler.handleCommand(command, config.eventHandler, snapshot)
     state = session.currentState

@@ -192,7 +192,7 @@ val customerModule = SerializersModule {
 val customerConfig = CommandControllerConfig(
   "Customer",
   customerEventHandler,
-  CustomerCommandHandler,
+  { CustomerCommandHandler },
   customerCmdValidator
 )
 

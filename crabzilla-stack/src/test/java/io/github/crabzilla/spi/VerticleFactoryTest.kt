@@ -1,6 +1,7 @@
 package io.github.crabzilla.spi
 
 import io.vertx.core.DeploymentOptions
+import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -28,5 +29,11 @@ class VerticleFactoryTest {
         }
         tc.completeNow()
       }
+  }
+
+  @Test
+  fun mapEmpty() {
+    println(Future.succeededFuture<Void>().mapEmpty<Void>())
+    println(Future.failedFuture<Void>(IllegalArgumentException("")).mapEmpty<Void>())
   }
 }

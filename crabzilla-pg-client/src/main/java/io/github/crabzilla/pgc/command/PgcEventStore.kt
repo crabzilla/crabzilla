@@ -2,6 +2,7 @@ package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandControllerConfig
+import io.github.crabzilla.core.CommandException
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.StatefulSession
@@ -10,7 +11,6 @@ import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CorrelationId
 import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
-import io.github.crabzilla.stack.command.CommandException
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.command.EventStore
 import io.github.crabzilla.stack.foldLeft
@@ -33,7 +33,7 @@ class PgcEventStore<A : DomainState, C : Command, E : DomainEvent>(
   private val json: Json,
   private val saveCommandOption: Boolean = true,
   private val optimisticLockOption: Boolean = true, // only use false if you have a singleton command handler verticle
-  private val eventsProjectorApi: EventsProjector? = null,
+  private val eventsProjector: EventsProjector? = null,
 ) : EventStore<A, C, E> {
 
   companion object {
@@ -169,7 +169,7 @@ class PgcEventStore<A : DomainState, C : Command, E : DomainEvent>(
     }
 
     fun projectEvents(conn: SqlConnection, appendedEvents: AppendedEvents<E>): Future<Void> {
-      if (eventsProjectorApi == null) {
+      if (eventsProjector == null) {
         return Future.succeededFuture()
       }
       val initialFuture = Future.succeededFuture<Void>()
@@ -185,7 +185,7 @@ class PgcEventStore<A : DomainState, C : Command, E : DomainEvent>(
             CausationId(appendedEvent.causationId),
             appendedEvent.sequence
           )
-          eventsProjectorApi.project(conn, appendedEvent.event, eventMetadata)
+          eventsProjector.project(conn, appendedEvent.event, eventMetadata)
         }
       }.mapEmpty()
     }

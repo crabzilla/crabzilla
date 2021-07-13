@@ -105,7 +105,7 @@ data class Customer(
  */
 val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
   when (command) {
-    is RegisterCustomer -> listOf()
+    is RegisterCustomer -> if (command.name == "bad customer") listOf("Bad customer!") else listOf()
     is RegisterAndActivateCustomer -> listOf()
     is ActivateCustomer -> listOf()
     is DeactivateCustomer -> listOf()
@@ -170,7 +170,7 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
 val customerConfig = CommandControllerConfig(
   "Customer",
   customerEventHandler,
-  CustomerCommandHandler,
+  { CustomerCommandHandler },
   customerCmdValidator
 )
 

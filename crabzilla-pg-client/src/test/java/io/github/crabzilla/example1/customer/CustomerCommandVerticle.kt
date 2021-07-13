@@ -25,7 +25,7 @@ class CustomerCommandVerticle : PgcAbstractVerticle() {
 
     val snapshotRepo = PgcSnapshotRepo<Customer>(sqlClient, example1Json)
     val eventStore = PgcEventStore(customerConfig, pgPool, example1Json, false)
-    val controller = CommandController(customerConfig, snapshotRepo, eventStore, vertx.eventBus())
+    val controller = CommandController(customerConfig, snapshotRepo, eventStore)
 
     vertx.eventBus().consumer<JsonObject>(ENDPOINT) { msg ->
       val metadata = CommandMetadata.fromJson(msg.body().getJsonObject("metadata"))

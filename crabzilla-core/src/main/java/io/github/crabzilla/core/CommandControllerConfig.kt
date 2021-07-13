@@ -6,6 +6,6 @@ package io.github.crabzilla.core
 class CommandControllerConfig<A : DomainState, C : Command, E : DomainEvent>(
   val name: String,
   val eventHandler: EventHandler<A, E>,
-  val commandHandler: CommandHandlerApi<A, C, E>,
+  val commandHandlerFactory: () -> CommandHandlerApi<A, C, E>,
   val commandValidator: CommandValidator<C>? = null
 )
