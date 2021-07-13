@@ -1,5 +1,5 @@
 [![CI](https://github.com/crabzilla/crabzilla/actions/workflows/blank.yml/badge.svg)](https://github.com/crabzilla/crabzilla/actions/workflows/blank.yml)
-[![codecov](https://codecov.io/gh/crabzilla/crabzilla/branch/master/graph/badge.svg)](https://codecov.io/gh/crabzilla/crabzilla)
+[![codecov](https://codecov.io/gh/crabzilla/crabzilla/branch/main/graph/badge.svg)](https://codecov.io/gh/crabzilla/crabzilla)
 [![](https://www.code-inspector.com/project/24241/score/svg)](https://frontend.code-inspector.com/public/project/24241/crabzilla/dashboard)
 [![](https://www.code-inspector.com/project/24241/status/svg)](https://frontend.code-inspector.com/public/project/24241/crabzilla/dashboard)
 [![Jitpack](https://jitpack.io/v/io.github.crabzilla/crabzilla.svg)](https://jitpack.io/#io.github.crabzilla/crabzilla)
