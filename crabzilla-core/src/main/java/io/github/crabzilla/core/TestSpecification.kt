@@ -12,7 +12,7 @@ class TestSpecification<A : DomainState, C : Command, E : DomainEvent>(val confi
   fun events(): List<E> = events.toList()
 
   fun whenCommand(command: C): TestSpecification<A, C, E> {
-    val commandHandler = config.commandHandler as CommandHandler<A, C, E>
+    val commandHandler = config.commandHandlerFactory.invoke() as CommandHandler<A, C, E>
     val snapshot = if (state == null) null else Snapshot(state!!, events.size)
     val session = commandHandler.handleCommand(command, config.eventHandler, snapshot)
     state = session.currentState

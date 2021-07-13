@@ -170,7 +170,7 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
 val customerConfig = CommandControllerConfig(
   "Customer",
   customerEventHandler,
-  CustomerCommandHandler,
+  { CustomerCommandHandler },
   customerCmdValidator
 )
 

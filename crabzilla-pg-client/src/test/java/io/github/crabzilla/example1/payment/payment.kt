@@ -1,7 +1,6 @@
 package io.github.crabzilla.example1.payment
 
 import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.core.CommandHandlerApi.ConstructorResult
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.DomainState
@@ -14,9 +13,8 @@ import io.github.crabzilla.example1.payment.PaymentEvent.PaymentApproved
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentNotApproved
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentRefunded
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentRequested
-import io.github.crabzilla.stack.command.ExternalCommandHandler
+import io.github.crabzilla.stack.command.FutureCommandHandler
 import io.vertx.core.Future
-import io.vertx.core.eventbus.EventBus
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -91,10 +89,9 @@ val paymentEventHandler = EventHandler<Payment, PaymentEvent> { state, event ->
   }
 }
 
-object ExternalPaymentCommandHandler : ExternalCommandHandler<Payment, PaymentCommand, PaymentEvent> {
+object FuturePaymentCommandHandler : FutureCommandHandler<Payment, PaymentCommand, PaymentEvent> {
 
   override fun handleCommand(
-    eventBus: EventBus,
     command: PaymentCommand,
     eventHandler: EventHandler<Payment, PaymentEvent>,
     snapshot: Snapshot<Payment>?,
@@ -115,12 +112,6 @@ object ExternalPaymentCommandHandler : ExternalCommandHandler<Payment, PaymentCo
     }
   }
 }
-
-val paymentConfig = CommandControllerConfig(
-  "Payment",
-  paymentEventHandler,
-  ExternalPaymentCommandHandler
-)
 
 @kotlinx.serialization.ExperimentalSerializationApi
 val paymentModule = SerializersModule {

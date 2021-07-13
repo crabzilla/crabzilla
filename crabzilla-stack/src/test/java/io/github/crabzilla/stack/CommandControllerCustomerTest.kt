@@ -122,7 +122,7 @@ class CommandControllerCustomerTest : BehaviorSpec({
       every { commandHandler.handleCommand(any(), any(), any()) } throws RuntimeException("I got an error!")
       val mockedCustomerConfig = CommandControllerConfig(
         customerConfig.name, customerConfig.eventHandler,
-        commandHandler, customerConfig.commandValidator
+        { commandHandler }, customerConfig.commandValidator
       )
       val badController = CommandController(mockedCustomerConfig, snapshotRepo, eventStore, eventBus)
       val domainStateId = DomainStateId(UUID.randomUUID())

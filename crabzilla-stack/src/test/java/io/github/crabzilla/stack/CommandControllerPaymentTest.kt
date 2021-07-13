@@ -1,12 +1,14 @@
 package io.github.crabzilla.stack
 
+import io.github.crabzilla.core.CommandControllerConfig
+import io.github.crabzilla.example1.payment.FuturePaymentCommandHandler
 import io.github.crabzilla.example1.payment.Payment
 import io.github.crabzilla.example1.payment.PaymentCommand
 import io.github.crabzilla.example1.payment.PaymentEvent
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentApproved
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentRequested
 import io.github.crabzilla.example1.payment.Status
-import io.github.crabzilla.example1.payment.paymentConfig
+import io.github.crabzilla.example1.payment.paymentEventHandler
 import io.github.crabzilla.stack.command.CommandController
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.command.EventStore
@@ -32,9 +34,16 @@ class CommandControllerPaymentTest : BehaviorSpec({
     eventStore = mockk()
   }
 
-  val eventBus = Vertx.vertx().eventBus()
+  val vertx = Vertx.vertx()
+  val eventBus = vertx.eventBus()
 
   Given("mocked snapshotRepo and EventStore") {
+
+    val paymentConfig = CommandControllerConfig(
+      "Payment",
+      paymentEventHandler,
+      { FuturePaymentCommandHandler(eventBus) }
+    )
 
     When("I send a pay command") {
       every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)

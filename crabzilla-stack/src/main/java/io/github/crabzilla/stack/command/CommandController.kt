@@ -43,7 +43,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
     return snapshotRepo.get(metadata.domainStateId.id)
       .compose { snapshot ->
         log.debug("Got snapshot {}. Now let's handle the command", snapshot)
-        when (val handler: CommandHandlerApi<A, C, E> = config.commandHandler) {
+        when (val handler: CommandHandlerApi<A, C, E> = config.commandHandlerFactory.invoke()) {
           is CommandHandler<A, C, E> -> {
             try {
               Future.succeededFuture(handler.handleCommand(command, config.eventHandler, snapshot))
@@ -51,8 +51,8 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
               Future.failedFuture(e)
             }
           }
-          is ExternalCommandHandler<A, C, E> -> {
-            handler.handleCommand(eventBus, command, config.eventHandler, snapshot)
+          is FutureCommandHandler<A, C, E> -> {
+            handler.handleCommand(command, config.eventHandler, snapshot)
           }
           else -> Future.failedFuture("Unknown command handler")
         }
