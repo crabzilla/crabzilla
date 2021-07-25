@@ -3,9 +3,7 @@ package io.github.crabzilla.example1.customer
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.PgcAbstractVerticle
-import io.github.crabzilla.pgc.command.PgcEventStore
-import io.github.crabzilla.pgc.command.PgcSnapshotRepo
-import io.github.crabzilla.stack.command.CommandController
+import io.github.crabzilla.pgc.command.CommandController
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
@@ -21,16 +19,13 @@ class CustomerCommandVerticle : PgcAbstractVerticle() {
   override fun start() {
 
     val pgPool = pgPool(config())
-    val sqlClient = sqlClient(config())
 
-    val snapshotRepo = PgcSnapshotRepo<Customer>(sqlClient, example1Json)
-    val eventStore = PgcEventStore(customerConfig, pgPool, example1Json, false)
-    val controller = CommandController(customerConfig, snapshotRepo, eventStore)
+    val eventStore = CommandController(customerConfig, pgPool, example1Json, false)
 
     vertx.eventBus().consumer<JsonObject>(ENDPOINT) { msg ->
       val metadata = CommandMetadata.fromJson(msg.body().getJsonObject("metadata"))
       val command = Command.fromJson<CustomerCommand>(example1Json, msg.body().getJsonObject("command").toString())
-      controller.handle(metadata, command)
+      eventStore.handle(metadata, command)
         .onFailure { msg.fail(500, it.message) }
         .onSuccess { msg.reply(true) }
     }

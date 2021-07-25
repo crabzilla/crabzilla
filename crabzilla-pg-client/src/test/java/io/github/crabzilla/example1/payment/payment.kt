@@ -15,6 +15,7 @@ import io.github.crabzilla.example1.payment.PaymentEvent.PaymentRefunded
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentRequested
 import io.github.crabzilla.stack.command.FutureCommandHandler
 import io.vertx.core.Future
+import io.vertx.core.eventbus.EventBus
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -89,7 +90,7 @@ val paymentEventHandler = EventHandler<Payment, PaymentEvent> { state, event ->
   }
 }
 
-object FuturePaymentCommandHandler : FutureCommandHandler<Payment, PaymentCommand, PaymentEvent> {
+class FuturePaymentCommandHandler(val eventbus: EventBus) : FutureCommandHandler<Payment, PaymentCommand, PaymentEvent> {
 
   override fun handleCommand(
     command: PaymentCommand,
@@ -97,7 +98,7 @@ object FuturePaymentCommandHandler : FutureCommandHandler<Payment, PaymentComman
     snapshot: Snapshot<Payment>?,
   ): Future<StatefulSession<Payment, PaymentEvent>> {
 
-    return when (command) {
+    val result = when (command) {
       is Pay -> {
         withNew(Payment.create(command.id, command.creditCardNo, command.amount), eventHandler)
           .toFuture()
@@ -107,9 +108,17 @@ object FuturePaymentCommandHandler : FutureCommandHandler<Payment, PaymentComman
           }
       }
       is Refund -> {
-        TODO()
+        Future.failedFuture("Not implemented yet")
       }
     }
+
+    result.onSuccess {
+      println("whoa!")
+    }.onFailure {
+      println("ugh")
+    }
+
+    return result
   }
 }
 

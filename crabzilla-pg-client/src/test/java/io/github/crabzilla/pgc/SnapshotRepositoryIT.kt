@@ -3,8 +3,7 @@ package io.github.crabzilla.pgc
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.pgc.command.CommandControllerClient
-import io.github.crabzilla.pgc.command.PgcSnapshotRepo
+import io.github.crabzilla.pgc.command.CommandsContext
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -17,16 +16,16 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
-class PgcSnapshotRepoIT {
+class SnapshotRepositoryIT {
 
-  private lateinit var client: CommandControllerClient
-  private lateinit var repo: PgcSnapshotRepo<Customer>
+  private lateinit var client: CommandsContext
+  private lateinit var repository: SnapshotRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = CommandControllerClient.create(vertx, example1Json, connectOptions, poolOptions)
-    repo = PgcSnapshotRepo(client.pgPool, client.json)
+    client = CommandsContext.create(vertx, example1Json, connectOptions, poolOptions)
+    repository = SnapshotRepository(client.pgPool, client.json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)
       .onFailure { tc.failNow(it) }
@@ -36,7 +35,7 @@ class PgcSnapshotRepoIT {
   @Test
   @DisplayName("given none snapshot, it can retrieve correct snapshot")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    repo.get(UUID.randomUUID())
+    repository.get(UUID.randomUUID())
       .onFailure { err -> tc.failNow(err) }
       .onSuccess { snapshot ->
         tc.verify { assertThat(snapshot).isNull() }
@@ -54,7 +53,7 @@ class PgcSnapshotRepoIT {
       .put("name", "c1")
       .put("isActive", false)
     testRepo.upsert(id, customerConfig.name, 1, snapshotAsJson)
-      .compose { repo.get(id) }
+      .compose { repository.get(id) }
       .onFailure { err -> tc.failNow(err) }
       .onSuccess { snapshot ->
         tc.verify { assertThat(snapshot!!.version).isEqualTo(1) }

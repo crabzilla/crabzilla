@@ -6,7 +6,6 @@ import io.github.crabzilla.stack.DomainStateId
 import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.publisher.EventsScanner
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
@@ -16,10 +15,13 @@ import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
 // TODO could receive also a list of aggregate root names to filter interesting events
-class PgcEventsScanner(private val sqlClient: SqlClient, private val projectionName: String) : EventsScanner {
+class EventsScanner(
+  private val sqlClient: SqlClient,
+  private val projectionName: String
+) {
 
   companion object {
-    private val log = LoggerFactory.getLogger(PgcEventsScanner::class.java)
+    private val log = LoggerFactory.getLogger(EventsScanner::class.java)
   }
 
   private val selectAfterOffset =
@@ -34,11 +36,11 @@ class PgcEventsScanner(private val sqlClient: SqlClient, private val projectionN
   private val updateOffset =
     "UPDATE projections SET last_offset = $1 WHERE projections.name = $2"
 
-  override fun streamName(): String {
+  fun streamName(): String {
     return projectionName
   }
 
-  override fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
+  fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
     log.debug("Scanning for new events on stream {}", streamName())
     return sqlClient
       .preparedQuery(selectAfterOffset)
@@ -59,7 +61,7 @@ class PgcEventsScanner(private val sqlClient: SqlClient, private val projectionN
       }
   }
 
-  override fun updateOffSet(eventSequence: Long): Future<Void> {
+  fun updateOffSet(eventSequence: Long): Future<Void> {
     return sqlClient
       .preparedQuery(updateOffset)
       .execute(Tuple.of(eventSequence, projectionName))

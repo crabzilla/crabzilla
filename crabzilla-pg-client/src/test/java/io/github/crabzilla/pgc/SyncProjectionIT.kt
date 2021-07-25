@@ -8,9 +8,8 @@ import io.github.crabzilla.example1.customer.CustomerEventsProjector
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.customer.customerEventHandler
 import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.pgc.command.CommandControllerClient
-import io.github.crabzilla.pgc.command.PgcEventStore
-import io.github.crabzilla.pgc.command.PgcSnapshotRepo
+import io.github.crabzilla.pgc.command.CommandController
+import io.github.crabzilla.pgc.command.CommandsContext
 import io.github.crabzilla.stack.DomainStateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
@@ -26,23 +25,23 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PgcEventStoreProjectionIT {
+class SyncProjectionIT {
 
-  private lateinit var client: CommandControllerClient
-  private lateinit var eventStore: PgcEventStore<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var repo: PgcSnapshotRepo<Customer>
+  private lateinit var client: CommandsContext
+  private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var snapshotRepository: SnapshotRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = CommandControllerClient.create(vertx, example1Json, connectOptions, poolOptions)
-    eventStore = PgcEventStore(
-      customerConfig, client.pgPool, client.json,
+    client = CommandsContext.create(vertx, example1Json, connectOptions, poolOptions)
+    controller = client.create(
+      customerConfig,
       saveCommandOption = true,
-      optimisticLockOption = true,
+      advisoryLockOption = true,
       eventsProjector = CustomerEventsProjector
     )
-    repo = PgcSnapshotRepo(client.pgPool, client.json)
+    snapshotRepository = SnapshotRepository(client.pgPool, client.json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)
       .onFailure { tc.failNow(it) }
@@ -58,7 +57,7 @@ class PgcEventStoreProjectionIT {
     val constructorResult = Customer.create(id, cmd.name)
     val session = StatefulSession(constructorResult, customerEventHandler)
     session.execute { it.activate(cmd.reason) }
-    eventStore.append(cmd, metadata, session)
+    controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         testRepo.getAllCustomers()
@@ -80,20 +79,14 @@ class PgcEventStoreProjectionIT {
     val id = UUID.randomUUID()
     val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")
     val metadata1 = CommandMetadata(DomainStateId(id))
-    val constructorResult = Customer.create(id, cmd1.name)
-    val session1 = StatefulSession(constructorResult, customerEventHandler)
-    session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
     val metadata2 = CommandMetadata(DomainStateId(id))
-    val customer2 = Customer(id, cmd1.name, true, cmd2.reason)
-    val session2 = StatefulSession(2, customer2, customerEventHandler)
-    session2.execute { it.deactivate(cmd2.reason) }
 
-    eventStore.append(cmd1, metadata1, session1)
+    controller.handle(metadata1, cmd1)
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        eventStore.append(cmd2, metadata2, session2)
+        controller.handle(metadata2, cmd2)
           .onFailure { tc.failNow(it) }
           .onSuccess {
             testRepo.getAllCustomers()
@@ -105,6 +98,39 @@ class PgcEventStoreProjectionIT {
                 assertThat(json.getString("name")).isEqualTo(cmd1.name)
                 assertThat(json.getBoolean("is_active")).isEqualTo(false)
                 tc.completeNow()
+              }
+          }
+      }
+  }
+
+  @Test
+  @DisplayName("checking the snapshot")
+  fun a0(tc: VertxTestContext, vertx: Vertx) {
+    val id = UUID.randomUUID()
+    snapshotRepository.get(id)
+      .onFailure { tc.failNow(it) }
+      .onSuccess { snapshot0 ->
+        assert(snapshot0 == null)
+        controller.handle(CommandMetadata(DomainStateId(id)), CustomerCommand.RegisterCustomer(id, "cust#$id"))
+          .onFailure { tc.failNow(it) }
+          .onSuccess {
+            snapshotRepository.get(id)
+              .onFailure { err -> tc.failNow(err) }
+              .onSuccess { snapshot1 ->
+                assert(1 == snapshot1!!.version)
+                assert(snapshot1.state == Customer(id, "cust#$id"))
+                controller.handle(CommandMetadata(DomainStateId(id)), CustomerCommand.ActivateCustomer("because yes"))
+                  .onFailure { tc.failNow(it) }
+                  .onSuccess {
+                    snapshotRepository.get(id)
+                      .onFailure { err -> tc.failNow(err) }
+                      .onSuccess { snapshot2 ->
+                        assert(2 == snapshot2!!.version)
+                        val expected = Customer(id, "cust#$id", isActive = true, reason = "because yes")
+                        assert(snapshot2.state == expected)
+                        tc.completeNow()
+                      }
+                  }
               }
           }
       }

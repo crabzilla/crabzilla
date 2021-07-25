@@ -1,18 +1,15 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.example1.customer.customerEventHandler
 import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.pgc.command.CommandControllerClient
-import io.github.crabzilla.pgc.command.PgcEventStore
-import io.github.crabzilla.pgc.command.PgcSnapshotRepo
+import io.github.crabzilla.pgc.command.CommandController
+import io.github.crabzilla.pgc.command.CommandsContext
 import io.github.crabzilla.stack.DomainStateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
@@ -28,18 +25,18 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PgcEventStoreCommandsIT {
+class CommandsPersistenceIT {
 
-  private lateinit var client: CommandControllerClient
-  private lateinit var eventStore: PgcEventStore<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var repo: PgcSnapshotRepo<Customer>
+  private lateinit var client: CommandsContext
+  private lateinit var eventStore: CommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var repository: SnapshotRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = CommandControllerClient.create(vertx, example1Json, connectOptions, poolOptions)
-    eventStore = PgcEventStore(customerConfig, client.pgPool, client.json, true)
-    repo = PgcSnapshotRepo(client.pgPool, client.json)
+    client = CommandsContext.create(vertx, example1Json, connectOptions, poolOptions)
+    eventStore = CommandController(customerConfig, client.pgPool, client.json, true)
+    repository = SnapshotRepository(client.pgPool, client.json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)
       .onFailure { tc.failNow(it) }
@@ -52,10 +49,7 @@ class PgcEventStoreCommandsIT {
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata(DomainStateId(id))
-    val constructorResult = Customer.create(id, cmd.name)
-    val session = StatefulSession(constructorResult, customerEventHandler)
-    session.execute { it.activate(cmd.reason) }
-    eventStore.append(cmd, metadata, session)
+    eventStore.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         testRepo.getAllCommands()
@@ -78,20 +72,14 @@ class PgcEventStoreCommandsIT {
     val id = UUID.randomUUID()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
     val metadata1 = CommandMetadata(DomainStateId(id))
-    val constructorResult = Customer.create(id, cmd1.name)
-    val session1 = StatefulSession(constructorResult, customerEventHandler)
-    session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = DeactivateCustomer("it's not needed anymore")
     val metadata2 = CommandMetadata(DomainStateId(id))
-    val customer2 = Customer(id, cmd1.name, true, cmd2.reason)
-    val session2 = StatefulSession(2, customer2, customerEventHandler)
-    session2.execute { it.deactivate(cmd2.reason) }
 
-    eventStore.append(cmd1, metadata1, session1)
+    eventStore.handle(metadata1, cmd1)
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        eventStore.append(cmd2, metadata2, session2)
+        eventStore.handle(metadata2, cmd2)
           .onFailure { tc.failNow(it) }
           .onSuccess {
             testRepo.getAllCommands()
