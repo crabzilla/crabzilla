@@ -102,10 +102,11 @@ class FuturePaymentCommandHandler(val eventbus: EventBus) : FutureCommandHandler
       is Pay -> {
         withNew(Payment.create(command.id, command.creditCardNo, command.amount), eventHandler)
           .toFuture()
-          .compose { s ->
-            // here we could use event bus to request some external api call
-            s.register(PaymentApproved("ok")).toFuture()
-          }
+//          .compose { s ->
+//            // here we could use event bus to request some external api call
+//            s.register(PaymentApproved("ok"))
+//              .toFuture()
+//          }
       }
       is Refund -> {
         TODO()

@@ -37,6 +37,13 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>io.kotest</groupId>
+      <artifactId>kotest-assertions-core-jvm</artifactId>
+      <version>4.4.3</version>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
 </project>

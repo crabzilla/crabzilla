@@ -30,6 +30,7 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 class CommandController<A : DomainState, C : Command, E : DomainEvent>(
   private val config: CommandControllerConfig<A, C, E>,
@@ -231,6 +232,9 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
       }.mapEmpty()
     }
 
+    val sessionResult: AtomicReference<StatefulSession<A, E>> = AtomicReference(null)
+    val appendedEventsResult: AtomicReference<AppendedEvents<E>> = AtomicReference(null)
+
     return pgPool.withTransaction { conn ->
       validateCommands()
         .compose {
@@ -239,28 +243,25 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
         }.compose { snapshot ->
           log.debug("Snapshot {}", snapshot)
           handleCommand(snapshot)
-        }
-        .compose { session ->
+        }.compose { session ->
           log.debug("Command handled {}", session.toSessionData())
+          sessionResult.set(session)
           appendCommand(conn)
-            .compose {
-              appendEvents(conn, session)
-                .compose { eventsAppended ->
-                  log.debug("Events appended {}", eventsAppended)
-                  projectEvents(conn, eventsAppended)
-                    .compose {
-                      if (eventsProjector != null) {
-                        log.debug("Events projected")
-                      }
-                      updateSnapshot(conn, eventsAppended.resultingVersion, session)
-                        .onComplete {
-                          log.debug("Snapshot updated")
-                        }
-                    }
-                }
-            }
+        }.compose {
+          log.debug("Command persisted")
+          appendEvents(conn, sessionResult.get())
+        }.compose {
+          appendedEventsResult.set(it)
+          projectEvents(conn, it)
+        }.compose {
+          if (eventsProjector != null) {
+            log.debug("Events projected")
+          }
+          updateSnapshot(conn, appendedEventsResult.get().resultingVersion, sessionResult.get())
+        }.compose {
+          Future.succeededFuture(sessionResult.get())
         }
-    }.mapEmpty()
+    }
   }
 
   private data class AppendedEvent<E>(val event: E, val causationId: UUID, val sequence: Long, val eventId: UUID)
