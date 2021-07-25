@@ -8,8 +8,8 @@ import io.github.crabzilla.example1.customer.CustomerEventsProjector
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.customer.customerEventHandler
 import io.github.crabzilla.example1.example1Json
+import io.github.crabzilla.pgc.command.CommandController
 import io.github.crabzilla.pgc.command.CommandsContext
-import io.github.crabzilla.pgc.command.DefaultCommandController
 import io.github.crabzilla.stack.DomainStateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
@@ -25,20 +25,19 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class SyncReadModelProjectionIT {
+class SyncProjectionIT {
 
   private lateinit var client: CommandsContext
-  private lateinit var controller: DefaultCommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var snapshotRepository: SnapshotRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     client = CommandsContext.create(vertx, example1Json, connectOptions, poolOptions)
-    controller = DefaultCommandController(
-      customerConfig, client.pgPool, client.json,
+    controller = client.create(
+      customerConfig,
       saveCommandOption = true,
-      advisoryLockOption = true,
       eventsProjector = CustomerEventsProjector
     )
     snapshotRepository = SnapshotRepository(client.pgPool, client.json)

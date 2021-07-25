@@ -3,9 +3,6 @@ package io.github.crabzilla.pgc.publisher
 import io.github.crabzilla.pgc.PgcAbstractVerticle
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.foldLeft
-import io.github.crabzilla.stack.publisher.EventsPublisher
-import io.github.crabzilla.stack.publisher.PubSubEventsPublisher
-import io.github.crabzilla.stack.publisher.RequestReplyEventPublisher
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Promise
@@ -15,9 +12,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-/**
- * This component will publish the domain events to an EventsPublisher.
- */
 class EventsPublisherVerticle : PgcAbstractVerticle() {
 
   companion object {
@@ -31,20 +25,14 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
   private val showStats = AtomicBoolean(true)
 
   private lateinit var options: Config
-  lateinit var scannerDefault: DefaultEventsScanner
-  lateinit var publisher: EventsPublisher
+  lateinit var scanner: EventsScanner
 
   override fun start() {
 
     options = Config.create(config())
 
     val sqlClient = sqlClient(config())
-    scannerDefault = DefaultEventsScanner(sqlClient, options.projectionId)
-    publisher = if (options.publisherType == "publish-subscribe") {
-      PubSubEventsPublisher(options.targetEndpoint, vertx.eventBus())
-    } else {
-      RequestReplyEventPublisher(options.targetEndpoint, vertx.eventBus())
-    }
+    scanner = EventsScanner(sqlClient, options.projectionId)
     options = Config.create(config())
 
     // Schedule the first execution
@@ -91,7 +79,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
   private fun scanAndPublish(numberOfRows: Int): Future<Long> {
     fun publish(eventsList: List<EventRecord>): Future<Long> {
       fun action(eventRecord: EventRecord): Future<Void> {
-        return publisher.publish(eventRecord)
+        return vertx.eventBus().request<Void>(options.targetEndpoint, eventRecord.toJsonObject()).mapEmpty()
       }
       val eventSequence = AtomicLong(0)
       val initialFuture = Future.succeededFuture<Void>()
@@ -107,7 +95,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
     }
 
     val promise = Promise.promise<Long>()
-    scannerDefault.scanPendingEvents(numberOfRows)
+    scanner.scanPendingEvents(numberOfRows)
       .onFailure {
         promise.fail(it)
         log.error("When scanning new events", it)
@@ -124,7 +112,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
             if (lastEventPublished == 0L) {
               promise.complete(0L)
             } else {
-              scannerDefault.updateOffSet(lastEventPublished)
+              scanner.updateOffSet(lastEventPublished)
                 .onFailure { promise.fail(it) }
                 .onSuccess {
                   if (showStats.get()) {

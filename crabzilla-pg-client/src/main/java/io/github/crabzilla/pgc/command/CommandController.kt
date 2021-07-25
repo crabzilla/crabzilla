@@ -15,7 +15,6 @@ import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CorrelationId
 import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
-import io.github.crabzilla.stack.command.CommandController
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.command.FutureCommandHandler
 import io.github.crabzilla.stack.foldLeft
@@ -32,14 +31,13 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
-class DefaultCommandController<A : DomainState, C : Command, E : DomainEvent>(
+class CommandController<A : DomainState, C : Command, E : DomainEvent>(
   private val config: CommandControllerConfig<A, C, E>,
   private val pgPool: PgPool,
   private val json: Json,
   private val saveCommandOption: Boolean = true,
-  private val advisoryLockOption: Boolean = true, // only use false if you have a singleton command handler verticle
-  private val eventsProjector: EventsProjector? = null,
-) : CommandController<A, C, E> {
+  private val eventsProjector: EventsProjector? = null
+) {
 
   companion object {
     private val log = LoggerFactory.getLogger(CommandController::class.java)
@@ -66,7 +64,7 @@ class DefaultCommandController<A : DomainState, C : Command, E : DomainEvent>(
 //           AND ar_type = $2"""
   }
 
-  override fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<A, E>> {
+  fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<A, E>> {
     fun validateCommands(): Future<Void> {
       val validator: CommandValidator<C>? = config.commandValidator
       return if (validator != null) {
@@ -100,10 +98,6 @@ class DefaultCommandController<A : DomainState, C : Command, E : DomainEvent>(
             null
           }
         }
-      }
-      if (!advisoryLockOption) {
-        log.debug("Ignored lock")
-        return Future.succeededFuture(null)
       }
       return conn
         .preparedQuery(SQL_LOCK_SNAPSHOT)
@@ -236,7 +230,6 @@ class DefaultCommandController<A : DomainState, C : Command, E : DomainEvent>(
         }
       }.mapEmpty()
     }
-
 
     return pgPool.withTransaction { conn ->
       validateCommands()

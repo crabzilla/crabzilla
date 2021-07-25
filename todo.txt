@@ -1,12 +1,3 @@
--- events table
--- it must have version so it accepts event patching
--- a command generates N events
--- an event can generate a command
--- an event can generate another event (side effect handlers)
--- events type: domainEvent, commandApplied and (idempotent) side effect applied
+-- https://softwaremill.com/implementing-event-sourcing-using-a-relational-database/
+-- https://domaincentric.net/blog/event-sourcing-projection-patterns-deduplication-strategies
 -- https://stackoverflow.com/questions/53207723/sequential-composition-for-arbitrary-number-of-calls-in-vertx-with-futures
-
-NATS
-
-sudo docker run -d --name=nats-stream -p 4222:4222 -p 6222:6222 -p 8222:8222 -v /home/alisson/docker_workspace/nats:/datastore  nats-streaming --user al --pass alisson -store file -dir datastore
-sudo docker run -d -p 4222:4222 -p 6222:6222 -p 8222:8222  nats-streaming

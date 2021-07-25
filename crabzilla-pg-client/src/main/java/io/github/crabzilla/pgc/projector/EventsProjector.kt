@@ -6,7 +6,7 @@ import io.vertx.core.Future
 import io.vertx.sqlclient.SqlConnection
 
 /**
- * To project events within the DefaultCommandController (same db transaction)
+ * To project events within the CommandController (same db transaction)
  */
 interface EventsProjector {
   fun project(conn: SqlConnection, event: DomainEvent, eventMetadata: EventMetadata): Future<Void>

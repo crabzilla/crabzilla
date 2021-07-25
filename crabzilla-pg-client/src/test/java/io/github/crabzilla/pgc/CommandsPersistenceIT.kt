@@ -8,8 +8,8 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivate
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
+import io.github.crabzilla.pgc.command.CommandController
 import io.github.crabzilla.pgc.command.CommandsContext
-import io.github.crabzilla.pgc.command.DefaultCommandController
 import io.github.crabzilla.stack.DomainStateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
@@ -28,14 +28,14 @@ import java.util.UUID
 class CommandsPersistenceIT {
 
   private lateinit var client: CommandsContext
-  private lateinit var eventStore: DefaultCommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var eventStore: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var repository: SnapshotRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     client = CommandsContext.create(vertx, example1Json, connectOptions, poolOptions)
-    eventStore = DefaultCommandController(customerConfig, client.pgPool, client.json, true)
+    eventStore = CommandController(customerConfig, client.pgPool, client.json, true)
     repository = SnapshotRepository(client.pgPool, client.json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)

@@ -24,32 +24,29 @@ class CommandsContext(val vertx: Vertx, val json: Json, val pgPool: PgPool, val 
   }
 
   /**
-   * Creates a DefaultCommandController
+   * Creates a CommandController
    */
   fun <A : DomainState, C : Command, E : DomainEvent> create(
     config: CommandControllerConfig<A, C, E>
-  ): DefaultCommandController<A, C, E> {
-    return DefaultCommandController(
+  ): CommandController<A, C, E> {
+    return CommandController(
       config, pgPool, json,
       saveCommandOption = true,
-      advisoryLockOption = true,
       eventsProjector = null
     )
   }
 
   /**
-   * Creates a more configurable DefaultCommandController
+   * Creates a more configurable CommandController
    */
   fun <A : DomainState, C : Command, E : DomainEvent> create(
     config: CommandControllerConfig<A, C, E>,
     saveCommandOption: Boolean,
-    advisoryLockOption: Boolean,
     eventsProjector: EventsProjector?
-  ): DefaultCommandController<A, C, E> {
-    return DefaultCommandController(
+  ): CommandController<A, C, E> {
+    return CommandController(
       config, pgPool, json,
       saveCommandOption,
-      advisoryLockOption,
       eventsProjector
     )
   }

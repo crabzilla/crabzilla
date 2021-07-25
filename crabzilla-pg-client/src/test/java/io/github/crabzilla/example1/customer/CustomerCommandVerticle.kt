@@ -3,7 +3,7 @@ package io.github.crabzilla.example1.customer
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.PgcAbstractVerticle
-import io.github.crabzilla.pgc.command.DefaultCommandController
+import io.github.crabzilla.pgc.command.CommandController
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
@@ -20,7 +20,7 @@ class CustomerCommandVerticle : PgcAbstractVerticle() {
 
     val pgPool = pgPool(config())
 
-    val eventStore = DefaultCommandController(customerConfig, pgPool, example1Json, false)
+    val eventStore = CommandController(customerConfig, pgPool, example1Json, false)
 
     vertx.eventBus().consumer<JsonObject>(ENDPOINT) { msg ->
       val metadata = CommandMetadata.fromJson(msg.body().getJsonObject("metadata"))
