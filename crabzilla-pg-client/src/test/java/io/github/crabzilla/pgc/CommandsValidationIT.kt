@@ -10,6 +10,7 @@ import io.github.crabzilla.pgc.command.CommandController
 import io.github.crabzilla.pgc.command.CommandsContext
 import io.github.crabzilla.stack.DomainStateId
 import io.github.crabzilla.stack.command.CommandMetadata
+import io.kotest.matchers.throwable.shouldHaveMessage
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -47,9 +48,12 @@ class CommandsValidationIT {
     val cmd = RegisterAndActivateCustomer(id, "bad customer", "is needed")
     val metadata = CommandMetadata(DomainStateId(id))
     eventStore.handle(metadata, cmd)
-      .onFailure { tc.completeNow() }
+      .onFailure {
+        it shouldHaveMessage "[Bad customer!]"
+        tc.completeNow()
+      }
       .onSuccess {
-        tc.failNow("It should fails")
+        tc.failNow("It should fail")
       }
   }
 }

@@ -96,7 +96,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
             Snapshot(state, version)
           } else {
             log.debug("Not locked {} {}", id, metadata.domainStateId.id)
-            null
+            throw (CommandException.LockingException(id.toString()))
           }
         }
       }

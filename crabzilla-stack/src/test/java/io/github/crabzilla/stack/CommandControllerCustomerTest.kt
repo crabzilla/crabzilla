@@ -1,7 +1,7 @@
 // package io.github.crabzilla.stack
 //
 // import io.github.crabzilla.core.CommandControllerConfig
-// import io.github.crabzilla.core.CommandException.OptimisticLockingException
+// import io.github.crabzilla.core.CommandException.LockingException
 // import io.github.crabzilla.core.CommandHandler
 // import io.github.crabzilla.example1.customer.Customer
 // import io.github.crabzilla.example1.customer.CustomerCommand
@@ -79,7 +79,7 @@
 //      every { snapshotRepo.get(any()) } returns
 //        Future.succeededFuture(null)
 //      every { eventStore.append(any(), any(), any()) } returns
-//        Future.failedFuture(OptimisticLockingException("Concurrency error"))
+//        Future.failedFuture(LockingException("Concurrency error"))
 //      val controller = CommandController(customerConfig, snapshotRepo, eventStore)
 //      val domainStateId = DomainStateId(UUID.randomUUID())
 //      val result = controller
@@ -97,7 +97,7 @@
 //      every { snapshotRepo.get(any()) } returns
 //        Future.failedFuture("db is down!")
 //      every { eventStore.append(any(), any(), any()) } returns
-//        Future.failedFuture(OptimisticLockingException("Concurrency error"))
+//        Future.failedFuture(LockingException("Concurrency error"))
 //      val controller = CommandController(customerConfig, snapshotRepo, eventStore)
 //      val domainStateId = DomainStateId(UUID.randomUUID())
 //      val result = controller

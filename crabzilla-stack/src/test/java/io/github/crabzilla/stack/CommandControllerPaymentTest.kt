@@ -87,7 +87,7 @@
 // //      every { snapshotRepo.get(any()) } returns
 // //        Future.succeededFuture(null)
 // //      every { eventStore.append(any(), any(), any()) } returns
-// //        Future.failedFuture(OptimisticLockingException("Concurrency error"))
+// //        Future.failedFuture(LockingException("Concurrency error"))
 // //      val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
 // //      val domainStateId = DomainStateId(UUID.randomUUID())
 // //      val result = controller
@@ -105,7 +105,7 @@
 // //      every { snapshotRepo.get(any()) } returns
 // //        Future.failedFuture("db is down!")
 // //      every { eventStore.append(any(), any(), any()) } returns
-// //        Future.failedFuture(OptimisticLockingException("Concurrency error"))
+// //        Future.failedFuture(LockingException("Concurrency error"))
 // //      val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
 // //      val domainStateId = DomainStateId(UUID.randomUUID())
 // //      val result = controller
