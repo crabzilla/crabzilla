@@ -32,6 +32,7 @@ class CommandsContext(val vertx: Vertx, val json: Json, val pgPool: PgPool, val 
     return CommandController(
       config, pgPool, json,
       saveCommandOption = true,
+      advisoryLockOption = true,
       eventsProjector = null
     )
   }
@@ -42,11 +43,13 @@ class CommandsContext(val vertx: Vertx, val json: Json, val pgPool: PgPool, val 
   fun <A : DomainState, C : Command, E : DomainEvent> create(
     config: CommandControllerConfig<A, C, E>,
     saveCommandOption: Boolean,
+    advisoryLockOption: Boolean,
     eventsProjector: EventsProjector?
   ): CommandController<A, C, E> {
     return CommandController(
       config, pgPool, json,
       saveCommandOption,
+      advisoryLockOption,
       eventsProjector
     )
   }

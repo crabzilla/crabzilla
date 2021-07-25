@@ -38,6 +38,7 @@ class SyncProjectionIT {
     controller = client.create(
       customerConfig,
       saveCommandOption = true,
+      advisoryLockOption = true,
       eventsProjector = CustomerEventsProjector
     )
     snapshotRepository = SnapshotRepository(client.pgPool, client.json)

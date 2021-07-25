@@ -37,6 +37,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
   private val pgPool: PgPool,
   private val json: Json,
   private val saveCommandOption: Boolean = true,
+  private val advisoryLockOption: Boolean = true,
   private val eventsProjector: EventsProjector? = null
 ) {
 
@@ -89,14 +90,13 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
           val version = r.getInteger("version")
           val locked = r.getBoolean("locked")
           val id = r.getLong("id")
-          if (locked) {
+          if (!advisoryLockOption || locked) {
             log.debug("Locked {} {}", id, metadata.domainStateId.id)
             val stateAsJson = JsonObject(r.getValue("json_content").toString())
             val state = DomainState.fromJson<A>(json, stateAsJson.toString())
             Snapshot(state, version)
           } else {
-            log.debug("Not locked {} {}", id, metadata.domainStateId.id)
-            throw (CommandException.LockingException(id.toString()))
+            throw (CommandException.LockingException("Not locked $id ${metadata.domainStateId.id}"))
           }
         }
       }
@@ -238,10 +238,10 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
     return pgPool.withTransaction { conn ->
       validateCommands()
         .compose {
-          log.debug("Validated")
+          log.debug("Command validated")
           getSnapshot(conn)
         }.compose { snapshot ->
-          log.debug("Snapshot {}", snapshot)
+          log.debug("Got snapshot {}", snapshot)
           handleCommand(snapshot)
         }.compose { session ->
           log.debug("Command handled {}", session.toSessionData())
