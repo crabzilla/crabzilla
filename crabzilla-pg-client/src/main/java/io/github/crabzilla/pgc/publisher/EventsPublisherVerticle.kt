@@ -3,7 +3,9 @@ package io.github.crabzilla.pgc.publisher
 import io.github.crabzilla.pgc.PgcAbstractVerticle
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.foldLeft
-import io.github.crabzilla.stack.publisher.EventBusPublisher
+import io.github.crabzilla.stack.publisher.EventsPublisher
+import io.github.crabzilla.stack.publisher.PubSubEventsPublisher
+import io.github.crabzilla.stack.publisher.RequestReplyEventPublisher
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Promise
@@ -29,16 +31,20 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
   private val showStats = AtomicBoolean(true)
 
   private lateinit var options: Config
-  lateinit var scanner: PgcEventsScanner
-  lateinit var publisher: EventBusPublisher
+  lateinit var scannerDefault: DefaultEventsScanner
+  lateinit var publisher: EventsPublisher
 
   override fun start() {
 
     options = Config.create(config())
 
     val sqlClient = sqlClient(config())
-    scanner = PgcEventsScanner(sqlClient, options.projectionId)
-    publisher = EventBusPublisher(options.targetEndpoint, vertx.eventBus())
+    scannerDefault = DefaultEventsScanner(sqlClient, options.projectionId)
+    publisher = if (options.publisherType == "publish-subscribe") {
+      PubSubEventsPublisher(options.targetEndpoint, vertx.eventBus())
+    } else {
+      RequestReplyEventPublisher(options.targetEndpoint, vertx.eventBus())
+    }
     options = Config.create(config())
 
     // Schedule the first execution
@@ -101,7 +107,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
     }
 
     val promise = Promise.promise<Long>()
-    scanner.scanPendingEvents(numberOfRows)
+    scannerDefault.scanPendingEvents(numberOfRows)
       .onFailure {
         promise.fail(it)
         log.error("When scanning new events", it)
@@ -118,7 +124,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
             if (lastEventPublished == 0L) {
               promise.complete(0L)
             } else {
-              scanner.updateOffSet(lastEventPublished)
+              scannerDefault.updateOffSet(lastEventPublished)
                 .onFailure { promise.fail(it) }
                 .onSuccess {
                   if (showStats.get()) {
@@ -142,7 +148,8 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
     val interval: Long,
     val maxNumberOfRows: Int,
     val maxInterval: Long,
-    val statsInterval: Long
+    val statsInterval: Long,
+    val publisherType: String
   ) {
     companion object {
       fun create(config: JsonObject): Config {
@@ -152,7 +159,8 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
         val maxNumberOfRows = config.getInteger("maxNumberOfRows", 500)
         val maxInterval = config.getLong("maxInterval", 60_000)
         val statsInterval = config.getLong("statsInterval", 30_000)
-        return Config(projectionId, targetEndpoint, interval, maxNumberOfRows, maxInterval, statsInterval)
+        val publisherType = config.getString("publisherType", "request-reply")
+        return Config(projectionId, targetEndpoint, interval, maxNumberOfRows, maxInterval, statsInterval, publisherType)
       }
     }
   }

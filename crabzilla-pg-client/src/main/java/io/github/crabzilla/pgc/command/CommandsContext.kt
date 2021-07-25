@@ -5,7 +5,6 @@ import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.pgc.projector.EventsProjector
-import io.github.crabzilla.stack.command.CommandController
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.pgclient.PgConnectOptions
@@ -14,44 +13,45 @@ import io.vertx.sqlclient.PoolOptions
 import io.vertx.sqlclient.SqlClient
 import kotlinx.serialization.json.Json
 
-class CommandControllerClient(val vertx: Vertx, val json: Json, val pgPool: PgPool, val sqlClient: SqlClient) {
+class CommandsContext(val vertx: Vertx, val json: Json, val pgPool: PgPool, val sqlClient: SqlClient) {
 
   companion object {
-    fun create(vertx: Vertx, json: Json, connectOptions: PgConnectOptions, poolOptions: PoolOptions): CommandControllerClient {
+    fun create(vertx: Vertx, json: Json, connectOptions: PgConnectOptions, poolOptions: PoolOptions): CommandsContext {
       val thePgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
       val theSqlClient: SqlClient = PgPool.client(vertx, connectOptions, poolOptions)
-      return CommandControllerClient(vertx, json, thePgPool, theSqlClient)
+      return CommandsContext(vertx, json, thePgPool, theSqlClient)
     }
   }
 
   /**
-   * Creates a CommandController
+   * Creates a DefaultCommandController
    */
   fun <A : DomainState, C : Command, E : DomainEvent> create(
     config: CommandControllerConfig<A, C, E>
-  ): CommandController<A, C, E> {
-    val snapshotRepo = PgcSnapshotRepo<A>(sqlClient, json)
-    val eventStore = PgcEventStore(
+  ): DefaultCommandController<A, C, E> {
+    return DefaultCommandController(
       config, pgPool, json,
       saveCommandOption = true,
-      optimisticLockOption = true,
+      advisoryLockOption = true,
       eventsProjector = null
     )
-    return CommandController(config, snapshotRepo, eventStore)
   }
 
   /**
-   * Creates a more configurable CommandController
+   * Creates a more configurable DefaultCommandController
    */
   fun <A : DomainState, C : Command, E : DomainEvent> create(
     config: CommandControllerConfig<A, C, E>,
     saveCommandOption: Boolean,
-    optimisticLockOption: Boolean,
+    advisoryLockOption: Boolean,
     eventsProjector: EventsProjector?
-  ): CommandController<A, C, E> {
-    val snapshotRepo = PgcSnapshotRepo<A>(sqlClient, json)
-    val eventStore = PgcEventStore(config, pgPool, json, saveCommandOption, optimisticLockOption, eventsProjector)
-    return CommandController(config, snapshotRepo, eventStore)
+  ): DefaultCommandController<A, C, E> {
+    return DefaultCommandController(
+      config, pgPool, json,
+      saveCommandOption,
+      advisoryLockOption,
+      eventsProjector
+    )
   }
 
   fun close(): Future<Void> {

@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgc.command
+package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.Snapshot
@@ -13,13 +13,13 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
-class PgcSnapshotRepo<A : DomainState>(
+class SnapshotRepository<A : DomainState>(
   private val sqlClient: SqlClient,
   private val json: Json
 ) : SnapshotRepository<A> {
 
   companion object {
-    private val log = LoggerFactory.getLogger(PgcSnapshotRepo::class.java)
+    private val log = LoggerFactory.getLogger(SnapshotRepository::class.java)
     const val SQL_SELECT_VERSION =
       """ SELECT version, json_content
           FROM SNAPSHOTS 

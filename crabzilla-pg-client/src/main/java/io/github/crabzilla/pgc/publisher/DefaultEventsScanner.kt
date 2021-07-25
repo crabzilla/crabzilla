@@ -16,10 +16,11 @@ import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
 // TODO could receive also a list of aggregate root names to filter interesting events
-class PgcEventsScanner(private val sqlClient: SqlClient, private val projectionName: String) : EventsScanner {
+class DefaultEventsScanner(private val sqlClient: SqlClient, private val projectionName: String) :
+  EventsScanner {
 
   companion object {
-    private val log = LoggerFactory.getLogger(PgcEventsScanner::class.java)
+    private val log = LoggerFactory.getLogger(EventsScanner::class.java)
   }
 
   private val selectAfterOffset =

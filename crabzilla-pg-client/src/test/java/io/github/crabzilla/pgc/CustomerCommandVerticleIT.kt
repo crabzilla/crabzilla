@@ -5,8 +5,7 @@ import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerCommandVerticle
 import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.pgc.command.CommandControllerClient
-import io.github.crabzilla.pgc.command.PgcSnapshotRepo
+import io.github.crabzilla.pgc.command.CommandsContext
 import io.github.crabzilla.stack.DomainStateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.deployVerticles
@@ -34,11 +33,11 @@ class CustomerCommandVerticleIT {
 
   val id = UUID.randomUUID()
 
-  lateinit var client: CommandControllerClient
+  lateinit var client: CommandsContext
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = CommandControllerClient.create(vertx, example1Json, connectOptions, poolOptions)
+    client = CommandsContext.create(vertx, example1Json, connectOptions, poolOptions)
     val verticles = listOf(
 //      "service:crabzilla.example1.customer.CustomersEventsPublisher",
 //      "service:crabzilla.example1.customer.CustomersEventsProjector",
@@ -62,7 +61,7 @@ class CustomerCommandVerticleIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val snapshotRepo = PgcSnapshotRepo<Customer>(client.pgPool, client.json)
+    val snapshotRepo = SnapshotRepository<Customer>(client.pgPool, client.json)
     snapshotRepo.get(id)
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->
