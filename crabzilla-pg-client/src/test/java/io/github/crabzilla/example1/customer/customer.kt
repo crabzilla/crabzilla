@@ -103,8 +103,8 @@ data class Customer(
  */
 val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
   when (command) {
-    is RegisterCustomer -> listOf()
-    is RegisterAndActivateCustomer -> listOf()
+    is RegisterCustomer -> if (command.name == "bad customer") listOf("Bad customer!") else listOf()
+    is RegisterAndActivateCustomer -> if (command.name == "bad customer") listOf("Bad customer!") else listOf()
     is ActivateCustomer -> listOf()
     is DeactivateCustomer -> listOf()
   }
