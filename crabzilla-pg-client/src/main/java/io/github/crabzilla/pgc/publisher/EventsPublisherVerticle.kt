@@ -2,7 +2,6 @@ package io.github.crabzilla.pgc.publisher
 
 import io.github.crabzilla.pgc.PgcAbstractVerticle
 import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.foldLeft
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Promise
@@ -17,7 +16,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
   companion object {
     private val log = LoggerFactory.getLogger(EventsPublisherVerticle::class.java)
 
-    // TODO this must be by instance: add endpoint for pause, resume, restart from N, etc
+    // TODO this must be by instance: add endpoint for pause, resume, restart from N, etc (using event sourcing!)
   }
 
   private val action: Handler<Long?> = handler()
@@ -83,8 +82,8 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
       }
       val eventSequence = AtomicLong(0)
       val initialFuture = Future.succeededFuture<Void>()
-      return foldLeft(
-        eventsList.iterator(), initialFuture
+      return eventsList.fold(
+        initialFuture
       ) { currentFuture: Future<Void>, eventRecord: EventRecord ->
         currentFuture.compose {
           log.debug("Successfully projected event #{}", eventRecord.eventMetadata.eventId)

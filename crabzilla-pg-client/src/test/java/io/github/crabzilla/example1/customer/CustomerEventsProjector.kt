@@ -1,6 +1,9 @@
 package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.pgc.projector.EventsProjector
 import io.github.crabzilla.stack.EventMetadata
 import io.vertx.core.Future
@@ -12,11 +15,11 @@ object CustomerEventsProjector : EventsProjector {
     val id = eventMetadata.domainStateId.id
     val repo = CustomersWriteRepository
     return when (val customerEvent = event as CustomerEvent) {
-      is CustomerEvent.CustomerRegistered ->
+      is CustomerRegistered ->
         repo.upsert(conn, id, customerEvent.name, false)
-      is CustomerEvent.CustomerActivated ->
+      is CustomerActivated ->
         repo.updateStatus(conn, id, true)
-      is CustomerEvent.CustomerDeactivated ->
+      is CustomerDeactivated ->
         repo.updateStatus(conn, id, false)
     }
   }

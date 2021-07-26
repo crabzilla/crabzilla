@@ -7,7 +7,7 @@ import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 
 /**
- * To update customer read model given events
+ * A broker verticle to project events to database
  */
 class EventsProjectorVerticle : PgcAbstractVerticle() {
 
@@ -31,6 +31,10 @@ class EventsProjectorVerticle : PgcAbstractVerticle() {
       pgPool.withConnection { conn ->
         val event = DomainEvent.fromJson<DomainEvent>(json, eventRecord.eventAsjJson.toString())
         eventsProjector.project(conn, event, eventRecord.eventMetadata)
+//          .compose {
+//            // TODO update projection offset within the same transaction
+//            Future.succeededFuture<Void>()
+//          }
       }
         .onFailure { msg.fail(500, it.message) }
         .onSuccess { msg.reply(true) }
