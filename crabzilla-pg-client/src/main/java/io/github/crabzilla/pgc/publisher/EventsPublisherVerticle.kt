@@ -7,7 +7,6 @@ import io.vertx.core.Handler
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
@@ -21,7 +20,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
 
   private val action: Handler<Long?> = handler()
   private val failures = AtomicLong(0L)
-  private val showStats = AtomicBoolean(true)
+  private val lastEventPublishedRef = AtomicLong(0L)
 
   private lateinit var options: Config
   lateinit var scanner: EventsScanner
@@ -31,23 +30,38 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
     options = Config.create(config())
 
     val sqlClient = sqlClient(config())
-    scanner = EventsScanner(sqlClient, options.projectionId)
+    scanner = EventsScanner(sqlClient, options.publicationId)
     options = Config.create(config())
 
     // Schedule the first execution
-    vertx.setTimer(options.interval, action)
-    vertx.setPeriodic(options.statsInterval) {
-      showStats.set(true)
+    vertx.setTimer(options.initialInterval, action)
+
+    vertx.setPeriodic(options.metricsInterval) {
+      publishMetrics()
     }
 
     log.info("Started pooling events with {}", options)
+    publishMetrics()
   }
 
   override fun stop() {
     log.info("Stopped")
   }
 
+  fun publishMetrics() {
+    val metric = JsonObject() // TODO also publish errors
+      .put("publicationId", options.publicationId)
+      .put("sequence", lastEventPublishedRef.get())
+    vertx.eventBus().publish("crabzilla.publications", metric)
+  }
+
   private fun handler(): Handler<Long?> {
+    return Handler {
+      action()
+    }
+  }
+
+  fun action(): Future<Long> {
     fun registerFailure() {
       val nextInterval = min(options.maxInterval, options.interval * failures.incrementAndGet())
       vertx.setTimer(nextInterval, action)
@@ -58,21 +72,19 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
       vertx.setTimer(options.interval, action)
       log.debug("Rescheduled to next {} milliseconds", options.interval)
     }
-    return Handler { _ ->
-      scanAndPublish(options.maxNumberOfRows)
-        .compose { retrievedRows ->
-          when (retrievedRows) {
-            0L -> {
-              log.debug("No new events")
-              registerFailure()
-            }
-            else -> {
-              registerSuccessOrStillBusy()
-            }
+    return scanAndPublish(options.maxNumberOfRows)
+      .compose { retrievedRows ->
+        when (retrievedRows) {
+          0L -> {
+            log.debug("No new events")
+            registerFailure()
           }
-          Future.succeededFuture(retrievedRows)
+          else -> {
+            registerSuccessOrStillBusy()
+          }
         }
-    }
+        Future.succeededFuture(retrievedRows)
+      }
   }
 
   private fun scanAndPublish(numberOfRows: Int): Future<Long> {
@@ -114,10 +126,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
               scanner.updateOffSet(lastEventPublished)
                 .onFailure { promise.fail(it) }
                 .onSuccess {
-                  if (showStats.get()) {
-                    log.info("Updated latest offset to {}", lastEventPublished)
-                    showStats.set(false)
-                  }
+                  lastEventPublishedRef.set(lastEventPublished)
                   promise.complete(lastEventPublished)
                 }
             }
@@ -130,24 +139,32 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
   }
 
   private data class Config(
-    val projectionId: String,
+    val publicationId: String,
     val targetEndpoint: String,
+    val initialInterval: Long,
     val interval: Long,
-    val maxNumberOfRows: Int,
     val maxInterval: Long,
-    val statsInterval: Long,
-    val publisherType: String
+    val metricsInterval: Long,
+    val maxNumberOfRows: Int
   ) {
     companion object {
       fun create(config: JsonObject): Config {
-        val projectionId = config.getString("projectionId")
+        val publicationId = config.getString("publicationId")
         val targetEndpoint = config.getString("targetEndpoint")
+        val initialInterval = config.getLong("initialInterval", 10_000)
         val interval = config.getLong("interval", 500)
+        val maxInterval = config.getLong("maxInterval", 30_000)
+        val metricsInterval = config.getLong("metricsInterval", 10_000)
         val maxNumberOfRows = config.getInteger("maxNumberOfRows", 500)
-        val maxInterval = config.getLong("maxInterval", 60_000)
-        val statsInterval = config.getLong("statsInterval", 30_000)
-        val publisherType = config.getString("publisherType", "request-reply")
-        return Config(projectionId, targetEndpoint, interval, maxNumberOfRows, maxInterval, statsInterval, publisherType)
+        return Config(
+          publicationId = publicationId,
+          targetEndpoint = targetEndpoint,
+          initialInterval = initialInterval,
+          interval = interval,
+          maxInterval = maxInterval,
+          metricsInterval = metricsInterval,
+          maxNumberOfRows = maxNumberOfRows
+        )
       }
     }
   }

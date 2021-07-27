@@ -8,7 +8,8 @@
       },
       "jsonFactoryClassName": "io.github.crabzilla.example1.Example1JsonContextFactory",
       "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
-      "targetEndpoint" : "customers-projection"
+      "targetEndpoint" : "customers-projection",
+      "metricsInterval": 10000
     },
     "worker": false,
     "instances": 1

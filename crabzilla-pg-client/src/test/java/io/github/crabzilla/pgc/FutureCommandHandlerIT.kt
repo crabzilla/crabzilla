@@ -43,7 +43,7 @@ class FutureCommandHandlerIT {
       { FuturePaymentCommandHandler(vertx.eventBus()) }
     )
 
-    controller = CommandController(paymentConfig, client.pgPool, client.json, true)
+    controller = CommandController(vertx, paymentConfig, client.pgPool, client.json, true)
     repository = SnapshotRepository(client.pgPool, client.json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)

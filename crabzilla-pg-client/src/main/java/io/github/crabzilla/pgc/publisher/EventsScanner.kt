@@ -28,13 +28,13 @@ class EventsScanner(
     """
       SELECT ar_name, ar_id, event_payload, sequence, id, causation_id, correlation_id
       FROM events
-      WHERE sequence > (select last_offset from projections where name = $1)
+      WHERE sequence > (select sequence from publications where name = $1)
       ORDER BY sequence
       limit $2
     """
 
   private val updateOffset =
-    "UPDATE projections SET last_offset = $1 WHERE projections.name = $2"
+    "UPDATE publications SET sequence = $1 WHERE publications.name = $2"
 
   fun streamName(): String {
     return projectionName

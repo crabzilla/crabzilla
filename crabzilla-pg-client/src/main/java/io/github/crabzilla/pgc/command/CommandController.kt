@@ -19,6 +19,7 @@ import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.command.FutureCommandHandler
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
+import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
@@ -29,9 +30,11 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 class CommandController<A : DomainState, C : Command, E : DomainEvent>(
+  private val vertx: Vertx,
   private val config: CommandControllerConfig<A, C, E>,
   private val pgPool: PgPool,
   private val json: Json,
@@ -63,6 +66,8 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
            AND version = $4"""
 //    AND ar_type = $4
   }
+
+  private val commandsOk = AtomicLong(0)
 
   fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<A, E>> {
     fun validateCommands(): Future<Void> {
@@ -228,6 +233,13 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
       }.mapEmpty()
     }
 
+    vertx.setPeriodic(10_000) {
+      val metric = JsonObject() // TODO also publish errors
+        .put("controllerId", config.name)
+        .put("successes", commandsOk.get())
+      vertx.eventBus().publish("crabzilla.command-controllers", metric)
+    }
+
     val sessionResult: AtomicReference<StatefulSession<A, E>> = AtomicReference(null)
     val appendedEventsResult: AtomicReference<AppendedEvents<E>> = AtomicReference(null)
 
@@ -257,6 +269,8 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
           updateSnapshot(conn, appendedEventsResult.get().resultingVersion, sessionResult.get())
         }.compose {
           Future.succeededFuture(sessionResult.get())
+        }.onSuccess {
+          commandsOk.incrementAndGet()
         }
     }
   }

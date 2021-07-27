@@ -35,7 +35,7 @@ class CorrelationCausationIdsIT {
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     client = CommandsContext.create(vertx, example1Json, connectOptions, poolOptions)
-    eventStore = CommandController(customerConfig, client.pgPool, client.json, false)
+    eventStore = CommandController(vertx, customerConfig, client.pgPool, client.json, false)
     repository = SnapshotRepository(client.pgPool, client.json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)
