@@ -9,11 +9,11 @@
       "jsonFactoryClassName": "io.github.crabzilla.example1.Example1JsonContextFactory",
       "publicationId": "customers",
       "targetEndpoint" : "customers-projection",
-      "initialInterval" : 1,
+      "initialInterval" : 0,
       "interval" : 10,
-      "maxInterval" : 10,
+      "maxInterval" : 100,
       "metricsInterval" : 10,
-      "maxNumberOfRows": 1
+      "maxNumberOfRows": 10
     },
     "worker": false,
     "instances": 1

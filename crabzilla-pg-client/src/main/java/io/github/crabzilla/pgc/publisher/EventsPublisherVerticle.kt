@@ -25,7 +25,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
   private lateinit var options: Config
   lateinit var scanner: EventsScanner
 
-  override fun start() {
+  override fun start(promise: Promise<Void>) {
 
     options = Config.create(config())
 
@@ -33,22 +33,26 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
     scanner = EventsScanner(sqlClient, options.publicationId)
     options = Config.create(config())
 
-    // Schedule the first execution
-    vertx.setTimer(options.initialInterval, action)
+    action()
+      .onFailure { promise.fail(it) }
+      .onSuccess {
+        publishMetrics()
+        // Schedule the first execution
+        vertx.setTimer(options.initialInterval + options.interval, action)
+        vertx.setPeriodic(options.metricsInterval) {
+          publishMetrics()
+        }
+        log.info("Started pooling events with {}", options)
+        promise.complete()
+      }
 
-    vertx.setPeriodic(options.metricsInterval) {
-      publishMetrics()
-    }
-
-    log.info("Started pooling events with {}", options)
-    publishMetrics()
   }
 
   override fun stop() {
     log.info("Stopped")
   }
 
-  fun publishMetrics() {
+  private fun publishMetrics() {
     val metric = JsonObject() // TODO also publish errors
       .put("publicationId", options.publicationId)
       .put("sequence", lastEventPublishedRef.get())
@@ -61,7 +65,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
     }
   }
 
-  fun action(): Future<Long> {
+  private fun action(): Future<Long> {
     fun registerFailure() {
       val nextInterval = min(options.maxInterval, options.interval * failures.incrementAndGet())
       vertx.setTimer(nextInterval, action)
