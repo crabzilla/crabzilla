@@ -1,8 +1,11 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.core.Snapshot
+import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.command.CommandsContext
@@ -10,10 +13,10 @@ import io.github.crabzilla.stack.DomainStateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.deployVerticles
 import io.vertx.core.DeploymentOptions
+import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -65,48 +68,43 @@ class AsyncProjectionIT {
     val snapshotRepo = SnapshotRepository<Customer>(client.pgPool, client.json)
     val controller = client.create(customerConfig)
     snapshotRepo.get(id)
-      .onFailure { tc.failNow(it) }
-      .onSuccess { snapshot0 ->
+      .compose { snapshot0: Snapshot<Customer>? ->
         assert(snapshot0 == null)
         controller.handle(CommandMetadata(DomainStateId(id)), RegisterCustomer(id, "cust#$id"))
-          .onFailure { tc.failNow(it) }
-          .onSuccess {
-            snapshotRepo.get(id)
-              .onFailure { err -> tc.failNow(err) }
-              .onSuccess { snapshot1 ->
-                assert(1 == snapshot1!!.version)
-                assert(Customer(id, "cust#$id") == snapshot1.state)
-                controller.handle(
-                  CommandMetadata(DomainStateId(id)),
-                  ActivateCustomer("because yes")
-                )
-                  .onFailure { tc.failNow(it) }
-                  .onSuccess {
-                    snapshotRepo.get(id)
-                      .onFailure { err -> tc.failNow(err) }
-                      .onSuccess { snapshot2 ->
-                        assert(2 == snapshot2!!.version)
-                        assert(
-                          Customer(
-                            id,
-                            "cust#$id",
-                            isActive = true,
-                            reason = "because yes"
-                          )
-                            == snapshot2.state
-                        )
-                        testRepo.getProjections("customers")
-                          .onFailure { tc.failNow(it) }
-                          .onSuccess {
-                            tc.verify {
-                              assertThat(it > 0)
-                            }
-                            tc.completeNow()
-                          }
-                      }
-                  }
-              }
-          }
+      }.compose { s1: StatefulSession<Customer, CustomerEvent> ->
+        snapshotRepo.get(id)
+      }.compose { snapshot1 ->
+        assert(1 == snapshot1!!.version)
+        assert(Customer(id, "cust#$id") == snapshot1.state)
+        controller.handle(
+          CommandMetadata(DomainStateId(id)),
+          ActivateCustomer("because yes")
+        )
+      }.compose { s2: StatefulSession<Customer, CustomerEvent> ->
+        snapshotRepo.get(id)
+      }.compose { snapshot2: Snapshot<Customer>? ->
+        assert(2 == snapshot2!!.version)
+        assert(
+          Customer(
+            id,
+            "cust#$id",
+            isActive = true,
+            reason = "because yes"
+          ) == snapshot2.state
+        )
+        Future.succeededFuture<Void>()
+      }.compose {
+        vertx.eventBus().request<Void>("crabzilla.publisher-customers", null)
+      }.transform {
+        if (it.failed()) {
+          Future.failedFuture(it.cause())
+        } else {
+          Future.succeededFuture(testRepo.getProjections("customers"))
+        }
+      }.onFailure {
+        tc.failNow(it)
+      }.onSuccess {
+        tc.completeNow()
       }
   }
 }

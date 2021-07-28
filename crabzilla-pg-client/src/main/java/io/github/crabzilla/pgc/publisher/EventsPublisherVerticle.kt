@@ -18,33 +18,38 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
     // TODO this must be by instance: add endpoint for pause, resume, restart from N, etc (using event sourcing!)
   }
 
-  private val action: Handler<Long?> = handler()
+//  private val action: Handler<Long?> = handler()
   private val failures = AtomicLong(0L)
   private val lastEventPublishedRef = AtomicLong(0L)
 
   private lateinit var options: Config
   lateinit var scanner: EventsScanner
 
-  override fun start(promise: Promise<Void>) {
+  override fun start() {
 
     options = Config.create(config())
 
     val sqlClient = sqlClient(config())
-    scanner = EventsScanner(sqlClient, options.publicationId)
+    scanner = EventsScanner(sqlClient, options.publicationId, options.publicationType)
     options = Config.create(config())
 
-    action()
-      .onFailure { promise.fail(it) }
-      .onSuccess {
-        publishMetrics()
-        // Schedule the first execution
-        vertx.setTimer(options.initialInterval + options.interval, action)
-        vertx.setPeriodic(options.metricsInterval) {
+    vertx.eventBus().consumer<Void>("crabzilla.publisher-${options.publicationId}") { msg ->
+      action()
+        .onFailure { msg.fail(500, it.message) }
+        .onSuccess {
           publishMetrics()
+          msg.reply(null)
         }
-        log.info("Started pooling events with {}", options)
-        promise.complete()
-      }
+    }
+
+    // Schedule the first execution
+    vertx.setTimer(options.initialInterval + options.interval) {
+      action()
+    }
+    vertx.setPeriodic(options.metricsInterval) {
+      publishMetrics()
+    }
+    log.info("Started pooling events with {}", options)
   }
 
   override fun stop() {
@@ -59,20 +64,24 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
   }
 
   private fun handler(): Handler<Long?> {
-    return Handler {
+    return Handler<Long?> {
       action()
+        .onFailure { log.error("?") }
+        .onSuccess {
+          publishMetrics()
+        }
     }
   }
 
   private fun action(): Future<Long> {
     fun registerFailure() {
       val nextInterval = min(options.maxInterval, options.interval * failures.incrementAndGet())
-      vertx.setTimer(nextInterval, action)
+      vertx.setTimer(nextInterval, handler())
       log.debug("Rescheduled to next {} milliseconds", nextInterval)
     }
     fun registerSuccessOrStillBusy() {
       failures.set(0)
-      vertx.setTimer(options.interval, action)
+      vertx.setTimer(options.interval, handler())
       log.debug("Rescheduled to next {} milliseconds", options.interval)
     }
     return scanAndPublish(options.maxNumberOfRows)
@@ -110,30 +119,25 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
 
     val promise = Promise.promise<Long>()
     scanner.scanPendingEvents(numberOfRows)
-      .onFailure {
-        promise.fail(it)
-        log.error("When scanning new events", it)
-      }
-      .onSuccess { eventsList ->
+      .compose { eventsList ->
         if (eventsList.isEmpty()) {
-          promise.complete(0)
-          return@onSuccess
+          Future.failedFuture("No new events")
+        } else {
+          log.debug(
+            "Found {} new events. The last one is #{}",
+            eventsList.size,
+            eventsList.last().eventMetadata.eventId
+          )
+          publish(eventsList)
         }
-        log.debug("Found {} new events. The last one is #{}", eventsList.size, eventsList.last().eventMetadata.eventId)
-        publish(eventsList)
-          .onSuccess { lastEventPublished ->
-            log.debug("After publishing {}, the latest published event id is #{}", eventsList.size, lastEventPublished)
-            if (lastEventPublished == 0L) {
-              promise.complete(0L)
-            } else {
-              scanner.updateOffSet(lastEventPublished)
-                .onFailure { promise.fail(it) }
-                .onSuccess {
-                  lastEventPublishedRef.set(lastEventPublished)
-                  promise.complete(lastEventPublished)
-                }
-            }
-          }
+      }.compose { lastPublishedEvent ->
+        scanner.updateOffSet(lastPublishedEvent)
+          .map(lastPublishedEvent)
+      }.onSuccess { lastPublishedEvent ->
+        lastEventPublishedRef.set(lastPublishedEvent)
+        promise.complete(lastPublishedEvent)
+      }.onFailure {
+        promise.complete(0L)
       }
       .onComplete {
         log.trace("Scan is now inactive until new request")
@@ -143,6 +147,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
 
   private data class Config(
     val publicationId: String,
+    val publicationType: String,
     val targetEndpoint: String,
     val initialInterval: Long,
     val interval: Long,
@@ -153,6 +158,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
     companion object {
       fun create(config: JsonObject): Config {
         val publicationId = config.getString("publicationId")
+        val publicationType = config.getString("publicationType")
         val targetEndpoint = config.getString("targetEndpoint")
         val initialInterval = config.getLong("initialInterval", 10_000)
         val interval = config.getLong("interval", 500)
@@ -161,6 +167,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
         val maxNumberOfRows = config.getInteger("maxNumberOfRows", 500)
         return Config(
           publicationId = publicationId,
+          publicationType = publicationType,
           targetEndpoint = targetEndpoint,
           initialInterval = initialInterval,
           interval = interval,

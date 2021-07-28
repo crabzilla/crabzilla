@@ -58,13 +58,12 @@ class EventsProjectorVerticle : PgcAbstractVerticle() {
     log.info("Started consuming from endpoint [{}]", targetEndpoint)
   }
 
-  fun publishMetrics() : Unit {
+  fun publishMetrics() {
     val metric = JsonObject() // TODO also publish errors
       .put("projectionId", targetEndpoint)
       .put("sequence", eventSequence.get())
     vertx.eventBus().publish("crabzilla.projections", metric)
   }
-
 
   override fun stop() {
     log.info("Stopped consuming from endpoint [{}]", targetEndpoint)
