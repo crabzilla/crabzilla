@@ -131,7 +131,14 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
         }
       }.compose { lastPublishedEvent ->
         scanner.updateOffSet(lastPublishedEvent)
-          .map(lastPublishedEvent)
+          .transform {
+            if (it.failed()) {
+              Future.failedFuture("When updating sequence for " +
+                      "${options.publicationType} [${options.publicationId}]")
+            } else {
+              Future.succeededFuture(lastPublishedEvent)
+            }
+          }
       }.onSuccess { lastPublishedEvent ->
         lastEventPublishedRef.set(lastPublishedEvent)
         promise.complete(lastPublishedEvent)
