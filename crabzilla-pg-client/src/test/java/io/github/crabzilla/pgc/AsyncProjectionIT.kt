@@ -47,7 +47,6 @@ class AsyncProjectionIT {
     val options = DeploymentOptions().setConfig(config)
     cleanDatabase(client.sqlClient)
       .compose { vertx.deployVerticles(verticles, options) }
-      .compose { vertx.deployVerticle(ObservabilityVerticle()) }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }

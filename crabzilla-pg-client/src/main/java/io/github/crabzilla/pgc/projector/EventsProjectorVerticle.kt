@@ -14,6 +14,7 @@ class EventsProjectorVerticle : PgcAbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(EventsProjectorVerticle::class.java)
+    private const val defaultMetricInterval = 10_000L
   }
 
   private lateinit var targetEndpoint: String
@@ -41,24 +42,29 @@ class EventsProjectorVerticle : PgcAbstractVerticle() {
 //          }
       }
         .onFailure {
-          failures.incrementAndGet()
           msg.fail(500, it.message)
+          failures.incrementAndGet()
         }
         .onSuccess {
-          eventSequence.set(eventRecord.eventMetadata.eventSequence)
           msg.reply(true)
+          eventSequence.set(eventRecord.eventMetadata.eventSequence)
         }
     }
 
-    vertx.setPeriodic(config().getLong("metricsInterval", 10_000)) {
-      val metric = JsonObject() // TODO also publish errors
-        .put("projectionId", targetEndpoint)
-        .put("sequence", eventSequence.get())
-      vertx.eventBus().publish("crabzilla.projections", metric)
+    vertx.setPeriodic(config().getLong("metricsInterval", defaultMetricInterval)) {
+      publishMetrics()
     }
 
     log.info("Started consuming from endpoint [{}]", targetEndpoint)
   }
+
+  fun publishMetrics() : Unit {
+    val metric = JsonObject() // TODO also publish errors
+      .put("projectionId", targetEndpoint)
+      .put("sequence", eventSequence.get())
+    vertx.eventBus().publish("crabzilla.projections", metric)
+  }
+
 
   override fun stop() {
     log.info("Stopped consuming from endpoint [{}]", targetEndpoint)

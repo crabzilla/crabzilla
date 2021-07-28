@@ -45,7 +45,6 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
         log.info("Started pooling events with {}", options)
         promise.complete()
       }
-
   }
 
   override fun stop() {
