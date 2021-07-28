@@ -17,9 +17,9 @@ import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.command.FutureCommandHandler
-import io.github.crabzilla.stack.foldLeft
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
+import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
@@ -30,9 +30,11 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 class CommandController<A : DomainState, C : Command, E : DomainEvent>(
+  private val vertx: Vertx,
   private val config: CommandControllerConfig<A, C, E>,
   private val pgPool: PgPool,
   private val json: Json,
@@ -43,6 +45,11 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
 
   companion object {
     private val log = LoggerFactory.getLogger(CommandController::class.java)
+    const val SQL_LOCK_SNAPSHOT =
+      """ SELECT version, json_content, pg_try_advisory_xact_lock(s.id) as locked, s.id as id
+          FROM snapshots s
+         WHERE ar_id = $1 """
+//           AND ar_type = $2"""
     const val SQL_APPEND_CMD =
       """ INSERT INTO commands (cmd_id, cmd_payload)
           VALUES ($1, $2)"""
@@ -58,13 +65,9 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
           WHERE ar_id = $3 
            AND version = $4"""
 //    AND ar_type = $4
-
-    const val SQL_LOCK_SNAPSHOT =
-      """ SELECT version, json_content, pg_try_advisory_xact_lock(s.id) as locked, s.id as id
-          FROM snapshots s
-         WHERE ar_id = $1 """
-//           AND ar_type = $2"""
   }
+
+  private val commandsOk = AtomicLong(0)
 
   fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<A, E>> {
     fun validateCommands(): Future<Void> {
@@ -158,13 +161,11 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
             )
           }
       }
-
       val initialFuture = Future.succeededFuture<AppendedEvent<E>?>(null)
       val version = AtomicInteger(session.originalVersion)
       val eventsAdded = mutableListOf<AppendedEvent<E>>()
-
-      return foldLeft(
-        session.appliedEvents().iterator(), initialFuture
+      return session.appliedEvents().fold(
+        initialFuture
       ) {
         currentFuture: Future<AppendedEvent<E>?>,
         event: E,
@@ -215,8 +216,8 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
         return Future.succeededFuture()
       }
       val initialFuture = Future.succeededFuture<Void>()
-      return foldLeft(
-        appendedEvents.events.iterator(), initialFuture
+      return appendedEvents.events.fold(
+        initialFuture
       ) { currentFuture: Future<Void>, appendedEvent ->
         currentFuture.compose {
           val eventMetadata = EventMetadata(
@@ -230,6 +231,13 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
           eventsProjector.project(conn, appendedEvent.event, eventMetadata)
         }
       }.mapEmpty()
+    }
+
+    vertx.setPeriodic(10_000) {
+      val metric = JsonObject() // TODO also publish errors
+        .put("controllerId", config.name)
+        .put("successes", commandsOk.get())
+      vertx.eventBus().publish("crabzilla.command-controllers", metric)
     }
 
     val sessionResult: AtomicReference<StatefulSession<A, E>> = AtomicReference(null)
@@ -248,9 +256,10 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
           sessionResult.set(session)
           appendCommand(conn)
         }.compose {
-          log.debug("Command persisted")
+          log.debug("Command appended")
           appendEvents(conn, sessionResult.get())
         }.compose {
+          log.debug("Events appended")
           appendedEventsResult.set(it)
           projectEvents(conn, it)
         }.compose {
@@ -260,6 +269,8 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
           updateSnapshot(conn, appendedEventsResult.get().resultingVersion, sessionResult.get())
         }.compose {
           Future.succeededFuture(sessionResult.get())
+        }.onSuccess {
+          commandsOk.incrementAndGet()
         }
     }
   }

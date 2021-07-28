@@ -9,8 +9,9 @@
 
 - [x] Command controller
 - [x] Events publisher
+- [x] Events projectors
+- [x] Very basic observability (logging stats)
 - [ ] Getting started tutorial
-- [ ] Observability (publishing stats to eventbus)
 - [ ] Web interface to write model (to track commands, events, etc)
 
 ### Status

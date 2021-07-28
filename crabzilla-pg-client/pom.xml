@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>v0.2.5</version>
+    <version>v0.2.6</version>
   </parent>
 
   <artifactId>crabzilla-pg-client</artifactId>
@@ -40,7 +40,7 @@
     <dependency>
       <groupId>io.kotest</groupId>
       <artifactId>kotest-assertions-core-jvm</artifactId>
-      <version>4.4.3</version>
+      <version>4.6.1</version>
       <scope>test</scope>
     </dependency>
 

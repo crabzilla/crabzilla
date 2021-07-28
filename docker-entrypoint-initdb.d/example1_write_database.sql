@@ -2,13 +2,14 @@ CREATE DATABASE ex1_crabzilla OWNER user1;
 
 \connect ex1_crabzilla ;
 
---- APP TABLES
-
--- projections
+CREATE TABLE publications (
+   name TEXT PRIMARY KEY NOT NULL,
+   sequence BIGINT
+);
 
 CREATE TABLE projections (
    name TEXT PRIMARY KEY NOT NULL,
-   last_offset BIGINT
+   sequence BIGINT
 );
 
 --  snapshots table
@@ -81,4 +82,4 @@ CREATE TABLE customer_summary (
     PRIMARY KEY (id)
 );
 
-INSERT INTO projections (name, last_offset) values ('customers', 0);
+INSERT INTO projections (name, sequence) values ('customers', 0);

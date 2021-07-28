@@ -20,7 +20,7 @@ class CustomerCommandVerticle : PgcAbstractVerticle() {
 
     val pgPool = pgPool(config())
 
-    val eventStore = CommandController(customerConfig, pgPool, example1Json, false)
+    val eventStore = CommandController(vertx, customerConfig, pgPool, example1Json, false)
 
     vertx.eventBus().consumer<JsonObject>(ENDPOINT) { msg ->
       val metadata = CommandMetadata.fromJson(msg.body().getJsonObject("metadata"))

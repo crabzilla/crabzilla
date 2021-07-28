@@ -5,17 +5,22 @@ import io.github.crabzilla.pgc.PgcAbstractVerticle
 import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
+import java.util.concurrent.atomic.AtomicLong
 
 /**
- * To update customer read model given events
+ * A broker verticle to project events to database
  */
 class EventsProjectorVerticle : PgcAbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(EventsProjectorVerticle::class.java)
+    private const val defaultMetricInterval = 10_000L
   }
 
   private lateinit var targetEndpoint: String
+
+  private val failures: AtomicLong = AtomicLong(0)
+  private val eventSequence: AtomicLong = AtomicLong(0)
 
   override fun start() {
 
@@ -31,11 +36,33 @@ class EventsProjectorVerticle : PgcAbstractVerticle() {
       pgPool.withConnection { conn ->
         val event = DomainEvent.fromJson<DomainEvent>(json, eventRecord.eventAsjJson.toString())
         eventsProjector.project(conn, event, eventRecord.eventMetadata)
+//          .compose {
+//            // TODO update projection offset within the same transaction
+//            Future.succeededFuture<Void>()
+//          }
       }
-        .onFailure { msg.fail(500, it.message) }
-        .onSuccess { msg.reply(true) }
+        .onFailure {
+          msg.fail(500, it.message)
+          failures.incrementAndGet()
+        }
+        .onSuccess {
+          msg.reply(true)
+          eventSequence.set(eventRecord.eventMetadata.eventSequence)
+        }
     }
+
+    vertx.setPeriodic(config().getLong("metricsInterval", defaultMetricInterval)) {
+      publishMetrics()
+    }
+
     log.info("Started consuming from endpoint [{}]", targetEndpoint)
+  }
+
+  fun publishMetrics() {
+    val metric = JsonObject() // TODO also publish errors
+      .put("projectionId", targetEndpoint)
+      .put("sequence", eventSequence.get())
+    vertx.eventBus().publish("crabzilla.projections", metric)
   }
 
   override fun stop() {
