@@ -18,7 +18,6 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
     // TODO this must be by instance: add endpoint for pause, resume, restart from N, etc (using event sourcing!)
   }
 
-//  private val action: Handler<Long?> = handler()
   private val failures = AtomicLong(0L)
   private val lastEventPublishedRef = AtomicLong(0L)
 
