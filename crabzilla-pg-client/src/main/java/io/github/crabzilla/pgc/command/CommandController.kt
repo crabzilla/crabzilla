@@ -1,5 +1,6 @@
 package io.github.crabzilla.pgc.command
 
+import com.github.f4b6a3.uuid.UuidCreator
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.core.CommandException
@@ -54,8 +55,8 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
       """ INSERT INTO commands (cmd_id, cmd_payload)
           VALUES ($1, $2)"""
     const val SQL_APPEND_EVENT =
-      """ INSERT INTO events (causation_id, correlation_id, ar_name, ar_id, event_payload, version)
-          VALUES ($1, $2, $3, $4, $5, $6) returning id, causation_id, sequence"""
+      """ INSERT INTO events (causation_id, correlation_id, ar_name, ar_id, event_payload, version, id)
+          VALUES ($1, $2, $3, $4, $5, $6, $7) returning sequence"""
     const val SQL_INSERT_VERSION =
       """ INSERT INTO snapshots (version, json_content, ar_id, ar_type)
           VALUES ($1, $2, $3, $4)"""
@@ -68,6 +69,8 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
   }
 
   private val commandsOk = AtomicLong(0)
+
+  private val commandHandler = commandHandler()
 
   fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<A, E>> {
     fun validateCommands(): Future<Void> {
@@ -108,22 +111,6 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
         .execute(Tuple.of(metadata.domainStateId.id))
         .map { pgRow -> snapshot(pgRow) }
     }
-    fun handleCommand(snapshot: Snapshot<A>?): Future<StatefulSession<A, E>> {
-      return when (val handler: CommandHandlerApi<A, C, E> = config.commandHandlerFactory.invoke()) {
-        is CommandHandler<A, C, E> -> {
-          try {
-            val session = handler.handleCommand(command, config.eventHandler, snapshot)
-            Future.succeededFuture(session)
-          } catch (e: Throwable) {
-            Future.failedFuture(e)
-          }
-        }
-        is FutureCommandHandler<A, C, E> -> {
-          handler.handleCommand(command, config.eventHandler, snapshot)
-        }
-        else -> Future.failedFuture("Unknown command handler")
-      }
-    }
     fun appendCommand(conn: SqlConnection): Future<Void> {
       if (!saveCommandOption) {
         return Future.succeededFuture(null)
@@ -142,22 +129,24 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
       fun appendEvent(event: E, version: Int, causationId: CausationId): Future<AppendedEvent<E>> {
         val eventAsJson = event.toJson(json)
         log.debug("Will append event {} as {}", event, eventAsJson)
+        val eventId = UuidCreator.getTimeOrdered()
         val params = Tuple.of(
           causationId.id,
           metadata.correlationId.id,
           config.name,
           metadata.domainStateId.id,
           JsonObject(eventAsJson),
-          version
+          version,
+          eventId
         )
         return conn.preparedQuery(SQL_APPEND_EVENT)
           .execute(params)
           .map { rs: RowSet<Row> ->
             AppendedEvent(
               event,
-              rs.first().getUUID("causation_id"),
+              causationId.id,
               rs.first().getLong("sequence"),
-              rs.first().getUUID("id")
+              eventId
             )
           }
       }
@@ -250,7 +239,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
           getSnapshot(conn)
         }.compose { snapshot ->
           log.debug("Got snapshot {}", snapshot)
-          handleCommand(snapshot)
+          commandHandler.invoke(command, snapshot)
         }.compose { session ->
           log.debug("Command handled {}", session.toSessionData())
           sessionResult.set(session)
@@ -278,4 +267,21 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
   private data class AppendedEvent<E>(val event: E, val causationId: UUID, val sequence: Long, val eventId: UUID)
 
   private data class AppendedEvents<E>(val events: List<AppendedEvent<E>>, val resultingVersion: Int)
+
+  private fun commandHandler(): (command: C, snapshot: Snapshot<A>?) -> Future<StatefulSession<A, E>> {
+    return when (val handler: CommandHandlerApi<A, C, E> = config.commandHandlerFactory.invoke()) {
+      is CommandHandler<A, C, E> -> { command, snapshot ->
+        try {
+          val session = handler.handleCommand(command, config.eventHandler, snapshot)
+          Future.succeededFuture(session)
+        } catch (e: Throwable) {
+          Future.failedFuture(e)
+        }
+      }
+      is FutureCommandHandler<A, C, E> -> { command, snapshot ->
+        handler.handleCommand(command, config.eventHandler, snapshot)
+      }
+      else -> throw IllegalArgumentException("Unknown command handler")
+    }
+  }
 }
