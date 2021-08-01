@@ -53,7 +53,7 @@ CREATE TABLE events (
       ar_name text NOT NULL,
       ar_id UUID NOT NULL,
       version INTEGER NOT NULL,
-      id UUID NOT NULL DEFAULT gen_random_uuid(),
+      id UUID NOT NULL,
       causation_id UUID NOT NULL,
       correlation_id UUID NOT NULL,
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

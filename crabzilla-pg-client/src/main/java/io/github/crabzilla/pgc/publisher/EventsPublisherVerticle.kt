@@ -133,8 +133,10 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
         scanner.updateOffSet(lastPublishedEvent)
           .transform {
             if (it.failed()) {
-              Future.failedFuture("When updating sequence for " +
-                      "${options.publicationType} [${options.publicationId}]")
+              Future.failedFuture(
+                "When updating sequence for " +
+                  "${options.publicationType} [${options.publicationId}]"
+              )
             } else {
               Future.succeededFuture(lastPublishedEvent)
             }

@@ -1,5 +1,6 @@
 package io.github.crabzilla.stack.command
 
+import com.github.f4b6a3.uuid.UuidCreator
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CommandId
 import io.github.crabzilla.stack.CorrelationId
@@ -9,7 +10,7 @@ import java.util.UUID
 
 data class CommandMetadata(
   val domainStateId: DomainStateId,
-  val commandId: CommandId = CommandId(UUID.randomUUID()),
+  val commandId: CommandId = CommandId(UuidCreator.getTimeOrdered()),
   val correlationId: CorrelationId = CorrelationId(commandId.id),
   val causationId: CausationId = CausationId(commandId.id)
 ) {
