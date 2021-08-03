@@ -47,6 +47,7 @@ class ObservabilityVerticleIT {
     val json = JsonObject()
       .put("controllerId", "Customer")
       .put("successes", 431)
+      .put("failures", 0)
     vertx.eventBus().request<Void>("crabzilla.command-controllers", json)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
