@@ -3,7 +3,8 @@ package io.github.crabzilla.pgc.command
 import com.github.f4b6a3.uuid.UuidCreator
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandControllerConfig
-import io.github.crabzilla.core.CommandException
+import io.github.crabzilla.core.CommandException.LockingException
+import io.github.crabzilla.core.CommandException.ValidationException
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandHandlerApi
 import io.github.crabzilla.core.CommandValidator
@@ -69,6 +70,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
   }
 
   private val commandsOk = AtomicLong(0)
+  private val commandsFailures = AtomicLong(0)
 
   private val commandHandler = commandHandler()
 
@@ -78,7 +80,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
       return if (validator != null) {
         val validationErrors = validator.validate(command)
         return if (validationErrors.isNotEmpty()) {
-          Future.failedFuture(CommandException.ValidationException(validationErrors))
+          Future.failedFuture(ValidationException(validationErrors))
         } else {
           Future.succeededFuture()
         }
@@ -102,7 +104,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
             val state = DomainState.fromJson<A>(json, stateAsJson.toString())
             Snapshot(state, version)
           } else {
-            throw (CommandException.LockingException("Not locked $id ${metadata.domainStateId.id}"))
+            throw (LockingException("Not locked $id ${metadata.domainStateId.id}"))
           }
         }
       }
@@ -223,9 +225,10 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
     }
 
     vertx.setPeriodic(10_000) {
-      val metric = JsonObject() // TODO also publish errors
+      val metric = JsonObject()
         .put("controllerId", config.name)
         .put("successes", commandsOk.get())
+        .put("failures", commandsFailures.get())
       vertx.eventBus().publish("crabzilla.command-controllers", metric)
     }
 
@@ -260,6 +263,8 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
           Future.succeededFuture(sessionResult.get())
         }.onSuccess {
           commandsOk.incrementAndGet()
+        }.onFailure {
+          commandsFailures.incrementAndGet()
         }
     }
   }
@@ -272,14 +277,14 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
     return when (val handler: CommandHandlerApi<A, C, E> = config.commandHandlerFactory.invoke()) {
       is CommandHandler<A, C, E> -> { command, snapshot ->
         try {
-          val session = handler.handleCommand(command, config.eventHandler, snapshot)
+          val session = handler.handleCommand(command, snapshot)
           Future.succeededFuture(session)
         } catch (e: Throwable) {
           Future.failedFuture(e)
         }
       }
       is FutureCommandHandler<A, C, E> -> { command, snapshot ->
-        handler.handleCommand(command, config.eventHandler, snapshot)
+        handler.handleCommand(command, snapshot)
       }
       else -> throw IllegalArgumentException("Unknown command handler")
     }

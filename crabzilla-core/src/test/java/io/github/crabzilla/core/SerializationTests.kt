@@ -11,7 +11,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -57,17 +56,18 @@ class SerializationTests {
   fun testLd() {
     val t = Bean2(LocalDate.now())
     val expectedJson = """{"ld":"${t.ld}"}"""
-    assertThat(customerJson.encodeToString(t)).isEqualTo(expectedJson)
     assertThat(customerJson.decodeFromString<Bean2>(expectedJson)).isEqualTo(t)
+    val resultJson = customerJson.encodeToString(t)
+    assertThat(customerJson.decodeFromString<Bean2>(resultJson)).isEqualTo(t)
   }
 
   @Test
   @DisplayName("LocalDateTime ser/der")
-  @RepeatedTest(100)
+//  @RepeatedTest(100)
   fun testLdt() {
     val t = Bean1(LocalDateTime.now(), "foo")
     val expectedJson = """{"ldt":"${t.ldt}","newProp1":"foo"}"""
-//    assertThat(customerJson.encodeToString(t)).startsWith(expectedJson)
+    assertThat(customerJson.encodeToString(t)).startsWith(expectedJson)
     assertThat(customerJson.decodeFromString<Bean1>(expectedJson)).isEqualTo(t)
   }
 

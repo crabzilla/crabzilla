@@ -134,7 +134,6 @@ class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id 
 object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, CustomerEvent> {
   override fun handleCommand(
     command: CustomerCommand,
-    eventHandler: EventHandler<Customer, CustomerEvent>,
     snapshot: Snapshot<Customer>?
   ):
     StatefulSession<Customer, CustomerEvent> {
@@ -143,13 +142,13 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
 
       is RegisterCustomer -> {
         if (snapshot == null)
-          withNew(Customer.create(id = command.customerId, name = command.name), eventHandler)
+          withNew(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
         else throw CustomerAlreadyExists(command.customerId)
       }
 
       is RegisterAndActivateCustomer -> {
         if (snapshot == null)
-          withNew(Customer.create(id = command.customerId, name = command.name), eventHandler)
+          withNew(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
             .execute { it.activate(command.reason) }
         else throw CustomerAlreadyExists(command.customerId)
       }

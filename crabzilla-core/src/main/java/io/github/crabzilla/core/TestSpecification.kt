@@ -22,17 +22,20 @@ class TestSpecification<A : DomainState, C : Command, E : DomainEvent>(val confi
     }
     val commandHandler = config.commandHandlerFactory.invoke() as CommandHandler<A, C, E>
     val snapshot = if (state == null) null else Snapshot(state!!, events.size)
-    val session = commandHandler.handleCommand(command, config.eventHandler, snapshot)
+    val session = commandHandler.handleCommand(command, snapshot)
     state = session.currentState
     events.addAll(session.appliedEvents())
     return this
   }
 
+  fun then(assertion: (s: TestSpecification<A, C, E>) -> Unit): TestSpecification<A, C, E> {
+    assertion.invoke(this)
+    return this
+  }
+
   fun givenEvents(vararg fixtureEvents: E): TestSpecification<A, C, E> {
     fixtureEvents.forEach { e ->
-//      println("state $state event $e")
       val newState = config.eventHandler.handleEvent(state, e)
-//      println("new state $newState")
       state = newState
       events.add(e)
     }
