@@ -67,12 +67,22 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
           WHERE ar_id = $3 
            AND version = $4"""
 //    AND ar_type = $4
+    const val DEFAULT_STATS_INTERVAL = 10_000L
   }
 
   private val commandsOk = AtomicLong(0)
   private val commandsFailures = AtomicLong(0)
-
   private val commandHandler = commandHandler()
+
+  init {
+    vertx.setPeriodic(DEFAULT_STATS_INTERVAL) {
+      val metric = JsonObject()
+        .put("controllerId", config.name)
+        .put("successes", commandsOk.get())
+        .put("failures", commandsFailures.get())
+      vertx.eventBus().publish("crabzilla.command-controllers", metric)
+    }
+  }
 
   fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<A, E>> {
     fun validateCommands(): Future<Void> {
@@ -222,14 +232,6 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
           eventsProjector.project(conn, appendedEvent.event, eventMetadata)
         }
       }.mapEmpty()
-    }
-
-    vertx.setPeriodic(10_000) {
-      val metric = JsonObject()
-        .put("controllerId", config.name)
-        .put("successes", commandsOk.get())
-        .put("failures", commandsFailures.get())
-      vertx.eventBus().publish("crabzilla.command-controllers", metric)
     }
 
     val sessionResult: AtomicReference<StatefulSession<A, E>> = AtomicReference(null)
