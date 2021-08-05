@@ -74,8 +74,3 @@ mvn clean install -DskipTests=false
 ## Dependencies overview
 
 ![GitHub Logo](/crabzilla-packages.png)
-
-## Example
-
-I'm still working on a full Vertx demo. Anyway, there is a [Micronaut example](https://github.com/rodolfodpk/demo5) 
-
