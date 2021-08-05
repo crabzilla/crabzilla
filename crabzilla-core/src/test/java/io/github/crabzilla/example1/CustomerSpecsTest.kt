@@ -30,12 +30,10 @@ class CustomerSpecsTest {
         assertThat(it.events())
           .isEqualTo(listOf(CustomerRegistered(id, "c1")))
       }
-
   }
 
   @Test
   fun `given a registered customer`() {
-
     // give an existing customer
     val spec = TestSpecification(customerConfig)
       .givenEvents(CustomerRegistered(id, "c1"))
@@ -52,7 +50,6 @@ class CustomerSpecsTest {
             )
           )
       }
-
     // when deactivated
     spec.whenCommand(DeactivateCustomer("bcoz bad customer"))
       .then {
@@ -70,7 +67,6 @@ class CustomerSpecsTest {
             )
           )
       }
-
   }
 
   @Test

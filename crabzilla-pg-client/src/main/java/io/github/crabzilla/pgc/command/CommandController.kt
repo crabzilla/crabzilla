@@ -3,7 +3,8 @@ package io.github.crabzilla.pgc.command
 import com.github.f4b6a3.uuid.UuidCreator
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandControllerConfig
-import io.github.crabzilla.core.CommandException
+import io.github.crabzilla.core.CommandException.LockingException
+import io.github.crabzilla.core.CommandException.ValidationException
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandHandlerApi
 import io.github.crabzilla.core.CommandValidator
@@ -79,7 +80,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
       return if (validator != null) {
         val validationErrors = validator.validate(command)
         return if (validationErrors.isNotEmpty()) {
-          Future.failedFuture(CommandException.ValidationException(validationErrors))
+          Future.failedFuture(ValidationException(validationErrors))
         } else {
           Future.succeededFuture()
         }
@@ -103,7 +104,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
             val state = DomainState.fromJson<A>(json, stateAsJson.toString())
             Snapshot(state, version)
           } else {
-            throw (CommandException.LockingException("Not locked $id ${metadata.domainStateId.id}"))
+            throw (LockingException("Not locked $id ${metadata.domainStateId.id}"))
           }
         }
       }

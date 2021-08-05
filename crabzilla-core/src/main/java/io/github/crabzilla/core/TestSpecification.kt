@@ -35,9 +35,7 @@ class TestSpecification<A : DomainState, C : Command, E : DomainEvent>(val confi
 
   fun givenEvents(vararg fixtureEvents: E): TestSpecification<A, C, E> {
     fixtureEvents.forEach { e ->
-//      println("state $state event $e")
       val newState = config.eventHandler.handleEvent(state, e)
-//      println("new state $newState")
       state = newState
       events.add(e)
     }
