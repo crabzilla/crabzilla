@@ -130,7 +130,8 @@ class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id 
 /**
  * Customer command handler
  */
-object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, CustomerEvent> {
+class CustomerCommandHandler :
+  CommandHandler<Customer, CustomerCommand, CustomerEvent>(customerEventHandler) {
 
   override fun handleCommand(
     command: CustomerCommand,
@@ -141,22 +142,22 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
 
       is RegisterCustomer -> {
         if (snapshot != null) throw CustomerAlreadyExists(command.customerId)
-        withNew(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
+        withNew(Customer.create(id = command.customerId, name = command.name))
       }
 
       is RegisterAndActivateCustomer -> {
         if (snapshot != null) throw CustomerAlreadyExists(command.customerId)
-        withNew(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
+        withNew(Customer.create(id = command.customerId, name = command.name))
           .execute { it.activate(command.reason) }
       }
 
       is ActivateCustomer -> {
-        with(snapshot!!, customerEventHandler)
+        with(snapshot)
           .execute { it.activate(command.reason) }
       }
 
       is DeactivateCustomer -> {
-        with(snapshot!!, customerEventHandler)
+        with(snapshot)
           .execute { it.deactivate(command.reason) }
       }
     }
@@ -166,7 +167,7 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
 val customerConfig = CommandControllerConfig(
   "Customer",
   customerEventHandler,
-  { CustomerCommandHandler },
+  { CustomerCommandHandler() },
   customerCmdValidator
 )
 

@@ -105,7 +105,7 @@ data class Customer(
 val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
   when (command) {
     is RegisterCustomer -> if (command.name == "bad customer") listOf("Bad customer!") else listOf()
-    is RegisterAndActivateCustomer -> if (command.name == "bad customer") listOf("Bad customer!") else listOf()
+    is RegisterAndActivateCustomer -> listOf()
     is ActivateCustomer -> listOf()
     is DeactivateCustomer -> listOf()
   }
@@ -130,35 +130,34 @@ class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id 
 /**
  * Customer command handler
  */
-object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, CustomerEvent> {
+class CustomerCommandHandler :
+  CommandHandler<Customer, CustomerCommand, CustomerEvent>(customerEventHandler) {
+
   override fun handleCommand(
     command: CustomerCommand,
     snapshot: Snapshot<Customer>?
-  ):
-    StatefulSession<Customer, CustomerEvent> {
+  ): StatefulSession<Customer, CustomerEvent> {
 
     return when (command) {
 
       is RegisterCustomer -> {
-        if (snapshot == null)
-          withNew(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
-        else throw CustomerAlreadyExists(command.customerId)
+        if (snapshot != null) throw CustomerAlreadyExists(command.customerId)
+        withNew(Customer.create(id = command.customerId, name = command.name))
       }
 
       is RegisterAndActivateCustomer -> {
-        if (snapshot == null)
-          withNew(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
-            .execute { it.activate(command.reason) }
-        else throw CustomerAlreadyExists(command.customerId)
+        if (snapshot != null) throw CustomerAlreadyExists(command.customerId)
+        withNew(Customer.create(id = command.customerId, name = command.name))
+          .execute { it.activate(command.reason) }
       }
 
       is ActivateCustomer -> {
-        with(snapshot!!, customerEventHandler)
+        with(snapshot)
           .execute { it.activate(command.reason) }
       }
 
       is DeactivateCustomer -> {
-        with(snapshot!!, customerEventHandler)
+        with(snapshot)
           .execute { it.deactivate(command.reason) }
       }
     }
@@ -168,7 +167,7 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
 val customerConfig = CommandControllerConfig(
   "Customer",
   customerEventHandler,
-  { CustomerCommandHandler },
+  { CustomerCommandHandler() },
   customerCmdValidator
 )
 

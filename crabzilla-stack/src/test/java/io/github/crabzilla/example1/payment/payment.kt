@@ -93,7 +93,8 @@ val paymentEventHandler = EventHandler<Payment, PaymentEvent> { state, event ->
   }
 }
 
-class FuturePaymentCommandHandler(val eventbus: EventBus) : FutureCommandHandler<Payment, PaymentCommand, PaymentEvent> {
+class FuturePaymentCommandHandler(handler: EventHandler<Payment, PaymentEvent>, val eventbus: EventBus) :
+  FutureCommandHandler<Payment, PaymentCommand, PaymentEvent>(handler) {
 
   override fun handleCommand(
     command: PaymentCommand,
@@ -102,7 +103,7 @@ class FuturePaymentCommandHandler(val eventbus: EventBus) : FutureCommandHandler
 
     return when (command) {
       is Pay -> {
-        withNew(Payment.create(command.id, command.creditCardNo, command.amount), paymentEventHandler)
+        withNew(Payment.create(command.id, command.creditCardNo, command.amount))
           .toFuture()
           .compose { s ->
             // here we could use event bus to request some external api call
