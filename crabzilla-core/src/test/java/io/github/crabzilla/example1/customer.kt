@@ -152,12 +152,12 @@ class CustomerCommandHandler(handler: EventHandler<Customer, CustomerEvent>) :
       }
 
       is ActivateCustomer -> {
-        with(snapshot!!)
+        with(snapshot)
           .execute { it.activate(command.reason) }
       }
 
       is DeactivateCustomer -> {
-        with(snapshot!!)
+        with(snapshot)
           .execute { it.deactivate(command.reason) }
       }
     }
