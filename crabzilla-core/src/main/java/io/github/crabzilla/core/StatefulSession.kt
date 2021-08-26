@@ -1,7 +1,5 @@
 package io.github.crabzilla.core
 
-import io.github.crabzilla.core.CommandHandlerApi.ConstructorResult
-
 /**
  * To perform aggregate root business methods and track it's events and state
  */
@@ -19,15 +17,26 @@ class StatefulSession<A : DomainState, E : DomainEvent> {
     this.currentState = originalState
   }
 
-  constructor(constructorResult: ConstructorResult<A, E>, eventHandler: EventHandler<A, E>) {
+  constructor(events: List<E>, eventHandler: EventHandler<A, E>) {
     this.originalVersion = 0
-    this.originalState = constructorResult.state
     this.eventHandler = eventHandler
-    this.currentState = originalState
-    constructorResult.events.forEach {
-      appliedEvents.add(it)
+    val state: A? = events.fold(null) { s: A?, e: E ->
+      appliedEvents.add(e)
+      eventHandler.handleEvent(s, e)
     }
+    this.originalState = state!!
+    this.currentState = originalState
   }
+
+//  constructor(constructorResult: ConstructorResult<A, E>, eventHandler: EventHandler<A, E>) {
+//    this.originalVersion = 0
+//    this.originalState = constructorResult.state
+//    this.eventHandler = eventHandler
+//    this.currentState = originalState
+//    constructorResult.events.forEach {
+//      appliedEvents.add(it)
+//    }
+//  }
 
   fun appliedEvents(): List<E> {
     return appliedEvents

@@ -58,7 +58,9 @@ class FutureCommandHandlerIT {
     val cmd = PaymentCommand.Pay(domainStateId.id, "000", 10.00)
     val metadata = CommandMetadata(domainStateId)
     controller.handle(metadata, cmd)
-      .onFailure { tc.failNow(it) }
+      .onFailure { err ->
+        tc.failNow(err)
+      }
       .onSuccess { session ->
         session.originalVersion shouldBe 0
         session.currentState shouldBe

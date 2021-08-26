@@ -3,7 +3,6 @@ package io.github.crabzilla.example1
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.CommandHandlerApi.ConstructorResult
 import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.DomainState
@@ -83,11 +82,11 @@ data class Customer(
 ) : DomainState() {
 
   companion object {
-    fun create(id: UUID, name: String): ConstructorResult<Customer, CustomerEvent> {
-      return ConstructorResult(
-        Customer(id = id, name = name),
-        CustomerRegistered(id = id, name = name)
-      )
+    fun create(id: UUID, name: String): List<CustomerEvent> {
+      return listOf(CustomerRegistered(id = id, name = name))
+    }
+    fun fromEvent(event: CustomerRegistered): Customer {
+      return Customer(id = event.id, name = event.name, isActive = false)
     }
   }
 
@@ -117,7 +116,7 @@ val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
  */
 val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event ->
   when (event) {
-    is CustomerRegistered -> Customer.create(id = event.id, name = event.name).state
+    is CustomerRegistered -> Customer.fromEvent(event)
     is CustomerActivated -> state!!.copy(isActive = true, reason = event.reason)
     is CustomerDeactivated -> state!!.copy(isActive = false, reason = event.reason)
   }
@@ -141,16 +140,14 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
     return when (command) {
 
       is RegisterCustomer -> {
-        if (snapshot == null)
-          withNew(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
-        else throw CustomerAlreadyExists(command.customerId)
+        if (snapshot != null) throw CustomerAlreadyExists(command.customerId)
+        withNew(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
       }
 
       is RegisterAndActivateCustomer -> {
-        if (snapshot == null)
-          withNew(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
-            .execute { it.activate(command.reason) }
-        else throw CustomerAlreadyExists(command.customerId)
+        if (snapshot != null) throw CustomerAlreadyExists(command.customerId)
+        withNew(Customer.create(id = command.customerId, name = command.name), customerEventHandler)
+          .execute { it.activate(command.reason) }
       }
 
       is ActivateCustomer -> {

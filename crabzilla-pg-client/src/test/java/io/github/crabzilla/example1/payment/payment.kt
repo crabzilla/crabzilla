@@ -1,12 +1,12 @@
 package io.github.crabzilla.example1.payment
 
 import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.CommandHandlerApi.ConstructorResult
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.StatefulSession
+import io.github.crabzilla.core.javaModule
 import io.github.crabzilla.example1.payment.PaymentCommand.Pay
 import io.github.crabzilla.example1.payment.PaymentCommand.Refund
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentApproved
@@ -75,15 +75,18 @@ data class Payment(
 ) : DomainState() {
 
   companion object {
-    fun create(id: UUID, creditCardNo: String, amount: Double): ConstructorResult<Payment, PaymentEvent> {
-      return ConstructorResult(Payment(id, creditCardNo, amount), PaymentRequested(id, creditCardNo, amount))
+    fun create(id: UUID, creditCardNo: String, amount: Double): List<PaymentEvent> {
+      return listOf(PaymentRequested(id, creditCardNo, amount))
+    }
+    fun fromEvent(event: PaymentRequested): Payment {
+      return Payment(id = event.id, creditCardNo = event.creditCardNo, amount = event.amount)
     }
   }
 }
 
 val paymentEventHandler = EventHandler<Payment, PaymentEvent> { state, event ->
   when (event) {
-    is PaymentRequested -> Payment.create(event.id, event.creditCardNo, event.amount).state
+    is PaymentRequested -> Payment.fromEvent(event)
     is PaymentApproved -> state!!.copy(status = Status.Approved, reason = event.reason)
     is PaymentNotApproved -> state!!.copy(status = Status.NotApproved, reason = event.reason)
     is PaymentRefunded -> TODO()
@@ -97,32 +100,26 @@ class FuturePaymentCommandHandler(val eventbus: EventBus) : FutureCommandHandler
     snapshot: Snapshot<Payment>?,
   ): Future<StatefulSession<Payment, PaymentEvent>> {
 
-    val result = when (command) {
+    return when (command) {
       is Pay -> {
         withNew(Payment.create(command.id, command.creditCardNo, command.amount), paymentEventHandler)
           .toFuture()
           .compose { s ->
             // here we could use event bus to request some external api call
-            s.register(PaymentApproved("ok")).toFuture()
+            s.register(PaymentApproved("ok"))
+              .toFuture()
           }
       }
       is Refund -> {
-        Future.failedFuture("Not implemented yet")
+        TODO()
       }
     }
-
-    result.onSuccess {
-      println("whoa!")
-    }.onFailure {
-      println("ugh")
-    }
-
-    return result
   }
 }
 
 @kotlinx.serialization.ExperimentalSerializationApi
 val paymentModule = SerializersModule {
+  include(javaModule)
   polymorphic(DomainState::class) {
     subclass(Payment::class, Payment.serializer())
   }
