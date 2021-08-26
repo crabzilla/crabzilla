@@ -2,7 +2,6 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
@@ -45,7 +44,7 @@ class CommandsValidationIT {
   @DisplayName("it can validate command")
   fun s1(tc: VertxTestContext) {
     val id = UUID.randomUUID()
-    val cmd = RegisterAndActivateCustomer(id, "bad customer", "is needed")
+    val cmd = CustomerCommand.RegisterCustomer(id, "bad customer")
     val metadata = CommandMetadata(DomainStateId(id))
     eventStore.handle(metadata, cmd)
       .onFailure {

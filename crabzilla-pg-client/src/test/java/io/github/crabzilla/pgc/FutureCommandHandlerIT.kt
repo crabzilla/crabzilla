@@ -40,7 +40,7 @@ class FutureCommandHandlerIT {
     val paymentConfig = CommandControllerConfig(
       "Payment",
       paymentEventHandler,
-      { FuturePaymentCommandHandler(vertx.eventBus()) }
+      { FuturePaymentCommandHandler(paymentEventHandler, vertx.eventBus()) }
     )
 
     controller = CommandController(vertx, paymentConfig, client.pgPool, client.json, true)
