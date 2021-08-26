@@ -130,8 +130,8 @@ class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id 
 /**
  * Customer command handler
  */
-class CustomerCommandHandler(handler: EventHandler<Customer, CustomerEvent>) :
-  CommandHandler<Customer, CustomerCommand, CustomerEvent>(handler) {
+class CustomerCommandHandler :
+  CommandHandler<Customer, CustomerCommand, CustomerEvent>(customerEventHandler) {
 
   override fun handleCommand(
     command: CustomerCommand,
@@ -167,7 +167,7 @@ class CustomerCommandHandler(handler: EventHandler<Customer, CustomerEvent>) :
 val customerConfig = CommandControllerConfig(
   "Customer",
   customerEventHandler,
-  { CustomerCommandHandler(customerEventHandler) },
+  { CustomerCommandHandler() },
   customerCmdValidator
 )
 
