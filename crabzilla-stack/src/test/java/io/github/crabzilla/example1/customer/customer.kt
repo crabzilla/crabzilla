@@ -3,7 +3,6 @@ package io.github.crabzilla.example1.customer
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.CommandHandlerApi.ConstructorResult
 import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.DomainState
@@ -83,11 +82,11 @@ data class Customer(
 ) : DomainState() {
 
   companion object {
-    fun create(id: UUID, name: String): ConstructorResult<Customer, CustomerEvent> {
-      return ConstructorResult(
-        Customer(id = id, name = name),
-        CustomerRegistered(id = id, name = name)
-      )
+    fun create(id: UUID, name: String): List<CustomerEvent> {
+      return listOf(CustomerRegistered(id = id, name = name))
+    }
+    fun fromEvent(event: CustomerRegistered): Customer {
+      return Customer(id = event.id, name = event.name, isActive = false)
     }
   }
 
@@ -106,7 +105,7 @@ data class Customer(
 val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
   when (command) {
     is RegisterCustomer -> if (command.name == "bad customer") listOf("Bad customer!") else listOf()
-    is RegisterAndActivateCustomer -> listOf()
+    is RegisterAndActivateCustomer -> if (command.name == "bad customer") listOf("Bad customer!") else listOf()
     is ActivateCustomer -> listOf()
     is DeactivateCustomer -> listOf()
   }
@@ -117,7 +116,7 @@ val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
  */
 val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event ->
   when (event) {
-    is CustomerRegistered -> Customer.create(id = event.id, name = event.name).state
+    is CustomerRegistered -> Customer.fromEvent(event)
     is CustomerActivated -> state!!.copy(isActive = true, reason = event.reason)
     is CustomerDeactivated -> state!!.copy(isActive = false, reason = event.reason)
   }
@@ -166,6 +165,13 @@ object CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custom
   }
 }
 
+val customerConfig = CommandControllerConfig(
+  "Customer",
+  customerEventHandler,
+  { CustomerCommandHandler },
+  customerCmdValidator
+)
+
 /**
  * kotlinx.serialization
  */
@@ -187,12 +193,5 @@ val customerModule = SerializersModule {
     subclass(CustomerDeactivated::class, CustomerDeactivated.serializer())
   }
 }
-
-val customerConfig = CommandControllerConfig(
-  "Customer",
-  customerEventHandler,
-  { CustomerCommandHandler },
-  customerCmdValidator
-)
 
 val customerJson = Json { serializersModule = customerModule }

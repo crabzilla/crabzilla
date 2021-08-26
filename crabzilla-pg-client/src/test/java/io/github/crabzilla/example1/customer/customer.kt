@@ -3,13 +3,13 @@ package io.github.crabzilla.example1.customer
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandControllerConfig
 import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.CommandHandlerApi.ConstructorResult
 import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.DomainEvent
 import io.github.crabzilla.core.DomainState
 import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.StatefulSession
+import io.github.crabzilla.core.javaModule
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
@@ -20,6 +20,7 @@ import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import java.util.UUID
@@ -81,11 +82,11 @@ data class Customer(
 ) : DomainState() {
 
   companion object {
-    fun create(id: UUID, name: String): ConstructorResult<Customer, CustomerEvent> {
-      return ConstructorResult(
-        Customer(id = id, name = name),
-        CustomerRegistered(id = id, name = name)
-      )
+    fun create(id: UUID, name: String): List<CustomerEvent> {
+      return listOf(CustomerRegistered(id = id, name = name))
+    }
+    fun fromEvent(event: CustomerRegistered): Customer {
+      return Customer(id = event.id, name = event.name, isActive = false)
     }
   }
 
@@ -115,7 +116,7 @@ val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
  */
 val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event ->
   when (event) {
-    is CustomerRegistered -> Customer.create(id = event.id, name = event.name).state
+    is CustomerRegistered -> Customer.fromEvent(event)
     is CustomerActivated -> state!!.copy(isActive = true, reason = event.reason)
     is CustomerDeactivated -> state!!.copy(isActive = false, reason = event.reason)
   }
@@ -176,6 +177,7 @@ val customerConfig = CommandControllerConfig(
  */
 @kotlinx.serialization.ExperimentalSerializationApi
 val customerModule = SerializersModule {
+  include(javaModule)
   polymorphic(DomainState::class) {
     subclass(Customer::class, Customer.serializer())
   }
@@ -191,3 +193,5 @@ val customerModule = SerializersModule {
     subclass(CustomerDeactivated::class, CustomerDeactivated.serializer())
   }
 }
+
+val customerJson = Json { serializersModule = customerModule }
