@@ -75,13 +75,16 @@ class CommandController<S : State, C : Command, E : Event>(
   private val commandHandler = commandHandler()
 
   init {
-    vertx.setPeriodic(DEFAULT_STATS_INTERVAL) {
-      val metric = JsonObject()
-        .put("controllerId", config.name)
-        .put("successes", commandsOk.get())
-        .put("failures", commandsFailures.get())
-      vertx.eventBus().publish("crabzilla.command-controllers", metric)
-    }
+    vertx.setPeriodic(DEFAULT_STATS_INTERVAL) { publishMetrics() }
+    publishMetrics()
+  }
+
+  private fun publishMetrics() {
+    val metric = JsonObject()
+      .put("controllerId", config.name)
+      .put("successes", commandsOk.get())
+      .put("failures", commandsFailures.get())
+    vertx.eventBus().publish("crabzilla.command-controllers", metric)
   }
 
   fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<S, E>> {
