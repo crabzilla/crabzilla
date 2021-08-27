@@ -13,7 +13,7 @@
       "initialInterval" : 0,
       "interval" : 10,
       "maxInterval" : 10,
-      "metricsInterval" : 10000,
+      "metricsInterval" : 10,
       "maxNumberOfRows": 10
     },
     "worker": false,
