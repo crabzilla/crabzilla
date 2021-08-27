@@ -45,6 +45,10 @@ class StatefulSession<A : DomainState, E : DomainEvent> {
     return apply(newEvents)
   }
 
+  fun register(event: E): StatefulSession<A, E> {
+    return apply(listOf(event))
+  }
+
   fun toSessionData(): SessionData {
     return SessionData(originalVersion, if (originalVersion == 0) null else originalState, appliedEvents, currentState)
   }
