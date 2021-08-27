@@ -1,4 +1,4 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.CommandControllerConfig
@@ -10,13 +10,13 @@ import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.core.Snapshot
 import io.github.crabzilla.core.StatefulSession
 import io.github.crabzilla.core.javaModule
-import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.example1.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.example1.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.CustomerEvent.CustomerActivated
-import io.github.crabzilla.example1.CustomerEvent.CustomerDeactivated
-import io.github.crabzilla.example1.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
