@@ -1,8 +1,8 @@
 // package io.github.crabzilla.stack
 //
-// import io.github.crabzilla.core.CommandControllerConfig
-// import io.github.crabzilla.core.CommandException.LockingException
-// import io.github.crabzilla.core.CommandHandler
+// import io.github.crabzilla.core.command.CommandControllerConfig
+// import io.github.crabzilla.core.command.CommandException.LockingException
+// import io.github.crabzilla.core.command.CommandHandler
 // import io.github.crabzilla.example1.customer.Customer
 // import io.github.crabzilla.example1.customer.CustomerCommand
 // import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer

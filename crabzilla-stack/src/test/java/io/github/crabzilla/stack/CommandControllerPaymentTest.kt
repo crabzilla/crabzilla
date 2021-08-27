@@ -1,6 +1,6 @@
 // package io.github.crabzilla.stack
 //
-// import io.github.crabzilla.core.CommandControllerConfig
+// import io.github.crabzilla.core.command.CommandControllerConfig
 // import io.github.crabzilla.example1.payment.FuturePaymentCommandHandler
 // import io.github.crabzilla.example1.payment.Payment
 // import io.github.crabzilla.example1.payment.PaymentCommand

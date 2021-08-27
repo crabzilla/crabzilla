@@ -1,15 +1,14 @@
 package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.CommandControllerConfig
-import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.CommandValidator
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.DomainState
-import io.github.crabzilla.core.EventHandler
-import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.core.StatefulSession
-import io.github.crabzilla.core.javaModule
+import io.github.crabzilla.core.Event
+import io.github.crabzilla.core.State
+import io.github.crabzilla.core.command.CommandControllerConfig
+import io.github.crabzilla.core.command.CommandHandler
+import io.github.crabzilla.core.command.CommandValidator
+import io.github.crabzilla.core.command.EventHandler
+import io.github.crabzilla.core.command.Snapshot
+import io.github.crabzilla.core.command.StatefulSession
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
@@ -29,7 +28,7 @@ import java.util.UUID
  * Customer events
  */
 @Serializable
-sealed class CustomerEvent : DomainEvent() {
+sealed class CustomerEvent : Event() {
   @Serializable
   @SerialName("CustomerRegistered")
   data class CustomerRegistered(@Contextual val id: UUID, val name: String) : CustomerEvent()
@@ -79,7 +78,7 @@ data class Customer(
   val name: String,
   val isActive: Boolean = false,
   val reason: String? = null
-) : DomainState() {
+) : State() {
 
   companion object {
     fun create(id: UUID, name: String): List<CustomerEvent> {
@@ -176,8 +175,7 @@ val customerConfig = CommandControllerConfig(
  */
 @kotlinx.serialization.ExperimentalSerializationApi
 val customerModule = SerializersModule {
-  include(javaModule)
-  polymorphic(DomainState::class) {
+  polymorphic(State::class) {
     subclass(Customer::class, Customer.serializer())
   }
   polymorphic(Command::class) {
@@ -186,7 +184,7 @@ val customerModule = SerializersModule {
     subclass(DeactivateCustomer::class, DeactivateCustomer.serializer())
     subclass(RegisterAndActivateCustomer::class, RegisterAndActivateCustomer.serializer())
   }
-  polymorphic(DomainEvent::class) {
+  polymorphic(Event::class) {
     subclass(CustomerRegistered::class, CustomerRegistered.serializer())
     subclass(CustomerActivated::class, CustomerActivated.serializer())
     subclass(CustomerDeactivated::class, CustomerDeactivated.serializer())

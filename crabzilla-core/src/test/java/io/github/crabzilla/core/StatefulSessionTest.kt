@@ -1,8 +1,9 @@
 package io.github.crabzilla.core
 
-import io.github.crabzilla.example1.Customer
-import io.github.crabzilla.example1.CustomerEvent
-import io.github.crabzilla.example1.customerEventHandler
+import io.github.crabzilla.core.command.StatefulSession
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerEvent
+import io.github.crabzilla.example1.customer.customerEventHandler
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName

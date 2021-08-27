@@ -11,10 +11,10 @@
       "publicationType": "projection",
       "targetEndpoint" : "customers-projection",
       "initialInterval" : 0,
-      "interval" : 10,
-      "maxInterval" : 10,
-      "metricsInterval" : 10000,
-      "maxNumberOfRows": 10
+      "interval" : 1,
+      "maxInterval" : 5,
+      "metricsInterval" : 5,
+      "maxNumberOfRows": 1
     },
     "worker": false,
     "instances": 1

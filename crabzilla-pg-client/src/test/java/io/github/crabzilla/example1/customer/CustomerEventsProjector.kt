@@ -1,6 +1,6 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.Event
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
@@ -11,7 +11,7 @@ import io.vertx.sqlclient.SqlConnection
 
 object CustomerEventsProjector : EventsProjector {
 
-  override fun project(conn: SqlConnection, event: DomainEvent, eventMetadata: EventMetadata): Future<Void> {
+  override fun project(conn: SqlConnection, event: Event, eventMetadata: EventMetadata): Future<Void> {
     val id = eventMetadata.domainStateId.id
     val repo = CustomersWriteRepository
     return when (val customerEvent = event as CustomerEvent) {

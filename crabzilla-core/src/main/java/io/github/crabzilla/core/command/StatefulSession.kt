@@ -1,26 +1,29 @@
-package io.github.crabzilla.core
+package io.github.crabzilla.core.command
+
+import io.github.crabzilla.core.Event
+import io.github.crabzilla.core.State
 
 /**
  * To perform aggregate root business methods and track it's events and state
  */
-class StatefulSession<A : DomainState, E : DomainEvent> {
+class StatefulSession<S : State, E : Event> {
   val originalVersion: Int
-  private val originalState: A
-  private val eventHandler: EventHandler<A, E>
+  private val originalState: S
+  private val eventHandler: EventHandler<S, E>
   private val appliedEvents = mutableListOf<E>()
-  var currentState: A
+  var currentState: S
 
-  constructor(version: Int, state: A, eventHandler: EventHandler<A, E>) {
+  constructor(version: Int, state: S, eventHandler: EventHandler<S, E>) {
     this.originalVersion = version
     this.originalState = state
     this.eventHandler = eventHandler
     this.currentState = originalState
   }
 
-  constructor(events: List<E>, eventHandler: EventHandler<A, E>) {
+  constructor(events: List<E>, eventHandler: EventHandler<S, E>) {
     this.originalVersion = 0
     this.eventHandler = eventHandler
-    val state: A? = events.fold(null) { s: A?, e: E ->
+    val state: S? = events.fold(null) { s: S?, e: E ->
       appliedEvents.add(e)
       eventHandler.handleEvent(s, e)
     }
@@ -28,21 +31,11 @@ class StatefulSession<A : DomainState, E : DomainEvent> {
     this.currentState = originalState
   }
 
-//  constructor(constructorResult: ConstructorResult<A, E>, eventHandler: EventHandler<A, E>) {
-//    this.originalVersion = 0
-//    this.originalState = constructorResult.state
-//    this.eventHandler = eventHandler
-//    this.currentState = originalState
-//    constructorResult.events.forEach {
-//      appliedEvents.add(it)
-//    }
-//  }
-
   fun appliedEvents(): List<E> {
     return appliedEvents
   }
 
-  fun apply(events: List<E>): StatefulSession<A, E> {
+  fun apply(events: List<E>): StatefulSession<S, E> {
     events.forEach { domainEvent ->
       currentState = eventHandler.handleEvent(currentState, domainEvent)
       appliedEvents.add(domainEvent)
@@ -50,12 +43,12 @@ class StatefulSession<A : DomainState, E : DomainEvent> {
     return this
   }
 
-  inline fun execute(fn: (A) -> List<E>): StatefulSession<A, E> {
+  inline fun execute(fn: (S) -> List<E>): StatefulSession<S, E> {
     val newEvents = fn.invoke(currentState)
     return apply(newEvents)
   }
 
-  fun register(event: E): StatefulSession<A, E> {
+  fun register(event: E): StatefulSession<S, E> {
     return apply(listOf(event))
   }
 
@@ -65,8 +58,8 @@ class StatefulSession<A : DomainState, E : DomainEvent> {
 
   data class SessionData(
     val originalVersion: Int,
-    val originalState: DomainState?,
-    val events: List<DomainEvent>,
-    val newState: DomainState
+    val originalState: State?,
+    val events: List<Event>,
+    val newState: State
   )
 }

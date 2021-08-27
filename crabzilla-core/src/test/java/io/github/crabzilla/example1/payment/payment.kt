@@ -4,17 +4,12 @@ import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.EventHandler
-import io.github.crabzilla.core.command.Snapshot
-import io.github.crabzilla.core.command.StatefulSession
 import io.github.crabzilla.example1.payment.PaymentCommand.Pay
 import io.github.crabzilla.example1.payment.PaymentCommand.Refund
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentApproved
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentNotApproved
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentRefunded
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentRequested
-import io.github.crabzilla.stack.command.FutureCommandHandler
-import io.vertx.core.Future
-import io.vertx.core.eventbus.EventBus
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -92,30 +87,30 @@ val paymentEventHandler = EventHandler<Payment, PaymentEvent> { state, event ->
   }
 }
 
-class FuturePaymentCommandHandler(handler: EventHandler<Payment, PaymentEvent>, val eventbus: EventBus) :
-  FutureCommandHandler<Payment, PaymentCommand, PaymentEvent>(handler) {
-
-  override fun handleCommand(
-    command: PaymentCommand,
-    snapshot: Snapshot<Payment>?,
-  ): Future<StatefulSession<Payment, PaymentEvent>> {
-
-    return when (command) {
-      is Pay -> {
-        withNew(Payment.create(command.id, command.creditCardNo, command.amount))
-          .toFuture()
-          .compose { s ->
-            // here we could use event bus to request some external api call
-            s.register(PaymentApproved("ok"))
-              .toFuture()
-          }
-      }
-      is Refund -> {
-        TODO()
-      }
-    }
-  }
-}
+// class FuturePaymentCommandHandler(handler: EventHandler<Payment, PaymentEvent>, val eventbus: EventBus) :
+//  FutureCommandHandler<Payment, PaymentCommand, PaymentEvent>(handler) {
+//
+//  override fun handleCommand(
+//    command: PaymentCommand,
+//    snapshot: Snapshot<Payment>?,
+//  ): Future<StatefulSession<Payment, PaymentEvent>> {
+//
+//    return when (command) {
+//      is Pay -> {
+//        withNew(Payment.create(command.id, command.creditCardNo, command.amount))
+//          .toFuture()
+//          .compose { s ->
+//            // here we could use event bus to request some external api call
+//            s.register(PaymentApproved("ok"))
+//              .toFuture()
+//          }
+//      }
+//      is Refund -> {
+//        TODO()
+//      }
+//    }
+//  }
+// }
 
 @kotlinx.serialization.ExperimentalSerializationApi
 val paymentModule = SerializersModule {
