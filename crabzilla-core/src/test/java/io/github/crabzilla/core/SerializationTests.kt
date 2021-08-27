@@ -28,7 +28,7 @@ class SerializationTests {
       {"type":"Customer","id":"${aggregate.id}","name":"${aggregate.name}"}
     """.trimIndent()
     assertThat(aggregate.toJson(example1Json)).isEqualTo(expectedJson)
-    assertThat(DomainState.fromJson<Customer>(example1Json, expectedJson)).isEqualTo(aggregate)
+    assertThat(State.fromJson<Customer>(example1Json, expectedJson)).isEqualTo(aggregate)
   }
 
   @Test
@@ -50,7 +50,7 @@ class SerializationTests {
       {"type":"CustomerRegistered","id":"${event.id}","name":"${event.name}"}
     """.trimIndent()
     assertThat(event.toJson(example1Json)).isEqualTo(expectedJson)
-    assertThat(DomainEvent.fromJson<CustomerRegistered>(example1Json, expectedJson)).isEqualTo(event)
+    assertThat(Event.fromJson<CustomerRegistered>(example1Json, expectedJson)).isEqualTo(event)
   }
 
   @Test
@@ -100,7 +100,7 @@ class SerializationTests {
     val event1 = CustomerRegistered(UUID.randomUUID(), name = "name1")
     val event2 = CustomerEvent.CustomerActivated("because yes")
     val asJson = example1Json.encodeToString(listOf(event1, event2))
-    assertThat(example1Json.decodeFromString<List<DomainEvent>>(asJson)).isEqualTo(listOf(event1, event2))
+    assertThat(example1Json.decodeFromString<List<Event>>(asJson)).isEqualTo(listOf(event1, event2))
   }
 
   @Test
@@ -109,7 +109,7 @@ class SerializationTests {
     val state1 = Customer(UUID.randomUUID(), name = "name1")
     val state2 = Payment(UUID.randomUUID(), "because yes", 10.00)
     val asJson = example1Json.encodeToString(listOf(state1, state2))
-    assertThat(example1Json.decodeFromString<List<DomainState>>(asJson)).isEqualTo(listOf(state1, state2))
+    assertThat(example1Json.decodeFromString<List<State>>(asJson)).isEqualTo(listOf(state1, state2))
   }
 }
 

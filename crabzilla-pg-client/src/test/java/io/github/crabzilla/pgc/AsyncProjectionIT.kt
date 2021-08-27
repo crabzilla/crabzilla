@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.core.StatefulSession
+import io.github.crabzilla.core.command.Snapshot
+import io.github.crabzilla.core.command.StatefulSession
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer

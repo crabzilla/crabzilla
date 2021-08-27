@@ -1,6 +1,5 @@
 package io.github.crabzilla.example1
 
-import io.github.crabzilla.core.javaModule
 import io.github.crabzilla.example1.customer.customerModule
 import io.github.crabzilla.example1.payment.paymentModule
 import io.github.crabzilla.pgc.JsonContext
@@ -15,7 +14,6 @@ class Example1JsonContextFactory : JsonContextProvider {
   class Example1JsonContext : JsonContext {
     @kotlinx.serialization.ExperimentalSerializationApi
     val example1Module = SerializersModule {
-      include(javaModule)
       include(customerModule)
       include(paymentModule)
     }

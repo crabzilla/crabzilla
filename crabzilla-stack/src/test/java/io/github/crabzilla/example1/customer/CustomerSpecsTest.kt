@@ -1,7 +1,7 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.CommandException.ValidationException
-import io.github.crabzilla.core.TestSpecification
+import io.github.crabzilla.core.command.CommandException.ValidationException
+import io.github.crabzilla.core.test.TestSpecification
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer

@@ -1,26 +1,26 @@
 package io.github.crabzilla.stack.command
 
 import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.CommandHandlerApi
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.DomainState
-import io.github.crabzilla.core.EventHandler
-import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.core.StatefulSession
+import io.github.crabzilla.core.Event
+import io.github.crabzilla.core.State
+import io.github.crabzilla.core.command.CommandHandlerApi
+import io.github.crabzilla.core.command.EventHandler
+import io.github.crabzilla.core.command.Snapshot
+import io.github.crabzilla.core.command.StatefulSession
 import io.vertx.core.Future
 
 /**
  * To handle commands returning Future
  */
-abstract class FutureCommandHandler<A : DomainState, C : Command, E : DomainEvent>(handler: EventHandler<A, E>) :
-  CommandHandlerApi<A, C, E>(handler) {
+abstract class FutureCommandHandler<S : State, C : Command, E : Event>(handler: EventHandler<S, E>) :
+  CommandHandlerApi<S, C, E>(handler) {
 
-  fun <A : DomainState, E : DomainEvent> StatefulSession<A, E>.toFuture(): Future<StatefulSession<A, E>> {
+  fun <A : State, E : Event> StatefulSession<A, E>.toFuture(): Future<StatefulSession<A, E>> {
     return Future.succeededFuture(this)
   }
 
   abstract fun handleCommand(
     command: C,
-    snapshot: Snapshot<A>?
-  ): Future<StatefulSession<A, E>>
+    snapshot: Snapshot<S>?
+  ): Future<StatefulSession<S, E>>
 }

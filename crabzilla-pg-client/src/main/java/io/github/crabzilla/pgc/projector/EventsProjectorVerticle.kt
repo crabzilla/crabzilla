@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgc.projector
 
-import io.github.crabzilla.core.DomainEvent
+import io.github.crabzilla.core.Event
 import io.github.crabzilla.pgc.PgcAbstractVerticle
 import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.json.JsonObject
@@ -34,7 +34,7 @@ class EventsProjectorVerticle : PgcAbstractVerticle() {
     vertx.eventBus().consumer<JsonObject>(targetEndpoint) { msg ->
       val eventRecord = EventRecord.fromJsonObject(msg.body())
       pgPool.withConnection { conn ->
-        val event = DomainEvent.fromJson<DomainEvent>(json, eventRecord.eventAsjJson.toString())
+        val event = Event.fromJson<Event>(json, eventRecord.eventAsjJson.toString())
         eventsProjector.project(conn, event, eventRecord.eventMetadata)
 //          .compose {
 //            // TODO update projection offset within the same transaction

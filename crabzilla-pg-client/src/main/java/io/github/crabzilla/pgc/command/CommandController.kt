@@ -2,16 +2,16 @@ package io.github.crabzilla.pgc.command
 
 import com.github.f4b6a3.uuid.UuidCreator
 import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.CommandControllerConfig
-import io.github.crabzilla.core.CommandException.LockingException
-import io.github.crabzilla.core.CommandException.ValidationException
-import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.CommandHandlerApi
-import io.github.crabzilla.core.CommandValidator
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.DomainState
-import io.github.crabzilla.core.Snapshot
-import io.github.crabzilla.core.StatefulSession
+import io.github.crabzilla.core.Event
+import io.github.crabzilla.core.State
+import io.github.crabzilla.core.command.CommandControllerConfig
+import io.github.crabzilla.core.command.CommandException.LockingException
+import io.github.crabzilla.core.command.CommandException.ValidationException
+import io.github.crabzilla.core.command.CommandHandler
+import io.github.crabzilla.core.command.CommandHandlerApi
+import io.github.crabzilla.core.command.CommandValidator
+import io.github.crabzilla.core.command.Snapshot
+import io.github.crabzilla.core.command.StatefulSession
 import io.github.crabzilla.pgc.projector.EventsProjector
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CorrelationId
@@ -35,9 +35,9 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
-class CommandController<A : DomainState, C : Command, E : DomainEvent>(
+class CommandController<S : State, C : Command, E : Event>(
   private val vertx: Vertx,
-  private val config: CommandControllerConfig<A, C, E>,
+  private val config: CommandControllerConfig<S, C, E>,
   private val pgPool: PgPool,
   private val json: Json,
   private val saveCommandOption: Boolean = true,
@@ -84,7 +84,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
     }
   }
 
-  fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<A, E>> {
+  fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<S, E>> {
     fun validateCommands(): Future<Void> {
       val validator: CommandValidator<C>? = config.commandValidator
       return if (validator != null) {
@@ -98,8 +98,8 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
         Future.succeededFuture()
       }
     }
-    fun getSnapshot(conn: SqlConnection): Future<Snapshot<A>?> {
-      fun snapshot(rowSet: RowSet<Row>): Snapshot<A>? {
+    fun getSnapshot(conn: SqlConnection): Future<Snapshot<S>?> {
+      fun snapshot(rowSet: RowSet<Row>): Snapshot<S>? {
         return if (rowSet.size() == 0) {
           log.debug("Not locked (1)")
           null
@@ -111,7 +111,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
           if (!advisoryLockOption || locked) {
             log.debug("Locked {} {}", id, metadata.domainStateId.id)
             val stateAsJson = JsonObject(r.getValue("json_content").toString())
-            val state = DomainState.fromJson<A>(json, stateAsJson.toString())
+            val state = State.fromJson<S>(json, stateAsJson.toString())
             Snapshot(state, version)
           } else {
             throw (LockingException("Not locked $id ${metadata.domainStateId.id}"))
@@ -137,7 +137,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
         .execute(params)
         .mapEmpty()
     }
-    fun appendEvents(conn: SqlConnection, session: StatefulSession<A, E>): Future<AppendedEvents<E>> {
+    fun appendEvents(conn: SqlConnection, session: StatefulSession<S, E>): Future<AppendedEvents<E>> {
       fun appendEvent(event: E, version: Int, causationId: CausationId): Future<AppendedEvent<E>> {
         val eventAsJson = event.toJson(json)
         log.debug("Will append event {} as {}", event, eventAsJson)
@@ -178,7 +178,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
         }
       }.map { AppendedEvents(eventsAdded, version.get()) }
     }
-    fun updateSnapshot(conn: SqlConnection, resultingVersion: Int, session: StatefulSession<A, E>): Future<Void> {
+    fun updateSnapshot(conn: SqlConnection, resultingVersion: Int, session: StatefulSession<S, E>): Future<Void> {
       val newSTateAsJson = session.currentState.toJson(json)
       log.debug("Will append snapshot {} to version {}", newSTateAsJson, resultingVersion)
       return if (session.originalVersion == 0) {
@@ -234,7 +234,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
       }.mapEmpty()
     }
 
-    val sessionResult: AtomicReference<StatefulSession<A, E>> = AtomicReference(null)
+    val sessionResult: AtomicReference<StatefulSession<S, E>> = AtomicReference(null)
     val appendedEventsResult: AtomicReference<AppendedEvents<E>> = AtomicReference(null)
 
     return pgPool.withTransaction { conn ->
@@ -275,9 +275,9 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
 
   private data class AppendedEvents<E>(val events: List<AppendedEvent<E>>, val resultingVersion: Int)
 
-  private fun commandHandler(): (command: C, snapshot: Snapshot<A>?) -> Future<StatefulSession<A, E>> {
-    return when (val handler: CommandHandlerApi<A, C, E> = config.commandHandlerFactory.invoke()) {
-      is CommandHandler<A, C, E> -> { command, snapshot ->
+  private fun commandHandler(): (command: C, snapshot: Snapshot<S>?) -> Future<StatefulSession<S, E>> {
+    return when (val handler: CommandHandlerApi<S, C, E> = config.commandHandlerFactory.invoke()) {
+      is CommandHandler<S, C, E> -> { command, snapshot ->
         try {
           val session = handler.handleCommand(command, snapshot)
           Future.succeededFuture(session)
@@ -285,7 +285,7 @@ class CommandController<A : DomainState, C : Command, E : DomainEvent>(
           Future.failedFuture(e)
         }
       }
-      is FutureCommandHandler<A, C, E> -> { command, snapshot ->
+      is FutureCommandHandler<S, C, E> -> { command, snapshot ->
         handler.handleCommand(command, snapshot)
       }
       else -> throw IllegalArgumentException("Unknown command handler")

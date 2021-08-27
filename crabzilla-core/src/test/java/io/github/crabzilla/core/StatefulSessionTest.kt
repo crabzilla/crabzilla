@@ -1,5 +1,6 @@
 package io.github.crabzilla.core
 
+import io.github.crabzilla.core.command.StatefulSession
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerEventHandler

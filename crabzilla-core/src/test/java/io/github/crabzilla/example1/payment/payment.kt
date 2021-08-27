@@ -1,10 +1,9 @@
 package io.github.crabzilla.example1.payment
 
 import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.DomainState
-import io.github.crabzilla.core.EventHandler
-import io.github.crabzilla.core.javaModule
+import io.github.crabzilla.core.Event
+import io.github.crabzilla.core.State
+import io.github.crabzilla.core.command.EventHandler
 import io.github.crabzilla.example1.payment.PaymentCommand.Pay
 import io.github.crabzilla.example1.payment.PaymentCommand.Refund
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentApproved
@@ -19,7 +18,7 @@ import kotlinx.serialization.modules.polymorphic
 import java.util.UUID
 
 @Serializable
-sealed class PaymentEvent : DomainEvent() {
+sealed class PaymentEvent : Event() {
   @Serializable
   @SerialName("PaymentRequested")
   data class PaymentRequested(
@@ -67,7 +66,7 @@ data class Payment(
   val amount: Double,
   val status: Status? = null,
   val reason: String? = null,
-) : DomainState() {
+) : State() {
 
   companion object {
     fun create(id: UUID, creditCardNo: String, amount: Double): List<PaymentEvent> {
@@ -115,15 +114,14 @@ val paymentEventHandler = EventHandler<Payment, PaymentEvent> { state, event ->
 
 @kotlinx.serialization.ExperimentalSerializationApi
 val paymentModule = SerializersModule {
-  include(javaModule)
-  polymorphic(DomainState::class) {
+  polymorphic(State::class) {
     subclass(Payment::class, Payment.serializer())
   }
   polymorphic(Command::class) {
     subclass(Pay::class, Pay.serializer())
     subclass(Refund::class, Refund.serializer())
   }
-  polymorphic(DomainEvent::class) {
+  polymorphic(Event::class) {
     subclass(PaymentRequested::class, PaymentRequested.serializer())
     subclass(PaymentApproved::class, PaymentApproved.serializer())
     subclass(PaymentNotApproved::class, PaymentNotApproved.serializer())

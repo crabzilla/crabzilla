@@ -5,11 +5,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 @Serializable
-abstract class DomainState {
+abstract class State {
   companion object {
-    private val serDer = PolymorphicSerializer(DomainState::class)
-    fun <A : DomainState> fromJson(json: Json, asJson: String): A {
-      return json.decodeFromString(serDer, asJson) as A
+    private val serDer = PolymorphicSerializer(State::class)
+    fun <S : State> fromJson(json: Json, asJson: String): S {
+      return json.decodeFromString(serDer, asJson) as S
     }
   }
   fun toJson(json: Json): String {

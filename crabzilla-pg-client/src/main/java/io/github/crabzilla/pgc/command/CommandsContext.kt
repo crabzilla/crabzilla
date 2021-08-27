@@ -1,9 +1,9 @@
 package io.github.crabzilla.pgc.command
 
 import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.CommandControllerConfig
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.DomainState
+import io.github.crabzilla.core.Event
+import io.github.crabzilla.core.State
+import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.pgc.projector.EventsProjector
 import io.vertx.core.Future
 import io.vertx.core.Vertx
@@ -26,9 +26,9 @@ class CommandsContext(val vertx: Vertx, val json: Json, val pgPool: PgPool, val 
   /**
    * Creates a CommandController
    */
-  fun <A : DomainState, C : Command, E : DomainEvent> create(
-    config: CommandControllerConfig<A, C, E>
-  ): CommandController<A, C, E> {
+  fun <S : State, C : Command, E : Event> create(
+    config: CommandControllerConfig<S, C, E>
+  ): CommandController<S, C, E> {
     return CommandController(
       vertx, config, pgPool, json,
       saveCommandOption = true,
@@ -40,12 +40,12 @@ class CommandsContext(val vertx: Vertx, val json: Json, val pgPool: PgPool, val 
   /**
    * Creates a more configurable CommandController
    */
-  fun <A : DomainState, C : Command, E : DomainEvent> create(
-    config: CommandControllerConfig<A, C, E>,
+  fun <S : State, C : Command, E : Event> create(
+    config: CommandControllerConfig<S, C, E>,
     saveCommandOption: Boolean,
     advisoryLockOption: Boolean,
     eventsProjector: EventsProjector?
-  ): CommandController<A, C, E> {
+  ): CommandController<S, C, E> {
     return CommandController(
       vertx, config, pgPool, json,
       saveCommandOption,

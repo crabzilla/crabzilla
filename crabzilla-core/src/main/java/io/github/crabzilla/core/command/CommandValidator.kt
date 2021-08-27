@@ -1,4 +1,6 @@
-package io.github.crabzilla.core
+package io.github.crabzilla.core.command
+
+import io.github.crabzilla.core.Command
 
 /**
  * To validate a command

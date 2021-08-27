@@ -1,6 +1,7 @@
 package io.github.crabzilla.core
 
-import io.github.crabzilla.core.CommandException.ValidationException
+import io.github.crabzilla.core.command.CommandException
+import io.github.crabzilla.core.command.CommandException.ValidationException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

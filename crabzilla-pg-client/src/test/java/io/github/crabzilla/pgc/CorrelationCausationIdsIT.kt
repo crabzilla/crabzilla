@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc
 
-import io.github.crabzilla.core.DomainEvent
-import io.github.crabzilla.core.StatefulSession
+import io.github.crabzilla.core.Event
+import io.github.crabzilla.core.command.StatefulSession
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
@@ -72,7 +72,7 @@ class CorrelationCausationIdsIT {
                 assertThat(asJson1.getInteger("version")).isEqualTo(1)
                 val expectedEvent1 = CustomerEvent.CustomerRegistered(id, cmd.name)
                 val json1 = asJson1.getString("event_payload")
-                val event1 = DomainEvent.fromJson<CustomerEvent.CustomerRegistered>(example1Json, json1)
+                val event1 = Event.fromJson<CustomerEvent.CustomerRegistered>(example1Json, json1)
                 assertThat(expectedEvent1).isEqualTo(event1)
                 assertThat(asJson1.getString("causation_id")).isEqualTo(metadata.commandId.id.toString())
                 assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata.commandId.id.toString())
@@ -84,7 +84,7 @@ class CorrelationCausationIdsIT {
                 assertThat(asJson.getInteger("version")).isEqualTo(2)
                 val expectedEvent = CustomerEvent.CustomerActivated(cmd.reason)
                 val json = asJson.getString("event_payload")
-                val event = DomainEvent.fromJson<CustomerEvent.CustomerActivated>(example1Json, json)
+                val event = Event.fromJson<CustomerEvent.CustomerActivated>(example1Json, json)
                 assertThat(expectedEvent).isEqualTo(event)
                 val causationId = asJson1.getString("id")
                 assertThat(asJson.getString("causation_id")).isEqualTo(causationId)
@@ -135,7 +135,7 @@ class CorrelationCausationIdsIT {
                     assertThat(asJson1.getInteger("version")).isEqualTo(1)
                     val expectedEvent1 = CustomerEvent.CustomerRegistered(id, cmd1.name)
                     val json1 = asJson1.getString("event_payload")
-                    val event1 = DomainEvent.fromJson<CustomerEvent.CustomerRegistered>(example1Json, json1)
+                    val event1 = Event.fromJson<CustomerEvent.CustomerRegistered>(example1Json, json1)
                     assertThat(expectedEvent1).isEqualTo(event1)
                     assertThat(asJson1.getString("causation_id")).isEqualTo(metadata1.commandId.id.toString())
                     assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata1.commandId.id.toString())
@@ -147,7 +147,7 @@ class CorrelationCausationIdsIT {
                     assertThat(asJson2.getInteger("version")).isEqualTo(2)
                     val expectedEvent2 = CustomerEvent.CustomerActivated(cmd1.reason)
                     val json2 = asJson2.getString("event_payload")
-                    val event2 = DomainEvent.fromJson<CustomerEvent.CustomerActivated>(example1Json, json2)
+                    val event2 = Event.fromJson<CustomerEvent.CustomerActivated>(example1Json, json2)
                     assertThat(expectedEvent2).isEqualTo(event2)
                     val causationId2 = asJson1.getString("id")
                     assertThat(asJson2.getString("causation_id")).isEqualTo(causationId2)
@@ -160,7 +160,7 @@ class CorrelationCausationIdsIT {
                     assertThat(asJson3.getInteger("version")).isEqualTo(3)
                     val expectedEvent3 = CustomerEvent.CustomerDeactivated(cmd2.reason)
                     val json3 = asJson3.getString("event_payload")
-                    val event3 = DomainEvent.fromJson<CustomerEvent.CustomerDeactivated>(example1Json, json3)
+                    val event3 = Event.fromJson<CustomerEvent.CustomerDeactivated>(example1Json, json3)
                     assertThat(expectedEvent3).isEqualTo(event3)
                     assertThat(asJson3.getString("causation_id")).isEqualTo(metadata2.commandId.id.toString())
                     assertThat(asJson3.getString("correlation_id")).isEqualTo(metadata2.commandId.id.toString())
