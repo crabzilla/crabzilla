@@ -55,10 +55,11 @@ class EventsProjectorVerticle : PgcAbstractVerticle() {
       publishMetrics()
     }
 
+    publishMetrics()
     log.info("Started consuming from endpoint [{}]", targetEndpoint)
   }
 
-  fun publishMetrics() {
+  private fun publishMetrics() {
     val metric = JsonObject() // TODO also publish errors
       .put("projectionId", targetEndpoint)
       .put("sequence", eventSequence.get())
