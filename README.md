@@ -44,7 +44,7 @@ It's still in very early development stage.
 ```xml
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-pg-client</artifactId>
+    <artifactId>crabzilla-engine-postgres</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ```

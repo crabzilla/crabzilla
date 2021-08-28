@@ -1,6 +1,5 @@
 package io.github.crabzilla.core
 
-import io.github.crabzilla.core.serder.KotlinSerDer
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
@@ -8,6 +7,7 @@ import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.example1.payment.Payment
+import io.github.crabzilla.serder.KotlinSerDer
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString

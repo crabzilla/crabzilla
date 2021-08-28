@@ -31,7 +31,7 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-pg-client</artifactId>
+      <artifactId>crabzilla-engine-postgres</artifactId>
     </dependency>
 
   </dependencies>
