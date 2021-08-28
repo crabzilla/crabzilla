@@ -14,7 +14,6 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(EventsPublisherVerticle::class.java)
-
     // TODO add endpoint for pause, resume, restart from N, etc (using event sourcing!)
   }
 
@@ -29,10 +28,10 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
     options = Config.create(config())
 
     val sqlClient = sqlClient(config())
-    scanner = EventsScanner(sqlClient, options.publicationId, options.controlTable)
+    scanner = EventsScanner(sqlClient, options.targetEndpoint)
     options = Config.create(config())
 
-    vertx.eventBus().consumer<Void>("crabzilla.publisher-${options.publicationId}") { msg ->
+    vertx.eventBus().consumer<Void>("crabzilla.publisher-${options.targetEndpoint}") { msg ->
       action()
         .onFailure { msg.fail(500, it.message) }
         .onSuccess {
@@ -57,7 +56,7 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
 
   private fun publishMetrics() {
     val metric = JsonObject() // TODO also publish errors
-      .put("publicationId", options.publicationId)
+      .put("publicationId", options.targetEndpoint)
       .put("sequence", lastEventPublishedRef.get())
     vertx.eventBus().publish("crabzilla.publications", metric)
   }
@@ -131,7 +130,7 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
           .transform {
             if (it.failed()) {
               Future.failedFuture(
-                "When updating sequence for ${options.controlTable} [${options.publicationId}]"
+                "When updating sequence for [${options.targetEndpoint}]"
               )
             } else {
               Future.succeededFuture(lastPublishedEvent)
@@ -150,8 +149,6 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
   }
 
   private data class Config(
-    val publicationId: String,
-    val controlTable: String,
     val targetEndpoint: String,
     val initialInterval: Long,
     val interval: Long,
@@ -161,8 +158,6 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
   ) {
     companion object {
       fun create(config: JsonObject): Config {
-        val publicationId = config.getString("publicationId")
-        val controlTable = config.getString("controlTable")
         val targetEndpoint = config.getString("targetEndpoint")
         val initialInterval = config.getLong("initialInterval", 10_000)
         val interval = config.getLong("interval", 500)
@@ -170,8 +165,6 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
         val metricsInterval = config.getLong("metricsInterval", 10_000)
         val maxNumberOfRows = config.getInteger("maxNumberOfRows", 500)
         return Config(
-          publicationId = publicationId,
-          controlTable = controlTable,
           targetEndpoint = targetEndpoint,
           initialInterval = initialInterval,
           interval = interval,

@@ -17,8 +17,7 @@ import org.slf4j.LoggerFactory
 // TODO could receive also a list of aggregate root names to filter interesting events
 class EventsScanner(
   private val sqlClient: SqlClient,
-  private val name: String,
-  table: String
+  private val name: String
 ) {
 
   companion object {
@@ -29,13 +28,13 @@ class EventsScanner(
     """
       SELECT ar_name, ar_id, event_payload, sequence, id, causation_id, correlation_id
       FROM events
-      WHERE sequence > (select sequence from $table where name = $1)
+      WHERE sequence > (select sequence from publications where name = $1)
       ORDER BY sequence
       limit $2
     """
 
   private val updateOffset =
-    "UPDATE $table SET sequence = $1 WHERE $table.name = $2"
+    "UPDATE publications SET sequence = $1 WHERE publications.name = $2"
 
   fun streamName(): String {
     return name

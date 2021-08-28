@@ -3,6 +3,7 @@ package io.github.crabzilla.engine.projector
 import io.github.crabzilla.engine.PostgresAbstractVerticle
 import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.json.JsonObject
+import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicLong
 
@@ -30,12 +31,17 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
     val provider = EventsProjectorProviderFinder().create(config().getString("eventsProjectorFactoryClassName"))
     val eventsProjector = provider.create()
 
-    // TODO plug a built in idempotency mechanism here or delegate it to eventsProjector?
     vertx.eventBus().consumer<JsonObject>(targetEndpoint) { msg ->
       val eventRecord = EventRecord.fromJsonObject(msg.body())
-      pgPool.withConnection { conn ->
+      pgPool.withTransaction { conn ->
         val event = serDer.eventFromJson(eventRecord.eventAsjJson.toString())
         eventsProjector.project(conn, event, eventRecord.eventMetadata)
+          .compose { projectedSequence ->
+            log.debug("Projected {}", projectedSequence)
+            conn
+              .preparedQuery("update projections set sequence = $2 where name = $1 and sequence < $2")
+              .execute(Tuple.of(targetEndpoint, projectedSequence))
+          }
       }
         .onFailure {
           msg.fail(500, it.message)
@@ -56,8 +62,9 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
   }
 
   private fun publishMetrics() {
-    val metric = JsonObject() // TODO also publish errors
+    val metric = JsonObject()
       .put("projectionId", targetEndpoint)
+      .put("failures", failures.get())
       .put("sequence", eventSequence.get())
     vertx.eventBus().publish("crabzilla.projections", metric)
   }

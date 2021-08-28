@@ -1,14 +1,12 @@
 package io.github.crabzilla.engine
 
 import io.github.crabzilla.core.command.Snapshot
-import io.github.crabzilla.core.command.StatefulSession
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandsContext
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.stack.StateId
@@ -65,6 +63,8 @@ class AsyncProjectionIT {
       .onSuccess { tc.completeNow() }
   }
 
+  // TODO test idempotency
+
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
@@ -74,7 +74,7 @@ class AsyncProjectionIT {
       .compose { snapshot0: Snapshot<Customer>? ->
         assert(snapshot0 == null)
         controller.handle(CommandMetadata(StateId(id)), RegisterCustomer(id, "cust#$id"))
-      }.compose { s1: StatefulSession<Customer, CustomerEvent> ->
+      }.compose {
         snapshotRepo.get(id)
       }.compose { snapshot1 ->
         assert(1 == snapshot1!!.version)
@@ -83,7 +83,7 @@ class AsyncProjectionIT {
           CommandMetadata(StateId(id)),
           ActivateCustomer("because yes")
         )
-      }.compose { s2: StatefulSession<Customer, CustomerEvent> ->
+      }.compose {
         snapshotRepo.get(id)
       }.compose { snapshot2: Snapshot<Customer>? ->
         assert(2 == snapshot2!!.version)
@@ -97,7 +97,7 @@ class AsyncProjectionIT {
         )
         Future.succeededFuture<Void>()
       }.compose {
-        vertx.eventBus().request<Void>("crabzilla.publisher-customers", null)
+        vertx.eventBus().request<Void>("crabzilla.publisher-root", null)
       }.transform {
         if (it.failed()) {
           Future.failedFuture(it.cause())

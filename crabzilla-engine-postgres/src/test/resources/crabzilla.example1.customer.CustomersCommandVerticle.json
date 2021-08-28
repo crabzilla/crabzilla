@@ -6,7 +6,7 @@
       "poolOptions": {
         "maxSize": 7
       },
-      "targetEndpoint" : "customers-projection"
+      "targetEndpoint" : "projection.customers"
     },
     "worker": false,
     "instances": 1
