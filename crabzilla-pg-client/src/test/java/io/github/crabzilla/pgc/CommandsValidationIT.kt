@@ -9,7 +9,7 @@ import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.command.CommandController
 import io.github.crabzilla.pgc.command.CommandsContext
-import io.github.crabzilla.stack.DomainStateId
+import io.github.crabzilla.stack.StateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.kotest.matchers.throwable.shouldHaveMessage
 import io.vertx.core.Vertx
@@ -49,7 +49,7 @@ class CommandsValidationIT {
   fun s1(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "bad customer")
-    val metadata = CommandMetadata(DomainStateId(id))
+    val metadata = CommandMetadata(StateId(id))
     eventStore.handle(metadata, cmd)
       .onFailure {
         it shouldHaveMessage "[Bad customer!]"

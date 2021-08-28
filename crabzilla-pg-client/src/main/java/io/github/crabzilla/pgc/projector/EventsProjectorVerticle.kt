@@ -35,10 +35,6 @@ class EventsProjectorVerticle : PgcAbstractVerticle() {
       pgPool.withConnection { conn ->
         val event = serDer.eventFromJson(eventRecord.eventAsjJson.toString())
         eventsProjector.project(conn, event, eventRecord.eventMetadata)
-//          .compose {
-//            // TODO update projection offset within the same transaction ?
-//            Future.succeededFuture<Void>()
-//          }
       }
         .onFailure {
           msg.fail(500, it.message)

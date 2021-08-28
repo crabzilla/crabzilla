@@ -22,7 +22,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
   private val lastEventPublishedRef = AtomicLong(0L)
 
   private lateinit var options: Config
-  lateinit var scanner: EventsScanner
+  private lateinit var scanner: EventsScanner
 
   override fun start() {
 
@@ -65,7 +65,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
   private fun handler(): Handler<Long?> {
     return Handler<Long?> {
       action()
-        .onFailure { log.error("?") }
+        .onFailure { log.error(it.message, it) }
         .onSuccess {
           publishMetrics()
         }
@@ -100,22 +100,19 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
 
   private fun scanAndPublish(numberOfRows: Int): Future<Long> {
     fun publish(eventsList: List<EventRecord>): Future<Long> {
-      fun action(eventRecord: EventRecord): Future<Void> {
-        return vertx.eventBus().request<Void>(options.targetEndpoint, eventRecord.toJsonObject()).mapEmpty()
-      }
       val eventSequence = AtomicLong(0)
       val initialFuture = Future.succeededFuture<Void>()
       return eventsList.fold(
         initialFuture
       ) { currentFuture: Future<Void>, eventRecord: EventRecord ->
         currentFuture.compose {
-          log.debug("Successfully projected event #{}", eventRecord.eventMetadata.eventId)
-          eventSequence.set(eventRecord.eventMetadata.eventSequence)
-          action(eventRecord)
+          log.debug("Will publish event #{}", eventRecord.eventMetadata.eventId)
+          vertx.eventBus().request<Void>(options.targetEndpoint, eventRecord.toJsonObject())
+            .onSuccess { eventSequence.set(eventRecord.eventMetadata.eventSequence) }
+            .mapEmpty()
         }
       }.map { eventSequence.get() }
     }
-
     val promise = Promise.promise<Long>()
     scanner.scanPendingEvents(numberOfRows)
       .compose { eventsList ->

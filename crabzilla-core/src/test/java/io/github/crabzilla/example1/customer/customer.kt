@@ -23,9 +23,7 @@ import java.util.UUID
  */
 sealed class CustomerEvent : Event {
   data class CustomerRegistered(val id: UUID, val name: String) : CustomerEvent()
-
   data class CustomerActivated(val reason: String) : CustomerEvent()
-
   data class CustomerDeactivated(val reason: String) : CustomerEvent()
 }
 
@@ -34,11 +32,8 @@ sealed class CustomerEvent : Event {
  */
 sealed class CustomerCommand : Command {
   data class RegisterCustomer(val customerId: UUID, val name: String) : CustomerCommand()
-
   data class ActivateCustomer(val reason: String) : CustomerCommand()
-
   data class DeactivateCustomer(val reason: String) : CustomerCommand()
-
   data class RegisterAndActivateCustomer(
     val customerId: UUID,
     val name: String,
@@ -47,7 +42,7 @@ sealed class CustomerCommand : Command {
 }
 
 /**
- * Customer aggregate root
+ * Customer state
  */
 data class Customer(
   val id: UUID,
@@ -55,7 +50,6 @@ data class Customer(
   val isActive: Boolean = false,
   val reason: String? = null
 ) : State {
-
   companion object {
     fun create(id: UUID, name: String): List<CustomerEvent> {
       return listOf(CustomerRegistered(id = id, name = name))
@@ -64,11 +58,9 @@ data class Customer(
       return Customer(id = event.id, name = event.name, isActive = false)
     }
   }
-
   fun activate(reason: String): List<CustomerEvent> {
     return listOf(CustomerActivated(reason))
   }
-
   fun deactivate(reason: String): List<CustomerEvent> {
     return listOf(CustomerDeactivated(reason))
   }
@@ -107,30 +99,24 @@ class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id 
  */
 class CustomerCommandHandler :
   CommandHandler<Customer, CustomerCommand, CustomerEvent>(customerEventHandler) {
-
   override fun handleCommand(
     command: CustomerCommand,
     snapshot: Snapshot<Customer>?
   ): StatefulSession<Customer, CustomerEvent> {
-
     return when (command) {
-
       is RegisterCustomer -> {
         if (snapshot != null) throw CustomerAlreadyExists(command.customerId)
         withNew(Customer.create(id = command.customerId, name = command.name))
       }
-
       is RegisterAndActivateCustomer -> {
         if (snapshot != null) throw CustomerAlreadyExists(command.customerId)
         withNew(Customer.create(id = command.customerId, name = command.name))
           .execute { it.activate(command.reason) }
       }
-
       is ActivateCustomer -> {
         with(snapshot)
           .execute { it.activate(command.reason) }
       }
-
       is DeactivateCustomer -> {
         with(snapshot)
           .execute { it.deactivate(command.reason) }

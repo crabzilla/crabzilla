@@ -15,7 +15,7 @@ import io.vertx.core.Future
 abstract class FutureCommandHandler<S : State, C : Command, E : Event>(handler: EventHandler<S, E>) :
   CommandHandlerApi<S, C, E>(handler) {
 
-  fun <A : State, E : Event> StatefulSession<A, E>.toFuture(): Future<StatefulSession<A, E>> {
+  fun <S : State, E : Event> StatefulSession<S, E>.toFuture(): Future<StatefulSession<S, E>> {
     return Future.succeededFuture(this)
   }
 

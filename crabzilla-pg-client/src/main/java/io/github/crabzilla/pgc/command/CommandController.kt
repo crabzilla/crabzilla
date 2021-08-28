@@ -112,18 +112,18 @@ class CommandController<S : State, C : Command, E : Event>(
           val locked = r.getBoolean("locked")
           val id = r.getLong("id")
           if (!advisoryLockOption || locked) {
-            log.debug("Locked {} {}", id, metadata.domainStateId.id)
+            log.debug("Locked {} {}", id, metadata.stateId.id)
             val stateAsJson = JsonObject(r.getValue("json_content").toString())
             val state = serDer.stateFromJson(stateAsJson.toString()) as S
             Snapshot(state, version)
           } else {
-            throw (LockingException("Not locked $id ${metadata.domainStateId.id}"))
+            throw (LockingException("Not locked $id ${metadata.stateId.id}"))
           }
         }
       }
       return conn
         .preparedQuery(SQL_LOCK_SNAPSHOT)
-        .execute(Tuple.of(metadata.domainStateId.id))
+        .execute(Tuple.of(metadata.stateId.id))
         .map { pgRow -> snapshot(pgRow) }
     }
     fun appendCommand(conn: SqlConnection): Future<Void> {
@@ -149,7 +149,7 @@ class CommandController<S : State, C : Command, E : Event>(
           causationId.id,
           metadata.correlationId.id,
           config.name,
-          metadata.domainStateId.id,
+          metadata.stateId.id,
           JsonObject(eventAsJson),
           version,
           eventId
@@ -188,7 +188,7 @@ class CommandController<S : State, C : Command, E : Event>(
         val params = Tuple.of(
           resultingVersion,
           JsonObject(newSTateAsJson),
-          metadata.domainStateId.id,
+          metadata.stateId.id,
           config.name
         )
         conn.preparedQuery(SQL_INSERT_VERSION).execute(params).mapEmpty()
@@ -196,7 +196,7 @@ class CommandController<S : State, C : Command, E : Event>(
         val params = Tuple.of(
           resultingVersion,
           JsonObject(newSTateAsJson),
-          metadata.domainStateId.id,
+          metadata.stateId.id,
           session.originalVersion
         )
         conn
@@ -226,7 +226,7 @@ class CommandController<S : State, C : Command, E : Event>(
         currentFuture.compose {
           val eventMetadata = EventMetadata(
             config.name,
-            metadata.domainStateId,
+            metadata.stateId,
             EventId(appendedEvent.eventId),
             CorrelationId(metadata.commandId.id),
             CausationId(appendedEvent.causationId),

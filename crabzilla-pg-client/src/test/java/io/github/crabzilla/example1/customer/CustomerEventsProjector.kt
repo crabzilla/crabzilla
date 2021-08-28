@@ -12,7 +12,7 @@ import io.vertx.sqlclient.SqlConnection
 object CustomerEventsProjector : EventsProjector {
 
   override fun project(conn: SqlConnection, event: Event, eventMetadata: EventMetadata): Future<Void> {
-    val id = eventMetadata.domainStateId.id
+    val id = eventMetadata.stateId.id
     val repo = CustomersWriteRepository
     return when (val customerEvent = event as CustomerEvent) {
       is CustomerRegistered ->

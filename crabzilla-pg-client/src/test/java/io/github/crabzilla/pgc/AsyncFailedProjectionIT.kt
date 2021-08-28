@@ -8,7 +8,7 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.command.CommandsContext
-import io.github.crabzilla.stack.DomainStateId
+import io.github.crabzilla.stack.StateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.deployVerticles
 import io.vertx.core.DeploymentOptions
@@ -70,7 +70,7 @@ class AsyncFailedProjectionIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->
         assert(snapshot0 == null)
-        controller.handle(CommandMetadata(DomainStateId(id)), RegisterCustomer(id, "cust#$id"))
+        controller.handle(CommandMetadata(StateId(id)), RegisterCustomer(id, "cust#$id"))
           .onFailure { tc.failNow(it) }
           .onSuccess {
             snapshotRepo.get(id)
@@ -79,7 +79,7 @@ class AsyncFailedProjectionIT {
                 assert(1 == snapshot1!!.version)
                 assert(Customer(id, "cust#$id") == snapshot1.state)
                 controller.handle(
-                  CommandMetadata(DomainStateId(id)),
+                  CommandMetadata(StateId(id)),
                   ActivateCustomer("because yes")
                 )
                   .onFailure { tc.failNow(it) }

@@ -14,7 +14,7 @@ import io.github.crabzilla.example1.payment.Status
 import io.github.crabzilla.example1.payment.paymentEventHandler
 import io.github.crabzilla.pgc.command.CommandController
 import io.github.crabzilla.pgc.command.CommandsContext
-import io.github.crabzilla.stack.DomainStateId
+import io.github.crabzilla.stack.StateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.kotest.matchers.shouldBe
 import io.vertx.core.Vertx
@@ -57,9 +57,9 @@ class FutureCommandHandlerIT {
   @Test
   @DisplayName("it can hadle an async command handler")
   fun s1(tc: VertxTestContext) {
-    val domainStateId = DomainStateId(UUID.randomUUID())
-    val cmd = PaymentCommand.Pay(domainStateId.id, "000", 10.00)
-    val metadata = CommandMetadata(domainStateId)
+    val stateId = StateId(UUID.randomUUID())
+    val cmd = PaymentCommand.Pay(stateId.id, "000", 10.00)
+    val metadata = CommandMetadata(stateId)
     controller.handle(metadata, cmd)
       .onFailure { err ->
         tc.failNow(err)
@@ -67,10 +67,10 @@ class FutureCommandHandlerIT {
       .onSuccess { session ->
         session.originalVersion shouldBe 0
         session.currentState shouldBe
-          Payment(domainStateId.id, "000", 10.00, Status.Approved, "ok")
+          Payment(stateId.id, "000", 10.00, Status.Approved, "ok")
         session.appliedEvents() shouldBe
           listOf(
-            PaymentRequested(domainStateId.id, "000", 10.00),
+            PaymentRequested(stateId.id, "000", 10.00),
             PaymentApproved("ok")
           )
         tc.completeNow()

@@ -11,7 +11,7 @@ import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.command.CommandsContext
-import io.github.crabzilla.stack.DomainStateId
+import io.github.crabzilla.stack.StateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.deployVerticles
 import io.vertx.core.DeploymentOptions
@@ -73,14 +73,14 @@ class AsyncProjectionIT {
     snapshotRepo.get(id)
       .compose { snapshot0: Snapshot<Customer>? ->
         assert(snapshot0 == null)
-        controller.handle(CommandMetadata(DomainStateId(id)), RegisterCustomer(id, "cust#$id"))
+        controller.handle(CommandMetadata(StateId(id)), RegisterCustomer(id, "cust#$id"))
       }.compose { s1: StatefulSession<Customer, CustomerEvent> ->
         snapshotRepo.get(id)
       }.compose { snapshot1 ->
         assert(1 == snapshot1!!.version)
         assert(Customer(id, "cust#$id") == snapshot1.state)
         controller.handle(
-          CommandMetadata(DomainStateId(id)),
+          CommandMetadata(StateId(id)),
           ActivateCustomer("because yes")
         )
       }.compose { s2: StatefulSession<Customer, CustomerEvent> ->

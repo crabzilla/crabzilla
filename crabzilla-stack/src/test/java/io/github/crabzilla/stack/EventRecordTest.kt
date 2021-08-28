@@ -16,7 +16,7 @@ class EventRecordTest {
   val event = CustomerEvent.CustomerRegistered(id, "customer1")
   val eventAsJson = JsonObject(serDer.toJson(event))
   val eventMetadata = EventMetadata(
-    "Customer", DomainStateId(id),
+    "Customer", StateId(id),
     EventId(UUID.randomUUID()), CorrelationId(UUID.randomUUID()), CausationId(UUID.randomUUID()),
     1
   )

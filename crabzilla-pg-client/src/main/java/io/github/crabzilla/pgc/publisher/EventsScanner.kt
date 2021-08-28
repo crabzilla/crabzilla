@@ -2,10 +2,10 @@ package io.github.crabzilla.pgc.publisher
 
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CorrelationId
-import io.github.crabzilla.stack.DomainStateId
 import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventRecord
+import io.github.crabzilla.stack.StateId
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
@@ -50,7 +50,7 @@ class EventsScanner(
         rowSet.iterator().asSequence().map { row: Row ->
           val eventMetadata = EventMetadata(
             row.getString("ar_name"),
-            DomainStateId(row.getUUID("ar_id")),
+            StateId(row.getUUID("ar_id")),
             EventId(row.getUUID("id")),
             CorrelationId(row.getUUID("correlation_id")),
             CausationId(row.getUUID("causation_id")),

@@ -11,7 +11,7 @@ import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.command.CommandController
 import io.github.crabzilla.pgc.command.CommandsContext
-import io.github.crabzilla.stack.DomainStateId
+import io.github.crabzilla.stack.StateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -51,7 +51,7 @@ class CommandsPersistenceIT {
   fun s1(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata(DomainStateId(id))
+    val metadata = CommandMetadata(StateId(id))
     eventStore.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -74,10 +74,10 @@ class CommandsPersistenceIT {
   fun s2(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
-    val metadata1 = CommandMetadata(DomainStateId(id))
+    val metadata1 = CommandMetadata(StateId(id))
 
     val cmd2 = DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(DomainStateId(id))
+    val metadata2 = CommandMetadata(StateId(id))
 
     eventStore.handle(metadata1, cmd1)
       .onFailure { tc.failNow(it) }

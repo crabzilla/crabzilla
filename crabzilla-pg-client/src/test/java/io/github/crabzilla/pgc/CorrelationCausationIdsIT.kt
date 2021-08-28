@@ -11,7 +11,7 @@ import io.github.crabzilla.example1.customer.customerEventHandler
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.command.CommandController
 import io.github.crabzilla.pgc.command.CommandsContext
-import io.github.crabzilla.stack.DomainStateId
+import io.github.crabzilla.stack.StateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -51,7 +51,7 @@ class CorrelationCausationIdsIT {
   fun s1(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata(DomainStateId(id))
+    val metadata = CommandMetadata(StateId(id))
     val constructorResult = Customer.create(id, cmd.name)
     val session = StatefulSession(constructorResult, customerEventHandler)
     session.execute { it.activate(cmd.reason) }
@@ -103,13 +103,13 @@ class CorrelationCausationIdsIT {
   fun s11(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")
-    val metadata1 = CommandMetadata(DomainStateId(id))
+    val metadata1 = CommandMetadata(StateId(id))
     val constructorResult = Customer.create(id, cmd1.name)
     val session1 = StatefulSession(constructorResult, customerEventHandler)
     session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(DomainStateId(id))
+    val metadata2 = CommandMetadata(StateId(id))
     val customer2 = Customer(id, cmd1.name, true, cmd2.reason)
     val session2 = StatefulSession(2, customer2, customerEventHandler)
     session2.execute { it.deactivate(cmd2.reason) }

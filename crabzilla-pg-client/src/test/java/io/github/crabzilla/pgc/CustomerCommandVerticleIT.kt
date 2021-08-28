@@ -8,7 +8,7 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerCommandVerticle
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.command.CommandsContext
-import io.github.crabzilla.stack.DomainStateId
+import io.github.crabzilla.stack.StateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.deployVerticles
 import io.vertx.core.DeploymentOptions
@@ -69,7 +69,7 @@ class CustomerCommandVerticleIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->
         assert(snapshot0 == null)
-        val metadata1 = CommandMetadata(DomainStateId(id))
+        val metadata1 = CommandMetadata(StateId(id))
         val command1 = RegisterCustomer(id, "cust#$id")
         val msg1 = JsonObject()
           .put("metadata", metadata1.toJson())
@@ -85,7 +85,7 @@ class CustomerCommandVerticleIT {
                 assert(1 == snapshot1!!.version)
                 assert(Customer(id, "cust#$id") == snapshot1.state)
 
-                val metadata2 = CommandMetadata(DomainStateId(id))
+                val metadata2 = CommandMetadata(StateId(id))
                 val command2 = ActivateCustomer("because yes")
                 val msg2 = JsonObject()
                   .put("metadata", metadata2.toJson())
