@@ -9,7 +9,7 @@
     <version>v0.3.3</version>
   </parent>
 
-  <artifactId>crabzilla-stack</artifactId>
+  <artifactId>crabzilla-serder-kotlin</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -20,29 +20,9 @@
     </dependency>
 
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.f4b6a3</groupId>
-      <artifactId>uuid-creator</artifactId>
-      <version>3.7.3</version>
-      <scope>compile</scope>
-    </dependency>
-
-    <!-- test -->
-
-    <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-serder-kotlin</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-service-factory</artifactId>
-      <scope>test</scope>
+      <groupId>org.jetbrains.kotlinx</groupId>
+      <artifactId>kotlinx-serialization-json</artifactId>
+      <version>${serialization.version}</version>
     </dependency>
 
   </dependencies>

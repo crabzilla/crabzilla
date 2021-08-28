@@ -1,6 +1,5 @@
 package io.github.crabzilla.pgc.projector
 
-import io.github.crabzilla.core.Event
 import io.github.crabzilla.pgc.PgcAbstractVerticle
 import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.json.JsonObject
@@ -26,7 +25,7 @@ class EventsProjectorVerticle : PgcAbstractVerticle() {
 
     targetEndpoint = config().getString("targetEndpoint")
 
-    val json = json(config())
+    val serDer = serDer(config())
     val pgPool = pgPool(config())
     val provider = EventsProjectorProviderFinder().create(config().getString("eventsProjectorFactoryClassName"))
     val eventsProjector = provider!!.create()
@@ -34,10 +33,10 @@ class EventsProjectorVerticle : PgcAbstractVerticle() {
     vertx.eventBus().consumer<JsonObject>(targetEndpoint) { msg ->
       val eventRecord = EventRecord.fromJsonObject(msg.body())
       pgPool.withConnection { conn ->
-        val event = Event.fromJson<Event>(json, eventRecord.eventAsjJson.toString())
+        val event = serDer.eventFromJson(eventRecord.eventAsjJson.toString())
         eventsProjector.project(conn, event, eventRecord.eventMetadata)
 //          .compose {
-//            // TODO update projection offset within the same transaction
+//            // TODO update projection offset within the same transaction ?
 //            Future.succeededFuture<Void>()
 //          }
       }

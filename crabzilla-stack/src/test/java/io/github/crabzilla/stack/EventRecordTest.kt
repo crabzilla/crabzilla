@@ -1,5 +1,6 @@
 package io.github.crabzilla.stack
 
+import io.github.crabzilla.core.serder.KotlinSerDer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.example1Json
 import io.vertx.core.json.JsonObject
@@ -9,9 +10,11 @@ import java.util.UUID
 
 class EventRecordTest {
 
+  val serDer = KotlinSerDer(example1Json)
+
   val id = UUID.fromString("c2aeadc1-d6b5-4df6-82a4-7dec4f1df429")
   val event = CustomerEvent.CustomerRegistered(id, "customer1")
-  val eventAsJson = JsonObject(event.toJson(example1Json))
+  val eventAsJson = JsonObject(serDer.toJson(event))
   val eventMetadata = EventMetadata(
     "Customer", DomainStateId(id),
     EventId(UUID.randomUUID()), CorrelationId(UUID.randomUUID()), CausationId(UUID.randomUUID()),

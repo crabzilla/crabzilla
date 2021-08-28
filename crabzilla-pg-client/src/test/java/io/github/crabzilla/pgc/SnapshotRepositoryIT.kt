@@ -1,5 +1,7 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.core.serder.KotlinSerDer
+import io.github.crabzilla.core.serder.SerDer
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
@@ -18,14 +20,16 @@ import java.util.UUID
 @ExtendWith(VertxExtension::class)
 class SnapshotRepositoryIT {
 
+  private lateinit var serDer: SerDer
   private lateinit var client: CommandsContext
   private lateinit var repository: SnapshotRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = CommandsContext.create(vertx, example1Json, connectOptions, poolOptions)
-    repository = SnapshotRepository(client.pgPool, client.json)
+    serDer = KotlinSerDer(example1Json)
+    client = CommandsContext.create(vertx, serDer, connectOptions, poolOptions)
+    repository = SnapshotRepository(client.pgPool, example1Json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)
       .onFailure { tc.failNow(it) }

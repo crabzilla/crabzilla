@@ -1,5 +1,7 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.core.serder.KotlinSerDer
+import io.github.crabzilla.core.serder.SerDer
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
@@ -32,12 +34,13 @@ class CustomerCommandVerticleIT {
   }
 
   val id = UUID.randomUUID()
-
+  private lateinit var serDer: SerDer
   lateinit var client: CommandsContext
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = CommandsContext.create(vertx, example1Json, connectOptions, poolOptions)
+    serDer = KotlinSerDer(example1Json)
+    client = CommandsContext.create(vertx, serDer, connectOptions, poolOptions)
     val verticles = listOf(
 //      "service:crabzilla.example1.customer.CustomersEventsPublisher",
 //      "service:crabzilla.example1.customer.CustomersEventsProjector",
@@ -61,7 +64,7 @@ class CustomerCommandVerticleIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val snapshotRepo = SnapshotRepository<Customer>(client.pgPool, client.json)
+    val snapshotRepo = SnapshotRepository<Customer>(client.pgPool, example1Json)
     snapshotRepo.get(id)
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->
@@ -70,7 +73,7 @@ class CustomerCommandVerticleIT {
         val command1 = RegisterCustomer(id, "cust#$id")
         val msg1 = JsonObject()
           .put("metadata", metadata1.toJson())
-          .put("command", JsonObject(command1.toJson(example1Json)))
+          .put("command", JsonObject(serDer.toJson(command1)))
         vertx
           .eventBus()
           .request<Boolean>(CustomerCommandVerticle.ENDPOINT, msg1)
@@ -86,7 +89,7 @@ class CustomerCommandVerticleIT {
                 val command2 = ActivateCustomer("because yes")
                 val msg2 = JsonObject()
                   .put("metadata", metadata2.toJson())
-                  .put("command", JsonObject(command2.toJson(example1Json)))
+                  .put("command", JsonObject(serDer.toJson(command2)))
                 vertx
                   .eventBus()
                   .request<Boolean>(CustomerCommandVerticle.ENDPOINT, msg2)

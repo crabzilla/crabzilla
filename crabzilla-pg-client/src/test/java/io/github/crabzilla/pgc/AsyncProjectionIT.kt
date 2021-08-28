@@ -2,6 +2,8 @@ package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.command.Snapshot
 import io.github.crabzilla.core.command.StatefulSession
+import io.github.crabzilla.core.serder.KotlinSerDer
+import io.github.crabzilla.core.serder.SerDer
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
@@ -35,13 +37,14 @@ class AsyncProjectionIT {
   }
 
   val id = UUID.randomUUID()
-
+  lateinit var serDer: SerDer
   lateinit var client: CommandsContext
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = CommandsContext.create(vertx, example1Json, connectOptions, poolOptions)
+    serDer = KotlinSerDer(example1Json)
+    client = CommandsContext.create(vertx, serDer, connectOptions, poolOptions)
     testRepo = TestRepository(client.pgPool)
     val verticles = listOf(
       "service:crabzilla.example1.customer.CustomersEventsPublisher",
@@ -65,7 +68,7 @@ class AsyncProjectionIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val snapshotRepo = SnapshotRepository<Customer>(client.pgPool, client.json)
+    val snapshotRepo = SnapshotRepository<Customer>(client.pgPool, example1Json)
     val controller = client.create(customerConfig)
     snapshotRepo.get(id)
       .compose { snapshot0: Snapshot<Customer>? ->

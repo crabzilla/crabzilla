@@ -1,6 +1,8 @@
 package io.github.crabzilla.pgc
 
 import io.github.crabzilla.core.command.StatefulSession
+import io.github.crabzilla.core.serder.KotlinSerDer
+import io.github.crabzilla.core.serder.SerDer
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
@@ -27,6 +29,7 @@ import java.util.UUID
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SyncProjectionIT {
 
+  private lateinit var serDer: SerDer
   private lateinit var client: CommandsContext
   private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var snapshotRepository: SnapshotRepository<Customer>
@@ -34,14 +37,15 @@ class SyncProjectionIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    client = CommandsContext.create(vertx, example1Json, connectOptions, poolOptions)
+    serDer = KotlinSerDer(example1Json)
+    client = CommandsContext.create(vertx, serDer, connectOptions, poolOptions)
     controller = client.create(
       customerConfig,
       saveCommandOption = true,
       advisoryLockOption = true,
       eventsProjector = CustomerEventsProjector
     )
-    snapshotRepository = SnapshotRepository(client.pgPool, client.json)
+    snapshotRepository = SnapshotRepository(client.pgPool, example1Json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)
       .onFailure { tc.failNow(it) }

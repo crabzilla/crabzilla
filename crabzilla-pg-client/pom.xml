@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>v0.3.2</version>
+    <version>v0.3.3</version>
   </parent>
 
   <artifactId>crabzilla-pg-client</artifactId>
@@ -30,6 +30,12 @@
     </dependency>
 
     <!-- test -->
+
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-serder-kotlin</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>io.vertx</groupId>

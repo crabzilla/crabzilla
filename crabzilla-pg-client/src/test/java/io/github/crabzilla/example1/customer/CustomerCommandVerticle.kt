@@ -1,6 +1,6 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.serder.KotlinSerDer
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.pgc.PgcAbstractVerticle
 import io.github.crabzilla.pgc.command.CommandController
@@ -20,11 +20,12 @@ class CustomerCommandVerticle : PgcAbstractVerticle() {
 
     val pgPool = pgPool(config())
 
-    val eventStore = CommandController(vertx, customerConfig, pgPool, example1Json, false)
+    val serDer = KotlinSerDer(example1Json)
+    val eventStore = CommandController(vertx, customerConfig, pgPool, serDer, false)
 
     vertx.eventBus().consumer<JsonObject>(ENDPOINT) { msg ->
       val metadata = CommandMetadata.fromJson(msg.body().getJsonObject("metadata"))
-      val command = Command.fromJson<CustomerCommand>(example1Json, msg.body().getJsonObject("command").toString())
+      val command = serDer.commandFromJson(msg.body().getJsonObject("command").toString()) as CustomerCommand
       eventStore.handle(metadata, command)
         .onFailure { msg.fail(500, it.message) }
         .onSuccess { msg.reply(true) }

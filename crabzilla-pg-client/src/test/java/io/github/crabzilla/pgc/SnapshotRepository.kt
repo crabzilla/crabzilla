@@ -8,6 +8,7 @@ import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlClient
 import io.vertx.sqlclient.Tuple
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -31,7 +32,7 @@ class SnapshotRepository<A : State>(
         null
       } else {
         val stateAsJson = JsonObject(rowSet.first().getValue(1).toString())
-        val state = State.fromJson<A>(json, stateAsJson.toString())
+        val state = json.decodeFromString<State>(stateAsJson.toString()) as A
         Snapshot(state, rowSet.first().getInteger("version"))
       }
     }

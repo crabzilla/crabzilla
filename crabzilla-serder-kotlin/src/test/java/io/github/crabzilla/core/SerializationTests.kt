@@ -1,5 +1,6 @@
 package io.github.crabzilla.core
 
+import io.github.crabzilla.core.serder.KotlinSerDer
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
@@ -20,6 +21,8 @@ import java.util.UUID
 
 class SerializationTests {
 
+  val serDer = KotlinSerDer(example1Json)
+
   @Test
   @DisplayName("Aggregate ser/der")
   fun testAggr() {
@@ -27,8 +30,8 @@ class SerializationTests {
     val expectedJson = """
       {"type":"Customer","id":"${aggregate.id}","name":"${aggregate.name}"}
     """.trimIndent()
-    assertThat(aggregate.toJson(example1Json)).isEqualTo(expectedJson)
-    assertThat(State.fromJson<Customer>(example1Json, expectedJson)).isEqualTo(aggregate)
+    assertThat(serDer.toJson(aggregate)).isEqualTo(expectedJson)
+    assertThat(serDer.stateFromJson(expectedJson)).isEqualTo(aggregate)
   }
 
   @Test
@@ -38,8 +41,8 @@ class SerializationTests {
     val expectedJson = """
       {"type":"RegisterCustomer","customerId":"${command.customerId}","name":"${command.name}"}
     """.trimIndent()
-    assertThat(command.toJson(example1Json)).isEqualTo(expectedJson)
-    assertThat(Command.fromJson<RegisterCustomer>(example1Json, expectedJson)).isEqualTo(command)
+    assertThat(serDer.toJson(command)).isEqualTo(expectedJson)
+    assertThat(serDer.commandFromJson(expectedJson)).isEqualTo(command)
   }
 
   @Test
@@ -49,8 +52,8 @@ class SerializationTests {
     val expectedJson = """
       {"type":"CustomerRegistered","id":"${event.id}","name":"${event.name}"}
     """.trimIndent()
-    assertThat(event.toJson(example1Json)).isEqualTo(expectedJson)
-    assertThat(Event.fromJson<CustomerRegistered>(example1Json, expectedJson)).isEqualTo(event)
+    assertThat(serDer.toJson(event)).isEqualTo(expectedJson)
+    assertThat(serDer.eventFromJson(expectedJson)).isEqualTo(event)
   }
 
   @Test

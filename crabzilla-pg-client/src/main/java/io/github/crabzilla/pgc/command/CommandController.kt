@@ -12,6 +12,7 @@ import io.github.crabzilla.core.command.CommandHandlerApi
 import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.command.Snapshot
 import io.github.crabzilla.core.command.StatefulSession
+import io.github.crabzilla.core.serder.SerDer
 import io.github.crabzilla.pgc.projector.EventsProjector
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CorrelationId
@@ -28,7 +29,6 @@ import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
-import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
@@ -39,7 +39,7 @@ class CommandController<S : State, C : Command, E : Event>(
   private val vertx: Vertx,
   private val config: CommandControllerConfig<S, C, E>,
   private val pgPool: PgPool,
-  private val json: Json,
+  private val serDer: SerDer,
   private val saveCommandOption: Boolean = true,
   private val advisoryLockOption: Boolean = true,
   private val eventsProjector: EventsProjector? = null
@@ -114,7 +114,7 @@ class CommandController<S : State, C : Command, E : Event>(
           if (!advisoryLockOption || locked) {
             log.debug("Locked {} {}", id, metadata.domainStateId.id)
             val stateAsJson = JsonObject(r.getValue("json_content").toString())
-            val state = State.fromJson<S>(json, stateAsJson.toString())
+            val state = serDer.stateFromJson(stateAsJson.toString()) as S
             Snapshot(state, version)
           } else {
             throw (LockingException("Not locked $id ${metadata.domainStateId.id}"))
@@ -130,7 +130,7 @@ class CommandController<S : State, C : Command, E : Event>(
       if (!saveCommandOption) {
         return Future.succeededFuture(null)
       }
-      val cmdAsJson = command.toJson(json)
+      val cmdAsJson = serDer.toJson(command)
       log.debug("Will append command {} as {}", command, cmdAsJson)
       val params = Tuple.of(
         metadata.commandId.id,
@@ -142,7 +142,7 @@ class CommandController<S : State, C : Command, E : Event>(
     }
     fun appendEvents(conn: SqlConnection, session: StatefulSession<S, E>): Future<AppendedEvents<E>> {
       fun appendEvent(event: E, version: Int, causationId: CausationId): Future<AppendedEvent<E>> {
-        val eventAsJson = event.toJson(json)
+        val eventAsJson = serDer.toJson(event)
         log.debug("Will append event {} as {}", event, eventAsJson)
         val eventId = UuidCreator.getTimeOrdered()
         val params = Tuple.of(
@@ -182,7 +182,7 @@ class CommandController<S : State, C : Command, E : Event>(
       }.map { AppendedEvents(eventsAdded, version.get()) }
     }
     fun updateSnapshot(conn: SqlConnection, resultingVersion: Int, session: StatefulSession<S, E>): Future<Void> {
-      val newSTateAsJson = session.currentState.toJson(json)
+      val newSTateAsJson = serDer.toJson(session.currentState)
       log.debug("Will append snapshot {} to version {}", newSTateAsJson, resultingVersion)
       return if (session.originalVersion == 0) {
         val params = Tuple.of(

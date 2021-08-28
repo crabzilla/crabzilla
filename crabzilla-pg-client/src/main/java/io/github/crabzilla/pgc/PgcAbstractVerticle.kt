@@ -1,21 +1,18 @@
 package io.github.crabzilla.pgc
 
+import io.github.crabzilla.core.serder.SerDer
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.PoolOptions
 import io.vertx.sqlclient.SqlClient
-import kotlinx.serialization.json.Json
 
-/**
- * To update customer read model given events
- */
 open class PgcAbstractVerticle : AbstractVerticle() {
 
-  fun json(config: JsonObject): Json {
+  fun serDer(config: JsonObject): SerDer {
     val provider = JsonContextProviderFinder().create(config.getString("jsonFactoryClassName"))
-    return provider!!.create().json()
+    return provider!!.create().serder()
   }
 
   fun pgPool(config: JsonObject): PgPool {

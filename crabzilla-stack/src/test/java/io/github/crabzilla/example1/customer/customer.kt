@@ -19,7 +19,6 @@ import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import java.util.UUID
@@ -28,7 +27,7 @@ import java.util.UUID
  * Customer events
  */
 @Serializable
-sealed class CustomerEvent : Event() {
+sealed class CustomerEvent : Event {
   @Serializable
   @SerialName("CustomerRegistered")
   data class CustomerRegistered(@Contextual val id: UUID, val name: String) : CustomerEvent()
@@ -46,7 +45,7 @@ sealed class CustomerEvent : Event() {
  * Customer commands
  */
 @Serializable
-sealed class CustomerCommand : Command() {
+sealed class CustomerCommand : Command {
   @Serializable
   @SerialName("RegisterCustomer")
   data class RegisterCustomer(@Contextual val customerId: UUID, val name: String) : CustomerCommand()
@@ -78,7 +77,7 @@ data class Customer(
   val name: String,
   val isActive: Boolean = false,
   val reason: String? = null
-) : State() {
+) : State {
 
   companion object {
     fun create(id: UUID, name: String): List<CustomerEvent> {
@@ -190,5 +189,3 @@ val customerModule = SerializersModule {
     subclass(CustomerDeactivated::class, CustomerDeactivated.serializer())
   }
 }
-
-val customerJson = Json { serializersModule = customerModule }

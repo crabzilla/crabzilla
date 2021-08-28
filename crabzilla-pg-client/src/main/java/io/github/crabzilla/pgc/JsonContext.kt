@@ -1,7 +1,7 @@
 package io.github.crabzilla.pgc
 
-import kotlinx.serialization.json.Json
+import io.github.crabzilla.core.serder.SerDer
 
 interface JsonContext {
-  fun json(): Json
+  fun serder(): SerDer
 }
