@@ -31,7 +31,15 @@ It's still in very early development stage.
 </repositories>
 ```
 
-2. Add the dependency:
+2. Add these dependencies:
+
+```xml
+<dependency>
+    <groupId>com.github.crabzilla.crabzilla</groupId>
+    <artifactId>crabzilla-serder-kotlin</artifactId>
+    <version>see latest jitpack version</version>
+</dependency>
+```
 
 ```xml
 <dependency>
@@ -71,6 +79,6 @@ docker-compose up
 mvn clean install -DskipTests=false
 ```
 
-## Dependencies overview
+## Dependencies overview (outdated)
 
 ![GitHub Logo](/crabzilla-packages.png)
