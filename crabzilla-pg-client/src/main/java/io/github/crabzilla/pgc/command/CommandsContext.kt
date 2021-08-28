@@ -16,12 +16,8 @@ import io.vertx.sqlclient.SqlClient
 class CommandsContext(val vertx: Vertx, val serDer: SerDer, val pgPool: PgPool, val sqlClient: SqlClient) {
 
   companion object {
-    fun create(
-      vertx: Vertx,
-      serDer: SerDer,
-      connectOptions: PgConnectOptions,
-      poolOptions: PoolOptions,
-    ): CommandsContext {
+    fun create(vertx: Vertx, serDer: SerDer, connectOptions: PgConnectOptions, poolOptions: PoolOptions)
+    : CommandsContext {
       val thePgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
       val theSqlClient: SqlClient = PgPool.client(vertx, connectOptions, poolOptions)
       return CommandsContext(vertx, serDer, thePgPool, theSqlClient)
@@ -32,7 +28,7 @@ class CommandsContext(val vertx: Vertx, val serDer: SerDer, val pgPool: PgPool, 
    * Creates a CommandController
    */
   fun <S : State, C : Command, E : Event> create(
-    config: CommandControllerConfig<S, C, E>,
+    config: CommandControllerConfig<S, C, E>
   ): CommandController<S, C, E> {
     return CommandController(
       vertx, config, pgPool, serDer,
@@ -49,7 +45,7 @@ class CommandsContext(val vertx: Vertx, val serDer: SerDer, val pgPool: PgPool, 
     config: CommandControllerConfig<S, C, E>,
     saveCommandOption: Boolean,
     advisoryLockOption: Boolean,
-    eventsProjector: EventsProjector?,
+    eventsProjector: EventsProjector?
   ): CommandController<S, C, E> {
     return CommandController(
       vertx, config, pgPool, serDer,
