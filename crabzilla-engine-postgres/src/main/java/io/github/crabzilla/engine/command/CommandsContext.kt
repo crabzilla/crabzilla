@@ -16,11 +16,12 @@ import io.vertx.sqlclient.SqlClient
 class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: PgPool, val sqlClient: SqlClient) {
 
   companion object {
-    fun create(vertx: Vertx,
-               jsonSerDer: JsonSerDer,
-               connectOptions: PgConnectOptions,
-               poolOptions: PoolOptions)
-    : CommandsContext {
+    fun create(
+      vertx: Vertx,
+      jsonSerDer: JsonSerDer,
+      connectOptions: PgConnectOptions,
+      poolOptions: PoolOptions
+    ): CommandsContext {
       val thePgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
       val theSqlClient: SqlClient = PgPool.client(vertx, connectOptions, poolOptions)
       return CommandsContext(vertx, jsonSerDer, thePgPool, theSqlClient)
