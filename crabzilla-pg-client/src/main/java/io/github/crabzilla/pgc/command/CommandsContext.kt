@@ -16,7 +16,8 @@ import io.vertx.sqlclient.SqlClient
 class CommandsContext(val vertx: Vertx, val serDer: SerDer, val pgPool: PgPool, val sqlClient: SqlClient) {
 
   companion object {
-    fun create(vertx: Vertx, serDer: SerDer, connectOptions: PgConnectOptions, poolOptions: PoolOptions): CommandsContext {
+    fun create(vertx: Vertx, serDer: SerDer, connectOptions: PgConnectOptions, poolOptions: PoolOptions)
+    : CommandsContext {
       val thePgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
       val theSqlClient: SqlClient = PgPool.client(vertx, connectOptions, poolOptions)
       return CommandsContext(vertx, serDer, thePgPool, theSqlClient)
