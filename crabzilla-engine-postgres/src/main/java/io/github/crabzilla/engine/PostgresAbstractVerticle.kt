@@ -1,6 +1,6 @@
 package io.github.crabzilla.engine
 
-import io.github.crabzilla.serder.SerDer
+import io.github.crabzilla.core.serder.JsonSerDer
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
@@ -8,9 +8,9 @@ import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.PoolOptions
 import io.vertx.sqlclient.SqlClient
 
-open class PgcAbstractVerticle : AbstractVerticle() {
+open class PostgresAbstractVerticle : AbstractVerticle() {
 
-  fun serDer(config: JsonObject): SerDer {
+  fun serDer(config: JsonObject): JsonSerDer {
     val provider = JsonContextProviderFinder().create(config.getString("jsonFactoryClassName"))
     return provider!!.create().serder()
   }

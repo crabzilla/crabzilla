@@ -1,6 +1,6 @@
 package io.github.crabzilla.engine.publisher
 
-import io.github.crabzilla.engine.PgcAbstractVerticle
+import io.github.crabzilla.engine.PostgresAbstractVerticle
 import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.Future
 import io.vertx.core.Handler
@@ -10,12 +10,12 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-class EventsPublisherVerticle : PgcAbstractVerticle() {
+class EventsPublisherVerticle : PostgresAbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(EventsPublisherVerticle::class.java)
 
-    // TODO this must be by instance: add endpoint for pause, resume, restart from N, etc (using event sourcing!)
+    // TODO add endpoint for pause, resume, restart from N, etc (using event sourcing!)
   }
 
   private val failures = AtomicLong(0L)

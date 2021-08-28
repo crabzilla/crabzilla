@@ -1,15 +1,15 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.engine.PgcAbstractVerticle
+import io.github.crabzilla.core.serder.KotlinJsonSerDer
+import io.github.crabzilla.engine.PostgresAbstractVerticle
 import io.github.crabzilla.engine.command.CommandController
 import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.serder.KotlinSerDer
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 
 // TODO a singleton command verticle could skip the optimistic locking but does it really worth?
-class CustomerCommandVerticle : PgcAbstractVerticle() {
+class CustomerCommandVerticle : PostgresAbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(CustomerCommandVerticle::class.java)
@@ -20,7 +20,7 @@ class CustomerCommandVerticle : PgcAbstractVerticle() {
 
     val pgPool = pgPool(config())
 
-    val serDer = KotlinSerDer(example1Json)
+    val serDer = KotlinJsonSerDer(example1Json)
     val eventStore = CommandController(vertx, customerConfig, pgPool, serDer, false)
 
     vertx.eventBus().consumer<JsonObject>(ENDPOINT) { msg ->

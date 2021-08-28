@@ -2,6 +2,8 @@ package io.github.crabzilla.engine
 
 import io.github.crabzilla.core.command.Snapshot
 import io.github.crabzilla.core.command.StatefulSession
+import io.github.crabzilla.core.serder.JsonSerDer
+import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandsContext
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
@@ -9,8 +11,6 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.serder.KotlinSerDer
-import io.github.crabzilla.serder.SerDer
 import io.github.crabzilla.stack.StateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.deployVerticles
@@ -37,14 +37,14 @@ class AsyncProjectionIT {
   }
 
   val id = UUID.randomUUID()
-  lateinit var serDer: SerDer
+  lateinit var jsonSerDer: JsonSerDer
   lateinit var client: CommandsContext
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    serDer = KotlinSerDer(example1Json)
-    client = CommandsContext.create(vertx, serDer, connectOptions, poolOptions)
+    jsonSerDer = KotlinJsonSerDer(example1Json)
+    client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
     testRepo = TestRepository(client.pgPool)
     val verticles = listOf(
       "service:crabzilla.example1.customer.CustomersEventsPublisher",

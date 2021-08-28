@@ -1,13 +1,13 @@
 package io.github.crabzilla.engine
 
+import io.github.crabzilla.core.serder.JsonSerDer
+import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandsContext
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerCommandVerticle
 import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.serder.KotlinSerDer
-import io.github.crabzilla.serder.SerDer
 import io.github.crabzilla.stack.StateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.deployVerticles
@@ -34,13 +34,13 @@ class CustomerCommandVerticleIT {
   }
 
   val id = UUID.randomUUID()
-  private lateinit var serDer: SerDer
+  private lateinit var jsonSerDer: JsonSerDer
   lateinit var client: CommandsContext
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    serDer = KotlinSerDer(example1Json)
-    client = CommandsContext.create(vertx, serDer, connectOptions, poolOptions)
+    jsonSerDer = KotlinJsonSerDer(example1Json)
+    client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
     val verticles = listOf(
 //      "service:crabzilla.example1.customer.CustomersEventsPublisher",
 //      "service:crabzilla.example1.customer.CustomersEventsProjector",
@@ -73,7 +73,7 @@ class CustomerCommandVerticleIT {
         val command1 = RegisterCustomer(id, "cust#$id")
         val msg1 = JsonObject()
           .put("metadata", metadata1.toJson())
-          .put("command", JsonObject(serDer.toJson(command1)))
+          .put("command", JsonObject(jsonSerDer.toJson(command1)))
         vertx
           .eventBus()
           .request<Boolean>(CustomerCommandVerticle.ENDPOINT, msg1)
@@ -89,7 +89,7 @@ class CustomerCommandVerticleIT {
                 val command2 = ActivateCustomer("because yes")
                 val msg2 = JsonObject()
                   .put("metadata", metadata2.toJson())
-                  .put("command", JsonObject(serDer.toJson(command2)))
+                  .put("command", JsonObject(jsonSerDer.toJson(command2)))
                 vertx
                   .eventBus()
                   .request<Boolean>(CustomerCommandVerticle.ENDPOINT, msg2)

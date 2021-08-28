@@ -1,5 +1,7 @@
 package io.github.crabzilla.engine
 
+import io.github.crabzilla.core.serder.JsonSerDer
+import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandController
 import io.github.crabzilla.engine.command.CommandsContext
 import io.github.crabzilla.example1.customer.Customer
@@ -9,8 +11,6 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivate
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.serder.KotlinSerDer
-import io.github.crabzilla.serder.SerDer
 import io.github.crabzilla.stack.StateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
@@ -28,7 +28,7 @@ import java.util.UUID
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CommandsPersistenceIT {
 
-  private lateinit var serDer: SerDer
+  private lateinit var jsonSerDer: JsonSerDer
   private lateinit var client: CommandsContext
   private lateinit var eventStore: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var repository: SnapshotRepository<Customer>
@@ -36,9 +36,9 @@ class CommandsPersistenceIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    serDer = KotlinSerDer(example1Json)
-    client = CommandsContext.create(vertx, serDer, connectOptions, poolOptions)
-    eventStore = CommandController(vertx, customerConfig, client.pgPool, serDer, true)
+    jsonSerDer = KotlinJsonSerDer(example1Json)
+    client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
+    eventStore = CommandController(vertx, customerConfig, client.pgPool, jsonSerDer, true)
     repository = SnapshotRepository(client.pgPool, example1Json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)
@@ -62,7 +62,7 @@ class CommandsPersistenceIT {
             val rowAsJson = list.first()
             assertThat(UUID.fromString(rowAsJson.getString("cmd_id"))).isEqualTo(metadata.commandId.id)
             val cmdAsJsonFroDb = rowAsJson.getJsonObject("cmd_payload")
-            val cmdFromDb = serDer.commandFromJson(cmdAsJsonFroDb.toString()) as RegisterAndActivateCustomer
+            val cmdFromDb = jsonSerDer.commandFromJson(cmdAsJsonFroDb.toString()) as RegisterAndActivateCustomer
             assertThat(cmdFromDb).isEqualTo(cmd)
             tc.completeNow()
           }
@@ -93,13 +93,13 @@ class CommandsPersistenceIT {
                 val rowAsJson1 = list.first()
                 assertThat(UUID.fromString(rowAsJson1.getString("cmd_id"))).isEqualTo(metadata1.commandId.id)
                 val cmdAsJsonFroDb1 = rowAsJson1.getJsonObject("cmd_payload")
-                val cmdFromDb1 = serDer.commandFromJson(cmdAsJsonFroDb1.toString())
+                val cmdFromDb1 = jsonSerDer.commandFromJson(cmdAsJsonFroDb1.toString())
                 assertThat(cmdFromDb1).isEqualTo(cmd1)
 
                 val rowAsJson2 = list.last()
                 assertThat(UUID.fromString(rowAsJson2.getString("cmd_id"))).isEqualTo(metadata2.commandId.id)
                 val cmdAsJsonFroDb2 = rowAsJson2.getJsonObject("cmd_payload")
-                val cmdFromDb2 = serDer.commandFromJson(cmdAsJsonFroDb2.toString())
+                val cmdFromDb2 = jsonSerDer.commandFromJson(cmdAsJsonFroDb2.toString())
                 assertThat(cmdFromDb2).isEqualTo(cmd2)
 
                 tc.completeNow()

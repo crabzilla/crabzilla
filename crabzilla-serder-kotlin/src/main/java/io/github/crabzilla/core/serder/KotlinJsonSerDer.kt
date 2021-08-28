@@ -1,4 +1,4 @@
-package io.github.crabzilla.serder
+package io.github.crabzilla.core.serder
 
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
@@ -6,7 +6,7 @@ import io.github.crabzilla.core.State
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
 
-class KotlinSerDer(private val json: Json) : SerDer {
+class KotlinJsonSerDer(private val json: Json) : JsonSerDer {
 
   companion object {
     private val cmdSerDer = PolymorphicSerializer(Command::class)

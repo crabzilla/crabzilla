@@ -1,10 +1,10 @@
-package io.github.crabzilla.serder
+package io.github.crabzilla.core.serder
 
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
 
-interface SerDer {
+interface JsonSerDer {
 
   fun toJson(command: Command): String
   fun toJson(event: Event): String

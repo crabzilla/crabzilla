@@ -5,7 +5,7 @@ import java.util.ServiceLoader
 
 class EventsProjectorProviderFinder {
   // provider by name
-  fun create(providerName: String): EventsProjectorProvider? {
+  fun create(providerName: String): EventsProjectorProvider {
     val loader: ServiceLoader<EventsProjectorProvider> =
       ServiceLoader.load(EventsProjectorProvider::class.java)
     val it: Iterator<EventsProjectorProvider> = loader.iterator()

@@ -1,4 +1,4 @@
-package io.github.crabzilla.serder
+package io.github.crabzilla.core.serder
 
 import kotlinx.serialization.modules.SerializersModule
 import java.time.LocalDate

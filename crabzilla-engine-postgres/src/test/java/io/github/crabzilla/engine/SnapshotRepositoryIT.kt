@@ -1,11 +1,11 @@
 package io.github.crabzilla.engine
 
+import io.github.crabzilla.core.serder.JsonSerDer
+import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandsContext
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.serder.KotlinSerDer
-import io.github.crabzilla.serder.SerDer
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -20,15 +20,15 @@ import java.util.UUID
 @ExtendWith(VertxExtension::class)
 class SnapshotRepositoryIT {
 
-  private lateinit var serDer: SerDer
+  private lateinit var jsonSerDer: JsonSerDer
   private lateinit var client: CommandsContext
   private lateinit var repository: SnapshotRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    serDer = KotlinSerDer(example1Json)
-    client = CommandsContext.create(vertx, serDer, connectOptions, poolOptions)
+    jsonSerDer = KotlinJsonSerDer(example1Json)
+    client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
     repository = SnapshotRepository(client.pgPool, example1Json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)

@@ -1,6 +1,6 @@
 package io.github.crabzilla.engine.projector
 
-import io.github.crabzilla.engine.PgcAbstractVerticle
+import io.github.crabzilla.engine.PostgresAbstractVerticle
 import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicLong
 /**
  * A broker verticle to project events to database
  */
-class EventsProjectorVerticle : PgcAbstractVerticle() {
+class EventsProjectorVerticle : PostgresAbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(EventsProjectorVerticle::class.java)
@@ -28,8 +28,9 @@ class EventsProjectorVerticle : PgcAbstractVerticle() {
     val serDer = serDer(config())
     val pgPool = pgPool(config())
     val provider = EventsProjectorProviderFinder().create(config().getString("eventsProjectorFactoryClassName"))
-    val eventsProjector = provider!!.create()
+    val eventsProjector = provider.create()
 
+    // TODO plug a built in idempotency mechanism here or delegate it to eventsProjector?
     vertx.eventBus().consumer<JsonObject>(targetEndpoint) { msg ->
       val eventRecord = EventRecord.fromJsonObject(msg.body())
       pgPool.withConnection { conn ->
