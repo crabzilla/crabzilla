@@ -13,6 +13,7 @@ import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.command.Snapshot
 import io.github.crabzilla.core.command.StatefulSession
 import io.github.crabzilla.core.serder.JsonSerDer
+import io.github.crabzilla.engine.assertAffectedRows
 import io.github.crabzilla.engine.projector.EventsProjector
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CorrelationId
@@ -20,7 +21,6 @@ import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.command.FutureCommandHandler
-import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -202,17 +202,7 @@ class CommandController<S : State, C : Command, E : Event>(
         conn
           .preparedQuery(SQL_UPDATE_VERSION)
           .execute(params)
-          .transform { ar: AsyncResult<RowSet<Row>> ->
-            if (ar.succeeded()) {
-              if (ar.result().rowCount() == 1) {
-                Future.succeededFuture()
-              } else {
-                Future.failedFuture("Expected 1 update but it was ${ar.result().size()}")
-              }
-            } else {
-              Future.failedFuture("When updating version")
-            }
-          }
+          .transform { it.assertAffectedRows(1) }
       }
     }
     fun projectEvents(conn: SqlConnection, appendedEvents: AppendedEvents<E>): Future<Void> {
