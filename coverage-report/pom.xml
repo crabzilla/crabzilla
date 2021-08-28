@@ -34,16 +34,6 @@
       <artifactId>crabzilla-pg-client</artifactId>
     </dependency>
 
-<!--    <dependency>-->
-<!--      <groupId>io.github.crabzilla</groupId>-->
-<!--      <artifactId>crabzilla-cassandra</artifactId>-->
-<!--    </dependency>-->
-
-<!--    <dependency>-->
-<!--      <groupId>io.github.crabzilla</groupId>-->
-<!--      <artifactId>crabzilla-web</artifactId>-->
-<!--    </dependency>-->
-
   </dependencies>
 
   <build>
