@@ -23,7 +23,7 @@ import kotlinx.serialization.modules.polymorphic
 import java.util.UUID
 
 @Serializable
-sealed class PaymentEvent : Event() {
+sealed class PaymentEvent : Event {
   @Serializable
   @SerialName("PaymentRequested")
   data class PaymentRequested(
@@ -46,7 +46,7 @@ sealed class PaymentEvent : Event() {
 }
 
 @Serializable
-sealed class PaymentCommand : Command() {
+sealed class PaymentCommand : Command {
   @Serializable
   @SerialName("Pay")
   data class Pay(@Contextual val id: UUID, val creditCardNo: String, val amount: Double) :
@@ -71,7 +71,7 @@ data class Payment(
   val amount: Double,
   val status: Status? = null,
   val reason: String? = null,
-) : State() {
+) : State {
 
   companion object {
     fun create(id: UUID, creditCardNo: String, amount: Double): List<PaymentEvent> {

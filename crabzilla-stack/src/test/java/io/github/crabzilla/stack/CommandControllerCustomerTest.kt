@@ -42,17 +42,17 @@
 //      every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
 //
 //      val controller = CommandController(customerConfig, snapshotRepo, eventStore)
-//      val domainStateId = DomainStateId(UUID.randomUUID())
+//      val stateId = StateId(UUID.randomUUID())
 //      val result = controller
-//        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "customer#1"))
+//        .handle(CommandMetadata(stateId), RegisterCustomer(stateId.id, "customer#1"))
 //      Then("It should have the expected StatefulSession") {
 //        result
 //          .onFailure { err -> fail(err.message ?: "wtf?") }
 //          .onSuccess { session ->
 //            session.originalVersion shouldBe 0
-//            session.currentState shouldBe Customer(id = domainStateId.id, name = "customer#1")
+//            session.currentState shouldBe Customer(id = stateId.id, name = "customer#1")
 //            session.appliedEvents() shouldContainInOrder
-//              listOf(CustomerEvent.CustomerRegistered(id = domainStateId.id, name = "customer#1"))
+//              listOf(CustomerEvent.CustomerRegistered(id = stateId.id, name = "customer#1"))
 //          }
 //      }
 //    }
@@ -63,9 +63,9 @@
 //      every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
 //
 //      val controller = CommandController(customerConfig, snapshotRepo, eventStore)
-//      val domainStateId = DomainStateId(UUID.randomUUID())
+//      val stateId = StateId(UUID.randomUUID())
 //      val result = controller
-//        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "bad customer"))
+//        .handle(CommandMetadata(stateId), RegisterCustomer(stateId.id, "bad customer"))
 //      Then("It should fail") {
 //        result
 //          .onFailure { it shouldHaveMessage "[Bad customer!]" }
@@ -81,9 +81,9 @@
 //      every { eventStore.append(any(), any(), any()) } returns
 //        Future.failedFuture(LockingException("Concurrency error"))
 //      val controller = CommandController(customerConfig, snapshotRepo, eventStore)
-//      val domainStateId = DomainStateId(UUID.randomUUID())
+//      val stateId = StateId(UUID.randomUUID())
 //      val result = controller
-//        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "good customer"))
+//        .handle(CommandMetadata(stateId), RegisterCustomer(stateId.id, "good customer"))
 //      Then("It should fail") {
 //        result
 //          .onFailure { it shouldHaveMessage "Concurrency error" }
@@ -99,9 +99,9 @@
 //      every { eventStore.append(any(), any(), any()) } returns
 //        Future.failedFuture(LockingException("Concurrency error"))
 //      val controller = CommandController(customerConfig, snapshotRepo, eventStore)
-//      val domainStateId = DomainStateId(UUID.randomUUID())
+//      val stateId = StateId(UUID.randomUUID())
 //      val result = controller
-//        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "good customer"))
+//        .handle(CommandMetadata(stateId), RegisterCustomer(stateId.id, "good customer"))
 //      Then("It should fail") {
 //        result
 //          .onFailure { it shouldHaveMessage "db is down!" }
@@ -121,9 +121,9 @@
 //        { commandHandler }, customerConfig.commandValidator
 //      )
 //      val badController = CommandController(mockedCustomerConfig, snapshotRepo, eventStore)
-//      val domainStateId = DomainStateId(UUID.randomUUID())
+//      val stateId = StateId(UUID.randomUUID())
 //      val result = badController
-//        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "good customer"))
+//        .handle(CommandMetadata(stateId), RegisterCustomer(stateId.id, "good customer"))
 //      Then("It should fail") {
 //        result
 //          .onFailure { it shouldHaveMessage "I got an error!" }

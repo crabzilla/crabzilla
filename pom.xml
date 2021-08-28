@@ -5,7 +5,7 @@
 
   <groupId>io.github.crabzilla</groupId>
   <artifactId>crabzilla</artifactId>
-  <version>v0.3.2</version>
+  <version>v0.3.3</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -71,10 +71,9 @@
 
   <modules>
     <module>crabzilla-core</module>
+    <module>crabzilla-serder-kotlin</module>
     <module>crabzilla-stack</module>
-    <module>crabzilla-pg-client</module>
-<!--    <module>crabzilla-cassandra</module>-->
-    <!--    <module>crabzilla-web</module>-->
+    <module>crabzilla-engine-postgres</module>
     <module>coverage-report</module>
   </modules>
   <dependencyManagement>
@@ -91,13 +90,19 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
+        <artifactId>crabzilla-serder-kotlin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.github.crabzilla</groupId>
         <artifactId>crabzilla-stack</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-pg-client</artifactId>
+        <artifactId>crabzilla-engine-postgres</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -111,7 +116,13 @@
         <scope>import</scope>
       </dependency>
 
-      <!-- util -->
+      <!-- kotlin -->
+
+      <dependency>
+        <groupId>org.jetbrains.kotlin</groupId>
+        <artifactId>kotlin-stdlib</artifactId>
+        <version>${kotlin.version}</version>
+      </dependency>
 
       <dependency>
         <groupId>org.jetbrains.kotlinx</groupId>
@@ -148,9 +159,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.jetbrains.kotlinx</groupId>
-      <artifactId>kotlinx-serialization-json</artifactId>
-      <version>${serialization.version}</version>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-stdlib</artifactId>
     </dependency>
 
     <!-- test -->

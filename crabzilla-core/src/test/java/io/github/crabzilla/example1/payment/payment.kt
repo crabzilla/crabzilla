@@ -4,69 +4,45 @@ import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.EventHandler
-import io.github.crabzilla.example1.payment.PaymentCommand.Pay
-import io.github.crabzilla.example1.payment.PaymentCommand.Refund
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentApproved
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentNotApproved
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentRefunded
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentRequested
-import kotlinx.serialization.Contextual
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
 import java.util.UUID
 
-@Serializable
-sealed class PaymentEvent : Event() {
-  @Serializable
-  @SerialName("PaymentRequested")
+sealed class PaymentEvent : Event {
   data class PaymentRequested(
-    @Contextual val id: UUID,
+    val id: UUID,
     val creditCardNo: String,
     val amount: Double,
   ) : PaymentEvent()
 
-  @Serializable
-  @SerialName("PaymentApproved")
   data class PaymentApproved(val reason: String) : PaymentEvent()
 
-  @Serializable
-  @SerialName("PaymentNotApproved")
   data class PaymentNotApproved(val reason: String) : PaymentEvent()
 
-  @Serializable
-  @SerialName("PaymentRefunded")
   data class PaymentRefunded(val reason: String, val amount: Double) : PaymentEvent()
 }
 
-@Serializable
-sealed class PaymentCommand : Command() {
-  @Serializable
-  @SerialName("Pay")
-  data class Pay(@Contextual val id: UUID, val creditCardNo: String, val amount: Double) :
+sealed class PaymentCommand : Command {
+  data class Pay(val id: UUID, val creditCardNo: String, val amount: Double) :
     PaymentCommand()
 
-  @Serializable
-  @SerialName("Refund")
   data class Refund(val reason: String) : PaymentCommand()
 }
 
-@Serializable
 enum class Status {
   Approved,
   NotApproved
 }
 
-@Serializable
-@SerialName("Payment")
 data class Payment(
-  @Contextual val id: UUID,
+  val id: UUID,
   val creditCardNo: String,
   val amount: Double,
   val status: Status? = null,
   val reason: String? = null,
-) : State() {
+) : State {
 
   companion object {
     fun create(id: UUID, creditCardNo: String, amount: Double): List<PaymentEvent> {
@@ -111,20 +87,3 @@ val paymentEventHandler = EventHandler<Payment, PaymentEvent> { state, event ->
 //    }
 //  }
 // }
-
-@kotlinx.serialization.ExperimentalSerializationApi
-val paymentModule = SerializersModule {
-  polymorphic(State::class) {
-    subclass(Payment::class, Payment.serializer())
-  }
-  polymorphic(Command::class) {
-    subclass(Pay::class, Pay.serializer())
-    subclass(Refund::class, Refund.serializer())
-  }
-  polymorphic(Event::class) {
-    subclass(PaymentRequested::class, PaymentRequested.serializer())
-    subclass(PaymentApproved::class, PaymentApproved.serializer())
-    subclass(PaymentNotApproved::class, PaymentNotApproved.serializer())
-    subclass(PaymentRefunded::class, PaymentRefunded.serializer())
-  }
-}

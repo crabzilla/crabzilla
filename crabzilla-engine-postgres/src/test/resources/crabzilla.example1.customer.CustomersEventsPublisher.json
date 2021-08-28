@@ -1,0 +1,20 @@
+{
+  "main": "io.github.crabzilla.engine.publisher.EventsPublisherVerticle",
+  "options": {
+    "config" : {
+      "connectOptionsName": "ex1_crabzilla-config",
+      "poolOptions": {
+        "maxSize": 7
+      },
+      "jsonFactoryClassName": "io.github.crabzilla.example1.Example1JsonContextFactory",
+      "targetEndpoint" : "projection.customers",
+      "initialInterval" : 0,
+      "interval" : 1,
+      "maxInterval" : 5,
+      "metricsInterval" : 5,
+      "maxNumberOfRows": 1
+    },
+    "worker": false,
+    "instances": 1
+  }
+}

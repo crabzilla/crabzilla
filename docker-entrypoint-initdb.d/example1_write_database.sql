@@ -82,4 +82,5 @@ CREATE TABLE customer_summary (
     PRIMARY KEY (id)
 );
 
-INSERT INTO projections (name, sequence) values ('customers', 0);
+INSERT INTO publications (name, sequence) values ('projection.customers', 0);
+INSERT INTO projections (name, sequence) values ('projection.customers', 0);

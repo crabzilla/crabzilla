@@ -47,11 +47,11 @@
 //      every { snapshotRepo.get(any()) } returns Future.succeededFuture(null)
 //      every { eventStore.append(any(), any(), any()) } returns Future.succeededFuture()
 //      val controller = CommandController(paymentConfig, snapshotRepo, eventStore)
-//      val domainStateId = DomainStateId(UUID.randomUUID())
+//      val stateId = StateId(UUID.randomUUID())
 //      val result = controller
 //        .handle(
-//          CommandMetadata(domainStateId),
-//          PaymentCommand.Pay(domainStateId.id, "000", 10.00)
+//          CommandMetadata(stateId),
+//          PaymentCommand.Pay(stateId.id, "000", 10.00)
 //        )
 //      Then("It should have the expected StatefulSession") {
 //        result
@@ -59,10 +59,10 @@
 //          .onSuccess { session ->
 //            session.originalVersion shouldBe 0
 //            session.currentState shouldBe
-//              Payment(domainStateId.id, "000", 10.00, Status.Approved, "ok")
+//              Payment(stateId.id, "000", 10.00, Status.Approved, "ok")
 //            session.appliedEvents() shouldBe
 //              listOf(
-//                PaymentRequested(domainStateId.id, "000", 10.00),
+//                PaymentRequested(stateId.id, "000", 10.00),
 //                PaymentApproved("ok")
 //              )
 //          }
@@ -71,9 +71,9 @@
 //
 // //    When("I send an invalid register command") {
 // //      val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
-// //      val domainStateId = DomainStateId(UUID.randomUUID())
+// //      val stateId = StateId(UUID.randomUUID())
 // //      val result = controller
-// //        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "bad customer"))
+// //        .handle(CommandMetadata(stateId), RegisterCustomer(stateId.id, "bad customer"))
 // //      Then("It should fail") {
 // //        result
 // //          .onFailure { it shouldHaveMessage "[Bad customer!]" }
@@ -89,9 +89,9 @@
 // //      every { eventStore.append(any(), any(), any()) } returns
 // //        Future.failedFuture(LockingException("Concurrency error"))
 // //      val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
-// //      val domainStateId = DomainStateId(UUID.randomUUID())
+// //      val stateId = StateId(UUID.randomUUID())
 // //      val result = controller
-// //        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "good customer"))
+// //        .handle(CommandMetadata(stateId), RegisterCustomer(stateId.id, "good customer"))
 // //      Then("It should fail") {
 // //        result
 // //          .onFailure { it shouldHaveMessage "Concurrency error" }
@@ -107,9 +107,9 @@
 // //      every { eventStore.append(any(), any(), any()) } returns
 // //        Future.failedFuture(LockingException("Concurrency error"))
 // //      val controller = CommandController(customerConfig, snapshotRepo, eventStore, eventBus)
-// //      val domainStateId = DomainStateId(UUID.randomUUID())
+// //      val stateId = StateId(UUID.randomUUID())
 // //      val result = controller
-// //        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "good customer"))
+// //        .handle(CommandMetadata(stateId), RegisterCustomer(stateId.id, "good customer"))
 // //      Then("It should fail") {
 // //        result
 // //          .onFailure { it shouldHaveMessage "db is down!" }
@@ -129,9 +129,9 @@
 // //        commandHandler, customerConfig.commandValidator
 // //      )
 // //      val badController = CommandController(mockedCustomerConfig, snapshotRepo, eventStore, eventBus)
-// //      val domainStateId = DomainStateId(UUID.randomUUID())
+// //      val stateId = StateId(UUID.randomUUID())
 // //      val result = badController
-// //        .handle(CommandMetadata(domainStateId), RegisterCustomer(domainStateId.id, "good customer"))
+// //        .handle(CommandMetadata(stateId), RegisterCustomer(stateId.id, "good customer"))
 // //      Then("It should fail") {
 // //        result
 // //          .onFailure { it shouldHaveMessage "I got an error!" }

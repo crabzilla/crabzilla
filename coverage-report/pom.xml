@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>v0.3.2</version>
+    <version>v0.3.3</version>
   </parent>
 
   <artifactId>coverage-report</artifactId>
@@ -21,23 +21,18 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-serder-kotlin</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
       <artifactId>crabzilla-stack</artifactId>
     </dependency>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-pg-client</artifactId>
+      <artifactId>crabzilla-engine-postgres</artifactId>
     </dependency>
-
-<!--    <dependency>-->
-<!--      <groupId>io.github.crabzilla</groupId>-->
-<!--      <artifactId>crabzilla-cassandra</artifactId>-->
-<!--    </dependency>-->
-
-<!--    <dependency>-->
-<!--      <groupId>io.github.crabzilla</groupId>-->
-<!--      <artifactId>crabzilla-web</artifactId>-->
-<!--    </dependency>-->
 
   </dependencies>
 
