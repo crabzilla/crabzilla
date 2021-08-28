@@ -6,7 +6,7 @@ import java.util.ServiceLoader
 class JsonContextProviderFinder {
 
   // provider by name
-  fun create(providerName: String): JsonContextProvider? {
+  fun create(providerName: String): JsonContextProvider {
     val loader: ServiceLoader<JsonContextProvider> =
       ServiceLoader.load(JsonContextProvider::class.java)
     val it: Iterator<JsonContextProvider> = loader.iterator()
