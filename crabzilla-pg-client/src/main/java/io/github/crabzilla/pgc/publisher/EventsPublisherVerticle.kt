@@ -29,7 +29,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
     options = Config.create(config())
 
     val sqlClient = sqlClient(config())
-    scanner = EventsScanner(sqlClient, options.publicationId, options.publicationType)
+    scanner = EventsScanner(sqlClient, options.publicationId, options.controlTable)
     options = Config.create(config())
 
     vertx.eventBus().consumer<Void>("crabzilla.publisher-${options.publicationId}") { msg ->
@@ -134,8 +134,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
           .transform {
             if (it.failed()) {
               Future.failedFuture(
-                "When updating sequence for " +
-                  "${options.publicationType} [${options.publicationId}]"
+                "When updating sequence for ${options.controlTable} [${options.publicationId}]"
               )
             } else {
               Future.succeededFuture(lastPublishedEvent)
@@ -155,7 +154,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
 
   private data class Config(
     val publicationId: String,
-    val publicationType: String,
+    val controlTable: String,
     val targetEndpoint: String,
     val initialInterval: Long,
     val interval: Long,
@@ -166,7 +165,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
     companion object {
       fun create(config: JsonObject): Config {
         val publicationId = config.getString("publicationId")
-        val publicationType = config.getString("publicationType")
+        val controlTable = config.getString("controlTable")
         val targetEndpoint = config.getString("targetEndpoint")
         val initialInterval = config.getLong("initialInterval", 10_000)
         val interval = config.getLong("interval", 500)
@@ -175,7 +174,7 @@ class EventsPublisherVerticle : PgcAbstractVerticle() {
         val maxNumberOfRows = config.getInteger("maxNumberOfRows", 500)
         return Config(
           publicationId = publicationId,
-          publicationType = publicationType,
+          controlTable = controlTable,
           targetEndpoint = targetEndpoint,
           initialInterval = initialInterval,
           interval = interval,

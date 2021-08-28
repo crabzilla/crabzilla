@@ -18,17 +18,11 @@ import org.slf4j.LoggerFactory
 class EventsScanner(
   private val sqlClient: SqlClient,
   private val name: String,
-  publicationType: String
+  table: String
 ) {
 
   companion object {
     private val log = LoggerFactory.getLogger(EventsScanner::class.java)
-  }
-
-  private val table = when (publicationType) {
-    "projection" -> "projections"
-    "publication" -> "publications"
-    else -> throw IllegalArgumentException("Invalid publicationType $publicationType")
   }
 
   private val selectAfterOffset =
