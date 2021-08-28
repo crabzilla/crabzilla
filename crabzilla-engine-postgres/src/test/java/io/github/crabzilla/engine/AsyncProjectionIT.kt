@@ -97,12 +97,12 @@ class AsyncProjectionIT {
         )
         Future.succeededFuture<Void>()
       }.compose {
-        vertx.eventBus().request<Void>("crabzilla.publisher-root", null)
+        vertx.eventBus().request<Void>("crabzilla.publisher-projection.customers", null)
       }.transform {
         if (it.failed()) {
           Future.failedFuture(it.cause())
         } else {
-          Future.succeededFuture(testRepo.getProjections("customers"))
+          Future.succeededFuture(testRepo.getProjections("projection.customers"))
         }
       }.onFailure {
         tc.failNow(it)

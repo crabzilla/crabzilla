@@ -35,6 +35,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
       val eventRecord = EventRecord.fromJsonObject(msg.body())
       pgPool.withTransaction { conn ->
         val event = serDer.eventFromJson(eventRecord.eventAsjJson.toString())
+        // TODO check if eventRecord.eventMetadata.eventSequence was already processed - idempotency
         eventsProjector.project(conn, event, eventRecord.eventMetadata)
           .compose { projectedSequence ->
             log.debug("Projected {}", projectedSequence)

@@ -97,7 +97,7 @@ class AsyncFailedProjectionIT {
                           )
                             == snapshot2.state
                         )
-                        testRepo.getProjections("customers")
+                        testRepo.getProjections("projection.customers")
                           .onFailure { tc.failNow(it) }
                           .onSuccess {
                             tc.verify {

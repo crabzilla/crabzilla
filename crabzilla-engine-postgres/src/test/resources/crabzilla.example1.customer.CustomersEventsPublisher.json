@@ -7,7 +7,7 @@
         "maxSize": 7
       },
       "jsonFactoryClassName": "io.github.crabzilla.example1.Example1JsonContextFactory",
-      "targetEndpoint" : "root",
+      "targetEndpoint" : "projection.customers",
       "initialInterval" : 0,
       "interval" : 1,
       "maxInterval" : 5,
