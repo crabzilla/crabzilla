@@ -74,8 +74,6 @@
     <module>crabzilla-serder-kotlin</module>
     <module>crabzilla-stack</module>
     <module>crabzilla-pg-client</module>
-<!--    <module>crabzilla-cassandra</module>-->
-    <!--    <module>crabzilla-web</module>-->
     <module>coverage-report</module>
   </modules>
   <dependencyManagement>
