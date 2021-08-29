@@ -72,8 +72,9 @@ class SerializationTests {
   fun testLdt() {
     val t = Bean1(LocalDateTime.now(), "foo")
     val expectedJson = """{"ldt":"${t.ldt}","newProp1":"foo"}"""
-    assertThat(example1Json.encodeToString(t)).startsWith(expectedJson)
     assertThat(example1Json.decodeFromString<Bean1>(expectedJson)).isEqualTo(t)
+    val resultJson = example1Json.encodeToString(t)
+    assertThat(example1Json.decodeFromString<Bean1>(resultJson)).isEqualTo(t)
   }
 
   @Test

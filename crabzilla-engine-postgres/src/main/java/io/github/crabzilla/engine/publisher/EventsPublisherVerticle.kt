@@ -42,7 +42,7 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
 
     // Schedule the first execution
     vertx.setTimer(options.initialInterval + options.interval) {
-      action()
+      handler()
     }
     vertx.setPeriodic(options.metricsInterval) {
       publishMetrics()

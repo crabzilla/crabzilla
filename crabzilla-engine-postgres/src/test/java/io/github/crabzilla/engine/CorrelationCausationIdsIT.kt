@@ -1,6 +1,6 @@
 package io.github.crabzilla.engine
 
-import io.github.crabzilla.core.command.StatefulSession
+import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandController
@@ -53,7 +53,7 @@ class CorrelationCausationIdsIT {
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata(StateId(id))
     val constructorResult = Customer.create(id, cmd.name)
-    val session = StatefulSession(constructorResult, customerEventHandler)
+    val session = CommandSession(constructorResult, customerEventHandler)
     session.execute { it.activate(cmd.reason) }
     eventStore.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
@@ -105,13 +105,13 @@ class CorrelationCausationIdsIT {
     val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")
     val metadata1 = CommandMetadata(StateId(id))
     val constructorResult = Customer.create(id, cmd1.name)
-    val session1 = StatefulSession(constructorResult, customerEventHandler)
+    val session1 = CommandSession(constructorResult, customerEventHandler)
     session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
     val metadata2 = CommandMetadata(StateId(id))
     val customer2 = Customer(id, cmd1.name, true, cmd2.reason)
-    val session2 = StatefulSession(2, customer2, customerEventHandler)
+    val session2 = CommandSession(customer2, customerEventHandler)
     session2.execute { it.deactivate(cmd2.reason) }
 
     eventStore.handle(metadata1, cmd1)

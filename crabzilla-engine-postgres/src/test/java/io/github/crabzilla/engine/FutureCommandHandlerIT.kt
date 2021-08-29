@@ -65,7 +65,6 @@ class FutureCommandHandlerIT {
         tc.failNow(err)
       }
       .onSuccess { session ->
-        session.originalVersion shouldBe 0
         session.currentState shouldBe
           Payment(stateId.id, "000", 10.00, Status.Approved, "ok")
         session.appliedEvents() shouldBe

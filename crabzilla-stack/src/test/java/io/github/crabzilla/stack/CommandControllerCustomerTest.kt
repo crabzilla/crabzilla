@@ -45,7 +45,7 @@
 //      val stateId = StateId(UUID.randomUUID())
 //      val result = controller
 //        .handle(CommandMetadata(stateId), RegisterCustomer(stateId.id, "customer#1"))
-//      Then("It should have the expected StatefulSession") {
+//      Then("It should have the expected CommandSession") {
 //        result
 //          .onFailure { err -> fail(err.message ?: "wtf?") }
 //          .onSuccess { session ->

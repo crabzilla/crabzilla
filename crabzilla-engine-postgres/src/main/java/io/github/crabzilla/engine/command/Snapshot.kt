@@ -1,4 +1,4 @@
-package io.github.crabzilla.core.command
+package io.github.crabzilla.engine.command
 
 import io.github.crabzilla.core.State
 
