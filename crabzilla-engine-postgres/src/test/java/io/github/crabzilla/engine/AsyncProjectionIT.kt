@@ -7,14 +7,21 @@ import io.github.crabzilla.engine.command.CommandsContext
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
+import io.github.crabzilla.stack.CausationId
+import io.github.crabzilla.stack.CorrelationId
+import io.github.crabzilla.stack.EventId
+import io.github.crabzilla.stack.EventMetadata
+import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.StateId
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.github.crabzilla.stack.deployVerticles
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import org.junit.jupiter.api.BeforeEach
@@ -98,6 +105,15 @@ class AsyncProjectionIT {
         Future.succeededFuture<Void>()
       }.compose {
         vertx.eventBus().request<Void>("crabzilla.publisher-projection.customers", null)
+      }.compose {
+        // projection.customers
+        val eventMetadata = EventMetadata(
+          "Customer", StateId(id), EventId(UUID.randomUUID()),
+          CorrelationId(UUID.randomUUID()), CausationId(UUID.randomUUID()), 1L
+        )
+        val eventJson = jsonSerDer.toJson(CustomerEvent.CustomerRegistered(id, "cust#$id"))
+        val eventRecord = EventRecord(eventMetadata, JsonObject(eventJson))
+        vertx.eventBus().request<Void>("projection.customers", eventRecord.toJsonObject())
       }.transform {
         if (it.failed()) {
           Future.failedFuture(it.cause())

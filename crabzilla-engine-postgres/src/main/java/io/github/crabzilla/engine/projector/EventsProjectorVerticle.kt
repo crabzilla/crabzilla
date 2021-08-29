@@ -2,6 +2,8 @@ package io.github.crabzilla.engine.projector
 
 import io.github.crabzilla.engine.PostgresAbstractVerticle
 import io.github.crabzilla.stack.EventRecord
+import io.vertx.core.Future
+import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
@@ -22,7 +24,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
   private val failures: AtomicLong = AtomicLong(0)
   private val eventSequence: AtomicLong = AtomicLong(0)
 
-  override fun start() {
+  override fun start(promise: Promise<Void>) {
 
     targetEndpoint = config().getString("targetEndpoint")
 
@@ -31,35 +33,61 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
     val provider = EventsProjectorProviderFinder().create(config().getString("eventsProjectorFactoryClassName"))
     val eventsProjector = provider.create()
 
-    vertx.eventBus().consumer<JsonObject>(targetEndpoint) { msg ->
-      val eventRecord = EventRecord.fromJsonObject(msg.body())
-      pgPool.withTransaction { conn ->
-        val event = serDer.eventFromJson(eventRecord.eventAsjJson.toString())
-        // TODO check if eventRecord.eventMetadata.eventSequence was already processed - idempotency
-        eventsProjector.project(conn, event, eventRecord.eventMetadata)
-          .compose { projectedSequence ->
-            log.debug("Projected {}", projectedSequence)
-            conn
-              .preparedQuery("update projections set sequence = $2 where name = $1 and sequence < $2")
-              .execute(Tuple.of(targetEndpoint, projectedSequence))
+    pgPool.withConnection { conn ->
+      conn.preparedQuery("select sequence from projections where name =$1")
+        .execute(Tuple.of(targetEndpoint))
+        .map { row ->
+          if (row.rowCount() == 1) {
+            eventSequence.set(row.first().getLong("sequence"))
+            Future.succeededFuture<Void>()
+          } else {
+            Future.failedFuture("Projection not found: [$targetEndpoint]")
           }
+        }
+    }
+      .onFailure {
+        promise.fail(it)
       }
-        .onFailure {
-          msg.fail(500, it.message)
-          failures.incrementAndGet()
+      .onSuccess {
+        vertx.eventBus().consumer<JsonObject>(targetEndpoint) { msg ->
+          val eventRecord = EventRecord.fromJsonObject(msg.body())
+          log.info(
+            "Event sequence {} current {}",
+            eventRecord.eventMetadata.eventSequence, eventSequence.get()
+          )
+          val event = serDer.eventFromJson(eventRecord.eventAsjJson.toString())
+          if (eventRecord.eventMetadata.eventSequence <= eventSequence.get()) {
+            log.debug(
+              "Ignoring event sequence {} since it's lower than {}",
+              eventRecord.eventMetadata.eventSequence, eventSequence.get()
+            )
+            msg.reply(true)
+            return@consumer
+          }
+          pgPool.withTransaction { conn ->
+            eventsProjector.project(conn, event, eventRecord.eventMetadata)
+              .compose { projectedSequence ->
+                log.debug("Projected {}", projectedSequence)
+                conn
+                  .preparedQuery("update projections set sequence = $2 where name = $1 and sequence < $2")
+                  .execute(Tuple.of(targetEndpoint, projectedSequence))
+              }
+          }
+            .onFailure {
+              msg.fail(500, it.message)
+              failures.incrementAndGet()
+            }
+            .onSuccess {
+              msg.reply(true)
+              eventSequence.set(eventRecord.eventMetadata.eventSequence)
+            }
         }
-        .onSuccess {
-          msg.reply(true)
-          eventSequence.set(eventRecord.eventMetadata.eventSequence)
+        vertx.setPeriodic(config().getLong("metricsInterval", defaultMetricInterval)) {
+          publishMetrics()
         }
-    }
-
-    vertx.setPeriodic(config().getLong("metricsInterval", defaultMetricInterval)) {
-      publishMetrics()
-    }
-
-    publishMetrics()
-    log.info("Started consuming from endpoint [{}]", targetEndpoint)
+        log.info("Started consuming from endpoint [{}]", targetEndpoint)
+        promise.complete()
+      }
   }
 
   private fun publishMetrics() {

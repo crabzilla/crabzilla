@@ -9,7 +9,7 @@
       "jsonFactoryClassName": "io.github.crabzilla.example1.Example1JsonContextFactory",
       "targetEndpoint" : "projection.customers",
       "initialInterval" : 0,
-      "interval" : 1,
+      "interval" : 5,
       "maxInterval" : 5,
       "metricsInterval" : 5,
       "maxNumberOfRows": 1
