@@ -7,21 +7,18 @@ import io.github.crabzilla.core.State
  * To perform aggregate root business methods and track it's events and state
  */
 class StatefulSession<S : State, E : Event> {
-  val originalVersion: Int
   private val originalState: S
   private val eventHandler: EventHandler<S, E>
   private val appliedEvents = mutableListOf<E>()
   var currentState: S
 
-  constructor(version: Int, state: S, eventHandler: EventHandler<S, E>) {
-    this.originalVersion = version
+  constructor(state: S, eventHandler: EventHandler<S, E>) {
     this.originalState = state
     this.eventHandler = eventHandler
     this.currentState = originalState
   }
 
   constructor(events: List<E>, eventHandler: EventHandler<S, E>) {
-    this.originalVersion = 0
     this.eventHandler = eventHandler
     val state: S? = events.fold(null) { s: S?, e: E ->
       appliedEvents.add(e)
@@ -53,13 +50,6 @@ class StatefulSession<S : State, E : Event> {
   }
 
   fun toSessionData(): SessionData {
-    return SessionData(originalVersion, if (originalVersion == 0) null else originalState, appliedEvents, currentState)
+    return SessionData(originalState, appliedEvents, currentState)
   }
-
-  data class SessionData(
-    val originalVersion: Int,
-    val originalState: State?,
-    val events: List<Event>,
-    val newState: State
-  )
 }

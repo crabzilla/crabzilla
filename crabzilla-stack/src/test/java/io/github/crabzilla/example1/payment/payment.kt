@@ -4,7 +4,6 @@ import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.EventHandler
-import io.github.crabzilla.core.command.Snapshot
 import io.github.crabzilla.core.command.StatefulSession
 import io.github.crabzilla.example1.payment.PaymentCommand.Pay
 import io.github.crabzilla.example1.payment.PaymentCommand.Refund
@@ -97,7 +96,7 @@ class FuturePaymentCommandHandler(handler: EventHandler<Payment, PaymentEvent>, 
 
   override fun handleCommand(
     command: PaymentCommand,
-    snapshot: Snapshot<Payment>?,
+    state: Payment?
   ): Future<StatefulSession<Payment, PaymentEvent>> {
 
     return when (command) {

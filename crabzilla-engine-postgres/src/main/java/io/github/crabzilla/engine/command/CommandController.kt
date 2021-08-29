@@ -140,7 +140,7 @@ class CommandController<S : State, C : Command, E : Event>(
         .execute(params)
         .mapEmpty()
     }
-    fun appendEvents(conn: SqlConnection, session: StatefulSession<S, E>): Future<AppendedEvents<E>> {
+    fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>): Future<AppendedEvents<E>> {
       fun appendEvent(event: E, version: Int, causationId: CausationId): Future<AppendedEvent<E>> {
         val eventAsJson = jsonSerDer.toJson(event)
         log.debug("Will append event {} as {}", event, eventAsJson)
@@ -166,9 +166,9 @@ class CommandController<S : State, C : Command, E : Event>(
           }
       }
       val initialFuture = Future.succeededFuture<AppendedEvent<E>?>(null)
-      val version = AtomicInteger(session.originalVersion)
+      val version = AtomicInteger(initialVersion)
       val eventsAdded = mutableListOf<AppendedEvent<E>>()
-      return session.appliedEvents().fold(
+      return events.fold(
         initialFuture
       ) {
         currentFuture: Future<AppendedEvent<E>?>,
@@ -181,10 +181,10 @@ class CommandController<S : State, C : Command, E : Event>(
         }
       }.map { AppendedEvents(eventsAdded, version.get()) }
     }
-    fun updateSnapshot(conn: SqlConnection, resultingVersion: Int, session: StatefulSession<S, E>): Future<Void> {
-      val newSTateAsJson = jsonSerDer.toJson(session.currentState)
+    fun updateSnapshot(conn: SqlConnection, originalVersion: Int, resultingVersion: Int, newState: S): Future<Void> {
+      val newSTateAsJson = jsonSerDer.toJson(newState)
       log.debug("Will append snapshot {} to version {}", newSTateAsJson, resultingVersion)
-      return if (session.originalVersion == 0) {
+      return if (originalVersion == 0) {
         val params = Tuple.of(
           resultingVersion,
           JsonObject(newSTateAsJson),
@@ -197,7 +197,7 @@ class CommandController<S : State, C : Command, E : Event>(
           resultingVersion,
           JsonObject(newSTateAsJson),
           metadata.stateId.id,
-          session.originalVersion
+          originalVersion
         )
         conn
           .preparedQuery(SQL_UPDATE_VERSION)
@@ -227,6 +227,7 @@ class CommandController<S : State, C : Command, E : Event>(
       }.mapEmpty()
     }
 
+    val snapshotResult: AtomicReference<Snapshot<S>?> = AtomicReference(null)
     val sessionResult: AtomicReference<StatefulSession<S, E>> = AtomicReference(null)
     val appendedEventsResult: AtomicReference<AppendedEvents<E>> = AtomicReference(null)
 
@@ -236,15 +237,17 @@ class CommandController<S : State, C : Command, E : Event>(
           log.debug("Command validated")
           getSnapshot(conn)
         }.compose { snapshot ->
+          snapshotResult.set(snapshot)
           log.debug("Got snapshot {}", snapshot)
-          commandHandler.invoke(command, snapshot)
+          commandHandler.invoke(command, snapshot?.state)
         }.compose { session ->
-          log.debug("Command handled {}", session.toSessionData())
           sessionResult.set(session)
+          log.debug("Command handled {}", session.toSessionData())
           appendCommand(conn)
         }.compose {
           log.debug("Command appended")
-          appendEvents(conn, sessionResult.get())
+          val originalVersion = snapshotResult.get()?.version ?: 0
+          appendEvents(conn, originalVersion, sessionResult.get().appliedEvents())
         }.compose {
           log.debug("Events appended")
           appendedEventsResult.set(it)
@@ -253,7 +256,11 @@ class CommandController<S : State, C : Command, E : Event>(
           if (eventsProjector != null) {
             log.debug("Events projected")
           }
-          updateSnapshot(conn, appendedEventsResult.get().resultingVersion, sessionResult.get())
+          val originalVersion = snapshotResult.get()?.version ?: 0
+          updateSnapshot(
+            conn,
+            originalVersion, appendedEventsResult.get().resultingVersion, sessionResult.get().currentState
+          )
         }.compose {
           Future.succeededFuture(sessionResult.get())
         }.onSuccess {
@@ -268,18 +275,18 @@ class CommandController<S : State, C : Command, E : Event>(
 
   private data class AppendedEvents<E>(val events: List<AppendedEvent<E>>, val resultingVersion: Int)
 
-  private fun commandHandler(): (command: C, snapshot: Snapshot<S>?) -> Future<StatefulSession<S, E>> {
+  private fun commandHandler(): (command: C, state: S?) -> Future<StatefulSession<S, E>> {
     return when (val handler: CommandHandlerApi<S, C, E> = config.commandHandlerFactory.invoke()) {
-      is CommandHandler<S, C, E> -> { command, snapshot ->
+      is CommandHandler<S, C, E> -> { command, state ->
         try {
-          val session = handler.handleCommand(command, snapshot)
+          val session = handler.handleCommand(command, state)
           Future.succeededFuture(session)
         } catch (e: Throwable) {
           Future.failedFuture(e)
         }
       }
-      is FutureCommandHandler<S, C, E> -> { command, snapshot ->
-        handler.handleCommand(command, snapshot)
+      is FutureCommandHandler<S, C, E> -> { command, state ->
+        handler.handleCommand(command, state)
       }
       else -> throw IllegalArgumentException("Unknown command handler")
     }

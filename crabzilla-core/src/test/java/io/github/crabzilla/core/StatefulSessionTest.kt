@@ -21,7 +21,7 @@ internal class StatefulSessionTest {
 
   @Test
   fun can_be_instantiated() {
-    StatefulSession(1, customer, customerEventHandler)
+    StatefulSession(customer, customerEventHandler)
   }
 
   // TODO test
@@ -37,7 +37,7 @@ internal class StatefulSessionTest {
 
     @BeforeEach
     fun instantiate() {
-      statefulSession = StatefulSession(1, customer, customerEventHandler)
+      statefulSession = StatefulSession(customer, customerEventHandler)
     }
 
     @Test
@@ -55,7 +55,6 @@ internal class StatefulSessionTest {
       val sessionData = statefulSession.toSessionData()
       assertThat(sessionData.newState).isEqualTo(customer)
       assertThat(sessionData.originalState).isEqualTo(customer)
-      assertThat(sessionData.originalVersion).isEqualTo(1)
       assertThat(sessionData.events).isEmpty()
     }
 
@@ -88,7 +87,6 @@ internal class StatefulSessionTest {
         val sessionData = statefulSession.toSessionData()
         assertThat(sessionData.newState).isEqualTo(expectedCustomer)
         assertThat(sessionData.originalState).isEqualTo(customer)
-        assertThat(sessionData.originalVersion).isEqualTo(1)
         assertThat(sessionData.events).containsOnly(customerCreated)
       }
 
@@ -136,7 +134,7 @@ internal class StatefulSessionTest {
     @BeforeEach
     fun instantiate() {
       // given
-      statefulSession = StatefulSession(1, customer, customerEventHandler)
+      statefulSession = StatefulSession(customer, customerEventHandler)
       // when
       statefulSession.execute { customer -> asList(customerCreated, customerActivated) }
     }

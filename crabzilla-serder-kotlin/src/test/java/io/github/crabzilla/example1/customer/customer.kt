@@ -7,7 +7,6 @@ import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.command.EventHandler
-import io.github.crabzilla.core.command.Snapshot
 import io.github.crabzilla.core.command.StatefulSession
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
@@ -133,29 +132,24 @@ class CustomerCommandHandler :
 
   override fun handleCommand(
     command: CustomerCommand,
-    snapshot: Snapshot<Customer>?
+    state: Customer?
   ): StatefulSession<Customer, CustomerEvent> {
-
     return when (command) {
-
       is RegisterCustomer -> {
-        if (snapshot != null) throw CustomerAlreadyExists(command.customerId)
+        if (state != null) throw CustomerAlreadyExists(command.customerId)
         withNew(Customer.create(id = command.customerId, name = command.name))
       }
-
       is RegisterAndActivateCustomer -> {
-        if (snapshot != null) throw CustomerAlreadyExists(command.customerId)
+        if (state != null) throw CustomerAlreadyExists(command.customerId)
         withNew(Customer.create(id = command.customerId, name = command.name))
           .execute { it.activate(command.reason) }
       }
-
       is ActivateCustomer -> {
-        with(snapshot)
+        with(state!!)
           .execute { it.activate(command.reason) }
       }
-
       is DeactivateCustomer -> {
-        with(snapshot)
+        with(state!!)
           .execute { it.deactivate(command.reason) }
       }
     }

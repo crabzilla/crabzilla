@@ -6,7 +6,6 @@ import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.command.CommandException.ValidationException
 import io.github.crabzilla.core.command.CommandHandler
-import io.github.crabzilla.core.command.Snapshot
 
 /**
  * A helper for basic specifications
@@ -27,8 +26,7 @@ class TestSpecification<S : State, C : Command, E : Event>(val config: CommandCo
       }
     }
     val commandHandler = config.commandHandlerFactory.invoke() as CommandHandler<S, C, E>
-    val snapshot = if (state == null) null else Snapshot(state!!, events.size)
-    val session = commandHandler.handleCommand(command, snapshot)
+    val session = commandHandler.handleCommand(command, state)
     state = session.currentState
     events.addAll(session.appliedEvents())
     return this

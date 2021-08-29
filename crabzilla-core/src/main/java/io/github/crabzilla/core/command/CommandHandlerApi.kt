@@ -10,7 +10,7 @@ open class CommandHandlerApi<S : State, C : Command, E : Event>(
   fun withNew(events: List<E>): StatefulSession<S, E> {
     return StatefulSession(events, applier)
   }
-  fun with(snapshot: Snapshot<S>?): StatefulSession<S, E> {
-    return StatefulSession(snapshot!!.version, snapshot.state, applier)
+  fun with(state: S?): StatefulSession<S, E> {
+    return StatefulSession(state!!, applier)
   }
 }

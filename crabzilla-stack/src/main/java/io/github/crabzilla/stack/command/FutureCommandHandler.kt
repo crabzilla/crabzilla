@@ -5,7 +5,6 @@ import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandHandlerApi
 import io.github.crabzilla.core.command.EventHandler
-import io.github.crabzilla.core.command.Snapshot
 import io.github.crabzilla.core.command.StatefulSession
 import io.vertx.core.Future
 
@@ -21,6 +20,6 @@ abstract class FutureCommandHandler<S : State, C : Command, E : Event>(handler: 
 
   abstract fun handleCommand(
     command: C,
-    snapshot: Snapshot<S>?
+    state: S?
   ): Future<StatefulSession<S, E>>
 }

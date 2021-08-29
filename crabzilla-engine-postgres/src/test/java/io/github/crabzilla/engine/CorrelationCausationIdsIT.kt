@@ -111,7 +111,7 @@ class CorrelationCausationIdsIT {
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
     val metadata2 = CommandMetadata(StateId(id))
     val customer2 = Customer(id, cmd1.name, true, cmd2.reason)
-    val session2 = StatefulSession(2, customer2, customerEventHandler)
+    val session2 = StatefulSession(customer2, customerEventHandler)
     session2.execute { it.deactivate(cmd2.reason) }
 
     eventStore.handle(metadata1, cmd1)
