@@ -1,6 +1,6 @@
 package io.github.crabzilla.engine
 
-import io.github.crabzilla.core.command.Snapshot
+import io.github.crabzilla.engine.command.Snapshot
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandsContext

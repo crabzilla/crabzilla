@@ -11,7 +11,6 @@ import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.command.CommandHandlerApi
 import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
-import io.github.crabzilla.core.command.Snapshot
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.engine.assertAffectedRows
 import io.github.crabzilla.engine.projector.EventsProjector

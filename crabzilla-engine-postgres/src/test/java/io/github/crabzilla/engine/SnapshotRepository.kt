@@ -1,7 +1,7 @@
 package io.github.crabzilla.engine
 
 import io.github.crabzilla.core.State
-import io.github.crabzilla.core.command.Snapshot
+import io.github.crabzilla.engine.command.Snapshot
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
