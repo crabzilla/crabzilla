@@ -208,6 +208,7 @@ class CommandController<S : State, C : Command, E : Event>(
       if (eventsProjector == null) {
         return Future.succeededFuture()
       }
+      log.debug("Will project events")
       val initialFuture = Future.succeededFuture<Void>()
       return appendedEvents.events.fold(
         initialFuture
@@ -252,9 +253,6 @@ class CommandController<S : State, C : Command, E : Event>(
           appendedEventsResult.set(it)
           projectEvents(conn, it)
         }.compose {
-          if (eventsProjector != null) {
-            log.debug("Events projected")
-          }
           val originalVersion = snapshotResult.get()?.version ?: 0
           updateSnapshot(
             conn,
