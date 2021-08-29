@@ -69,7 +69,7 @@ val paymentEventHandler = EventHandler<Payment, PaymentEvent> { state, event ->
 //  override fun handleCommand(
 //    command: PaymentCommand,
 //    snapshot: Snapshot<Payment>?,
-//  ): Future<StatefulSession<Payment, PaymentEvent>> {
+//  ): Future<CommandSession<Payment, PaymentEvent>> {
 //
 //    return when (command) {
 //      is Pay -> {

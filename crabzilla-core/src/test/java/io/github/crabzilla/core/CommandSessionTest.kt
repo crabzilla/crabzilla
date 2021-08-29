@@ -1,6 +1,6 @@
 package io.github.crabzilla.core
 
-import io.github.crabzilla.core.command.StatefulSession
+import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerEventHandler
@@ -12,16 +12,16 @@ import org.junit.jupiter.api.Test
 import java.util.Arrays.asList
 import java.util.UUID
 
-@DisplayName("A StatefulSession")
-internal class StatefulSessionTest {
+@DisplayName("A CommandSession")
+internal class CommandSessionTest {
 
-  lateinit var statefulSession: StatefulSession<Customer, CustomerEvent>
+  lateinit var commandSession: CommandSession<Customer, CustomerEvent>
 
   val customer = Customer(id = UUID.randomUUID(), name = "c1")
 
   @Test
   fun can_be_instantiated() {
-    StatefulSession(customer, customerEventHandler)
+    CommandSession(customer, customerEventHandler)
   }
 
   // TODO test
@@ -37,22 +37,22 @@ internal class StatefulSessionTest {
 
     @BeforeEach
     fun instantiate() {
-      statefulSession = StatefulSession(customer, customerEventHandler)
+      commandSession = CommandSession(customer, customerEventHandler)
     }
 
     @Test
     fun is_empty() {
-      assertThat(statefulSession.appliedEvents().size).isEqualTo(0)
+      assertThat(commandSession.appliedEvents().size).isEqualTo(0)
     }
 
     @Test
     fun has_empty_state() {
-      assertThat(statefulSession.currentState).isEqualTo(customer)
+      assertThat(commandSession.currentState).isEqualTo(customer)
     }
 
     @Test
     fun statusData_matches() {
-      val sessionData = statefulSession.toSessionData()
+      val sessionData = commandSession.toSessionData()
       assertThat(sessionData.newState).isEqualTo(customer)
       assertThat(sessionData.originalState).isEqualTo(customer)
       assertThat(sessionData.events).isEmpty()
@@ -68,23 +68,23 @@ internal class StatefulSessionTest {
 
       @BeforeEach
       fun apply_create_event() {
-        statefulSession.execute { customer -> listOf(customerCreated) }
+        commandSession.execute { customer -> listOf(customerCreated) }
       }
 
       @Test
       fun has_new_state() {
-        assertThat(statefulSession.currentState).isEqualTo(expectedCustomer)
+        assertThat(commandSession.currentState).isEqualTo(expectedCustomer)
       }
 
       @Test
       fun has_only_create_event() {
-        assertThat(statefulSession.appliedEvents()).contains(customerCreated)
-        assertThat(statefulSession.appliedEvents().size).isEqualTo(1)
+        assertThat(commandSession.appliedEvents()).contains(customerCreated)
+        assertThat(commandSession.appliedEvents().size).isEqualTo(1)
       }
 
       @Test
       fun statusData_matches() {
-        val sessionData = statefulSession.toSessionData()
+        val sessionData = commandSession.toSessionData()
         assertThat(sessionData.newState).isEqualTo(expectedCustomer)
         assertThat(sessionData.originalState).isEqualTo(customer)
         assertThat(sessionData.events).containsOnly(customerCreated)
@@ -102,19 +102,19 @@ internal class StatefulSessionTest {
 
         @BeforeEach
         fun apply_activate_event() {
-          statefulSession.execute { customer -> listOf(customerActivated) }
+          commandSession.execute { customer -> listOf(customerActivated) }
         }
 
         @Test
         fun has_new_state() {
-          assertThat(statefulSession.currentState).isEqualTo(expectedCustomer)
+          assertThat(commandSession.currentState).isEqualTo(expectedCustomer)
         }
 
         @Test
         fun has_both_create_and_activated_evenst() {
-          assertThat(statefulSession.appliedEvents()[0]).isEqualTo(customerCreated)
-          assertThat(statefulSession.appliedEvents()[1]).isEqualTo(customerActivated)
-          assertThat(statefulSession.appliedEvents().size).isEqualTo(2)
+          assertThat(commandSession.appliedEvents()[0]).isEqualTo(customerCreated)
+          assertThat(commandSession.appliedEvents()[1]).isEqualTo(customerActivated)
+          assertThat(commandSession.appliedEvents().size).isEqualTo(2)
         }
       }
     }
@@ -134,23 +134,23 @@ internal class StatefulSessionTest {
     @BeforeEach
     fun instantiate() {
       // given
-      statefulSession = StatefulSession(customer, customerEventHandler)
+      commandSession = CommandSession(customer, customerEventHandler)
       // when
-      statefulSession.execute { customer -> asList(customerCreated, customerActivated) }
+      commandSession.execute { customer -> asList(customerCreated, customerActivated) }
     }
 
     // then
 
     @Test
     fun has_new_state() {
-      assertThat(statefulSession.currentState).isEqualTo(expectedCustomer)
+      assertThat(commandSession.currentState).isEqualTo(expectedCustomer)
     }
 
     @Test
     fun has_both_event() {
-      assertThat(statefulSession.appliedEvents()).contains(customerCreated)
-      assertThat(statefulSession.appliedEvents()).contains(customerActivated)
-      assertThat(statefulSession.appliedEvents().size).isEqualTo(2)
+      assertThat(commandSession.appliedEvents()).contains(customerCreated)
+      assertThat(commandSession.appliedEvents()).contains(customerActivated)
+      assertThat(commandSession.appliedEvents().size).isEqualTo(2)
     }
   }
 }

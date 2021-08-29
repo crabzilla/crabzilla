@@ -9,9 +9,9 @@ import io.github.crabzilla.core.command.CommandException.LockingException
 import io.github.crabzilla.core.command.CommandException.ValidationException
 import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.command.CommandHandlerApi
+import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.command.Snapshot
-import io.github.crabzilla.core.command.StatefulSession
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.engine.assertAffectedRows
 import io.github.crabzilla.engine.projector.EventsProjector
@@ -87,7 +87,7 @@ class CommandController<S : State, C : Command, E : Event>(
     vertx.eventBus().publish("crabzilla.command-controllers", metric)
   }
 
-  fun handle(metadata: CommandMetadata, command: C): Future<StatefulSession<S, E>> {
+  fun handle(metadata: CommandMetadata, command: C): Future<CommandSession<S, E>> {
     fun validateCommands(): Future<Void> {
       val validator: CommandValidator<C>? = config.commandValidator
       return if (validator != null) {
@@ -228,7 +228,7 @@ class CommandController<S : State, C : Command, E : Event>(
     }
 
     val snapshotResult: AtomicReference<Snapshot<S>?> = AtomicReference(null)
-    val sessionResult: AtomicReference<StatefulSession<S, E>> = AtomicReference(null)
+    val sessionResult: AtomicReference<CommandSession<S, E>> = AtomicReference(null)
     val appendedEventsResult: AtomicReference<AppendedEvents<E>> = AtomicReference(null)
 
     return pgPool.withTransaction { conn ->
@@ -275,7 +275,7 @@ class CommandController<S : State, C : Command, E : Event>(
 
   private data class AppendedEvents<E>(val events: List<AppendedEvent<E>>, val resultingVersion: Int)
 
-  private fun commandHandler(): (command: C, state: S?) -> Future<StatefulSession<S, E>> {
+  private fun commandHandler(): (command: C, state: S?) -> Future<CommandSession<S, E>> {
     return when (val handler: CommandHandlerApi<S, C, E> = config.commandHandlerFactory.invoke()) {
       is CommandHandler<S, C, E> -> { command, state ->
         try {

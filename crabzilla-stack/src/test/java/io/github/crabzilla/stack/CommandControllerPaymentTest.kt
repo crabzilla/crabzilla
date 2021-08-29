@@ -53,7 +53,7 @@
 //          CommandMetadata(stateId),
 //          PaymentCommand.Pay(stateId.id, "000", 10.00)
 //        )
-//      Then("It should have the expected StatefulSession") {
+//      Then("It should have the expected CommandSession") {
 //        result
 //          .onFailure { err -> fail(err.message ?: "wtf?") }
 //          .onSuccess { session ->

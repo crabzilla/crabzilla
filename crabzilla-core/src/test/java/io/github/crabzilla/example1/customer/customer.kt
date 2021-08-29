@@ -5,9 +5,9 @@ import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.command.CommandHandler
+import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.command.EventHandler
-import io.github.crabzilla.core.command.StatefulSession
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
@@ -101,7 +101,7 @@ class CustomerCommandHandler :
   override fun handleCommand(
     command: CustomerCommand,
     state: Customer?
-  ): StatefulSession<Customer, CustomerEvent> {
+  ): CommandSession<Customer, CustomerEvent> {
     return when (command) {
       is RegisterCustomer -> {
         if (state != null) throw CustomerAlreadyExists(command.customerId)
@@ -113,11 +113,11 @@ class CustomerCommandHandler :
           .execute { it.activate(command.reason) }
       }
       is ActivateCustomer -> {
-        with(state!!)
+        with(state)
           .execute { it.activate(command.reason) }
       }
       is DeactivateCustomer -> {
-        with(state!!)
+        with(state)
           .execute { it.deactivate(command.reason) }
       }
     }

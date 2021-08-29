@@ -6,7 +6,7 @@ import io.github.crabzilla.core.State
 /**
  * To perform aggregate root business methods and track it's events and state
  */
-class StatefulSession<S : State, E : Event> {
+class CommandSession<S : State, E : Event> {
   private val originalState: S
   private val eventHandler: EventHandler<S, E>
   private val appliedEvents = mutableListOf<E>()
@@ -32,7 +32,7 @@ class StatefulSession<S : State, E : Event> {
     return appliedEvents
   }
 
-  fun apply(events: List<E>): StatefulSession<S, E> {
+  fun apply(events: List<E>): CommandSession<S, E> {
     events.forEach { domainEvent ->
       currentState = eventHandler.handleEvent(currentState, domainEvent)
       appliedEvents.add(domainEvent)
@@ -40,16 +40,16 @@ class StatefulSession<S : State, E : Event> {
     return this
   }
 
-  inline fun execute(fn: (S) -> List<E>): StatefulSession<S, E> {
+  inline fun execute(fn: (S) -> List<E>): CommandSession<S, E> {
     val newEvents = fn.invoke(currentState)
     return apply(newEvents)
   }
 
-  fun register(event: E): StatefulSession<S, E> {
+  fun register(event: E): CommandSession<S, E> {
     return apply(listOf(event))
   }
 
-  fun toSessionData(): SessionData {
-    return SessionData(originalState, appliedEvents, currentState)
+  fun toSessionData(): CommandSessionData {
+    return CommandSessionData(originalState, appliedEvents, currentState)
   }
 }

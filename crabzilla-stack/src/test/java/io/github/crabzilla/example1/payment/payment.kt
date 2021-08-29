@@ -3,8 +3,8 @@ package io.github.crabzilla.example1.payment
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
+import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.EventHandler
-import io.github.crabzilla.core.command.StatefulSession
 import io.github.crabzilla.example1.payment.PaymentCommand.Pay
 import io.github.crabzilla.example1.payment.PaymentCommand.Refund
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentApproved
@@ -97,7 +97,7 @@ class FuturePaymentCommandHandler(handler: EventHandler<Payment, PaymentEvent>, 
   override fun handleCommand(
     command: PaymentCommand,
     state: Payment?
-  ): Future<StatefulSession<Payment, PaymentEvent>> {
+  ): Future<CommandSession<Payment, PaymentEvent>> {
 
     return when (command) {
       is Pay -> {

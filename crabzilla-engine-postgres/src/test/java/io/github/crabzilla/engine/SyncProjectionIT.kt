@@ -1,6 +1,6 @@
 package io.github.crabzilla.engine
 
-import io.github.crabzilla.core.command.StatefulSession
+import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandController
@@ -59,7 +59,7 @@ class SyncProjectionIT {
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata(StateId(id))
     val constructorResult = Customer.create(id, cmd.name)
-    val session = StatefulSession(constructorResult, customerEventHandler)
+    val session = CommandSession(constructorResult, customerEventHandler)
     session.execute { it.activate(cmd.reason) }
     controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }

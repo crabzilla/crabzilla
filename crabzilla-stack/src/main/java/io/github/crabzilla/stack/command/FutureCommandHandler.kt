@@ -4,8 +4,8 @@ import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandHandlerApi
+import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.EventHandler
-import io.github.crabzilla.core.command.StatefulSession
 import io.vertx.core.Future
 
 /**
@@ -14,12 +14,12 @@ import io.vertx.core.Future
 abstract class FutureCommandHandler<S : State, C : Command, E : Event>(handler: EventHandler<S, E>) :
   CommandHandlerApi<S, C, E>(handler) {
 
-  fun <S : State, E : Event> StatefulSession<S, E>.toFuture(): Future<StatefulSession<S, E>> {
+  fun <S : State, E : Event> CommandSession<S, E>.toFuture(): Future<CommandSession<S, E>> {
     return Future.succeededFuture(this)
   }
 
   abstract fun handleCommand(
     command: C,
     state: S?
-  ): Future<StatefulSession<S, E>>
+  ): Future<CommandSession<S, E>>
 }
