@@ -1,9 +1,9 @@
 package io.github.crabzilla.engine
 
-import io.github.crabzilla.engine.command.Snapshot
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandsContext
+import io.github.crabzilla.engine.command.Snapshot
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
