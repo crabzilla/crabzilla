@@ -9,10 +9,7 @@ import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.stack.command.FutureCommandHandler
 import io.vertx.core.Future
 
-class UnknownCommandHandler(msg: String) : IllegalArgumentException(msg)
-
-fun <S : State, C : Command, E : Event> CommandHandlerApi<S, C, E>.wrap()
-: (command: C, state: S?) -> Future<CommandSession<S, E>> {
+fun <S : State, C : Command, E : Event> CommandHandlerApi<S, C, E>.wrap(): (command: C, state: S?) -> Future<CommandSession<S, E>> {
   return when (val handler: CommandHandlerApi<S, C, E> = this) {
     is CommandHandler<S, C, E> -> { command, state ->
       try {
