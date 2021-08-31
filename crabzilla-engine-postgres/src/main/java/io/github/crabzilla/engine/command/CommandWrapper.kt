@@ -13,7 +13,7 @@ object CommandWrapper {
 
   fun <S : State, C : Command, E : Event> wrap(handler: CommandHandlerApi<S, C, E>):
     (command: C, state: S?) -> Future<CommandSession<S, E>> {
-    return when (val handler: CommandHandlerApi<S, C, E> = handler) {
+    return when (handler) {
       is CommandHandler<S, C, E> -> { command, state ->
         try {
           val session = handler.handleCommand(command, state)
