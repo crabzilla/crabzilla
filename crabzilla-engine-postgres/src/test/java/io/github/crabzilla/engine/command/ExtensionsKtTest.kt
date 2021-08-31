@@ -6,17 +6,20 @@ import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerEventHandler
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 
-internal class ExtensionsKtTest{
+internal class ExtensionsKtTest {
 
   class InvalidCmdHandler(applier: EventHandler<Customer, CustomerEvent>) :
     CommandHandlerApi<Customer, CustomerCommand, CustomerEvent>(applier)
 
   @Test
-  @Throws(UnknownCommandHandler::class)
   fun invalidCmdHandler() {
     val ch = InvalidCmdHandler(customerEventHandler)
-    ch.wrap()
+    Assertions.assertThatExceptionOfType(UnknownCommandHandler::class.java)
+      .isThrownBy {
+        ch.wrap()
+      }.withMessage("Unknown command handler: InvalidCmdHandler")
   }
 }
