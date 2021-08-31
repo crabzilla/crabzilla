@@ -15,7 +15,7 @@ fun <S : State, C : Command, E : Event> CommandHandlerApi<S, C, E>.wrap(): (comm
       try {
         val session = handler.handleCommand(command, state)
         Future.succeededFuture(session)
-      } catch (e: Throwable) {
+      } catch (e: Exception) {
         Future.failedFuture(e)
       }
     }
