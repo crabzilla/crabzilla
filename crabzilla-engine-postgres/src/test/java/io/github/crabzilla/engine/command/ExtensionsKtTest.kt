@@ -14,7 +14,7 @@ internal class ExtensionsKtTest{
     CommandHandlerApi<Customer, CustomerCommand, CustomerEvent>(applier)
 
   @Test
-  @Throws(IllegalArgumentException::class)
+  @Throws(UnknownCommandHandler::class)
   fun invalidCmdHandler() {
     val ch = InvalidCmdHandler(customerEventHandler)
     ch.wrap()
