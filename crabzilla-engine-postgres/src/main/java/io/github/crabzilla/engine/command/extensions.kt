@@ -9,19 +9,23 @@ import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.stack.command.FutureCommandHandler
 import io.vertx.core.Future
 
-fun <S : State, C : Command, E : Event> CommandHandlerApi<S, C, E>.wrap(): (command: C, state: S?) -> Future<CommandSession<S, E>> {
-  return when (val handler: CommandHandlerApi<S, C, E> = this) {
-    is CommandHandler<S, C, E> -> { command, state ->
-      try {
-        val session = handler.handleCommand(command, state)
-        Future.succeededFuture(session)
-      } catch (e: RuntimeException) {
-        Future.failedFuture(e)
+object CommandWrapper {
+
+  fun <S : State, C : Command, E : Event> wrap(handler: CommandHandlerApi<S, C, E>):
+    (command: C, state: S?) -> Future<CommandSession<S, E>> {
+    return when (val handler: CommandHandlerApi<S, C, E> = handler) {
+      is CommandHandler<S, C, E> -> { command, state ->
+        try {
+          val session = handler.handleCommand(command, state)
+          Future.succeededFuture(session)
+        } catch (e: RuntimeException) {
+          Future.failedFuture(e)
+        }
       }
+      is FutureCommandHandler<S, C, E> -> { command, state ->
+        handler.handleCommand(command, state)
+      }
+      else -> throw UnknownCommandHandler("Unknown command handler: " + handler.javaClass.simpleName)
     }
-    is FutureCommandHandler<S, C, E> -> { command, state ->
-      handler.handleCommand(command, state)
-    }
-    else -> throw UnknownCommandHandler("Unknown command handler: " + handler.javaClass.simpleName)
   }
 }

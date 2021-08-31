@@ -11,6 +11,7 @@ import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.engine.assertAffectedRows
+import io.github.crabzilla.engine.command.CommandWrapper.wrap
 import io.github.crabzilla.engine.projector.EventsProjector
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CorrelationId
@@ -69,7 +70,7 @@ class CommandController<S : State, C : Command, E : Event>(
   private val commandsOk = AtomicLong(0)
   private val commandsFailures = AtomicLong(0)
   private val commandHandler: (command: C, state: S?) -> Future<CommandSession<S, E>> =
-    config.commandHandlerFactory.invoke().wrap()
+    wrap(config.commandHandlerFactory.invoke())
 
   init {
     vertx.setPeriodic(DEFAULT_STATS_INTERVAL) { publishMetrics() }
