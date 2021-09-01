@@ -149,6 +149,8 @@ class CustomerCommandHandler :
       }
 
       is ActivateCustomer -> {
+        if (command.reason == "because I want it")
+          throw IllegalArgumentException("Reason cannot be = [${command.reason}], please be polite.")
         with(state)
           .execute { it.activate(command.reason) }
       }
