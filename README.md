@@ -8,7 +8,16 @@
 ### Goals for version 1.0.0
 
 - [x] Command controller
+  - [X] Non-blocking IO using `vertx-pg-client`
+  - [X] Snapshots
+  - [X] Optional Command validation
+  - [X] Optional State ID locking using Postgres Advisory locks
+  - [X] Optional Command persistence
+  - [X] Optional synchronous Read Model projection: within the same command handler transaction
+  - [X] Command Handler can have external integrations: `FutureCommandHandler`
 - [x] Events publisher
+  - [X] Publish events with some level of idempotency using `projections` table.
+  - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic (safe)
 - [x] Events projectors
 - [x] Very basic observability (logging stats)
 - [ ] Getting started tutorial
