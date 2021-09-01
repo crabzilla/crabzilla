@@ -60,7 +60,6 @@ class CommandsValidationIT {
       }
   }
 
-
   @Test
   @DisplayName("it can validate command within command handler")
   fun s2(tc: VertxTestContext) {
@@ -69,8 +68,11 @@ class CommandsValidationIT {
     val metadata = CommandMetadata(StateId(id))
     commandController.handle(metadata, cmd)
       .compose {
-        commandController.handle(CommandMetadata(StateId(id)),
-          CustomerCommand.ActivateCustomer("because I want it")) }
+        commandController.handle(
+          CommandMetadata(StateId(id)),
+          CustomerCommand.ActivateCustomer("because I want it")
+        )
+      }
       .onFailure {
         tc.completeNow()
       }
