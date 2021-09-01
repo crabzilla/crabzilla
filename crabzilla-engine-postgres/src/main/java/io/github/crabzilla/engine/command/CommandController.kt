@@ -11,7 +11,7 @@ import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.engine.assertAffectedRows
-import io.github.crabzilla.engine.command.CommandWrapper.wrap
+import io.github.crabzilla.engine.command.CommandHandlerWrapper.wrap
 import io.github.crabzilla.engine.projector.EventsProjector
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CorrelationId

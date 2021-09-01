@@ -2,7 +2,7 @@ package io.github.crabzilla.engine.command
 
 import io.github.crabzilla.core.command.CommandHandlerApi
 import io.github.crabzilla.core.command.EventHandler
-import io.github.crabzilla.engine.command.CommandWrapper.wrap
+import io.github.crabzilla.engine.command.CommandHandlerWrapper.wrap
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
