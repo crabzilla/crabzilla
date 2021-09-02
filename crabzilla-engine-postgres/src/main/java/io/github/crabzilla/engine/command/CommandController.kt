@@ -7,19 +7,17 @@ import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.command.CommandException.LockingException
 import io.github.crabzilla.core.command.CommandException.ValidationException
-import io.github.crabzilla.core.command.CommandHandler
-import io.github.crabzilla.core.command.CommandHandlerApi
 import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.engine.assertAffectedRows
+import io.github.crabzilla.engine.command.CommandHandlerWrapper.wrap
 import io.github.crabzilla.engine.projector.EventsProjector
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CorrelationId
 import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.command.CommandMetadata
-import io.github.crabzilla.stack.command.FutureCommandHandler
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -71,7 +69,8 @@ class CommandController<S : State, C : Command, E : Event>(
 
   private val commandsOk = AtomicLong(0)
   private val commandsFailures = AtomicLong(0)
-  private val commandHandler = commandHandler()
+  private val commandHandler: (command: C, state: S?) -> Future<CommandSession<S, E>> =
+    wrap(config.commandHandlerFactory.invoke())
 
   init {
     vertx.setPeriodic(DEFAULT_STATS_INTERVAL) { publishMetrics() }
@@ -271,21 +270,4 @@ class CommandController<S : State, C : Command, E : Event>(
   private data class AppendedEvent<E>(val event: E, val causationId: UUID, val sequence: Long, val eventId: UUID)
 
   private data class AppendedEvents<E>(val events: List<AppendedEvent<E>>, val resultingVersion: Int)
-
-  private fun commandHandler(): (command: C, state: S?) -> Future<CommandSession<S, E>> {
-    return when (val handler: CommandHandlerApi<S, C, E> = config.commandHandlerFactory.invoke()) {
-      is CommandHandler<S, C, E> -> { command, state ->
-        try {
-          val session = handler.handleCommand(command, state)
-          Future.succeededFuture(session)
-        } catch (e: Throwable) {
-          Future.failedFuture(e)
-        }
-      }
-      is FutureCommandHandler<S, C, E> -> { command, state ->
-        handler.handleCommand(command, state)
-      }
-      else -> throw IllegalArgumentException("Unknown command handler")
-    }
-  }
 }

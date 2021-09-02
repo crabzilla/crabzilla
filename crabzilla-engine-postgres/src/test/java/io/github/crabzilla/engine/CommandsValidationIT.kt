@@ -27,19 +27,19 @@ import java.util.UUID
 class CommandsValidationIT {
 
   private lateinit var jsonSerDer: JsonSerDer
-  private lateinit var client: CommandsContext
-  private lateinit var eventStore: CommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var commandsContext: CommandsContext
+  private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var repository: SnapshotRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
-    client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
-    eventStore = CommandController(vertx, customerConfig, client.pgPool, jsonSerDer, true)
-    repository = SnapshotRepository(client.pgPool, example1Json)
-    testRepo = TestRepository(client.pgPool)
-    cleanDatabase(client.sqlClient)
+    commandsContext = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
+    commandController = CommandController(vertx, customerConfig, commandsContext.pgPool, jsonSerDer, true)
+    repository = SnapshotRepository(commandsContext.pgPool, example1Json)
+    testRepo = TestRepository(commandsContext.pgPool)
+    cleanDatabase(commandsContext.sqlClient)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -50,9 +50,30 @@ class CommandsValidationIT {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "bad customer")
     val metadata = CommandMetadata(StateId(id))
-    eventStore.handle(metadata, cmd)
+    commandController.handle(metadata, cmd)
       .onFailure {
         it shouldHaveMessage "[Bad customer!]"
+        tc.completeNow()
+      }
+      .onSuccess {
+        tc.failNow("It should fail")
+      }
+  }
+
+  @Test
+  @DisplayName("it can validate command within command handler")
+  fun s2(tc: VertxTestContext) {
+    val id = UUID.randomUUID()
+    val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
+    val metadata = CommandMetadata(StateId(id))
+    commandController.handle(metadata, cmd)
+      .compose {
+        commandController.handle(
+          CommandMetadata(StateId(id)),
+          CustomerCommand.ActivateCustomer("because I want it")
+        )
+      }
+      .onFailure {
         tc.completeNow()
       }
       .onSuccess {

@@ -12,7 +12,7 @@ open class PostgresAbstractVerticle : AbstractVerticle() {
 
   fun serDer(config: JsonObject): JsonSerDer {
     val provider = JsonContextProviderFinder().create(config.getString("jsonFactoryClassName"))
-    return provider!!.create().serder()
+    return provider.create().serder()
   }
 
   fun pgPool(config: JsonObject): PgPool {
