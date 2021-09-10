@@ -77,7 +77,7 @@ class AsyncProjectionIT {
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val snapshotRepo = SnapshotTestRepository<Customer>(commandsContext.pgPool, example1Json)
-    val controller = commandsContext.create(customerConfig, SnapshotRepository.SnapshotType.PERSISTENT)
+    val controller = commandsContext.create(customerConfig, SnapshotRepository.Companion.SnapshotType.PERSISTENT)
     snapshotRepo.get(id)
       .compose { snapshot0: Snapshot<Customer>? ->
         assert(snapshot0 == null)

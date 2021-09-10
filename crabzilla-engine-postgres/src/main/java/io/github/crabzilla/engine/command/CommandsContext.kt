@@ -5,9 +5,9 @@ import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.serder.JsonSerDer
-import io.github.crabzilla.engine.command.SnapshotRepository.SnapshotType
-import io.github.crabzilla.engine.command.SnapshotRepository.SnapshotType.ON_DEMAND
-import io.github.crabzilla.engine.command.SnapshotRepository.SnapshotType.PERSISTENT
+import io.github.crabzilla.engine.command.SnapshotRepository.Companion.SnapshotType
+import io.github.crabzilla.engine.command.SnapshotRepository.Companion.SnapshotType.ON_DEMAND
+import io.github.crabzilla.engine.command.SnapshotRepository.Companion.SnapshotType.PERSISTENT
 import io.github.crabzilla.engine.projector.EventsProjector
 import io.vertx.core.Future
 import io.vertx.core.Vertx

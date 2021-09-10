@@ -40,7 +40,7 @@ class SyncProjectionIT {
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
-    controller = client.create(customerConfig, SnapshotRepository.SnapshotType.PERSISTENT, CustomerEventsProjector)
+    controller = client.create(customerConfig, SnapshotRepository.Companion.SnapshotType.PERSISTENT, CustomerEventsProjector)
     snapshotTestRepository = SnapshotTestRepository(client.pgPool, example1Json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)

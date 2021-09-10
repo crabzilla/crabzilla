@@ -16,7 +16,7 @@ internal class CommandsContextTest {
   fun create() {
     val jsonSerDer = KotlinJsonSerDer(example1Json)
     val commandsContext = CommandsContext.create(Vertx.vertx(), jsonSerDer, connectOptions, poolOptions)
-    val controller = commandsContext.create(customerConfig, SnapshotRepository.SnapshotType.PERSISTENT)
+    val controller = commandsContext.create(customerConfig, SnapshotRepository.Companion.SnapshotType.PERSISTENT)
     assertNotNull(controller)
   }
 
@@ -25,7 +25,7 @@ internal class CommandsContextTest {
     val jsonSerDer = KotlinJsonSerDer(example1Json)
     val commandsContext = CommandsContext.create(Vertx.vertx(), jsonSerDer, connectOptions, poolOptions)
     val controller = commandsContext
-      .create(customerConfig, SnapshotRepository.SnapshotType.PERSISTENT, CustomerEventsProjector)
+      .create(customerConfig, SnapshotRepository.Companion.SnapshotType.PERSISTENT, CustomerEventsProjector)
     assertNotNull(controller)
   }
 }
