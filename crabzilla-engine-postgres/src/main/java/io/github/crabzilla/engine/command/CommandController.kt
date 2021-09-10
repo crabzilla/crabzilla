@@ -52,9 +52,6 @@ class CommandController<S : State, C : Command, E : Event>(
     private const val SQL_APPEND_EVENT =
       """ INSERT INTO events (causation_id, correlation_id, ar_name, ar_id, event_payload, version, id)
           VALUES ($1, $2, $3, $4, $5, $6, $7) returning sequence"""
-    private const val SQL_INSERT_VERSION =
-      """ INSERT INTO snapshots (version, json_content, ar_id, ar_type)
-          VALUES ($1, $2, $3, $4)"""
     private const val DEFAULT_STATS_INTERVAL = 10_000L
   }
 
