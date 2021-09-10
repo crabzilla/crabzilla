@@ -18,18 +18,18 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
-class SnapshotRepositoryIT {
+class SnapshotTestRepositoryIT {
 
   private lateinit var jsonSerDer: JsonSerDer
   private lateinit var client: CommandsContext
-  private lateinit var repository: SnapshotRepository<Customer>
+  private lateinit var repository: SnapshotTestRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
-    repository = SnapshotRepository(client.pgPool, example1Json)
+    repository = SnapshotTestRepository(client.pgPool, example1Json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)
       .onFailure { tc.failNow(it) }

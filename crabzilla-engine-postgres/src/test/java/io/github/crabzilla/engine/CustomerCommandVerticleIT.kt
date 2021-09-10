@@ -64,7 +64,7 @@ class CustomerCommandVerticleIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val snapshotRepo = SnapshotRepository<Customer>(client.pgPool, example1Json)
+    val snapshotRepo = SnapshotTestRepository<Customer>(client.pgPool, example1Json)
     snapshotRepo.get(id)
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->

@@ -1,7 +1,7 @@
 package io.github.crabzilla.engine
 
 import io.github.crabzilla.core.State
-import io.github.crabzilla.engine.command.Snapshot
+import io.github.crabzilla.stack.command.Snapshot
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
@@ -13,13 +13,13 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
-class SnapshotRepository<A : State>(
+class SnapshotTestRepository<A : State>(
   private val sqlClient: SqlClient,
   private val json: Json
 ) {
 
   companion object {
-    private val log = LoggerFactory.getLogger(SnapshotRepository::class.java)
+    private val log = LoggerFactory.getLogger(SnapshotTestRepository::class.java)
     const val SQL_SELECT_VERSION =
       """ SELECT version, json_content
           FROM SNAPSHOTS 

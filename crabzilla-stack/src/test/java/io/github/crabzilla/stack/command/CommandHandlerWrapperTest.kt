@@ -1,16 +1,16 @@
-package io.github.crabzilla.engine.command
+package io.github.crabzilla.stack.command
 
 import io.github.crabzilla.core.command.CommandHandlerApi
 import io.github.crabzilla.core.command.EventHandler
-import io.github.crabzilla.engine.command.CommandHandlerWrapper.wrap
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerEventHandler
+import io.github.crabzilla.stack.command.CommandHandlerWrapper.wrap
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 
-internal class ExtensionsKtTest {
+internal class CommandHandlerWrapperTest {
 
   class InvalidCmdHandler(applier: EventHandler<Customer, CustomerEvent>) :
     CommandHandlerApi<Customer, CustomerCommand, CustomerEvent>(applier)

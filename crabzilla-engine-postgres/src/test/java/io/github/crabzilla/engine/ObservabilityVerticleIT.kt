@@ -1,5 +1,6 @@
 package io.github.crabzilla.engine
 
+import io.github.crabzilla.stack.ObservabilityVerticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension

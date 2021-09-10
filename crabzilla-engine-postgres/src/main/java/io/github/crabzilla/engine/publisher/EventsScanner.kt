@@ -22,26 +22,24 @@ class EventsScanner(
 
   companion object {
     private val log = LoggerFactory.getLogger(EventsScanner::class.java)
-  }
-
-  private val selectAfterOffset =
-    """
+    private const val selectAfterOffset =
+      """
       SELECT ar_name, ar_id, event_payload, sequence, id, causation_id, correlation_id
       FROM events
       WHERE sequence > (select sequence from publications where name = $1)
       ORDER BY sequence
       limit $2
     """
+    private const val updateOffset =
+      "UPDATE publications SET sequence = $1 WHERE publications.name = $2"
+  }
 
-  private val updateOffset =
-    "UPDATE publications SET sequence = $1 WHERE publications.name = $2"
-
-  fun streamName(): String {
-    return name
+  init {
+    log.info("Starting for [{}}]", name)
   }
 
   fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
-    log.debug("Scanning for new events on stream {}", streamName())
+    log.debug("Scanning for new events on stream {}", name)
     return sqlClient
       .preparedQuery(selectAfterOffset)
       .execute(Tuple.of(name, numberOfRows))

@@ -1,4 +1,4 @@
-package io.github.crabzilla.engine.command
+package io.github.crabzilla.stack.command
 
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
@@ -6,7 +6,6 @@ import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.command.CommandHandlerApi
 import io.github.crabzilla.core.command.CommandSession
-import io.github.crabzilla.stack.command.FutureCommandHandler
 import io.vertx.core.Future
 
 object CommandHandlerWrapper {

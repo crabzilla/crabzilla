@@ -3,9 +3,11 @@ package io.github.crabzilla.engine
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandsContext
+import io.github.crabzilla.engine.command.PersistentSnapshotRepo
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.stack.StateId
@@ -64,8 +66,9 @@ class AsyncFailedProjectionIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val snapshotRepo = SnapshotRepository<Customer>(client.pgPool, example1Json)
-    val controller = client.create(customerConfig)
+    val snapshotRepo = SnapshotTestRepository<Customer>(client.pgPool, example1Json)
+    val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
+    val controller = client.create(customerConfig, snapshotRepo2)
     snapshotRepo.get(id)
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->

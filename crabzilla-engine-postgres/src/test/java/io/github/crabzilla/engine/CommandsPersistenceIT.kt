@@ -4,6 +4,7 @@ import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandController
 import io.github.crabzilla.engine.command.CommandsContext
+import io.github.crabzilla.engine.command.OnDemandSnapshotRepo
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
@@ -29,19 +30,21 @@ import java.util.UUID
 class CommandsPersistenceIT {
 
   private lateinit var jsonSerDer: JsonSerDer
-  private lateinit var client: CommandsContext
-  private lateinit var eventStore: CommandController<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var repository: SnapshotRepository<Customer>
+  private lateinit var commandsContext: CommandsContext
+  private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var repository: SnapshotTestRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
-    client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
-    eventStore = CommandController(vertx, customerConfig, client.pgPool, jsonSerDer, true)
-    repository = SnapshotRepository(client.pgPool, example1Json)
-    testRepo = TestRepository(client.pgPool)
-    cleanDatabase(client.sqlClient)
+    commandsContext = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
+    val snapshotRepo2 = OnDemandSnapshotRepo(customerConfig.eventHandler, jsonSerDer)
+//    val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
+    commandController = CommandController(vertx, customerConfig, commandsContext.pgPool, jsonSerDer, snapshotRepo2)
+    repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
+    testRepo = TestRepository(commandsContext.pgPool)
+    cleanDatabase(commandsContext.sqlClient)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -52,7 +55,7 @@ class CommandsPersistenceIT {
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata(StateId(id))
-    eventStore.handle(metadata, cmd)
+    commandController.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         testRepo.getAllCommands()
@@ -79,10 +82,10 @@ class CommandsPersistenceIT {
     val cmd2 = DeactivateCustomer("it's not needed anymore")
     val metadata2 = CommandMetadata(StateId(id))
 
-    eventStore.handle(metadata1, cmd1)
+    commandController.handle(metadata1, cmd1)
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        eventStore.handle(metadata2, cmd2)
+        commandController.handle(metadata2, cmd2)
           .onFailure { tc.failNow(it) }
           .onSuccess {
             testRepo.getAllCommands()

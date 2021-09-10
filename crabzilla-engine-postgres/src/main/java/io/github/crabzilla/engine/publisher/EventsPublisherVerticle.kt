@@ -41,12 +41,12 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
     }
 
     // Schedule the first execution
-    vertx.setTimer(options.initialInterval + options.interval) {
-      handler()
-    }
+    vertx.setTimer(options.initialInterval + options.interval, handler())
+
     vertx.setPeriodic(options.metricsInterval) {
       publishMetrics()
     }
+
     log.info("Started pooling events with {}", options)
   }
 
@@ -82,6 +82,7 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
       vertx.setTimer(options.interval, handler())
       log.debug("Rescheduled to next {} milliseconds", options.interval)
     }
+    log.debug("Scanning new events")
     return scanAndPublish(options.maxNumberOfRows)
       .compose { retrievedRows ->
         when (retrievedRows) {

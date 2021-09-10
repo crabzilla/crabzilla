@@ -8,6 +8,7 @@ import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
 import java.util.UUID
 
+// TODO decouple from example1 and make it a library scope class
 class TestRepository(private val pgPool: PgPool) {
 
   companion object {

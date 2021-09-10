@@ -3,7 +3,7 @@ package io.github.crabzilla.engine
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandsContext
-import io.github.crabzilla.engine.command.Snapshot
+import io.github.crabzilla.engine.command.PersistentSnapshotRepo
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
@@ -17,6 +17,7 @@ import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.StateId
 import io.github.crabzilla.stack.command.CommandMetadata
+import io.github.crabzilla.stack.command.Snapshot
 import io.github.crabzilla.stack.deployVerticles
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future
@@ -75,8 +76,9 @@ class AsyncProjectionIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val snapshotRepo = SnapshotRepository<Customer>(client.pgPool, example1Json)
-    val controller = client.create(customerConfig)
+    val snapshotRepo = SnapshotTestRepository<Customer>(client.pgPool, example1Json)
+    val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
+    val controller = client.create(customerConfig, snapshotRepo2)
     snapshotRepo.get(id)
       .compose { snapshot0: Snapshot<Customer>? ->
         assert(snapshot0 == null)
