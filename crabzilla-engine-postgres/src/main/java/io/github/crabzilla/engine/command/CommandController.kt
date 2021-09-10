@@ -10,7 +10,6 @@ import io.github.crabzilla.core.command.CommandException.ValidationException
 import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.serder.JsonSerDer
-import io.github.crabzilla.engine.assertAffectedRows
 import io.github.crabzilla.engine.projector.EventsProjector
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CorrelationId
@@ -38,8 +37,7 @@ class CommandController<S : State, C : Command, E : Event>(
   private val config: CommandControllerConfig<S, C, E>,
   private val pgPool: PgPool,
   private val jsonSerDer: JsonSerDer,
-  private val saveCommandOption: Boolean = true,
-  private val saveSnapshotOption: Boolean = true,
+  private val snapshotRepository: SnapshotRepository<S, E>,
   private val eventsProjector: EventsProjector? = null
 ) {
 
@@ -115,23 +113,6 @@ class CommandController<S : State, C : Command, E : Event>(
           }
         }
     }
-    fun getSnapshot(conn: SqlConnection): Future<Snapshot<S>?> {
-      fun snapshot(rowSet: RowSet<Row>): Snapshot<S>? {
-        return if (rowSet.size() == 0) {
-          null
-        } else {
-          val row = rowSet.first()
-          val version = row.getInteger("version")
-          val stateAsJson = JsonObject(row.getValue("json_content").toString())
-          val state = jsonSerDer.stateFromJson(stateAsJson.toString()) as S
-          Snapshot(state, version)
-        }
-      }
-      return conn
-        .preparedQuery(SQL_GET_SNAPSHOT)
-        .execute(Tuple.of(metadata.stateId.id))
-        .map { pgRow -> snapshot(pgRow) }
-    }
     fun appendCommand(conn: SqlConnection): Future<Void> {
       val cmdAsJson = jsonSerDer.toJson(command)
       log.debug("Will append command {} as {}", command, cmdAsJson)
@@ -184,30 +165,6 @@ class CommandController<S : State, C : Command, E : Event>(
         }
       }.map { AppendedEvents(eventsAdded, version.get()) }
     }
-    fun updateSnapshot(conn: SqlConnection, originalVersion: Int, resultingVersion: Int, newState: S): Future<Void> {
-      val newSTateAsJson = jsonSerDer.toJson(newState)
-      log.debug("Will append snapshot {} to version {}", newSTateAsJson, resultingVersion)
-      return if (originalVersion == 0) {
-        val params = Tuple.of(
-          resultingVersion,
-          JsonObject(newSTateAsJson),
-          metadata.stateId.id,
-          config.name
-        )
-        conn.preparedQuery(SQL_INSERT_VERSION).execute(params).mapEmpty()
-      } else {
-        val params = Tuple.of(
-          resultingVersion,
-          JsonObject(newSTateAsJson),
-          metadata.stateId.id,
-          originalVersion
-        )
-        conn
-          .preparedQuery(SQL_UPDATE_VERSION)
-          .execute(params)
-          .transform { it.assertAffectedRows(1) }
-      }
-    }
     fun projectEvents(
       conn: SqlConnection,
       appendedEvents: AppendedEvents<E>,
@@ -243,7 +200,7 @@ class CommandController<S : State, C : Command, E : Event>(
           lock(conn, metadata.stateId.id.hashCode())
         }.compose {
           log.debug("State locked")
-          getSnapshot(conn)
+          snapshotRepository.get(conn, metadata.stateId.id)
         }.compose { snapshot ->
           snapshotResult.set(snapshot)
           log.debug("Got snapshot {}", snapshot)
@@ -268,9 +225,9 @@ class CommandController<S : State, C : Command, E : Event>(
           }
         }.compose {
           val originalVersion = snapshotResult.get()?.version ?: 0
-          updateSnapshot(
-            conn,
-            originalVersion, appendedEventsResult.get().resultingVersion, sessionResult.get().currentState
+          snapshotRepository.upsert(
+            conn, metadata.stateId.id, originalVersion,
+            appendedEventsResult.get().resultingVersion, sessionResult.get().currentState
           )
         }.compose {
           Future.succeededFuture(sessionResult.get())

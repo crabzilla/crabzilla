@@ -5,6 +5,7 @@ import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandController
 import io.github.crabzilla.engine.command.CommandsContext
+import io.github.crabzilla.engine.command.PersistentSnapshotRepo
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
@@ -38,7 +39,8 @@ class CorrelationCausationIdsIT {
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     commandsContext = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
-    commandController = CommandController(vertx, customerConfig, commandsContext.pgPool, jsonSerDer, false)
+    val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
+    commandController = CommandController(vertx, customerConfig, commandsContext.pgPool, jsonSerDer, snapshotRepo2)
     repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
     testRepo = TestRepository(commandsContext.pgPool)
     cleanDatabase(commandsContext.sqlClient)

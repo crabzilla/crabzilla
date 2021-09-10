@@ -32,14 +32,10 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
    * Creates a CommandController
    */
   fun <S : State, C : Command, E : Event> create(
-    config: CommandControllerConfig<S, C, E>
+    config: CommandControllerConfig<S, C, E>,
+    snapshotRepository: SnapshotRepository<S, E>
   ): CommandController<S, C, E> {
-    return CommandController(
-      vertx, config, pgPool, jsonSerDer,
-      saveCommandOption = true,
-      saveSnapshotOption = true,
-      eventsProjector = null
-    )
+    return CommandController(vertx, config, pgPool, jsonSerDer, snapshotRepository)
   }
 
   /**
@@ -47,16 +43,10 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
    */
   fun <S : State, C : Command, E : Event> create(
     config: CommandControllerConfig<S, C, E>,
-    saveCommandOption: Boolean,
-    saveSnapshotOption: Boolean,
+    snapshotRepository: SnapshotRepository<S, E>,
     eventsProjector: EventsProjector?
   ): CommandController<S, C, E> {
-    return CommandController(
-      vertx, config, pgPool, jsonSerDer,
-      saveCommandOption,
-      saveSnapshotOption,
-      eventsProjector
-    )
+    return CommandController(vertx, config, pgPool, jsonSerDer, snapshotRepository, eventsProjector)
   }
 
   fun close(): Future<Void> {

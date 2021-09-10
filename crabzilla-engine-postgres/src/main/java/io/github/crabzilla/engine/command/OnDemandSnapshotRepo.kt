@@ -6,8 +6,8 @@ import io.github.crabzilla.core.command.EventHandler
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.stack.command.Snapshot
 import io.vertx.core.Future
-import io.vertx.pgclient.PgConnection
 import io.vertx.sqlclient.Row
+import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -29,8 +29,8 @@ class OnDemandSnapshotRepo<S : State, E : Event>(
     """
   }
 
-  override fun get(pgConn: PgConnection, id: UUID): Future<Snapshot<S>?> {
-    return pgConn
+  override fun get(conn: SqlConnection, id: UUID): Future<Snapshot<S>?> {
+    return conn
       .preparedQuery(GET_EVENTS_BY_ID)
       .execute(Tuple.of(id))
       .map { rowSet ->
@@ -52,7 +52,7 @@ class OnDemandSnapshotRepo<S : State, E : Event>(
   }
 
   override fun upsert(
-    conn: PgConnection,
+    conn: SqlConnection,
     id: UUID,
     originalVersion: Int,
     resultingVersion: Int,

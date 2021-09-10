@@ -5,6 +5,8 @@ import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandController
 import io.github.crabzilla.engine.command.CommandsContext
+import io.github.crabzilla.engine.command.PersistentSnapshotRepo
+import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.example1.payment.FuturePaymentCommandHandler
 import io.github.crabzilla.example1.payment.Payment
@@ -46,7 +48,8 @@ class FutureCommandHandlerIT {
       paymentEventHandler,
       { FuturePaymentCommandHandler(paymentEventHandler, vertx.eventBus()) }
     )
-    commandController = CommandController(vertx, paymentConfig, commandsContext.pgPool, jsonSerDer, true)
+    val snapshotRepo2 = PersistentSnapshotRepo<Payment, PaymentEvent>(customerConfig.name, jsonSerDer)
+    commandController = CommandController(vertx, paymentConfig, commandsContext.pgPool, jsonSerDer, snapshotRepo2)
     repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
     testRepo = TestRepository(commandsContext.pgPool)
     cleanDatabase(commandsContext.sqlClient)

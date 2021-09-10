@@ -7,9 +7,9 @@ import io.github.crabzilla.engine.assertAffectedRows
 import io.github.crabzilla.stack.command.Snapshot
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
-import io.vertx.pgclient.PgConnection
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
+import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -39,7 +39,7 @@ class PersistentSnapshotRepo<S : State, E : Event>(
   }
 
   override fun get(
-    pgConn: PgConnection,
+    conn: SqlConnection,
     id: UUID
   ): Future<Snapshot<S>?> {
     fun snapshot(rowSet: RowSet<Row>): Snapshot<S>? {
@@ -53,14 +53,14 @@ class PersistentSnapshotRepo<S : State, E : Event>(
         Snapshot(state, version)
       }
     }
-    return pgConn
+    return conn
       .preparedQuery(SQL_GET_SNAPSHOT)
       .execute(Tuple.of(id, stateName))
       .map { pgRow -> snapshot(pgRow) }
   }
 
   override fun upsert(
-    conn: PgConnection,
+    conn: SqlConnection,
     id: UUID,
     originalVersion: Int,
     resultingVersion: Int,
