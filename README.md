@@ -9,8 +9,8 @@
 
 - [x] Command controller
   - [X] Non-blocking IO using `vertx-pg-client`
-  - [X] Synchronous snapshotting
-  - [ ] Asynchronous snapshotting
+  - [X] On Demand snapshotting
+  - [X] Persistent snapshotting
   - [X] Optional Command validation
   - [X] Optional State ID locking using Postgres Advisory locks
   - [X] Optional Command persistence
