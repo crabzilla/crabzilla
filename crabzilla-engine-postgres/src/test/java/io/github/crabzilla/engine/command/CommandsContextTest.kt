@@ -1,6 +1,7 @@
 package io.github.crabzilla.engine.command
 
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
+import io.github.crabzilla.engine.command.SnapshotType.ON_DEMAND
 import io.github.crabzilla.engine.command.SnapshotType.PERSISTENT
 import io.github.crabzilla.engine.connectOptions
 import io.github.crabzilla.engine.poolOptions
@@ -26,7 +27,7 @@ internal class CommandsContextTest {
     val jsonSerDer = KotlinJsonSerDer(example1Json)
     val commandsContext = CommandsContext.create(Vertx.vertx(), jsonSerDer, connectOptions, poolOptions)
     val controller = commandsContext
-      .create(customerConfig, PERSISTENT, CustomerEventsProjector)
+      .create(customerConfig, ON_DEMAND, CustomerEventsProjector)
     assertNotNull(controller)
   }
 }
