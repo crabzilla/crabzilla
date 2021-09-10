@@ -5,7 +5,7 @@ import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandController
 import io.github.crabzilla.engine.command.CommandsContext
-import io.github.crabzilla.engine.command.SnapshotRepository
+import io.github.crabzilla.engine.command.SnapshotRepository.Companion.SnapshotType.PERSISTENT
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
@@ -40,7 +40,7 @@ class SyncProjectionIT {
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
-    controller = client.create(customerConfig, SnapshotRepository.Companion.SnapshotType.PERSISTENT, CustomerEventsProjector)
+    controller = client.create(customerConfig, PERSISTENT, CustomerEventsProjector)
     snapshotTestRepository = SnapshotTestRepository(client.pgPool, example1Json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)
