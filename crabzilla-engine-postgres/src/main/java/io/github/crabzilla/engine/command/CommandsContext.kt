@@ -37,7 +37,7 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
     return CommandController(
       vertx, config, pgPool, jsonSerDer,
       saveCommandOption = true,
-      advisoryLockOption = true,
+      saveSnapshotOption = true,
       eventsProjector = null
     )
   }
@@ -48,13 +48,13 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
   fun <S : State, C : Command, E : Event> create(
     config: CommandControllerConfig<S, C, E>,
     saveCommandOption: Boolean,
-    advisoryLockOption: Boolean,
+    saveSnapshotOption: Boolean,
     eventsProjector: EventsProjector?
   ): CommandController<S, C, E> {
     return CommandController(
       vertx, config, pgPool, jsonSerDer,
       saveCommandOption,
-      advisoryLockOption,
+      saveSnapshotOption,
       eventsProjector
     )
   }

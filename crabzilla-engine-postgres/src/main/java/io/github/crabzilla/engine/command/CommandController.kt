@@ -11,13 +11,14 @@ import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.engine.assertAffectedRows
-import io.github.crabzilla.engine.command.CommandHandlerWrapper.wrap
 import io.github.crabzilla.engine.projector.EventsProjector
 import io.github.crabzilla.stack.CausationId
 import io.github.crabzilla.stack.CorrelationId
 import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
+import io.github.crabzilla.stack.command.CommandHandlerWrapper.wrap
 import io.github.crabzilla.stack.command.CommandMetadata
+import io.github.crabzilla.stack.command.Snapshot
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -38,33 +39,36 @@ class CommandController<S : State, C : Command, E : Event>(
   private val pgPool: PgPool,
   private val jsonSerDer: JsonSerDer,
   private val saveCommandOption: Boolean = true,
-  private val advisoryLockOption: Boolean = true,
+  private val saveSnapshotOption: Boolean = true,
   private val eventsProjector: EventsProjector? = null
 ) {
 
   companion object {
     private val log = LoggerFactory.getLogger(CommandController::class.java)
-    const val SQL_LOCK_SNAPSHOT =
-      """ SELECT version, json_content, pg_try_advisory_xact_lock(s.id) as locked, s.id as id
+    private const val SQL_LOCK =
+      """ SELECT pg_try_advisory_xact_lock($1, $2) as locked
+      """
+    private const val SQL_GET_SNAPSHOT =
+      """ SELECT version, json_content
           FROM snapshots s
          WHERE ar_id = $1 """
 //           AND ar_type = $2"""
-    const val SQL_APPEND_CMD =
+    private const val SQL_APPEND_CMD =
       """ INSERT INTO commands (cmd_id, cmd_payload)
           VALUES ($1, $2)"""
-    const val SQL_APPEND_EVENT =
+    private const val SQL_APPEND_EVENT =
       """ INSERT INTO events (causation_id, correlation_id, ar_name, ar_id, event_payload, version, id)
           VALUES ($1, $2, $3, $4, $5, $6, $7) returning sequence"""
-    const val SQL_INSERT_VERSION =
+    private const val SQL_INSERT_VERSION =
       """ INSERT INTO snapshots (version, json_content, ar_id, ar_type)
           VALUES ($1, $2, $3, $4)"""
-    const val SQL_UPDATE_VERSION =
+    private const val SQL_UPDATE_VERSION =
       """ UPDATE snapshots 
           SET version = $1, json_content = $2 
           WHERE ar_id = $3 
            AND version = $4"""
 //    AND ar_type = $4
-    const val DEFAULT_STATS_INTERVAL = 10_000L
+    private const val DEFAULT_STATS_INTERVAL = 10_000L
   }
 
   private val commandsOk = AtomicLong(0)
@@ -99,35 +103,36 @@ class CommandController<S : State, C : Command, E : Event>(
         Future.succeededFuture()
       }
     }
+    fun lock(conn: SqlConnection, lockId: Int): Future<Void> {
+      return conn
+        .preparedQuery(SQL_LOCK)
+        .execute(Tuple.of(config.name.hashCode(), lockId))
+        .compose { pgRow ->
+          if (pgRow.first().getBoolean("locked")) {
+            Future.succeededFuture()
+          } else {
+            Future.failedFuture(LockingException("Not locked ${metadata.stateId.id}"))
+          }
+        }
+    }
     fun getSnapshot(conn: SqlConnection): Future<Snapshot<S>?> {
       fun snapshot(rowSet: RowSet<Row>): Snapshot<S>? {
         return if (rowSet.size() == 0) {
-          log.debug("Not locked (1)")
           null
         } else {
-          val r = rowSet.first()
-          val version = r.getInteger("version")
-          val locked = r.getBoolean("locked")
-          val id = r.getLong("id")
-          if (!advisoryLockOption || locked) {
-            log.debug("Locked {} {}", id, metadata.stateId.id)
-            val stateAsJson = JsonObject(r.getValue("json_content").toString())
-            val state = jsonSerDer.stateFromJson(stateAsJson.toString()) as S
-            Snapshot(state, version)
-          } else {
-            throw (LockingException("Not locked $id ${metadata.stateId.id}"))
-          }
+          val row = rowSet.first()
+          val version = row.getInteger("version")
+          val stateAsJson = JsonObject(row.getValue("json_content").toString())
+          val state = jsonSerDer.stateFromJson(stateAsJson.toString()) as S
+          Snapshot(state, version)
         }
       }
       return conn
-        .preparedQuery(SQL_LOCK_SNAPSHOT)
+        .preparedQuery(SQL_GET_SNAPSHOT)
         .execute(Tuple.of(metadata.stateId.id))
         .map { pgRow -> snapshot(pgRow) }
     }
     fun appendCommand(conn: SqlConnection): Future<Void> {
-      if (!saveCommandOption) {
-        return Future.succeededFuture(null)
-      }
       val cmdAsJson = jsonSerDer.toJson(command)
       log.debug("Will append command {} as {}", command, cmdAsJson)
       val params = Tuple.of(
@@ -203,10 +208,11 @@ class CommandController<S : State, C : Command, E : Event>(
           .transform { it.assertAffectedRows(1) }
       }
     }
-    fun projectEvents(conn: SqlConnection, appendedEvents: AppendedEvents<E>): Future<Void> {
-      if (eventsProjector == null) {
-        return Future.succeededFuture()
-      }
+    fun projectEvents(
+      conn: SqlConnection,
+      appendedEvents: AppendedEvents<E>,
+      projector: EventsProjector
+    ): Future<Void> {
       log.debug("Will project events")
       val initialFuture = Future.succeededFuture<Void>()
       return appendedEvents.events.fold(
@@ -221,7 +227,7 @@ class CommandController<S : State, C : Command, E : Event>(
             CausationId(appendedEvent.causationId),
             appendedEvent.sequence
           )
-          eventsProjector.project(conn, appendedEvent.event, eventMetadata)
+          projector.project(conn, appendedEvent.event, eventMetadata)
         }
       }.mapEmpty()
     }
@@ -234,6 +240,9 @@ class CommandController<S : State, C : Command, E : Event>(
       validateCommands()
         .compose {
           log.debug("Command validated")
+          lock(conn, metadata.stateId.id.hashCode())
+        }.compose {
+          log.debug("State locked")
           getSnapshot(conn)
         }.compose { snapshot ->
           snapshotResult.set(snapshot)
@@ -250,7 +259,13 @@ class CommandController<S : State, C : Command, E : Event>(
         }.compose {
           log.debug("Events appended")
           appendedEventsResult.set(it)
-          projectEvents(conn, it)
+          if (eventsProjector != null) {
+            val future = projectEvents(conn, it, eventsProjector)
+            log.debug("Events projected")
+            future
+          } else {
+            Future.succeededFuture()
+          }
         }.compose {
           val originalVersion = snapshotResult.get()?.version ?: 0
           updateSnapshot(

@@ -29,7 +29,7 @@ class CommandsValidationIT {
   private lateinit var jsonSerDer: JsonSerDer
   private lateinit var commandsContext: CommandsContext
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var repository: SnapshotRepository<Customer>
+  private lateinit var repository: SnapshotTestRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
@@ -37,7 +37,7 @@ class CommandsValidationIT {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     commandsContext = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
     commandController = CommandController(vertx, customerConfig, commandsContext.pgPool, jsonSerDer, true)
-    repository = SnapshotRepository(commandsContext.pgPool, example1Json)
+    repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
     testRepo = TestRepository(commandsContext.pgPool)
     cleanDatabase(commandsContext.sqlClient)
       .onFailure { tc.failNow(it) }

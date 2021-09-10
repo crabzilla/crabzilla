@@ -15,7 +15,6 @@ CREATE TABLE projections (
 --  snapshots table
 
 CREATE TABLE snapshots (
-      id BIGSERIAL NOT NULL,
       ar_id UUID NOT NULL,
       ar_type text NOT NULL,
       version INTEGER,

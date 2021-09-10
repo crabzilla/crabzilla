@@ -32,24 +32,24 @@ import java.util.UUID
 class FutureCommandHandlerIT {
 
   private lateinit var jsonSerDer: JsonSerDer
-  private lateinit var client: CommandsContext
-  private lateinit var controller: CommandController<Payment, PaymentCommand, PaymentEvent>
-  private lateinit var repository: SnapshotRepository<Payment>
+  private lateinit var commandsContext: CommandsContext
+  private lateinit var commandController: CommandController<Payment, PaymentCommand, PaymentEvent>
+  private lateinit var repository: SnapshotTestRepository<Payment>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
-    client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
+    commandsContext = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
     val paymentConfig = CommandControllerConfig(
       "Payment",
       paymentEventHandler,
       { FuturePaymentCommandHandler(paymentEventHandler, vertx.eventBus()) }
     )
-    controller = CommandController(vertx, paymentConfig, client.pgPool, jsonSerDer, true)
-    repository = SnapshotRepository(client.pgPool, example1Json)
-    testRepo = TestRepository(client.pgPool)
-    cleanDatabase(client.sqlClient)
+    commandController = CommandController(vertx, paymentConfig, commandsContext.pgPool, jsonSerDer, true)
+    repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
+    testRepo = TestRepository(commandsContext.pgPool)
+    cleanDatabase(commandsContext.sqlClient)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -60,7 +60,7 @@ class FutureCommandHandlerIT {
     val stateId = StateId(UUID.randomUUID())
     val cmd = PaymentCommand.Pay(stateId.id, "000", 10.00)
     val metadata = CommandMetadata(stateId)
-    controller.handle(metadata, cmd)
+    commandController.handle(metadata, cmd)
       .onFailure { err ->
         tc.failNow(err)
       }

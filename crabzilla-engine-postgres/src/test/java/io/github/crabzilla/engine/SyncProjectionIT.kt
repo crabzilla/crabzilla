@@ -32,7 +32,7 @@ class SyncProjectionIT {
   private lateinit var jsonSerDer: JsonSerDer
   private lateinit var client: CommandsContext
   private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var snapshotRepository: SnapshotRepository<Customer>
+  private lateinit var snapshotTestRepository: SnapshotTestRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
@@ -42,10 +42,10 @@ class SyncProjectionIT {
     controller = client.create(
       customerConfig,
       saveCommandOption = true,
-      advisoryLockOption = true,
+      saveSnapshotOption = true,
       eventsProjector = CustomerEventsProjector
     )
-    snapshotRepository = SnapshotRepository(client.pgPool, example1Json)
+    snapshotTestRepository = SnapshotTestRepository(client.pgPool, example1Json)
     testRepo = TestRepository(client.pgPool)
     cleanDatabase(client.sqlClient)
       .onFailure { tc.failNow(it) }
@@ -111,14 +111,14 @@ class SyncProjectionIT {
   @DisplayName("checking the snapshot")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val id = UUID.randomUUID()
-    snapshotRepository.get(id)
+    snapshotTestRepository.get(id)
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->
         assert(snapshot0 == null)
         controller.handle(CommandMetadata(StateId(id)), CustomerCommand.RegisterCustomer(id, "cust#$id"))
           .onFailure { tc.failNow(it) }
           .onSuccess {
-            snapshotRepository.get(id)
+            snapshotTestRepository.get(id)
               .onFailure { err -> tc.failNow(err) }
               .onSuccess { snapshot1 ->
                 assert(1 == snapshot1!!.version)
@@ -126,7 +126,7 @@ class SyncProjectionIT {
                 controller.handle(CommandMetadata(StateId(id)), CustomerCommand.ActivateCustomer("because yes"))
                   .onFailure { tc.failNow(it) }
                   .onSuccess {
-                    snapshotRepository.get(id)
+                    snapshotTestRepository.get(id)
                       .onFailure { err -> tc.failNow(err) }
                       .onSuccess { snapshot2 ->
                         assert(2 == snapshot2!!.version)

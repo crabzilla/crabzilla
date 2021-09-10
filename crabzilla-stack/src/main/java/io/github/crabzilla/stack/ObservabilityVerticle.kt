@@ -1,4 +1,4 @@
-package io.github.crabzilla.engine
+package io.github.crabzilla.stack
 
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.json.JsonArray

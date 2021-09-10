@@ -1,6 +1,5 @@
-package io.github.crabzilla.core
+package io.github.crabzilla.core.command
 
-import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerEventHandler

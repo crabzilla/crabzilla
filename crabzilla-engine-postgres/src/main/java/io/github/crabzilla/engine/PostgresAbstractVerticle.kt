@@ -1,6 +1,7 @@
 package io.github.crabzilla.engine
 
 import io.github.crabzilla.core.serder.JsonSerDer
+import io.github.crabzilla.stack.JsonContextProviderFinder
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions

@@ -9,12 +9,14 @@
 
 - [x] Command controller
   - [X] Non-blocking IO using `vertx-pg-client`
-  - [X] Snapshots
+  - [X] Synchronous snapshotting
+  - [ ] Asynchronous snapshotting
   - [X] Optional Command validation
   - [X] Optional State ID locking using Postgres Advisory locks
   - [X] Optional Command persistence
   - [X] Optional synchronous Read Model projection: within the same command handler transaction
   - [X] Command Handler can have external integrations: `FutureCommandHandler`
+  - [X] Correlation and causation IDs
 - [x] Events publisher
   - [X] Publish events with some level of idempotency using `projections` table.
   - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic (safe)

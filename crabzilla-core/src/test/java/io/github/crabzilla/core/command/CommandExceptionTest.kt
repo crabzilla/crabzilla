@@ -18,5 +18,4 @@ class CommandExceptionTest {
     val e = LockingException("x")
     assertThat(e.message).isEqualTo("x")
   }
-
 }
