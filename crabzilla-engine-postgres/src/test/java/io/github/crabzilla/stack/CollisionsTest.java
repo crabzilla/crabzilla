@@ -1,6 +1,6 @@
-package io.github.crabzilla.stack;
+//package io.github.crabzilla.stack;
 
-public class CollisionsTest {
+//public class CollisionsTest {
 //    private final static int num_of_users = 10000 * 1000;
 //    private final static int num_of_stacks = 50;
 //
@@ -25,4 +25,4 @@ public class CollisionsTest {
 //        }
 //        return collisions;
 //    }
-}
+//}
