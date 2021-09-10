@@ -5,9 +5,6 @@ import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.serder.JsonSerDer
-import io.github.crabzilla.engine.command.SnapshotRepository.Companion.SnapshotType
-import io.github.crabzilla.engine.command.SnapshotRepository.Companion.SnapshotType.ON_DEMAND
-import io.github.crabzilla.engine.command.SnapshotRepository.Companion.SnapshotType.PERSISTENT
 import io.github.crabzilla.engine.projector.EventsProjector
 import io.vertx.core.Future
 import io.vertx.core.Vertx
@@ -62,8 +59,8 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
     config: CommandControllerConfig<S, C, E>
   ): SnapshotRepository<S, E> {
     return when (snapshotType) {
-      ON_DEMAND -> OnDemandSnapshotRepo(config.eventHandler, jsonSerDer)
-      PERSISTENT -> PersistentSnapshotRepo(config.name, jsonSerDer)
+      SnapshotType.ON_DEMAND -> OnDemandSnapshotRepo(config.eventHandler, jsonSerDer)
+      SnapshotType.PERSISTENT -> PersistentSnapshotRepo(config.name, jsonSerDer)
     }
   }
 }

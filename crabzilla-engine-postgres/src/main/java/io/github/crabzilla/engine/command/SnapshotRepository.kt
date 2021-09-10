@@ -10,10 +10,4 @@ import java.util.UUID
 sealed interface SnapshotRepository<S : State, E : Event> {
   fun get(conn: SqlConnection, id: UUID): Future<Snapshot<S>?>
   fun upsert(conn: SqlConnection, id: UUID, originalVersion: Int, resultingVersion: Int, newState: S): Future<Void>
-
-  companion object {
-    enum class SnapshotType {
-      PERSISTENT, ON_DEMAND
-    }
-  }
 }

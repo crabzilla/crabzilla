@@ -5,7 +5,7 @@ import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandController
 import io.github.crabzilla.engine.command.CommandsContext
-import io.github.crabzilla.engine.command.SnapshotRepository.Companion.SnapshotType.PERSISTENT
+import io.github.crabzilla.engine.command.SnapshotType.PERSISTENT
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent

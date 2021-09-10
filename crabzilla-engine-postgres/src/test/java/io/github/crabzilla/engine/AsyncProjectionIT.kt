@@ -3,7 +3,7 @@ package io.github.crabzilla.engine
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandsContext
-import io.github.crabzilla.engine.command.SnapshotRepository
+import io.github.crabzilla.engine.command.SnapshotType.PERSISTENT
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
@@ -77,7 +77,7 @@ class AsyncProjectionIT {
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val snapshotRepo = SnapshotTestRepository<Customer>(commandsContext.pgPool, example1Json)
-    val controller = commandsContext.create(customerConfig, SnapshotRepository.Companion.SnapshotType.PERSISTENT)
+    val controller = commandsContext.create(customerConfig, PERSISTENT)
     snapshotRepo.get(id)
       .compose { snapshot0: Snapshot<Customer>? ->
         assert(snapshot0 == null)
