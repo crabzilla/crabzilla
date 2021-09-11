@@ -18,9 +18,11 @@
   - [X] Command Handler can have external integrations: `FutureCommandHandler`
   - [X] Correlation and causation IDs
 - [x] Events publisher
-  - [X] Publish events with some level of idempotency using `projections` table.
-  - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic (safe)
+  - [X] Publish events with some level of idempotency using `publications` table.
+  - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic
 - [x] Events projectors
+  - [X] Publish events with some level of idempotency using `projections` table.
+  - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic 
 - [x] Very basic observability (logging stats)
 - [ ] Getting started tutorial
 - [ ] Web interface to write model (to track commands, events, etc)
