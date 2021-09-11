@@ -106,7 +106,7 @@ mvn clean install -DskipTests=false
 
 ## Integration overview 
 
-![GitHub Logo](/doc/crabzilla-integration.png)
+![GitHub Logo](/doc/crabzilla-overview.png)
 
 ## Dependencies overview (outdated)
 
