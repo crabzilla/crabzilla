@@ -110,4 +110,4 @@ mvn clean install -DskipTests=false
 
 ## Dependencies overview (outdated)
 
-![GitHub Logo](/crabzilla-packages.png)
+![GitHub Logo](/doc/crabzilla-packages.png)
