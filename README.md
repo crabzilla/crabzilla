@@ -44,15 +44,27 @@ It's still in very early development stage.
 </repositories>
 ```
 
-2. Add these dependencies:
+1. Add `crabzilla-core` to write Commands, Events, States and TestSpecifications. 
 
 ```xml
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-serder-kotlin</artifactId>
+    <artifactId>crabzilla-core</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ```
+
+2. Add `crabzilla-serder-kotlin` to serialize/deserialize your Commands, Events and States to JSON.
+
+```xml
+<dependency>
+    <groupId>com.github.crabzilla.crabzilla</groupId>
+    <artifactId>crabzilla-core</artifactId>
+    <version>see latest jitpack version</version>
+</dependency>
+```
+
+3. Add `crabzilla-engine-postgres` to consistently append your events to Postgres.
 
 ```xml
 <dependency>
@@ -91,6 +103,10 @@ docker-compose up
 ```bash
 mvn clean install -DskipTests=false
 ```
+
+## Integration overview 
+
+![GitHub Logo](/doc/crabzilla-integration.png)
 
 ## Dependencies overview (outdated)
 
