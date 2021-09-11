@@ -20,7 +20,7 @@
 - [x] Events publisher
   - [X] Publish events with some level of idempotency using `publications` table.
   - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic
-- [x] Events projectors
+- [x] Events projector
   - [X] Publish events with some level of idempotency using `projections` table.
   - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic 
 - [x] Very basic observability (logging stats)
