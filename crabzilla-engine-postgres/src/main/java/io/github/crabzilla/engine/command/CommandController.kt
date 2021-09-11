@@ -46,26 +46,12 @@ class CommandController<S : State, C : Command, E : Event>(
     private const val SQL_LOCK =
       """ SELECT pg_try_advisory_xact_lock($1, $2) as locked
       """
-    private const val SQL_GET_SNAPSHOT =
-      """ SELECT version, json_content
-          FROM snapshots s
-         WHERE ar_id = $1 """
-//           AND ar_type = $2"""
     private const val SQL_APPEND_CMD =
       """ INSERT INTO commands (cmd_id, cmd_payload)
           VALUES ($1, $2)"""
     private const val SQL_APPEND_EVENT =
       """ INSERT INTO events (causation_id, correlation_id, ar_name, ar_id, event_payload, version, id)
           VALUES ($1, $2, $3, $4, $5, $6, $7) returning sequence"""
-    private const val SQL_INSERT_VERSION =
-      """ INSERT INTO snapshots (version, json_content, ar_id, ar_type)
-          VALUES ($1, $2, $3, $4)"""
-    private const val SQL_UPDATE_VERSION =
-      """ UPDATE snapshots 
-          SET version = $1, json_content = $2 
-          WHERE ar_id = $3 
-           AND version = $4"""
-//    AND ar_type = $4
     private const val DEFAULT_STATS_INTERVAL = 10_000L
   }
 

@@ -128,15 +128,7 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
         }
       }.compose { lastPublishedEvent ->
         scanner.updateOffSet(lastPublishedEvent)
-          .transform {
-            if (it.failed()) {
-              Future.failedFuture(
-                "When updating sequence for [${options.targetEndpoint}]"
-              )
-            } else {
-              Future.succeededFuture(lastPublishedEvent)
-            }
-          }
+          .map { lastPublishedEvent }
       }.onSuccess { lastPublishedEvent ->
         lastEventPublishedRef.set(lastPublishedEvent)
         promise.complete(lastPublishedEvent)

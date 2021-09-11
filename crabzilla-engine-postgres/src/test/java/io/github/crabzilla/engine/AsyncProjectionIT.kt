@@ -3,7 +3,7 @@ package io.github.crabzilla.engine
 import io.github.crabzilla.core.serder.JsonSerDer
 import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.command.CommandsContext
-import io.github.crabzilla.engine.command.PersistentSnapshotRepo
+import io.github.crabzilla.engine.command.SnapshotType.PERSISTENT
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
@@ -44,20 +44,20 @@ class AsyncProjectionIT {
 
   val id = UUID.randomUUID()
   lateinit var jsonSerDer: JsonSerDer
-  lateinit var client: CommandsContext
+  lateinit var commandsContext: CommandsContext
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
-    client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
-    testRepo = TestRepository(client.pgPool)
+    commandsContext = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
+    testRepo = TestRepository(commandsContext.pgPool)
     val verticles = listOf(
       "service:crabzilla.example1.customer.CustomersEventsPublisher",
       "service:crabzilla.example1.customer.CustomersEventsProjector",
     )
     val options = DeploymentOptions().setConfig(config)
-    cleanDatabase(client.sqlClient)
+    cleanDatabase(commandsContext.sqlClient)
       .compose { vertx.deployVerticles(verticles, options) }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
@@ -66,7 +66,7 @@ class AsyncProjectionIT {
   @Test
   @DisplayName("closing db connections")
   fun cleanup(tc: VertxTestContext) {
-    client.close()
+    commandsContext.close()
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -76,9 +76,8 @@ class AsyncProjectionIT {
   @Test
   @DisplayName("it can create a command controller and send a command using default snapshot repository")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val snapshotRepo = SnapshotTestRepository<Customer>(client.pgPool, example1Json)
-    val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
-    val controller = client.create(customerConfig, snapshotRepo2)
+    val snapshotRepo = SnapshotTestRepository<Customer>(commandsContext.pgPool, example1Json)
+    val controller = commandsContext.create(customerConfig, PERSISTENT)
     snapshotRepo.get(id)
       .compose { snapshot0: Snapshot<Customer>? ->
         assert(snapshot0 == null)

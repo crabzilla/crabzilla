@@ -33,9 +33,9 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
    */
   fun <S : State, C : Command, E : Event> create(
     config: CommandControllerConfig<S, C, E>,
-    snapshotRepository: SnapshotRepository<S, E>
+    snapshotType: SnapshotType
   ): CommandController<S, C, E> {
-    return CommandController(vertx, config, pgPool, jsonSerDer, snapshotRepository)
+    return CommandController(vertx, config, pgPool, jsonSerDer, snapshotRepo(snapshotType, config))
   }
 
   /**
@@ -43,14 +43,24 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
    */
   fun <S : State, C : Command, E : Event> create(
     config: CommandControllerConfig<S, C, E>,
-    snapshotRepository: SnapshotRepository<S, E>,
+    snapshotType: SnapshotType,
     eventsProjector: EventsProjector?
   ): CommandController<S, C, E> {
-    return CommandController(vertx, config, pgPool, jsonSerDer, snapshotRepository, eventsProjector)
+    return CommandController(vertx, config, pgPool, jsonSerDer, snapshotRepo(snapshotType, config), eventsProjector)
   }
 
   fun close(): Future<Void> {
     return pgPool.close()
       .compose { sqlClient.close() }
+  }
+
+  private fun <S : State, C : Command, E : Event> snapshotRepo(
+    snapshotType: SnapshotType,
+    config: CommandControllerConfig<S, C, E>
+  ): SnapshotRepository<S, E> {
+    return when (snapshotType) {
+      SnapshotType.ON_DEMAND -> OnDemandSnapshotRepo(config.eventHandler, jsonSerDer)
+      SnapshotType.PERSISTENT -> PersistentSnapshotRepo(config.name, jsonSerDer)
+    }
   }
 }
