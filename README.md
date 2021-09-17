@@ -59,7 +59,7 @@ It's still in very early development stage.
 ```xml
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-core</artifactId>
+    <artifactId>crabzilla-serder-kotlin</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ```
