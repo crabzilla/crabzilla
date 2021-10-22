@@ -11,24 +11,43 @@ import io.vertx.sqlclient.SqlClient
 
 open class PostgresAbstractVerticle : AbstractVerticle() {
 
-  fun serDer(config: JsonObject): JsonSerDer {
-    val provider = JsonContextProviderFinder().create(config.getString("jsonFactoryClassName"))
-    return provider.create().serder()
+  val jsonSerDer: JsonSerDer by lazy {
+    println(config().encodePrettily())
+    val provider = JsonContextProviderFinder().create(config().getString("jsonFactoryClassName"))
+    provider.create().serder()
   }
 
-  fun pgPool(config: JsonObject): PgPool {
-    val configId = config.getString("connectOptionsName")
-    val connectOptions = createConnectOptions(config.getJsonObject(configId))
-    val poolOptions = createPoolOptions(config.getJsonObject("poolOptions"))
-    return PgPool.pool(vertx, connectOptions, poolOptions)
+  val pgPool: PgPool by lazy {
+    val configId = config().getString("connectOptionsName")
+    val connectOptions = createConnectOptions(config().getJsonObject(configId))
+    val poolOptions = createPoolOptions(config().getJsonObject("poolOptions"))
+    PgPool.pool(vertx, connectOptions, poolOptions)
   }
 
-  fun sqlClient(config: JsonObject): SqlClient {
-    println(config.encodePrettily())
-    val configId = config.getString("connectOptionsName")
-    val connectOptions = createConnectOptions(config.getJsonObject(configId))
-    val poolOptions = createPoolOptions(config.getJsonObject("poolOptions"))
-    return PgPool.client(vertx, connectOptions, poolOptions)
+  val sqlClient: SqlClient by lazy {
+    val configId = config().getString("connectOptionsName")
+    val connectOptions = createConnectOptions(config().getJsonObject(configId))
+    val poolOptions = createPoolOptions(config().getJsonObject("poolOptions"))
+    PgPool.client(vertx, connectOptions, poolOptions)
+  }
+
+  val connectOptions: PgConnectOptions? by lazy {
+    val pgConnectOptions = PgConnectOptions()
+    val host = config().getString("host")
+    pgConnectOptions.host = host
+    val port = config().getInteger("port")
+    pgConnectOptions.port = port
+    val username = config().getString("user")
+    pgConnectOptions.user = username
+    val password = config().getString("password")
+    pgConnectOptions.password = password
+    val database = config().getString("database")
+    pgConnectOptions.database = database
+    // TODO config it
+    pgConnectOptions.cachePreparedStatements = true
+    pgConnectOptions.reconnectAttempts = 2
+    pgConnectOptions.reconnectInterval = 1000
+    pgConnectOptions
   }
 
   private fun createConnectOptions(config: JsonObject): PgConnectOptions? {

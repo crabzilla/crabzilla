@@ -71,8 +71,6 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
 
     targetEndpoint = config().getString("targetEndpoint")
 
-    val serDer = serDer(config())
-    val pgPool = pgPool(config())
     val provider = EventsProjectorProviderFinder().create(config().getString("eventsProjectorFactoryClassName"))
     val eventsProjector = provider.create()
 
@@ -92,7 +90,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
         promise.fail(it)
       }
       .onSuccess {
-        consumers(eventsProjector, serDer, pgPool)
+        consumers(eventsProjector, jsonSerDer, pgPool)
         log.info("Started consuming from endpoint [{}]", targetEndpoint)
         promise.complete()
       }

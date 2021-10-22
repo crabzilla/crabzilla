@@ -1,10 +1,8 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.serder.KotlinJsonSerDer
 import io.github.crabzilla.engine.PostgresAbstractVerticle
 import io.github.crabzilla.engine.command.CommandController
 import io.github.crabzilla.engine.command.PersistentSnapshotRepo
-import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
@@ -19,15 +17,12 @@ class CustomerCommandVerticle : PostgresAbstractVerticle() {
 
   override fun start() {
 
-    val pgPool = pgPool(config())
-
-    val serDer = KotlinJsonSerDer(example1Json)
-    val snapshotRepo = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, serDer)
-    val eventStore = CommandController(vertx, customerConfig, pgPool, serDer, snapshotRepo)
+    val snapshotRepo = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
+    val eventStore = CommandController(vertx, customerConfig, pgPool, jsonSerDer, snapshotRepo)
 
     vertx.eventBus().consumer<JsonObject>(ENDPOINT) { msg ->
       val metadata = CommandMetadata.fromJson(msg.body().getJsonObject("metadata"))
-      val command = serDer.commandFromJson(msg.body().getJsonObject("command").toString()) as CustomerCommand
+      val command = jsonSerDer.commandFromJson(msg.body().getJsonObject("command").toString()) as CustomerCommand
       eventStore.handle(metadata, command)
         .onFailure { msg.fail(500, it.message) }
         .onSuccess { msg.reply(true) }

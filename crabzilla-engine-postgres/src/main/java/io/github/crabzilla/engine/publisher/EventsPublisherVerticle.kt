@@ -26,10 +26,7 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
   override fun start() {
 
     options = Config.create(config())
-
-    val sqlClient = sqlClient(config())
     scanner = EventsScanner(sqlClient, options.targetEndpoint)
-    options = Config.create(config())
 
     vertx.eventBus().consumer<Void>("crabzilla.publisher-${options.targetEndpoint}") { msg ->
       action()

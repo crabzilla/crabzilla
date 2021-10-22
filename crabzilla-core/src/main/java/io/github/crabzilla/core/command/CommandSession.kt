@@ -4,7 +4,7 @@ import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
 
 /**
- * To perform aggregate root business methods and track it's events and state
+ * To apply and track events against state
  */
 class CommandSession<S : State, E : Event> {
   private val originalState: S

@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicReference
 
 class CommandController<S : State, C : Command, E : Event>(
   private val vertx: Vertx,
@@ -175,9 +174,11 @@ class CommandController<S : State, C : Command, E : Event>(
       }.mapEmpty()
     }
 
-    val snapshotResult: AtomicReference<Snapshot<S>?> = AtomicReference(null)
-    val sessionResult: AtomicReference<CommandSession<S, E>> = AtomicReference(null)
-    val appendedEventsResult: AtomicReference<AppendedEvents<E>> = AtomicReference(null)
+    data class Results(
+      val snapshot: Snapshot<S>?,
+      val session: CommandSession<S, E>?,
+      val appendedEvents: AppendedEvents<E>?
+    )
 
     return pgPool.withTransaction { conn ->
       validateCommands()
@@ -188,35 +189,35 @@ class CommandController<S : State, C : Command, E : Event>(
           log.debug("State locked")
           snapshotRepository.get(conn, metadata.stateId.id)
         }.compose { snapshot ->
-          snapshotResult.set(snapshot)
           log.debug("Got snapshot {}", snapshot)
           commandHandler.invoke(command, snapshot?.state)
-        }.compose { session ->
-          sessionResult.set(session)
-          log.debug("Command handled {}", session.toSessionData())
+            .map { Results(snapshot, it, null) }
+        }.compose { results ->
+          log.debug("Command handled {}", results.session!!.toSessionData())
           appendCommand(conn)
-        }.compose {
+            .map { results }
+        }.compose { results ->
           log.debug("Command appended")
-          val originalVersion = snapshotResult.get()?.version ?: 0
-          appendEvents(conn, originalVersion, sessionResult.get().appliedEvents())
-        }.compose {
+          val originalVersion = results.snapshot?.version ?: 0
+          appendEvents(conn, originalVersion, results.session!!.appliedEvents())
+            .map { results.copy(appendedEvents = it) }
+        }.compose { results ->
           log.debug("Events appended")
-          appendedEventsResult.set(it)
           if (eventsProjector != null) {
-            val future = projectEvents(conn, it, eventsProjector)
+            val future = projectEvents(conn, results.appendedEvents!!, eventsProjector)
             log.debug("Events projected")
-            future
+            future.map { results }
           } else {
-            Future.succeededFuture()
+            Future.succeededFuture(results)
           }
-        }.compose {
-          val originalVersion = snapshotResult.get()?.version ?: 0
+        }.compose { results ->
+          val originalVersion = results.snapshot?.version ?: 0
           snapshotRepository.upsert(
             conn, metadata.stateId.id, originalVersion,
-            appendedEventsResult.get().resultingVersion, sessionResult.get().currentState
-          )
-        }.compose {
-          Future.succeededFuture(sessionResult.get())
+            results.appendedEvents!!.resultingVersion, results.session!!.currentState
+          ).map { results }
+        }.compose { results ->
+          Future.succeededFuture(results.session)
         }.onSuccess {
           commandsOk.incrementAndGet()
         }.onFailure {
