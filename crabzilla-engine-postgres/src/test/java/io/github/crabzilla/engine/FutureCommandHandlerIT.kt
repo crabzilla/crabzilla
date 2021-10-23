@@ -49,7 +49,7 @@ class FutureCommandHandlerIT {
       { FuturePaymentCommandHandler(paymentEventHandler, vertx.eventBus()) }
     )
     val snapshotRepo2 = PersistentSnapshotRepo<Payment, PaymentEvent>(customerConfig.name, jsonSerDer)
-    commandController = CommandController(vertx, paymentConfig, commandsContext.pgPool, jsonSerDer, snapshotRepo2)
+    commandController = CommandController(vertx, commandsContext.pgPool, jsonSerDer, paymentConfig, snapshotRepo2)
     repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
     testRepo = TestRepository(commandsContext.pgPool)
     cleanDatabase(commandsContext.sqlClient)

@@ -35,7 +35,7 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
     config: CommandControllerConfig<S, C, E>,
     snapshotType: SnapshotType
   ): CommandController<S, C, E> {
-    return CommandController(vertx, config, pgPool, jsonSerDer, snapshotRepo(snapshotType, config))
+    return CommandController(vertx, pgPool, jsonSerDer, config, snapshotRepo(snapshotType, config))
   }
 
   /**
@@ -46,7 +46,7 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
     snapshotType: SnapshotType,
     eventsProjector: EventsProjector?
   ): CommandController<S, C, E> {
-    return CommandController(vertx, config, pgPool, jsonSerDer, snapshotRepo(snapshotType, config), eventsProjector)
+    return CommandController(vertx, pgPool, jsonSerDer, config, snapshotRepo(snapshotType, config), eventsProjector)
   }
 
   fun close(): Future<Void> {

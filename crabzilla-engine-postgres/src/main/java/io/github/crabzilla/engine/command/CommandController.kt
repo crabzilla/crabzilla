@@ -17,7 +17,6 @@ import io.github.crabzilla.stack.EventId
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.command.CommandHandlerWrapper.wrap
 import io.github.crabzilla.stack.command.CommandMetadata
-import io.github.crabzilla.stack.command.Snapshot
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -33,9 +32,9 @@ import java.util.concurrent.atomic.AtomicLong
 
 class CommandController<S : State, C : Command, E : Event>(
   private val vertx: Vertx,
-  private val config: CommandControllerConfig<S, C, E>,
   private val pgPool: PgPool,
   private val jsonSerDer: JsonSerDer,
+  private val config: CommandControllerConfig<S, C, E>,
   private val snapshotRepository: SnapshotRepository<S, E>,
   private val eventsProjector: EventsProjector? = null
 ) {
@@ -174,12 +173,6 @@ class CommandController<S : State, C : Command, E : Event>(
       }.mapEmpty()
     }
 
-    data class Results(
-      val snapshot: Snapshot<S>?,
-      val session: CommandSession<S, E>?,
-      val appendedEvents: AppendedEvents<E>?
-    )
-
     return pgPool.withTransaction { conn ->
       validateCommands()
         .compose {
@@ -191,33 +184,39 @@ class CommandController<S : State, C : Command, E : Event>(
         }.compose { snapshot ->
           log.debug("Got snapshot {}", snapshot)
           commandHandler.invoke(command, snapshot?.state)
-            .map { Results(snapshot, it, null) }
-        }.compose { results ->
-          log.debug("Command handled {}", results.session!!.toSessionData())
+            .map { Pair(snapshot, it) }
+        }.compose { pair ->
+          val (_, session) = pair
+          log.debug("Command handled {}", session.toSessionData())
           appendCommand(conn)
-            .map { results }
-        }.compose { results ->
+            .map { pair }
+        }.compose { pair ->
+          val (snapshot, session) = pair
           log.debug("Command appended")
-          val originalVersion = results.snapshot?.version ?: 0
-          appendEvents(conn, originalVersion, results.session!!.appliedEvents())
-            .map { results.copy(appendedEvents = it) }
-        }.compose { results ->
+          val originalVersion = snapshot?.version ?: 0
+          appendEvents(conn, originalVersion, session.appliedEvents())
+            .map { Triple(snapshot, session, it) }
+        }.compose { triple ->
+          val (_, _, appendedEvents) = triple
           log.debug("Events appended")
           if (eventsProjector != null) {
-            val future = projectEvents(conn, results.appendedEvents!!, eventsProjector)
-            log.debug("Events projected")
-            future.map { results }
+            projectEvents(conn, appendedEvents, eventsProjector)
+              .onSuccess {
+                log.debug("Events projected")
+              }.map { triple }
           } else {
-            Future.succeededFuture(results)
+            Future.succeededFuture(triple)
           }
-        }.compose { results ->
-          val originalVersion = results.snapshot?.version ?: 0
+        }.compose { triple ->
+          val (snapshot, session, appendedEvents) = triple
+          val originalVersion = snapshot?.version ?: 0
           snapshotRepository.upsert(
             conn, metadata.stateId.id, originalVersion,
-            results.appendedEvents!!.resultingVersion, results.session!!.currentState
-          ).map { results }
-        }.compose { results ->
-          Future.succeededFuture(results.session)
+            appendedEvents.resultingVersion, session.currentState
+          ).map { triple }
+        }.compose { triple ->
+          val (_, session, _) = triple
+          Future.succeededFuture(session)
         }.onSuccess {
           commandsOk.incrementAndGet()
         }.onFailure {
