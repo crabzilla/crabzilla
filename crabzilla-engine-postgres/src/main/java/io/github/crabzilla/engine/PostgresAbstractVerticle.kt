@@ -12,7 +12,6 @@ import io.vertx.sqlclient.SqlClient
 open class PostgresAbstractVerticle : AbstractVerticle() {
 
   val jsonSerDer: JsonSerDer by lazy {
-    println(config().encodePrettily())
     val provider = JsonContextProviderFinder().create(config().getString("jsonFactoryClassName"))
     provider.create().serder()
   }
@@ -31,7 +30,7 @@ open class PostgresAbstractVerticle : AbstractVerticle() {
     PgPool.client(vertx, connectOptions, poolOptions)
   }
 
-  val connectOptions: PgConnectOptions? by lazy {
+  val connectOptions: PgConnectOptions by lazy {
     val pgConnectOptions = PgConnectOptions()
     val host = config().getString("host")
     pgConnectOptions.host = host
@@ -50,7 +49,7 @@ open class PostgresAbstractVerticle : AbstractVerticle() {
     pgConnectOptions
   }
 
-  private fun createConnectOptions(config: JsonObject): PgConnectOptions? {
+  private fun createConnectOptions(config: JsonObject): PgConnectOptions {
     val pgConnectOptions = PgConnectOptions()
     val host = config.getString("host")
     pgConnectOptions.host = host
