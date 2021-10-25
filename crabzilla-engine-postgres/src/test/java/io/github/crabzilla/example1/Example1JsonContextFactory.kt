@@ -8,7 +8,7 @@ import io.github.crabzilla.stack.JsonContextProvider
 class Example1JsonContextFactory : JsonContextProvider {
   override fun create(): JsonContext {
     return object : JsonContext {
-      override fun serder(): JsonSerDer {
+      override fun get(): JsonSerDer {
         return KotlinJsonSerDer(example1Json)
       }
     }

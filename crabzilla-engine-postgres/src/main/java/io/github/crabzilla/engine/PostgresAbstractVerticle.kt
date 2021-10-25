@@ -13,7 +13,7 @@ open class PostgresAbstractVerticle : AbstractVerticle() {
 
   val jsonSerDer: JsonSerDer by lazy {
     val provider = JsonContextProviderFinder().create(config().getString("jsonFactoryClassName"))
-    provider.create().serder()
+    provider.create().get()
   }
 
   val pgPool: PgPool by lazy {
