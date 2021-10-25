@@ -15,9 +15,10 @@
   - [X] Persistent snapshotting
   - [X] State ID locking using Postgres Advisory locks
   - [X] Correlation and causation IDs
+  - [X] Commands persistence
+  - [X] Events persistence
   - [X] Optional Command validation
-  - [X] Optional Command persistence
-  - [X] Optional synchronous Read Model projection: within the same command handler transaction
+  - [X] Optional "synchronous" Read Model projection: within the same command handler transaction
   - [X] Command Handler can have external integrations: `FutureCommandHandler`
 - [x] Events publisher
   - [X] Publish events with some level of idempotency using `publications` table.
