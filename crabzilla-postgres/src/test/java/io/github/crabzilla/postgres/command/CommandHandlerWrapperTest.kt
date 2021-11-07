@@ -1,5 +1,6 @@
 package io.github.crabzilla.postgres.command
 
+import io.github.crabzilla.core.command.CommandException.UnknownCommandException
 import io.github.crabzilla.core.command.CommandHandlerApi
 import io.github.crabzilla.core.command.EventHandler
 import io.github.crabzilla.example1.customer.Customer
@@ -18,7 +19,7 @@ internal class CommandHandlerWrapperTest {
   @Test
   fun invalidCmdHandler() {
     val ch = InvalidCmdHandler(customerEventHandler)
-    Assertions.assertThatExceptionOfType(UnknownCommandHandler::class.java)
+    Assertions.assertThatExceptionOfType(UnknownCommandException::class.java)
       .isThrownBy {
         wrap(ch)
       }.withMessage("Unknown command handler: InvalidCmdHandler")

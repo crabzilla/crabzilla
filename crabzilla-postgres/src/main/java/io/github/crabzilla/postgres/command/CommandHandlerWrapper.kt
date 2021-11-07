@@ -3,6 +3,7 @@ package io.github.crabzilla.postgres.command
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
+import io.github.crabzilla.core.command.CommandException.UnknownCommandException
 import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.command.CommandHandlerApi
 import io.github.crabzilla.core.command.CommandSession
@@ -24,7 +25,7 @@ object CommandHandlerWrapper {
       is FutureCommandHandler<S, C, E> -> { command, state ->
         handler.handleCommand(command, state)
       }
-      else -> throw UnknownCommandHandler("Unknown command handler: " + handler.javaClass.simpleName)
+      else -> throw UnknownCommandException("Unknown command handler: " + handler.javaClass.simpleName)
     }
   }
 }
