@@ -21,17 +21,12 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-serder-kotlin</artifactId>
+      <artifactId>crabzilla-json</artifactId>
     </dependency>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-stack</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-engine-postgres</artifactId>
+      <artifactId>crabzilla-postgres</artifactId>
     </dependency>
 
   </dependencies>

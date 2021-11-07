@@ -61,22 +61,22 @@ https://github.com/rodolfodpk/accounts2
 </dependency>
 ```
 
-2. Add `crabzilla-serder-kotlin` to serialize/deserialize your Commands, Events and States to JSON.
+2. Add `crabzilla-kotlin-json` to serialize/deserialize your Commands, Events and States to JSON.
 
 ```xml
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-serder-kotlin</artifactId>
+    <artifactId>crabzilla-kotlin-json</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ```
 
-3. Add `crabzilla-engine-postgres` to consistently append your events to Postgres.
+3. Add `crabzilla-vertx-pg-client` to consistently append your events to Postgres.
 
 ```xml
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-engine-postgres</artifactId>
+    <artifactId>crabzilla-vertx-pg-client</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ```

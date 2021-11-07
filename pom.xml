@@ -71,9 +71,9 @@
 
   <modules>
     <module>crabzilla-core</module>
-    <module>crabzilla-serder-kotlin</module>
-    <module>crabzilla-stack</module>
-    <module>crabzilla-engine-postgres</module>
+    <module>crabzilla-json</module>
+<!--    <module>crabzilla-vertx</module>-->
+    <module>crabzilla-postgres</module>
     <module>coverage-report</module>
   </modules>
   <dependencyManagement>
@@ -90,19 +90,13 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-serder-kotlin</artifactId>
+        <artifactId>crabzilla-json</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-stack</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-engine-postgres</artifactId>
+        <artifactId>crabzilla-postgres</artifactId>
         <version>${project.version}</version>
       </dependency>
 
