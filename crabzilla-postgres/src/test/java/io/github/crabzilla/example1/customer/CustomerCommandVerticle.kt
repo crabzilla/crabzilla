@@ -1,9 +1,9 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.engine.PostgresAbstractVerticle
-import io.github.crabzilla.engine.command.CommandController
-import io.github.crabzilla.engine.command.CommandMetadataExt.fromJson
-import io.github.crabzilla.engine.command.PersistentSnapshotRepo
+import io.github.crabzilla.postgres.PostgresAbstractVerticle
+import io.github.crabzilla.postgres.command.CommandController
+import io.github.crabzilla.postgres.command.CommandMetadataExt.fromJson
+import io.github.crabzilla.postgres.command.PersistentSnapshotRepo
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 

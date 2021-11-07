@@ -1,5 +1,5 @@
 {
-  "main": "io.github.crabzilla.engine.projector.EventsProjectorVerticle",
+  "main": "io.github.crabzilla.postgres.projector.EventsProjectorVerticle",
   "options": {
     "config" : {
       "connectOptionsName": "ex1_crabzilla-config",

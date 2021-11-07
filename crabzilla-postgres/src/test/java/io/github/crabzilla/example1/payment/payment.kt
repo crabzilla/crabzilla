@@ -5,13 +5,13 @@ import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.EventHandler
-import io.github.crabzilla.engine.command.FutureCommandHandler
 import io.github.crabzilla.example1.payment.PaymentCommand.Pay
 import io.github.crabzilla.example1.payment.PaymentCommand.Refund
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentApproved
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentNotApproved
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentRefunded
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentRequested
+import io.github.crabzilla.postgres.command.FutureCommandHandler
 import io.vertx.core.Future
 import io.vertx.core.eventbus.EventBus
 import kotlinx.serialization.Contextual

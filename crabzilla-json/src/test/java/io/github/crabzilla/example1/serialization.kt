@@ -1,8 +1,8 @@
 package io.github.crabzilla.example1
 
-import io.github.crabzilla.core.json.javaModule
 import io.github.crabzilla.example1.customer.customerModule
 import io.github.crabzilla.example1.payment.paymentModule
+import io.github.crabzilla.json.javaModule
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 
