@@ -9,7 +9,7 @@ import io.github.crabzilla.core.command.CommandHandlerApi
 import io.github.crabzilla.core.command.CommandSession
 import io.vertx.core.Future
 
-object CommandHandlerWrapper {
+internal object CommandHandlerWrapper {
 
   fun <S : State, C : Command, E : Event> wrap(handler: CommandHandlerApi<S, C, E>):
     (command: C, state: S?) -> Future<CommandSession<S, E>> {

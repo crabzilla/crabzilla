@@ -15,7 +15,7 @@ import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
 // TODO could receive also a list of aggregate root names to filter interesting events
-class EventsScanner(
+internal class EventsScanner(
   private val sqlClient: SqlClient,
   private val name: String
 ) {

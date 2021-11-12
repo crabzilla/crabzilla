@@ -21,14 +21,14 @@
   - [X] Optional "synchronous" Read Model projection: within the same command handler transaction
   - [X] Command Handler can have external integrations: `FutureCommandHandler`
 - [x] Events publisher
-  - [X] Publish events with some level of idempotency using `publications` table.
+  - [X] Publish events using `publications` table.
   - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic
 - [x] Events projector
-  - [X] Publish events with some level of idempotency using `projections` table.
+  - [X] Project events using `projections` table.
   - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic 
 - [x] Very basic observability (logging stats)
 - [ ] Getting started tutorial
-- [ ] Web interface to write model (to track commands, events, etc)
+- [ ] Web interface to write model (to track commands, events, etc.)
 
 ### Status
 
@@ -61,22 +61,22 @@ https://github.com/rodolfodpk/accounts2
 </dependency>
 ```
 
-2. Add `crabzilla-kotlin-json` to serialize/deserialize your Commands, Events and States to JSON.
+2. Add `crabzilla-json` to serialize/deserialize your Commands, Events and States to JSON.
 
 ```xml
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-kotlin-json</artifactId>
+    <artifactId>crabzilla-json</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ```
 
-3. Add `crabzilla-vertx-pg-client` to consistently append your events to Postgres.
+3. Add `crabzilla-postgres` to consistently append your events to Postgres.
 
 ```xml
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-vertx-pg-client</artifactId>
+    <artifactId>crabzilla-postgres</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ```
