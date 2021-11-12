@@ -114,11 +114,7 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
         if (eventsList.isEmpty()) {
           Future.failedFuture("No new events")
         } else {
-          log.debug(
-            "Found {} new events. The last one is #{}",
-            eventsList.size,
-            eventsList.last().eventMetadata.eventId
-          )
+          log.debug("Found {} new events. The last one is {}", eventsList.size, eventsList.last().eventMetadata.eventId)
           publish(eventsList)
         }
       }.compose { lastPublishedEvent ->
