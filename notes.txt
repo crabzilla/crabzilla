@@ -1,3 +1,4 @@
+-- https://www.youtube.com/watch?v=GzrZworHpIk
 -- https://softwaremill.com/implementing-event-sourcing-using-a-relational-database/
 -- https://stackoverflow.com/questions/53207723/sequential-composition-for-arbitrary-number-of-calls-in-vertx-with-futures
 
@@ -13,3 +14,5 @@
 
 * demo
 -- https://jameseastham.co.uk/software-development/event-modeling-by-example
+
+https://www.youtube.com/watch?v=o51kMltuSuQ
