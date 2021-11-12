@@ -97,18 +97,16 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
 
   private fun scanAndPublish(numberOfRows: Int): Future<Long> {
     fun publish(eventsList: List<EventRecord>): Future<Long> {
-      val eventSequence = AtomicLong(0)
-      val initialFuture = Future.succeededFuture<Void>()
+      val initialFuture = Future.succeededFuture<Long>()
       return eventsList.fold(
         initialFuture
-      ) { currentFuture: Future<Void>, eventRecord: EventRecord ->
+      ) { currentFuture: Future<Long>, eventRecord: EventRecord ->
         currentFuture.compose {
           log.debug("Will publish event #{}", eventRecord.eventMetadata.eventId)
           vertx.eventBus().request<Void>(options.targetEndpoint, eventRecord.toJsonObject())
-            .onSuccess { eventSequence.set(eventRecord.eventMetadata.eventSequence) }
-            .mapEmpty()
+            .map { eventRecord.eventMetadata.eventSequence }
         }
-      }.map { eventSequence.get() }
+      }
     }
     val promise = Promise.promise<Long>()
     scanner.scanPendingEvents(numberOfRows)

@@ -29,25 +29,6 @@ open class PostgresAbstractVerticle : AbstractVerticle() {
     PgPool.client(vertx, connectOptions, poolOptions)
   }
 
-  val connectOptions: PgConnectOptions by lazy {
-    val pgConnectOptions = PgConnectOptions()
-    val host = config().getString("host")
-    pgConnectOptions.host = host
-    val port = config().getInteger("port")
-    pgConnectOptions.port = port
-    val username = config().getString("user")
-    pgConnectOptions.user = username
-    val password = config().getString("password")
-    pgConnectOptions.password = password
-    val database = config().getString("database")
-    pgConnectOptions.database = database
-    // TODO config it
-    pgConnectOptions.cachePreparedStatements = true
-    pgConnectOptions.reconnectAttempts = 2
-    pgConnectOptions.reconnectInterval = 1000
-    pgConnectOptions
-  }
-
   private fun createConnectOptions(config: JsonObject): PgConnectOptions {
     val pgConnectOptions = PgConnectOptions()
     val host = config.getString("host")
