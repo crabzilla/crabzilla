@@ -18,7 +18,7 @@ class CustomerCommandVerticle : PostgresAbstractVerticle() {
   override fun start() {
 
     val snapshotRepo = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
-    val eventStore = CommandController(vertx, pgPool, jsonSerDer, customerConfig, snapshotRepo)
+    val eventStore = CommandController(pgPool, jsonSerDer, customerConfig, snapshotRepo)
 
     vertx.eventBus().consumer<JsonObject>(ENDPOINT) { msg ->
       val metadata = fromJson(msg.body().getJsonObject("metadata"))

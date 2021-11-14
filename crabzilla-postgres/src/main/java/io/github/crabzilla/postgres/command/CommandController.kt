@@ -18,7 +18,6 @@ import io.github.crabzilla.json.JsonSerDer
 import io.github.crabzilla.postgres.command.CommandHandlerWrapper.wrap
 import io.github.crabzilla.postgres.projector.EventsProjector
 import io.vertx.core.Future
-import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
@@ -31,7 +30,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 class CommandController<S : State, C : Command, E : Event>(
-  private val vertx: Vertx,
   private val pgPool: PgPool,
   private val jsonSerDer: JsonSerDer,
   private val config: CommandControllerConfig<S, C, E>,
@@ -57,19 +55,6 @@ class CommandController<S : State, C : Command, E : Event>(
   private val commandsFailures = AtomicLong(0)
   private val commandHandler: (command: C, state: S?) -> Future<CommandSession<S, E>> =
     wrap(config.commandHandlerFactory.invoke())
-
-  init {
-    vertx.setPeriodic(DEFAULT_STATS_INTERVAL) { publishMetrics() }
-    publishMetrics()
-  }
-
-  private fun publishMetrics() {
-    val metric = JsonObject()
-      .put("controllerId", config.name)
-      .put("successes", commandsOk.get())
-      .put("failures", commandsFailures.get())
-    vertx.eventBus().publish("crabzilla.command-controllers", metric)
-  }
 
   fun handle(metadata: CommandMetadata, command: C): Future<CommandSession<S, E>> {
     fun validateCommands(): Future<Void> {

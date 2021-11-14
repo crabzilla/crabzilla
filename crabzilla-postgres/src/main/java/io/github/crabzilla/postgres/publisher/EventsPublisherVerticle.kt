@@ -26,23 +26,21 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
   override fun start() {
 
     options = Config.create(config())
+
+    log.info("Starting with {}", options)
+
     scanner = EventsScanner(sqlClient, options.targetEndpoint)
 
     vertx.eventBus().consumer<Void>("crabzilla.publisher-${options.targetEndpoint}") { msg ->
       action()
         .onFailure { msg.fail(500, it.message) }
         .onSuccess {
-          publishMetrics()
           msg.reply(null)
         }
     }
 
     // Schedule the first execution
     vertx.setTimer(options.initialInterval + options.interval, handler())
-
-    vertx.setPeriodic(options.metricsInterval) {
-      publishMetrics()
-    }
 
     log.info("Started pooling events with {}", options)
   }
@@ -51,20 +49,10 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
     log.info("Stopped")
   }
 
-  private fun publishMetrics() {
-    val metric = JsonObject() // TODO also publish errors
-      .put("publicationId", options.targetEndpoint)
-      .put("sequence", lastEventPublishedRef.get())
-    vertx.eventBus().publish("crabzilla.publications", metric)
-  }
-
   private fun handler(): Handler<Long?> {
     return Handler<Long?> {
       action()
         .onFailure { log.error(it.message, it) }
-        .onSuccess {
-          publishMetrics()
-        }
     }
   }
 
@@ -153,7 +141,7 @@ class EventsPublisherVerticle : PostgresAbstractVerticle() {
           initialInterval = initialInterval,
           interval = interval,
           maxInterval = maxInterval,
-          metricsInterval = metricsInterval,
+          metricsInterval = metricsInterval, // TODO delete
           maxNumberOfRows = maxNumberOfRows
         )
       }

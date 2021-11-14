@@ -18,7 +18,6 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(EventsProjectorVerticle::class.java)
-    private const val defaultMetricInterval = 10_000L
     private const val errorCode = 500
     private const val expectedRows = 1
     private const val notFound = -1L
@@ -71,10 +70,6 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
             msg.fail(errorCode, it.message)
           }
       }
-
-      vertx.setPeriodic(config().getLong("metricsInterval", defaultMetricInterval)) {
-        publishMetrics()
-      }
     }
 
     targetEndpoint = config().getString("targetEndpoint")
@@ -95,14 +90,6 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
           promise.complete()
         }
       }
-  }
-
-  private fun publishMetrics() {
-    val metric = JsonObject()
-      .put("projectionId", targetEndpoint)
-      .put("failures", failures.get())
-      .put("sequence", latestOffset.get())
-    vertx.eventBus().publish("crabzilla.projections", metric)
   }
 
   override fun stop() {
