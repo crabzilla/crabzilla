@@ -9,6 +9,14 @@
 
 ### Goals for version 1.0.0
 
+- [x] `crabzila-core`
+  - [X] State, Command and Event 
+  - [X] Command Handler function
+  - [X] Event Handler function
+  - [X] Test specifications given a command
+  - [X] Test specifications given some events then a command
+- [x] `crabzila-json`
+  - [X] `kotlinx-serialization-json` implementation
 - [x] `crabzila-command`
   - [X] Non-blocking IO using `vertx-pg-client`
   - [X] On Demand snapshotting
