@@ -26,8 +26,13 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-postgres</artifactId>
+      <artifactId>crabzilla-command</artifactId>
     </dependency>
+
+<!--    <dependency>-->
+<!--      <groupId>io.github.crabzilla</groupId>-->
+<!--      <artifactId>crabzilla-projection</artifactId>-->
+<!--    </dependency>-->
 
   </dependencies>
 

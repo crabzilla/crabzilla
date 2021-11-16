@@ -3,18 +3,18 @@ version: '3.1'
 services:
 
   db:
-    image: postgres:13.2-alpine
+    image: command:13.2-alpine
     environment:
       POSTGRES_USER: user1
       POSTGRES_PASSWORD: pwd1
-#        PGDATA: /data/postgres
+#        PGDATA: /data/command
     volumes:
-#        - /data/postgres:/data/postgres
+#        - /data/command:/data/command
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
 #      networks:
-#        - postgres
+#        - command
     restart: unless-stopped
 
 

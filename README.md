@@ -25,8 +25,7 @@
   - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic
 - [x] Events projector
   - [X] Project events using `projections` table.
-  - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic 
-- [x] Very basic observability (logging stats)
+  - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic
 - [ ] Getting started tutorial
 - [ ] Web interface to write model (to track commands, events, etc.)
 

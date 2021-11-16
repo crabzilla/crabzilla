@@ -72,8 +72,8 @@
   <modules>
     <module>crabzilla-core</module>
     <module>crabzilla-json</module>
-<!--    <module>crabzilla-vertx</module>-->
-    <module>crabzilla-postgres</module>
+    <module>crabzilla-command</module>
+<!--    <module>crabzilla-projection</module>-->
     <module>coverage-report</module>
   </modules>
   <dependencyManagement>
@@ -96,9 +96,15 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-postgres</artifactId>
+        <artifactId>crabzilla-command</artifactId>
         <version>${project.version}</version>
       </dependency>
+
+        <dependency>
+            <groupId>io.github.crabzilla</groupId>
+            <artifactId>crabzilla-projection</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
       <!-- vertx -->
 
