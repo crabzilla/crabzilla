@@ -2,7 +2,6 @@ package io.github.crabzilla.command
 
 import io.github.crabzilla.command.internal.OnDemandSnapshotRepo
 import io.github.crabzilla.core.json.JsonSerDer
-import io.github.crabzilla.core.json.KotlinJsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.core.metadata.Metadata.StateId
 import io.github.crabzilla.example1.customer.Customer
@@ -12,6 +11,7 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivate
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
+import io.github.crabzilla.json.KotlinJsonSerDer
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext

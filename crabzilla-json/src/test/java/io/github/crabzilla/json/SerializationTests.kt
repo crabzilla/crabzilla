@@ -1,6 +1,8 @@
-package io.github.crabzilla.core
+package io.github.crabzilla.json
 
-import io.github.crabzilla.core.json.KotlinJsonSerDer
+import io.github.crabzilla.core.Command
+import io.github.crabzilla.core.Event
+import io.github.crabzilla.core.State
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer

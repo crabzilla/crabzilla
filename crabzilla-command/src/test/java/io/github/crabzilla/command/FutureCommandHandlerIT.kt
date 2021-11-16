@@ -3,7 +3,6 @@ package io.github.crabzilla.command
 import io.github.crabzilla.command.internal.PersistentSnapshotRepo
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.json.JsonSerDer
-import io.github.crabzilla.core.json.KotlinJsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.core.metadata.Metadata.StateId
 import io.github.crabzilla.example1.customer.customerConfig
@@ -16,6 +15,7 @@ import io.github.crabzilla.example1.payment.PaymentEvent.PaymentApproved
 import io.github.crabzilla.example1.payment.PaymentEvent.PaymentRequested
 import io.github.crabzilla.example1.payment.Status
 import io.github.crabzilla.example1.payment.paymentEventHandler
+import io.github.crabzilla.json.KotlinJsonSerDer
 import io.kotest.matchers.shouldBe
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension

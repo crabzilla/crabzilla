@@ -1,10 +1,10 @@
 package io.github.crabzilla.command
 
 import io.github.crabzilla.core.json.JsonSerDer
-import io.github.crabzilla.core.json.KotlinJsonSerDer
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
+import io.github.crabzilla.json.KotlinJsonSerDer
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension

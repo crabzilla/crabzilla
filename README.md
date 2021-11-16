@@ -15,6 +15,8 @@
   - [X] Event Handler function
   - [X] Test specifications given a command
   - [X] Test specifications given some events then a command
+  - [X] Command Metadata
+  - [X] Event Metadata
 - [x] `crabzila-json`
   - [X] `kotlinx-serialization-json` implementation
 - [x] `crabzila-command`

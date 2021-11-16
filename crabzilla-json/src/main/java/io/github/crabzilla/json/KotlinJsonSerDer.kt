@@ -1,8 +1,9 @@
-package io.github.crabzilla.core.json
+package io.github.crabzilla.json
 
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
+import io.github.crabzilla.core.json.JsonSerDer
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
 
