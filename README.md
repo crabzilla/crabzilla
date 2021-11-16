@@ -9,7 +9,7 @@
 
 ### Goals for version 1.0.0
 
-- [x] Command controller
+- [x] `crabzila-command`
   - [X] Non-blocking IO using `vertx-pg-client`
   - [X] On Demand snapshotting
   - [X] Persistent snapshotting
@@ -20,12 +20,7 @@
   - [X] Optional Command validation
   - [X] Optional "synchronous" Read Model projection: within the same command handler transaction
   - [X] Command Handler can have external integrations: `FutureCommandHandler`
-- [x] Events publisher
-  - [X] Publish events using `publications` table.
-  - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic
-- [x] Events projector
-  - [X] Project events using `projections` table.
-  - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic
+- [ ] `crabzila-projection`
 - [ ] Getting started tutorial
 - [ ] Web interface to write model (to track commands, events, etc.)
 
