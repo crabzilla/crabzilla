@@ -58,7 +58,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
       vertx.setTimer(options.interval, handler())
       log.debug("Rescheduled to next {} milliseconds", options.interval)
     }
-    log.debug("Scanning new events")
+    log.debug("Scanning for new events for projection {}", options.projectionName)
     return scanAndSubmit(options.maxNumberOfRows)
       .compose { retrievedRows ->
         when (retrievedRows) {
@@ -104,7 +104,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
     return scanner.scanPendingEvents(numberOfRows)
       .compose { eventsList ->
         if (eventsList.isEmpty()) {
-          Future.failedFuture("No new events")
+          Future.succeededFuture(0)
         } else {
           log.debug("Found {} new events. The last one is {}", eventsList.size, eventsList.last().eventMetadata.eventId)
           projectEvents(eventsList)

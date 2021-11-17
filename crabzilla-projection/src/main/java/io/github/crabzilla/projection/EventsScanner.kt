@@ -44,7 +44,6 @@ internal class EventsScanner(
   }
 
   fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
-    log.debug("Scanning for new events on stream {}", name)
     return sqlClient
       .preparedQuery(selectAfterOffset)
       .execute(Tuple.of(name, numberOfRows))
