@@ -1,11 +1,11 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.command.projector.EventsProjector
 import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.metadata.EventMetadata
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.projection.EventsProjector
 import io.vertx.core.Future
 import io.vertx.sqlclient.SqlConnection
 

@@ -1,4 +1,4 @@
-package io.github.crabzilla.command
+package io.github.crabzilla.projection
 
 import java.nio.file.ProviderNotFoundException
 import java.util.ServiceLoader

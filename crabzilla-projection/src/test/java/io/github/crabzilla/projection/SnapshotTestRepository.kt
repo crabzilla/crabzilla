@@ -1,5 +1,6 @@
-package io.github.crabzilla.command
+package io.github.crabzilla.projection
 
+import io.github.crabzilla.command.internal.Snapshot
 import io.github.crabzilla.core.State
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject

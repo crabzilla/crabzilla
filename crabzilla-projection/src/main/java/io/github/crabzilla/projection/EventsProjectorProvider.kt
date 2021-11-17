@@ -1,4 +1,4 @@
-package io.github.crabzilla.command.projector
+package io.github.crabzilla.projection
 
 interface EventsProjectorProvider {
   fun create(): EventsProjector

@@ -1,4 +1,4 @@
-package io.github.crabzilla.command
+package io.github.crabzilla.projection
 
 import io.github.crabzilla.core.json.JsonSerDer
 import io.vertx.core.AbstractVerticle

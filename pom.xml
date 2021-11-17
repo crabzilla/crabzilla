@@ -73,7 +73,7 @@
     <module>crabzilla-core</module>
     <module>crabzilla-json</module>
     <module>crabzilla-command</module>
-<!--    <module>crabzilla-projection</module>-->
+    <module>crabzilla-projection</module>
     <module>coverage-report</module>
   </modules>
   <dependencyManagement>
@@ -100,11 +100,11 @@
         <version>${project.version}</version>
       </dependency>
 
-        <dependency>
-            <groupId>io.github.crabzilla</groupId>
-            <artifactId>crabzilla-projection</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+      <dependency>
+          <groupId>io.github.crabzilla</groupId>
+          <artifactId>crabzilla-projection</artifactId>
+          <version>${project.version}</version>
+      </dependency>
 
       <!-- vertx -->
 

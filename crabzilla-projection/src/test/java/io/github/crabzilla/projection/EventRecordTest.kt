@@ -1,7 +1,5 @@
-package io.github.crabzilla.command
+package io.github.crabzilla.projection
 
-import io.github.crabzilla.command.EventRecord.Companion.fromJsonObject
-import io.github.crabzilla.core.json.KotlinJsonSerDer
 import io.github.crabzilla.core.metadata.EventMetadata
 import io.github.crabzilla.core.metadata.Metadata.CausationId
 import io.github.crabzilla.core.metadata.Metadata.CorrelationId
@@ -9,6 +7,8 @@ import io.github.crabzilla.core.metadata.Metadata.EventId
 import io.github.crabzilla.core.metadata.Metadata.StateId
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.example1.example1Json
+import io.github.crabzilla.json.KotlinJsonSerDer
+import io.github.crabzilla.projection.EventRecord.Companion.fromJsonObject
 import io.vertx.core.json.JsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

@@ -1,6 +1,6 @@
 package io.github.crabzilla.example1.payment
 
-import io.github.crabzilla.command.command.FutureCommandHandler
+import io.github.crabzilla.command.FutureCommandHandler
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State

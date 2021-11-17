@@ -1,6 +1,5 @@
-package io.github.crabzilla.command.publisher
+package io.github.crabzilla.projection
 
-import io.github.crabzilla.command.EventRecord
 import io.github.crabzilla.core.metadata.EventMetadata
 import io.github.crabzilla.core.metadata.Metadata.CausationId
 import io.github.crabzilla.core.metadata.Metadata.CorrelationId
@@ -20,22 +19,28 @@ internal class EventsScanner(
   private val name: String
 ) {
 
+  /*
+
+  SELECT event_payload ->> 'type' AS event_type
+  FROM events
+ where event_payload ->> 'type' = ANY('{CustomerActivated,CustomerRegistered}'::text[])
+
+
+   */
   companion object {
     private val log = LoggerFactory.getLogger(EventsScanner::class.java)
     private const val selectAfterOffset =
       """
       SELECT ar_name, ar_id, event_payload, sequence, id, causation_id, correlation_id
       FROM events
-      WHERE sequence > (select sequence from publications where name = $1)
+      WHERE sequence > (select sequence from projections where name = $1)
       ORDER BY sequence
       limit $2
     """
-    private const val updateOffset =
-      "UPDATE publications SET sequence = $1 WHERE publications.name = $2"
   }
 
   init {
-    log.info("Starting for [{}}]", name)
+    log.info("Starting for projection {}", name)
   }
 
   fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
@@ -57,12 +62,5 @@ internal class EventsScanner(
           EventRecord(eventMetadata, jsonObject)
         }.toList()
       }
-  }
-
-  fun updateOffSet(eventSequence: Long): Future<Void> {
-    return sqlClient
-      .preparedQuery(updateOffset)
-      .execute(Tuple.of(eventSequence, name))
-      .mapEmpty()
   }
 }

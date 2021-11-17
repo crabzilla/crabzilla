@@ -1,4 +1,4 @@
-package io.github.crabzilla.command
+package io.github.crabzilla.projection
 
 import io.github.crabzilla.core.metadata.EventMetadata
 import io.github.crabzilla.core.metadata.Metadata.CausationId
