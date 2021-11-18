@@ -75,12 +75,22 @@ https://github.com/rodolfodpk/accounts2
 </dependency>
 ```
 
-3. Add `crabzilla-postgres` to consistently append your events to Postgres.
+3. Add `crabzilla-command` to consistently append your events to Postgres.
 
 ```xml
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-postgres</artifactId>
+    <artifactId>crabzilla-command</artifactId>
+    <version>see latest jitpack version</version>
+</dependency>
+```
+
+4Add `crabzilla-projection` to project your events to read model.
+
+```xml
+<dependency>
+    <groupId>com.github.crabzilla.crabzilla</groupId>
+    <artifactId>crabzilla-projection</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ```
