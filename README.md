@@ -30,7 +30,11 @@
   - [X] Optional Command validation
   - [X] Optional "synchronous" Read Model projection: within the same command handler transaction
   - [X] Command Handler can have external integrations: `FutureCommandHandler`
-- [ ] `crabzila-projection`
+- [X] `crabzila-projection`
+  - [X] Based on Verticles (single writer)
+  - [X] Batch projection within a single transaction
+  - [X] Can filter by state types: `Customer`, `Account`, etc.
+  - [X] Can filter by event types: `CustomerRegistered`, `CustomerActivated`, etc.
 - [ ] Getting started tutorial
 - [ ] Web interface to write model (to track commands, events, etc.)
 
