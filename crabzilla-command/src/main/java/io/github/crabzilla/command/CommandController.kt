@@ -47,7 +47,8 @@ class CommandController<S : State, C : Command, E : Event>(
       """ INSERT INTO commands (cmd_id, cmd_payload)
           VALUES ($1, $2)"""
     private const val SQL_APPEND_EVENT =
-      """ INSERT INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
+      """ INSERT 
+            INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
   }
 
