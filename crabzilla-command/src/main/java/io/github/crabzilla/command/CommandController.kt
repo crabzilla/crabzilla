@@ -47,8 +47,8 @@ class CommandController<S : State, C : Command, E : Event>(
       """ INSERT INTO commands (cmd_id, cmd_payload)
           VALUES ($1, $2)"""
     private const val SQL_APPEND_EVENT =
-      """ INSERT INTO events (causation_id, correlation_id, ar_name, ar_id, event_payload, version, id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7) returning sequence"""
+      """ INSERT INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
   }
 
   private val commandHandler: (command: C, state: S?) -> Future<CommandSession<S, E>> =
@@ -66,7 +66,7 @@ class CommandController<S : State, C : Command, E : Event>(
     }
     fun lock(conn: SqlConnection, lockId: Int): Future<Void> {
       return conn
-        .preparedQuery(Companion.SQL_LOCK)
+        .preparedQuery(SQL_LOCK)
         .execute(Tuple.of(config.name.hashCode(), lockId))
         .compose { pgRow ->
           if (pgRow.first().getBoolean("locked")) {
@@ -92,16 +92,20 @@ class CommandController<S : State, C : Command, E : Event>(
         val eventAsJson = jsonSerDer.toJson(event)
         log.debug("Will append event {} as {}", event, eventAsJson)
         val eventId = UuidCreator.getTimeOrdered()
+        val jsonObject = JsonObject(eventAsJson)
+        val type = jsonObject.getString("type")
+        jsonObject.remove("type")
         val params = Tuple.of(
+          type,
           causationId.id,
           metadata.correlationId.id,
           config.name,
           metadata.stateId.id,
-          JsonObject(eventAsJson),
+          jsonObject,
           version,
           eventId
         )
-        return conn.preparedQuery(Companion.SQL_APPEND_EVENT)
+        return conn.preparedQuery(SQL_APPEND_EVENT)
           .execute(params)
           .map { rs: RowSet<Row> ->
             AppendedEvent(

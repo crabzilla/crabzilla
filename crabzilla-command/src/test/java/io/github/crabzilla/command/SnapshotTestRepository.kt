@@ -23,7 +23,7 @@ class SnapshotTestRepository<A : State>(
     const val SQL_SELECT_VERSION =
       """ SELECT version, json_content
           FROM SNAPSHOTS 
-          WHERE ar_id = $1"""
+          WHERE state_id = $1"""
   }
 
   fun get(id: UUID): Future<Snapshot<A>?> {

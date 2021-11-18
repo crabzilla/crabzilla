@@ -1,11 +1,14 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.projection.internal
 
 import io.github.crabzilla.core.metadata.EventMetadata
 import io.github.crabzilla.core.metadata.Metadata.CausationId
 import io.github.crabzilla.core.metadata.Metadata.CorrelationId
 import io.github.crabzilla.core.metadata.Metadata.EventId
 import io.github.crabzilla.core.metadata.Metadata.StateId
+import io.github.crabzilla.projection.EventRecord
 import io.vertx.core.Future
+import io.vertx.core.Future.failedFuture
+import io.vertx.core.Future.succeededFuture
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
@@ -13,29 +16,16 @@ import io.vertx.sqlclient.SqlClient
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
-// TODO could receive also a list of aggregate root names to filter interesting events
 internal class EventsScanner(
   private val sqlClient: SqlClient,
-  private val name: String
+  private val name: String,
+  private val querySpecification: String
 ) {
 
-  /*
-
-  SELECT event_payload ->> 'type' AS event_type
-  FROM events
- where event_payload ->> 'type' = ANY('{CustomerActivated,CustomerRegistered}'::text[])
-
-
-   */
   companion object {
     private val log = LoggerFactory.getLogger(EventsScanner::class.java)
-    private const val selectAfterOffset =
-      """
-      SELECT ar_name, ar_id, event_payload, sequence, id, causation_id, correlation_id
-      FROM events
-      WHERE sequence > (select sequence from projections where name = $1)
-      ORDER BY sequence
-      limit $2
+    private const val selectCurrentOffset = """
+      select sequence from projections where name = $1
     """
   }
 
@@ -43,21 +33,35 @@ internal class EventsScanner(
     log.info("Starting for projection {}", name)
   }
 
+  fun getCurrentOffset(): Future<Long> {
+    return sqlClient
+      .preparedQuery(selectCurrentOffset)
+      .execute(Tuple.of(name))
+      .transform {
+        if (it.failed() || it.result().size() != 1) {
+          failedFuture("Projection $name not found")
+        } else {
+          succeededFuture(it.result().first().getLong("sequence"))
+        }
+      }
+  }
+
   fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
     return sqlClient
-      .preparedQuery(selectAfterOffset)
+      .preparedQuery(querySpecification)
       .execute(Tuple.of(name, numberOfRows))
       .map { rowSet: RowSet<Row> ->
         rowSet.iterator().asSequence().map { row: Row ->
           val eventMetadata = EventMetadata(
-            row.getString("ar_name"),
-            StateId(row.getUUID("ar_id")),
+            row.getString("state_type"),
+            StateId(row.getUUID("state_id")),
             EventId(row.getUUID("id")),
             CorrelationId(row.getUUID("correlation_id")),
             CausationId(row.getUUID("causation_id")),
             row.getLong("sequence")
           )
           val jsonObject = JsonObject(row.getValue("event_payload").toString())
+          jsonObject.put("type", row.getString("event_type"))
           EventRecord(eventMetadata, jsonObject)
         }.toList()
       }

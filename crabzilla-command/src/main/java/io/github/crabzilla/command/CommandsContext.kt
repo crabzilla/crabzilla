@@ -3,6 +3,8 @@ package io.github.crabzilla.command
 import io.github.crabzilla.command.SnapshotType.ON_DEMAND
 import io.github.crabzilla.command.SnapshotType.PERSISTENT
 import io.github.crabzilla.command.internal.OnDemandSnapshotRepo
+import io.github.crabzilla.command.internal.OptionsFactory.createPgConnectOptions
+import io.github.crabzilla.command.internal.OptionsFactory.createPoolOptions
 import io.github.crabzilla.command.internal.PersistentSnapshotRepo
 import io.github.crabzilla.command.internal.SnapshotRepository
 import io.github.crabzilla.core.Command
@@ -12,6 +14,7 @@ import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.json.JsonSerDer
 import io.vertx.core.Future
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.PoolOptions
@@ -26,6 +29,17 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
       connectOptions: PgConnectOptions,
       poolOptions: PoolOptions
     ): CommandsContext {
+      val thePgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
+      val theSqlClient: SqlClient = PgPool.client(vertx, connectOptions, poolOptions)
+      return CommandsContext(vertx, jsonSerDer, thePgPool, theSqlClient)
+    }
+    fun create(
+      vertx: Vertx,
+      jsonSerDer: JsonSerDer,
+      config: JsonObject
+    ): CommandsContext {
+      val connectOptions = createPgConnectOptions(config)
+      val poolOptions = createPoolOptions(config)
       val thePgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
       val theSqlClient: SqlClient = PgPool.client(vertx, connectOptions, poolOptions)
       return CommandsContext(vertx, jsonSerDer, thePgPool, theSqlClient)

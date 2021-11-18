@@ -15,13 +15,13 @@ CREATE TABLE projections (
 --  snapshots table
 
 CREATE TABLE snapshots (
-      ar_id UUID NOT NULL,
-      ar_type text NOT NULL,
+      state_id UUID NOT NULL,
+      state_type text NOT NULL,
       version INTEGER,
-      json_content JSONB NOT NULL,
-      PRIMARY KEY (ar_id, ar_type)
+      json_content JSON NOT NULL,
+      PRIMARY KEY (state_id, state_type)
     )
-    PARTITION BY hash(ar_id, ar_type)
+    PARTITION BY hash(state_id, state_type)
 ;
 
 -- 3 partitions
@@ -39,7 +39,7 @@ CREATE TABLE snapshots_2 PARTITION OF snapshots
 
 CREATE TABLE commands (
       cmd_id UUID NOT NULL PRIMARY KEY,
-      cmd_payload JSONB NOT NULL,
+      cmd_payload JSON NOT NULL,
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
  ;
@@ -48,20 +48,23 @@ CREATE TABLE commands (
 
 CREATE TABLE events (
       sequence BIGSERIAL NOT NULL,
-      event_payload JSONB NOT NULL,
-      ar_name text NOT NULL,
-      ar_id UUID NOT NULL,
+      event_type TEXT NOT NULL,
+      event_payload JSON NOT NULL,
+      state_type text NOT NULL,
+      state_id UUID NOT NULL,
       version INTEGER NOT NULL,
       id UUID NOT NULL,
       causation_id UUID NOT NULL,
       correlation_id UUID NOT NULL,
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE (ar_id, version) -- to help lookup by entity id ordered by version
+      UNIQUE (state_id, version) -- to help lookup by entity id ordered by version
     )
-      PARTITION BY hash(ar_id) -- all related events within same partition
+      PARTITION BY hash(state_id) -- all related events within same partition
     ;
 
 CREATE INDEX sequence_idx ON events using brin (sequence);
+CREATE INDEX state_name ON events (state_type);
+CREATE INDEX event_type ON events (event_type);
 
 -- 3 partitions
 

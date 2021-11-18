@@ -244,17 +244,17 @@
           </dependency>
         </dependencies>
         <executions>
-          <execution>
-            <id>kapt</id>
-            <goals>
-              <goal>kapt</goal>
-            </goals>
-            <configuration>
-              <sourceDirs>
-                <sourceDir>src/main/java</sourceDir>
-              </sourceDirs>
-            </configuration>
-          </execution>
+<!--          <execution>-->
+<!--            <id>kapt</id>-->
+<!--            <goals>-->
+<!--              <goal>kapt</goal>-->
+<!--            </goals>-->
+<!--            <configuration>-->
+<!--              <sourceDirs>-->
+<!--                <sourceDir>src/main/java</sourceDir>-->
+<!--              </sourceDirs>-->
+<!--            </configuration>-->
+<!--          </execution>-->
           <execution>
             <id>compile</id>
             <phase>compile</phase>
@@ -262,17 +262,17 @@
               <goal>compile</goal>
             </goals>
           </execution>
-          <execution>
-            <id>test-kapt</id>
-            <goals>
-              <goal>test-kapt</goal>
-            </goals>
-            <configuration>
-              <sourceDirs>
-                <sourceDir>src/test/java</sourceDir>
-              </sourceDirs>
-            </configuration>
-          </execution>
+<!--          <execution>-->
+<!--            <id>test-kapt</id>-->
+<!--            <goals>-->
+<!--              <goal>test-kapt</goal>-->
+<!--            </goals>-->
+<!--            <configuration>-->
+<!--              <sourceDirs>-->
+<!--                <sourceDir>src/test/java</sourceDir>-->
+<!--              </sourceDirs>-->
+<!--            </configuration>-->
+<!--          </execution>-->
           <execution>
             <id>test-compile</id>
             <phase>test-compile</phase>

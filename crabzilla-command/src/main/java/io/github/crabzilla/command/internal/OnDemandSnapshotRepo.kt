@@ -5,6 +5,7 @@ import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.EventHandler
 import io.github.crabzilla.core.json.JsonSerDer
 import io.vertx.core.Future
+import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
@@ -21,9 +22,9 @@ internal class OnDemandSnapshotRepo<S : State, E : Event>(
     private val log = LoggerFactory.getLogger(OnDemandSnapshotRepo::class.java)
     private const val GET_EVENTS_BY_ID =
       """
-      SELECT event_payload, version
+      SELECT event_type, event_payload, version
       FROM events
-      WHERE ar_id = $1
+      WHERE state_id = $1
       ORDER BY sequence
     """
   }
@@ -33,9 +34,14 @@ internal class OnDemandSnapshotRepo<S : State, E : Event>(
       .preparedQuery(GET_EVENTS_BY_ID)
       .execute(Tuple.of(id))
       .map { rowSet ->
-        rowSet.iterator().asSequence().map { row: Row ->
-          Pair(row.getValue("event_payload").toString(), row.getInteger("version"))
-        }.toList()
+        rowSet
+          .iterator()
+          .asSequence()
+          .map { row: Row ->
+            val json = JsonObject(row.getValue("event_payload").toString())
+            json.put("type", row.getString("event_type"))
+            Pair(json.toString(), row.getInteger("version"))
+          }.toList()
       }.compose { events ->
         if (events.isEmpty()) {
           Future.succeededFuture(null)

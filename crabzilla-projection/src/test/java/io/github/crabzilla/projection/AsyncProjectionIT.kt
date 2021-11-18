@@ -30,7 +30,7 @@ class AsyncProjectionIT {
     private val log = LoggerFactory.getLogger(AsyncProjectionIT::class.java)
   }
 
-  val id = UUID.randomUUID()
+  private val id: UUID = UUID.randomUUID()
   lateinit var jsonSerDer: JsonSerDer
   lateinit var commandsContext: CommandsContext
   private lateinit var testRepo: TestRepository
