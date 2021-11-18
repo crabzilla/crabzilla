@@ -99,7 +99,7 @@ https://github.com/rodolfodpk/accounts2
 
 ###### Requirements
 
-* Java 8
+* Java 11
 * Maven (tested with 3.5.0+)
 * Docker compose (tested with 1.18.0)
 * Kotlin plugin for your IDE

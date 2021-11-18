@@ -10,7 +10,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <java.version>1.8</java.version>
+    <java.version>11</java.version>
 
     <!-- crabzilla core -->
     <kotlin.version>1.5.31</kotlin.version>
@@ -226,7 +226,7 @@
         <groupId>org.jetbrains.kotlin</groupId>
         <version>${kotlin.version}</version>
         <configuration>
-          <jvmTarget>1.8</jvmTarget>
+          <jvmTarget>11</jvmTarget>
           <languageVersion>1.5</languageVersion>
           <apiVersion>1.5</apiVersion>
           <args>
@@ -289,8 +289,8 @@
         <version>${maven-compiler-plugin.version}</version>
         <configuration>
           <proc>none</proc>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>11</source>
+          <target>11</target>
           <annotationProcessors>
             <annotationProcessor>io.vertx.serviceproxy.ServiceProxyProcessor</annotationProcessor>
           </annotationProcessors>
