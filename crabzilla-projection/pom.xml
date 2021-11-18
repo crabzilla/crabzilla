@@ -9,8 +9,8 @@
     <version>v0.3.6</version>
   </parent>
 
-  <artifactId>coverage-report</artifactId>
-  <packaging>pom</packaging>
+  <artifactId>crabzilla-projection</artifactId>
+  <packaging>jar</packaging>
 
   <dependencies>
 
@@ -20,42 +20,48 @@
     </dependency>
 
     <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-pg-client</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.f4b6a3</groupId>
+      <artifactId>uuid-creator</artifactId>
+      <version>4.1.3</version>
+    </dependency>
+
+    <!-- test -->
+
+    <dependency>
       <groupId>io.github.crabzilla</groupId>
       <artifactId>crabzilla-json</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
       <artifactId>crabzilla-command</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-projection</artifactId>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-service-factory</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.kotest</groupId>
+      <artifactId>kotest-assertions-core-jvm</artifactId>
+      <version>4.6.1</version>
+      <scope>test</scope>
     </dependency>
 
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <version>${maven.jacoco.plugin.version}</version>
-        <executions>
-          <!-- https://www.eclemma.org/jacoco/trunk/doc/report-aggregate-mojo.html -->
-          <execution>
-            <phase>verify</phase>
-            <goals>
-              <goal>report-aggregate</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.basedir}/target</outputDirectory>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 
 </project>

@@ -9,7 +9,17 @@
 
 ### Goals for version 1.0.0
 
-- [x] Command controller
+- [x] `crabzila-core`
+  - [X] State, Command and Event 
+  - [X] Command Handler function
+  - [X] Event Handler function
+  - [X] Test specifications given a command
+  - [X] Test specifications given some events then a command
+  - [X] Command Metadata
+  - [X] Event Metadata
+- [x] `crabzila-json`
+  - [X] `kotlinx-serialization-json` implementation
+- [x] `crabzila-command`
   - [X] Non-blocking IO using `vertx-pg-client`
   - [X] On Demand snapshotting
   - [X] Persistent snapshotting
@@ -20,15 +30,9 @@
   - [X] Optional Command validation
   - [X] Optional "synchronous" Read Model projection: within the same command handler transaction
   - [X] Command Handler can have external integrations: `FutureCommandHandler`
-- [x] Events publisher
-  - [X] Publish events with some level of idempotency using `publications` table.
-  - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic
-- [x] Events projector
-  - [X] Publish events with some level of idempotency using `projections` table.
-  - [X] It publishes events and it's metadata as plain JSON to Vertx EventBus using request reply semantic 
-- [x] Very basic observability (logging stats)
+- [ ] `crabzila-projection`
 - [ ] Getting started tutorial
-- [ ] Web interface to write model (to track commands, events, etc)
+- [ ] Web interface to write model (to track commands, events, etc.)
 
 ### Status
 
@@ -61,22 +65,32 @@ https://github.com/rodolfodpk/accounts2
 </dependency>
 ```
 
-2. Add `crabzilla-serder-kotlin` to serialize/deserialize your Commands, Events and States to JSON.
+2. Add `crabzilla-json` to serialize/deserialize your Commands, Events and States to JSON.
 
 ```xml
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-serder-kotlin</artifactId>
+    <artifactId>crabzilla-json</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ```
 
-3. Add `crabzilla-engine-postgres` to consistently append your events to Postgres.
+3. Add `crabzilla-command` to consistently append your events to Postgres.
 
 ```xml
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-engine-postgres</artifactId>
+    <artifactId>crabzilla-command</artifactId>
+    <version>see latest jitpack version</version>
+</dependency>
+```
+
+4Add `crabzilla-projection` to project your events to read model.
+
+```xml
+<dependency>
+    <groupId>com.github.crabzilla.crabzilla</groupId>
+    <artifactId>crabzilla-projection</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ```

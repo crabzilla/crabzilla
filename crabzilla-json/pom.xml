@@ -9,7 +9,22 @@
     <version>v0.3.6</version>
   </parent>
 
-  <artifactId>crabzilla-core</artifactId>
+  <artifactId>crabzilla-json</artifactId>
   <packaging>jar</packaging>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.kotlinx</groupId>
+      <artifactId>kotlinx-serialization-json</artifactId>
+      <version>${serialization.version}</version>
+    </dependency>
+
+  </dependencies>
 
 </project>

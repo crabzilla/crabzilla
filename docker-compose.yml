@@ -7,33 +7,14 @@ services:
     environment:
       POSTGRES_USER: user1
       POSTGRES_PASSWORD: pwd1
-#        PGDATA: /data/postgres
+#        PGDATA: /data/command
     volumes:
-#        - /data/postgres:/data/postgres
+#        - /data/command:/data/command
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
 #      networks:
-#        - postgres
+#        - command
     restart: unless-stopped
 
-#  crdb:
-#    container_name: crdb
-#    hostname: crdb
-#    image: cockroachdb/cockroach:latest
-#    command: start-single-node --cluster-name=example-single-node --logtostderr=WARNING --log-file-verbosity=WARNING --insecure
-#    ports:
-#      - "26257:26257"
-#      - "8080:8080"
-#
-#  crdb-init:
-#    container_name: crdb-init
-#    hostname: crdb-init
-#    image: timveil/cockroachdb-remote-client:latest
-#    environment:
-#      - COCKROACH_HOST=crdb:26257
-#      - COCKROACH_INSECURE=true
-#      - DATABASE_NAME=test
-#    depends_on:
-#      - crdb
 
