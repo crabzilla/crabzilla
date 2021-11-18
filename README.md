@@ -32,7 +32,7 @@
   - [X] Command Handler can have external integrations: `FutureCommandHandler`
 - [X] `crabzila-projection`
   - [X] Based on Verticles (single writer)
-  - [X] Batch projection within a single transaction
+  - [X] Batch projection of many events within a single transaction
   - [X] Can filter by state types: `Customer`, `Account`, etc.
   - [X] Can filter by event types: `CustomerRegistered`, `CustomerActivated`, etc.
 - [ ] Getting started tutorial
