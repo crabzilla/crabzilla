@@ -35,14 +35,16 @@
   - [X] Batch projection of many events within a single transaction
   - [X] Can filter by state types: `Customer`, `Account`, etc.
   - [X] Can filter by event types: `CustomerRegistered`, `CustomerActivated`, etc.
-- [ ] Getting started tutorial
-- [ ] Web interface to write model (to track commands, events, etc.)
+- [X] A working sample application
+- [ ] A web interface 
+  - [ ] Querying commands, events, snapshots, etc.
+  - [ ] Pausing and restarting projections
 
 ### Status
 
 It's still in very early development stage. 
 
-### Example
+### Sample application
 
 https://github.com/rodolfodpk/accounts2
 
@@ -129,10 +131,3 @@ docker-compose up
 mvn clean install -DskipTests=false
 ```
 
-## Integration overview 
-
-![GitHub Logo](/doc/crabzilla-overview.png)
-
-## Dependencies overview (outdated)
-
-![GitHub Logo](/doc/crabzilla-packages.png)
