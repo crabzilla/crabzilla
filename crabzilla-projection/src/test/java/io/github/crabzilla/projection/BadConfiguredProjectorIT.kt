@@ -34,5 +34,4 @@ class BadConfiguredProjectorIT {
       .onFailure { tc.completeNow() }
       .onSuccess { tc.failNow("Should fail") }
   }
-
 }

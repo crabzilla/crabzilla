@@ -3,6 +3,8 @@ package io.github.crabzilla.projection
 import io.github.crabzilla.projection.internal.EventsScanner
 import io.github.crabzilla.projection.internal.QuerySpecification
 import io.vertx.core.Future
+import io.vertx.core.Future.failedFuture
+import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonArray
@@ -10,6 +12,7 @@ import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
+import java.lang.management.ManagementFactory
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
@@ -28,7 +31,18 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
   private lateinit var eventsProjector: EventsProjector
 
   override fun start(startPromise: Promise<Void>) {
-    options = Config.create(config())
+    val node = ManagementFactory.getRuntimeMXBean().name
+    val jsonConfig = config()
+    log.info("Node {} starting with {}", node, jsonConfig.encodePrettily())
+    options = Config.create(jsonConfig)
+    vertx.eventBus()
+      .consumer<String>("crabzilla.projector.${options.projectionName}.ping") { msg ->
+        log.info(
+          "Node [${msg.body()}] just asked to start this verticle. I will answer that I'm already " +
+            "working from this node [$node]"
+        )
+        msg.reply(node)
+      }
     val query = QuerySpecification.query(options.stateTypes, options.eventTypes)
     log.debug("Projection [{}] using query [{}]", options.projectionName, query)
     scanner = EventsScanner(sqlClient, options.projectionName, query)
@@ -39,7 +53,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
         .onComplete { msg.reply(null) }
     }
     // Schedule the first execution
-    vertx.setTimer(options.initialInterval + options.interval, handler())
+    vertx.setTimer(options.initialInterval, handler())
     // Schedule the metrics
     vertx.setPeriodic(options.metricsInterval) {
       log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
@@ -67,23 +81,23 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
     }
   }
 
-  private fun action(): Future<Long> {
+  private fun action(): Future<Int> {
     fun registerFailure() {
       val nextInterval = min(options.maxInterval, options.interval * failures.incrementAndGet())
       vertx.setTimer(nextInterval, handler())
       log.debug("Rescheduled to next {} milliseconds", nextInterval)
     }
-
     fun registerSuccessOrStillBusy() {
       failures.set(0)
       vertx.setTimer(options.interval, handler())
       log.debug("Rescheduled to next {} milliseconds", options.interval)
     }
+
     log.debug("Scanning for new events for projection {}", options.projectionName)
     return scanAndSubmit(options.maxNumberOfRows)
       .compose { retrievedRows ->
         when (retrievedRows) {
-          0L -> {
+          0 -> {
             log.debug("No new events")
             registerFailure()
           }
@@ -91,26 +105,23 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
             registerSuccessOrStillBusy()
           }
         }
-        Future.succeededFuture(retrievedRows)
+        succeededFuture(retrievedRows)
       }
   }
 
-  private fun scanAndSubmit(numberOfRows: Int): Future<Long> {
+  private fun scanAndSubmit(numberOfRows: Int): Future<Int> {
     fun projectEvents(conn: SqlConnection, eventsList: List<EventRecord>): Future<Long> {
-      fun projectEvent(eventRecord: EventRecord): Future<Void> {
-        val event = jsonSerDer.eventFromJson(eventRecord.eventAsjJson.toString())
-        return eventsProjector.project(conn, event, eventRecord.eventMetadata)
-          .mapEmpty()
-      }
-
-      val initialFuture = Future.succeededFuture<Long>()
+      val initialFuture = succeededFuture<Long>()
       return eventsList.fold(
         initialFuture
       ) { currentFuture: Future<Long>, eventRecord: EventRecord ->
         currentFuture.compose {
-          log.debug("Will project event #{}", eventRecord.eventMetadata.eventId)
-          projectEvent(eventRecord)
-            .map { eventRecord.eventMetadata.eventSequence }
+          log.debug("Will project event #{}", eventRecord.eventMetadata.eventSequence)
+          val event = jsonSerDer.eventFromJson(eventRecord.eventAsjJson.toString())
+          eventsProjector.project(conn, event, eventRecord.eventMetadata)
+            .transform {
+              if (it.failed()) failedFuture(it.cause()) else succeededFuture(eventRecord.eventMetadata.eventSequence)
+            }
         }
       }
     }
@@ -118,17 +129,28 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
     return scanner.scanPendingEvents(numberOfRows)
       .compose { eventsList ->
         if (eventsList.isEmpty()) {
-          Future.succeededFuture(0)
+          succeededFuture(0)
         } else {
-          log.debug("Found {} new events. The last one is {}", eventsList.size, eventsList.last().eventMetadata.eventId)
+          log.debug(
+            "Found {} new events. The first is {} and last is {}",
+            eventsList.size,
+            eventsList.first().eventMetadata.eventSequence,
+            eventsList.last().eventMetadata.eventSequence
+          )
           pgPool.withTransaction { conn ->
             projectEvents(conn, eventsList)
               .compose { offset ->
-                currentOffset = offset
                 conn
-                  .preparedQuery("update projections set sequence = $2 where name = $1 and sequence < $2")
-                  .execute(Tuple.of(options.projectionName, currentOffset))
-              }.mapEmpty()
+                  .preparedQuery("update projections set sequence = $2 where name = $1")
+                  .execute(Tuple.of(options.projectionName, offset))
+                  .map { offset }
+              }.onSuccess {
+                currentOffset = it
+              }.map {
+                numberOfRows
+              }
+          }.onFailure {
+            log.error(it.message)
           }
         }
       }
@@ -148,10 +170,10 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
       fun create(config: JsonObject): Config {
         val projectionName = config.getString("projectionName")
         val initialInterval = config.getLong("initialInterval", 10_000)
-        val interval = config.getLong("interval", 500)
+        val interval = config.getLong("interval", 100)
         val maxInterval = config.getLong("maxInterval", 30_000)
-        val metricsInterval = config.getLong("metricsInterval", 10_000)
-        val maxNumberOfRows = config.getInteger("maxNumberOfRows", 500)
+        val metricsInterval = config.getLong("metricsInterval", 30_000)
+        val maxNumberOfRows = config.getInteger("maxNumberOfRows", 250)
         val stateTypesArray = config.getJsonArray("stateTypes") ?: JsonArray()
         val stateTypes = stateTypesArray.iterator().asSequence().map { it.toString() }.toList()
         val eventTypesArray = config.getJsonArray("eventTypes") ?: JsonArray()

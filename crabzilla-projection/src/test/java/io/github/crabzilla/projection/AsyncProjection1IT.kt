@@ -66,6 +66,8 @@ class AsyncProjection1IT {
     val controller = commandsContext.create(customerConfig, SnapshotType.ON_DEMAND)
     controller.handle(CommandMetadata(StateId(id)), RegisterCustomer(id, "cust#$id"))
       .compose {
+        vertx.eventBus().request<String>("crabzilla.projector.customers.ping", "me")
+      }.compose {
         vertx.eventBus().request<Void>("crabzilla.projector.customers", null)
       }.compose {
         commandsContext.sqlClient.preparedQuery("select * from customer_summary")
