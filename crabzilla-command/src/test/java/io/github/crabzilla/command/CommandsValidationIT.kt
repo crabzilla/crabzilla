@@ -34,7 +34,7 @@ class CommandsValidationIT {
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
-    commandsContext = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
+    commandsContext = CommandsContext.create(vertx, jsonSerDer, config)
     val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
     commandController = CommandController(commandsContext.pgPool, jsonSerDer, customerConfig, snapshotRepo2)
     repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)

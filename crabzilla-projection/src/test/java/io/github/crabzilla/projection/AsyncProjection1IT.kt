@@ -21,16 +21,16 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
-class AsyncProjectionIT {
+class AsyncProjection1IT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
 
   companion object {
-    private val log = LoggerFactory.getLogger(AsyncProjectionIT::class.java)
+    private val log = LoggerFactory.getLogger(AsyncProjection1IT::class.java)
   }
 
-  val id = UUID.randomUUID()
+  private val id: UUID = UUID.randomUUID()
   lateinit var jsonSerDer: JsonSerDer
   lateinit var commandsContext: CommandsContext
   private lateinit var testRepo: TestRepository
@@ -66,6 +66,8 @@ class AsyncProjectionIT {
     val controller = commandsContext.create(customerConfig, SnapshotType.ON_DEMAND)
     controller.handle(CommandMetadata(StateId(id)), RegisterCustomer(id, "cust#$id"))
       .compose {
+        vertx.eventBus().request<String>("crabzilla.projector.customers.ping", "me")
+      }.compose {
         vertx.eventBus().request<Void>("crabzilla.projector.customers", null)
       }.compose {
         commandsContext.sqlClient.preparedQuery("select * from customer_summary")

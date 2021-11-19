@@ -70,11 +70,11 @@ class CorrelationCausationIdsIT {
                 // check register event
                 val asJson1 = eventsList[0]
 //                println(asJson1.encodePrettily())
-                assertThat(asJson1.getString("ar_name")).isEqualTo(customerConfig.name)
-                assertThat(asJson1.getString("ar_id")).isEqualTo(id.toString())
+                assertThat(asJson1.getString("state_type")).isEqualTo(customerConfig.name)
+                assertThat(asJson1.getString("state_id")).isEqualTo(id.toString())
                 assertThat(asJson1.getInteger("version")).isEqualTo(1)
                 val expectedEvent1 = CustomerEvent.CustomerRegistered(id, cmd.name)
-                val json1 = asJson1.getString("event_payload")
+                val json1 = asJson1.getJsonObject("event_payload").toString()
                 val event1 = jsonSerDer.eventFromJson(json1)
                 assertThat(expectedEvent1).isEqualTo(event1)
                 assertThat(asJson1.getString("causation_id")).isEqualTo(metadata.commandId.id.toString())
@@ -82,11 +82,11 @@ class CorrelationCausationIdsIT {
                 // check activate event
                 val asJson = eventsList[1]
 //                println(asJson.encodePrettily())
-                assertThat(asJson.getString("ar_name")).isEqualTo(customerConfig.name)
-                assertThat(asJson.getString("ar_id")).isEqualTo(id.toString())
+                assertThat(asJson.getString("state_type")).isEqualTo(customerConfig.name)
+                assertThat(asJson.getString("state_id")).isEqualTo(id.toString())
                 assertThat(asJson.getInteger("version")).isEqualTo(2)
                 val expectedEvent = CustomerEvent.CustomerActivated(cmd.reason)
-                val json = asJson.getString("event_payload")
+                val json = asJson.getJsonObject("event_payload").toString()
                 val event = jsonSerDer.eventFromJson(json)
                 assertThat(expectedEvent).isEqualTo(event)
                 val causationId = asJson1.getString("id")
@@ -133,8 +133,8 @@ class CorrelationCausationIdsIT {
                     // check register event
                     val asJson1 = eventsList[0]
                     // println(asJson1.encodePrettily())
-                    assertThat(asJson1.getString("ar_name")).isEqualTo(customerConfig.name)
-                    assertThat(asJson1.getString("ar_id")).isEqualTo(id.toString())
+                    assertThat(asJson1.getString("state_type")).isEqualTo(customerConfig.name)
+                    assertThat(asJson1.getString("state_id")).isEqualTo(id.toString())
                     assertThat(asJson1.getInteger("version")).isEqualTo(1)
                     val expectedEvent1 = CustomerEvent.CustomerRegistered(id, cmd1.name)
                     val json1 = asJson1.getString("event_payload")
@@ -145,8 +145,8 @@ class CorrelationCausationIdsIT {
                     // check activate event
                     val asJson2 = eventsList[1]
                     // println(asJson2.encodePrettily())
-                    assertThat(asJson2.getString("ar_name")).isEqualTo(customerConfig.name)
-                    assertThat(asJson2.getString("ar_id")).isEqualTo(id.toString())
+                    assertThat(asJson2.getString("state_type")).isEqualTo(customerConfig.name)
+                    assertThat(asJson2.getString("state_id")).isEqualTo(id.toString())
                     assertThat(asJson2.getInteger("version")).isEqualTo(2)
                     val expectedEvent2 = CustomerEvent.CustomerActivated(cmd1.reason)
                     val json2 = asJson2.getString("event_payload")
@@ -158,8 +158,8 @@ class CorrelationCausationIdsIT {
                     // check deactivate events
                     val asJson3 = eventsList[2]
                     // println(asJson3.encodePrettily())
-                    assertThat(asJson3.getString("ar_name")).isEqualTo(customerConfig.name)
-                    assertThat(asJson3.getString("ar_id")).isEqualTo(id.toString())
+                    assertThat(asJson3.getString("state_type")).isEqualTo(customerConfig.name)
+                    assertThat(asJson3.getString("state_id")).isEqualTo(id.toString())
                     assertThat(asJson3.getInteger("version")).isEqualTo(3)
                     val expectedEvent3 = CustomerEvent.CustomerDeactivated(cmd2.reason)
                     val json3 = asJson3.getString("event_payload")

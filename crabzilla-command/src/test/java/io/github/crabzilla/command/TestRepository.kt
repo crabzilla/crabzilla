@@ -13,9 +13,9 @@ class TestRepository(private val pgPool: PgPool) {
 
   companion object {
     private const val SQL_UPSERT_VERSION =
-      """ INSERT INTO snapshots (ar_id, ar_type, version, json_content)
+      """ INSERT INTO snapshots (state_id, state_type, version, json_content)
           VALUES ($1, $2, $3, $4)
-          ON CONFLICT (ar_id, ar_type) DO UPDATE SET version = $3, json_content = $4"""
+          ON CONFLICT (state_id, state_type) DO UPDATE SET version = $3, json_content = $4"""
     private const val selectAfterOffset =
       """
       SELECT *
@@ -38,10 +38,12 @@ class TestRepository(private val pgPool: PgPool) {
         .map { rowSet: RowSet<Row> ->
           rowSet.iterator().asSequence().map { row: Row ->
             val json = JsonObject()
+            val payload = row.getJsonObject("event_payload")
+            payload.put("type", row.getString("event_type"))
             json.put("sequence", row.getLong("sequence"))
-            json.put("event_payload", row.getValue("event_payload").toString())
-            json.put("ar_name", row.getString("ar_name"))
-            json.put("ar_id", row.getUUID("ar_id").toString())
+            json.put("event_payload", payload)
+            json.put("state_type", row.getString("state_type"))
+            json.put("state_id", row.getUUID("state_id").toString())
             json.put("version", row.getInteger("version"))
             json.put("id", row.getUUID("id").toString())
             json.put("causation_id", row.getUUID("causation_id").toString())

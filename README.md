@@ -30,15 +30,21 @@
   - [X] Optional Command validation
   - [X] Optional "synchronous" Read Model projection: within the same command handler transaction
   - [X] Command Handler can have external integrations: `FutureCommandHandler`
-- [ ] `crabzila-projection`
-- [ ] Getting started tutorial
-- [ ] Web interface to write model (to track commands, events, etc.)
+- [X] `crabzila-projection`
+  - [X] Based on Verticles (single writer)
+  - [X] Batch projection of many events within a single transaction
+  - [X] Can filter by state types: `Customer`, `Account`, etc.
+  - [X] Can filter by event types: `CustomerRegistered`, `CustomerActivated`, etc.
+- [X] A working sample application
+- [ ] A web interface 
+  - [ ] Querying commands, events, snapshots, etc.
+  - [ ] Pausing and restarting projections
 
 ### Status
 
 It's still in very early development stage. 
 
-### Example
+### Sample application
 
 https://github.com/rodolfodpk/accounts2
 
@@ -99,7 +105,7 @@ https://github.com/rodolfodpk/accounts2
 
 ###### Requirements
 
-* Java 8
+* Java 11
 * Maven (tested with 3.5.0+)
 * Docker compose (tested with 1.18.0)
 * Kotlin plugin for your IDE
@@ -125,10 +131,3 @@ docker-compose up
 mvn clean install -DskipTests=false
 ```
 
-## Integration overview 
-
-![GitHub Logo](/doc/crabzilla-overview.png)
-
-## Dependencies overview (outdated)
-
-![GitHub Logo](/doc/crabzilla-packages.png)

@@ -23,17 +23,17 @@ internal class PersistentSnapshotRepo<S : State, E : Event>(
     private const val SQL_GET_SNAPSHOT =
       """ SELECT version, json_content
           FROM snapshots s
-         WHERE ar_id = $1 
-           AND ar_type = $2"""
+         WHERE state_id = $1 
+           AND state_type = $2"""
     private const val SQL_INSERT_VERSION =
-      """ INSERT INTO snapshots (version, json_content, ar_id, ar_type)
+      """ INSERT INTO snapshots (version, json_content, state_id, state_type)
           VALUES ($1, $2, $3, $4)"""
     private const val SQL_UPDATE_VERSION =
       """ UPDATE snapshots 
           SET version = $1, json_content = $2 
-          WHERE ar_id = $3 
+          WHERE state_id = $3 
            AND version = $4
-           AND ar_type = $5"""
+           AND state_type = $5"""
   }
 
   override fun get(
