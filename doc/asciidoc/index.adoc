@@ -16,7 +16,9 @@ image::crabzilla-overview.drawio.png[]
 
 You can have as many CommandController and EventsProjectorVerticle instances you need.
 
-=== To handle your Command in a non-blocking way, Crabzilla will :
+=== Command handling
+
+To handle your Command in a non-blocking way, Crabzilla will :
 
 . Validate your https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/Command.kt[Command] using your implementation of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandValidator.kt[CommandValidator].
 . Lock the target https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/State.kt[State] instance using https://www.postgresql.org/docs/13/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks].
@@ -29,7 +31,7 @@ You can have as many CommandController and EventsProjectorVerticle instances you
 .. Optionally project the resulting events to you read model
 . Return a https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandSessionData.kt[CommandSessionData] to the caller.
 
-=== To handle your projections, Crabzilla will :
+=== Projections handling
 
 TODO
 

@@ -26,9 +26,10 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 * Using https://vertx.io/docs/vertx-pg-client/java/[Vertx] to implement a `non-blocking IO` event store.
 * Idiomatic Kotlin: type safeness: pattern matching, honouring your constructors.
 * Immutability: state transitions occurs after computing results of pure functions `(State, Event) -> State`).
-* JSON serialization using Kotlin serialization (other implementations are welcome).
-* Consistent by default: before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]
-* `EventsProjectorVerticle` allows handling projections strait from database: no need to publish your events to Kafka in order to handle your read model projections.
+* https://github.com/crabzilla/crabzilla/blob/main/crabzilla-command/src/main/java/io/github/crabzilla/command/CommandController.kt[CommandController] is consistent by default: before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]
+* https://github.com/crabzilla/crabzilla/blob/main/crabzilla-projection/src/main/java/io/github/crabzilla/projection/EventsProjectorVerticle.kt[EventsProjectorVerticle] allows handling your read model projection's strait from database: no need to publish your events to Kafka or NATS.
+* You can even use https://vertx.io/docs/#clustering[Vertx Clustering] to deploy your EventsProjectorVerticle instances. Projections with HA :)
+* JSON serialization using https://kotlinlang.org/docs/serialization.html[Kotlin serialization] (other implementations are welcome).
 
 == Example application
 
