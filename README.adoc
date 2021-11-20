@@ -44,4 +44,4 @@ Seems like is finally reaching stable :)
 
 == More info
 
-https://crabzilla.github.io/crabzilla/docs/overview.html[Overview]
+https://crabzilla.github.io/crabzilla/docs/index.html[Overview]
