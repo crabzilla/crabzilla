@@ -23,7 +23,7 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 
 == Overview
 
-image::https://github.com/crabzilla/crabzilla/blob/doc/asciidoc/images/crabzilla-overview.drawio.png[]
+image::doc/asciidoc/images/crabzilla-overview.drawio.png[]
 
 You can have many CommandController and EventsProjectionVerticle instances.
 
