@@ -448,8 +448,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#steps">Steps</a></li>
 </ul>
 </li>
+<li><a href="#getting-started">Getting started</a></li>
 <li><a href="#goals-for-version-100">Goals for version 1.0.0</a></li>
-<li><a href="#getting-started-dependencies">Getting started - dependencies</a></li>
 </ul>
 </div>
 </div>
@@ -513,6 +513,91 @@ tests:</p>
 <div class="content">
 <pre class="highlightjs highlight"><code data-lang="bash" class="language-bash hljs">mvn clean install -DskipTests=false</code></pre>
 </div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="getting-started"><a class="anchor" href="#getting-started"></a>Getting started</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Add the JitPack repository to your build file:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;repositories&gt;
+  &lt;repository&gt;
+    &lt;id&gt;jitpack.io&lt;/id&gt;
+    &lt;url&gt;https://jitpack.io&lt;/url&gt;
+  &lt;/repository&gt;
+&lt;/repositories&gt;</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Add <code>crabzilla-core</code> to write Commands, Events, States and
+TestSpecifications.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
+    &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
+    &lt;artifactId&gt;crabzilla-core&lt;/artifactId&gt;
+    &lt;version&gt;see latest jitpack version&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>Add <code>crabzilla-json</code> to serialize/deserialize your Commands, Events
+and States to JSON.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
+    &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
+    &lt;artifactId&gt;crabzilla-json&lt;/artifactId&gt;
+    &lt;version&gt;see latest jitpack version&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>Add <code>crabzilla-command</code> to consistently append your events to
+Postgres.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
+    &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
+    &lt;artifactId&gt;crabzilla-command&lt;/artifactId&gt;
+    &lt;version&gt;see latest jitpack version&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>4Add <code>crabzilla-projection</code> to project your events to read model.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
+    &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
+    &lt;artifactId&gt;crabzilla-projection&lt;/artifactId&gt;
+    &lt;version&gt;see latest jitpack version&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
 </div>
 </div>
 </div>
@@ -624,96 +709,11 @@ command handler transaction</p>
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="getting-started-dependencies"><a class="anchor" href="#getting-started-dependencies"></a>Getting started - dependencies</h2>
-<div class="sectionbody">
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Add the JitPack repository to your build file:</p>
-</li>
-</ol>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;repositories&gt;
-  &lt;repository&gt;
-    &lt;id&gt;jitpack.io&lt;/id&gt;
-    &lt;url&gt;https://jitpack.io&lt;/url&gt;
-  &lt;/repository&gt;
-&lt;/repositories&gt;</code></pre>
-</div>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Add <code>crabzilla-core</code> to write Commands, Events, States and
-TestSpecifications.</p>
-</li>
-</ol>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
-    &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
-    &lt;artifactId&gt;crabzilla-core&lt;/artifactId&gt;
-    &lt;version&gt;see latest jitpack version&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-</div>
-</div>
-<div class="olist arabic">
-<ol class="arabic" start="2">
-<li>
-<p>Add <code>crabzilla-json</code> to serialize/deserialize your Commands, Events
-and States to JSON.</p>
-</li>
-</ol>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
-    &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
-    &lt;artifactId&gt;crabzilla-json&lt;/artifactId&gt;
-    &lt;version&gt;see latest jitpack version&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-</div>
-</div>
-<div class="olist arabic">
-<ol class="arabic" start="3">
-<li>
-<p>Add <code>crabzilla-command</code> to consistently append your events to
-Postgres.</p>
-</li>
-</ol>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
-    &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
-    &lt;artifactId&gt;crabzilla-command&lt;/artifactId&gt;
-    &lt;version&gt;see latest jitpack version&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>4Add <code>crabzilla-projection</code> to project your events to read model.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
-    &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
-    &lt;artifactId&gt;crabzilla-projection&lt;/artifactId&gt;
-    &lt;version&gt;see latest jitpack version&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-</div>
-</div>
-</div>
-</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version v0.3.6<br>
-Last updated 2021-11-20 13:35:22 -0300
+Last updated 2021-11-20 13:39:07 -0300
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
