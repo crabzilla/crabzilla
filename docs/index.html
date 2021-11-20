@@ -444,8 +444,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel1">
 <li><a href="#overview">Overview</a>
 <ul class="sectlevel2">
-<li><a href="#to-handle-your-command-in-a-non-blocking-way-crabzilla-will">To handle your <code>command</code> in a non-blocking way, <code>Crabzilla</code> will :</a></li>
-<li><a href="#to-handle-your-projections-crabzilla-will">To handle your projections, <code>Crabzilla</code> will :</a></li>
+<li><a href="#to-handle-your-command-in-a-non-blocking-way-crabzilla-will">To handle your Command in a non-blocking way, Crabzilla will :</a></li>
+<li><a href="#to-handle-your-projections-crabzilla-will">To handle your projections, Crabzilla will :</a></li>
 </ul>
 </li>
 <li><a href="#goals-for-version-100">Goals for version 1.0.0</a></li>
@@ -472,10 +472,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="paragraph">
-<p>You can have many CommandController and EventsProjectionVerticle instances as you need.</p>
+<p>You can have as many CommandController and EventsProjectorVerticle instances you need.</p>
 </div>
 <div class="sect2">
-<h3 id="to-handle-your-command-in-a-non-blocking-way-crabzilla-will"><a class="anchor" href="#to-handle-your-command-in-a-non-blocking-way-crabzilla-will"></a>To handle your <code>command</code> in a non-blocking way, <code>Crabzilla</code> will :</h3>
+<h3 id="to-handle-your-command-in-a-non-blocking-way-crabzilla-will"><a class="anchor" href="#to-handle-your-command-in-a-non-blocking-way-crabzilla-will"></a>To handle your Command in a non-blocking way, Crabzilla will :</h3>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
@@ -488,20 +488,20 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>Retrieve the target <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-command/src/main/java/io/github/crabzilla/command/internal/Snapshot.kt">Snapshot</a>.</p>
 </li>
 <li>
-<p>Handle your <code>command</code> and <code>snapshot.state</code> using your implementations of <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandHandler.kt">CommandHandler</a> and <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/EventHandler.kt">EventHandler</a>:</p>
+<p>Handle your Command and snapshot.state using your implementations of <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandHandler.kt">CommandHandler</a> and <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/EventHandler.kt">EventHandler</a>:</p>
 </li>
 <li>
 <p>Persist (within a db transaction)</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Optionally persist your <code>command</code> as <code>JSON</code> to <code>commands</code> table.</p>
+<p>Optionally persist your command as JSON to commands table.</p>
 </li>
 <li>
-<p>Persist the resulting <code>events</code> + metadata as JSON to <code>events</code> table.</p>
+<p>Persist the resulting events + metadata as JSON to events table.</p>
 </li>
 <li>
-<p>Optionally persist the resulting <code>snapshot</code> (<code>state</code> and <code>version</code>) as JSON to <code>snapshots</code> table.</p>
+<p>Optionally persist the resulting snapshot (state and version) as JSON to snapshots table.</p>
 </li>
 <li>
 <p>Optionally project the resulting events to you read model</p>
@@ -516,7 +516,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect2">
-<h3 id="to-handle-your-projections-crabzilla-will"><a class="anchor" href="#to-handle-your-projections-crabzilla-will"></a>To handle your projections, <code>Crabzilla</code> will :</h3>
+<h3 id="to-handle-your-projections-crabzilla-will"><a class="anchor" href="#to-handle-your-projections-crabzilla-will"></a>To handle your projections, Crabzilla will :</h3>
 <div class="paragraph">
 <p>TODO</p>
 </div>
@@ -782,7 +782,7 @@ Postgres.</p>
 <div id="footer">
 <div id="footer-text">
 Version v0.3.6<br>
-Last updated 2021-11-20 15:13:19 -0300
+Last updated 2021-11-20 15:52:34 -0300
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
