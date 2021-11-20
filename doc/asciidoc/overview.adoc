@@ -8,39 +8,6 @@ ifndef::imagesdir[:imagesdir: images]
 ifndef::sourcedir[:sourcedir: ../../main/java]
 :toclevels: 4
 
-[[goals-for-version-100]]
-== Goals for version 1.0.0
-
-* [X] `crabzila-core`
-** [X] State, Command and Event
-** [X] Command Handler function
-** [X] Event Handler function
-** [X] Test specifications given a command
-** [X] Test specifications given some events then a command
-** [X] Command Metadata
-** [X] Event Metadata
-* [X] `crabzila-json`
-** [X] `kotlinx-serialization-json` implementation
-* [X] `crabzila-command`
-** [X] Non-blocking IO using `vertx-pg-client`
-** [X] On Demand snapshotting
-** [X] Persistent snapshotting
-** [X] State ID locking using Postgres Advisory locks
-** [X] Correlation and causation IDs
-** [X] Commands persistence
-** [X] Events persistence
-** [X] Optional Command validation
-** [X] Optional "synchronous" Read Model projection: within the same
-command handler transaction
-** [X] Command Handler can have external integrations: `FutureCommandHandler`
-* [X] `crabzila-projection`
-** [X] Based on Verticles (single writer)
-** [X] Batch projection of many events within a single transaction
-** [X] Can filter by state types: `Customer`, `Account`, etc.
-** [X] Can filter by event types: `CustomerRegistered`, `CustomerActivated`, etc.
-* [X] A working sample application
-
-
 == Building
 
 === Requirements
@@ -76,6 +43,38 @@ tests:
 ----
 mvn clean install -DskipTests=false
 ----
+
+[[goals-for-version-100]]
+== Goals for version 1.0.0
+
+* [X] `crabzila-core`
+** [X] State, Command and Event
+** [X] Command Handler function
+** [X] Event Handler function
+** [X] Test specifications given a command
+** [X] Test specifications given some events then a command
+** [X] Command Metadata
+** [X] Event Metadata
+* [X] `crabzila-json`
+** [X] `kotlinx-serialization-json` implementation
+* [X] `crabzila-command`
+** [X] Non-blocking IO using `vertx-pg-client`
+** [X] On Demand snapshotting
+** [X] Persistent snapshotting
+** [X] State ID locking using Postgres Advisory locks
+** [X] Correlation and causation IDs
+** [X] Commands persistence
+** [X] Events persistence
+** [X] Optional Command validation
+** [X] Optional "synchronous" Read Model projection: within the same
+command handler transaction
+** [X] Command Handler can have external integrations: `FutureCommandHandler`
+* [X] `crabzila-projection`
+** [X] Based on Verticles (single writer)
+** [X] Batch projection of many events within a single transaction
+** [X] Can filter by state types: `Customer`, `Account`, etc.
+** [X] Can filter by event types: `CustomerRegistered`, `CustomerActivated`, etc.
+* [X] A working sample application
 
 == Getting started - dependencies
 

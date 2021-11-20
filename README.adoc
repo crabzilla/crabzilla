@@ -17,7 +17,7 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 
 == Objectives
 
-. Allows to write a testable `CQRS/ES` domain with minimal dependencies.
+. Allows writing a testable `CQRS/ES` model with minimal dependencies.
 . Allows handling your commands and save resulting events into `Postgres`.
 . Allows projecting events to your read models.
 
@@ -28,12 +28,13 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 . Retrieve the target https://github.com/crabzilla/crabzilla/blob/main/crabzilla-command/src/main/java/io/github/crabzilla/command/internal/Snapshot.kt[Snapshot].
 . Handle your `command` and `snapshot.state` using your implementations of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandHandler.kt[CommandHandler] and https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/EventHandler.kt[EventHandler]:
 . Persist (within a db transaction)
-.. Persist your `command` as `JSON` to `commands` table.
+.. Optionally persist your `command` as `JSON` to `commands` table.
 .. Persist the resulting `events` + metadata as JSON to `events` table.
 .. Optionally persist the resulting `snapshot` (`state` and `version`) as JSON to `snapshots` table.
+.. Optionally project the resulting events to you read model
 . Return a https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandSessionData.kt[CommandSessionData] to the caller.
 
-== Sample application
+== Example application
 
 https://github.com/rodolfodpk/accounts2[https://github.com/rodolfodpk/accounts2]
 
@@ -41,3 +42,6 @@ https://github.com/rodolfodpk/accounts2[https://github.com/rodolfodpk/accounts2]
 
 Seems like is finally reaching stable :)
 
+== More info
+
+https://crabzilla.github.io/crabzilla/docs/overview.html[Overview]

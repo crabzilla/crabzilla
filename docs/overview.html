@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
-<title>Goals for version 1.0.0</title>
+<title>Building</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -442,18 +442,81 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#goals-for-version-100">Goals for version 1.0.0</a></li>
 <li><a href="#building">Building</a>
 <ul class="sectlevel2">
 <li><a href="#requirements">Requirements</a></li>
 <li><a href="#steps">Steps</a></li>
 </ul>
 </li>
+<li><a href="#goals-for-version-100">Goals for version 1.0.0</a></li>
 <li><a href="#getting-started-dependencies">Getting started - dependencies</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
+<div class="sect1">
+<h2 id="building"><a class="anchor" href="#building"></a>Building</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="requirements"><a class="anchor" href="#requirements"></a>Requirements</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Java 11</p>
+</li>
+<li>
+<p>Maven</p>
+</li>
+<li>
+<p>Docker compose</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="steps"><a class="anchor" href="#steps"></a>Steps</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Clone it:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="bash" class="language-bash hljs">git clone https://github.com/crabzilla/crabzilla
+cd crabzilla</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>Start docker-compose running a Postgres database (port 5432 will be
+used):</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="bash" class="language-bash hljs">docker-compose up</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>Open another terminal and build it, running both unit and integration
+tests:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="bash" class="language-bash hljs">mvn clean install -DskipTests=false</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div class="sect1">
 <h2 id="goals-for-version-100"><a class="anchor" href="#goals-for-version-100"></a>Goals for version 1.0.0</h2>
 <div class="sectionbody">
@@ -562,69 +625,6 @@ command handler transaction</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="building"><a class="anchor" href="#building"></a>Building</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="requirements"><a class="anchor" href="#requirements"></a>Requirements</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>Java 11</p>
-</li>
-<li>
-<p>Maven</p>
-</li>
-<li>
-<p>Docker compose</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="steps"><a class="anchor" href="#steps"></a>Steps</h3>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Clone it:</p>
-</li>
-</ol>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code data-lang="bash" class="language-bash hljs">git clone https://github.com/crabzilla/crabzilla
-cd crabzilla</code></pre>
-</div>
-</div>
-<div class="olist arabic">
-<ol class="arabic" start="2">
-<li>
-<p>Start docker-compose running a Postgres database (port 5432 will be
-used):</p>
-</li>
-</ol>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code data-lang="bash" class="language-bash hljs">docker-compose up</code></pre>
-</div>
-</div>
-<div class="olist arabic">
-<ol class="arabic" start="3">
-<li>
-<p>Open another terminal and build it, running both unit and integration
-tests:</p>
-</li>
-</ol>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code data-lang="bash" class="language-bash hljs">mvn clean install -DskipTests=false</code></pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
 <h2 id="getting-started-dependencies"><a class="anchor" href="#getting-started-dependencies"></a>Getting started - dependencies</h2>
 <div class="sectionbody">
 <div class="olist arabic">
@@ -713,7 +713,7 @@ Postgres.</p>
 <div id="footer">
 <div id="footer-text">
 Version v0.3.6<br>
-Last updated 2021-11-20 13:19:32 -0300
+Last updated 2021-11-20 13:35:22 -0300
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
