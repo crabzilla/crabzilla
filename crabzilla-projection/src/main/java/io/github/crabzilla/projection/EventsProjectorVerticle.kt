@@ -20,6 +20,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(EventsProjectorVerticle::class.java)
+    private val node: String = ManagementFactory.getRuntimeMXBean().name
     // TODO add endpoint for pause, resume, restart from N, etc (using event sourcing!)
   }
 
@@ -31,7 +32,6 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
   private lateinit var eventsProjector: EventsProjector
 
   override fun start(startPromise: Promise<Void>) {
-    val node = ManagementFactory.getRuntimeMXBean().name
     val jsonConfig = config()
     log.info("Node {} starting with {}", node, jsonConfig.encodePrettily())
     options = Config.create(jsonConfig)

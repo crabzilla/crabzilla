@@ -21,6 +21,12 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 . Allows handling your commands and save resulting events into `Postgres`.
 . Allows projecting events to your read models.
 
+== Overview
+
+image::https://github.com/crabzilla/crabzilla/blob/doc/asciidoc/images/crabzilla-overview.drawio.png[]
+
+You can have many CommandController and EventsProjectionVerticle instances.
+
 == To handle your `command` in a non-blocking way, `Crabzilla` will :
 
 . Validate your https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/Command.kt[Command] using your implementation of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandValidator.kt[CommandValidator].
