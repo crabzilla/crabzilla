@@ -1,4 +1,4 @@
-= Crabzila Documentation
+:sourcedir: src/main/java
 :source-highlighter: highlightjs
 :highlightjsdir: highlight
 :highlightjs-theme: rainbow
@@ -6,37 +6,136 @@
 :example-caption!:
 ifndef::imagesdir[:imagesdir: images]
 ifndef::sourcedir[:sourcedir: ../../main/java]
+:toclevels: 4
 
-Status: *WORK IN PROGRESS*
+[[goals-for-version-100]]
+== Goals for version 1.0.0
+
+* [X] `crabzila-core`
+** [X] State, Command and Event
+** [X] Command Handler function
+** [X] Event Handler function
+** [X] Test specifications given a command
+** [X] Test specifications given some events then a command
+** [X] Command Metadata
+** [X] Event Metadata
+* [X] `crabzila-json`
+** [X] `kotlinx-serialization-json` implementation
+* [X] `crabzila-command`
+** [X] Non-blocking IO using `vertx-pg-client`
+** [X] On Demand snapshotting
+** [X] Persistent snapshotting
+** [X] State ID locking using Postgres Advisory locks
+** [X] Correlation and causation IDs
+** [X] Commands persistence
+** [X] Events persistence
+** [X] Optional Command validation
+** [X] Optional "synchronous" Read Model projection: within the same
+command handler transaction
+** [X] Command Handler can have external integrations: `FutureCommandHandler`
+* [X] `crabzila-projection`
+** [X] Based on Verticles (single writer)
+** [X] Batch projection of many events within a single transaction
+** [X] Can filter by state types: `Customer`, `Account`, etc.
+** [X] Can filter by event types: `CustomerRegistered`, `CustomerActivated`, etc.
+* [X] A working sample application
 
 
-== Modules
+== Building
 
-Crabzilla has these modules:
+=== Requirements
 
-* **crabzilla-core**            → Command, DomainEvent, Aggregate, Snapshot, etc Your domain will depend on it.
-* **crabzilla-example1**        → An example using Crabzilla.
-* **crabzilla-vertx-core**      → Codecs, Helpers, etc. Your services will depend on it.
-* **crabzilla-vertx-handler**   → CommandHandlerVerticles and UnitOfWorkRepositories.
-* **crabzilla-vertx-projector** → ProjectionHandlerVerticle, EventsProjector and ProjectionRepository.
-* **crabzilla-vertx-web**       → CommandRestVerticle. Depends on vertx-web module.
-* **crabzilla-vertx-dagger**    → Useful modules definitions you can optionally leverage.
+* Java 11
+* Maven
+* Docker compose
 
-The dependencies between the modules:
+=== Steps
 
-[.thumb]
-image::crabzilla-modules.png[scaledwidth=100%]
+. Clone it:
 
-and your typical *crabzilla-example1* project will have this structure:
+[source,bash]
+----
+git clone https://github.com/crabzilla/crabzilla
+cd crabzilla
+----
 
-* **example1-core**              → Your domain code. Services and Repositories as interfaces. Almost zero dependencies.
-* **example1-handler**           → Library exposing command handler verticles for your domain.
-* **example1-projector**         → Library exposing projection verticles.
-* **example1-services**          → Running services (verticles wiring and configuration).
+[start=2]
+. Start docker-compose running a Postgres database (port 5432 will be
+used):
 
-The granularity of this module is probably a *bounded context*.
+[source,bash]
+----
+docker-compose up
+----
 
-crabzilla-example1-ha has these three services:
+[start=3]
+. Open another terminal and build it, running both unit and integration
+tests:
 
-[.thumb]
-image::crabzilla-bc-architecture.png[scaledwidth=100%]
+[source,bash]
+----
+mvn clean install -DskipTests=false
+----
+
+== Getting started - dependencies
+
+. Add the JitPack repository to your build file:
+
+[source,xml]
+----
+<repositories>
+  <repository>
+    <id>jitpack.io</id>
+    <url>https://jitpack.io</url>
+  </repository>
+</repositories>
+----
+
+. Add `crabzilla-core` to write Commands, Events, States and
+TestSpecifications.
+
+[source,xml]
+----
+<dependency>
+    <groupId>com.github.crabzilla.crabzilla</groupId>
+    <artifactId>crabzilla-core</artifactId>
+    <version>see latest jitpack version</version>
+</dependency>
+----
+
+[start=2]
+. Add `crabzilla-json` to serialize/deserialize your Commands, Events
+and States to JSON.
+
+[source,xml]
+----
+<dependency>
+    <groupId>com.github.crabzilla.crabzilla</groupId>
+    <artifactId>crabzilla-json</artifactId>
+    <version>see latest jitpack version</version>
+</dependency>
+----
+
+[start=3]
+. Add `crabzilla-command` to consistently append your events to
+Postgres.
+
+[source,xml]
+----
+<dependency>
+    <groupId>com.github.crabzilla.crabzilla</groupId>
+    <artifactId>crabzilla-command</artifactId>
+    <version>see latest jitpack version</version>
+</dependency>
+----
+
+4Add `crabzilla-projection` to project your events to read model.
+
+[source,xml]
+----
+<dependency>
+    <groupId>com.github.crabzilla.crabzilla</groupId>
+    <artifactId>crabzilla-projection</artifactId>
+    <version>see latest jitpack version</version>
+</dependency>
+----
