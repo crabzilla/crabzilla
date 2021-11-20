@@ -8,6 +8,63 @@ ifndef::imagesdir[:imagesdir: images]
 ifndef::sourcedir[:sourcedir: ../../main/java]
 :toclevels: 4
 
+Status `WIP`
+
+== Overview
+
+image::crabzilla-overview.drawio.png[]
+
+You can have as many CommandController and EventsProjectorVerticle instances you need.
+
+=== To handle your Command in a non-blocking way, Crabzilla will :
+
+. Validate your https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/Command.kt[Command] using your implementation of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandValidator.kt[CommandValidator].
+. Lock the target https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/State.kt[State] instance using https://www.postgresql.org/docs/13/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks].
+. Retrieve the target https://github.com/crabzilla/crabzilla/blob/main/crabzilla-command/src/main/java/io/github/crabzilla/command/internal/Snapshot.kt[Snapshot].
+. Handle your Command and snapshot.state using your implementations of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandHandler.kt[CommandHandler] and https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/EventHandler.kt[EventHandler]:
+. Persist (within a db transaction)
+.. Optionally persist your command as JSON to commands table.
+.. Persist the resulting events + metadata as JSON to events table.
+.. Optionally persist the resulting snapshot (state and version) as JSON to snapshots table.
+.. Optionally project the resulting events to you read model
+. Return a https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandSessionData.kt[CommandSessionData] to the caller.
+
+=== To handle your projections, Crabzilla will :
+
+TODO
+
+[[goals-for-version-100]]
+== Goals for version 1.0.0
+
+* [X] `crabzila-core`
+** [X] State, Command and Event
+** [X] Command Handler function
+** [X] Event Handler function
+** [X] Test specifications given a command
+** [X] Test specifications given some events then a command
+** [X] Command Metadata
+** [X] Event Metadata
+* [X] `crabzila-json`
+** [X] `kotlinx-serialization-json` implementation
+* [X] `crabzila-command`
+** [X] Non-blocking IO using `vertx-pg-client`
+** [X] On Demand snapshotting
+** [X] Persistent snapshotting
+** [X] State ID locking using Postgres Advisory locks
+** [X] Correlation and causation IDs
+** [X] Commands persistence
+** [X] Events persistence
+** [X] Optional Command validation
+** [X] Optional "synchronous" Read Model projection: within the same
+command handler transaction
+** [X] Command Handler can have external integrations: `FutureCommandHandler`
+* [X] `crabzila-projection`
+** [X] Based on Verticles (single writer)
+** [X] Batch projection of many events within a single transaction
+** [X] Can filter by state types: `Customer`, `Account`, etc.
+** [X] Can filter by event types: `CustomerRegistered`, `CustomerActivated`, etc.
+* [X] A working sample application
+
 == Building
 
 === Requirements
@@ -107,34 +164,3 @@ Postgres.
 </dependency>
 ----
 
-[[goals-for-version-100]]
-== Goals for version 1.0.0
-
-* [X] `crabzila-core`
-** [X] State, Command and Event
-** [X] Command Handler function
-** [X] Event Handler function
-** [X] Test specifications given a command
-** [X] Test specifications given some events then a command
-** [X] Command Metadata
-** [X] Event Metadata
-* [X] `crabzila-json`
-** [X] `kotlinx-serialization-json` implementation
-* [X] `crabzila-command`
-** [X] Non-blocking IO using `vertx-pg-client`
-** [X] On Demand snapshotting
-** [X] Persistent snapshotting
-** [X] State ID locking using Postgres Advisory locks
-** [X] Correlation and causation IDs
-** [X] Commands persistence
-** [X] Events persistence
-** [X] Optional Command validation
-** [X] Optional "synchronous" Read Model projection: within the same
-command handler transaction
-** [X] Command Handler can have external integrations: `FutureCommandHandler`
-* [X] `crabzila-projection`
-** [X] Based on Verticles (single writer)
-** [X] Batch projection of many events within a single transaction
-** [X] Can filter by state types: `Customer`, `Account`, etc.
-** [X] Can filter by event types: `CustomerRegistered`, `CustomerActivated`, etc.
-* [X] A working sample application

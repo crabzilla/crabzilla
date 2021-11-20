@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
-<title>Building</title>
+<title>Overview</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -442,6 +442,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
+<li><a href="#overview">Overview</a>
+<ul class="sectlevel2">
+<li><a href="#to-handle-your-command-in-a-non-blocking-way-crabzilla-will">To handle your <code>command</code> in a non-blocking way, <code>Crabzilla</code> will :</a></li>
+<li><a href="#to-handle-your-projections-crabzilla-will">To handle your projections, <code>Crabzilla</code> will :</a></li>
+</ul>
+</li>
+<li><a href="#goals-for-version-100">Goals for version 1.0.0</a></li>
 <li><a href="#building">Building</a>
 <ul class="sectlevel2">
 <li><a href="#requirements">Requirements</a></li>
@@ -449,11 +456,180 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </ul>
 </li>
 <li><a href="#getting-started">Getting started</a></li>
-<li><a href="#goals-for-version-100">Goals for version 1.0.0</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
+<div class="paragraph">
+<p>Status <code>WIP</code></p>
+</div>
+<div class="sect1">
+<h2 id="overview"><a class="anchor" href="#overview"></a>Overview</h2>
+<div class="sectionbody">
+<div class="imageblock">
+<div class="content">
+<img src="./images/crabzilla-overview.drawio.png" alt="crabzilla overview.drawio">
+</div>
+</div>
+<div class="paragraph">
+<p>You can have many CommandController and EventsProjectionVerticle instances as you need.</p>
+</div>
+<div class="sect2">
+<h3 id="to-handle-your-command-in-a-non-blocking-way-crabzilla-will"><a class="anchor" href="#to-handle-your-command-in-a-non-blocking-way-crabzilla-will"></a>To handle your <code>command</code> in a non-blocking way, <code>Crabzilla</code> will :</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Validate your <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/Command.kt">Command</a> using your implementation of <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandValidator.kt">CommandValidator</a>.</p>
+</li>
+<li>
+<p>Lock the target <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/State.kt">State</a> instance using <a href="https://www.postgresql.org/docs/13/explicit-locking.html#ADVISORY-LOCKS">Postgres Advisory Locks</a>.</p>
+</li>
+<li>
+<p>Retrieve the target <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-command/src/main/java/io/github/crabzilla/command/internal/Snapshot.kt">Snapshot</a>.</p>
+</li>
+<li>
+<p>Handle your <code>command</code> and <code>snapshot.state</code> using your implementations of <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandHandler.kt">CommandHandler</a> and <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/EventHandler.kt">EventHandler</a>:</p>
+</li>
+<li>
+<p>Persist (within a db transaction)</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Optionally persist your <code>command</code> as <code>JSON</code> to <code>commands</code> table.</p>
+</li>
+<li>
+<p>Persist the resulting <code>events</code> + metadata as JSON to <code>events</code> table.</p>
+</li>
+<li>
+<p>Optionally persist the resulting <code>snapshot</code> (<code>state</code> and <code>version</code>) as JSON to <code>snapshots</code> table.</p>
+</li>
+<li>
+<p>Optionally project the resulting events to you read model</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Return a <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandSessionData.kt">CommandSessionData</a> to the caller.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="to-handle-your-projections-crabzilla-will"><a class="anchor" href="#to-handle-your-projections-crabzilla-will"></a>To handle your projections, <code>Crabzilla</code> will :</h3>
+<div class="paragraph">
+<p>TODO</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="goals-for-version-100"><a class="anchor" href="#goals-for-version-100"></a>Goals for version 1.0.0</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>[X] <code>crabzila-core</code></p>
+<div class="ulist">
+<ul>
+<li>
+<p>[X] State, Command and Event</p>
+</li>
+<li>
+<p>[X] Command Handler function</p>
+</li>
+<li>
+<p>[X] Event Handler function</p>
+</li>
+<li>
+<p>[X] Test specifications given a command</p>
+</li>
+<li>
+<p>[X] Test specifications given some events then a command</p>
+</li>
+<li>
+<p>[X] Command Metadata</p>
+</li>
+<li>
+<p>[X] Event Metadata</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>[X] <code>crabzila-json</code></p>
+<div class="ulist">
+<ul>
+<li>
+<p>[X] <code>kotlinx-serialization-json</code> implementation</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>[X] <code>crabzila-command</code></p>
+<div class="ulist">
+<ul>
+<li>
+<p>[X] Non-blocking IO using <code>vertx-pg-client</code></p>
+</li>
+<li>
+<p>[X] On Demand snapshotting</p>
+</li>
+<li>
+<p>[X] Persistent snapshotting</p>
+</li>
+<li>
+<p>[X] State ID locking using Postgres Advisory locks</p>
+</li>
+<li>
+<p>[X] Correlation and causation IDs</p>
+</li>
+<li>
+<p>[X] Commands persistence</p>
+</li>
+<li>
+<p>[X] Events persistence</p>
+</li>
+<li>
+<p>[X] Optional Command validation</p>
+</li>
+<li>
+<p>[X] Optional "synchronous" Read Model projection: within the same
+command handler transaction</p>
+</li>
+<li>
+<p>[X] Command Handler can have external integrations: <code>FutureCommandHandler</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>[X] <code>crabzila-projection</code></p>
+<div class="ulist">
+<ul>
+<li>
+<p>[X] Based on Verticles (single writer)</p>
+</li>
+<li>
+<p>[X] Batch projection of many events within a single transaction</p>
+</li>
+<li>
+<p>[X] Can filter by state types: <code>Customer</code>, <code>Account</code>, etc.</p>
+</li>
+<li>
+<p>[X] Can filter by event types: <code>CustomerRegistered</code>, <code>CustomerActivated</code>, etc.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>[X] A working sample application</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
 <div class="sect1">
 <h2 id="building"><a class="anchor" href="#building"></a>Building</h2>
 <div class="sectionbody">
@@ -602,118 +778,11 @@ Postgres.</p>
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="goals-for-version-100"><a class="anchor" href="#goals-for-version-100"></a>Goals for version 1.0.0</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>[X] <code>crabzila-core</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>[X] State, Command and Event</p>
-</li>
-<li>
-<p>[X] Command Handler function</p>
-</li>
-<li>
-<p>[X] Event Handler function</p>
-</li>
-<li>
-<p>[X] Test specifications given a command</p>
-</li>
-<li>
-<p>[X] Test specifications given some events then a command</p>
-</li>
-<li>
-<p>[X] Command Metadata</p>
-</li>
-<li>
-<p>[X] Event Metadata</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>[X] <code>crabzila-json</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>[X] <code>kotlinx-serialization-json</code> implementation</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>[X] <code>crabzila-command</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>[X] Non-blocking IO using <code>vertx-pg-client</code></p>
-</li>
-<li>
-<p>[X] On Demand snapshotting</p>
-</li>
-<li>
-<p>[X] Persistent snapshotting</p>
-</li>
-<li>
-<p>[X] State ID locking using Postgres Advisory locks</p>
-</li>
-<li>
-<p>[X] Correlation and causation IDs</p>
-</li>
-<li>
-<p>[X] Commands persistence</p>
-</li>
-<li>
-<p>[X] Events persistence</p>
-</li>
-<li>
-<p>[X] Optional Command validation</p>
-</li>
-<li>
-<p>[X] Optional "synchronous" Read Model projection: within the same
-command handler transaction</p>
-</li>
-<li>
-<p>[X] Command Handler can have external integrations: <code>FutureCommandHandler</code></p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>[X] <code>crabzila-projection</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>[X] Based on Verticles (single writer)</p>
-</li>
-<li>
-<p>[X] Batch projection of many events within a single transaction</p>
-</li>
-<li>
-<p>[X] Can filter by state types: <code>Customer</code>, <code>Account</code>, etc.</p>
-</li>
-<li>
-<p>[X] Can filter by event types: <code>CustomerRegistered</code>, <code>CustomerActivated</code>, etc.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>[X] A working sample application</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version v0.3.6<br>
-Last updated 2021-11-20 13:50:24 -0300
+Last updated 2021-11-20 15:13:19 -0300
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
