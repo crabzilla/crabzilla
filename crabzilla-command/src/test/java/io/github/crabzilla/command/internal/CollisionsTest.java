@@ -1,4 +1,4 @@
-package io.github.crabzilla.command;//package io.github.crabzilla.stack;
+package io.github.crabzilla.command.internal;//package io.github.crabzilla.stack;
 
 //public class CollisionsTest {
 //    private final static int num_of_users = 10000 * 1000;

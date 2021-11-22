@@ -24,6 +24,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
     // TODO add endpoint for pause, resume, restart from N, etc (using event sourcing!)
   }
 
+  private var greedy: Boolean = false
   private val failures = AtomicLong(0L)
   private var currentOffset = 0L
 
@@ -44,7 +45,10 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
         msg.reply(node)
       }
     val query = QuerySpecification.query(options.stateTypes, options.eventTypes)
-    log.debug("Projection [{}] using query [{}]", options.projectionName, query)
+    log.debug(
+      "Will start projection [{}] using query [{}] in [{}] milliseconds", options.projectionName, query,
+      options.initialInterval
+    )
     scanner = EventsScanner(sqlClient, options.projectionName, query)
     val provider = EventsProjectorProviderFinder().create(config().getString("eventsProjectorFactoryClassName"))
     eventsProjector = provider.create()
@@ -58,16 +62,26 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
     vertx.setPeriodic(options.metricsInterval) {
       log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
     }
-    scanner.getCurrentOffset()
-      .onSuccess { offset ->
-        currentOffset = offset
-        startPromise.complete()
-        log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
-        log.info("Projection [{}] started pooling events with {}", options.projectionName, options)
-      }.onFailure {
-        log.error(it.message)
-        startPromise.fail(it)
+    subscriber
+      .channel("crabzilla.events")
+      .subscribeHandler {
+        this.greedy = true
       }
+    subscriber.connect().onSuccess {
+      scanner.getCurrentOffset()
+        .onSuccess { offset ->
+          currentOffset = offset
+          startPromise.complete()
+          log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
+          log.info("Projection [{}] started pooling events with {}", options.projectionName, options)
+        }.onFailure {
+          log.error(it.message)
+          startPromise.fail(it)
+        }
+    }.onFailure {
+      log.error(it.message)
+      startPromise.fail(it)
+    }
   }
 
   override fun stop() {

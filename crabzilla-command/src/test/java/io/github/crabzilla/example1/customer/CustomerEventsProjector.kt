@@ -14,6 +14,7 @@ object CustomerEventsProjector : EventsProjector {
   override fun project(conn: SqlConnection, event: Event, eventMetadata: EventMetadata): Future<Void> {
     val id = eventMetadata.stateId.id
     val repo = CustomersWriteRepository
+    println(event)
     return when (val customerEvent = event as CustomerEvent) {
       is CustomerRegistered ->
         repo.upsert(conn, id, customerEvent.name, false)

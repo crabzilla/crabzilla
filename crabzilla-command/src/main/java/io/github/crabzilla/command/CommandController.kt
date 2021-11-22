@@ -35,7 +35,7 @@ class CommandController<S : State, C : Command, E : Event>(
   private val jsonSerDer: JsonSerDer,
   private val config: CommandControllerConfig<S, C, E>,
   private val snapshotRepository: SnapshotRepository<S, E>,
-  private val eventsProjector: EventsProjector? = null
+  private val eventsProjector: EventsProjector? = null,
 ) {
 
   companion object {
@@ -89,56 +89,50 @@ class CommandController<S : State, C : Command, E : Event>(
         .mapEmpty()
     }
     fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>): Future<AppendedEvents<E>> {
-      fun appendEvent(event: E, version: Int, causationId: CausationId): Future<AppendedEvent<E>> {
+      val version = AtomicInteger(initialVersion)
+      val eventIds = events.map { UuidCreator.getTimeOrdered() }
+      val plan: List<Pair<Tuple, AppendedEvent<E>>> = events.mapIndexed { index, event ->
+        val causationId: UUID = if (index == 0) metadata.commandId.id else eventIds[(index - 1)]
         val eventAsJson = jsonSerDer.toJson(event)
-        log.debug("Will append event {} as {}", event, eventAsJson)
-        val eventId = UuidCreator.getTimeOrdered()
+        val eventId = eventIds[index]
         val jsonObject = JsonObject(eventAsJson)
         val type = jsonObject.getString("type")
         jsonObject.remove("type")
-        val params = Tuple.of(
+        val tuple = Tuple.of(
           type,
-          causationId.id,
+          causationId,
           metadata.correlationId.id,
           config.name,
           metadata.stateId.id,
           jsonObject,
-          version,
+          version.incrementAndGet(),
           eventId
         )
-        return conn.preparedQuery(SQL_APPEND_EVENT)
-          .execute(params)
-          .map { rs: RowSet<Row> ->
-            AppendedEvent(
-              event,
-              causationId.id,
-              rs.first().getLong("sequence"),
-              eventId
-            )
-          }
+        Pair(tuple, AppendedEvent(event, causationId, 0, eventId))
       }
-      val initialFuture = succeededFuture<AppendedEvent<E>?>(null)
-      val version = AtomicInteger(initialVersion)
-      val eventsAdded = mutableListOf<AppendedEvent<E>>()
-      return events.fold(
-        initialFuture
-      ) {
-        currentFuture: Future<AppendedEvent<E>?>,
-        event: E,
-        ->
-        currentFuture.compose { appendedEvent: AppendedEvent<E>? ->
-          val causationId = if (eventsAdded.size == 0) metadata.commandId.id else appendedEvent!!.eventId
-          appendEvent(event, version.incrementAndGet(), CausationId(causationId))
-            .onSuccess { eventsAdded.add(it) }
+      val tuples: List<Tuple> = plan.map { it.first }
+      val appendedEventList = mutableListOf<AppendedEvent<E>>()
+      return conn.preparedQuery(SQL_APPEND_EVENT)
+        .executeBatch(tuples)
+        .onSuccess { rowSet ->
+          var rs: RowSet<Row>? = rowSet
+          val values = mutableListOf<Long>()
+          tuples.mapIndexed { index, _ ->
+            val sequence = rs!!.iterator().next().getLong("sequence")
+            values.add(sequence)
+            appendedEventList.add(plan[index].second.copy(sequence = sequence))
+            rs = rs!!.next()
+          }
+        }.map {
+          AppendedEvents(appendedEventList, version.get())
         }
-      }.map { AppendedEvents(eventsAdded, version.get()) }
     }
     fun projectEvents(
       conn: SqlConnection,
       appendedEvents: AppendedEvents<E>,
-      projector: EventsProjector
+      projector: EventsProjector,
     ): Future<Void> {
-      log.debug("Will project events")
+      log.debug("Will project {} events", appendedEvents.events.size)
       val initialFuture = succeededFuture<Void>()
       return appendedEvents.events.fold(
         initialFuture
@@ -182,7 +176,7 @@ class CommandController<S : State, C : Command, E : Event>(
             .map { Triple(snapshot, session, it) }
         }.compose { triple ->
           val (_, _, appendedEvents) = triple
-          log.debug("Events appended")
+          log.debug("Events appended {}", appendedEvents.events.toString())
           if (eventsProjector != null) {
             projectEvents(conn, appendedEvents, eventsProjector)
               .onSuccess {

@@ -1,6 +1,5 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.core.metadata.Metadata.StateId
@@ -9,7 +8,6 @@ import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomerEventsProjector
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.example1.customer.customerEventHandler
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
 import io.vertx.core.Vertx
@@ -51,9 +49,6 @@ class SyncProjectionIT {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata(StateId(id))
-    val constructorResult = Customer.create(id, cmd.name)
-    val session = CommandSession(constructorResult, customerEventHandler)
-    session.execute { it.activate(cmd.reason) }
     controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -62,6 +57,7 @@ class SyncProjectionIT {
           .onSuccess { customersList ->
             assertThat(customersList.size).isEqualTo(1)
             val json = customersList.first()
+            println(json.encodePrettily())
             assertThat(UUID.fromString(json.getString("id"))).isEqualTo(id)
             assertThat(json.getString("name")).isEqualTo(cmd.name)
             assertThat(json.getBoolean("is_active")).isEqualTo(true)
