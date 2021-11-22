@@ -30,7 +30,7 @@ class SnapshotTestRepositoryIT {
     client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
     repository = SnapshotTestRepository(client.pgPool, example1Json)
     testRepo = TestRepository(client.pgPool)
-    cleanDatabase(client.sqlClient)
+    cleanDatabase(client.pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }

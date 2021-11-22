@@ -29,7 +29,7 @@ class BadConfiguredProjectorIT {
       "service:crabzilla.example1.customer.BadConfiguredEventsProjector",
     )
     val options = DeploymentOptions().setConfig(config)
-    cleanDatabase(commandsContext.sqlClient)
+    cleanDatabase(commandsContext.pgPool)
       .compose { vertx.deployVerticles(verticles, options) }
       .onFailure { tc.completeNow() }
       .onSuccess { tc.failNow("Should fail") }

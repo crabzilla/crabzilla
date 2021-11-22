@@ -18,9 +18,8 @@ import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.PoolOptions
-import io.vertx.sqlclient.SqlClient
 
-class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: PgPool, val sqlClient: SqlClient) {
+class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: PgPool) {
 
   companion object {
     fun create(
@@ -30,8 +29,7 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
       poolOptions: PoolOptions
     ): CommandsContext {
       val thePgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
-      val theSqlClient: SqlClient = PgPool.client(vertx, connectOptions, poolOptions)
-      return CommandsContext(vertx, jsonSerDer, thePgPool, theSqlClient)
+      return CommandsContext(vertx, jsonSerDer, thePgPool)
     }
     fun create(
       vertx: Vertx,
@@ -41,8 +39,7 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
       val connectOptions = createPgConnectOptions(config)
       val poolOptions = createPoolOptions(config)
       val thePgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
-      val theSqlClient: SqlClient = PgPool.client(vertx, connectOptions, poolOptions)
-      return CommandsContext(vertx, jsonSerDer, thePgPool, theSqlClient)
+      return CommandsContext(vertx, jsonSerDer, thePgPool)
     }
   }
 
@@ -75,7 +72,6 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
 
   fun close(): Future<Void> {
     return pgPool.close()
-      .compose { sqlClient.close() }
   }
 
   private fun <S : State, C : Command, E : Event> snapshotRepo(

@@ -51,7 +51,7 @@ class FutureCommandHandlerIT {
       CommandController(commandsContext.pgPool, jsonSerDer, paymentConfig, snapshotRepo2)
     repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
     testRepo = TestRepository(commandsContext.pgPool)
-    cleanDatabase(commandsContext.sqlClient)
+    cleanDatabase(commandsContext.pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }

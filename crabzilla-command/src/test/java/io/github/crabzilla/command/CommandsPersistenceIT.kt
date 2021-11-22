@@ -42,7 +42,7 @@ class CommandsPersistenceIT {
     commandController = CommandController(commandsContext.pgPool, jsonSerDer, customerConfig, snapshotRepo2)
     repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
     testRepo = TestRepository(commandsContext.pgPool)
-    cleanDatabase(commandsContext.sqlClient)
+    cleanDatabase(commandsContext.pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }

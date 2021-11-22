@@ -21,13 +21,13 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
-class AsyncProjection1IT {
+class AsyncProjectionIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
 
   companion object {
-    private val log = LoggerFactory.getLogger(AsyncProjection1IT::class.java)
+    private val log = LoggerFactory.getLogger(AsyncProjectionIT::class.java)
   }
 
   private val id: UUID = UUID.randomUUID()
@@ -44,7 +44,7 @@ class AsyncProjection1IT {
       "service:crabzilla.example1.customer.CustomersEventsProjector",
     )
     val options = DeploymentOptions().setConfig(config)
-    cleanDatabase(commandsContext.sqlClient)
+    cleanDatabase(commandsContext.pgPool)
       .compose { vertx.deployVerticles(verticles, options) }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
@@ -70,7 +70,7 @@ class AsyncProjection1IT {
       }.compose {
         vertx.eventBus().request<Void>("crabzilla.projector.customers", null)
       }.compose {
-        commandsContext.sqlClient.preparedQuery("select * from customer_summary")
+        commandsContext.pgPool.preparedQuery("select * from customer_summary")
           .execute()
           .map { rs ->
             rs.size() == 1

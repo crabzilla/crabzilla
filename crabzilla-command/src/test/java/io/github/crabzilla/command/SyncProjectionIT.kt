@@ -38,7 +38,7 @@ class SyncProjectionIT {
     controller = client.create(customerConfig, SnapshotType.PERSISTENT, CustomerEventsProjector)
     snapshotTestRepository = SnapshotTestRepository(client.pgPool, example1Json)
     testRepo = TestRepository(client.pgPool)
-    cleanDatabase(client.sqlClient)
+    cleanDatabase(client.pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
