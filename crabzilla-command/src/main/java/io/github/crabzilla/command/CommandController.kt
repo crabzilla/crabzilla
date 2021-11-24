@@ -21,6 +21,7 @@ import io.github.crabzilla.core.metadata.Metadata.EventId
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
+import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
@@ -29,9 +30,9 @@ import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicInteger
 
 class CommandController<S : State, C : Command, E : Event>(
+  private val vertx: Vertx,
   private val pgPool: PgPool,
   private val jsonSerDer: JsonSerDer,
   private val config: CommandControllerConfig<S, C, E>,
@@ -41,6 +42,7 @@ class CommandController<S : State, C : Command, E : Event>(
 
   companion object {
     private val log = LoggerFactory.getLogger(CommandController::class.java)
+    private const val NOTIFICATIONS_INTERVAL = 1000L
     private const val SQL_LOCK =
       """ SELECT pg_try_advisory_xact_lock($1, $2) as locked
       """
@@ -51,6 +53,19 @@ class CommandController<S : State, C : Command, E : Event>(
       """ INSERT 
             INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
+  }
+
+  private val notificationsByStateType = HashSet<String>()
+
+  init {
+    vertx.setPeriodic(NOTIFICATIONS_INTERVAL) {
+      notificationsByStateType.forEach { stateType ->
+        pgPool
+          .query("NOTIFY " + EventTopics.CRABZILLA_ROOT_TOPIC.name.lowercase() + ", '" + stateType + "'")
+          .execute()
+      }
+      notificationsByStateType.clear()
+    }
   }
 
   private val commandHandler: (command: C, state: S?) -> Future<CommandSession<S, E>> =
@@ -90,28 +105,26 @@ class CommandController<S : State, C : Command, E : Event>(
         .mapEmpty()
     }
     fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>): Future<AppendedEvents<E>> {
-      val version = AtomicInteger(initialVersion)
+      var version = initialVersion
       val eventIds = events.map { UuidCreator.getTimeOrdered() }
-      val plan: List<Pair<Tuple, AppendedEvent<E>>> = events.mapIndexed { index, event ->
+      val tuples: List<Tuple> = events.mapIndexed { index, event ->
         val causationId: UUID = if (index == 0) metadata.commandId.id else eventIds[(index - 1)]
         val eventAsJson = jsonSerDer.toJson(event)
         val eventId = eventIds[index]
         val jsonObject = JsonObject(eventAsJson)
         val type = jsonObject.getString("type")
         jsonObject.remove("type")
-        val tuple = Tuple.of(
+        Tuple.of(
           type,
           causationId,
           metadata.correlationId.id,
           config.name,
           metadata.stateId.id,
           jsonObject,
-          version.incrementAndGet(),
+          ++version,
           eventId
         )
-        Pair(tuple, AppendedEvent(event, causationId, 0, eventId))
       }
-      val tuples: List<Tuple> = plan.map { it.first }
       val appendedEventList = mutableListOf<AppendedEvent<E>>()
       return conn.preparedQuery(SQL_APPEND_EVENT)
         .executeBatch(tuples)
@@ -119,11 +132,13 @@ class CommandController<S : State, C : Command, E : Event>(
           var rs: RowSet<Row>? = rowSet
           tuples.mapIndexed { index, _ ->
             val sequence = rs!!.iterator().next().getLong("sequence")
-            appendedEventList.add(plan[index].second.copy(sequence = sequence))
+            val correlationId = tuples[index].getUUID(2)
+            val eventId = tuples[index].getUUID(7)
+            appendedEventList.add(AppendedEvent(events[index], correlationId, sequence, eventId))
             rs = rs!!.next()
           }
         }.map {
-          AppendedEvents(appendedEventList, version.get())
+          AppendedEvents(appendedEventList, version)
         }
     }
     fun projectEvents(
@@ -192,12 +207,8 @@ class CommandController<S : State, C : Command, E : Event>(
             appendedEvents.resultingVersion, session.currentState
           ).map { triple }
         }.compose { triple ->
-          val (_, _, _) = triple
-          conn.preparedQuery("NOTIFY " + EventTopics.CRABZILLA_ROOT_TOPIC.name)
-            .execute()
-            .map { triple }
-        }.compose { triple ->
           val (_, session, _) = triple
+          notificationsByStateType.add(config.name)
           succeededFuture(session)
         }
     }
