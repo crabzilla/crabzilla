@@ -1,5 +1,6 @@
 package io.github.crabzilla.projection
 
+import io.github.crabzilla.core.EventTopics
 import io.github.crabzilla.projection.internal.EventsScanner
 import io.github.crabzilla.projection.internal.QuerySpecification
 import io.vertx.core.Future
@@ -36,6 +37,18 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
     val jsonConfig = config()
     log.info("Node {} starting with {}", node, jsonConfig.encodePrettily())
     options = Config.create(jsonConfig)
+    subscriber.connect().onSuccess {
+      subscriber.channel(EventTopics.CRABZILLA_ROOT_TOPIC.name.lowercase())
+        .handler { stateType ->
+          if (greedy) {
+            return@handler
+          }
+          if (options.stateTypes.isEmpty() || options.stateTypes.contains(stateType)) {
+            greedy = true
+            log.debug("Greedy $stateType")
+          }
+        }
+    }
     vertx.eventBus()
       .consumer<String>("crabzilla.projector.${options.projectionName}.ping") { msg ->
         log.info(
@@ -45,47 +58,49 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
         msg.reply(node)
       }
     val query = QuerySpecification.query(options.stateTypes, options.eventTypes)
-    log.debug(
+    log.info(
       "Will start projection [{}] using query [{}] in [{}] milliseconds", options.projectionName, query,
       options.initialInterval
     )
-    scanner = EventsScanner(sqlClient, options.projectionName, query)
+    scanner = EventsScanner(pgPool, options.projectionName, query)
     val provider = EventsProjectorProviderFinder().create(config().getString("eventsProjectorFactoryClassName"))
     eventsProjector = provider.create()
-    vertx.eventBus().consumer<Void>("crabzilla.projector.${options.projectionName}") { msg ->
-      action()
-        .onComplete { msg.reply(null) }
-    }
-    // Schedule the first execution
-    vertx.setTimer(options.initialInterval, handler())
-    // Schedule the metrics
-    vertx.setPeriodic(options.metricsInterval) {
-      log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
-    }
-    subscriber
-      .channel("crabzilla.events")
-      .subscribeHandler {
-        this.greedy = true
+    scanner.getCurrentOffset()
+      .onSuccess { offset ->
+        currentOffset = offset
       }
-    subscriber.connect().onSuccess {
-      scanner.getCurrentOffset()
-        .onSuccess { offset ->
-          currentOffset = offset
-          startPromise.complete()
-          log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
-          log.info("Projection [{}] started pooling events with {}", options.projectionName, options)
-        }.onFailure {
-          log.error(it.message)
-          startPromise.fail(it)
+      .compose {
+        scanner.getGlobalOffset()
+      }
+      .onSuccess { globalOffset ->
+        if (globalOffset > currentOffset) {
+          greedy = true
         }
-    }.onFailure {
-      log.error(it.message)
-      startPromise.fail(it)
-    }
+        val effectiveInitialInterval = if (greedy) 1 else options.initialInterval
+        log.info(
+          "Projection [{}] current offset [{}] global offset [{}] will start in [{}] ms",
+          options.projectionName, currentOffset, globalOffset, effectiveInitialInterval
+        )
+        log.info("Projection [{}] started pooling events with {}", options.projectionName, options)
+        // Schedule the first execution
+        vertx.setTimer(effectiveInitialInterval, handler())
+        // Schedule the metrics
+        vertx.setPeriodic(options.metricsInterval) {
+          log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
+        }
+        vertx.eventBus().consumer<Void>("crabzilla.projector.${options.projectionName}") { msg ->
+          action()
+            .onComplete { msg.reply(null) }
+        }
+        startPromise.complete()
+      }.onFailure {
+        log.error(it.message)
+        startPromise.fail(it)
+      }
   }
 
   override fun stop() {
-    log.info("Stopped")
+    log.info("Projection [{}] stopped at offset [{}]", options.projectionName, currentOffset)
   }
 
   private fun handler(): Handler<Long?> {
@@ -97,7 +112,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
 
   private fun action(): Future<Int> {
     fun registerFailure() {
-      val nextInterval = min(options.maxInterval, options.interval * failures.incrementAndGet())
+      val nextInterval = if (greedy) 1 else min(options.maxInterval, options.interval * failures.incrementAndGet())
       vertx.setTimer(nextInterval, handler())
       log.debug("Rescheduled to next {} milliseconds", nextInterval)
     }
@@ -113,6 +128,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
         when (retrievedRows) {
           0 -> {
             log.debug("No new events")
+            greedy = false
             registerFailure()
           }
           else -> {
@@ -174,20 +190,20 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
     val projectionName: String,
     val initialInterval: Long,
     val interval: Long,
+    val maxNumberOfRows: Int,
     val maxInterval: Long,
     val metricsInterval: Long,
-    val maxNumberOfRows: Int,
     val stateTypes: List<String>,
-    val eventTypes: List<String>
+    val eventTypes: List<String>,
   ) {
     companion object {
       fun create(config: JsonObject): Config {
         val projectionName = config.getString("projectionName")
-        val initialInterval = config.getLong("initialInterval", 10_000)
-        val interval = config.getLong("interval", 100)
-        val maxInterval = config.getLong("maxInterval", 30_000)
-        val metricsInterval = config.getLong("metricsInterval", 30_000)
+        val initialInterval = config.getLong("initialInterval", 5_000)
+        val interval = config.getLong("interval", 50)
         val maxNumberOfRows = config.getInteger("maxNumberOfRows", 250)
+        val maxInterval = config.getLong("maxInterval", 60_000)
+        val metricsInterval = config.getLong("metricsInterval", 60_000)
         val stateTypesArray = config.getJsonArray("stateTypes") ?: JsonArray()
         val stateTypes = stateTypesArray.iterator().asSequence().map { it.toString() }.toList()
         val eventTypesArray = config.getJsonArray("eventTypes") ?: JsonArray()

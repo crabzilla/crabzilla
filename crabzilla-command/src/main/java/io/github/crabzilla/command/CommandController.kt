@@ -5,6 +5,7 @@ import io.github.crabzilla.command.internal.CommandHandlerWrapper.wrap
 import io.github.crabzilla.command.internal.SnapshotRepository
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
+import io.github.crabzilla.core.EventTopics
 import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.command.CommandException.LockingException
@@ -116,10 +117,8 @@ class CommandController<S : State, C : Command, E : Event>(
         .executeBatch(tuples)
         .onSuccess { rowSet ->
           var rs: RowSet<Row>? = rowSet
-          val values = mutableListOf<Long>()
           tuples.mapIndexed { index, _ ->
             val sequence = rs!!.iterator().next().getLong("sequence")
-            values.add(sequence)
             appendedEventList.add(plan[index].second.copy(sequence = sequence))
             rs = rs!!.next()
           }
@@ -192,6 +191,11 @@ class CommandController<S : State, C : Command, E : Event>(
             conn, metadata.stateId.id, originalVersion,
             appendedEvents.resultingVersion, session.currentState
           ).map { triple }
+        }.compose { triple ->
+          val (_, _, _) = triple
+          conn.preparedQuery("NOTIFY " + EventTopics.CRABZILLA_ROOT_TOPIC.name)
+            .execute()
+            .map { triple }
         }.compose { triple ->
           val (_, session, _) = triple
           succeededFuture(session)
