@@ -42,7 +42,7 @@ class CommandController<S : State, C : Command, E : Event>(
 
   companion object {
     private val log = LoggerFactory.getLogger(CommandController::class.java)
-    private const val NOTIFICATIONS_INTERVAL = 1000L
+    private const val NOTIFICATIONS_INTERVAL = 3000L
     private const val SQL_LOCK =
       """ SELECT pg_try_advisory_xact_lock($1, $2) as locked
       """

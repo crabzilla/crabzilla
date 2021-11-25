@@ -200,7 +200,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
       fun create(config: JsonObject): Config {
         val projectionName = config.getString("projectionName")
         val initialInterval = config.getLong("initialInterval", 5_000)
-        val interval = config.getLong("interval", 50)
+        val interval = config.getLong("interval", 250)
         val maxNumberOfRows = config.getInteger("maxNumberOfRows", 250)
         val maxInterval = config.getLong("maxInterval", 60_000)
         val metricsInterval = config.getLong("metricsInterval", 60_000)
