@@ -32,6 +32,10 @@ fun deployProjector(
             promise.complete()
             log.info("Started {}", serviceName)
           }
+          .onFailure {
+            promise.fail(it)
+            log.error("When starting {}", serviceName, it)
+          }
       } else {
         promise.complete()
         log.info(
