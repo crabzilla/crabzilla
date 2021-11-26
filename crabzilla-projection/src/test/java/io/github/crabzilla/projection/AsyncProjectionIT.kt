@@ -9,7 +9,6 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
-import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -40,12 +39,14 @@ class AsyncProjectionIT {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     commandsContext = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
     testRepo = TestRepository(commandsContext.pgPool)
-    val verticles = listOf(
-      "service:crabzilla.example1.customer.CustomersEventsProjector",
-    )
-    val options = DeploymentOptions().setConfig(config)
+
     cleanDatabase(commandsContext.pgPool)
-      .compose { vertx.deployVerticles(verticles, options) }
+      .compose {
+        deployProjector(
+          log, vertx, config,
+          "service:crabzilla.example1.customer.CustomersEventsProjector"
+        )
+      }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -63,12 +64,14 @@ class AsyncProjectionIT {
   @Test
   @DisplayName("after a command the events will be projected")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
+    val target = "crabzilla.example1.customer.CustomersEventsProjector"
     val controller = commandsContext.create(customerConfig, SnapshotType.ON_DEMAND)
     controller.handle(CommandMetadata(StateId(id)), RegisterCustomer(id, "cust#$id"))
       .compose {
-        vertx.eventBus().request<String>("crabzilla.projector.customers.ping", "me")
+        vertx.eventBus()
+          .request<String>("crabzilla.projector.$target.ping", "me")
       }.compose {
-        vertx.eventBus().request<Void>("crabzilla.projector.customers", null)
+        vertx.eventBus().request<Void>("crabzilla.projector.$target", null)
       }.compose {
         commandsContext.pgPool.preparedQuery("select * from customer_summary")
           .execute()

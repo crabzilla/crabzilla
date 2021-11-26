@@ -85,4 +85,4 @@ CREATE TABLE customer_summary (
 );
 
 INSERT INTO publications (name, sequence) values ('customers', 0);
-INSERT INTO projections (name, sequence) values ('customers', 0);
+INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.CustomersEventsProjector', 0);

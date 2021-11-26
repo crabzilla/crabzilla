@@ -11,7 +11,6 @@ import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.command.CommandException.LockingException
 import io.github.crabzilla.core.command.CommandException.ValidationException
 import io.github.crabzilla.core.command.CommandSession
-import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.core.metadata.EventMetadata
@@ -32,17 +31,17 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 
 class CommandController<S : State, C : Command, E : Event>(
-  private val vertx: Vertx,
+  vertx: Vertx,
   private val pgPool: PgPool,
   private val jsonSerDer: JsonSerDer,
   private val config: CommandControllerConfig<S, C, E>,
   private val snapshotRepository: SnapshotRepository<S, E>,
   private val eventsProjector: EventsProjector? = null,
+  notificationsInterval: Long = 3000
 ) {
 
   companion object {
     private val log = LoggerFactory.getLogger(CommandController::class.java)
-    private const val NOTIFICATIONS_INTERVAL = 3000L
     private const val SQL_LOCK =
       """ SELECT pg_try_advisory_xact_lock($1, $2) as locked
       """
@@ -58,13 +57,14 @@ class CommandController<S : State, C : Command, E : Event>(
   private val notificationsByStateType = HashSet<String>()
 
   init {
-    vertx.setPeriodic(NOTIFICATIONS_INTERVAL) {
-      notificationsByStateType.forEach { stateType ->
-        pgPool
-          .query("NOTIFY " + EventTopics.CRABZILLA_ROOT_TOPIC.name.lowercase() + ", '" + stateType + "'")
-          .execute()
-      }
-      notificationsByStateType.clear()
+    vertx.setPeriodic(notificationsInterval) {
+      val tuples = notificationsByStateType.map { stateType -> Tuple.of(stateType) }
+      pgPool
+        .preparedQuery("NOTIFY " + EventTopics.CRABZILLA_ROOT_TOPIC.name.lowercase() + ", '$1'")
+        .executeBatch(tuples)
+        .onSuccess {
+          notificationsByStateType.clear()
+        }
     }
   }
 
@@ -72,15 +72,6 @@ class CommandController<S : State, C : Command, E : Event>(
     wrap(config.commandHandlerFactory.invoke())
 
   fun handle(metadata: CommandMetadata, command: C): Future<CommandSession<S, E>> {
-    fun validateCommands(): Future<Void> {
-      val validator: CommandValidator<C> = config.commandValidator ?: return succeededFuture()
-      val validationErrors = validator.validate(command)
-      return if (validationErrors.isNotEmpty()) {
-        failedFuture(ValidationException(validationErrors))
-      } else {
-        succeededFuture()
-      }
-    }
     fun lock(conn: SqlConnection, lockId: Int): Future<Void> {
       return conn
         .preparedQuery(SQL_LOCK)
@@ -165,12 +156,18 @@ class CommandController<S : State, C : Command, E : Event>(
       }.mapEmpty()
     }
 
+    if (config.commandValidator != null) {
+      val errors = config.commandValidator!!.validate(command)
+      if (errors.isNotEmpty()) {
+        return failedFuture(ValidationException(errors))
+      }
+    }
+
+    log.debug("Command validated")
+
     return pgPool.withTransaction { conn ->
-      validateCommands()
+      lock(conn, metadata.stateId.id.hashCode())
         .compose {
-          log.debug("Command validated")
-          lock(conn, metadata.stateId.id.hashCode())
-        }.compose {
           log.debug("State locked")
           snapshotRepository.get(conn, metadata.stateId.id)
         }.compose { snapshot ->
