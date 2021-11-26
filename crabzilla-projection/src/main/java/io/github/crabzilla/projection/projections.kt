@@ -8,7 +8,14 @@ import io.vertx.core.json.JsonObject
 import org.slf4j.Logger
 import java.lang.management.ManagementFactory
 
-fun deployProjector(log: Logger, vertx: Vertx, config: JsonObject, serviceName: String, isClustered: Boolean = false): Future<Void> {
+fun deployProjector(
+  log: Logger,
+  vertx: Vertx,
+  config: JsonObject,
+  serviceName: String,
+  isClustered: Boolean = false,
+)
+        : Future<Void> {
   // TODO use hz quorum?
   val node = ManagementFactory.getRuntimeMXBean().name
   val serviceConfig = JsonObject(config.toBuffer()) // to not mutate config
@@ -25,15 +32,11 @@ fun deployProjector(log: Logger, vertx: Vertx, config: JsonObject, serviceName: 
             promise.complete()
             log.info("Started {}", serviceName)
           }
-          .onFailure {
-            promise.fail(it)
-            log.error("When starting {}", serviceName, it)
-          }
       } else {
         promise.complete()
         log.info(
           "Started as standby since node ${resp.result().body()} " +
-            "is the current owner of this verticle"
+                  "is the current owner of this verticle"
         )
       }
     }
