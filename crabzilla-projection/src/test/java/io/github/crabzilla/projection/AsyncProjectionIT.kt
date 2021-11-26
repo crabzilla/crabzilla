@@ -69,9 +69,9 @@ class AsyncProjectionIT {
     controller.handle(CommandMetadata(StateId(id)), RegisterCustomer(id, "cust#$id"))
       .compose {
         vertx.eventBus()
-          .request<String>("crabzilla.projector.$target.ping", "me")
+          .request<String>("crabzilla.projectors.$target.ping", "me")
       }.compose {
-        vertx.eventBus().request<Void>("crabzilla.projector.$target", null)
+        vertx.eventBus().request<Void>("crabzilla.projectors.$target", null)
       }.compose {
         commandsContext.pgPool.preparedQuery("select * from customer_summary")
           .execute()

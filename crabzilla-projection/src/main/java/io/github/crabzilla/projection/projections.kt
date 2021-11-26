@@ -14,8 +14,7 @@ fun deployProjector(
   config: JsonObject,
   serviceName: String,
   isClustered: Boolean = false,
-)
-        : Future<Void> {
+): Future<Void> {
   // TODO use hz quorum?
   val node = ManagementFactory.getRuntimeMXBean().name
   val serviceConfig = JsonObject(config.toBuffer()) // to not mutate config
@@ -41,7 +40,7 @@ fun deployProjector(
         promise.complete()
         log.info(
           "Started as standby since node ${resp.result().body()} " +
-                  "is the current owner of this verticle"
+            "is the current owner of this verticle"
         )
       }
     }

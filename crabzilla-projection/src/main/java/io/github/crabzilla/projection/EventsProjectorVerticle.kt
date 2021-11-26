@@ -50,7 +50,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
         }
     }
     vertx.eventBus()
-      .consumer<String>("crabzilla.projector.${options.projectionName}.ping") { msg ->
+      .consumer<String>("crabzilla.projectors.${options.projectionName}.ping") { msg ->
         log.info(
           "Node [${msg.body()}] just asked to start this verticle. I will answer that I'm already " +
             "working from this node [$node]"
@@ -88,7 +88,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
         vertx.setPeriodic(options.metricsInterval) {
           log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
         }
-        vertx.eventBus().consumer<Void>("crabzilla.projector.${options.projectionName}") { msg ->
+        vertx.eventBus().consumer<Void>("crabzilla.projectors.${options.projectionName}") { msg ->
           action()
             .onComplete { msg.reply(null) }
         }
