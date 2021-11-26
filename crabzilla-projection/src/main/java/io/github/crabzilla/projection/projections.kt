@@ -19,11 +19,12 @@ fun deployProjector(
   // TODO use hz quorum?
   val node = ManagementFactory.getRuntimeMXBean().name
   val serviceConfig = JsonObject(config.toBuffer()) // to not mutate config
-  serviceConfig.put("projectionName", serviceName.removePrefix("service:"))
+  val projectionName = serviceName.removePrefix("service:")
+  serviceConfig.put("projectionName", projectionName)
   val promise = Promise.promise<Void>()
   vertx
     .eventBus()
-    .request<String>("crabzilla.projectors.$serviceName.ping", node) { resp ->
+    .request<String>("crabzilla.projectors.$projectionName.ping", node) { resp ->
       log.info("Got response from verticle {}", serviceName)
       if (resp.failed()) {
         val projectionOptions = DeploymentOptions().setConfig(serviceConfig).setHa(isClustered).setInstances(1)
