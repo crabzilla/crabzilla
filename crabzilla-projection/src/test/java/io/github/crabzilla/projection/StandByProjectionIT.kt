@@ -1,12 +1,7 @@
 package io.github.crabzilla.projection
 
 import io.github.crabzilla.command.CommandsContext
-import io.github.crabzilla.command.SnapshotType
 import io.github.crabzilla.core.json.JsonSerDer
-import io.github.crabzilla.core.metadata.CommandMetadata
-import io.github.crabzilla.core.metadata.Metadata.StateId
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
 import io.github.crabzilla.projection.infra.TestRepository
@@ -25,13 +20,13 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
-class AsyncProjectionIT {
+class StandByProjectionIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
 
   companion object {
-    private val log = LoggerFactory.getLogger(AsyncProjectionIT::class.java)
+    private val log = LoggerFactory.getLogger(StandByProjectionIT::class.java)
   }
 
   private val id: UUID = UUID.randomUUID()
@@ -67,30 +62,16 @@ class AsyncProjectionIT {
   // TODO test idempotency
 
   @Test
-  @DisplayName("after a command the events will be projected")
+  @DisplayName("if it's already deployed, it will silently keep going")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val target = "crabzilla.example1.customer.CustomersEventsProjector"
-    val controller = commandsContext.create(customerConfig, SnapshotType.ON_DEMAND)
-    controller.handle(CommandMetadata(StateId(id)), RegisterCustomer(id, "cust#$id"))
-      .compose {
-        vertx.eventBus()
-          .request<String>("crabzilla.projectors.$target.ping", "me")
-      }.compose {
-        vertx.eventBus().request<Void>("crabzilla.projectors.$target", null)
-      }.compose {
-        commandsContext.pgPool.preparedQuery("select * from customer_summary")
-          .execute()
-          .map { rs ->
-            rs.size() == 1
-          }
-      }.onFailure {
+    deployProjector(
+      log, vertx, config,
+      "service:crabzilla.example1.customer.CustomersEventsProjector"
+    )
+      .onFailure {
         tc.failNow(it)
       }.onSuccess {
-        if (it) {
-          tc.completeNow()
-        } else {
-          tc.failNow("Nothing projected")
-        }
+        tc.completeNow()
       }
   }
 }

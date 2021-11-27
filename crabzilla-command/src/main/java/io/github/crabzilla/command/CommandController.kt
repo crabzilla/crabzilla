@@ -58,13 +58,12 @@ class CommandController<S : State, C : Command, E : Event>(
 
   init {
     vertx.setPeriodic(notificationsInterval) {
-      val tuples = notificationsByStateType.map { stateType -> Tuple.of(stateType) }
-      pgPool
-        .preparedQuery("NOTIFY " + EventTopics.CRABZILLA_ROOT_TOPIC.name.lowercase() + ", '$1'")
-        .executeBatch(tuples)
-        .onSuccess {
-          notificationsByStateType.clear()
-        }
+      notificationsByStateType.forEach { stateType ->
+        pgPool
+          .preparedQuery("NOTIFY " + EventTopics.CRABZILLA_ROOT_TOPIC.name.lowercase() + ", '$stateType'")
+          .execute()
+      }
+      notificationsByStateType.clear()
     }
   }
 

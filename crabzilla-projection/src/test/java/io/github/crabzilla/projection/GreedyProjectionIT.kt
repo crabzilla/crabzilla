@@ -2,6 +2,7 @@ package io.github.crabzilla.projection
 
 import io.github.crabzilla.command.CommandsContext
 import io.github.crabzilla.command.SnapshotType
+import io.github.crabzilla.core.EventTopics
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.core.metadata.Metadata.StateId
@@ -25,13 +26,13 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
-class AsyncProjectionIT {
+class GreedyProjectionIT {
 
   // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
   // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
 
   companion object {
-    private val log = LoggerFactory.getLogger(AsyncProjectionIT::class.java)
+    private val log = LoggerFactory.getLogger(GreedyProjectionIT::class.java)
   }
 
   private val id: UUID = UUID.randomUUID()
@@ -64,33 +65,38 @@ class AsyncProjectionIT {
       .onSuccess { tc.completeNow() }
   }
 
-  // TODO test idempotency
-
   @Test
-  @DisplayName("after a command the events will be projected")
+  @DisplayName("forcing it starting greedy then sending a command the events will be projected")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val target = "crabzilla.example1.customer.CustomersEventsProjector"
-    val controller = commandsContext.create(customerConfig, SnapshotType.ON_DEMAND)
-    controller.handle(CommandMetadata(StateId(id)), RegisterCustomer(id, "cust#$id"))
-      .compose {
-        vertx.eventBus()
-          .request<String>("crabzilla.projectors.$target.ping", "me")
-      }.compose {
-        vertx.eventBus().request<Void>("crabzilla.projectors.$target", null)
-      }.compose {
-        commandsContext.pgPool.preparedQuery("select * from customer_summary")
-          .execute()
-          .map { rs ->
-            rs.size() == 1
+
+    commandsContext.pgPool
+      .preparedQuery("NOTIFY " + EventTopics.CRABZILLA_ROOT_TOPIC.name.lowercase() + ", 'Customer'")
+      .execute()
+      .onFailure { tc.failNow(it) }
+      .onSuccess {
+        val target = "crabzilla.example1.customer.CustomersEventsProjector"
+        val controller = commandsContext.create(customerConfig, SnapshotType.ON_DEMAND)
+        controller.handle(CommandMetadata(StateId(id)), RegisterCustomer(id, "cust#$id"))
+          .compose {
+            vertx.eventBus()
+              .request<String>("crabzilla.projectors.$target.ping", "me")
+          }.compose {
+            vertx.eventBus().request<Void>("crabzilla.projectors.$target", null)
+          }.compose {
+            commandsContext.pgPool.preparedQuery("select * from customer_summary")
+              .execute()
+              .map { rs ->
+                rs.size() == 1
+              }
+          }.onFailure {
+            tc.failNow(it)
+          }.onSuccess {
+            if (it) {
+              tc.completeNow()
+            } else {
+              tc.failNow("Nothing projected")
+            }
           }
-      }.onFailure {
-        tc.failNow(it)
-      }.onSuccess {
-        if (it) {
-          tc.completeNow()
-        } else {
-          tc.failNow("Nothing projected")
-        }
       }
   }
 }

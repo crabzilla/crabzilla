@@ -40,12 +40,9 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
     subscriber.connect().onSuccess {
       subscriber.channel(EventTopics.CRABZILLA_ROOT_TOPIC.name.lowercase())
         .handler { stateType ->
-          if (greedy) {
-            return@handler
-          }
-          if (options.stateTypes.isEmpty() || options.stateTypes.contains(stateType)) {
+          if (!greedy && (options.stateTypes.isEmpty() || options.stateTypes.contains(stateType))) {
             greedy = true
-            log.debug("Greedy $stateType")
+            log.debug("Greedy {}", stateType)
           }
         }
     }
@@ -65,6 +62,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
     scanner = EventsScanner(pgPool, options.projectionName, query)
     val provider = EventsProjectorProviderFinder().create(config().getString("eventsProjectorFactoryClassName"))
     eventsProjector = provider.create()
+
     scanner.getCurrentOffset()
       .onSuccess { offset ->
         currentOffset = offset
@@ -73,9 +71,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
         scanner.getGlobalOffset()
       }
       .onSuccess { globalOffset ->
-        if (globalOffset > currentOffset) {
-          greedy = true
-        }
+        greedy = globalOffset > currentOffset
         val effectiveInitialInterval = if (greedy) 1 else options.initialInterval
         log.info(
           "Projection [{}] current offset [{}] global offset [{}] will start in [{}] ms",
@@ -94,7 +90,6 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
         }
         startPromise.complete()
       }.onFailure {
-        log.error(it.message)
         startPromise.fail(it)
       }
   }
