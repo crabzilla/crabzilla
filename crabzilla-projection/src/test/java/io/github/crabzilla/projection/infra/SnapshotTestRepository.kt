@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.projection.infra
 
 import io.github.crabzilla.command.internal.Snapshot
 import io.github.crabzilla.core.State

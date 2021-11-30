@@ -5,12 +5,12 @@ import io.github.crabzilla.command.internal.CommandHandlerWrapper.wrap
 import io.github.crabzilla.command.internal.SnapshotRepository
 import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
+import io.github.crabzilla.core.EventTopics
 import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.command.CommandException.LockingException
 import io.github.crabzilla.core.command.CommandException.ValidationException
 import io.github.crabzilla.core.command.CommandSession
-import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.core.metadata.EventMetadata
@@ -20,6 +20,7 @@ import io.github.crabzilla.core.metadata.Metadata.EventId
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
+import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
@@ -28,14 +29,15 @@ import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicInteger
 
 class CommandController<S : State, C : Command, E : Event>(
+  vertx: Vertx,
   private val pgPool: PgPool,
   private val jsonSerDer: JsonSerDer,
   private val config: CommandControllerConfig<S, C, E>,
   private val snapshotRepository: SnapshotRepository<S, E>,
-  private val eventsProjector: EventsProjector? = null
+  private val eventsProjector: EventsProjector? = null,
+  notificationsInterval: Long = 3000
 ) {
 
   companion object {
@@ -52,19 +54,23 @@ class CommandController<S : State, C : Command, E : Event>(
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
   }
 
+  private val notificationsByStateType = HashSet<String>()
+
+  init {
+    vertx.setPeriodic(notificationsInterval) {
+      notificationsByStateType.forEach { stateType ->
+        pgPool
+          .preparedQuery("NOTIFY " + EventTopics.CRABZILLA_ROOT_TOPIC.name.lowercase() + ", '$stateType'")
+          .execute()
+      }
+      notificationsByStateType.clear()
+    }
+  }
+
   private val commandHandler: (command: C, state: S?) -> Future<CommandSession<S, E>> =
     wrap(config.commandHandlerFactory.invoke())
 
   fun handle(metadata: CommandMetadata, command: C): Future<CommandSession<S, E>> {
-    fun validateCommands(): Future<Void> {
-      val validator: CommandValidator<C> = config.commandValidator ?: return succeededFuture()
-      val validationErrors = validator.validate(command)
-      return if (validationErrors.isNotEmpty()) {
-        failedFuture(ValidationException(validationErrors))
-      } else {
-        succeededFuture()
-      }
-    }
     fun lock(conn: SqlConnection, lockId: Int): Future<Void> {
       return conn
         .preparedQuery(SQL_LOCK)
@@ -89,56 +95,48 @@ class CommandController<S : State, C : Command, E : Event>(
         .mapEmpty()
     }
     fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>): Future<AppendedEvents<E>> {
-      fun appendEvent(event: E, version: Int, causationId: CausationId): Future<AppendedEvent<E>> {
+      var version = initialVersion
+      val eventIds = events.map { UuidCreator.getTimeOrdered() }
+      val tuples: List<Tuple> = events.mapIndexed { index, event ->
+        val causationId: UUID = if (index == 0) metadata.commandId.id else eventIds[(index - 1)]
         val eventAsJson = jsonSerDer.toJson(event)
-        log.debug("Will append event {} as {}", event, eventAsJson)
-        val eventId = UuidCreator.getTimeOrdered()
+        val eventId = eventIds[index]
         val jsonObject = JsonObject(eventAsJson)
         val type = jsonObject.getString("type")
         jsonObject.remove("type")
-        val params = Tuple.of(
+        Tuple.of(
           type,
-          causationId.id,
+          causationId,
           metadata.correlationId.id,
           config.name,
           metadata.stateId.id,
           jsonObject,
-          version,
+          ++version,
           eventId
         )
-        return conn.preparedQuery(SQL_APPEND_EVENT)
-          .execute(params)
-          .map { rs: RowSet<Row> ->
-            AppendedEvent(
-              event,
-              causationId.id,
-              rs.first().getLong("sequence"),
-              eventId
-            )
-          }
       }
-      val initialFuture = succeededFuture<AppendedEvent<E>?>(null)
-      val version = AtomicInteger(initialVersion)
-      val eventsAdded = mutableListOf<AppendedEvent<E>>()
-      return events.fold(
-        initialFuture
-      ) {
-        currentFuture: Future<AppendedEvent<E>?>,
-        event: E,
-        ->
-        currentFuture.compose { appendedEvent: AppendedEvent<E>? ->
-          val causationId = if (eventsAdded.size == 0) metadata.commandId.id else appendedEvent!!.eventId
-          appendEvent(event, version.incrementAndGet(), CausationId(causationId))
-            .onSuccess { eventsAdded.add(it) }
+      val appendedEventList = mutableListOf<AppendedEvent<E>>()
+      return conn.preparedQuery(SQL_APPEND_EVENT)
+        .executeBatch(tuples)
+        .onSuccess { rowSet ->
+          var rs: RowSet<Row>? = rowSet
+          tuples.mapIndexed { index, _ ->
+            val sequence = rs!!.iterator().next().getLong("sequence")
+            val correlationId = tuples[index].getUUID(2)
+            val eventId = tuples[index].getUUID(7)
+            appendedEventList.add(AppendedEvent(events[index], correlationId, sequence, eventId))
+            rs = rs!!.next()
+          }
+        }.map {
+          AppendedEvents(appendedEventList, version)
         }
-      }.map { AppendedEvents(eventsAdded, version.get()) }
     }
     fun projectEvents(
       conn: SqlConnection,
       appendedEvents: AppendedEvents<E>,
-      projector: EventsProjector
+      projector: EventsProjector,
     ): Future<Void> {
-      log.debug("Will project events")
+      log.debug("Will project {} events", appendedEvents.events.size)
       val initialFuture = succeededFuture<Void>()
       return appendedEvents.events.fold(
         initialFuture
@@ -157,12 +155,18 @@ class CommandController<S : State, C : Command, E : Event>(
       }.mapEmpty()
     }
 
+    if (config.commandValidator != null) {
+      val errors = config.commandValidator!!.validate(command)
+      if (errors.isNotEmpty()) {
+        return failedFuture(ValidationException(errors))
+      }
+    }
+
+    log.debug("Command validated")
+
     return pgPool.withTransaction { conn ->
-      validateCommands()
+      lock(conn, metadata.stateId.id.hashCode())
         .compose {
-          log.debug("Command validated")
-          lock(conn, metadata.stateId.id.hashCode())
-        }.compose {
           log.debug("State locked")
           snapshotRepository.get(conn, metadata.stateId.id)
         }.compose { snapshot ->
@@ -182,7 +186,7 @@ class CommandController<S : State, C : Command, E : Event>(
             .map { Triple(snapshot, session, it) }
         }.compose { triple ->
           val (_, _, appendedEvents) = triple
-          log.debug("Events appended")
+          log.debug("Events appended {}", appendedEvents.events.toString())
           if (eventsProjector != null) {
             projectEvents(conn, appendedEvents, eventsProjector)
               .onSuccess {
@@ -200,6 +204,7 @@ class CommandController<S : State, C : Command, E : Event>(
           ).map { triple }
         }.compose { triple ->
           val (_, session, _) = triple
+          notificationsByStateType.add(config.name)
           succeededFuture(session)
         }
     }

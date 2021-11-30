@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.projection.infra
 
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future

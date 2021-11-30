@@ -39,10 +39,10 @@ class CommandsPersistenceIT {
     commandsContext = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
     val snapshotRepo2 = OnDemandSnapshotRepo(customerConfig.eventHandler, jsonSerDer)
 //    val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
-    commandController = CommandController(commandsContext.pgPool, jsonSerDer, customerConfig, snapshotRepo2)
+    commandController = CommandController(vertx, commandsContext.pgPool, jsonSerDer, customerConfig, snapshotRepo2,)
     repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
     testRepo = TestRepository(commandsContext.pgPool)
-    cleanDatabase(commandsContext.sqlClient)
+    cleanDatabase(commandsContext.pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }

@@ -9,19 +9,30 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
-import io.vertx.core.DeploymentOptions
+import io.github.crabzilla.projection.infra.TestRepository
+import io.github.crabzilla.projection.infra.cleanDatabase
+import io.github.crabzilla.projection.infra.config
+import io.github.crabzilla.projection.infra.connectOptions
+import io.github.crabzilla.projection.infra.poolOptions
 import io.vertx.core.Vertx
-import io.vertx.core.json.JsonArray
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.slf4j.LoggerFactory
 import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
-class AsyncProjection2IT {
+class AsyncProjectionIT {
+
+  // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
+  // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
+
+  companion object {
+    private val log = LoggerFactory.getLogger(AsyncProjectionIT::class.java)
+  }
 
   private val id: UUID = UUID.randomUUID()
   lateinit var jsonSerDer: JsonSerDer
@@ -33,16 +44,14 @@ class AsyncProjection2IT {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     commandsContext = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
     testRepo = TestRepository(commandsContext.pgPool)
-    val newConfig = config
-    newConfig.put("connectOptionsName", "ex1_crabzilla-config")
-    newConfig.put("projectionName", "customers")
-    newConfig.put("jsonFactoryClassName", "io.github.crabzilla.example1.Example1JsonContextFactory")
-    newConfig.put("eventsProjectorFactoryClassName", "io.github.crabzilla.example1.customer.CustomersProjectorFactory")
-    newConfig.put("stateTypes", JsonArray(listOf("Customer")))
-    newConfig.put("eventTypes", JsonArray(listOf("CustomerRegistered")))
-    val options = DeploymentOptions().setConfig(newConfig)
-    cleanDatabase(commandsContext.sqlClient)
-      .compose { vertx.deployVerticle(EventsProjectorVerticle(), options) }
+
+    cleanDatabase(commandsContext.pgPool)
+      .compose {
+        deployProjector(
+          log, vertx, config,
+          "service:crabzilla.example1.customer.CustomersEventsProjector"
+        )
+      }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -60,12 +69,16 @@ class AsyncProjection2IT {
   @Test
   @DisplayName("after a command the events will be projected")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
+    val target = "crabzilla.example1.customer.CustomersEventsProjector"
     val controller = commandsContext.create(customerConfig, SnapshotType.ON_DEMAND)
     controller.handle(CommandMetadata(StateId(id)), RegisterCustomer(id, "cust#$id"))
       .compose {
-        vertx.eventBus().request<Void>("crabzilla.projector.customers", null)
+        vertx.eventBus()
+          .request<String>("crabzilla.projectors.$target.ping", "me")
       }.compose {
-        commandsContext.sqlClient.preparedQuery("select * from customer_summary")
+        vertx.eventBus().request<Void>("crabzilla.projectors.$target", null)
+      }.compose {
+        commandsContext.pgPool.preparedQuery("select * from customer_summary")
           .execute()
           .map { rs ->
             rs.size() == 1

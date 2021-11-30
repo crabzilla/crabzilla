@@ -5,7 +5,7 @@ import io.github.crabzilla.projection.internal.OptionsFactory
 import io.github.crabzilla.projection.internal.OptionsFactory.createPoolOptions
 import io.vertx.core.AbstractVerticle
 import io.vertx.pgclient.PgPool
-import io.vertx.sqlclient.SqlClient
+import io.vertx.pgclient.pubsub.PgSubscriber
 
 open class PostgresAbstractVerticle : AbstractVerticle() {
 
@@ -21,10 +21,9 @@ open class PostgresAbstractVerticle : AbstractVerticle() {
     PgPool.pool(vertx, connectOptions, poolOptions)
   }
 
-  val sqlClient: SqlClient by lazy {
+  val subscriber: PgSubscriber by lazy {
     val configId = config().getString("connectOptionsName")
     val connectOptions = OptionsFactory.createPgConnectOptions(config().getJsonObject(configId))
-    val poolOptions = createPoolOptions(config().getJsonObject(configId))
-    PgPool.client(vertx, connectOptions, poolOptions)
+    PgSubscriber.subscriber(vertx, connectOptions)
   }
 }

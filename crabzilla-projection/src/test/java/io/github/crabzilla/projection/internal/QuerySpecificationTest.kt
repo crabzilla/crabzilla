@@ -45,4 +45,17 @@ internal class QuerySpecificationTest {
     )
     assertEquals(q, expected)
   }
+
+  @Test
+  fun fold() {
+    val list = listOf(1, 2, 3, 4, 5)
+    val list2 = mutableListOf<Int>()
+    val foled = list.fold(0) { a, b ->
+      println("$a $b")
+      list2.add(b)
+      b
+    }
+    println("** folded $foled")
+    println("** list2 $list2")
+  }
 }

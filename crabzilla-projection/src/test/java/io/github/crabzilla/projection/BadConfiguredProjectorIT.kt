@@ -4,6 +4,12 @@ import io.github.crabzilla.command.CommandsContext
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
+import io.github.crabzilla.projection.infra.TestRepository
+import io.github.crabzilla.projection.infra.cleanDatabase
+import io.github.crabzilla.projection.infra.config
+import io.github.crabzilla.projection.infra.connectOptions
+import io.github.crabzilla.projection.infra.deployVerticles
+import io.github.crabzilla.projection.infra.poolOptions
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -29,7 +35,7 @@ class BadConfiguredProjectorIT {
       "service:crabzilla.example1.customer.BadConfiguredEventsProjector",
     )
     val options = DeploymentOptions().setConfig(config)
-    cleanDatabase(commandsContext.sqlClient)
+    cleanDatabase(commandsContext.pgPool)
       .compose { vertx.deployVerticles(verticles, options) }
       .onFailure { tc.completeNow() }
       .onSuccess { tc.failNow("Should fail") }

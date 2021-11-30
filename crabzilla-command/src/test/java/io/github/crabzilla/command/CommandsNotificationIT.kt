@@ -23,7 +23,7 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class CommandsValidationIT {
+class CommandsNotificationIT {
 
   private lateinit var jsonSerDer: JsonSerDer
   private lateinit var commandsContext: CommandsContext
@@ -36,7 +36,8 @@ class CommandsValidationIT {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     commandsContext = CommandsContext.create(vertx, jsonSerDer, config)
     val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
-    commandController = CommandController(vertx, commandsContext.pgPool, jsonSerDer, customerConfig, snapshotRepo2,)
+    commandController = CommandController(vertx = vertx, pgPool = commandsContext.pgPool,
+      jsonSerDer = jsonSerDer, config = customerConfig, snapshotRepository = snapshotRepo2, notificationsInterval =  5)
     repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
     testRepo = TestRepository(commandsContext.pgPool)
     cleanDatabase(commandsContext.pgPool)
@@ -44,24 +45,9 @@ class CommandsValidationIT {
       .onSuccess { tc.completeNow() }
   }
 
-  @Test
-  @DisplayName("it can validate command")
-  fun s1(tc: VertxTestContext) {
-    val id = UUID.randomUUID()
-    val cmd = CustomerCommand.RegisterCustomer(id, "bad customer")
-    val metadata = CommandMetadata(StateId(id))
-    commandController.handle(metadata, cmd)
-      .onFailure {
-        it shouldHaveMessage "[Bad customer!]"
-        tc.completeNow()
-      }
-      .onSuccess {
-        tc.failNow("It should fail")
-      }
-  }
 
   @Test
-  @DisplayName("it can validate command within command handler")
+  @DisplayName("it should notify each 5 ms")
   fun s2(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "good customer")

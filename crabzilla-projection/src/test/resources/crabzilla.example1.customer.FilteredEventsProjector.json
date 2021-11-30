@@ -5,11 +5,13 @@
       "connectOptionsName": "ex1_crabzilla-config",
       "jsonFactoryClassName": "io.github.crabzilla.example1.Example1JsonContextFactory",
       "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
-      "initialInterval" : 1,
-      "interval" : 1000,
-      "metricsInterval" : 1000,
-      "maxInterval" : 10000,
-      "maxNumberOfRows": 1
+      "initialInterval" : 2,
+      "interval" : 10,
+      "metricsInterval" : 10,
+      "maxInterval" : 10,
+      "maxNumberOfRows": 1,
+      "stateTypes": ["Customer"],
+      "eventTypes": ["CustomerRegistered", "CustomerActivated"]
     }
   }
 }

@@ -3,13 +3,12 @@
   "options": {
     "config" : {
       "connectOptionsName": "ex1_crabzilla-config",
-      "projectionName" : "customers",
       "jsonFactoryClassName": "io.github.crabzilla.example1.Example1JsonContextFactory",
       "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
-      "initialInterval" : 5,
-      "interval" : 5,
-      "metricsInterval" : 5,
-      "maxInterval" : 5,
+      "initialInterval" : 2,
+      "interval" : 1000,
+      "metricsInterval" : 1000,
+      "maxInterval" : 10000,
       "maxNumberOfRows": 1
     },
     "worker": false,

@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>v0.3.6</version>
+    <version>v0.3.7</version>
   </parent>
 
   <artifactId>crabzilla-json</artifactId>

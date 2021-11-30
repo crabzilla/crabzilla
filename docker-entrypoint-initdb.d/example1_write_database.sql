@@ -64,7 +64,7 @@ CREATE TABLE events (
 
 CREATE INDEX sequence_idx ON events using brin (sequence);
 CREATE INDEX state_name ON events (state_type);
-CREATE INDEX event_type ON events (event_type);
+--CREATE INDEX event_type ON events (event_type);
 
 -- 3 partitions
 
@@ -85,4 +85,5 @@ CREATE TABLE customer_summary (
 );
 
 INSERT INTO publications (name, sequence) values ('customers', 0);
-INSERT INTO projections (name, sequence) values ('customers', 0);
+INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.CustomersEventsProjector', 0);
+INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.FilteredEventsProjector', 0);

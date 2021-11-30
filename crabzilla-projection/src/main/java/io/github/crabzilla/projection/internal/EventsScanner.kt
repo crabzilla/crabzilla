@@ -27,6 +27,9 @@ internal class EventsScanner(
     private const val selectCurrentOffset = """
       select sequence from projections where name = $1
     """
+    private const val selectGlobalOffset = """
+      select max(sequence) as sequence from events
+    """
   }
 
   init {
@@ -43,6 +46,15 @@ internal class EventsScanner(
         } else {
           succeededFuture(it.result().first().getLong("sequence"))
         }
+      }
+  }
+
+  fun getGlobalOffset(): Future<Long> {
+    return sqlClient
+      .preparedQuery(selectGlobalOffset)
+      .execute()
+      .map {
+        if (it.rowCount() == 1) it.first().getLong("sequence") ?: 0L else 0L
       }
   }
 

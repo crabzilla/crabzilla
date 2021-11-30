@@ -18,9 +18,8 @@ import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.PoolOptions
-import io.vertx.sqlclient.SqlClient
 
-class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: PgPool, val sqlClient: SqlClient) {
+class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: PgPool) {
 
   companion object {
     fun create(
@@ -30,8 +29,7 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
       poolOptions: PoolOptions
     ): CommandsContext {
       val thePgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
-      val theSqlClient: SqlClient = PgPool.client(vertx, connectOptions, poolOptions)
-      return CommandsContext(vertx, jsonSerDer, thePgPool, theSqlClient)
+      return CommandsContext(vertx, jsonSerDer, thePgPool)
     }
     fun create(
       vertx: Vertx,
@@ -41,8 +39,7 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
       val connectOptions = createPgConnectOptions(config)
       val poolOptions = createPoolOptions(config)
       val thePgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
-      val theSqlClient: SqlClient = PgPool.client(vertx, connectOptions, poolOptions)
-      return CommandsContext(vertx, jsonSerDer, thePgPool, theSqlClient)
+      return CommandsContext(vertx, jsonSerDer, thePgPool)
     }
   }
 
@@ -53,7 +50,7 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
     config: CommandControllerConfig<S, C, E>,
     snapshotType: SnapshotType
   ): CommandController<S, C, E> {
-    return CommandController(pgPool, jsonSerDer, config, snapshotRepo(snapshotType, config))
+    return CommandController(vertx, pgPool, jsonSerDer, config, snapshotRepo(snapshotType, config),)
   }
 
   /**
@@ -64,18 +61,11 @@ class CommandsContext(val vertx: Vertx, val jsonSerDer: JsonSerDer, val pgPool: 
     snapshotType: SnapshotType,
     eventsProjector: EventsProjector?
   ): CommandController<S, C, E> {
-    return CommandController(
-      pgPool,
-      jsonSerDer,
-      config,
-      snapshotRepo(snapshotType, config),
-      eventsProjector
-    )
+    return CommandController(vertx, pgPool, jsonSerDer, config, snapshotRepo(snapshotType, config), eventsProjector)
   }
 
   fun close(): Future<Void> {
     return pgPool.close()
-      .compose { sqlClient.close() }
   }
 
   private fun <S : State, C : Command, E : Event> snapshotRepo(
