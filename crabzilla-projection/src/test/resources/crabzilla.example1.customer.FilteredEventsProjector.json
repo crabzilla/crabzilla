@@ -11,7 +11,8 @@
       "maxInterval" : 10,
       "maxNumberOfRows": 1,
       "stateTypes": ["Customer"],
-      "eventTypes": ["CustomerRegistered", "CustomerActivated"]
+      "eventTypes": ["CustomerRegistered", "CustomerActivated"],
+      "viewName": "customer_summary"
     }
   }
 }

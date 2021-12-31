@@ -11,9 +11,6 @@ import io.github.crabzilla.example1.payment.FuturePaymentCommandHandler
 import io.github.crabzilla.example1.payment.Payment
 import io.github.crabzilla.example1.payment.PaymentCommand
 import io.github.crabzilla.example1.payment.PaymentEvent
-import io.github.crabzilla.example1.payment.PaymentEvent.PaymentApproved
-import io.github.crabzilla.example1.payment.PaymentEvent.PaymentRequested
-import io.github.crabzilla.example1.payment.Status
 import io.github.crabzilla.example1.payment.paymentEventHandler
 import io.github.crabzilla.json.KotlinJsonSerDer
 import io.kotest.matchers.shouldBe
@@ -66,14 +63,8 @@ class FutureCommandHandlerIT {
       .onFailure { err ->
         tc.failNow(err)
       }
-      .onSuccess { session ->
-        session.currentState shouldBe
-          Payment(stateId.id, "000", 10.00, Status.Approved, "ok")
-        session.appliedEvents() shouldBe
-          listOf(
-            PaymentRequested(stateId.id, "000", 10.00),
-            PaymentApproved("ok")
-          )
+      .onSuccess { sideEffects ->
+        sideEffects.appendedEvents.size shouldBe 2
         tc.completeNow()
       }
   }

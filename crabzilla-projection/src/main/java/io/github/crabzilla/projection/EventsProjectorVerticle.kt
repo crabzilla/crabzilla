@@ -17,7 +17,7 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-class EventsProjectorVerticle : PostgresAbstractVerticle() {
+class EventsProjectorVerticle : PgClientAbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(EventsProjectorVerticle::class.java)
@@ -38,7 +38,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
     log.info("Node {} starting with {}", node, jsonConfig.encodePrettily())
     options = Config.create(jsonConfig)
     subscriber.connect().onSuccess {
-      subscriber.channel(EventTopics.CRABZILLA_ROOT_TOPIC.name.lowercase())
+      subscriber.channel(EventTopics.STATE_TOPIC.name.lowercase())
         .handler { stateType ->
           if (!greedy && (options.stateTypes.isEmpty() || options.stateTypes.contains(stateType))) {
             greedy = true
@@ -142,10 +142,13 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
       ) { currentFuture: Future<Long>, eventRecord: EventRecord ->
         currentFuture.compose {
           log.debug("Will project event #{}", eventRecord.eventMetadata.eventSequence)
-          val event = jsonSerDer.eventFromJson(eventRecord.eventAsjJson.toString())
-          eventsProjector.project(conn, event, eventRecord.eventMetadata)
+          eventsProjector.project(conn, eventRecord.eventAsjJson, eventRecord.eventMetadata)
             .transform {
               if (it.failed()) failedFuture(it.cause()) else succeededFuture(eventRecord.eventMetadata.eventSequence)
+            }.eventually {
+              pgPool
+                .preparedQuery("NOTIFY " + EventTopics.VIEW_TOPIC.name.lowercase() + ", '${options.viewName}'")
+                .execute()
             }
         }
       }
@@ -183,6 +186,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
 
   private data class Config(
     val projectionName: String,
+    val viewName: String,
     val initialInterval: Long,
     val interval: Long,
     val maxNumberOfRows: Int,
@@ -194,6 +198,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
     companion object {
       fun create(config: JsonObject): Config {
         val projectionName = config.getString("projectionName")
+        val viewName = config.getString("viewName")
         val initialInterval = config.getLong("initialInterval", 5_000)
         val interval = config.getLong("interval", 250)
         val maxNumberOfRows = config.getInteger("maxNumberOfRows", 250)
@@ -206,6 +211,7 @@ class EventsProjectorVerticle : PostgresAbstractVerticle() {
 
         return Config(
           projectionName = projectionName,
+          viewName = viewName,
           initialInterval = initialInterval,
           interval = interval,
           maxInterval = maxInterval,

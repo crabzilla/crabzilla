@@ -1,10 +1,10 @@
-package io.github.crabzilla.projection.internal
+package io.github.crabzilla.projection
 
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.sqlclient.PoolOptions
 
-object OptionsFactory {
+object PgClientFactory {
 
   fun createPgConnectOptions(sqlConfig: JsonObject): PgConnectOptions {
     val pgConnectOptions = PgConnectOptions()

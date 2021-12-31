@@ -9,9 +9,8 @@
       "interval" : 1000,
       "metricsInterval" : 1000,
       "maxInterval" : 10000,
-      "maxNumberOfRows": 1
-    },
-    "worker": false,
-    "instances": 1
+      "maxNumberOfRows": 1,
+      "viewName": "customer_summary"
+    }
   }
 }

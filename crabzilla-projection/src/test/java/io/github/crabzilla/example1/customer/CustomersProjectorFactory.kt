@@ -5,6 +5,6 @@ import io.github.crabzilla.projection.EventsProjectorProvider
 
 class CustomersProjectorFactory : EventsProjectorProvider {
   override fun create(): EventsProjector {
-    return CustomerEventsProjector
+    return CustomerEventsProjector("customer_summary")
   }
 }

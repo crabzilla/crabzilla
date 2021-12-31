@@ -10,7 +10,6 @@ import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
-import io.kotest.matchers.throwable.shouldHaveMessage
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -36,15 +35,16 @@ class CommandsNotificationIT {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     commandsContext = CommandsContext.create(vertx, jsonSerDer, config)
     val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
-    commandController = CommandController(vertx = vertx, pgPool = commandsContext.pgPool,
-      jsonSerDer = jsonSerDer, config = customerConfig, snapshotRepository = snapshotRepo2, notificationsInterval =  5)
+    commandController = CommandController(
+      vertx = vertx, pgPool = commandsContext.pgPool,
+      jsonSerDer = jsonSerDer, config = customerConfig, snapshotRepository = snapshotRepo2, notificationsInterval = 5
+    )
     repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
     testRepo = TestRepository(commandsContext.pgPool)
     cleanDatabase(commandsContext.pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
-
 
   @Test
   @DisplayName("it should notify each 5 ms")

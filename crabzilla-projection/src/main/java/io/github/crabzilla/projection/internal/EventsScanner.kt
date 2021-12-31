@@ -42,7 +42,7 @@ internal class EventsScanner(
       .execute(Tuple.of(name))
       .transform {
         if (it.failed() || it.result().size() != 1) {
-          failedFuture("Projection $name not found")
+          failedFuture("Projection $name not found on projections table")
         } else {
           succeededFuture(it.result().first().getLong("sequence"))
         }

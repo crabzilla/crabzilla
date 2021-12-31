@@ -7,7 +7,7 @@ import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
-import io.vertx.sqlclient.SqlClient
+import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -37,7 +37,7 @@ internal class PersistentSnapshotRepo<S : State, E : Event>(
   }
 
   override fun get(
-    conn: SqlClient,
+    conn: SqlConnection,
     id: UUID
   ): Future<Snapshot<S>?> {
     fun snapshot(rowSet: RowSet<Row>): Snapshot<S>? {
@@ -58,7 +58,7 @@ internal class PersistentSnapshotRepo<S : State, E : Event>(
   }
 
   override fun upsert(
-    conn: SqlClient,
+    conn: SqlConnection,
     id: UUID,
     originalVersion: Int,
     resultingVersion: Int,

@@ -53,6 +53,14 @@ class CommandsPersistenceIT {
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata(StateId(id))
+
+//    commandController.compose { conn: SqlConnection ->
+//      commandController.handle(conn, metadata, cmd) // with draw command
+//        .compose { result: CommandSideEffect<Customer, CustomerEvent> ->
+//           commandController.handle(conn, metadata, cmd)  // deposit command
+//        }
+//    }
+
     commandController.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {

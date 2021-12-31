@@ -16,5 +16,13 @@ services:
 #      networks:
 #        - command
     restart: unless-stopped
+    networks:
+      - crabzilla
 
-
+networks:
+  crabzilla:
+    ipam:
+      config:
+        - subnet: 172.19.189.1/25
+      driver:
+        default

@@ -70,7 +70,7 @@ class GreedyProjectionIT {
   fun a0(tc: VertxTestContext, vertx: Vertx) {
 
     commandsContext.pgPool
-      .preparedQuery("NOTIFY " + EventTopics.CRABZILLA_ROOT_TOPIC.name.lowercase() + ", 'Customer'")
+      .preparedQuery("NOTIFY " + EventTopics.STATE_TOPIC.name.lowercase() + ", 'Customer'")
       .execute()
       .onFailure { tc.failNow(it) }
       .onSuccess {

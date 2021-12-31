@@ -7,7 +7,7 @@ import io.github.crabzilla.core.json.JsonSerDer
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
-import io.vertx.sqlclient.SqlClient
+import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -29,7 +29,7 @@ internal class OnDemandSnapshotRepo<S : State, E : Event>(
     """
   }
 
-  override fun get(conn: SqlClient, id: UUID): Future<Snapshot<S>?> {
+  override fun get(conn: SqlConnection, id: UUID): Future<Snapshot<S>?> {
     return conn
       .preparedQuery(GET_EVENTS_BY_ID)
       .execute(Tuple.of(id))
@@ -57,7 +57,7 @@ internal class OnDemandSnapshotRepo<S : State, E : Event>(
   }
 
   override fun upsert(
-    conn: SqlClient,
+    conn: SqlConnection,
     id: UUID,
     originalVersion: Int,
     resultingVersion: Int,

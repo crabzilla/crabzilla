@@ -8,18 +8,18 @@ import java.util.UUID
 /**
  * Read model repository
  */
-object CustomersWriteRepository {
+class CustomersWriteRepository(private val viewName: String) {
 
   fun upsert(conn: SqlConnection, id: UUID, name: String, isActive: Boolean): Future<Void> {
     return conn
-      .preparedQuery("INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)")
+      .preparedQuery("INSERT INTO $viewName (id, name, is_active) VALUES ($1, $2, $3)")
       .execute(Tuple.of(id, name, isActive))
       .mapEmpty()
   }
 
   fun updateStatus(conn: SqlConnection, id: UUID, isActive: Boolean): Future<Void> {
     return conn
-      .preparedQuery("UPDATE customer_summary set is_active = $2 where id = $1")
+      .preparedQuery("UPDATE $viewName set is_active = $2 where id = $1")
       .execute(Tuple.of(id, isActive))
       .mapEmpty()
   }

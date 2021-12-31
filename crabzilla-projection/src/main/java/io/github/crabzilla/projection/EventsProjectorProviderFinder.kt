@@ -1,9 +1,13 @@
 package io.github.crabzilla.projection
 
+import org.slf4j.LoggerFactory
 import java.nio.file.ProviderNotFoundException
 import java.util.ServiceLoader
 
 class EventsProjectorProviderFinder {
+  companion object {
+    val log = LoggerFactory.getLogger(EventsProjectorProviderFinder::class.java)
+  }
   // provider by name
   fun create(providerName: String): EventsProjectorProvider {
     val loader: ServiceLoader<EventsProjectorProvider> =
@@ -12,6 +16,7 @@ class EventsProjectorProviderFinder {
     while (it.hasNext()) {
       val provider: EventsProjectorProvider = it.next()
       if (providerName == provider::class.java.name) {
+        log.info("Found provider {}", provider)
         return provider
       }
     }
