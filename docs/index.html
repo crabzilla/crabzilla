@@ -488,7 +488,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>Lock the target <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/State.kt">State</a> instance using <a href="https://www.postgresql.org/docs/13/explicit-locking.html#ADVISORY-LOCKS">Postgres Advisory Locks</a>.</p>
 </li>
 <li>
-<p>Retrieve the target <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-command/src/main/java/io/github/crabzilla/command/internal/Snapshot.kt">Snapshot</a>.</p>
+<p>Retrieve the target <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-vertx-pgclient/src/main/java/io/github/crabzilla/command/internal/Snapshot.kt">Snapshot</a>.</p>
 </li>
 <li>
 <p>Handle your Command and snapshot.state using your implementations of <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandHandler.kt">CommandHandler</a> and <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/EventHandler.kt">EventHandler</a>:</p>
@@ -736,7 +736,7 @@ TestSpecifications.</p>
 <div class="olist arabic">
 <ol class="arabic" start="2">
 <li>
-<p>Add <code>crabzilla-json</code> to serialize/deserialize your Commands, Events
+<p>Add <code>crabzilla-kotlinx-json</code> to serialize/deserialize your Commands, Events
 and States to JSON.</p>
 </li>
 </ol>
@@ -745,7 +745,7 @@ and States to JSON.</p>
 <div class="content">
 <pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
     &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
-    &lt;artifactId&gt;crabzilla-json&lt;/artifactId&gt;
+    &lt;artifactId&gt;crabzilla-kotlinx-json&lt;/artifactId&gt;
     &lt;version&gt;see latest jitpack version&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
@@ -753,7 +753,7 @@ and States to JSON.</p>
 <div class="olist arabic">
 <ol class="arabic" start="3">
 <li>
-<p>Add <code>crabzilla-command</code> to consistently append your events to
+<p>Add <code>crabzilla-vertx-pgclient</code> to consistently append your events to
 Postgres.</p>
 </li>
 </ol>
@@ -762,7 +762,7 @@ Postgres.</p>
 <div class="content">
 <pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
     &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
-    &lt;artifactId&gt;crabzilla-command&lt;/artifactId&gt;
+    &lt;artifactId&gt;crabzilla-vertx-pgclient&lt;/artifactId&gt;
     &lt;version&gt;see latest jitpack version&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>

@@ -22,7 +22,7 @@ To handle your Command in a non-blocking way, Crabzilla will :
 
 . Validate your https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/Command.kt[Command] using your implementation of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandValidator.kt[CommandValidator].
 . Lock the target https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/State.kt[State] instance using https://www.postgresql.org/docs/13/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks].
-. Retrieve the target https://github.com/crabzilla/crabzilla/blob/main/crabzilla-command/src/main/java/io/github/crabzilla/command/internal/Snapshot.kt[Snapshot].
+. Retrieve the target https://github.com/crabzilla/crabzilla/blob/main/crabzilla-vertx-pgclient/src/main/java/io/github/crabzilla/command/internal/Snapshot.kt[Snapshot].
 . Handle your Command and snapshot.state using your implementations of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/CommandHandler.kt[CommandHandler] and https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/java/io/github/crabzilla/core/command/EventHandler.kt[EventHandler]:
 . Persist (within a db transaction)
 .. Optionally persist your command as JSON to commands table.
@@ -130,27 +130,27 @@ TestSpecifications.
 ----
 
 [start=2]
-. Add `crabzilla-json` to serialize/deserialize your Commands, Events
+. Add `crabzilla-kotlinx-json` to serialize/deserialize your Commands, Events
 and States to JSON.
 
 [source,xml]
 ----
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-json</artifactId>
+    <artifactId>crabzilla-kotlinx-json</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ----
 
 [start=3]
-. Add `crabzilla-command` to consistently append your events to
+. Add `crabzilla-vertx-pgclient` to consistently append your events to
 Postgres.
 
 [source,xml]
 ----
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-command</artifactId>
+    <artifactId>crabzilla-vertx-pgclient</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ----

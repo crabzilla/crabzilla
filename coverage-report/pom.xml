@@ -21,17 +21,12 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-json</artifactId>
+      <artifactId>crabzilla-kotlinx-json</artifactId>
     </dependency>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-command</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-projection</artifactId>
+      <artifactId>crabzilla-vertx-pgclient</artifactId>
     </dependency>
 
   </dependencies>
