@@ -3,7 +3,6 @@ package io.github.crabzilla.pgclient.command
 import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
-import io.github.crabzilla.core.metadata.Metadata.StateId
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
@@ -51,7 +50,7 @@ class CorrelationCausationIdsIT {
   fun s1(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata(StateId(id))
+    val metadata = CommandMetadata(id)
     val constructorResult = Customer.create(id, cmd.name)
     val session = CommandSession(constructorResult, customerEventHandler)
     session.execute { it.activate(cmd.reason) }
@@ -77,8 +76,8 @@ class CorrelationCausationIdsIT {
                 val json1 = asJson1.getJsonObject("event_payload").toString()
                 val event1 = jsonSerDer.eventFromJson(json1)
                 assertThat(expectedEvent1).isEqualTo(event1)
-                assertThat(asJson1.getString("causation_id")).isEqualTo(metadata.commandId.id.toString())
-                assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata.commandId.id.toString())
+                assertThat(asJson1.getString("causation_id")).isEqualTo(metadata.commandId.toString())
+                assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata.commandId.toString())
                 // check activate event
                 val asJson = eventsList[1]
 //                println(asJson.encodePrettily())
@@ -91,7 +90,7 @@ class CorrelationCausationIdsIT {
                 assertThat(expectedEvent).isEqualTo(event)
                 val causationId = asJson1.getString("id")
                 assertThat(asJson.getString("causation_id")).isEqualTo(causationId)
-                assertThat(asJson.getString("correlation_id")).isEqualTo(metadata.commandId.id.toString())
+                assertThat(asJson.getString("correlation_id")).isEqualTo(metadata.commandId.toString())
                 tc.completeNow()
               }
           }
@@ -103,13 +102,13 @@ class CorrelationCausationIdsIT {
   fun s11(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")
-    val metadata1 = CommandMetadata(StateId(id))
+    val metadata1 = CommandMetadata(id)
     val constructorResult = Customer.create(id, cmd1.name)
     val session1 = CommandSession(constructorResult, customerEventHandler)
     session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(StateId(id))
+    val metadata2 = CommandMetadata(id)
     val customer2 = Customer(id, cmd1.name, true, cmd2.reason)
     val session2 = CommandSession(customer2, customerEventHandler)
     session2.execute { it.deactivate(cmd2.reason) }
@@ -140,8 +139,8 @@ class CorrelationCausationIdsIT {
                     val json1 = asJson1.getString("event_payload")
                     val event1 = jsonSerDer.eventFromJson(json1)
                     assertThat(expectedEvent1).isEqualTo(event1)
-                    assertThat(asJson1.getString("causation_id")).isEqualTo(metadata1.commandId.id.toString())
-                    assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata1.commandId.id.toString())
+                    assertThat(asJson1.getString("causation_id")).isEqualTo(metadata1.commandId.toString())
+                    assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata1.commandId.toString())
                     // check activate event
                     val asJson2 = eventsList[1]
                     // println(asJson2.encodePrettily())
@@ -154,7 +153,7 @@ class CorrelationCausationIdsIT {
                     assertThat(expectedEvent2).isEqualTo(event2)
                     val causationId2 = asJson1.getString("id")
                     assertThat(asJson2.getString("causation_id")).isEqualTo(causationId2)
-                    assertThat(asJson2.getString("correlation_id")).isEqualTo(metadata1.commandId.id.toString())
+                    assertThat(asJson2.getString("correlation_id")).isEqualTo(metadata1.commandId.toString())
                     // check deactivate events
                     val asJson3 = eventsList[2]
                     // println(asJson3.encodePrettily())
@@ -165,8 +164,8 @@ class CorrelationCausationIdsIT {
                     val json3 = asJson3.getString("event_payload")
                     val event3 = jsonSerDer.eventFromJson(json3)
                     assertThat(expectedEvent3).isEqualTo(event3)
-                    assertThat(asJson3.getString("causation_id")).isEqualTo(metadata2.commandId.id.toString())
-                    assertThat(asJson3.getString("correlation_id")).isEqualTo(metadata2.commandId.id.toString())
+                    assertThat(asJson3.getString("causation_id")).isEqualTo(metadata2.commandId.toString())
+                    assertThat(asJson3.getString("correlation_id")).isEqualTo(metadata2.commandId.toString())
                     tc.completeNow()
                   }
               }

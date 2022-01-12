@@ -1,10 +1,6 @@
 package io.github.crabzilla.pgclient.projection
 
 import io.github.crabzilla.core.metadata.EventMetadata
-import io.github.crabzilla.core.metadata.Metadata.CausationId
-import io.github.crabzilla.core.metadata.Metadata.CorrelationId
-import io.github.crabzilla.core.metadata.Metadata.EventId
-import io.github.crabzilla.core.metadata.Metadata.StateId
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
@@ -22,10 +18,7 @@ class EventRecordTest {
   val event = CustomerRegistered(id, "customer1")
   val eventAsJson = JsonObject(serDer.toJson(event))
   val eventMetadata = EventMetadata(
-    "Customer", StateId(id),
-    EventId(UUID.randomUUID()), CorrelationId(UUID.randomUUID()),
-    CausationId(UUID.randomUUID()),
-    1
+    "Customer", id, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 1
   )
   val eventRecord = EventRecord(eventMetadata, eventAsJson)
   val eventRecordAsJson = eventRecord.toJsonObject()
@@ -35,9 +28,9 @@ class EventRecordTest {
         "aggregateId":"$id",
         "eventAsjJson":{"type":"CustomerRegistered","id":"$id","name":"customer1"},
         "eventSequence":1,
-        "eventId":"${eventRecord.eventMetadata.eventId.id}",
-        "causationId":"${eventRecord.eventMetadata.causationId.id}",
-        "correlationId":"${eventRecord.eventMetadata.correlationId.id}"
+        "eventId":"${eventRecord.eventMetadata.eventId}",
+        "causationId":"${eventRecord.eventMetadata.causationId}",
+        "correlationId":"${eventRecord.eventMetadata.correlationId}"
         }
         """
     )

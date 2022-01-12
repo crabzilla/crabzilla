@@ -2,7 +2,6 @@ package io.github.crabzilla.pgclient.command
 
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
-import io.github.crabzilla.core.metadata.Metadata.StateId
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
@@ -48,7 +47,7 @@ class SyncProjectionIT {
   fun s1(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata(StateId(id))
+    val metadata = CommandMetadata(id)
     controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -71,10 +70,10 @@ class SyncProjectionIT {
   fun s2(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")
-    val metadata1 = CommandMetadata(StateId(id))
+    val metadata1 = CommandMetadata(id)
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(StateId(id))
+    val metadata2 = CommandMetadata(id)
 
     controller.handle(metadata1, cmd1)
       .onFailure { tc.failNow(it) }
@@ -104,7 +103,7 @@ class SyncProjectionIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { snapshot0 ->
         assert(snapshot0 == null)
-        controller.handle(CommandMetadata(StateId(id)), CustomerCommand.RegisterCustomer(id, "cust#$id"))
+        controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
           .onFailure { tc.failNow(it) }
           .onSuccess {
             snapshotTestRepository.get(id)
@@ -112,7 +111,7 @@ class SyncProjectionIT {
               .onSuccess { snapshot1 ->
                 assert(1 == snapshot1!!.version)
                 assert(snapshot1.state == Customer(id, "cust#$id"))
-                controller.handle(CommandMetadata(StateId(id)), CustomerCommand.ActivateCustomer("because yes"))
+                controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("because yes"))
                   .onFailure { tc.failNow(it) }
                   .onSuccess {
                     snapshotTestRepository.get(id)

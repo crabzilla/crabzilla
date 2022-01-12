@@ -2,7 +2,6 @@ package io.github.crabzilla.pgclient.command
 
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
-import io.github.crabzilla.core.metadata.Metadata.StateId
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
@@ -36,7 +35,7 @@ class CommandsValidationIT {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     commandsContext = CommandsContext.create(vertx, jsonSerDer, config)
     val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
-    commandController = CommandController(vertx, commandsContext.pgPool, jsonSerDer, customerConfig, snapshotRepo2,)
+    commandController = CommandController(vertx, commandsContext.pgPool, jsonSerDer, customerConfig, snapshotRepo2)
     repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
     testRepo = TestRepository(commandsContext.pgPool)
     cleanDatabase(commandsContext.pgPool)
@@ -49,7 +48,7 @@ class CommandsValidationIT {
   fun s1(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "bad customer")
-    val metadata = CommandMetadata(StateId(id))
+    val metadata = CommandMetadata(id)
     commandController.handle(metadata, cmd)
       .onFailure {
         it shouldHaveMessage "[Bad customer!]"
@@ -65,11 +64,11 @@ class CommandsValidationIT {
   fun s2(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
-    val metadata = CommandMetadata(StateId(id))
+    val metadata = CommandMetadata(id)
     commandController.handle(metadata, cmd)
       .compose {
         commandController.handle(
-          CommandMetadata(StateId(id)),
+          CommandMetadata(id),
           CustomerCommand.ActivateCustomer("because I want it")
         )
       }

@@ -2,7 +2,6 @@ package io.github.crabzilla.pgclient.command
 
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
-import io.github.crabzilla.core.metadata.Metadata.StateId
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
@@ -52,7 +51,7 @@ class CommandsPersistenceIT {
   fun s1(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata(StateId(id))
+    val metadata = CommandMetadata(id)
 
 //    commandController.compose { conn: SqlConnection ->
 //      commandController.handle(conn, metadata, cmd) // with draw command
@@ -69,7 +68,7 @@ class CommandsPersistenceIT {
           .onSuccess { list ->
             assertThat(list.size).isEqualTo(1)
             val rowAsJson = list.first()
-            assertThat(UUID.fromString(rowAsJson.getString("cmd_id"))).isEqualTo(metadata.commandId.id)
+            assertThat(UUID.fromString(rowAsJson.getString("cmd_id"))).isEqualTo(metadata.commandId)
             val cmdAsJsonFroDb = rowAsJson.getJsonObject("cmd_payload")
             val cmdFromDb = jsonSerDer.commandFromJson(cmdAsJsonFroDb.toString()) as RegisterAndActivateCustomer
             assertThat(cmdFromDb).isEqualTo(cmd)
@@ -83,10 +82,10 @@ class CommandsPersistenceIT {
   fun s2(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
-    val metadata1 = CommandMetadata(StateId(id))
+    val metadata1 = CommandMetadata(id)
 
     val cmd2 = DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(StateId(id))
+    val metadata2 = CommandMetadata(id)
 
     commandController.handle(metadata1, cmd1)
       .onFailure { tc.failNow(it) }
@@ -100,13 +99,13 @@ class CommandsPersistenceIT {
                 assertThat(list.size).isEqualTo(2)
 
                 val rowAsJson1 = list.first()
-                assertThat(UUID.fromString(rowAsJson1.getString("cmd_id"))).isEqualTo(metadata1.commandId.id)
+                assertThat(UUID.fromString(rowAsJson1.getString("cmd_id"))).isEqualTo(metadata1.commandId)
                 val cmdAsJsonFroDb1 = rowAsJson1.getJsonObject("cmd_payload")
                 val cmdFromDb1 = jsonSerDer.commandFromJson(cmdAsJsonFroDb1.toString())
                 assertThat(cmdFromDb1).isEqualTo(cmd1)
 
                 val rowAsJson2 = list.last()
-                assertThat(UUID.fromString(rowAsJson2.getString("cmd_id"))).isEqualTo(metadata2.commandId.id)
+                assertThat(UUID.fromString(rowAsJson2.getString("cmd_id"))).isEqualTo(metadata2.commandId)
                 val cmdAsJsonFroDb2 = rowAsJson2.getJsonObject("cmd_payload")
                 val cmdFromDb2 = jsonSerDer.commandFromJson(cmdAsJsonFroDb2.toString())
                 assertThat(cmdFromDb2).isEqualTo(cmd2)

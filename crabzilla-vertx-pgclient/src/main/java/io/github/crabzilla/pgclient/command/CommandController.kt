@@ -12,9 +12,6 @@ import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.core.metadata.EventMetadata
-import io.github.crabzilla.core.metadata.Metadata.CausationId
-import io.github.crabzilla.core.metadata.Metadata.CorrelationId
-import io.github.crabzilla.core.metadata.Metadata.EventId
 import io.github.crabzilla.pgclient.EventsProjector
 import io.github.crabzilla.pgclient.command.internal.CommandHandlerWrapper.wrap
 import io.github.crabzilla.pgclient.command.internal.SnapshotRepository
@@ -84,10 +81,10 @@ class CommandController<S : State, C : Command, E : Event>(
   fun handle(conn: SqlConnection, metadata: CommandMetadata, command: C): Future<CommandSideEffect> {
     return validate(command).compose {
       log.debug("Command validated")
-      lock(conn, metadata.stateId.id.hashCode(), metadata)
+      lock(conn, metadata.stateId.hashCode(), metadata)
         .compose {
           log.debug("State locked")
-          snapshotRepository.get(conn, metadata.stateId.id)
+          snapshotRepository.get(conn, metadata.stateId)
         }.compose { snapshot ->
           log.debug("Got snapshot {}", snapshot)
           commandHandler.invoke(command, snapshot?.state)
@@ -118,7 +115,7 @@ class CommandController<S : State, C : Command, E : Event>(
           val (snapshot, session, commandSideEffect) = triple
           val originalVersion = snapshot?.version ?: 0
           snapshotRepository.upsert(
-            conn, metadata.stateId.id, originalVersion,
+            conn, metadata.stateId, originalVersion,
             commandSideEffect.resultingVersion, session.currentState
           ).map {
             CommandSideEffect(commandSideEffect.appendedEvents, commandSideEffect.resultingVersion)
@@ -148,7 +145,7 @@ class CommandController<S : State, C : Command, E : Event>(
         if (pgRow.first().getBoolean("locked")) {
           succeededFuture()
         } else {
-          failedFuture(LockingException("Can't be locked ${metadata.stateId.id}"))
+          failedFuture(LockingException("Can't be locked ${metadata.stateId}"))
         }
       }
   }
@@ -157,7 +154,7 @@ class CommandController<S : State, C : Command, E : Event>(
     val cmdAsJson = jsonSerDer.toJson(command)
     log.debug("Will append command {} as {}", command, cmdAsJson)
     val params = Tuple.of(
-      metadata.commandId.id,
+      metadata.commandId,
       JsonObject(cmdAsJson)
     )
     return conn.preparedQuery(SQL_APPEND_CMD)
@@ -174,7 +171,7 @@ class CommandController<S : State, C : Command, E : Event>(
     var version = initialVersion
     val eventIds = events.map { UuidCreator.getTimeOrdered() }
     val tuples: List<Tuple> = events.mapIndexed { index, event ->
-      val causationId: UUID = if (index == 0) metadata.commandId.id else eventIds[(index - 1)]
+      val causationId: UUID = if (index == 0) metadata.commandId else eventIds[(index - 1)]
       val eventAsJson = jsonSerDer.toJson(event)
       val eventId = eventIds[index]
       val jsonObject = JsonObject(eventAsJson)
@@ -182,9 +179,9 @@ class CommandController<S : State, C : Command, E : Event>(
       Tuple.of(
         type,
         causationId,
-        metadata.correlationId.id,
+        metadata.correlationId,
         config.name,
-        metadata.stateId.id,
+        metadata.stateId,
         jsonObject,
         ++version,
         eventId
@@ -200,8 +197,8 @@ class CommandController<S : State, C : Command, E : Event>(
           val correlationId = tuples[index].getUUID(2)
           val eventId = tuples[index].getUUID(7)
           val eventMetadata = EventMetadata(
-            config.name, stateId = metadata.stateId, EventId(eventId),
-            CorrelationId(correlationId), CausationId(eventId), sequence
+            config.name, stateId = metadata.stateId, eventId,
+            correlationId, eventId, sequence
           )
           appendedEventList.add(Pair(tuples[index].getJsonObject(5), eventMetadata))
           rs = rs!!.next()
@@ -227,7 +224,7 @@ class CommandController<S : State, C : Command, E : Event>(
           config.name,
           metadata.stateId,
           appendedEvent.second.eventId,
-          CorrelationId(metadata.commandId.id),
+          metadata.commandId,
           appendedEvent.second.causationId,
           appendedEvent.second.eventSequence
         )

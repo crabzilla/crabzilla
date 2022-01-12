@@ -1,10 +1,6 @@
 package io.github.crabzilla.pgclient.projection
 
 import io.github.crabzilla.core.metadata.EventMetadata
-import io.github.crabzilla.core.metadata.Metadata.CausationId
-import io.github.crabzilla.core.metadata.Metadata.CorrelationId
-import io.github.crabzilla.core.metadata.Metadata.EventId
-import io.github.crabzilla.core.metadata.Metadata.StateId
 import io.vertx.core.json.JsonObject
 import java.util.UUID
 
@@ -16,13 +12,16 @@ data class EventRecord(
   val eventAsjJson: JsonObject,
 ) {
   companion object {
+    private fun JsonObject.getUUID(name: String): UUID {
+      return UUID.fromString(this.getString(name))
+    }
     fun fromJsonObject(asJsonObject: JsonObject): EventRecord {
       val eventMetadata = EventMetadata(
         asJsonObject.getString("aggregateName"),
-        StateId(UUID.fromString(asJsonObject.getString("aggregateId"))),
-        EventId(UUID.fromString(asJsonObject.getString("eventId"))),
-        CorrelationId(UUID.fromString(asJsonObject.getString("correlationId"))),
-        CausationId(UUID.fromString(asJsonObject.getString("causationId"))),
+        asJsonObject.getUUID("aggregateId"),
+        asJsonObject.getUUID("eventId"),
+        asJsonObject.getUUID("correlationId"),
+        asJsonObject.getUUID("causationId"),
         asJsonObject.getLong("eventSequence")
       )
       return EventRecord(eventMetadata, asJsonObject.getJsonObject("eventAsjJson"))
@@ -32,10 +31,10 @@ data class EventRecord(
     return JsonObject()
       .put("eventAsjJson", eventAsjJson)
       .put("aggregateName", eventMetadata.aggregateName)
-      .put("aggregateId", eventMetadata.stateId.id.toString())
+      .put("aggregateId", eventMetadata.stateId.toString())
       .put("eventSequence", eventMetadata.eventSequence)
-      .put("eventId", eventMetadata.eventId.id.toString())
-      .put("causationId", eventMetadata.causationId.id.toString())
-      .put("correlationId", eventMetadata.correlationId.id.toString())
+      .put("eventId", eventMetadata.eventId.toString())
+      .put("causationId", eventMetadata.causationId.toString())
+      .put("correlationId", eventMetadata.correlationId.toString())
   }
 }

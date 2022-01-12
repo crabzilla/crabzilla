@@ -9,7 +9,7 @@ import io.vertx.sqlclient.SqlConnection
 class CustomersEventsProjector(override val viewName: String) : EventsProjector {
 
   override fun project(conn: SqlConnection, eventAsJson: JsonObject, eventMetadata: EventMetadata): Future<Void> {
-    val id = eventMetadata.stateId.id
+    val id = eventMetadata.stateId
     return when (eventAsJson.getString("type")) {
       "CustomerRegistered" ->
         CustomersWriteRepository.upsert(conn, id, eventAsJson.getString("name"), false)

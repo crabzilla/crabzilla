@@ -43,9 +43,8 @@ class StandByProjectionIT {
 
     cleanDatabase(commandsContext.pgPool)
       .compose {
-        deployProjector(
-          log, vertx, config,
-          "service:crabzilla.example1.customer.CustomersEventsProjector"
+        vertx.deployProjector(
+          config, "service:crabzilla.example1.customer.CustomersEventsProjector"
         )
       }
       .onFailure { tc.failNow(it) }
@@ -65,9 +64,8 @@ class StandByProjectionIT {
   @Test
   @DisplayName("if it's already deployed, it will silently keep going")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    deployProjector(
-      log, vertx, config,
-      "service:crabzilla.example1.customer.CustomersEventsProjector"
+    vertx.deployProjector(
+      config, "service:crabzilla.example1.customer.CustomersEventsProjector"
     )
       .onFailure {
         tc.failNow(it)

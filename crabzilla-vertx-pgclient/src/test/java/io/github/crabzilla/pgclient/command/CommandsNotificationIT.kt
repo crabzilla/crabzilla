@@ -2,7 +2,6 @@ package io.github.crabzilla.pgclient.command
 
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
-import io.github.crabzilla.core.metadata.Metadata.StateId
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
@@ -51,11 +50,11 @@ class CommandsNotificationIT {
   fun s2(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
-    val metadata = CommandMetadata(StateId(id))
+    val metadata = CommandMetadata(id)
     commandController.handle(metadata, cmd)
       .compose {
         commandController.handle(
-          CommandMetadata(StateId(id)),
+          CommandMetadata(id),
           CustomerCommand.ActivateCustomer("because I want it")
         )
       }

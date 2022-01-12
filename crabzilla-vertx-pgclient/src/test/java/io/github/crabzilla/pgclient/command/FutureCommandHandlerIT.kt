@@ -3,7 +3,6 @@ package io.github.crabzilla.pgclient.command
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
-import io.github.crabzilla.core.metadata.Metadata.StateId
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.example1.payment.FuturePaymentCommandHandler
@@ -56,8 +55,8 @@ class FutureCommandHandlerIT {
   @Test
   @DisplayName("it can hadle an async command handler")
   fun s1(tc: VertxTestContext) {
-    val stateId = StateId(UUID.randomUUID())
-    val cmd = PaymentCommand.Pay(stateId.id, "000", 10.00)
+    val stateId = UUID.randomUUID()
+    val cmd = PaymentCommand.Pay(stateId, "000", 10.00)
     val metadata = CommandMetadata(stateId)
     commandController.handle(metadata, cmd)
       .onFailure { err ->

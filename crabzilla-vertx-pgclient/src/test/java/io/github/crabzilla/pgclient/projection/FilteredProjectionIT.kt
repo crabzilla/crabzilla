@@ -2,7 +2,6 @@ package io.github.crabzilla.pgclient.projection
 
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
-import io.github.crabzilla.core.metadata.Metadata.StateId
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
@@ -48,10 +47,7 @@ class FilteredProjectionIT {
 
     cleanDatabase(commandsContext.pgPool)
       .compose {
-        deployProjector(
-          log, vertx, config,
-          "service:crabzilla.example1.customer.FilteredEventsProjector"
-        )
+        vertx.deployProjector(config, "service:crabzilla.example1.customer.FilteredEventsProjector")
       }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
@@ -72,7 +68,7 @@ class FilteredProjectionIT {
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val target = "crabzilla.example1.customer.FilteredEventsProjector"
     val controller = commandsContext.create(customerConfig, SnapshotType.ON_DEMAND)
-    controller.handle(CommandMetadata(StateId(id)), RegisterCustomer(id, "cust#$id"))
+    controller.handle(CommandMetadata(id), RegisterCustomer(id, "cust#$id"))
       .compose {
         vertx.eventBus()
           .request<String>("crabzilla.projectors.$target.ping", "me")

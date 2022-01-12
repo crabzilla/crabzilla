@@ -1,10 +1,6 @@
 package io.github.crabzilla.pgclient.projection.internal
 
 import io.github.crabzilla.core.metadata.EventMetadata
-import io.github.crabzilla.core.metadata.Metadata.CausationId
-import io.github.crabzilla.core.metadata.Metadata.CorrelationId
-import io.github.crabzilla.core.metadata.Metadata.EventId
-import io.github.crabzilla.core.metadata.Metadata.StateId
 import io.github.crabzilla.pgclient.projection.EventRecord
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
@@ -66,10 +62,10 @@ internal class EventsScanner(
         rowSet.iterator().asSequence().map { row: Row ->
           val eventMetadata = EventMetadata(
             row.getString("state_type"),
-            StateId(row.getUUID("state_id")),
-            EventId(row.getUUID("id")),
-            CorrelationId(row.getUUID("correlation_id")),
-            CausationId(row.getUUID("causation_id")),
+            row.getUUID("state_id"),
+            row.getUUID("id"),
+            row.getUUID("correlation_id"),
+            row.getUUID("causation_id"),
             row.getLong("sequence")
           )
           val jsonObject = JsonObject(row.getValue("event_payload").toString())
