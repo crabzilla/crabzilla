@@ -18,3 +18,7 @@
 -- https://jameseastham.co.uk/software-development/event-modeling-by-example
 
 https://www.youtube.com/watch?v=o51kMltuSuQ
+
+* TODO
+https://www.logicbig.com/tutorials/core-java-tutorial/modules/service-provider-method.html
+

@@ -6,6 +6,7 @@ import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.command.CommandException.ValidationException
 import io.github.crabzilla.core.command.CommandHandler
+import io.github.crabzilla.core.command.CommandSession
 
 /**
  * A helper for basic specifications
@@ -13,7 +14,7 @@ import io.github.crabzilla.core.command.CommandHandler
 class TestSpecification<S : State, C : Command, E : Event>(val config: CommandControllerConfig<S, C, E>) {
 
   private var state: S? = null
-  private val events: MutableList<E> = mutableListOf()
+  private val events: MutableList<E> = mutableListOf() // TODO replace with AppendedEvents (to get EventMetadata)
 
   fun state(): S? = state
   fun events(): List<E> = events.toList()
@@ -25,8 +26,8 @@ class TestSpecification<S : State, C : Command, E : Event>(val config: CommandCo
         throw ValidationException(validationErrors)
       }
     }
-    val commandHandler = config.commandHandlerFactory.invoke() as CommandHandler<S, C, E>
-    val session = commandHandler.handleCommand(command, state)
+    val commandHandler: CommandHandler<S, C, E> = config.commandHandlerFactory.invoke() as CommandHandler<S, C, E>
+    val session: CommandSession<S, E> = commandHandler.handleCommand(command, state)
     state = session.currentState
     events.addAll(session.appliedEvents())
     return this
