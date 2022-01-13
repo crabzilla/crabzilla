@@ -34,8 +34,7 @@ class CommandController<S : State, C : Command, E : Event>(
   private val jsonSerDer: JsonSerDer,
   private val config: CommandControllerConfig<S, C, E>,
   private val snapshotRepository: SnapshotRepository<S, E>,
-  private val eventsProjector: EventsProjector? = null,
-  notificationsInterval: Long = 3000,
+  private val eventsProjector: EventsProjector? = null
 ) {
 
   companion object {
@@ -50,12 +49,13 @@ class CommandController<S : State, C : Command, E : Event>(
       """ INSERT 
             INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
+    private const val DEFAULT_NOTIFICATION_INTERVAL = 3000L
   }
 
   private val notificationsByStateType = HashSet<String>()
 
   init {
-    vertx.setPeriodic(notificationsInterval) {
+    vertx.setPeriodic(DEFAULT_NOTIFICATION_INTERVAL) {
       notificationsByStateType.forEach { stateType ->
         pgPool
           .preparedQuery("NOTIFY " + EventTopics.STATE_TOPIC.name.lowercase() + ", '$stateType'")
@@ -109,6 +109,7 @@ class CommandController<S : State, C : Command, E : Event>(
                 log.debug("Events projected")
               }.map { triple }
           } else {
+            log.debug("EventsProjector is null, skipping projecting events")
             succeededFuture(triple)
           }
         }.compose { triple ->

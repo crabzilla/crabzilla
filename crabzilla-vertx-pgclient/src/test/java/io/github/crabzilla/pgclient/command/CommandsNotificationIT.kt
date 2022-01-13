@@ -36,7 +36,7 @@ class CommandsNotificationIT {
     val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
     commandController = CommandController(
       vertx = vertx, pgPool = commandsContext.pgPool,
-      jsonSerDer = jsonSerDer, config = customerConfig, snapshotRepository = snapshotRepo2, notificationsInterval = 5
+      jsonSerDer = jsonSerDer, config = customerConfig, snapshotRepository = snapshotRepo2
     )
     repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
     testRepo = TestRepository(commandsContext.pgPool)
