@@ -1,0 +1,114 @@
+:sourcedir: src/main/java
+:source-highlighter: highlightjs
+:highlightjsdir: highlight
+:highlightjs-theme: rainbow
+:revnumber: {project-version}
+:example-caption!:
+ifndef::imagesdir[:imagesdir: images]
+ifndef::sourcedir[:sourcedir: ../../main/java]
+:toclevels: 4
+
+= Accounts
+
+image:https://img.shields.io/badge/crabzilla.v0.4.0-orange.svg[link="https://github.com/crabzilla/crabzilla"]
+
+This is an example of an application using https://vertx.io/[Vert.x] and https://github.com/crabzilla/crabzilla[Crabzilla]
+
+== Read model tables
+
+* accounts_view
+* transfers_view
+
+== Requirements
+
+* Java 11
+* Maven
+* Docker compose
+
+== Unit and integration testing
+
+1 - Start Postgres:
+```
+docker-compose up
+```
+
+2 - Run both unit and integration tests:
+```
+mvn clean verify
+```
+
+== Running
+
+1 - Start Postgres:
+```
+docker-compose up
+```
+
+2 - Run the `accounts-api` service:
+```
+cd accounts-api
+mvn clean compile exec:java
+```
+
+3 - Run the `accounts-integration` service:
+```
+cd accounts-integration
+mvn clean compile exec:java
+```
+
+4 - Optionally, you can start as many  `accounts-integration` service instances you want for High Availability: just start it again in another terminal. Any projector or processor verticle is a singleton instance within the cluster. Just open another terminal and:
+```
+cd accounts-integration
+mvn exec:java
+```
+
+=== Transfer test
+
+Open an account 1 with 110.00 and 2 with 0.00 then make a 100.00 transfer from account 1 to 2:
+
+```
+docker run --network host -i loadimpact/k6 run - <./k6/transfer.js
+```
+
+
+=== Stress test
+
+Opening many accounts with 1000 virtual users during 60 seconds:
+
+```
+docker run --network host -i loadimpact/k6 run --vus 1000 --duration 60s - <./k6/open-many-accounts.js
+```
+
+And you will see something like:
+
+```
+         /\      |‾‾| /‾‾/   /‾‾/
+     /\  /  \     |  |/  /   /  /
+    /  \/    \    |     (   /   ‾‾\
+   /          \   |  |\  \ |  (‾)  |
+  / __________ \  |__| \__\ \_____/ .io
+
+  execution: local
+     script: -
+     output: -
+
+  scenarios: (100.00%) 1 scenario, 1000 max VUs, 1m30s max duration (incl. graceful stop):
+           * default: 1000 looping VUs for 1m0s (gracefulStop: 30s)
+     data_received..................: 82 MB  1.4 MB/s
+     data_sent......................: 43 MB  711 kB/s
+     http_req_blocked...............: avg=663.44µs min=993ns    med=2.46µs   max=279.93ms p(90)=3.99µs   p(95)=5.07µs
+     http_req_connecting............: avg=650.65µs min=0s       med=0s       max=279.88ms p(90)=0s       p(95)=0s
+     http_req_duration..............: avg=379.85ms min=284.4ms  med=346.22ms max=1.87s    p(90)=437.34ms p(95)=509.92ms
+       { expected_response:true }...: avg=379.85ms min=284.4ms  med=346.22ms max=1.87s    p(90)=437.34ms p(95)=509.92ms
+     http_req_failed................: 0.00%  ✓ 0           ✗ 157518
+     http_req_receiving.............: avg=54.7µs   min=11.63µs  med=29.34µs  max=32.65ms  p(90)=61.89µs  p(95)=100.09µs
+     http_req_sending...............: avg=60.78µs  min=6.77µs   med=14.75µs  max=100.11ms p(90)=24.11µs  p(95)=32.08µs
+     http_req_tls_handshaking.......: avg=0s       min=0s       med=0s       max=0s       p(90)=0s       p(95)=0s
+     http_req_waiting...............: avg=379.73ms min=284.34ms med=346.16ms max=1.87s    p(90)=437.24ms p(95)=509.85ms
+     http_reqs......................: 157518 2612.393035/s
+     iteration_duration.............: avg=380.82ms min=284.61ms med=346.51ms max=2.05s    p(90)=437.68ms p(95)=510.22ms
+     iterations.....................: 157518 2612.393035/s
+     vus............................: 1000   min=1000      max=1000
+     vus_max........................: 1000   min=1000      max=1000
+```
+

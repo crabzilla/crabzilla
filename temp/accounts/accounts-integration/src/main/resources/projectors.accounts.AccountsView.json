@@ -1,0 +1,24 @@
+{
+  "main": "io.github.crabzilla.pgclient.projection.EventsProjectorVerticle",
+  "options": {
+    "config" : {
+      "connectOptionsName": "accounts-db-config",
+      "stateTypes" : [
+        "Account"
+      ],
+      "eventTypes" : [
+        "MoneyDeposited",
+        "MoneyWithdrawn",
+        "AccountClosed"
+      ],
+      "eventsProjectorFactoryClassName"
+      : "io.github.crabzilla.accounts.projectors.accounts.AccountsProjectorFactory",
+      "initialInterval" : 5000,
+      "interval" : 100,
+      "maxInterval" : 30000,
+      "metricsInterval" : 30000,
+      "maxNumberOfRows": 250,
+      "viewName": "accounts_view"
+    }
+  }
+}
