@@ -37,7 +37,7 @@ https://github.com/crabzilla/accounts2[https://github.com/crabzilla/accounts2]
 
 == Status
 
-Seems like is finally reaching stable :)
+Seems like it's finally reaching stable status :)
 
 == More info
 
