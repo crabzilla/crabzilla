@@ -4,6 +4,7 @@ import io.github.crabzilla.core.Command
 import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandControllerConfig
+import io.github.crabzilla.core.command.CommandException.UnknownCommandException
 import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
@@ -30,6 +31,7 @@ sealed class CustomerEvent : Event {
  * Customer commands
  */
 sealed class CustomerCommand : Command {
+  data class UnknownCommand(val x: String): CustomerCommand()
   data class RegisterCustomer(val customerId: UUID, val name: String) : CustomerCommand()
   data class ActivateCustomer(val reason: String) : CustomerCommand()
   data class DeactivateCustomer(val reason: String) : CustomerCommand()
@@ -71,9 +73,7 @@ data class Customer(
 val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
   when (command) {
     is RegisterCustomer -> if (command.name == "bad customer") listOf("Bad customer!") else listOf()
-    is RegisterAndActivateCustomer -> listOf()
-    is ActivateCustomer -> listOf()
-    is DeactivateCustomer -> listOf()
+    else -> listOf()
   }
 }
 
@@ -119,6 +119,9 @@ class CustomerCommandHandler :
       is DeactivateCustomer -> {
         with(state)
           .execute { it.deactivate(command.reason) }
+      }
+      else -> {
+        throw UnknownCommandException(command::class.java.canonicalName)
       }
     }
   }

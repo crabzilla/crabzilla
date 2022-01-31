@@ -1,8 +1,14 @@
 package io.github.crabzilla.core.command
 
+import io.github.crabzilla.core.command.CommandException.UnknownCommandException
+import io.github.crabzilla.core.test.TestSpecification
 import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerCommand.UnknownCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
+import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.customer.customerEventHandler
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -151,5 +157,15 @@ internal class CommandSessionTest {
       assertThat(commandSession.appliedEvents()).contains(customerActivated)
       assertThat(commandSession.appliedEvents().size).isEqualTo(2)
     }
+  }
+
+  @Test
+  fun `a UnknownCommand will fail`() {
+
+    Assertions.assertThatExceptionOfType(UnknownCommandException::class.java)
+      .isThrownBy {
+        TestSpecification(customerConfig)
+          .whenCommand(UnknownCommand("?"))
+      }.withMessage(UnknownCommand::class.java.canonicalName)
   }
 }

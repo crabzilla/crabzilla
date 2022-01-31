@@ -90,7 +90,7 @@ class CommandController<S : State, C : Command, E : Event>(
     }
   }
 
-  private val commandHandler: CommandHandler<S, C, E> = config.commandHandlerApiFactory.invoke()
+  private val commandHandler: CommandHandler<S, C, E> = config.commandHandlerFactory.invoke()
 
   fun handle(metadata: CommandMetadata, command: C): Future<CommandSideEffect> {
     return pgPool.withTransaction { conn: SqlConnection ->
