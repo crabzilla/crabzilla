@@ -102,7 +102,7 @@ class CommandController<S : State, C : Command, E : Event>(
     return pgPool.withTransaction(f)
   }
 
-  private fun handle(conn: SqlConnection, metadata: CommandMetadata, command: C): Future<CommandSideEffect> {
+  fun handle(conn: SqlConnection, metadata: CommandMetadata, command: C): Future<CommandSideEffect> {
     return validate(command)
       .compose {
         log.debug("Command validated")
