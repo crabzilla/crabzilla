@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgclient.command.internal
+package io.github.crabzilla.vertx
 
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
