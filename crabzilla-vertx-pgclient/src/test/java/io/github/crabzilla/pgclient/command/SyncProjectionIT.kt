@@ -25,7 +25,6 @@ import java.util.UUID
 class SyncProjectionIT {
 
   private lateinit var jsonSerDer: JsonSerDer
-  private lateinit var client: CommandsContext
   private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var snapshotTestRepository: SnapshotTestRepository<Customer>
   private lateinit var testRepo: TestRepository
@@ -33,11 +32,15 @@ class SyncProjectionIT {
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
-    client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
-    controller = client.create(customerConfig, SnapshotType.PERSISTENT, CustomersEventsProjector("customers"))
-    snapshotTestRepository = SnapshotTestRepository(client.pgPool, example1Json)
-    testRepo = TestRepository(client.pgPool)
-    cleanDatabase(client.pgPool)
+    val pgPool = pgPool(vertx)
+    controller = CommandController.create(
+      vertx, pgPool, jsonSerDer,
+      customerConfig, SnapshotType.PERSISTENT,
+      CustomersEventsProjector("customers")
+    )
+    snapshotTestRepository = SnapshotTestRepository(pgPool, example1Json)
+    testRepo = TestRepository(pgPool)
+    cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }

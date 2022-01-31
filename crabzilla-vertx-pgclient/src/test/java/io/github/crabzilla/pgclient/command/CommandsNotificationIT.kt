@@ -24,7 +24,6 @@ import java.util.UUID
 class CommandsNotificationIT {
 
   private lateinit var jsonSerDer: JsonSerDer
-  private lateinit var commandsContext: CommandsContext
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var repository: SnapshotTestRepository<Customer>
   private lateinit var testRepo: TestRepository
@@ -32,15 +31,15 @@ class CommandsNotificationIT {
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
-    commandsContext = CommandsContext.create(vertx, jsonSerDer, config)
+    val pgPool = pgPool(vertx)
     val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
     commandController = CommandController(
-      vertx = vertx, pgPool = commandsContext.pgPool,
-      jsonSerDer = jsonSerDer, config = customerConfig, snapshotRepository = snapshotRepo2
+      vertx = vertx, pgPool = pgPool, jsonSerDer = jsonSerDer,
+      config = customerConfig, snapshotRepository = snapshotRepo2
     )
-    repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
-    testRepo = TestRepository(commandsContext.pgPool)
-    cleanDatabase(commandsContext.pgPool)
+    repository = SnapshotTestRepository(pgPool, example1Json)
+    testRepo = TestRepository(pgPool)
+    cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }

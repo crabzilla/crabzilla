@@ -10,6 +10,6 @@ import io.github.crabzilla.core.State
 class CommandControllerConfig<S : State, C : Command, E : Event>(
   val name: String,
   val eventHandler: EventHandler<S, E>,
-  val commandHandlerFactory: () -> CommandHandlerApi<S, C, E>,
+  val commandHandlerFactory: () -> CommandHandler<S, C, E>,
   val commandValidator: CommandValidator<C>? = null
 )

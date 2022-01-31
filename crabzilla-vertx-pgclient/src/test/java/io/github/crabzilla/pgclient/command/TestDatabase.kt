@@ -1,8 +1,11 @@
 package io.github.crabzilla.pgclient.command
 
+import io.github.crabzilla.pgclient.PgClientFactory
 import io.vertx.core.Future
+import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
+import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.PoolOptions
 import io.vertx.sqlclient.SqlClient
 
@@ -31,6 +34,11 @@ val connectOptions: PgConnectOptions = PgConnectOptions()
 
 val poolOptions: PoolOptions = PoolOptions()
   .setMaxSize(7)
+
+fun pgPool(vertx: Vertx): PgPool {
+  val poolOptions = PgClientFactory.createPoolOptions(config)
+  return PgPool.pool(vertx, connectOptions, poolOptions)
+}
 
 fun cleanDatabase(sqlClient: SqlClient): Future<Void> {
   return sqlClient.query("delete from commands").execute()
