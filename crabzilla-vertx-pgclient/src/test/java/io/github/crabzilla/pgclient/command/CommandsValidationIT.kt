@@ -25,7 +25,6 @@ import java.util.UUID
 class CommandsValidationIT {
 
   private lateinit var jsonSerDer: JsonSerDer
-  private lateinit var commandsContext: CommandsContext
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var repository: SnapshotTestRepository<Customer>
   private lateinit var testRepo: TestRepository
@@ -34,7 +33,6 @@ class CommandsValidationIT {
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     val pgPool = pgPool(vertx)
-    commandsContext = CommandsContext(vertx, jsonSerDer, pgPool)
     val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
     commandController = CommandController(vertx, pgPool, jsonSerDer, customerConfig, snapshotRepo2)
     repository = SnapshotTestRepository(pgPool, example1Json)

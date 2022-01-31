@@ -3,7 +3,6 @@ package io.github.crabzilla.pgclient.projection
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
-import io.github.crabzilla.pgclient.command.CommandsContext
 import io.github.crabzilla.pgclient.command.pgPool
 import io.github.crabzilla.pgclient.deployProjector
 import io.github.crabzilla.pgclient.projection.infra.TestRepository
@@ -33,14 +32,12 @@ class StandByProjectionIT {
   private val id: UUID = UUID.randomUUID()
   lateinit var jsonSerDer: JsonSerDer
   lateinit var pgPool: PgPool
-  lateinit var commandsContext: CommandsContext
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     pgPool = pgPool(vertx)
-    commandsContext = CommandsContext(vertx, jsonSerDer, pgPool)
     testRepo = TestRepository(pgPool)
 
     cleanDatabase(pgPool)
@@ -56,7 +53,7 @@ class StandByProjectionIT {
   @Test
   @DisplayName("closing db connections")
   fun cleanup(tc: VertxTestContext) {
-    commandsContext.close()
+    pgPool.close()
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }

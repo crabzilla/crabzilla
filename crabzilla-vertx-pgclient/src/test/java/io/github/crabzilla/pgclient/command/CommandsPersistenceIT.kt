@@ -27,7 +27,6 @@ import java.util.UUID
 class CommandsPersistenceIT {
 
   private lateinit var jsonSerDer: JsonSerDer
-  private lateinit var commandsContext: CommandsContext
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var repository: SnapshotTestRepository<Customer>
   private lateinit var testRepo: TestRepository
@@ -36,10 +35,9 @@ class CommandsPersistenceIT {
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     val pgPool = pgPool(vertx)
-    commandsContext = CommandsContext(vertx, jsonSerDer, pgPool)
     val snapshotRepo2 = OnDemandSnapshotRepo(customerConfig.eventHandler, jsonSerDer)
 //    val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
-    commandController = CommandController(vertx, pgPool, jsonSerDer, customerConfig, snapshotRepo2,)
+    commandController = CommandController(vertx, pgPool, jsonSerDer, customerConfig, snapshotRepo2)
     repository = SnapshotTestRepository(pgPool, example1Json)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)

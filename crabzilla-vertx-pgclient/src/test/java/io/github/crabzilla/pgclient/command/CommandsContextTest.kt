@@ -16,8 +16,7 @@ internal class CommandsContextTest {
     val vertx = Vertx.vertx()
     val pgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
     val jsonSerDer = KotlinJsonSerDer(example1Json)
-    val commandsContext = CommandsContext(vertx, jsonSerDer, pgPool)
-    val controller = commandsContext.create(customerConfig, SnapshotType.PERSISTENT)
+    val controller = CommandController.create(vertx, pgPool, jsonSerDer, customerConfig, SnapshotType.PERSISTENT)
     assertNotNull(controller)
   }
 
@@ -26,9 +25,11 @@ internal class CommandsContextTest {
     val vertx = Vertx.vertx()
     val pgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
     val jsonSerDer = KotlinJsonSerDer(example1Json)
-    val commandsContext = CommandsContext(vertx, jsonSerDer, pgPool)
-    val controller = commandsContext
-      .create(customerConfig, SnapshotType.ON_DEMAND, CustomersEventsProjector("customers"))
+    val controller = CommandController
+      .create(
+        vertx, pgPool, jsonSerDer, customerConfig, SnapshotType.ON_DEMAND,
+        CustomersEventsProjector("customers")
+      )
     assertNotNull(controller)
   }
 }

@@ -20,7 +20,6 @@ import java.util.UUID
 class SnapshotTestRepositoryIT {
 
   private lateinit var jsonSerDer: JsonSerDer
-  private lateinit var commandsContext: CommandsContext
   private lateinit var repository: SnapshotTestRepository<Customer>
   private lateinit var testRepo: TestRepository
 
@@ -28,7 +27,6 @@ class SnapshotTestRepositoryIT {
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     val pgPool = pgPool(vertx)
-    commandsContext = CommandsContext(vertx, jsonSerDer, pgPool)
     repository = SnapshotTestRepository(pgPool, example1Json)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)

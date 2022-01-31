@@ -3,7 +3,6 @@ package io.github.crabzilla.pgclient.projection
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
-import io.github.crabzilla.pgclient.command.CommandsContext
 import io.github.crabzilla.pgclient.command.pgPool
 import io.github.crabzilla.pgclient.projection.infra.TestRepository
 import io.github.crabzilla.pgclient.projection.infra.cleanDatabase
@@ -21,7 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 class BadConfiguredProjectorIT {
 
   lateinit var jsonSerDer: JsonSerDer
-  lateinit var commandsContext: CommandsContext
   private lateinit var testRepo: TestRepository
 
   @Test
@@ -29,7 +27,6 @@ class BadConfiguredProjectorIT {
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     val pgPool = pgPool(vertx)
-    commandsContext = CommandsContext(vertx, jsonSerDer, pgPool)
     testRepo = TestRepository(pgPool)
     val verticles = listOf(
       "service:crabzilla.example1.customer.BadConfiguredEventsProjector",

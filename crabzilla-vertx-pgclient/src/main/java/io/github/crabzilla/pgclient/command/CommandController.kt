@@ -13,6 +13,8 @@ import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.core.metadata.EventMetadata
 import io.github.crabzilla.pgclient.EventsProjector
+import io.github.crabzilla.pgclient.command.internal.OnDemandSnapshotRepo
+import io.github.crabzilla.pgclient.command.internal.PersistentSnapshotRepo
 import io.github.crabzilla.pgclient.command.internal.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
@@ -49,6 +51,30 @@ class CommandController<S : State, C : Command, E : Event>(
             INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
     private const val DEFAULT_NOTIFICATION_INTERVAL = 3000L
+
+    fun <S : State, C : Command, E : Event> create(
+      vertx: Vertx,
+      pgPool: PgPool,
+      jsonSerDer: JsonSerDer,
+      config: CommandControllerConfig<S, C, E>,
+      snapshotType: SnapshotType,
+      eventsProjector: EventsProjector? = null
+    ): CommandController<S, C, E> {
+      fun <S : State, C : Command, E : Event> snapshotRepo(
+        snapshotType: SnapshotType,
+        jsonSerDer: JsonSerDer,
+        config: CommandControllerConfig<S, C, E>
+      ): SnapshotRepository<S, E> {
+        return when (snapshotType) {
+          SnapshotType.ON_DEMAND -> OnDemandSnapshotRepo(config.eventHandler, jsonSerDer)
+          SnapshotType.PERSISTENT -> PersistentSnapshotRepo(config.name, jsonSerDer)
+        }
+      }
+      return CommandController(
+        vertx, pgPool, jsonSerDer, config,
+        snapshotRepo(snapshotType, jsonSerDer, config), eventsProjector
+      )
+    }
   }
 
   private val notificationsByStateType = HashSet<String>()

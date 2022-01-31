@@ -6,7 +6,7 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
-import io.github.crabzilla.pgclient.command.CommandsContext
+import io.github.crabzilla.pgclient.command.CommandController
 import io.github.crabzilla.pgclient.command.SnapshotType
 import io.github.crabzilla.pgclient.command.pgPool
 import io.github.crabzilla.pgclient.deployProjector
@@ -37,14 +37,12 @@ class AsyncProjectionIT {
   private val id: UUID = UUID.randomUUID()
   lateinit var jsonSerDer: JsonSerDer
   lateinit var pgPool: PgPool
-  lateinit var commandsContext: CommandsContext
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     pgPool = pgPool(vertx)
-    commandsContext = CommandsContext(vertx, jsonSerDer, pgPool)
     testRepo = TestRepository(pgPool)
 
     cleanDatabase(pgPool)
@@ -58,7 +56,7 @@ class AsyncProjectionIT {
   @Test
   @DisplayName("closing db connections")
   fun cleanup(tc: VertxTestContext) {
-    commandsContext.close()
+    pgPool.close()
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -69,7 +67,7 @@ class AsyncProjectionIT {
   @DisplayName("after a command the events will be projected")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val target = "crabzilla.example1.customer.CustomersEventsProjector"
-    val controller = commandsContext.create(customerConfig, SnapshotType.ON_DEMAND)
+    val controller = CommandController.create(vertx, pgPool, jsonSerDer, customerConfig, SnapshotType.ON_DEMAND)
     controller.handle(CommandMetadata(id), RegisterCustomer(id, "cust#$id"))
       .compose {
         vertx.eventBus()
