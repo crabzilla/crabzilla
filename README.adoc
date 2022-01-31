@@ -33,11 +33,11 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 
 == Example application
 
-https://github.com/crabzilla/accounts2[https://github.com/crabzilla/accounts2]
+https://github.com/rodolfodpk/accounts-z[Accounts]
 
 == Status
 
-Seems like is finally reaching stable :)
+Seems like it's finally reaching stable status :)
 
 == More info
 
