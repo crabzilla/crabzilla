@@ -3,7 +3,6 @@ package io.github.crabzilla.core.command
 import io.github.crabzilla.core.command.CommandException.UnknownCommandException
 import io.github.crabzilla.core.test.TestSpecification
 import io.github.crabzilla.example1.customer.Customer
-import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.UnknownCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig

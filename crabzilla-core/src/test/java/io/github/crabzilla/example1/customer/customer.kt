@@ -31,7 +31,7 @@ sealed class CustomerEvent : Event {
  * Customer commands
  */
 sealed class CustomerCommand : Command {
-  data class UnknownCommand(val x: String): CustomerCommand()
+  data class UnknownCommand(val x: String) : CustomerCommand()
   data class RegisterCustomer(val customerId: UUID, val name: String) : CustomerCommand()
   data class ActivateCustomer(val reason: String) : CustomerCommand()
   data class DeactivateCustomer(val reason: String) : CustomerCommand()

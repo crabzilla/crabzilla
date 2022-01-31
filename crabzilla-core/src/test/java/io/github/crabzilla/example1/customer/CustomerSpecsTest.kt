@@ -79,5 +79,4 @@ class CustomerSpecsTest {
           .whenCommand(RegisterCustomer(id, "bad customer"))
       }.withMessage("[Bad customer!]")
   }
-
 }
