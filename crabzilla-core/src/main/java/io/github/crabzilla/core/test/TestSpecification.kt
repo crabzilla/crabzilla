@@ -26,7 +26,7 @@ class TestSpecification<S : State, C : Command, E : Event>(val config: CommandCo
         throw ValidationException(validationErrors)
       }
     }
-    val commandHandler: CommandHandler<S, C, E> = config.commandHandlerFactory.invoke() as CommandHandler<S, C, E>
+    val commandHandler: CommandHandler<S, C, E> = config.commandHandlerApiFactory.invoke() as CommandHandler<S, C, E>
     val session: CommandSession<S, E> = commandHandler.handleCommand(command, state)
     state = session.currentState
     events.addAll(session.appliedEvents())

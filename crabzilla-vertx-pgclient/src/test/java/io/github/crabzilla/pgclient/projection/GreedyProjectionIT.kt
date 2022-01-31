@@ -9,15 +9,15 @@ import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
 import io.github.crabzilla.pgclient.command.CommandsContext
 import io.github.crabzilla.pgclient.command.SnapshotType
+import io.github.crabzilla.pgclient.command.pgPool
 import io.github.crabzilla.pgclient.deployProjector
 import io.github.crabzilla.pgclient.projection.infra.TestRepository
 import io.github.crabzilla.pgclient.projection.infra.cleanDatabase
 import io.github.crabzilla.pgclient.projection.infra.config
-import io.github.crabzilla.pgclient.projection.infra.connectOptions
-import io.github.crabzilla.pgclient.projection.infra.poolOptions
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.pgclient.PgPool
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -37,16 +37,18 @@ class GreedyProjectionIT {
 
   private val id: UUID = UUID.randomUUID()
   lateinit var jsonSerDer: JsonSerDer
+  lateinit var pgPool: PgPool
   lateinit var commandsContext: CommandsContext
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
-    commandsContext = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
-    testRepo = TestRepository(commandsContext.pgPool)
+    pgPool = pgPool(vertx)
+    commandsContext = CommandsContext(vertx, jsonSerDer, pgPool)
+    testRepo = TestRepository(pgPool)
 
-    cleanDatabase(commandsContext.pgPool)
+    cleanDatabase(pgPool)
       .compose {
         vertx.deployProjector(
           config, "service:crabzilla.example1.customer.CustomersEventsProjector"
@@ -68,7 +70,7 @@ class GreedyProjectionIT {
   @DisplayName("forcing it starting greedy then sending a command the events will be projected")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
 
-    commandsContext.pgPool
+    pgPool
       .preparedQuery("NOTIFY " + EventTopics.STATE_TOPIC.name.lowercase() + ", 'Customer'")
       .execute()
       .onFailure { tc.failNow(it) }
@@ -82,7 +84,7 @@ class GreedyProjectionIT {
           }.compose {
             vertx.eventBus().request<Void>("crabzilla.projectors.$target", null)
           }.compose {
-            commandsContext.pgPool.preparedQuery("select * from customer_summary")
+            pgPool.preparedQuery("select * from customer_summary")
               .execute()
               .map { rs ->
                 rs.size() == 1

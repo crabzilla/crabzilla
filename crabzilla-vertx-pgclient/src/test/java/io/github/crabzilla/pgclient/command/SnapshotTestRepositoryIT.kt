@@ -20,17 +20,18 @@ import java.util.UUID
 class SnapshotTestRepositoryIT {
 
   private lateinit var jsonSerDer: JsonSerDer
-  private lateinit var client: CommandsContext
+  private lateinit var commandsContext: CommandsContext
   private lateinit var repository: SnapshotTestRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
-    client = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
-    repository = SnapshotTestRepository(client.pgPool, example1Json)
-    testRepo = TestRepository(client.pgPool)
-    cleanDatabase(client.pgPool)
+    val pgPool = pgPool(vertx)
+    commandsContext = CommandsContext(vertx, jsonSerDer, pgPool)
+    repository = SnapshotTestRepository(pgPool, example1Json)
+    testRepo = TestRepository(pgPool)
+    cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }

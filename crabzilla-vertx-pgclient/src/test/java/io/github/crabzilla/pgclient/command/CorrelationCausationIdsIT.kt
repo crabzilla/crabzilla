@@ -35,12 +35,13 @@ class CorrelationCausationIdsIT {
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
-    commandsContext = CommandsContext.create(vertx, jsonSerDer, connectOptions, poolOptions)
+    val pgPool = pgPool(vertx)
+    commandsContext = CommandsContext(vertx, jsonSerDer, pgPool)
     val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
-    commandController = CommandController(vertx, commandsContext.pgPool, jsonSerDer, customerConfig, snapshotRepo2,)
-    repository = SnapshotTestRepository(commandsContext.pgPool, example1Json)
-    testRepo = TestRepository(commandsContext.pgPool)
-    cleanDatabase(commandsContext.pgPool)
+    commandController = CommandController(vertx, pgPool, jsonSerDer, customerConfig, snapshotRepo2,)
+    repository = SnapshotTestRepository(pgPool, example1Json)
+    testRepo = TestRepository(pgPool)
+    cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
