@@ -10,6 +10,7 @@ import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
+import io.github.crabzilla.pgclient.TestRepository
 import io.github.crabzilla.pgclient.command.internal.OnDemandSnapshotRepo
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -24,21 +25,19 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@DisplayName("Persisting commands")
 class CommandsPersistenceIT {
 
   private lateinit var jsonSerDer: JsonSerDer
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var repository: SnapshotTestRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     val pgPool = pgPool(vertx)
-    val snapshotRepo2 = OnDemandSnapshotRepo(customerConfig.eventHandler, jsonSerDer)
-//    val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
-    commandController = CommandController(vertx, pgPool, jsonSerDer, customerConfig, snapshotRepo2)
-    repository = SnapshotTestRepository(pgPool, example1Json)
+    val snapshotRepo = OnDemandSnapshotRepo(customerConfig.eventHandler, jsonSerDer)
+    commandController = CommandController(vertx, pgPool, jsonSerDer, customerConfig, snapshotRepo)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
@@ -46,19 +45,10 @@ class CommandsPersistenceIT {
   }
 
   @Test
-  @DisplayName("appending 1 command with 2 events results in version 2 ")
-  fun s1(tc: VertxTestContext) {
+  fun `appending 1 command with 2 events results in version 2 `(vertx: Vertx, tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata(id)
-
-//    commandController.compose { conn: SqlConnection ->
-//      commandController.handle(conn, metadata, cmd) // with draw command
-//        .compose { result: CommandSideEffect<Customer, CustomerEvent> ->
-//           commandController.handle(conn, metadata, cmd)  // deposit command
-//        }
-//    }
-
     commandController.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -77,9 +67,10 @@ class CommandsPersistenceIT {
   }
 
   @Test
-  @DisplayName("appending 2 commands with 2 and 1 event, respectively results in version 3")
-  fun s2(tc: VertxTestContext) {
+  fun `appending 2 commands with 2 and 1 event, respectively results in version 3 `(vertx: Vertx, tc: VertxTestContext) {
+
     val id = UUID.randomUUID()
+
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
     val metadata1 = CommandMetadata(id)
 

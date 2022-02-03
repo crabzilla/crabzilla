@@ -10,10 +10,13 @@ import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.customer.customerEventHandler
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
+import io.github.crabzilla.pgclient.TestRepository
 import io.github.crabzilla.pgclient.command.internal.PersistentSnapshotRepo
+import io.github.crabzilla.pgclient.command.internal.SnapshotRepository
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.pgclient.PgPool
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -27,17 +30,17 @@ import java.util.UUID
 class CorrelationCausationIdsIT {
 
   private lateinit var jsonSerDer: JsonSerDer
+  private lateinit var pgPool: PgPool
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var repository: SnapshotTestRepository<Customer>
+  private lateinit var snapshotRepository: SnapshotRepository<Customer, CustomerEvent>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
-    val pgPool = pgPool(vertx)
-    val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
-    commandController = CommandController(vertx, pgPool, jsonSerDer, customerConfig, snapshotRepo2,)
-    repository = SnapshotTestRepository(pgPool, example1Json)
+    pgPool = pgPool(vertx)
+    snapshotRepository = PersistentSnapshotRepo(customerConfig.name, jsonSerDer)
+    commandController = CommandController(vertx, pgPool, jsonSerDer, customerConfig, snapshotRepository)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
@@ -56,7 +59,7 @@ class CorrelationCausationIdsIT {
     commandController.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        repository.get(id)
+        snapshotRepository.get(pgPool.connection.result(), id)
           .onFailure { tc.failNow(it) }
           .onSuccess {
             assertThat(it!!.version).isEqualTo(2)
@@ -118,7 +121,7 @@ class CorrelationCausationIdsIT {
         commandController.handle(metadata2, cmd2)
           .onFailure { tc.failNow(it) }
           .onSuccess {
-            repository.get(id)
+            snapshotRepository.get(pgPool.connection.result(), id)
               .onFailure { tc.failNow(it) }
               .onSuccess {
                 assertThat(it!!.version).isEqualTo(3)

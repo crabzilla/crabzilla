@@ -8,15 +8,13 @@ import io.vertx.pgclient.pubsub.PgSubscriber
 open class PgClientAbstractVerticle : AbstractVerticle() {
 
   val pgPool: PgPool by lazy {
-    val configId = config().getString("connectOptionsName")
-    val connectOptions = PgClientFactory.createPgConnectOptions(config().getJsonObject(configId))
-    val poolOptions = createPoolOptions(config().getJsonObject(configId))
+    val connectOptions = PgClientFactory.createPgConnectOptions(config())
+    val poolOptions = createPoolOptions(config())
     PgPool.pool(vertx, connectOptions, poolOptions)
   }
 
   val subscriber: PgSubscriber by lazy {
-    val configId = config().getString("connectOptionsName")
-    val connectOptions = PgClientFactory.createPgConnectOptions(config().getJsonObject(configId))
+    val connectOptions = PgClientFactory.createPgConnectOptions(config())
     PgSubscriber.subscriber(vertx, connectOptions)
   }
 }

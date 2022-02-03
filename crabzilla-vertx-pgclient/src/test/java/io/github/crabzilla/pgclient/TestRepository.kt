@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgclient.projection.infra
+package io.github.crabzilla.pgclient
 
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
@@ -38,8 +38,10 @@ class TestRepository(private val pgPool: PgPool) {
         .map { rowSet: RowSet<Row> ->
           rowSet.iterator().asSequence().map { row: Row ->
             val json = JsonObject()
+            val payload = row.getJsonObject("event_payload")
+            payload.put("type", row.getString("event_type"))
             json.put("sequence", row.getLong("sequence"))
-            json.put("event_payload", row.getValue("event_payload").toString())
+            json.put("event_payload", payload)
             json.put("state_type", row.getString("state_type"))
             json.put("state_id", row.getUUID("state_id").toString())
             json.put("version", row.getInteger("version"))

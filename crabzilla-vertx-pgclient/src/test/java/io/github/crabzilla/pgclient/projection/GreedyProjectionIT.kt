@@ -9,11 +9,11 @@ import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
 import io.github.crabzilla.pgclient.command.CommandController
 import io.github.crabzilla.pgclient.command.SnapshotType
+import io.github.crabzilla.pgclient.TestRepository
+import io.github.crabzilla.pgclient.command.cleanDatabase
+import io.github.crabzilla.pgclient.command.config
 import io.github.crabzilla.pgclient.command.pgPool
 import io.github.crabzilla.pgclient.deployProjector
-import io.github.crabzilla.pgclient.projection.infra.TestRepository
-import io.github.crabzilla.pgclient.projection.infra.cleanDatabase
-import io.github.crabzilla.pgclient.projection.infra.config
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext

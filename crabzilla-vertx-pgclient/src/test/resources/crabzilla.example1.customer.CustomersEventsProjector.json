@@ -1,5 +1,6 @@
 {
   "main": "io.github.crabzilla.pgclient.projection.EventsProjectorVerticle",
+  "connectOptionsName": "ex1_crabzilla-config",
   "options": {
     "config" : {
       "viewName": "customers",
