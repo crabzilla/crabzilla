@@ -21,18 +21,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.slf4j.LoggerFactory
 import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
+@DisplayName("Deploying a filtered events projector")
 class FilteredProjectionIT {
-
-  // https://dev.to/sip3/how-to-write-beautiful-unit-tests-in-vert-x-2kg7
-  // https://dev.to/cherrychain/tdd-in-an-event-driven-application-2d6i
-
-  companion object {
-    private val log = LoggerFactory.getLogger(FilteredProjectionIT::class.java)
-  }
 
   private val id: UUID = UUID.randomUUID()
   lateinit var jsonSerDer: JsonSerDer

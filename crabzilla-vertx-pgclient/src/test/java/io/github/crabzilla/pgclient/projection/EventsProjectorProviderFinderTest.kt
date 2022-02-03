@@ -2,9 +2,11 @@ package io.github.crabzilla.pgclient.projection
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.nio.file.ProviderNotFoundException
 
+@DisplayName("Instantiating EventsProjectorProvider")
 internal class EventsProjectorProviderFinderTest {
 
   @Test
