@@ -15,10 +15,12 @@ import io.github.crabzilla.pgclient.command.config
 import io.github.crabzilla.pgclient.command.pgPool
 import io.github.crabzilla.pgclient.deployProjector
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.PgPool
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -67,35 +69,18 @@ class GreedyProjectionIT {
   @Test
   @DisplayName("forcing it starting greedy then sending a command the events will be projected")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-
+    val target = "crabzilla.example1.customer.CustomersEventsProjector"
     pgPool
       .preparedQuery("NOTIFY " + EventTopics.STATE_TOPIC.name.lowercase() + ", 'Customer'")
       .execute()
-      .onFailure { tc.failNow(it) }
-      .onSuccess {
-        val target = "crabzilla.example1.customer.CustomersEventsProjector"
-        val controller = CommandController.create(vertx, pgPool, jsonSerDer, customerConfig, SnapshotType.ON_DEMAND)
-        controller.handle(CommandMetadata(id), RegisterCustomer(id, "cust#$id"))
-          .compose {
-            vertx.eventBus()
-              .request<String>("crabzilla.projectors.$target.ping", "me")
-          }.compose {
-            vertx.eventBus().request<Void>("crabzilla.projectors.$target", null)
-          }.compose {
-            pgPool.preparedQuery("select * from customer_summary")
-              .execute()
-              .map { rs ->
-                rs.size() == 1
-              }
-          }.onFailure {
-            tc.failNow(it)
-          }.onSuccess {
-            if (it) {
-              tc.completeNow()
-            } else {
-              tc.failNow("Nothing projected")
-            }
-          }
+      .compose {
+        vertx.eventBus().request<JsonObject>("crabzilla.projectors.$target.status", null)
+      }.onSuccess {
+        if (it.body().getBoolean("greedy")) {
+          tc.completeNow()
+        } else {
+          tc.failNow("Status should be greedy")
+        }
       }
   }
 }
