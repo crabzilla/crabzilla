@@ -27,7 +27,7 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DisplayName("Running synchronous projections")
+@DisplayName("Running synchronous projection")
 class SyncProjectionIT {
 
   private lateinit var jsonSerDer: JsonSerDer
