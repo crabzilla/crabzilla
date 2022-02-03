@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
 import java.util.UUID
 
 @DisplayName("Serializing EventRecord")
-class EventRecordTest {
+class EventRecordSerializationTest {
 
   val serDer = KotlinJsonSerDer(example1Json)
 

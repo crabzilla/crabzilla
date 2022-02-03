@@ -17,7 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(VertxExtension::class)
 @DisplayName("Deploying an invalid events projector")
-class BadConfiguredProjectorIT {
+class DeployingUnknownProjectorIT {
 
   lateinit var jsonSerDer: JsonSerDer
   private lateinit var testRepo: TestRepository
@@ -29,7 +29,7 @@ class BadConfiguredProjectorIT {
     testRepo = TestRepository(pgPool)
     val options = DeploymentOptions().setConfig(config)
     cleanDatabase(pgPool)
-      .compose { vertx.deployVerticle("service:crabzilla.example1.customer.BadConfiguredEventsProjector", options) }
+      .compose { vertx.deployVerticle("service:?", options) }
       .onFailure { tc.completeNow() }
       .onSuccess { tc.failNow("Should fail") }
   }

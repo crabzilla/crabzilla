@@ -22,4 +22,9 @@ internal class EventsProjectorProviderFinderTest {
       }
     }
   }
+
+  @Test
+  fun `a provider must work`() {
+      EventsProjectorProviderFinder().create("io.github.crabzilla.example1.customer.CustomersProjectorFactory")
+  }
 }
