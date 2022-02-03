@@ -8,7 +8,6 @@ import io.vertx.core.Vertx
 import io.vertx.pgclient.PgPool
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.DisplayNameGeneration
 import org.junit.jupiter.api.Test
 
 @DisplayName("Instantiating a command controller")
@@ -31,7 +30,6 @@ internal class CommandControllerTest {
     val controller = CommandController.create(vertx, pgPool, jsonSerDer, customerConfig, SnapshotType.PERSISTENT)
     assertNotNull(controller)
   }
-
 
   @Test
   fun `a command controller can be created with a custom synchronous event projector`() {

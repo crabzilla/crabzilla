@@ -2,7 +2,6 @@ package io.github.crabzilla.pgclient.projection.internal
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 
 @DisplayName("Specifying events query")

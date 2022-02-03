@@ -8,7 +8,7 @@ import java.nio.file.ProviderNotFoundException
 internal class EventsProjectorProviderFinderTest {
 
   @Test
-  fun `unknown provider must fail`() {
+  fun `an unknown provider must fail`() {
     try {
       EventsProjectorProviderFinder().create("?")
       fail("Should fail")

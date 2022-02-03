@@ -19,8 +19,6 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.extension.ExtendWith
-import org.slf4j.LoggerFactory
-import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @DisplayName("Deploying events projector")
@@ -66,5 +64,4 @@ class RedeployingProjectionIT {
         tc.completeNow()
       }
   }
-
 }

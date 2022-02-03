@@ -6,9 +6,9 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
+import io.github.crabzilla.pgclient.TestRepository
 import io.github.crabzilla.pgclient.command.CommandController
 import io.github.crabzilla.pgclient.command.SnapshotType
-import io.github.crabzilla.pgclient.TestRepository
 import io.github.crabzilla.pgclient.command.cleanDatabase
 import io.github.crabzilla.pgclient.command.config
 import io.github.crabzilla.pgclient.command.pgPool
