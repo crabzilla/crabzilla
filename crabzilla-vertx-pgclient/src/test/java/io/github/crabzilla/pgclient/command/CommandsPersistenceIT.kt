@@ -45,7 +45,7 @@ class CommandsPersistenceIT {
   }
 
   @Test
-  fun `appending 1 command with 2 events results in version 2 `(vertx: Vertx, tc: VertxTestContext) {
+  fun `appending 1 command with 2 events results in version 2 `(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata(id)
@@ -67,7 +67,7 @@ class CommandsPersistenceIT {
   }
 
   @Test
-  fun `appending 2 commands with 2 and 1 event, respectively results in version 3 `(vertx: Vertx, tc: VertxTestContext) {
+  fun `appending 2 commands with 2 and 1 event, respectively results in version 3 `(tc: VertxTestContext) {
 
     val id = UUID.randomUUID()
 

@@ -43,7 +43,7 @@ class CommandsValidationIT {
   }
 
   @Test
-  fun `it can validate before command handler`(vertx: Vertx, tc: VertxTestContext) {
+  fun `it can validate before command handler`(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "bad customer")
     val metadata = CommandMetadata(id)
@@ -58,7 +58,7 @@ class CommandsValidationIT {
   }
 
   @Test
-  fun `it can validate within command handler`(vertx: Vertx, tc: VertxTestContext) {
+  fun `it can validate within command handler`(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
     val metadata = CommandMetadata(id)

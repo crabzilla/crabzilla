@@ -27,6 +27,7 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@DisplayName("Running synchronous projections")
 class SyncProjectionIT {
 
   private lateinit var jsonSerDer: JsonSerDer
@@ -65,7 +66,7 @@ class SyncProjectionIT {
           .onSuccess { customersList ->
             assertThat(customersList.size).isEqualTo(1)
             val json = customersList.first()
-            println(json.encodePrettily())
+//            println(json.encodePrettily())
             assertThat(UUID.fromString(json.getString("id"))).isEqualTo(id)
             assertThat(json.getString("name")).isEqualTo(cmd.name)
             assertThat(json.getBoolean("is_active")).isEqualTo(true)
