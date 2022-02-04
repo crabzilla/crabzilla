@@ -62,10 +62,10 @@ class RedeployingProjectionIT {
         config, "service:crabzilla.example1.customer.CustomersEventsProjector"
       )
     }
-    .onFailure {
-      tc.failNow(it)
-    }.onSuccess {
-      tc.completeNow()
-    }
+      .onFailure {
+        tc.failNow(it)
+      }.onSuccess {
+        tc.completeNow()
+      }
   }
 }

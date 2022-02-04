@@ -18,7 +18,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.concurrent.TimeUnit
 
 @ExtendWith(VertxExtension::class)
 @DisplayName("Forcing projector to be greedy")
@@ -33,11 +32,10 @@ class GreedyProjectionIT {
     jsonSerDer = KotlinJsonSerDer(example1Json)
     pgPool = pgPool(vertx)
     testRepo = TestRepository(pgPool)
-
     cleanDatabase(pgPool)
       .compose {
         vertx.deployProjector(
-          config, "service:crabzilla.example1.customer.CustomersEventsProjector"
+          config, "service:crabzilla.example1.customer.CustomersSlowEventsProjector"
         )
       }
       .onFailure { tc.failNow(it) }
@@ -45,24 +43,16 @@ class GreedyProjectionIT {
   }
 
   @Test
-  @DisplayName("closing db connections")
-  fun cleanup(tc: VertxTestContext) {
-    pgPool.close()
-      .onFailure { tc.failNow(it) }
-      .onSuccess { tc.completeNow() }
-  }
-
-  @Test
   @DisplayName("forcing it starting greedy then sending a command the events will be projected")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val target = "crabzilla.example1.customer.CustomersEventsProjector"
+    val target = "crabzilla.example1.customer.CustomersSlowEventsProjector"
     pgPool
       .preparedQuery("NOTIFY " + EventTopics.STATE_TOPIC.name.lowercase() + ", 'Customer'")
       .execute()
       .compose {
         vertx.eventBus().request<JsonObject>("crabzilla.projectors.$target.status", null)
       }.onSuccess {
-        tc.awaitCompletion(1, TimeUnit.SECONDS)
+        println(it.body().encodePrettily())
         if (it.body().getBoolean("greedy")) {
           tc.completeNow()
         } else {
