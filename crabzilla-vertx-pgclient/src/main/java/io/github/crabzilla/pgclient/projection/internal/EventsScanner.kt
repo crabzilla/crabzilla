@@ -3,8 +3,6 @@ package io.github.crabzilla.pgclient.projection.internal
 import io.github.crabzilla.core.metadata.EventMetadata
 import io.github.crabzilla.pgclient.projection.EventRecord
 import io.vertx.core.Future
-import io.vertx.core.Future.failedFuture
-import io.vertx.core.Future.succeededFuture
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
@@ -36,12 +34,8 @@ internal class EventsScanner(
     return sqlClient
       .preparedQuery(selectCurrentOffset)
       .execute(Tuple.of(name))
-      .transform {
-        if (it.failed() || it.result().size() != 1) {
-          failedFuture("Projection $name not found on projections table")
-        } else {
-          succeededFuture(it.result().first().getLong("sequence"))
-        }
+      .map {
+        it.first().getLong("sequence")
       }
   }
 

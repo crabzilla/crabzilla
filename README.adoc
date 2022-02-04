@@ -8,7 +8,7 @@ ifndef::imagesdir[:imagesdir: images]
 ifndef::sourcedir[:sourcedir: ../../main/java]
 :toclevels: 4
 
-https://vertx.io[image:https://img.shields.io/badge/vert.x-4.2.1-purple.svg[Vertx]]
+https://vertx.io[image:https://img.shields.io/badge/vert.x-4.2.4-purple.svg[Vertx]]
 https://github.com/crabzilla/crabzilla/actions/workflows/blank.yml[image:https://github.com/crabzilla/crabzilla/actions/workflows/blank.yml/badge.svg[CI]]
 https://codecov.io/gh/crabzilla/crabzilla[image:https://codecov.io/gh/crabzilla/crabzilla/branch/main/graph/badge.svg[codecov]]
 https://frontend.code-inspector.com/public/project/24241/crabzilla/dashboard[image:https://api.codiga.io/project/24241/score/svg[image]]

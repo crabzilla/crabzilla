@@ -81,13 +81,18 @@ class CommandController<S : State, C : Command, E : Event>(
 
   init {
     vertx.setPeriodic(DEFAULT_NOTIFICATION_INTERVAL) {
-      notificationsByStateType.forEach { stateType ->
-        pgPool
-          .preparedQuery("NOTIFY " + EventTopics.STATE_TOPIC.name.lowercase() + ", '$stateType'")
-          .execute()
-      }
-      notificationsByStateType.clear()
+      notifyPg()
     }
+    notifyPg()
+  }
+
+  private fun notifyPg() {
+    notificationsByStateType.forEach { stateType ->
+      pgPool
+        .preparedQuery("NOTIFY " + EventTopics.STATE_TOPIC.name.lowercase() + ", '$stateType'")
+        .execute()
+    }
+    notificationsByStateType.clear()
   }
 
   private val commandHandler: CommandHandler<S, C, E> = config.commandHandlerFactory.invoke()

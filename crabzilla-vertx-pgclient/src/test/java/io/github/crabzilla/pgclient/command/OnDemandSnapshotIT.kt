@@ -1,20 +1,22 @@
 package io.github.crabzilla.pgclient.command
 
+import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
-import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.example1.customer.customerEventHandler
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
 import io.github.crabzilla.pgclient.TestRepository
 import io.github.crabzilla.pgclient.command.internal.OnDemandSnapshotRepo
+import io.github.crabzilla.pgclient.command.internal.SnapshotRepository
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.pgclient.PgPool
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -25,19 +27,21 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DisplayName("Persisting commands")
-class CommandsPersistenceIT {
+@DisplayName("Storing on demand snapshots")
+class OnDemandSnapshotIT {
 
   private lateinit var jsonSerDer: JsonSerDer
+  private lateinit var pgPool: PgPool
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var snapshotRepository: SnapshotRepository<Customer, CustomerEvent>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     jsonSerDer = KotlinJsonSerDer(example1Json)
-    val pgPool = pgPool(vertx)
-    val snapshotRepo = OnDemandSnapshotRepo(customerConfig.eventHandler, jsonSerDer)
-    commandController = CommandController(vertx, pgPool, jsonSerDer, customerConfig, snapshotRepo)
+    pgPool = pgPool(vertx)
+    snapshotRepository = OnDemandSnapshotRepo(customerEventHandler, jsonSerDer)
+    commandController = CommandController(vertx, pgPool, jsonSerDer, customerConfig, snapshotRepository)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
@@ -45,37 +49,42 @@ class CommandsPersistenceIT {
   }
 
   @Test
-  fun `appending 1 command with 2 events results in version 2 `(tc: VertxTestContext) {
+  @DisplayName("appending 1 command with 2 events results in version 2 ")
+  fun s1(tc: VertxTestContext) {
     val id = UUID.randomUUID()
-    val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
+    val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata(id)
+    val constructorResult = Customer.create(id, cmd.name)
+    val session = CommandSession(constructorResult, customerEventHandler)
+    session.execute { it.activate(cmd.reason) }
     commandController.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        testRepo.getAllCommands()
+        snapshotRepository.get(pgPool.connection.result(), id)
           .onFailure { tc.failNow(it) }
-          .onSuccess { list ->
-            assertThat(list.size).isEqualTo(1)
-            val rowAsJson = list.first()
-            assertThat(UUID.fromString(rowAsJson.getString("cmd_id"))).isEqualTo(metadata.commandId)
-            val cmdAsJsonFroDb = rowAsJson.getJsonObject("cmd_payload")
-            val cmdFromDb = jsonSerDer.commandFromJson(cmdAsJsonFroDb.toString()) as RegisterAndActivateCustomer
-            assertThat(cmdFromDb).isEqualTo(cmd)
+          .onSuccess {
+            assertThat(it!!.version).isEqualTo(2)
+            assertThat(it.state).isEqualTo(Customer(id, cmd.name, true, cmd.reason))
             tc.completeNow()
           }
       }
   }
 
   @Test
-  fun `appending 2 commands with 2 and 1 event, respectively results in version 3 `(tc: VertxTestContext) {
-
+  @DisplayName("appending 2 commands with 2 and 1 event, respectively results in version 3")
+  fun s11(tc: VertxTestContext) {
     val id = UUID.randomUUID()
-
-    val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
+    val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")
     val metadata1 = CommandMetadata(id)
+    val constructorResult = Customer.create(id, cmd1.name)
+    val session1 = CommandSession(constructorResult, customerEventHandler)
+    session1.execute { it.activate(cmd1.reason) }
 
-    val cmd2 = DeactivateCustomer("it's not needed anymore")
+    val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
     val metadata2 = CommandMetadata(id)
+    val customer2 = Customer(id, cmd1.name, true, cmd2.reason)
+    val session2 = CommandSession(customer2, customerEventHandler)
+    session2.execute { it.deactivate(cmd2.reason) }
 
     commandController.handle(metadata1, cmd1)
       .onFailure { tc.failNow(it) }
@@ -83,23 +92,12 @@ class CommandsPersistenceIT {
         commandController.handle(metadata2, cmd2)
           .onFailure { tc.failNow(it) }
           .onSuccess {
-            testRepo.getAllCommands()
+            snapshotRepository.get(pgPool.connection.result(), id)
               .onFailure { tc.failNow(it) }
-              .onSuccess { list ->
-                assertThat(list.size).isEqualTo(2)
-
-                val rowAsJson1 = list.first()
-                assertThat(UUID.fromString(rowAsJson1.getString("cmd_id"))).isEqualTo(metadata1.commandId)
-                val cmdAsJsonFroDb1 = rowAsJson1.getJsonObject("cmd_payload")
-                val cmdFromDb1 = jsonSerDer.commandFromJson(cmdAsJsonFroDb1.toString())
-                assertThat(cmdFromDb1).isEqualTo(cmd1)
-
-                val rowAsJson2 = list.last()
-                assertThat(UUID.fromString(rowAsJson2.getString("cmd_id"))).isEqualTo(metadata2.commandId)
-                val cmdAsJsonFroDb2 = rowAsJson2.getJsonObject("cmd_payload")
-                val cmdFromDb2 = jsonSerDer.commandFromJson(cmdAsJsonFroDb2.toString())
-                assertThat(cmdFromDb2).isEqualTo(cmd2)
-
+              .onSuccess {
+                assertThat(it!!.version).isEqualTo(3)
+                val expectedCustomer = customer2.copy(isActive = false, reason = cmd2.reason)
+                assertThat(it.state).isEqualTo(expectedCustomer)
                 tc.completeNow()
               }
           }

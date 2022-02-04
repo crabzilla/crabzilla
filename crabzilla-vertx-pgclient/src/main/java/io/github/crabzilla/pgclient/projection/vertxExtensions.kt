@@ -1,4 +1,4 @@
-package io.github.crabzilla.pgclient
+package io.github.crabzilla.pgclient.projection
 
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future

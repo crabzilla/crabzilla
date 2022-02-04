@@ -7,10 +7,12 @@ import io.github.crabzilla.json.KotlinJsonSerDer
 import io.github.crabzilla.pgclient.projection.EventRecord.Companion.fromJsonObject
 import io.vertx.core.json.JsonObject
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
-class EventRecordTest {
+@DisplayName("Serializing EventRecord")
+class EventRecordSerializationTest {
 
   val serDer = KotlinJsonSerDer(example1Json)
 

@@ -8,11 +8,12 @@ import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.example1Json
 import io.github.crabzilla.json.KotlinJsonSerDer
+import io.github.crabzilla.pgclient.TestRepository
 import io.github.crabzilla.pgclient.command.internal.PersistentSnapshotRepo
-import io.kotest.matchers.throwable.shouldHaveMessage
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -22,11 +23,11 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@DisplayName("Validating commands")
 class CommandsValidationIT {
 
   private lateinit var jsonSerDer: JsonSerDer
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var repository: SnapshotTestRepository<Customer>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
@@ -35,7 +36,6 @@ class CommandsValidationIT {
     val pgPool = pgPool(vertx)
     val snapshotRepo2 = PersistentSnapshotRepo<Customer, CustomerEvent>(customerConfig.name, jsonSerDer)
     commandController = CommandController(vertx, pgPool, jsonSerDer, customerConfig, snapshotRepo2)
-    repository = SnapshotTestRepository(pgPool, example1Json)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
@@ -43,14 +43,13 @@ class CommandsValidationIT {
   }
 
   @Test
-  @DisplayName("it can validate command")
-  fun s1(tc: VertxTestContext) {
+  fun `it can validate before command handler`(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "bad customer")
     val metadata = CommandMetadata(id)
     commandController.handle(metadata, cmd)
       .onFailure {
-        it shouldHaveMessage "[Bad customer!]"
+        assertEquals(it.message, "[Bad customer!]")
         tc.completeNow()
       }
       .onSuccess {
@@ -59,8 +58,7 @@ class CommandsValidationIT {
   }
 
   @Test
-  @DisplayName("it can validate command within command handler")
-  fun s2(tc: VertxTestContext) {
+  fun `it can validate within command handler`(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
     val metadata = CommandMetadata(id)

@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>v0.4.3</version>
+    <version>v0.4.4</version>
   </parent>
 
   <artifactId>crabzilla-vertx-pgclient</artifactId>
@@ -53,13 +53,6 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-service-factory</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.kotest</groupId>
-      <artifactId>kotest-assertions-core-jvm</artifactId>
-      <version>4.6.1</version>
       <scope>test</scope>
     </dependency>
 
