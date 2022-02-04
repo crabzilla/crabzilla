@@ -55,8 +55,10 @@ class PessimisticLockingIT {
         tc.failNow("it should fail")
       }
       .onFailure {
-        assertEquals(it.javaClass.simpleName, "LockingException")
-        tc.completeNow()
+        tc.verify {
+          assertEquals(it.javaClass.simpleName, "LockingException")
+          tc.completeNow()
+        }
       }
   }
 
