@@ -63,7 +63,6 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
         msg.reply(status)
       }
 
-
     val query = QuerySpecification.query(options.stateTypes, options.eventTypes)
     log.info(
       "Will start projection [{}] using query [{}] in [{}] milliseconds", options.projectionName, query,

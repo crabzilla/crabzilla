@@ -10,7 +10,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <java.version>11</java.version>
+    <java.version>17</java.version>
 
     <!-- crabzilla core -->
     <kotlin.version>1.6.10</kotlin.version>
@@ -227,9 +227,9 @@
         <groupId>org.jetbrains.kotlin</groupId>
         <version>${kotlin.version}</version>
         <configuration>
-          <jvmTarget>11</jvmTarget>
-          <languageVersion>1.5</languageVersion>
-          <apiVersion>1.5</apiVersion>
+          <jvmTarget>${java.version}</jvmTarget>
+<!--          <languageVersion>1.5</languageVersion>-->
+<!--          <apiVersion>1.5</apiVersion>-->
           <args>
             <arg>-Xallow-result-return-type</arg>
           </args>
@@ -290,8 +290,8 @@
         <version>${maven-compiler-plugin.version}</version>
         <configuration>
           <proc>none</proc>
-          <source>11</source>
-          <target>11</target>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
           <annotationProcessors>
             <annotationProcessor>io.vertx.serviceproxy.ServiceProxyProcessor</annotationProcessor>
           </annotationProcessors>
@@ -477,20 +477,20 @@
         </executions>
       </plugin>
 
-      <plugin>
-        <groupId>com.github.gantsign.maven</groupId>
-        <artifactId>ktlint-maven-plugin</artifactId>
-        <version>1.9.0</version>
-        <executions>
-          <execution>
-            <id>format-and-check</id>
-            <goals>
-              <goal>format</goal>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+<!--      <plugin>-->
+<!--        <groupId>com.github.gantsign.maven</groupId>-->
+<!--        <artifactId>ktlint-maven-plugin</artifactId>-->
+<!--        <version>1.11.12</version>-->
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <id>format-and-check</id>-->
+<!--            <goals>-->
+<!--              <goal>format</goal>-->
+<!--              <goal>check</goal>-->
+<!--            </goals>-->
+<!--          </execution>-->
+<!--        </executions>-->
+<!--      </plugin>-->
 
     </plugins>
 
