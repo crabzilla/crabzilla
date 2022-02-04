@@ -54,14 +54,18 @@ class RedeployingProjectionIT {
 
   @Test
   @Order(2)
-  fun `if it's already deployed, it will keep going`(tc: VertxTestContext, vertx: Vertx) {
+  fun `if it's already deployed, it will keep the current instance`(tc: VertxTestContext, vertx: Vertx) {
     vertx.deployProjector(
       config, "service:crabzilla.example1.customer.CustomersEventsProjector"
-    )
-      .onFailure {
-        tc.failNow(it)
-      }.onSuccess {
-        tc.completeNow()
-      }
+    ).compose {
+      vertx.deployProjector(
+        config, "service:crabzilla.example1.customer.CustomersEventsProjector"
+      )
+    }
+    .onFailure {
+      tc.failNow(it)
+    }.onSuccess {
+      tc.completeNow()
+    }
   }
 }
