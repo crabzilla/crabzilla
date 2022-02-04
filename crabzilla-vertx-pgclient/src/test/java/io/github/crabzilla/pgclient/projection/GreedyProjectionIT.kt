@@ -49,6 +49,7 @@ class GreedyProjectionIT {
       .preparedQuery("NOTIFY " + EventTopics.STATE_TOPIC.name.lowercase() + ", 'Customer'")
       .execute()
       .compose {
+        Thread.sleep(500)
         vertx.eventBus().request<JsonObject>("crabzilla.projectors.$target.status", null)
       }.onSuccess {
         println(it.body().encodePrettily())
