@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import java.util.concurrent.TimeUnit
 
 @ExtendWith(VertxExtension::class)
 @DisplayName("Forcing projector to be greedy")
@@ -61,6 +62,7 @@ class GreedyProjectionIT {
       .compose {
         vertx.eventBus().request<JsonObject>("crabzilla.projectors.$target.status", null)
       }.onSuccess {
+        tc.awaitCompletion(1, TimeUnit.SECONDS)
         if (it.body().getBoolean("greedy")) {
           tc.completeNow()
         } else {
