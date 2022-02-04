@@ -62,6 +62,8 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
           JsonObject().put("greedy", greedy).put("failures", failures.get()).put("currentOffset", currentOffset)
         msg.reply(status)
       }
+
+
     val query = QuerySpecification.query(options.stateTypes, options.eventTypes)
     log.info(
       "Will start projection [{}] using query [{}] in [{}] milliseconds", options.projectionName, query,

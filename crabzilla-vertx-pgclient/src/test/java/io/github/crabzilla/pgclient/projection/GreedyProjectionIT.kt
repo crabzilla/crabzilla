@@ -8,7 +8,6 @@ import io.github.crabzilla.pgclient.TestRepository
 import io.github.crabzilla.pgclient.command.cleanDatabase
 import io.github.crabzilla.pgclient.command.config
 import io.github.crabzilla.pgclient.command.pgPool
-import io.github.crabzilla.pgclient.deployProjector
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -50,6 +49,7 @@ class GreedyProjectionIT {
       .preparedQuery("NOTIFY " + EventTopics.STATE_TOPIC.name.lowercase() + ", 'Customer'")
       .execute()
       .compose {
+        Thread.sleep(1000)
         vertx.eventBus().request<JsonObject>("crabzilla.projectors.$target.status", null)
       }.onSuccess {
         println(it.body().encodePrettily())

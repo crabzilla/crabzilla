@@ -12,7 +12,6 @@ import io.github.crabzilla.pgclient.command.SnapshotType
 import io.github.crabzilla.pgclient.command.cleanDatabase
 import io.github.crabzilla.pgclient.command.config
 import io.github.crabzilla.pgclient.command.pgPool
-import io.github.crabzilla.pgclient.deployProjector
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
