@@ -45,10 +45,6 @@ class CommandSession<S : State, E : Event> {
     return apply(newEvents)
   }
 
-  fun register(event: E): CommandSession<S, E> {
-    return apply(listOf(event))
-  }
-
   fun toSessionData(): CommandSessionData {
     return CommandSessionData(originalState, appliedEvents, currentState)
   }
