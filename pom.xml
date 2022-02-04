@@ -56,7 +56,7 @@
     <connection>scm:git:git://github.com/crabzilla/crabzilla.git</connection>
     <developerConnection>scm:git:git://github.com/crabzilla/crabzilla.git</developerConnection>
     <url>https://github.com/crabzilla/crabzilla</url>
-    <tag>crabzilla-0.0.5</tag>
+    <tag>crabzilla-0.4.4</tag>
   </scm>
 
   <distributionManagement>
@@ -100,12 +100,6 @@
         <artifactId>crabzilla-vertx-pgclient</artifactId>
         <version>${project.version}</version>
       </dependency>
-
-<!--      <dependency>-->
-<!--          <groupId>io.github.crabzilla</groupId>-->
-<!--          <artifactId>crabzilla-projection</artifactId>-->
-<!--          <version>${project.version}</version>-->
-<!--      </dependency>-->
 
       <!-- vertx -->
 
