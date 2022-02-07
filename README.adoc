@@ -21,7 +21,7 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 . Allows consistently handling your commands and save resulting events into `Postgres`.
 . Allows projecting events to your read models.
 
-== Premisses
+== Approach
 
 * Using https://vertx.io/docs/vertx-pg-client/java/[Vertx] to implement a `non-blocking IO` event store.
 * Idiomatic Kotlin: type safeness: pattern matching, honouring your constructors.
