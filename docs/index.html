@@ -598,11 +598,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>[X] Optional Command validation</p>
 </li>
 <li>
-<p>[X] Optional "synchronous" Read Model projection: within the same
-command handler transaction</p>
-</li>
-<li>
-<p>[X] Command Handler can have external integrations: <code>FutureCommandHandler</code></p>
+<p>[X] Optional "synchronous" Read Model projection: within the same command handler transaction</p>
 </li>
 </ul>
 </div>
@@ -641,7 +637,7 @@ command handler transaction</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Java 11</p>
+<p>Java 17 (latest LTS)</p>
 </li>
 <li>
 <p>Maven</p>
@@ -683,14 +679,13 @@ used):</p>
 <div class="olist arabic">
 <ol class="arabic" start="3">
 <li>
-<p>Open another terminal and build it, running both unit and integration
-tests:</p>
+<p>Open another terminal and build it, running both unit and integration tests:</p>
 </li>
 </ol>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="bash" class="language-bash hljs">mvn clean install -DskipTests=false</code></pre>
+<pre class="highlightjs highlight"><code data-lang="bash" class="language-bash hljs">mvn clean install</code></pre>
 </div>
 </div>
 </div>
@@ -736,8 +731,7 @@ TestSpecifications.</p>
 <div class="olist arabic">
 <ol class="arabic" start="2">
 <li>
-<p>Add <code>crabzilla-kotlinx-json</code> to serialize/deserialize your Commands, Events
-and States to JSON.</p>
+<p>Add <code>crabzilla-kotlinx-json</code> to serialize/deserialize your Commands, Events and States to JSON.</p>
 </li>
 </ol>
 </div>
@@ -753,8 +747,7 @@ and States to JSON.</p>
 <div class="olist arabic">
 <ol class="arabic" start="3">
 <li>
-<p>Add <code>crabzilla-vertx-pgclient</code> to consistently append your events to
-Postgres.</p>
+<p>Add <code>crabzilla-vertx-pgclient</code> to consistently append and project your events to Postgres.</p>
 </li>
 </ol>
 </div>
@@ -767,25 +760,13 @@ Postgres.</p>
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>4Add <code>crabzilla-projection</code> to project your events to read model.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
-    &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
-    &lt;artifactId&gt;crabzilla-projection&lt;/artifactId&gt;
-    &lt;version&gt;see latest jitpack version&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-</div>
-</div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version v0.3.6<br>
-Last updated 2021-11-20 16:14:01 -0300
+Version v0.4.4<br>
+Last updated 2022-02-07 18:09:43 -0300
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
