@@ -83,7 +83,6 @@ git clone https://github.com/crabzilla/crabzilla
 cd crabzilla
 ----
 
-[start=2]
 . Start docker-compose running a Postgres database (port 5432 will be
 used):
 
@@ -92,7 +91,6 @@ used):
 docker-compose up
 ----
 
-[start=3]
 . Open another terminal and build it, running both unit and integration tests:
 
 [source,bash]
@@ -114,8 +112,7 @@ mvn clean install
 </repositories>
 ----
 
-. Add `crabzilla-core` to write Commands, Events, States and
-TestSpecifications.
+. Add `crabzilla-core` to write Commands, Events, States and TestSpecifications.
 
 [source,xml]
 ----
@@ -126,7 +123,6 @@ TestSpecifications.
 </dependency>
 ----
 
-[start=2]
 . Add `crabzilla-kotlinx-json` to serialize/deserialize your Commands, Events and States to JSON.
 
 [source,xml]
@@ -138,7 +134,6 @@ TestSpecifications.
 </dependency>
 ----
 
-[start=3]
 . Add `crabzilla-vertx-pgclient` to consistently append and project your events to Postgres.
 
 [source,xml]
