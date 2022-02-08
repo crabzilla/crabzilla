@@ -80,6 +80,7 @@ class CommandController<S : State, C : Command, E : Event>(
   private val notificationsByStateType = HashSet<String>()
 
   init {
+    notificationsByStateType.add(config.name)
     vertx.setPeriodic(DEFAULT_NOTIFICATION_INTERVAL) {
       notifyPg()
     }

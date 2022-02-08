@@ -57,9 +57,7 @@ TODO
 ** [X] Commands persistence
 ** [X] Events persistence
 ** [X] Optional Command validation
-** [X] Optional "synchronous" Read Model projection: within the same
-command handler transaction
-** [X] Command Handler can have external integrations: `FutureCommandHandler`
+** [X] Optional "synchronous" Read Model projection: within the same command handler transaction
 * [X] `crabzila-projection`
 ** [X] Based on Verticles (single writer)
 ** [X] Batch projection of many events within a single transaction
@@ -71,7 +69,7 @@ command handler transaction
 
 === Requirements
 
-* Java 11
+* Java 17 (latest LTS)
 * Maven
 * Docker compose
 
@@ -95,12 +93,11 @@ docker-compose up
 ----
 
 [start=3]
-. Open another terminal and build it, running both unit and integration
-tests:
+. Open another terminal and build it, running both unit and integration tests:
 
 [source,bash]
 ----
-mvn clean install -DskipTests=false
+mvn clean install
 ----
 
 == Getting started
@@ -130,8 +127,7 @@ TestSpecifications.
 ----
 
 [start=2]
-. Add `crabzilla-kotlinx-json` to serialize/deserialize your Commands, Events
-and States to JSON.
+. Add `crabzilla-kotlinx-json` to serialize/deserialize your Commands, Events and States to JSON.
 
 [source,xml]
 ----
@@ -143,8 +139,7 @@ and States to JSON.
 ----
 
 [start=3]
-. Add `crabzilla-vertx-pgclient` to consistently append your events to
-Postgres.
+. Add `crabzilla-vertx-pgclient` to consistently append and project your events to Postgres.
 
 [source,xml]
 ----
@@ -154,15 +149,3 @@ Postgres.
     <version>see latest jitpack version</version>
 </dependency>
 ----
-
-4Add `crabzilla-projection` to project your events to read model.
-
-[source,xml]
-----
-<dependency>
-    <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-projection</artifactId>
-    <version>see latest jitpack version</version>
-</dependency>
-----
-
