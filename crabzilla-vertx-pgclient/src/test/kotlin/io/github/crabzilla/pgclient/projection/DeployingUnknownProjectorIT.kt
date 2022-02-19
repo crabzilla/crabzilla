@@ -1,8 +1,5 @@
 package io.github.crabzilla.pgclient.projection
 
-import io.github.crabzilla.core.json.JsonSerDer
-import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.json.KotlinJsonSerDer
 import io.github.crabzilla.pgclient.TestRepository
 import io.github.crabzilla.pgclient.command.cleanDatabase
 import io.github.crabzilla.pgclient.command.config
@@ -19,12 +16,10 @@ import org.junit.jupiter.api.extension.ExtendWith
 @DisplayName("Deploying an invalid events projector")
 class DeployingUnknownProjectorIT {
 
-  lateinit var jsonSerDer: JsonSerDer
   private lateinit var testRepo: TestRepository
 
   @Test
   fun `deploying an invalid projector`(vertx: Vertx, tc: VertxTestContext) {
-    jsonSerDer = KotlinJsonSerDer(example1Json)
     val pgPool = pgPool(vertx)
     testRepo = TestRepository(pgPool)
     val options = DeploymentOptions().setConfig(config)

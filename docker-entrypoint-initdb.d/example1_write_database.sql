@@ -2,11 +2,6 @@ CREATE DATABASE ex1_crabzilla OWNER user1;
 
 \connect ex1_crabzilla ;
 
-CREATE TABLE publications (
-   name TEXT PRIMARY KEY NOT NULL,
-   sequence BIGINT
-);
-
 CREATE TABLE projections (
    name TEXT PRIMARY KEY NOT NULL,
    sequence BIGINT

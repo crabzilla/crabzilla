@@ -1,20 +1,20 @@
 package io.github.crabzilla.pgclient.command.internal
 
-import io.github.crabzilla.core.Event
-import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.EventHandler
-import io.github.crabzilla.core.json.JsonSerDer
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
+import kotlinx.serialization.PolymorphicSerializer
+import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
-internal class OnDemandSnapshotRepo<S : State, E : Event>(
+internal class OnDemandSnapshotRepo<S : Any, E : Any>(
   private val eventHandler: EventHandler<S, E>,
-  private val jsonSerDer: JsonSerDer,
+  private val json: Json,
+  private val eventSerDer: PolymorphicSerializer<E>
 ) :
   SnapshotRepository<S, E> {
 
@@ -48,7 +48,7 @@ internal class OnDemandSnapshotRepo<S : State, E : Event>(
         } else {
           var state: S? = null
           events.forEach {
-            val event = jsonSerDer.eventFromJson(it.first) as E
+            val event = json.decodeFromString(eventSerDer, it.first)
             state = eventHandler.handleEvent(state, event)
           }
           Future.succeededFuture(Snapshot(state!!, events.last().second))

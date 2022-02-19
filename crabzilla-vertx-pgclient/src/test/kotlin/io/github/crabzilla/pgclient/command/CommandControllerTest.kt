@@ -2,8 +2,7 @@ package io.github.crabzilla.pgclient.command
 
 import io.github.crabzilla.example1.customer.CustomersEventsProjector
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.json.KotlinJsonSerDer
+import io.github.crabzilla.example1.customer.example1Json
 import io.vertx.core.Vertx
 import io.vertx.pgclient.PgPool
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -17,8 +16,7 @@ internal class CommandControllerTest {
   fun `a command controller can be created with SnapshotType ON_DEMAND`() {
     val vertx = Vertx.vertx()
     val pgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
-    val jsonSerDer = KotlinJsonSerDer(example1Json)
-    val controller = CommandController.create(vertx, pgPool, jsonSerDer, customerConfig, SnapshotType.ON_DEMAND)
+    val controller = CommandController.create(vertx, pgPool, example1Json, customerConfig, SnapshotType.ON_DEMAND)
     assertNotNull(controller)
   }
 
@@ -26,8 +24,7 @@ internal class CommandControllerTest {
   fun `a command controller can be created with SnapshotType PERSISTENT`() {
     val vertx = Vertx.vertx()
     val pgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
-    val jsonSerDer = KotlinJsonSerDer(example1Json)
-    val controller = CommandController.create(vertx, pgPool, jsonSerDer, customerConfig, SnapshotType.PERSISTENT)
+    val controller = CommandController.create(vertx, pgPool, example1Json, customerConfig, SnapshotType.ON_DEMAND)
     assertNotNull(controller)
   }
 
@@ -35,10 +32,9 @@ internal class CommandControllerTest {
   fun `a command controller can be created with a custom synchronous event projector`() {
     val vertx = Vertx.vertx()
     val pgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
-    val jsonSerDer = KotlinJsonSerDer(example1Json)
     val controller = CommandController
       .create(
-        vertx, pgPool, jsonSerDer, customerConfig, SnapshotType.ON_DEMAND,
+        vertx, pgPool, example1Json, customerConfig, SnapshotType.ON_DEMAND,
         CustomersEventsProjector("customers")
       )
     assertNotNull(controller)

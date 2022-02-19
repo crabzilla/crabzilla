@@ -6,10 +6,18 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>v0.4.4</version>
+    <version>v0.4.5</version>
   </parent>
 
   <artifactId>crabzilla-core</artifactId>
   <packaging>jar</packaging>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.kotlinx</groupId>
+      <artifactId>kotlinx-serialization-json</artifactId>
+      <version>${serialization.version}</version>
+    </dependency>
+  </dependencies>
 
 </project>

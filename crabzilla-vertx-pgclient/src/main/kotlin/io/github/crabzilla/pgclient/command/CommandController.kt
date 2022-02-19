@@ -1,15 +1,10 @@
 package io.github.crabzilla.pgclient.command
 
-import com.github.f4b6a3.uuid.UuidCreator
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.Event
 import io.github.crabzilla.core.EventTopics
-import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.command.CommandException.LockingException
 import io.github.crabzilla.core.command.CommandException.ValidationException
 import io.github.crabzilla.core.command.CommandHandler
-import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.core.metadata.EventMetadata
 import io.github.crabzilla.pgclient.EventsProjector
@@ -26,13 +21,14 @@ import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
+import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
-class CommandController<S : State, C : Command, E : Event>(
+class CommandController<S: Any, C: Any, E: Any>(
   vertx: Vertx,
   private val pgPool: PgPool,
-  private val jsonSerDer: JsonSerDer,
+  private val json: Json,
   private val config: CommandControllerConfig<S, C, E>,
   private val snapshotRepository: SnapshotRepository<S, E>,
   private val eventsProjector: EventsProjector? = null
@@ -52,35 +48,34 @@ class CommandController<S : State, C : Command, E : Event>(
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
     private const val DEFAULT_NOTIFICATION_INTERVAL = 3000L
 
-    fun <S : State, C : Command, E : Event> create(
+    fun <S: Any, C: Any, E: Any> create(
       vertx: Vertx,
       pgPool: PgPool,
-      jsonSerDer: JsonSerDer,
+      json: Json,
       config: CommandControllerConfig<S, C, E>,
       snapshotType: SnapshotType,
       eventsProjector: EventsProjector? = null
     ): CommandController<S, C, E> {
-      fun <S : State, C : Command, E : Event> snapshotRepo(
+      fun <S: Any, C: Any, E: Any> snapshotRepo(
         snapshotType: SnapshotType,
-        jsonSerDer: JsonSerDer,
         config: CommandControllerConfig<S, C, E>
       ): SnapshotRepository<S, E> {
         return when (snapshotType) {
-          SnapshotType.ON_DEMAND -> OnDemandSnapshotRepo(config.eventHandler, jsonSerDer)
-          SnapshotType.PERSISTENT -> PersistentSnapshotRepo(config.name, jsonSerDer)
+          SnapshotType.ON_DEMAND -> OnDemandSnapshotRepo(config.eventHandler, json, config.eventSerDer)
+          SnapshotType.PERSISTENT -> PersistentSnapshotRepo(config.stateSerDer, json)
         }
       }
-      return CommandController(
-        vertx, pgPool, jsonSerDer, config,
-        snapshotRepo(snapshotType, jsonSerDer, config), eventsProjector
-      )
+      return CommandController(vertx, pgPool, json, config, snapshotRepo(snapshotType, config), eventsProjector)
     }
   }
+
+  private val stateSerialName = config.stateSerialName()
 
   private val notificationsByStateType = HashSet<String>()
 
   init {
-    notificationsByStateType.add(config.name)
+    log.info("Starting CommandController for $stateSerialName")
+    notificationsByStateType.add(stateSerialName)
     vertx.setPeriodic(DEFAULT_NOTIFICATION_INTERVAL) {
       notifyPg()
     }
@@ -152,7 +147,7 @@ class CommandController<S : State, C : Command, E : Event>(
               CommandSideEffect(commandSideEffect.appendedEvents, commandSideEffect.resultingVersion)
             }
           }.compose {
-            notificationsByStateType.add(config.name)
+            notificationsByStateType.add(stateSerialName)
             succeededFuture(it)
           }
       }
@@ -171,7 +166,7 @@ class CommandController<S : State, C : Command, E : Event>(
   private fun lock(conn: SqlConnection, lockId: Int, metadata: CommandMetadata): Future<Void> {
     return conn
       .preparedQuery(SQL_LOCK)
-      .execute(Tuple.of(config.name.hashCode(), lockId))
+      .execute(Tuple.of(stateSerialName.hashCode(), lockId))
       .compose { pgRow ->
         if (pgRow.first().getBoolean("locked")) {
           succeededFuture()
@@ -182,7 +177,7 @@ class CommandController<S : State, C : Command, E : Event>(
   }
 
   private fun appendCommand(conn: SqlConnection, command: C, metadata: CommandMetadata): Future<Void> {
-    val cmdAsJson = jsonSerDer.toJson(command)
+    val cmdAsJson = json.encodeToString(config.commandSerDer, command)
     log.debug("Will append command {} as {}", command, cmdAsJson)
     val params = Tuple.of(
       metadata.commandId,
@@ -200,10 +195,10 @@ class CommandController<S : State, C : Command, E : Event>(
     metadata: CommandMetadata
   ): Future<CommandSideEffect> {
     var version = initialVersion
-    val eventIds = events.map { UuidCreator.getTimeOrdered() }
+    val eventIds = events.map { UUID.randomUUID() }
     val tuples: List<Tuple> = events.mapIndexed { index, event ->
       val causationId: UUID = if (index == 0) metadata.commandId else eventIds[(index - 1)]
-      val eventAsJson = jsonSerDer.toJson(event)
+      val eventAsJson = json.encodeToString(config.eventSerDer, event)
       val eventId = eventIds[index]
       val jsonObject = JsonObject(eventAsJson)
       val type = jsonObject.getString("type")
@@ -211,7 +206,7 @@ class CommandController<S : State, C : Command, E : Event>(
         type,
         causationId,
         metadata.correlationId,
-        config.name,
+        stateSerialName,
         metadata.stateId,
         jsonObject,
         ++version,
@@ -228,7 +223,7 @@ class CommandController<S : State, C : Command, E : Event>(
           val correlationId = tuples[index].getUUID(2)
           val eventId = tuples[index].getUUID(7)
           val eventMetadata = EventMetadata(
-            config.name, stateId = metadata.stateId, eventId,
+            stateSerialName, stateId = metadata.stateId, eventId,
             correlationId, eventId, sequence
           )
           appendedEventList.add(Pair(tuples[index].getJsonObject(5), eventMetadata))
@@ -252,7 +247,7 @@ class CommandController<S : State, C : Command, E : Event>(
     ) { currentFuture: Future<Void>, appendedEvent: Pair<JsonObject, EventMetadata> ->
       currentFuture.compose {
         val eventMetadata = EventMetadata(
-          config.name,
+          stateSerialName,
           metadata.stateId,
           appendedEvent.second.eventId,
           metadata.commandId,

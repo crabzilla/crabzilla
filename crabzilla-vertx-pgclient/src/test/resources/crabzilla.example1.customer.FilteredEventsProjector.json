@@ -3,14 +3,14 @@
   "options": {
     "config" : {
       "viewName": "customers",
-      "jsonFactoryClassName": "io.github.crabzilla.example1.Example1JsonContextFactory",
       "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
       "initialInterval" : 2,
-      "interval" : 10,
+      "interval" : 2,
       "metricsInterval" : 10,
       "maxInterval" : 10,
       "maxNumberOfRows": 1,
       "stateTypes": ["Customer"],
-      "eventTypes": ["CustomerRegistered", "CustomerActivated"]    }
+      "eventTypes": ["CustomerRegistered", "CustomerActivated"]
+    }
   }
 }

@@ -1,12 +1,9 @@
 package io.github.crabzilla.core.command
 
-import io.github.crabzilla.core.Event
-import io.github.crabzilla.core.State
-
 /**
  * To apply and track events against state
  */
-class CommandSession<S : State, E : Event> {
+class CommandSession<S, E> {
   private val originalState: S
   private val eventHandler: EventHandler<S, E>
   private val appliedEvents = mutableListOf<E>()
@@ -45,7 +42,7 @@ class CommandSession<S : State, E : Event> {
     return apply(newEvents)
   }
 
-  fun toSessionData(): CommandSessionData {
+  fun toSessionData(): CommandSessionData<S, E> {
     return CommandSessionData(originalState, appliedEvents, currentState)
   }
 }

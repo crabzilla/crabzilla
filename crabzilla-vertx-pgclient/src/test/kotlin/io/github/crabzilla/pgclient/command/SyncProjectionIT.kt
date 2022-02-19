@@ -1,15 +1,14 @@
 package io.github.crabzilla.pgclient.command
 
-import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomersEventsProjector
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.customer.customerEventHandler
-import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.json.KotlinJsonSerDer
+import io.github.crabzilla.example1.customer.example1Json
 import io.github.crabzilla.pgclient.TestRepository
 import io.github.crabzilla.pgclient.command.internal.OnDemandSnapshotRepo
 import io.github.crabzilla.pgclient.command.internal.SnapshotRepository
@@ -30,7 +29,6 @@ import java.util.UUID
 @DisplayName("Running synchronous projection")
 class SyncProjectionIT {
 
-  private lateinit var jsonSerDer: JsonSerDer
   private lateinit var pgPool: PgPool
   private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var snapshotRepository: SnapshotRepository<Customer, CustomerEvent>
@@ -38,14 +36,13 @@ class SyncProjectionIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    jsonSerDer = KotlinJsonSerDer(example1Json)
     pgPool = pgPool(vertx)
     controller = CommandController.create(
-      vertx, pgPool, jsonSerDer,
+      vertx, pgPool, example1Json,
       customerConfig, SnapshotType.PERSISTENT,
       CustomersEventsProjector("customers")
     )
-    snapshotRepository = OnDemandSnapshotRepo(customerEventHandler, jsonSerDer)
+    snapshotRepository = OnDemandSnapshotRepo(customerEventHandler, example1Json, customerConfig.eventSerDer)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
@@ -56,8 +53,8 @@ class SyncProjectionIT {
   @DisplayName("appending 1 command with 2 events results in version 2 ")
   fun s1(tc: VertxTestContext) {
     val id = UUID.randomUUID()
-    val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata(id)
+    val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
+    val metadata = CommandMetadata.new(id)
     controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -79,11 +76,11 @@ class SyncProjectionIT {
   @DisplayName("appending 2 commands with 2 and 1 event, respectively results in version 3")
   fun s2(tc: VertxTestContext) {
     val id = UUID.randomUUID()
-    val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")
-    val metadata1 = CommandMetadata(id)
+    val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
+    val metadata1 = CommandMetadata.new(id)
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(id)
+    val metadata2 = CommandMetadata.new(id)
 
     controller.handle(metadata1, cmd1)
       .onFailure { tc.failNow(it) }
@@ -114,7 +111,7 @@ class SyncProjectionIT {
         .onFailure { tc.failNow(it) }
         .onSuccess { snapshot0 ->
           assert(snapshot0 == null)
-          controller.handle(CommandMetadata(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
+          controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
             .onFailure { tc.failNow(it) }
             .onSuccess {
               snapshotRepository.get(conn, id)
@@ -122,7 +119,7 @@ class SyncProjectionIT {
                 .onSuccess { snapshot1 ->
                   assert(1 == snapshot1!!.version)
                   assert(snapshot1.state == Customer(id, "cust#$id"))
-                  controller.handle(CommandMetadata(id), CustomerCommand.ActivateCustomer("because yes"))
+                  controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes"))
                     .onFailure { tc.failNow(it) }
                     .onSuccess {
                       snapshotRepository.get(conn, id)

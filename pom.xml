@@ -5,7 +5,7 @@
 
   <groupId>io.github.crabzilla</groupId>
   <artifactId>crabzilla</artifactId>
-  <version>v0.4.4</version>
+  <version>v0.4.5</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -68,7 +68,7 @@
 
   <modules>
     <module>crabzilla-core</module>
-    <module>crabzilla-kotlinx-json</module>
+<!--    <module>crabzilla-kotlinx-json</module>-->
     <module>crabzilla-vertx-pgclient</module>
     <module>coverage-report</module>
   </modules>
@@ -85,11 +85,11 @@
         <version>${project.version}</version>
       </dependency>
 
-      <dependency>
-        <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-kotlinx-json</artifactId>
-        <version>${project.version}</version>
-      </dependency>
+<!--      <dependency>-->
+<!--        <groupId>io.github.crabzilla</groupId>-->
+<!--        <artifactId>crabzilla-kotlinx-json</artifactId>-->
+<!--        <version>${project.version}</version>-->
+<!--      </dependency>-->
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
@@ -362,20 +362,20 @@
         </executions>
       </plugin>
 
-      <plugin>
-        <groupId>com.github.gantsign.maven</groupId>
-        <artifactId>ktlint-maven-plugin</artifactId>
-        <version>1.11.2</version>
-        <executions>
-          <execution>
-            <id>format-and-check</id>
-            <goals>
-              <goal>format</goal>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+<!--      <plugin>-->
+<!--        <groupId>com.github.gantsign.maven</groupId>-->
+<!--        <artifactId>ktlint-maven-plugin</artifactId>-->
+<!--        <version>1.11.2</version>-->
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <id>format-and-check</id>-->
+<!--            <goals>-->
+<!--              <goal>format</goal>-->
+<!--              <goal>check</goal>-->
+<!--            </goals>-->
+<!--          </execution>-->
+<!--        </executions>-->
+<!--      </plugin>-->
 
     </plugins>
 

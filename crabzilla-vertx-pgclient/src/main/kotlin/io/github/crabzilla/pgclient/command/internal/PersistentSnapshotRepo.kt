@@ -1,21 +1,19 @@
 package io.github.crabzilla.pgclient.command.internal
 
-import io.github.crabzilla.core.Event
-import io.github.crabzilla.core.State
-import io.github.crabzilla.core.json.JsonSerDer
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
+import kotlinx.serialization.PolymorphicSerializer
+import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
-internal class PersistentSnapshotRepo<S : State, E : Event>(
-  private val stateName: String,
-  private val jsonSerDer: JsonSerDer
-) :
+internal class PersistentSnapshotRepo<S : Any, E : Any>(
+  private val stateSerDer: PolymorphicSerializer<S>,
+  private val json: Json) :
   SnapshotRepository<S, E> {
 
   companion object {
@@ -47,13 +45,13 @@ internal class PersistentSnapshotRepo<S : State, E : Event>(
         val row = rowSet.first()
         val version = row.getInteger("version")
         val stateAsJson = JsonObject(row.getValue("json_content").toString())
-        val state = jsonSerDer.stateFromJson(stateAsJson.toString()) as S
+        val state = json.decodeFromString(stateSerDer, stateAsJson.toString())
         Snapshot(state, version)
       }
     }
     return conn
       .preparedQuery(SQL_GET_SNAPSHOT)
-      .execute(Tuple.of(id, stateName))
+      .execute(Tuple.of(id, stateSerDer.descriptor.serialName))
       .map { pgRow -> snapshot(pgRow) }
   }
 
@@ -64,14 +62,14 @@ internal class PersistentSnapshotRepo<S : State, E : Event>(
     resultingVersion: Int,
     newState: S
   ): Future<Void> {
-    val newSTateAsJson = jsonSerDer.toJson(newState)
+    val newSTateAsJson = json.encodeToString(stateSerDer, newState)
     log.debug("Will append {} snapshot {} to version {}", id, newSTateAsJson, resultingVersion)
     return if (originalVersion == 0) {
       val params = Tuple.of(
         resultingVersion,
         JsonObject(newSTateAsJson),
         id,
-        stateName
+        stateSerDer.descriptor.serialName
       )
       conn.preparedQuery(SQL_INSERT_VERSION)
         .execute(params)
@@ -82,7 +80,7 @@ internal class PersistentSnapshotRepo<S : State, E : Event>(
         JsonObject(newSTateAsJson),
         id,
         originalVersion,
-        stateName
+        stateSerDer.descriptor.serialName
       )
       conn
         .preparedQuery(SQL_UPDATE_VERSION)

@@ -1,15 +1,13 @@
 package io.github.crabzilla.pgclient.command
 
 import io.github.crabzilla.core.command.CommandSession
-import io.github.crabzilla.core.json.JsonSerDer
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.customer.customerEventHandler
-import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.json.KotlinJsonSerDer
+import io.github.crabzilla.example1.customer.example1Json
 import io.github.crabzilla.pgclient.TestRepository
 import io.github.crabzilla.pgclient.command.internal.OnDemandSnapshotRepo
 import io.github.crabzilla.pgclient.command.internal.SnapshotRepository
@@ -30,7 +28,6 @@ import java.util.UUID
 @DisplayName("Storing on demand snapshots")
 class OnDemandSnapshotIT {
 
-  private lateinit var jsonSerDer: JsonSerDer
   private lateinit var pgPool: PgPool
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var snapshotRepository: SnapshotRepository<Customer, CustomerEvent>
@@ -38,10 +35,9 @@ class OnDemandSnapshotIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    jsonSerDer = KotlinJsonSerDer(example1Json)
     pgPool = pgPool(vertx)
-    snapshotRepository = OnDemandSnapshotRepo(customerEventHandler, jsonSerDer)
-    commandController = CommandController(vertx, pgPool, jsonSerDer, customerConfig, snapshotRepository)
+    snapshotRepository = OnDemandSnapshotRepo(customerEventHandler, example1Json, customerConfig.eventSerDer)
+    commandController = CommandController(vertx, pgPool, example1Json, customerConfig, snapshotRepository)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
@@ -53,7 +49,7 @@ class OnDemandSnapshotIT {
   fun s1(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata(id)
+    val metadata = CommandMetadata.new(id)
     val constructorResult = Customer.create(id, cmd.name)
     val session = CommandSession(constructorResult, customerEventHandler)
     session.execute { it.activate(cmd.reason) }
@@ -75,13 +71,13 @@ class OnDemandSnapshotIT {
   fun s11(tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")
-    val metadata1 = CommandMetadata(id)
+    val metadata1 = CommandMetadata.new(id)
     val constructorResult = Customer.create(id, cmd1.name)
     val session1 = CommandSession(constructorResult, customerEventHandler)
     session1.execute { it.activate(cmd1.reason) }
 
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata(id)
+    val metadata2 = CommandMetadata.new(id)
     val customer2 = Customer(id, cmd1.name, true, cmd2.reason)
     val session2 = CommandSession(customer2, customerEventHandler)
     session2.execute { it.deactivate(cmd2.reason) }
