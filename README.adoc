@@ -28,7 +28,7 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 * Immutability: state transitions occurs after computing results of pure functions `(State, Event) -> State`.
 * https://github.com/crabzilla/crabzilla/blob/main/crabzilla-vertx-pgclient/src/main/java/io/github/crabzilla/pgclient/command/CommandController.kt[CommandController] is consistent by default: before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]
 * https://github.com/crabzilla/crabzilla/blob/main/crabzilla-vertx-pgclient/src/main/java/io/github/crabzilla/pgclient/projection/EventsProjectorVerticle.kt[EventsProjectorVerticle] allows handling your read model projection's strait from database: no need to publish your events to Kafka or NATS.
-* You can even use https://vertx.io/docs/#clustering[Vertx Clustering] to deploy your EventsProjectorVerticle instances. Projections with singleton clustered verticles (singleton writers) and also with High Availability built in Vertx :)
+* You can use https://vertx.io/docs/#clustering[Vertx Clustering] to deploy your EventsProjectorVerticle instances. Projections with singleton clustered verticles (singleton writers) and also with High Availability built in Vertx :)
 * JSON serialization using https://kotlinlang.org/docs/serialization.html[Kotlin serialization].
 
 == Example application
