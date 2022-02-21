@@ -2,11 +2,6 @@ CREATE DATABASE ex1_crabzilla OWNER user1;
 
 \connect ex1_crabzilla ;
 
-CREATE TABLE publications (
-   name TEXT PRIMARY KEY NOT NULL,
-   sequence BIGINT
-);
-
 CREATE TABLE projections (
    name TEXT PRIMARY KEY NOT NULL,
    sequence BIGINT
@@ -84,7 +79,6 @@ CREATE TABLE customer_summary (
     PRIMARY KEY (id)
 );
 
-INSERT INTO publications (name, sequence) values ('customers', 0);
 INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.CustomersEventsProjector', 0);
 INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.CustomersSlowEventsProjector', 0);
 INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.FilteredEventsProjector', 0);

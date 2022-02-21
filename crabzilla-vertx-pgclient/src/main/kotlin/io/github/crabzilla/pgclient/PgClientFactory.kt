@@ -6,7 +6,11 @@ import io.vertx.sqlclient.PoolOptions
 
 object PgClientFactory {
 
-  fun createPgConnectOptions(sqlConfig: JsonObject): PgConnectOptions {
+  const val DB_CONFIG_TAG: String = "targetDatabase"
+
+  fun createPgConnectOptions(config: JsonObject): PgConnectOptions {
+    val targetDb = config.getString(DB_CONFIG_TAG)
+    val sqlConfig = config.getJsonObject(targetDb)?: config
     val pgConnectOptions = PgConnectOptions()
     val host: String = sqlConfig.getString("host")
     val port: Int = sqlConfig.getInteger("port")
@@ -22,8 +26,10 @@ object PgClientFactory {
   }
 
   fun createPoolOptions(config: JsonObject): PoolOptions {
+    val targetDb = config.getString(DB_CONFIG_TAG)
+    val sqlConfig = config.getJsonObject(targetDb)?: config
     val poolOptions = PoolOptions()
-    val poolConfig: JsonObject = config.getJsonObject("pool") ?: return poolOptions
+    val poolConfig: JsonObject = sqlConfig.getJsonObject("pool") ?: return poolOptions
     if (poolConfig.containsKey("maxSize")) {
       poolOptions.maxSize = poolConfig.getInteger("maxSize")
     }

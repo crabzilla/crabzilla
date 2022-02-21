@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>v0.4.4</version>
+    <version>v0.4.5</version>
   </parent>
 
   <artifactId>coverage-report</artifactId>
@@ -19,10 +19,10 @@
       <artifactId>crabzilla-core</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-kotlinx-json</artifactId>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>io.github.crabzilla</groupId>-->
+<!--      <artifactId>crabzilla-kotlinx-json</artifactId>-->
+<!--    </dependency>-->
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>

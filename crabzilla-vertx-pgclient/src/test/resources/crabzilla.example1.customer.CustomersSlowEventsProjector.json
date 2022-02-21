@@ -3,7 +3,6 @@
   "options": {
     "config" : {
       "viewName": "customers",
-      "jsonFactoryClassName": "io.github.crabzilla.example1.Example1JsonContextFactory",
       "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
       "targetEndpoint" : "projection.customers",
       "initialInterval": 50000,

@@ -1,6 +1,7 @@
 package io.github.crabzilla.pgclient.command
 
 import io.github.crabzilla.pgclient.PgClientFactory
+import io.github.crabzilla.pgclient.PgClientFactory.DB_CONFIG_TAG
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -9,18 +10,19 @@ import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.PoolOptions
 import io.vertx.sqlclient.SqlClient
 
-val config: JsonObject =
+private val dbConfig: JsonObject =
   JsonObject()
     .put("port", 5432)
     .put("host", "0.0.0.0")
     .put("database", "ex1_crabzilla")
     .put("user", "user1")
     .put("password", "pwd1")
-    .put(
-      "pool",
-      JsonObject()
-        .put("maxSize", 7)
+    .put("pool", JsonObject().put("maxSize", 7)
     )
+
+val config: JsonObject = JsonObject()
+  .put(DB_CONFIG_TAG, "dbConfig")
+  .put("dbConfig", dbConfig)
 
 val connectOptions: PgConnectOptions = PgConnectOptions()
   .setPort(5432)
@@ -44,7 +46,6 @@ fun cleanDatabase(sqlClient: SqlClient): Future<Void> {
   return sqlClient.query("delete from commands").execute()
     .compose { sqlClient.query("delete from events").execute() }
     .compose { sqlClient.query("delete from snapshots").execute() }
-    .compose { sqlClient.query("update publications set sequence = 0").execute() }
     .compose { sqlClient.query("update projections set sequence = 0").execute() }
     .compose { sqlClient.query("alter sequence events_sequence_seq restart").execute() }
     .compose { sqlClient.query("delete from customer_summary").execute() }

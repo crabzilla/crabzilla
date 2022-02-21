@@ -1,11 +1,12 @@
 package io.github.crabzilla.pgclient.projection
 
 import io.github.crabzilla.core.metadata.EventMetadata
+import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.json.KotlinJsonSerDer
+import io.github.crabzilla.example1.customer.example1Json
 import io.github.crabzilla.pgclient.projection.EventRecord.Companion.fromJsonObject
 import io.vertx.core.json.JsonObject
+import kotlinx.serialization.encodeToString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -14,11 +15,9 @@ import java.util.UUID
 @DisplayName("Serializing EventRecord")
 class EventRecordSerializationTest {
 
-  val serDer = KotlinJsonSerDer(example1Json)
-
   val id = UUID.fromString("c2aeadc1-d6b5-4df6-82a4-7dec4f1df429")
-  val event = CustomerRegistered(id, "customer1")
-  val eventAsJson = JsonObject(serDer.toJson(event))
+  val event = CustomerRegistered(id, "customer1") as CustomerEvent
+  val eventAsJson = JsonObject(example1Json.encodeToString(event))
   val eventMetadata = EventMetadata(
     "Customer", id, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 1
   )

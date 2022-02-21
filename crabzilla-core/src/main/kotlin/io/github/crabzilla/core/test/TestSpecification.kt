@@ -1,8 +1,5 @@
 package io.github.crabzilla.core.test
 
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.Event
-import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.command.CommandException.ValidationException
 import io.github.crabzilla.core.command.CommandHandler
@@ -11,7 +8,7 @@ import io.github.crabzilla.core.command.CommandSession
 /**
  * A helper for basic specifications
  */
-class TestSpecification<S : State, C : Command, E : Event>(val config: CommandControllerConfig<S, C, E>) {
+class TestSpecification<S: Any, C: Any, E: Any>(val config: CommandControllerConfig<S, C, E>) {
 
   private var state: S? = null
   private val events: MutableList<E> = mutableListOf() // TODO replace with AppendedEvents (to get EventMetadata)

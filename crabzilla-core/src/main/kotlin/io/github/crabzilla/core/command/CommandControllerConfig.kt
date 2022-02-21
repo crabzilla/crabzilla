@@ -1,15 +1,20 @@
 package io.github.crabzilla.core.command
 
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.Event
-import io.github.crabzilla.core.State
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.PolymorphicSerializer
+import kotlinx.serialization.serializer
 
 /**
  * A configuration for a command controller
  */
-class CommandControllerConfig<S : State, C : Command, E : Event>(
-  val name: String,
+class CommandControllerConfig<S: Any, C: Any, E: Any>(
+  val stateSerDer: PolymorphicSerializer<S>,
+  val commandSerDer: PolymorphicSerializer<C>,
+  val eventSerDer: PolymorphicSerializer<E>,
   val eventHandler: EventHandler<S, E>,
   val commandHandlerFactory: () -> CommandHandler<S, C, E>,
   val commandValidator: CommandValidator<C>? = null
-)
+) {
+  @OptIn(InternalSerializationApi::class)
+  fun stateSerialName(): String = stateSerDer.baseClass.serializer().descriptor.serialName
+}

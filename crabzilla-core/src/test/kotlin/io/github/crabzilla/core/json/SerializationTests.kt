@@ -1,15 +1,13 @@
-package io.github.crabzilla.json
+package io.github.crabzilla.core.json
 
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.Event
-import io.github.crabzilla.core.State
 import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.example1.example1Json
-import io.github.crabzilla.example1.payment.Payment
+import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.example1.customer.example1Json
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -23,8 +21,6 @@ import java.util.UUID
 
 class SerializationTests {
 
-  val serDer = KotlinJsonSerDer(example1Json)
-
   @Test
   @DisplayName("Aggregate ser/der")
   fun testAggr() {
@@ -32,8 +28,8 @@ class SerializationTests {
     val expectedJson = """
       {"type":"Customer","id":"${aggregate.id}","name":"${aggregate.name}"}
     """.trimIndent()
-    assertThat(serDer.toJson(aggregate)).isEqualTo(expectedJson)
-    assertThat(serDer.stateFromJson(expectedJson)).isEqualTo(aggregate)
+    assertThat(example1Json.encodeToString(customerConfig.stateSerDer, aggregate)).isEqualTo(expectedJson)
+    assertThat(example1Json.decodeFromString(customerConfig.stateSerDer, expectedJson)).isEqualTo(aggregate)
   }
 
   @Test
@@ -43,8 +39,8 @@ class SerializationTests {
     val expectedJson = """
       {"type":"RegisterCustomer","customerId":"${command.customerId}","name":"${command.name}"}
     """.trimIndent()
-    assertThat(serDer.toJson(command)).isEqualTo(expectedJson)
-    assertThat(serDer.commandFromJson(expectedJson)).isEqualTo(command)
+    assertThat(example1Json.encodeToString(customerConfig.commandSerDer, command)).isEqualTo(expectedJson)
+    assertThat(example1Json.decodeFromString(customerConfig.commandSerDer, expectedJson)).isEqualTo(command)
   }
 
   @Test
@@ -54,8 +50,8 @@ class SerializationTests {
     val expectedJson = """
       {"type":"CustomerRegistered","id":"${event.id}","name":"${event.name}"}
     """.trimIndent()
-    assertThat(serDer.toJson(event)).isEqualTo(expectedJson)
-    assertThat(serDer.eventFromJson(expectedJson)).isEqualTo(event)
+    assertThat(example1Json.encodeToString(customerConfig.eventSerDer, event)).isEqualTo(expectedJson)
+    assertThat(example1Json.decodeFromString(customerConfig.eventSerDer, expectedJson)).isEqualTo(event)
   }
 
   @Test
@@ -97,7 +93,7 @@ class SerializationTests {
     val expectedJson = """[{"type":"RegisterCustomer","customerId":"${c1.customerId}",
       "name":"${c1.name}"},{"type":"ActivateCustomer","reason":"${c2.reason}"}]"""
     assertThat(example1Json.encodeToString(list)).isEqualToIgnoringWhitespace(expectedJson)
-    assertThat(example1Json.decodeFromString<List<Command>>(expectedJson)).isEqualTo(list)
+    assertThat(example1Json.decodeFromString<List<CustomerCommand>>(expectedJson)).isEqualTo(list)
   }
 
   @Test
@@ -106,17 +102,9 @@ class SerializationTests {
     val event1 = CustomerRegistered(UUID.randomUUID(), name = "name1")
     val event2 = CustomerEvent.CustomerActivated("because yes")
     val asJson = example1Json.encodeToString(listOf(event1, event2))
-    assertThat(example1Json.decodeFromString<List<Event>>(asJson)).isEqualTo(listOf(event1, event2))
+    assertThat(example1Json.decodeFromString<List<CustomerEvent>>(asJson)).isEqualTo(listOf(event1, event2))
   }
 
-  @Test
-  @DisplayName("State List ser/der")
-  fun testStateList() {
-    val state1 = Customer(UUID.randomUUID(), name = "name1")
-    val state2 = Payment(UUID.randomUUID(), "because yes", 10.00)
-    val asJson = example1Json.encodeToString(listOf(state1, state2))
-    assertThat(example1Json.decodeFromString<List<State>>(asJson)).isEqualTo(listOf(state1, state2))
-  }
 }
 
 @Serializable

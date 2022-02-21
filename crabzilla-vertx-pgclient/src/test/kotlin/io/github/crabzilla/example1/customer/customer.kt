@@ -1,13 +1,11 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.Event
-import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.command.EventHandler
+import io.github.crabzilla.core.json.javaModule
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
@@ -16,8 +14,10 @@ import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import java.util.UUID
@@ -26,7 +26,7 @@ import java.util.UUID
  * Customer events
  */
 @Serializable
-sealed class CustomerEvent : Event {
+sealed class CustomerEvent {
   @Serializable
   @SerialName("CustomerRegistered")
   data class CustomerRegistered(@Contextual val id: UUID, val name: String) : CustomerEvent()
@@ -44,7 +44,7 @@ sealed class CustomerEvent : Event {
  * Customer commands
  */
 @Serializable
-sealed class CustomerCommand : Command {
+sealed class CustomerCommand {
   @Serializable
   @SerialName("RegisterCustomer")
   data class RegisterCustomer(@Contextual val customerId: UUID, val name: String) : CustomerCommand()
@@ -76,7 +76,7 @@ data class Customer(
   val name: String,
   val isActive: Boolean = false,
   val reason: String? = null
-) : State {
+) {
 
   companion object {
     fun create(id: UUID, name: String): List<CustomerEvent> {
@@ -164,29 +164,31 @@ class CustomerCommandHandler :
 }
 
 val customerConfig = CommandControllerConfig(
-  "Customer",
+  PolymorphicSerializer(Customer::class),
+  PolymorphicSerializer(CustomerCommand::class),
+  PolymorphicSerializer(CustomerEvent::class),
   customerEventHandler,
   { CustomerCommandHandler() },
   customerCmdValidator
 )
 
-/**
- * kotlinx.serialization
- */
 @kotlinx.serialization.ExperimentalSerializationApi
 val customerModule = SerializersModule {
-  polymorphic(State::class) {
+  include(javaModule)
+  polymorphic(Customer::class) {
     subclass(Customer::class, Customer.serializer())
   }
-  polymorphic(Command::class) {
+  polymorphic(CustomerCommand::class) {
     subclass(RegisterCustomer::class, RegisterCustomer.serializer())
     subclass(ActivateCustomer::class, ActivateCustomer.serializer())
     subclass(DeactivateCustomer::class, DeactivateCustomer.serializer())
     subclass(RegisterAndActivateCustomer::class, RegisterAndActivateCustomer.serializer())
   }
-  polymorphic(Event::class) {
+  polymorphic(CustomerEvent::class) {
     subclass(CustomerRegistered::class, CustomerRegistered.serializer())
     subclass(CustomerActivated::class, CustomerActivated.serializer())
     subclass(CustomerDeactivated::class, CustomerDeactivated.serializer())
   }
 }
+
+val example1Json = Json { serializersModule = customerModule }

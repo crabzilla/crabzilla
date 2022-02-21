@@ -1,4 +1,4 @@
-package io.github.crabzilla.json
+package io.github.crabzilla.core.json
 
 import kotlinx.serialization.modules.SerializersModule
 import java.time.LocalDate

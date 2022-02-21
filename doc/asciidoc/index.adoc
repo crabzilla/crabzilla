@@ -46,8 +46,7 @@ TODO
 ** [X] Test specifications given some events then a command
 ** [X] Command Metadata
 ** [X] Event Metadata
-* [X] `crabzila-json`
-** [X] `kotlinx-serialization-json` implementation
+** [X] `kotlinx-serialization-json`
 * [X] `crabzila-command`
 ** [X] Non-blocking IO using `vertx-pg-client`
 ** [X] On Demand snapshotting
@@ -123,18 +122,7 @@ mvn clean install
 </dependency>
 ----
 
-. Add `crabzilla-kotlinx-json` to serialize/deserialize your Commands, Events and States to JSON.
-
-[source,xml]
-----
-<dependency>
-    <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-kotlinx-json</artifactId>
-    <version>see latest jitpack version</version>
-</dependency>
-----
-
-. Add `crabzilla-vertx-pgclient` to consistently append and project your events to Postgres.
+. Add `crabzilla-vertx-pgclient` to consistently append and project your events as JSON to Postgres.
 
 [source,xml]
 ----

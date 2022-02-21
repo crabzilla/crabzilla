@@ -1,14 +1,13 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.Command
-import io.github.crabzilla.core.Event
-import io.github.crabzilla.core.State
 import io.github.crabzilla.core.command.CommandControllerConfig
+import io.github.crabzilla.core.command.CommandException
 import io.github.crabzilla.core.command.CommandException.UnknownCommandException
 import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.command.EventHandler
+import io.github.crabzilla.core.json.javaModule
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
@@ -16,41 +15,71 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+
 import java.util.UUID
 
 /**
  * Customer events
  */
-sealed class CustomerEvent : Event {
-  data class CustomerRegistered(val id: UUID, val name: String) : CustomerEvent()
+@Serializable
+sealed class CustomerEvent {
+  @Serializable
+  @SerialName("CustomerRegistered")
+  data class CustomerRegistered(@Contextual val id: UUID, val name: String) : CustomerEvent()
+
+  @Serializable
+  @SerialName("CustomerActivated")
   data class CustomerActivated(val reason: String) : CustomerEvent()
+
+  @Serializable
+  @SerialName("CustomerDeactivated")
   data class CustomerDeactivated(val reason: String) : CustomerEvent()
 }
 
 /**
  * Customer commands
  */
-sealed class CustomerCommand : Command {
+@Serializable
+sealed class CustomerCommand {
+  @Serializable
   data class UnknownCommand(val x: String) : CustomerCommand()
-  data class RegisterCustomer(val customerId: UUID, val name: String) : CustomerCommand()
+  @Serializable
+  @SerialName("RegisterCustomer")
+  data class RegisterCustomer(@Contextual val customerId: UUID, val name: String) : CustomerCommand()
+
+  @Serializable
+  @SerialName("ActivateCustomer")
   data class ActivateCustomer(val reason: String) : CustomerCommand()
+
+  @Serializable
+  @SerialName("DeactivateCustomer")
   data class DeactivateCustomer(val reason: String) : CustomerCommand()
+
+  @Serializable
+  @SerialName("RegisterAndActivateCustomer")
   data class RegisterAndActivateCustomer(
-    val customerId: UUID,
+    @Contextual val customerId: UUID,
     val name: String,
     val reason: String
   ) : CustomerCommand()
 }
 
 /**
- * Customer state
+ * Customer aggregate root
  */
+@Serializable
+@SerialName("Customer")
 data class Customer(
-  val id: UUID,
+  @Contextual val id: UUID,
   val name: String,
   val isActive: Boolean = false,
   val reason: String? = null
-) : State {
+) {
+
   companion object {
     fun create(id: UUID, name: String): List<CustomerEvent> {
       return listOf(CustomerRegistered(id = id, name = name))
@@ -59,9 +88,11 @@ data class Customer(
       return Customer(id = event.id, name = event.name, isActive = false)
     }
   }
+
   fun activate(reason: String): List<CustomerEvent> {
     return listOf(CustomerActivated(reason))
   }
+
   fun deactivate(reason: String): List<CustomerEvent> {
     return listOf(CustomerDeactivated(reason))
   }
@@ -98,24 +129,32 @@ class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id 
  */
 class CustomerCommandHandler :
   CommandHandler<Customer, CustomerCommand, CustomerEvent>(customerEventHandler) {
+
   override fun handleCommand(
     command: CustomerCommand,
     state: Customer?
   ): CommandSession<Customer, CustomerEvent> {
+
     return when (command) {
+
       is RegisterCustomer -> {
         if (state != null) throw CustomerAlreadyExists(command.customerId)
         withNew(Customer.create(id = command.customerId, name = command.name))
       }
+
       is RegisterAndActivateCustomer -> {
         if (state != null) throw CustomerAlreadyExists(command.customerId)
         withNew(Customer.create(id = command.customerId, name = command.name))
           .execute { it.activate(command.reason) }
       }
+
       is ActivateCustomer -> {
+        if (command.reason == "because I want it")
+          throw IllegalArgumentException("Reason cannot be = [${command.reason}], please be polite.")
         with(state)
           .execute { it.activate(command.reason) }
       }
+
       is DeactivateCustomer -> {
         with(state)
           .execute { it.deactivate(command.reason) }
@@ -128,8 +167,34 @@ class CustomerCommandHandler :
 }
 
 val customerConfig = CommandControllerConfig(
-  "Customer",
+  PolymorphicSerializer(Customer::class),
+  PolymorphicSerializer(CustomerCommand::class),
+  PolymorphicSerializer(CustomerEvent::class),
   customerEventHandler,
   { CustomerCommandHandler() },
   customerCmdValidator
 )
+
+/**
+ * kotlinx.serialization
+ */
+@kotlinx.serialization.ExperimentalSerializationApi
+val customerModule = SerializersModule {
+  include(javaModule)
+  polymorphic(Customer::class) {
+    subclass(Customer::class, Customer.serializer())
+  }
+  polymorphic(CustomerCommand::class) {
+    subclass(RegisterCustomer::class, RegisterCustomer.serializer())
+    subclass(ActivateCustomer::class, ActivateCustomer.serializer())
+    subclass(DeactivateCustomer::class, DeactivateCustomer.serializer())
+    subclass(RegisterAndActivateCustomer::class, RegisterAndActivateCustomer.serializer())
+  }
+  polymorphic(CustomerEvent::class) {
+    subclass(CustomerRegistered::class, CustomerRegistered.serializer())
+    subclass(CustomerActivated::class, CustomerActivated.serializer())
+    subclass(CustomerDeactivated::class, CustomerDeactivated.serializer())
+  }
+}
+
+val example1Json = Json { serializersModule = customerModule }
