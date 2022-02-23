@@ -9,7 +9,7 @@ import io.vertx.core.Vertx
 import io.vertx.pgclient.PgPool
 import kotlinx.serialization.json.Json
 
-class CommandControllerBuilder(val vertx: Vertx, val pgPool: PgPool) {
+class CommandControllerBuilder(private val vertx: Vertx, private val pgPool: PgPool) {
 
   fun <S : Any, C : Any, E : Any> build(
     json: Json,
