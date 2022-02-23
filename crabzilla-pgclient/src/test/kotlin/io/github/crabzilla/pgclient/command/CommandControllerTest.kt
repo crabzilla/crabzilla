@@ -16,7 +16,8 @@ internal class CommandControllerTest {
   fun `a command controller can be created with SnapshotType ON_DEMAND`() {
     val vertx = Vertx.vertx()
     val pgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
-    val controller = CommandController.create(vertx, pgPool, example1Json, customerConfig, SnapshotType.ON_DEMAND)
+    val controller = CommandControllerBuilder(vertx, pgPool)
+        .build(example1Json, customerConfig, SnapshotType.ON_DEMAND)
     assertNotNull(controller)
   }
 
@@ -24,7 +25,8 @@ internal class CommandControllerTest {
   fun `a command controller can be created with SnapshotType PERSISTENT`() {
     val vertx = Vertx.vertx()
     val pgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
-    val controller = CommandController.create(vertx, pgPool, example1Json, customerConfig, SnapshotType.ON_DEMAND)
+    val controller = CommandControllerBuilder(vertx, pgPool)
+      .build(example1Json, customerConfig, SnapshotType.PERSISTENT)
     assertNotNull(controller)
   }
 
@@ -32,11 +34,9 @@ internal class CommandControllerTest {
   fun `a command controller can be created with a custom synchronous event projector`() {
     val vertx = Vertx.vertx()
     val pgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
-    val controller = CommandController
-      .create(
-        vertx, pgPool, example1Json, customerConfig, SnapshotType.ON_DEMAND,
-        CustomersEventsProjector("customers")
-      )
+    val controller = CommandControllerBuilder(vertx, pgPool)
+      .build(example1Json, customerConfig, SnapshotType.ON_DEMAND, CustomersEventsProjector("customers"))
     assertNotNull(controller)
   }
+
 }

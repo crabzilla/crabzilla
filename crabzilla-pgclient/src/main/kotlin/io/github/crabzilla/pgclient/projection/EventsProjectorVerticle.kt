@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgclient.projection
 
-import io.github.crabzilla.core.EventTopics
+import io.github.crabzilla.pgclient.EventTopics
 import io.github.crabzilla.pgclient.EventsProjector
 import io.github.crabzilla.pgclient.PgClientAbstractVerticle
 import io.github.crabzilla.pgclient.projection.internal.EventsScanner

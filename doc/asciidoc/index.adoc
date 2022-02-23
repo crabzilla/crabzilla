@@ -122,13 +122,13 @@ mvn clean install
 </dependency>
 ----
 
-. Add `crabzilla-vertx-pgclient` to consistently append and project your events as JSON to Postgres.
+. Add `crabzilla-pgclient` to consistently append and project your events as JSON to Postgres.
 
 [source,xml]
 ----
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-vertx-pgclient</artifactId>
+    <artifactId>crabzilla-pgclient</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ----

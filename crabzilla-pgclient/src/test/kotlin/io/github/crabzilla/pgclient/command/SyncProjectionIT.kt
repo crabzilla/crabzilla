@@ -37,11 +37,9 @@ class SyncProjectionIT {
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     pgPool = pgPool(vertx)
-    controller = CommandController.create(
-      vertx, pgPool, example1Json,
-      customerConfig, SnapshotType.PERSISTENT,
-      CustomersEventsProjector("customers")
-    )
+
+    controller = CommandControllerBuilder(vertx, pgPool)
+      .build(example1Json, customerConfig, SnapshotType.PERSISTENT, CustomersEventsProjector("customers"))
     snapshotRepository = OnDemandSnapshotRepo(customerEventHandler, example1Json, customerConfig.eventSerDer)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)

@@ -556,15 +556,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li>
 <p>[X] Event Metadata</p>
 </li>
-</ul>
-</div>
-</li>
 <li>
-<p>[X] <code>crabzila-json</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>[X] <code>kotlinx-serialization-json</code> implementation</p>
+<p>[X] <code>kotlinx-serialization-json</code></p>
 </li>
 </ul>
 </div>
@@ -730,7 +723,7 @@ used):</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Add <code>crabzilla-kotlinx-json</code> to serialize/deserialize your Commands, Events and States to JSON.</p>
+<p>Add <code>crabzilla-pgclient</code> to consistently append and project your events as JSON to Postgres.</p>
 </li>
 </ol>
 </div>
@@ -738,23 +731,7 @@ used):</p>
 <div class="content">
 <pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
     &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
-    &lt;artifactId&gt;crabzilla-kotlinx-json&lt;/artifactId&gt;
-    &lt;version&gt;see latest jitpack version&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-</div>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Add <code>crabzilla-vertx-pgclient</code> to consistently append and project your events to Postgres.</p>
-</li>
-</ol>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
-    &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
-    &lt;artifactId&gt;crabzilla-vertx-pgclient&lt;/artifactId&gt;
+    &lt;artifactId&gt;crabzilla-pgclient&lt;/artifactId&gt;
     &lt;version&gt;see latest jitpack version&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
@@ -764,8 +741,8 @@ used):</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version v0.4.4<br>
-Last updated 2022-02-08 12:45:09 -0300
+Version v0.4.5<br>
+Last updated 2022-02-23 11:44:04 -0300
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

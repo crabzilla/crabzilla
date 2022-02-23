@@ -1,6 +1,6 @@
 package io.github.crabzilla.pgclient.projection
 
-import io.github.crabzilla.core.EventTopics
+import io.github.crabzilla.pgclient.EventTopics
 import io.github.crabzilla.pgclient.TestRepository
 import io.github.crabzilla.pgclient.command.cleanDatabase
 import io.github.crabzilla.pgclient.command.config

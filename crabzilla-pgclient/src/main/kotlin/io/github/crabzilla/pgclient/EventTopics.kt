@@ -1,4 +1,4 @@
-package io.github.crabzilla.core
+package io.github.crabzilla.pgclient
 
 enum class EventTopics {
   STATE_TOPIC,
