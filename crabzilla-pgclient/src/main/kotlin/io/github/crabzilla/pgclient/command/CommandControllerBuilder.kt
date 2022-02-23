@@ -11,15 +11,15 @@ import kotlinx.serialization.json.Json
 
 class CommandControllerBuilder(val vertx: Vertx, val pgPool: PgPool) {
 
-  fun <S: Any, C: Any, E: Any> build(
+  fun <S : Any, C : Any, E : Any> build(
     json: Json,
     config: CommandControllerConfig<S, C, E>,
     snapshotType: SnapshotType,
-    eventsProjector: EventsProjector? = null
+    eventsProjector: EventsProjector? = null,
   ): CommandController<S, C, E> {
-    fun <S: Any, C: Any, E: Any> snapshotRepo(
+    fun <S : Any, C : Any, E : Any> snapshotRepo(
       snapshotType: SnapshotType,
-      config: CommandControllerConfig<S, C, E>
+      config: CommandControllerConfig<S, C, E>,
     ): SnapshotRepository<S, E> {
       return when (snapshotType) {
         SnapshotType.ON_DEMAND -> OnDemandSnapshotRepo(config.eventHandler, json, config.eventSerDer)
