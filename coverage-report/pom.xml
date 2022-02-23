@@ -19,14 +19,9 @@
       <artifactId>crabzilla-core</artifactId>
     </dependency>
 
-<!--    <dependency>-->
-<!--      <groupId>io.github.crabzilla</groupId>-->
-<!--      <artifactId>crabzilla-kotlinx-json</artifactId>-->
-<!--    </dependency>-->
-
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-vertx-pgclient</artifactId>
+      <artifactId>crabzilla-pgclient</artifactId>
     </dependency>
 
   </dependencies>

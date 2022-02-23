@@ -9,7 +9,7 @@
     <version>v0.4.5</version>
   </parent>
 
-  <artifactId>crabzilla-vertx-pgclient</artifactId>
+  <artifactId>crabzilla-pgclient</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
