@@ -7,6 +7,7 @@ import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.customer.example1Json
 import io.github.crabzilla.pgclient.TestRepository
 import io.github.crabzilla.pgclient.command.CommandController
+import io.github.crabzilla.pgclient.command.CommandControllerBuilder
 import io.github.crabzilla.pgclient.command.SnapshotType
 import io.github.crabzilla.pgclient.command.cleanDatabase
 import io.github.crabzilla.pgclient.command.config
@@ -49,7 +50,8 @@ class FilteredProjectionIT {
   @DisplayName("after a command the events will be projected")
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val target = "crabzilla.example1.customer.FilteredEventsProjector"
-    val controller = CommandController.create(vertx, pgPool, example1Json, customerConfig, SnapshotType.ON_DEMAND)
+    val controller = CommandControllerBuilder(vertx, pgPool)
+      .build(example1Json, customerConfig, SnapshotType.ON_DEMAND)
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
         Thread.sleep(500L)

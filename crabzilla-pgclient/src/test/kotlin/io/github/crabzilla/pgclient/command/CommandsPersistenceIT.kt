@@ -31,7 +31,8 @@ class CommandsPersistenceIT {
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     val pgPool = pgPool(vertx)
-    commandController = CommandController.create(vertx, pgPool, example1Json, customerConfig, SnapshotType.PERSISTENT)
+    commandController = CommandControllerBuilder(vertx, pgPool)
+      .build(example1Json, customerConfig, SnapshotType.PERSISTENT)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }

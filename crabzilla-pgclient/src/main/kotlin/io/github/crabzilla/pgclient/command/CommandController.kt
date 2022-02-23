@@ -1,15 +1,13 @@
 package io.github.crabzilla.pgclient.command
 
-import io.github.crabzilla.pgclient.EventTopics
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.command.CommandException.LockingException
 import io.github.crabzilla.core.command.CommandException.ValidationException
 import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.core.metadata.EventMetadata
+import io.github.crabzilla.pgclient.EventTopics
 import io.github.crabzilla.pgclient.EventsProjector
-import io.github.crabzilla.pgclient.command.internal.OnDemandSnapshotRepo
-import io.github.crabzilla.pgclient.command.internal.PersistentSnapshotRepo
 import io.github.crabzilla.pgclient.command.internal.SnapshotRepository
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
@@ -48,48 +46,6 @@ class CommandController<S: Any, C: Any, E: Any>(
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
     private const val DEFAULT_NOTIFICATION_INTERVAL = 3000L
 
-    class Builder(val vertx: Vertx,
-                  val pgPool: PgPool,
-                  val json: Json) {
-
-      fun <S: Any, C: Any, E: Any> create(
-        config: CommandControllerConfig<S, C, E>,
-        snapshotType: SnapshotType,
-        eventsProjector: EventsProjector? = null
-      ): CommandController<S, C, E> {
-        fun <S: Any, C: Any, E: Any> snapshotRepo(
-          snapshotType: SnapshotType,
-          config: CommandControllerConfig<S, C, E>
-        ): SnapshotRepository<S, E> {
-          return when (snapshotType) {
-            SnapshotType.ON_DEMAND -> OnDemandSnapshotRepo(config.eventHandler, json, config.eventSerDer)
-            SnapshotType.PERSISTENT -> PersistentSnapshotRepo(config.stateSerDer, json)
-          }
-        }
-        return CommandController(vertx, pgPool, json, config, snapshotRepo(snapshotType, config), eventsProjector)
-      }
-
-    }
-
-    fun <S: Any, C: Any, E: Any> create(
-      vertx: Vertx,
-      pgPool: PgPool,
-      json: Json,
-      config: CommandControllerConfig<S, C, E>,
-      snapshotType: SnapshotType,
-      eventsProjector: EventsProjector? = null
-    ): CommandController<S, C, E> {
-      fun <S: Any, C: Any, E: Any> snapshotRepo(
-        snapshotType: SnapshotType,
-        config: CommandControllerConfig<S, C, E>
-      ): SnapshotRepository<S, E> {
-        return when (snapshotType) {
-          SnapshotType.ON_DEMAND -> OnDemandSnapshotRepo(config.eventHandler, json, config.eventSerDer)
-          SnapshotType.PERSISTENT -> PersistentSnapshotRepo(config.stateSerDer, json)
-        }
-      }
-      return CommandController(vertx, pgPool, json, config, snapshotRepo(snapshotType, config), eventsProjector)
-    }
   }
 
   private val stateSerialName = config.stateSerialName()
