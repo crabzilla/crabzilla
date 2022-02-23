@@ -1,0 +1,12 @@
+{
+  "main": "io.github.crabzilla.pgclient.projection.EventsProjectorVerticle",
+  "options": {
+    "config" : {
+      "viewName": "customers",
+      "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
+      "targetEndpoint" : "projection.customers",
+      "initialInterval": 50000,
+      "interval": 5000
+    }
+  }
+}
