@@ -482,16 +482,16 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Validate your <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/Command.kt">Command</a> using your implementation of <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/CommandValidator.kt">CommandValidator</a>.</p>
+<p>Validate your Command using your implementation of <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/CommandValidator.kt">CommandValidator</a>.</p>
 </li>
 <li>
-<p>Lock the target <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/State.kt">State</a> instance using <a href="https://www.postgresql.org/docs/13/explicit-locking.html#ADVISORY-LOCKS">Postgres Advisory Locks</a>.</p>
+<p>Lock the target State instance using <a href="https://www.postgresql.org/docs/13/explicit-locking.html#ADVISORY-LOCKS">Postgres Advisory Locks</a>.</p>
 </li>
 <li>
-<p>Retrieve the target <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-vertx-pgclient/src/main/kotlin/io/github/crabzilla/command/internal/Snapshot.kt">Snapshot</a>.</p>
+<p>Retrieve the target <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-pgclient/src/main/kotlin/io/github/crabzilla/command/internal/Snapshot.kt">Snapshot</a>.</p>
 </li>
 <li>
-<p>Handle your Command and snapshot.state using your implementations of <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/CommandHandler.kt">CommandHandler</a> and <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/EventHandler.kt">EventHandler</a>:</p>
+<p>Handle your Command and snapshot state using your implementations of <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/CommandHandler.kt">CommandHandler</a> and <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/EventHandler.kt">EventHandler</a>:</p>
 </li>
 <li>
 <p>Persist (within a db transaction)</p>
@@ -742,7 +742,7 @@ used):</p>
 <div id="footer">
 <div id="footer-text">
 Version v0.4.5<br>
-Last updated 2022-02-23 12:44:40 -0300
+Last updated 2022-02-23 14:21:58 -0300
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">

@@ -15,6 +15,7 @@ import kotlinx.serialization.encodeToString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -22,8 +23,8 @@ import java.util.UUID
 class SerializationTests {
 
   @Test
-  @DisplayName("Aggregate ser/der")
-  fun testAggr() {
+  @DisplayName("State ser/der")
+  fun testState() {
     val aggregate = Customer(UUID.randomUUID(), "name1")
     val expectedJson = """
       {"type":"Customer","id":"${aggregate.id}","name":"${aggregate.name}"}
@@ -57,31 +58,31 @@ class SerializationTests {
   @Test
   @DisplayName("DateTime ser/der")
   fun testLd() {
-    val t = Bean2(LocalDate.now())
+    val t = BeanLocalDate(LocalDate.now())
     val expectedJson = """{"ld":"${t.ld}"}"""
-    assertThat(example1Json.decodeFromString<Bean2>(expectedJson)).isEqualTo(t)
+    assertThat(example1Json.decodeFromString<BeanLocalDate>(expectedJson)).isEqualTo(t)
     val resultJson = example1Json.encodeToString(t)
-    assertThat(example1Json.decodeFromString<Bean2>(resultJson)).isEqualTo(t)
+    assertThat(example1Json.decodeFromString<BeanLocalDate>(resultJson)).isEqualTo(t)
   }
 
   @Test
   @DisplayName("LocalDateTime ser/der")
 //  @RepeatedTest(100)
   fun testLdt() {
-    val t = Bean1(LocalDateTime.now(), "foo")
+    val t = BeanLocalDateTime(LocalDateTime.now(), "foo")
     val expectedJson = """{"ldt":"${t.ldt}","newProp1":"foo"}"""
-    assertThat(example1Json.decodeFromString<Bean1>(expectedJson)).isEqualTo(t)
+    assertThat(example1Json.decodeFromString<BeanLocalDateTime>(expectedJson)).isEqualTo(t)
     val resultJson = example1Json.encodeToString(t)
-    assertThat(example1Json.decodeFromString<Bean1>(resultJson)).isEqualTo(t)
+    assertThat(example1Json.decodeFromString<BeanLocalDateTime>(resultJson)).isEqualTo(t)
   }
 
   @Test
   @DisplayName("Value Object ser/der")
   fun testVo() {
-    val t = Bean3(AValueObject("test", 22), "foo")
+    val t = BeanValueObject(AValueObject("test", 22), "foo")
     val expectedJson = """{"vo":{"x":"test","y":22},"newProp1":"foo"}"""
     assertThat(example1Json.encodeToString(t)).isEqualTo(expectedJson)
-    assertThat(example1Json.decodeFromString<Bean3>(expectedJson)).isEqualTo(t)
+    assertThat(example1Json.decodeFromString<BeanValueObject>(expectedJson)).isEqualTo(t)
   }
 
   @Test
@@ -105,16 +106,28 @@ class SerializationTests {
     assertThat(example1Json.decodeFromString<List<CustomerEvent>>(asJson)).isEqualTo(listOf(event1, event2))
   }
 
+  @Test
+  @DisplayName("BigDecimal")
+  fun testDecimal() {
+    val amount = BeanBigDecimal(BigDecimal("34.56332"))
+    val asJson = example1Json.encodeToString(amount)
+    assertThat(example1Json.decodeFromString<BeanBigDecimal>(asJson)).isEqualTo(amount)
+  }
+
+
 }
 
 @Serializable
 data class AValueObject(val x: String, val y: Int)
 
 @Serializable
-data class Bean1(@Contextual val ldt: LocalDateTime, val newProp1: String? = null)
+data class BeanValueObject(@Contextual val vo: AValueObject, val newProp1: String? = null)
 
 @Serializable
-data class Bean2(@Contextual val ld: LocalDate, val newProp1: String? = null)
+data class BeanLocalDateTime(@Contextual val ldt: LocalDateTime, val newProp1: String? = null)
 
 @Serializable
-data class Bean3(@Contextual val vo: AValueObject, val newProp1: String? = null)
+data class BeanLocalDate(@Contextual val ld: LocalDate, val newProp1: String? = null)
+
+@Serializable
+data class BeanBigDecimal(@Contextual val amount: BigDecimal)

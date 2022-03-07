@@ -1,6 +1,7 @@
 package io.github.crabzilla.core.json
 
 import kotlinx.serialization.modules.SerializersModule
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -10,4 +11,5 @@ val javaModule = SerializersModule {
   contextual(UUID::class, UUIDSerializer)
   contextual(LocalDateTime::class, LocalDateTimeSerializer)
   contextual(LocalDate::class, LocalDateSerializer)
+  contextual(BigDecimal::class, BigDecimalAsStringSerializer)
 }
