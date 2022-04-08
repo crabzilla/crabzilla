@@ -13,3 +13,4 @@ val javaModule = SerializersModule {
   contextual(LocalDate::class, LocalDateSerializer)
   contextual(BigDecimal::class, BigDecimalAsStringSerializer)
 }
+
