@@ -2,6 +2,7 @@ package io.github.crabzilla.pgclient.command
 
 import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.pgclient.EventsProjector
+import io.github.crabzilla.pgclient.json.javaModule
 import io.vertx.core.Vertx
 import io.vertx.pgclient.PgPool
 import kotlinx.serialization.json.Json
@@ -14,7 +15,11 @@ class CommandControllerBuilder(private val vertx: Vertx, private val pgPool: PgP
     config: CommandControllerConfig<S, C, E>,
     eventsProjector: EventsProjector? = null,
   ): CommandController<S, C, E> {
-    val json = Json { serializersModule = serializationModule }
+    val module = SerializersModule {
+      include(javaModule)
+      include(serializationModule)
+    }
+    val json = Json { serializersModule = module }
     return CommandController(vertx, pgPool, json, config, eventsProjector)
   }
 
