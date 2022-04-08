@@ -45,7 +45,6 @@ fun pgPool(vertx: Vertx): PgPool {
 fun cleanDatabase(sqlClient: SqlClient): Future<Void> {
   return sqlClient.query("delete from commands").execute()
     .compose { sqlClient.query("delete from events").execute() }
-    .compose { sqlClient.query("delete from snapshots").execute() }
     .compose { sqlClient.query("update projections set sequence = 0").execute() }
     .compose { sqlClient.query("alter sequence events_sequence_seq restart").execute() }
     .compose { sqlClient.query("delete from customer_summary").execute() }
