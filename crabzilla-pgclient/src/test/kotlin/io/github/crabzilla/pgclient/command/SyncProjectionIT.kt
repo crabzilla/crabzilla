@@ -7,11 +7,8 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivate
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomersEventsProjector
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.example1.customer.customerEventHandler
-import io.github.crabzilla.example1.customer.example1Json
+import io.github.crabzilla.example1.customer.customerModule
 import io.github.crabzilla.pgclient.TestRepository
-import io.github.crabzilla.pgclient.command.internal.OnDemandSnapshotRepo
-import io.github.crabzilla.pgclient.command.internal.SnapshotRepository
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -31,7 +28,6 @@ class SyncProjectionIT {
 
   private lateinit var pgPool: PgPool
   private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var snapshotRepository: SnapshotRepository<Customer, CustomerEvent>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
@@ -39,8 +35,7 @@ class SyncProjectionIT {
     pgPool = pgPool(vertx)
 
     controller = CommandControllerBuilder(vertx, pgPool)
-      .build(example1Json, customerConfig, SnapshotType.PERSISTENT, CustomersEventsProjector("customers"))
-    snapshotRepository = OnDemandSnapshotRepo(customerEventHandler, example1Json, customerConfig.eventSerDer)
+      .build(customerModule, customerConfig, CustomersEventsProjector("customers"))
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
@@ -100,38 +95,4 @@ class SyncProjectionIT {
       }
   }
 
-  @Test
-  @DisplayName("checking the snapshot")
-  fun a0(tc: VertxTestContext, vertx: Vertx) {
-    val id = UUID.randomUUID()
-    pgPool.connection.compose { conn ->
-      snapshotRepository.get(conn, id)
-        .onFailure { tc.failNow(it) }
-        .onSuccess { snapshot0 ->
-          assert(snapshot0 == null)
-          controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
-            .onFailure { tc.failNow(it) }
-            .onSuccess {
-              snapshotRepository.get(conn, id)
-                .onFailure { err -> tc.failNow(err) }
-                .onSuccess { snapshot1 ->
-                  assert(1 == snapshot1!!.version)
-                  assert(snapshot1.state == Customer(id, "cust#$id"))
-                  controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes"))
-                    .onFailure { tc.failNow(it) }
-                    .onSuccess {
-                      snapshotRepository.get(conn, id)
-                        .onFailure { err -> tc.failNow(err) }
-                        .onSuccess { snapshot2 ->
-                          assert(2 == snapshot2!!.version)
-                          val expected = Customer(id, "cust#$id", isActive = true, reason = "because yes")
-                          assert(snapshot2.state == expected)
-                          tc.completeNow()
-                        }
-                    }
-                }
-            }
-        }
-    }
-  }
 }

@@ -1,6 +1,6 @@
 package io.github.crabzilla.core.metadata
 
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.UUID
 

@@ -1,4 +1,4 @@
-package io.github.crabzilla.core.json
+package io.github.crabzilla.pgclient.json
 
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
@@ -6,12 +6,14 @@ import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.example1.customer.example1Json
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -22,16 +24,31 @@ import java.util.UUID
 
 class SerializationTests {
 
-  @Test
-  @DisplayName("State ser/der")
-  fun testState() {
-    val aggregate = Customer(UUID.randomUUID(), "name1")
-    val expectedJson = """
-      {"type":"Customer","id":"${aggregate.id}","name":"${aggregate.name}"}
-    """.trimIndent()
-    assertThat(example1Json.encodeToString(customerConfig.stateSerDer, aggregate)).isEqualTo(expectedJson)
-    assertThat(example1Json.decodeFromString(customerConfig.stateSerDer, expectedJson)).isEqualTo(aggregate)
+  /**
+   * kotlinx.serialization
+   */
+  @kotlinx.serialization.ExperimentalSerializationApi
+  val customerModule = SerializersModule {
+    include(javaModule)
+    polymorphic(Customer::class) {
+      subclass(Customer::class, Customer.serializer())
+    }
+    polymorphic(CustomerCommand::class) {
+      subclass(RegisterCustomer::class, RegisterCustomer.serializer())
+      subclass(ActivateCustomer::class, ActivateCustomer.serializer())
+      subclass(CustomerCommand.DeactivateCustomer::class, CustomerCommand.DeactivateCustomer.serializer())
+      subclass(CustomerCommand.RegisterAndActivateCustomer::class, CustomerCommand.RegisterAndActivateCustomer.serializer())
+    }
+    polymorphic(CustomerEvent::class) {
+      subclass(CustomerRegistered::class, CustomerRegistered.serializer())
+      subclass(CustomerEvent.CustomerActivated::class, CustomerEvent.CustomerActivated.serializer())
+      subclass(CustomerEvent.CustomerDeactivated::class, CustomerEvent.CustomerDeactivated.serializer())
+    }
   }
+
+  val example1Json = Json { serializersModule = customerModule }
+  val commandSerDer = PolymorphicSerializer(CustomerCommand::class)
+  val eventSerDer = PolymorphicSerializer(CustomerEvent::class)
 
   @Test
   @DisplayName("Command ser/der")
@@ -40,8 +57,8 @@ class SerializationTests {
     val expectedJson = """
       {"type":"RegisterCustomer","customerId":"${command.customerId}","name":"${command.name}"}
     """.trimIndent()
-    assertThat(example1Json.encodeToString(customerConfig.commandSerDer, command)).isEqualTo(expectedJson)
-    assertThat(example1Json.decodeFromString(customerConfig.commandSerDer, expectedJson)).isEqualTo(command)
+    assertThat(example1Json.encodeToString(commandSerDer, command)).isEqualTo(expectedJson)
+    assertThat(example1Json.decodeFromString(commandSerDer, expectedJson)).isEqualTo(command)
   }
 
   @Test
@@ -51,8 +68,8 @@ class SerializationTests {
     val expectedJson = """
       {"type":"CustomerRegistered","id":"${event.id}","name":"${event.name}"}
     """.trimIndent()
-    assertThat(example1Json.encodeToString(customerConfig.eventSerDer, event)).isEqualTo(expectedJson)
-    assertThat(example1Json.decodeFromString(customerConfig.eventSerDer, expectedJson)).isEqualTo(event)
+    assertThat(example1Json.encodeToString(eventSerDer, event)).isEqualTo(expectedJson)
+    assertThat(example1Json.decodeFromString(eventSerDer, expectedJson)).isEqualTo(event)
   }
 
   @Test

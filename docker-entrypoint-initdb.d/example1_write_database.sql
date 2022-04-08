@@ -7,27 +7,6 @@ CREATE TABLE projections (
    sequence BIGINT
 );
 
---  snapshots table
-
-CREATE TABLE snapshots (
-      state_id UUID NOT NULL,
-      state_type text NOT NULL,
-      version INTEGER,
-      json_content JSON NOT NULL,
-      PRIMARY KEY (state_id, state_type)
-    )
-    PARTITION BY hash(state_id, state_type)
-;
-
--- 3 partitions
-
-CREATE TABLE snapshots_0 PARTITION OF snapshots
-    FOR VALUES WITH (MODULUS 3, REMAINDER 0);
-CREATE TABLE snapshots_1 PARTITION OF snapshots
-    FOR VALUES WITH (MODULUS 3, REMAINDER 1);
-CREATE TABLE snapshots_2 PARTITION OF snapshots
-    FOR VALUES WITH (MODULUS 3, REMAINDER 2);
-
 -- commands
 
 -- https://github.com/thenativeweb/commands-events/issues/1#issuecomment-385862281

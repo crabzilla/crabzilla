@@ -5,7 +5,7 @@ import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.example1.customer.example1Json
+import io.github.crabzilla.example1.customer.customerModule
 import io.github.crabzilla.pgclient.TestRepository
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -30,7 +30,7 @@ class CommandsValidationIT {
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     val pgPool = pgPool(vertx)
     commandController = CommandControllerBuilder(vertx, pgPool)
-      .build(example1Json, customerConfig, SnapshotType.PERSISTENT)
+      .build(customerModule, customerConfig)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }

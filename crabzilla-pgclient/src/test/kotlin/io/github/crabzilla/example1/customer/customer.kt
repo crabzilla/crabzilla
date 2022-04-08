@@ -5,7 +5,6 @@ import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
 import io.github.crabzilla.core.command.EventHandler
-import io.github.crabzilla.core.json.javaModule
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
@@ -13,8 +12,8 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.pgclient.json.javaModule
 import kotlinx.serialization.Contextual
-import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -164,9 +163,9 @@ class CustomerCommandHandler :
 }
 
 val customerConfig = CommandControllerConfig(
-  PolymorphicSerializer(Customer::class),
-  PolymorphicSerializer(CustomerCommand::class),
-  PolymorphicSerializer(CustomerEvent::class),
+  Customer::class,
+  CustomerCommand::class,
+  CustomerEvent::class,
   customerEventHandler,
   { CustomerCommandHandler() },
   customerCmdValidator

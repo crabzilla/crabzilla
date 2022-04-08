@@ -12,10 +12,6 @@ import java.util.UUID
 class TestRepository(private val pgPool: PgPool) {
 
   companion object {
-    private const val SQL_UPSERT_VERSION =
-      """ INSERT INTO snapshots (state_id, state_type, version, json_content)
-          VALUES ($1, $2, $3, $4)
-          ON CONFLICT (state_id, state_type) DO UPDATE SET version = $3, json_content = $4"""
     private const val selectAfterOffset =
       """
       SELECT *
@@ -24,11 +20,6 @@ class TestRepository(private val pgPool: PgPool) {
       ORDER BY sequence
       limit $2
     """
-  }
-
-  fun upsert(id: UUID, type: String, version: Int, snapshotAsJson: JsonObject): Future<Void> {
-    val tuple = Tuple.of(id, type, version, snapshotAsJson)
-    return pgPool.preparedQuery(SQL_UPSERT_VERSION).execute(tuple).mapEmpty()
   }
 
   fun scanEvents(afterSequence: Long, numberOfRows: Int): Future<List<JsonObject>> {
