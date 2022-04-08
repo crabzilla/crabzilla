@@ -9,7 +9,7 @@ ifndef::sourcedir[:sourcedir: ../../main/java]
 :toclevels: 4
 
 
-https://www.oracle.com/java/[image:https://img.shields.io/badge/Java-17-purple.svg[Vertx]]
+https://www.oracle.com/java/[image:https://img.shields.io/badge/Java-11-purple.svg[Vertx]]
 https://kotlinlang.org/[image:https://img.shields.io/badge/Kotlin-1.6.10-purple.svg[Vertx]]
 https://vertx.io[image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[Vertx]]
 https://github.com/crabzilla/crabzilla/actions/workflows/blank.yml[image:https://github.com/crabzilla/crabzilla/actions/workflows/blank.yml/badge.svg[CI]]
