@@ -9,6 +9,6 @@ internal class CommandControllerConfigTest {
 
   @Test
   fun stateSerialName() {
-      assertEquals(customerConfig.stateSerialName(), Customer.serializer().descriptor.serialName)
+      assertEquals(customerConfig.stateClass, Customer::class)
   }
 }

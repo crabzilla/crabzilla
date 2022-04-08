@@ -1,4 +1,4 @@
-package io.github.crabzilla.core.json
+package io.github.crabzilla.pgclient.json
 
 import kotlinx.serialization.modules.SerializersModule
 import java.math.BigDecimal

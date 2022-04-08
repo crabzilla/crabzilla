@@ -3,11 +3,9 @@ package io.github.crabzilla.pgclient.projection
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.example1.customer.example1Json
+import io.github.crabzilla.example1.customer.customerModule
 import io.github.crabzilla.pgclient.TestRepository
-import io.github.crabzilla.pgclient.command.CommandController
 import io.github.crabzilla.pgclient.command.CommandControllerBuilder
-import io.github.crabzilla.pgclient.command.SnapshotType
 import io.github.crabzilla.pgclient.command.cleanDatabase
 import io.github.crabzilla.pgclient.command.config
 import io.github.crabzilla.pgclient.command.pgPool
@@ -49,7 +47,7 @@ class AsyncProjectionIT {
   fun a0(tc: VertxTestContext, vertx: Vertx) {
     val target = "crabzilla.example1.customer.CustomersEventsProjector"
     val controller = CommandControllerBuilder(vertx, pgPool)
-      .build(example1Json, customerConfig, SnapshotType.ON_DEMAND)
+      .build(customerModule, customerConfig)
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
         vertx.eventBus()

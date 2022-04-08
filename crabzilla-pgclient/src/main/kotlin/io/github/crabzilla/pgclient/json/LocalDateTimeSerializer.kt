@@ -1,4 +1,4 @@
-package io.github.crabzilla.core.json
+package io.github.crabzilla.pgclient.json
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializer
