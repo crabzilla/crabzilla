@@ -22,3 +22,4 @@ https://www.youtube.com/watch?v=o51kMltuSuQ
 * TODO
 https://www.logicbig.com/tutorials/core-java-tutorial/modules/service-provider-method.html
 
+https://medium.com/swlh/microservices-on-kubernetes-quarkus-eks-e4fac1efbef5

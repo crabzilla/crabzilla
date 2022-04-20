@@ -12,4 +12,9 @@ class CommandControllerConfig<S : Any, C : Any, E : Any>(
   val eventHandler: EventHandler<S, E>,
   val commandHandlerFactory: () -> CommandHandler<S, C, E>,
   val commandValidator: CommandValidator<C>? = null
-)
+) {
+  var eventsStreamSize = 1000
+  fun withEventsStreamSize(size: Int) {
+    eventsStreamSize = size
+  }
+}

@@ -167,7 +167,7 @@ class CommandController<out S : Any, C : Any, E : Any>(
         var latestVersion = 0
         var error: Throwable? = null
         // Fetch 1000 rows at a time
-        val stream: RowStream<Row> = pq.createStream(1000, Tuple.of(id))
+        val stream: RowStream<Row> = pq.createStream(config.eventsStreamSize, Tuple.of(id))
         // Use the stream
         stream.handler { row: Row ->
           val eventAsJson = JsonObject(row.getValue("event_payload").toString())
