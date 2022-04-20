@@ -8,7 +8,7 @@ import io.github.crabzilla.core.command.CommandSession
 /**
  * A helper for basic specifications
  */
-class TestSpecification<S: Any, C: Any, E: Any>(val config: CommandControllerConfig<S, C, E>) {
+class TestSpecification<S : Any, C : Any, E : Any>(val config: CommandControllerConfig<S, C, E>) {
 
   private var state: S? = null
   private val events: MutableList<E> = mutableListOf() // TODO replace with AppendedEvents (to get EventMetadata)

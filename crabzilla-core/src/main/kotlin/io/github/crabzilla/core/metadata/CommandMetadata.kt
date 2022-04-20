@@ -7,8 +7,7 @@ data class CommandMetadata(
   val correlationId: UUID,
   val causationId: UUID,
   val commandId: UUID
-)
-{
+) {
   companion object {
     fun new(stateId: UUID): CommandMetadata {
       val commandId = UUID.randomUUID()

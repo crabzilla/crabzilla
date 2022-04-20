@@ -5,7 +5,7 @@ import kotlin.reflect.KClass
 /**
  * A configuration for a command controller
  */
-class CommandControllerConfig<S: Any, C: Any, E: Any>(
+class CommandControllerConfig<S : Any, C : Any, E : Any>(
   val stateClass: KClass<S>,
   val commandClass: KClass<C>,
   val eventClass: KClass<E>,

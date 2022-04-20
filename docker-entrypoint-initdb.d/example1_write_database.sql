@@ -30,6 +30,7 @@ CREATE TABLE events (
       id UUID NOT NULL,
       causation_id UUID NOT NULL,
       correlation_id UUID NOT NULL,
+--      cmd_id UUID,
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       UNIQUE (state_id, version) -- to help lookup by entity id ordered by version
     )
