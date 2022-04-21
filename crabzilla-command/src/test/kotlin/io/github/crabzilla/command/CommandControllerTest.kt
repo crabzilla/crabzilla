@@ -31,4 +31,24 @@ internal class CommandControllerTest {
       .build(customerModule, customerConfig, CustomersEventsProjector("customers"))
     assertNotNull(controller)
   }
+
+  @Test
+  fun `a command controller can be be customized with the event stream size`() {
+    val vertx = Vertx.vertx()
+    val pgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
+    val controller = CommandControllerBuilder(vertx, pgPool)
+      .build(customerModule, customerConfig)
+    controller.eventStreamSize = 10
+    assertNotNull(controller)
+  }
+
+  @Test
+  fun `a command controller can start notifying to postgres`() {
+    val vertx = Vertx.vertx()
+    val pgPool: PgPool = PgPool.pool(vertx, connectOptions, poolOptions)
+    val controller = CommandControllerBuilder(vertx, pgPool)
+      .build(customerModule, customerConfig)
+    controller.startPgNotification(30_000L)
+    assertNotNull(controller)
+  }
 }

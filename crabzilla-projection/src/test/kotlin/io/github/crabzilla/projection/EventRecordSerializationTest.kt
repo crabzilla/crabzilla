@@ -45,6 +45,6 @@ class EventRecordSerializationTest {
 
   @Test
   fun fromJson() {
-    val equalTo = assertThat(fromJsonObject(expectedAsJson)).isEqualTo(eventRecord)
+    assertThat(fromJsonObject(expectedAsJson)).isEqualTo(eventRecord)
   }
 }

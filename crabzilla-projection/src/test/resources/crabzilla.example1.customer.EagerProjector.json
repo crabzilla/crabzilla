@@ -4,9 +4,7 @@
     "config" : {
       "viewName": "customers",
       "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
-      "targetEndpoint" : "projection.customers",
-      "initialInterval" : 2,
-      "metricsInterval": 5
+      "initialInterval" : 2
     }
   }
 }

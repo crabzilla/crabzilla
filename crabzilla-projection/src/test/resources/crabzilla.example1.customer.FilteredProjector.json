@@ -4,9 +4,13 @@
     "config" : {
       "viewName": "customers",
       "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
-      "targetEndpoint" : "projection.customers",
-      "initialInterval": 50000,
-      "interval": 5000
+      "initialInterval" : 30000,
+      "interval" : 30000,
+      "metricsInterval" : 5,
+      "maxInterval" : 10000,
+      "maxNumberOfRows": 1,
+      "stateTypes": ["Customer"],
+      "eventTypes": ["CustomerRegistered", "CustomerActivated"]
     }
   }
 }

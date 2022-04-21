@@ -5,9 +5,9 @@ import io.github.crabzilla.core.command.CommandControllerConfig
 import io.github.crabzilla.core.command.CommandException.LockingException
 import io.github.crabzilla.core.command.CommandException.ValidationException
 import io.github.crabzilla.core.command.CommandHandler
+import io.github.crabzilla.core.constants.PgNotificationTopics
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.core.metadata.EventMetadata
-import io.github.crabzilla.core.metadata.PgNotificationTopics
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 
 class CommandController<out S : Any, C : Any, E : Any>(
-  vertx: Vertx,
+  private val vertx: Vertx,
   private val pgPool: PgPool,
   private val json: ObjectMapper,
   private val config: CommandControllerConfig<S, C, E>,
@@ -52,27 +52,27 @@ class CommandController<out S : Any, C : Any, E : Any>(
             INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
     private const val DEFAULT_NOTIFICATION_INTERVAL = 3000L
+    private const val DEFAULT_EVENT_STREAM_SIZE = 1000
   }
 
+  var eventStreamSize = DEFAULT_EVENT_STREAM_SIZE
   private val stateSerialName = config.stateClass.simpleName!!
   private val notificationsByStateType = HashSet<String>()
 
-  init {
-    log.info("Starting CommandController for $stateSerialName")
+  fun startPgNotification(notificationInterval: Long = DEFAULT_NOTIFICATION_INTERVAL) {
+    fun notifyPg() {
+      notificationsByStateType.forEach { stateType ->
+        pgPool
+          .preparedQuery("NOTIFY " + PgNotificationTopics.STATE_TOPIC.name.lowercase() + ", '$stateType'")
+          .execute()
+      }
+      notificationsByStateType.clear()
+    }
+    log.info("Starting notifying Postgres for $stateSerialName each $notificationInterval ms")
     notificationsByStateType.add(stateSerialName)
-    vertx.setPeriodic(DEFAULT_NOTIFICATION_INTERVAL) {
+    vertx.setPeriodic(notificationInterval) {
       notifyPg()
     }
-    notifyPg()
-  }
-
-  private fun notifyPg() {
-    notificationsByStateType.forEach { stateType ->
-      pgPool
-        .preparedQuery("NOTIFY " + PgNotificationTopics.STATE_TOPIC.name.lowercase() + ", '$stateType'")
-        .execute()
-    }
-    notificationsByStateType.clear()
   }
 
   private val commandHandler: CommandHandler<S, C, E> = config.commandHandlerFactory.invoke()
@@ -166,8 +166,8 @@ class CommandController<out S : Any, C : Any, E : Any>(
         var state: S? = null
         var latestVersion = 0
         var error: Throwable? = null
-        // Fetch 1000 rows at a time
-        val stream: RowStream<Row> = pq.createStream(config.eventsStreamSize, Tuple.of(id))
+        // Fetch N rows at a time
+        val stream: RowStream<Row> = pq.createStream(eventStreamSize, Tuple.of(id))
         // Use the stream
         stream.handler { row: Row ->
           val eventAsJson = JsonObject(row.getValue("event_payload").toString())

@@ -19,7 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(VertxExtension::class)
 @DisplayName("Deploying events projector")
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class RedeployingProjectionIT {
+class RedeployingProjectorIT {
 
   lateinit var pgPool: PgPool
   private lateinit var testRepo: TestRepository
@@ -37,7 +37,7 @@ class RedeployingProjectionIT {
   @Order(1)
   fun `if it's not deployed, it will deploy`(tc: VertxTestContext, vertx: Vertx) {
     vertx.deployProjector(
-      config, "service:crabzilla.example1.customer.CustomersEventsProjector"
+      config, "service:crabzilla.example1.customer.SimpleProjector"
     )
       .onFailure {
         tc.failNow(it)
@@ -50,10 +50,10 @@ class RedeployingProjectionIT {
   @Order(2)
   fun `if it's already deployed, it will keep the current instance`(tc: VertxTestContext, vertx: Vertx) {
     vertx.deployProjector(
-      config, "service:crabzilla.example1.customer.CustomersEventsProjector"
+      config, "service:crabzilla.example1.customer.SimpleProjector"
     ).compose {
       vertx.deployProjector(
-        config, "service:crabzilla.example1.customer.CustomersEventsProjector"
+        config, "service:crabzilla.example1.customer.SimpleProjector"
       )
     }
       .onFailure {

@@ -9,16 +9,16 @@ import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory
 
 fun Vertx.deployProjector(config: JsonObject, serviceName: String): Future<Void> {
-  // TODO use hz quorum?
   val node = ManagementFactory.getRuntimeMXBean().name
   val serviceConfig = JsonObject(config.toBuffer()) // to not mutate config
   val projectionName = serviceName.removePrefix("service:")
   val log = LoggerFactory.getLogger(projectionName)
   serviceConfig.put("projectionName", projectionName)
+  val projectorEndpoints = ProjectorEndpoints(projectionName)
   val promise = Promise.promise<Void>()
   this
     .eventBus()
-    .request<String>("crabzilla.projectors.$projectionName.ping", node) { resp ->
+    .request<JsonObject>(projectorEndpoints.status(), node) { resp ->
       if (resp.failed()) {
         val projectionOptions = DeploymentOptions().setConfig(serviceConfig).setHa(true).setInstances(1)
         this.deployVerticle(serviceName, projectionOptions)
@@ -28,12 +28,11 @@ fun Vertx.deployProjector(config: JsonObject, serviceName: String): Future<Void>
           }
           .onFailure {
             promise.fail(it)
-            log.error("When starting {}", serviceName, it)
           }
       } else {
         promise.complete()
         log.info(
-          "Started as standby since node ${resp.result().body()} " +
+          "Started as standby since node ${resp.result().body().getString("node")} " +
             "is the current owner of this verticle"
         )
       }

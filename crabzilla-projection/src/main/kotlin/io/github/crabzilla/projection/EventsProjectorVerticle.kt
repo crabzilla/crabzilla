@@ -1,6 +1,6 @@
 package io.github.crabzilla.projection
 
-import io.github.crabzilla.core.metadata.PgNotificationTopics
+import io.github.crabzilla.core.constants.PgNotificationTopics
 import io.github.crabzilla.projection.internal.EventsScanner
 import io.github.crabzilla.projection.internal.QuerySpecification
 import io.vertx.core.Future
@@ -25,18 +25,28 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
     // TODO add endpoint for pause, resume, restart from N, etc (using event sourcing!)
   }
 
-  private var greedy: Boolean = false
+  private var greedy = false
   private val failures = AtomicLong(0L)
   private var currentOffset = 0L
+  private var isPaused = false
 
   private lateinit var options: Config
   private lateinit var scanner: EventsScanner
   private lateinit var eventsProjector: EventsProjector
+  private lateinit var projectorEndpoints: ProjectorEndpoints
 
   override fun start(startPromise: Promise<Void>) {
+    fun status() : JsonObject {
+      return JsonObject().put("node", node).put("paused", isPaused)
+        .put("greedy", greedy).put("failures", failures.get()).put("currentOffset", currentOffset)
+    }
+
     val jsonConfig = config()
     log.info("Node {} starting with {}", node, jsonConfig.encodePrettily())
     options = Config.create(jsonConfig)
+
+    projectorEndpoints = ProjectorEndpoints(options.projectionName)
+
     subscriber.connect().onSuccess {
       subscriber.channel(PgNotificationTopics.STATE_TOPIC.name.lowercase())
         .handler { stateType ->
@@ -46,19 +56,23 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
           }
         }
     }
+
     vertx.eventBus()
-      .consumer<String>("crabzilla.projectors.${options.projectionName}.ping") { msg ->
-        log.info(
-          "Node [${msg.body()}] just asked to start this verticle. I will answer that I'm already " +
-            "working from this node [$node]"
-        )
-        msg.reply(node)
+      .consumer<String>(projectorEndpoints.status()) { msg ->
+        log.debug("Status: {}", status().encodePrettily())
+        msg.reply(status())
       }
+
     vertx.eventBus()
-      .consumer<String>("crabzilla.projectors.${options.projectionName}.status") { msg ->
-        val status =
-          JsonObject().put("greedy", greedy).put("failures", failures.get()).put("currentOffset", currentOffset)
-        msg.reply(status)
+      .consumer<String>(projectorEndpoints.pause()) { msg ->
+        isPaused = true
+        msg.reply(status())
+      }
+
+    vertx.eventBus()
+      .consumer<String>(projectorEndpoints.resume()) { msg ->
+        isPaused = false
+        msg.reply(status())
       }
 
     val query = QuerySpecification.query(options.stateTypes, options.eventTypes)
@@ -78,6 +92,7 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
         scanner.getGlobalOffset()
       }
       .onSuccess { globalOffset ->
+
         greedy = globalOffset > currentOffset
         val effectiveInitialInterval = if (greedy) 1 else options.initialInterval
         log.info(
@@ -91,11 +106,19 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
         vertx.setPeriodic(options.metricsInterval) {
           log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
         }
-        vertx.eventBus().consumer<Void>("crabzilla.projectors.${options.projectionName}") { msg ->
+
+        vertx.eventBus().consumer<Void>(projectorEndpoints.work()).handler { msg ->
           action()
-            .onComplete { msg.reply(null) }
+            .onFailure {
+              log.error(it.message, it)
+            }
+            .onComplete {
+              msg.reply(status())
+            }
         }
+
         startPromise.complete()
+
       }.onFailure {
         startPromise.fail(it)
       }
@@ -107,8 +130,7 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
 
   private fun handler(): Handler<Long?> {
     return Handler<Long?> {
-      action()
-        .onFailure { log.error(it.message, it) }
+      vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
     }
   }
 
@@ -123,7 +145,13 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
       vertx.setTimer(options.interval, handler())
       log.debug("Rescheduled to next {} milliseconds", options.interval)
     }
-
+    fun justReschedule() {
+      vertx.setTimer(options.interval, handler())
+    }
+    if (isPaused) {
+      justReschedule()
+      return succeededFuture(0)
+    }
     log.debug("Scanning for new events for projection {}", options.projectionName)
     return scanAndSubmit(options.maxNumberOfRows)
       .compose { retrievedRows ->

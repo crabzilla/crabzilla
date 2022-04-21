@@ -7,6 +7,6 @@ data class CommandSideEffect(
   val appendedEvents: List<Pair<JsonObject, EventMetadata>>,
   val resultingVersion: Int
 ) {
-  fun causationId() = appendedEvents.last().second.eventId
+  fun lastEventId() = appendedEvents.last().second.eventId
   fun correlationId() = appendedEvents.last().second.correlationId
 }
