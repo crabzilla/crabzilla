@@ -55,12 +55,17 @@ class FilteredProjectorIT {
 
   // TODO test idempotency
 
-  private fun statusMatches(status: JsonObject,
-                            paused: Boolean, greedy: Boolean, failures: Long, currentOffset: Long) : Boolean {
-    return status.getBoolean("paused") == paused
-            && status.getBoolean("greedy") == greedy
-            && status.getLong("failures") == failures
-            && status.getLong("currentOffset") == currentOffset
+  private fun statusMatches(
+    status: JsonObject,
+    paused: Boolean,
+    greedy: Boolean,
+    failures: Long,
+    currentOffset: Long
+  ): Boolean {
+    return status.getBoolean("paused") == paused &&
+      status.getBoolean("greedy") == greedy &&
+      status.getLong("failures") == failures &&
+      status.getLong("currentOffset") == currentOffset
   }
 
   @Test
@@ -84,7 +89,8 @@ class FilteredProjectorIT {
       .onFailure { tc.failNow(it) }
       .compose {
         Thread.sleep(100)
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null) }
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
+      }
       .onFailure { tc.failNow(it) }
       .onSuccess { msg: Message<JsonObject> ->
         if (statusMatches(msg.body(), paused = false, greedy = true, failures = 0L, currentOffset = 0L)) {
@@ -102,11 +108,13 @@ class FilteredProjectorIT {
       .onFailure { tc.failNow(it) }
       .compose {
         Thread.sleep(100)
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
+      }
       .onFailure { tc.failNow(it) }
       .compose {
         Thread.sleep(100)
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null) }
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
+      }
       .onFailure { tc.failNow(it) }
       .onSuccess { msg: Message<JsonObject> ->
         if (statusMatches(msg.body(), paused = false, greedy = true, failures = 0L, currentOffset = 1L)) {
@@ -141,14 +149,17 @@ class FilteredProjectorIT {
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .onFailure { tc.failNow(it) }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null) }
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
+      }
       .onFailure { tc.failNow(it) }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
+      }
       .onFailure { tc.failNow(it) }
       .compose {
         Thread.sleep(100)
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null) }
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
+      }
       .onFailure { tc.failNow(it) }
       .onSuccess { msg: Message<JsonObject> ->
         if (statusMatches(msg.body(), paused = true, greedy = true, failures = 0L, currentOffset = 0L)) {
@@ -165,17 +176,21 @@ class FilteredProjectorIT {
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .onFailure { tc.failNow(it) }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null) }
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
+      }
       .onFailure { tc.failNow(it) }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.resume(), null) }
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.resume(), null)
+      }
       .onFailure { tc.failNow(it) }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
+      }
       .onFailure { tc.failNow(it) }
       .compose {
         Thread.sleep(100)
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null) }
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
+      }
       .onFailure { tc.failNow(it) }
       .onSuccess { msg: Message<JsonObject> ->
         if (statusMatches(msg.body(), paused = false, greedy = true, failures = 0L, currentOffset = 1L)) {

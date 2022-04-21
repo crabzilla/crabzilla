@@ -36,7 +36,7 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
   private lateinit var projectorEndpoints: ProjectorEndpoints
 
   override fun start(startPromise: Promise<Void>) {
-    fun status() : JsonObject {
+    fun status(): JsonObject {
       return JsonObject().put("node", node).put("paused", isPaused)
         .put("greedy", greedy).put("failures", failures.get()).put("currentOffset", currentOffset)
     }
@@ -118,7 +118,6 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
         }
 
         startPromise.complete()
-
       }.onFailure {
         startPromise.fail(it)
       }
@@ -234,8 +233,8 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
       fun create(config: JsonObject): Config {
         val projectionName = config.getString("projectionName")
         val viewName = config.getString("viewName")
-        val initialInterval = config.getLong("initialInterval", 5_000)
-        val interval = config.getLong("interval", 250)
+        val initialInterval = config.getLong("initialInterval", 15_000)
+        val interval = config.getLong("interval", 5_000)
         val maxNumberOfRows = config.getInteger("maxNumberOfRows", 250)
         val maxInterval = config.getLong("maxInterval", 60_000)
         val metricsInterval = config.getLong("metricsInterval", 60_000)
