@@ -102,8 +102,11 @@ class EagerProjectorIT {
     vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
       .onFailure { tc.failNow(it) }
       .onSuccess { msg ->
-        if (statusMatches(msg.body(), paused = false, greedy = false, { failures: Long -> failures > 0 },
-            currentOffset = 0L)) {
+        if (statusMatches(
+            msg.body(), paused = false, greedy = false, { failures: Long -> failures > 0 },
+            currentOffset = 0L
+          )
+        ) {
           tc.completeNow()
         } else {
           tc.failNow("unexpected status ${msg.body().encodePrettily()}")
@@ -155,8 +158,10 @@ class EagerProjectorIT {
 
   @Test
   @Order(6)
-  fun `after a command then pause then resume the paused is false and currentOffset is 1`(tc: VertxTestContext,
-                                                                                          vertx: Vertx) {
+  fun `after a command then pause then resume the paused is false and currentOffset is 1`(
+    tc: VertxTestContext,
+    vertx: Vertx
+  ) {
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .onFailure { tc.failNow(it) }
       .compose {
