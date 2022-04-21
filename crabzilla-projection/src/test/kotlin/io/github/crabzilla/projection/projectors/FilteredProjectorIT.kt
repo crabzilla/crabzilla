@@ -145,7 +145,8 @@ class FilteredProjectorIT {
 
   @Test
   @Order(5)
-  fun `after a command then pause then work the paused is true and currentOffset is 0`(tc: VertxTestContext, vertx: Vertx) {
+  fun `after a command then pause then work the paused is true and currentOffset is 0`(tc: VertxTestContext,
+                                                                                       vertx: Vertx) {
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .onFailure { tc.failNow(it) }
       .compose {
@@ -172,7 +173,8 @@ class FilteredProjectorIT {
 
   @Test
   @Order(6)
-  fun `after a command then pause then resume the paused is false and currentOffset is 1`(tc: VertxTestContext, vertx: Vertx) {
+  fun `after a command then pause then resume the paused is false and currentOffset is 1`(tc: VertxTestContext,
+                                                                                          vertx: Vertx) {
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .onFailure { tc.failNow(it) }
       .compose {
