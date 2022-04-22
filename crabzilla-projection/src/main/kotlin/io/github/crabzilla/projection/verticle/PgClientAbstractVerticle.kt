@@ -9,12 +9,14 @@ import io.vertx.sqlclient.PoolOptions
 open class PgClientAbstractVerticle : AbstractVerticle() {
 
   val pgPool: PgPool by lazy {
-    val connectOptions = PgConnectOptionsFactory.from(config())
+    val pgConfig = PgConnectOptionsFactory.from(config())
+    val connectOptions = PgConnectOptionsFactory.from(pgConfig)
     PgPool.pool(vertx, connectOptions, PoolOptions())
   }
 
   val subscriber: PgSubscriber by lazy {
-    val connectOptions = PgConnectOptionsFactory.from(config())
+    val pgConfig = PgConnectOptionsFactory.from(config())
+    val connectOptions = PgConnectOptionsFactory.from(pgConfig)
     PgSubscriber.subscriber(vertx, connectOptions)
   }
 }
