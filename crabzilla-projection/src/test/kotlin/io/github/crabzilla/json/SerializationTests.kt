@@ -37,7 +37,10 @@ class SerializationTests {
       subclass(RegisterCustomer::class, RegisterCustomer.serializer())
       subclass(ActivateCustomer::class, ActivateCustomer.serializer())
       subclass(CustomerCommand.DeactivateCustomer::class, CustomerCommand.DeactivateCustomer.serializer())
-      subclass(CustomerCommand.RegisterAndActivateCustomer::class, CustomerCommand.RegisterAndActivateCustomer.serializer())
+      subclass(
+        CustomerCommand.RegisterAndActivateCustomer::class,
+        CustomerCommand.RegisterAndActivateCustomer.serializer()
+      )
     }
     polymorphic(CustomerEvent::class) {
       subclass(CustomerRegistered::class, CustomerRegistered.serializer())

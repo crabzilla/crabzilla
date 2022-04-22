@@ -6,23 +6,27 @@ import io.vertx.core.json.JsonObject
 data class ProjectorConfig(
   val projectionName: String,
   val viewName: String,
-  val initialInterval: Long = 15_000,
-  val interval: Long = 5_000,
-  val maxNumberOfRows: Int = 250,
-  val maxInterval: Long = 60_000,
-  val metricsInterval: Long = 60_000,
+  val initialInterval: Long = DEFAULT_INITIAL_INTERVAL,
+  val interval: Long = DEFAULT_INTERVAL,
+  val maxNumberOfRows: Int = DEFAULT_NUMBER_ROWS,
+  val maxInterval: Long = DEFAULT_MAX_INTERVAL,
+  val metricsInterval: Long = DEFAULT_MAX_INTERVAL,
   val stateTypes: List<String> = listOf(),
   val eventTypes: List<String> = listOf(),
 ) {
   companion object {
+    private const val DEFAULT_INITIAL_INTERVAL = 15_000L
+    private const val DEFAULT_INTERVAL = 5_000L
+    private const val DEFAULT_NUMBER_ROWS = 250
+    private const val DEFAULT_MAX_INTERVAL = 60_000L
     fun create(config: JsonObject): ProjectorConfig {
       val projectionName = config.getString("projectionName")
       val viewName = config.getString("viewName")
-      val initialInterval = config.getLong("initialInterval", 15_000)
-      val interval = config.getLong("interval", 5_000)
-      val maxNumberOfRows = config.getInteger("maxNumberOfRows", 250)
-      val maxInterval = config.getLong("maxInterval", 60_000)
-      val metricsInterval = config.getLong("metricsInterval", 60_000)
+      val initialInterval = config.getLong("initialInterval", DEFAULT_INITIAL_INTERVAL)
+      val interval = config.getLong("interval", DEFAULT_INTERVAL)
+      val maxNumberOfRows = config.getInteger("maxNumberOfRows", DEFAULT_NUMBER_ROWS)
+      val maxInterval = config.getLong("maxInterval", DEFAULT_INTERVAL)
+      val metricsInterval = config.getLong("metricsInterval", DEFAULT_MAX_INTERVAL)
       val stateTypesArray = config.getJsonArray("stateTypes") ?: JsonArray()
       val stateTypes = stateTypesArray.iterator().asSequence().map { it.toString() }.toList()
       val eventTypesArray = config.getJsonArray("eventTypes") ?: JsonArray()

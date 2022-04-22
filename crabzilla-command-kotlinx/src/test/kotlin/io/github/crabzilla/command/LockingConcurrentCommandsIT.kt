@@ -48,7 +48,7 @@ class LockingConcurrentCommandsIT {
     commandController.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess { sideEffect ->
-        vertx.executeBlocking<Void> {
+        vertx.executeBlocking<Void> { promise ->
           val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 2
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = CustomerCommand.ActivateCustomer("whatsoever")
@@ -73,9 +73,15 @@ class LockingConcurrentCommandsIT {
               }
               assertTrue(acceptable, "Exception unexpected ${f.cause().javaClass.simpleName}")
             }
-            tc.completeNow()
+            promise.complete(null)
+          }.failing<Void> {
+            promise.fail(it)
           }
           executorService.shutdown()
+        }.onSuccess {
+          tc.completeNow()
+        }.onFailure {
+          tc.failNow(it)
         }
       }
   }
