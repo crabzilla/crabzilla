@@ -1,7 +1,6 @@
 package io.github.crabzilla.command
 
 import io.github.crabzilla.Jackson.json
-import io.github.crabzilla.TestRepository
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
@@ -14,7 +13,6 @@ import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -62,9 +60,9 @@ class LockingConcurrentCommandsIT {
           val failures = futures.map { it.get() }.filter { it.failed() }
           val succeeded = futures.map { it.get() }.filter { it.succeeded() }
           tc.verify {
-            assertTrue(futures.size == callables.size)
-            assertTrue(failures.size == callables.size - 1)
-            assertTrue(succeeded.size == 1)
+            assertEquals(futures.size, callables.size)
+            assertEquals(failures.size, callables.size - 1)
+            assertEquals(succeeded.size, 1)
             for (cause in failures) {
               val t: Throwable = cause.cause()
               assertEquals("LockingException", t.javaClass.simpleName)
