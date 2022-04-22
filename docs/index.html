@@ -488,7 +488,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>Lock the target State instance using <a href="https://www.postgresql.org/docs/13/explicit-locking.html#ADVISORY-LOCKS">Postgres Advisory Locks</a>.</p>
 </li>
 <li>
-<p>Retrieve the target <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-pgclient/src/main/kotlin/io/github/crabzilla/command/internal/Snapshot.kt">Snapshot</a>.</p>
+<p>Retrieve the target Snapshot using streams to avoid consuming all events at once.</p>
 </li>
 <li>
 <p>Handle your Command and snapshot state using your implementations of <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/CommandHandler.kt">CommandHandler</a> and <a href="https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/EventHandler.kt">EventHandler</a>:</p>
@@ -504,10 +504,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>Persist the resulting events + metadata as JSON to events table.</p>
 </li>
 <li>
-<p>Optionally persist the resulting snapshot (state and version) as JSON to snapshots table.</p>
-</li>
-<li>
-<p>Optionally project the resulting events to you read model</p>
+<p>Optionally project the resulting events to you read model in case you need a set based validation.</p>
 </li>
 </ol>
 </div>
@@ -570,10 +567,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>[X] Non-blocking IO using <code>vertx-pg-client</code></p>
 </li>
 <li>
-<p>[X] On Demand snapshotting</p>
-</li>
-<li>
-<p>[X] Persistent snapshotting</p>
+<p>[X] On Demand snapshotting: no cache, no persistence</p>
 </li>
 <li>
 <p>[X] State ID locking using Postgres Advisory locks</p>
@@ -591,7 +585,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>[X] Optional Command validation</p>
 </li>
 <li>
-<p>[X] Optional "synchronous" Read Model projection: within the same command handler transaction</p>
+<p>[X] Optional "synchronous" Read Model projection: within the same command handler transaction: set based validation.</p>
 </li>
 </ul>
 </div>
@@ -601,7 +595,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p>[X] Based on Verticles (single writer)</p>
+<p>[X] EventsProjectorWorker can be injected (vertx and pgPool instances)</p>
+</li>
+<li>
+<p>[X] Optionally, based on Verticles (single writer clustered verticles)</p>
 </li>
 <li>
 <p>[X] Batch projection of many events within a single transaction</p>
@@ -630,7 +627,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p>Java 17 (latest LTS)</p>
+<p>Java 11 (LTS)</p>
 </li>
 <li>
 <p>Maven</p>
@@ -723,7 +720,7 @@ used):</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Add <code>crabzilla-pgclient</code> to consistently append and project your events as JSON to Postgres.</p>
+<p>Add <code>crabzilla-command-kotlinx</code> to consistently append your events as JSON to Postgres using Kotlin Serialization.</p>
 </li>
 </ol>
 </div>
@@ -731,7 +728,39 @@ used):</p>
 <div class="content">
 <pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
     &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
-    &lt;artifactId&gt;crabzilla-pgclient&lt;/artifactId&gt;
+    &lt;artifactId&gt;crabzilla-command-kotlinx&lt;/artifactId&gt;
+    &lt;version&gt;see latest jitpack version&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Add <code>crabzilla-command-jackson</code> to consistently append your events as JSON to Postgres using Jackson Kotlin module.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
+    &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
+    &lt;artifactId&gt;crabzilla-command-jackson&lt;/artifactId&gt;
+    &lt;version&gt;see latest jitpack version&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Add <code>crabzilla-command-projection</code> to consistently project your events to your view/read model.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
+    &lt;groupId&gt;com.github.crabzilla.crabzilla&lt;/groupId&gt;
+    &lt;artifactId&gt;crabzilla-command-projection&lt;/artifactId&gt;
     &lt;version&gt;see latest jitpack version&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
@@ -741,8 +770,8 @@ used):</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version v0.4.5<br>
-Last updated 2022-02-23 14:21:58 -0300
+Version v0.4.8<br>
+Last updated 2022-04-22 15:22:13 -0300
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/rainbow.min.css">
