@@ -21,6 +21,12 @@ internal class CommandControllerTest {
   }
 
   @Test
+  fun `a command controller can be created and start via factory`() {
+    val controller = CommandController.createAndStart(vertx, pgPool, json, customerConfig)
+    assertNotNull(controller)
+  }
+
+  @Test
   fun `a command controller can be created with a custom synchronous event projector`() {
     val options = CommandControllerOptions(eventsProjector = CustomersEventsProjector("customers"))
     val controller = CommandController(vertx, pgPool, json, customerConfig, options)

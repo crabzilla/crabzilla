@@ -26,7 +26,7 @@ import java.util.UUID
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Persisting events")
-class EventsPersistenceIT {
+class PersistingEventsT {
 
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
 

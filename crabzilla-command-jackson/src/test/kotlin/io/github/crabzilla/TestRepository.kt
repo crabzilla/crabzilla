@@ -11,6 +11,7 @@ import io.vertx.sqlclient.Tuple
 class TestRepository(private val pgPool: PgPool) {
 
   companion object {
+    val testRepo = TestRepository(pgPool = pgPool)
     private const val selectAfterOffset =
       """
       SELECT *

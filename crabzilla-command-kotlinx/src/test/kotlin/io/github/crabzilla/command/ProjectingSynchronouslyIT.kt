@@ -1,7 +1,8 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.Jackson.json
-import io.github.crabzilla.TestRepository
+import io.github.crabzilla.TestsFixtures.json
+import io.github.crabzilla.TestsFixtures.pgPool
+import io.github.crabzilla.TestsFixtures.testRepo
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
@@ -10,7 +11,6 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivate
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomersEventsProjector
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.pgPool
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -24,48 +24,22 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DisplayName("Running synchronous projection")
-class SyncProjectionIT {
+@DisplayName("Projecting to view model synchronously")
+class ProjectingSynchronouslyIT {
 
   private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     val options = CommandControllerOptions(eventsProjector = CustomersEventsProjector("customers"))
     controller = CommandController(vertx, pgPool, json, customerConfig, options)
-    testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
 
   @Test
-  @DisplayName("appending 1 command with 2 events results in version 2 ")
-  fun s1(tc: VertxTestContext) {
-    val id = UUID.randomUUID()
-    val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata.new(id)
-    controller.handle(metadata, cmd)
-      .onFailure { tc.failNow(it) }
-      .onSuccess {
-        testRepo.getAllCustomers()
-          .onFailure { tc.failNow(it) }
-          .onSuccess { customersList ->
-            assertThat(customersList.size).isEqualTo(1)
-            val json = customersList.first()
-//            println(json.encodePrettily())
-            assertThat(UUID.fromString(json.getString("id"))).isEqualTo(id)
-            assertThat(json.getString("name")).isEqualTo(cmd.name)
-            assertThat(json.getBoolean("is_active")).isEqualTo(true)
-            tc.completeNow()
-          }
-      }
-  }
-
-  @Test
-  @DisplayName("appending 2 commands with 2 and 1 event, respectively results in version 3")
-  fun s2(tc: VertxTestContext) {
+  fun `it can project to view model synchronously`(vertx: Vertx, tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
     val metadata1 = CommandMetadata.new(id)

@@ -1,14 +1,13 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.Jackson.json
-import io.github.crabzilla.TestRepository
+import io.github.crabzilla.TestsFixtures
+import io.github.crabzilla.TestsFixtures.pgPool
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.pgPool
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -23,15 +22,13 @@ import java.util.UUID
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Validating commands")
-class CommandsValidationIT {
+class ValidatingCommandIT {
 
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandController(vertx, pgPool, json, customerConfig)
-    testRepo = TestRepository(pgPool)
+    commandController = CommandController(vertx, pgPool, TestsFixtures.json, customerConfig)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }

@@ -1,60 +1,64 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.Jackson.json
-import io.github.crabzilla.TestRepository
+import io.github.crabzilla.TestsFixtures.json
+import io.github.crabzilla.TestsFixtures.pgPool
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.pgPool
-import io.vertx.core.CompositeFuture
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.UUID
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DisplayName("Running concurrent commands should pessimistically lock")
-class PessimisticLockingIT {
+@DisplayName("Publishing to eventbus")
+class PublishingToEventbusIT {
 
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     commandController = CommandController(vertx, pgPool, json, customerConfig)
-    testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
 
   @Test
-  fun `lock works`(tc: VertxTestContext) {
+  fun `it can publish to eventbus`(vertx: Vertx, tc: VertxTestContext) {
+    val latch = CountDownLatch(1)
+    val options = CommandControllerOptions(publishToEventBus = true)
+    val controller = CommandController.createAndStart(vertx, pgPool, json, customerConfig, options)
+    val jsonMessage = AtomicReference<JsonObject>()
+    vertx.eventBus().consumer<JsonObject>(customerConfig.stateClassName()) { msg ->
+      latch.countDown()
+      jsonMessage.set(msg.body())
+    }
     val id = UUID.randomUUID()
-    val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
+    val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata.new(id)
-    val future1 = commandController.handle(metadata, cmd)
-    val future2 = commandController.handle(metadata, cmd)
-    CompositeFuture.all(future1, future2)
+    controller.handle(metadata, cmd)
+      .onFailure { tc.failNow(it) }
       .onSuccess {
-        tc.failNow("it should fail")
-      }
-      .onFailure {
         tc.verify {
-          when (val exceptionName = it.javaClass.simpleName) {
-            "LockingException" -> tc.completeNow()
-            "CustomerAlreadyExists" -> tc.completeNow()
-            else -> tc.failNow("Unexpected exception name $exceptionName")
-          }
+          assertTrue(latch.await(1, TimeUnit.SECONDS))
+          assertTrue(jsonMessage.get().getJsonArray("events").size() == 2)
+          tc.completeNow()
         }
       }
   }
