@@ -49,7 +49,7 @@ class LockingConcurrentCommandsIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { sideEffect ->
         vertx.executeBlocking<Void> {
-          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE * 2
+          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 2
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = CustomerCommand.ActivateCustomer("whatsoever")
           val metadata2 = CommandMetadata(id, metadata.causationId, sideEffect.latestEventId(), UUID.randomUUID())
