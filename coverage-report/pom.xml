@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>v0.4.7</version>
+    <version>v0.4.8</version>
   </parent>
 
   <artifactId>coverage-report</artifactId>
@@ -21,7 +21,22 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-pgclient</artifactId>
+      <artifactId>crabzilla-stack</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-command-kotlinx</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-command-jackson</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-projection</artifactId>
     </dependency>
 
   </dependencies>

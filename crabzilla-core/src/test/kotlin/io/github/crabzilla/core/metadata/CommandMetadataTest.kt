@@ -25,5 +25,4 @@ internal class CommandMetadataTest {
     assertEquals(m.correlationId, correlationID)
     assertEquals(m.causationId, causationId)
   }
-
 }

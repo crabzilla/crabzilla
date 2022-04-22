@@ -1,0 +1,16 @@
+{
+  "main": "io.github.crabzilla.projection.verticle.EventsProjectorVerticle",
+  "options": {
+    "config" : {
+      "viewName": "customers",
+      "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
+      "initialInterval" : 30000,
+      "interval" : 30000,
+      "metricsInterval" : 5,
+      "maxInterval" : 10000,
+      "maxNumberOfRows": 1,
+      "stateTypes": ["Customer"],
+      "eventTypes": ["CustomerRegistered", "CustomerActivated"]
+    }
+  }
+}

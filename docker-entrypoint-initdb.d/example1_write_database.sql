@@ -30,6 +30,7 @@ CREATE TABLE events (
       id UUID NOT NULL,
       causation_id UUID NOT NULL,
       correlation_id UUID NOT NULL,
+--      cmd_id UUID,
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       UNIQUE (state_id, version) -- to help lookup by entity id ordered by version
     )
@@ -58,6 +59,6 @@ CREATE TABLE customer_summary (
     PRIMARY KEY (id)
 );
 
-INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.CustomersEventsProjector', 0);
-INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.CustomersSlowEventsProjector', 0);
-INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.FilteredEventsProjector', 0);
+INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.SimpleProjector', 0);
+INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.FilteredProjector', 0);
+INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.EagerProjector', 0);

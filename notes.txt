@@ -2,6 +2,10 @@
 -- https://softwaremill.com/implementing-event-sourcing-using-a-relational-database/
 -- https://stackoverflow.com/questions/53207723/sequential-composition-for-arbitrary-number-of-calls-in-vertx-with-futures
 
+-- https://martin.kleppmann.com/2018/01/18/event-types-in-kafka-topic.html
+-- https://verraes.net/2019/05/ddd-msg-arch/
+-- https://foojay.io/today/optimizing-relational-database-access/
+
 * projections
 -- https://github.com/tobyhede/postgresql-event-sourcing/
 -- https://domaincentric.net/blog/event-sourcing-projection-patterns-deduplication-strategies
@@ -22,3 +26,4 @@ https://www.youtube.com/watch?v=o51kMltuSuQ
 * TODO
 https://www.logicbig.com/tutorials/core-java-tutorial/modules/service-provider-method.html
 
+https://medium.com/swlh/microservices-on-kubernetes-quarkus-eks-e4fac1efbef5
