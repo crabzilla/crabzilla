@@ -15,6 +15,7 @@ import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.impl.PgPoolOptions
 import io.vertx.sqlclient.PoolOptions.DEFAULT_MAX_SIZE
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -49,7 +50,7 @@ class LockingConcurrentCommandsIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { sideEffect ->
         vertx.executeBlocking<Void> {
-          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE 
+          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE * 10
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = CustomerCommand.ActivateCustomer("whatsoever")
           val metadata2 = CommandMetadata(id, metadata.causationId, sideEffect.latestEventId(), UUID.randomUUID())
@@ -65,9 +66,13 @@ class LockingConcurrentCommandsIT {
             assertEquals(futures.size, callables.size)
             assertEquals(failures.size, callables.size - 1)
             assertEquals(succeeded.size, 1)
-            for (cause in failures) {
-              val t: Throwable = cause.cause()
-              assertEquals("LockingException", t.javaClass.simpleName)
+            for (f in failures) {
+              val acceptable = when (f.cause().javaClass.simpleName) {
+                "LockingException" -> true
+                "PgException" -> true
+                else -> false
+              }
+              assertTrue(acceptable, "Exception unexpected ${f.cause().javaClass.simpleName}")
             }
             tc.completeNow()
           }
