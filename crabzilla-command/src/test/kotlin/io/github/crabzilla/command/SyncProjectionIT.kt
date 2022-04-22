@@ -14,7 +14,6 @@ import io.github.crabzilla.pgPool
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.pgclient.PgPool
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -28,14 +27,11 @@ import java.util.UUID
 @DisplayName("Running synchronous projection")
 class SyncProjectionIT {
 
-  private lateinit var pgPool: PgPool
   private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    pgPool = pgPool(vertx)
-
     controller = CommandControllerBuilder(vertx, pgPool)
       .build(customerModule, customerConfig, CustomersEventsProjector("customers"))
     testRepo = TestRepository(pgPool)

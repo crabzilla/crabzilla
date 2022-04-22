@@ -1,13 +1,13 @@
 package io.github.crabzilla.command.json
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import io.github.crabzilla.Jackson.objectMapper
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.objectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test

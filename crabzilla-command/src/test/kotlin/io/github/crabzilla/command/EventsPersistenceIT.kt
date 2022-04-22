@@ -14,7 +14,6 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.pgclient.PgPool
 import kotlinx.serialization.PolymorphicSerializer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -29,7 +28,6 @@ import java.util.UUID
 @DisplayName("Persisting events")
 class EventsPersistenceIT {
 
-  private lateinit var pgPool: PgPool
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var testRepo: TestRepository
   private val stateSerDer = PolymorphicSerializer(Customer::class)
@@ -38,7 +36,6 @@ class EventsPersistenceIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    pgPool = pgPool(vertx)
     commandController = CommandControllerBuilder(vertx, pgPool)
       .build(customerModule, customerConfig)
     testRepo = TestRepository(pgPool)

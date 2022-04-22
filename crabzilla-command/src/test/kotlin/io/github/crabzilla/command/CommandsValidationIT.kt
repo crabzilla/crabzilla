@@ -30,7 +30,6 @@ class CommandsValidationIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val pgPool = pgPool(vertx)
     commandController = CommandControllerBuilder(vertx, pgPool)
       .build(customerModule, customerConfig)
     testRepo = TestRepository(pgPool)

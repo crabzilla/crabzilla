@@ -2,7 +2,7 @@ package io.github.crabzilla.projection
 
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.config
+import io.github.crabzilla.dbConfig
 import io.github.crabzilla.pgPool
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
@@ -20,9 +20,8 @@ class DeployingUnknownProjectorIT {
 
   @Test
   fun `deploying an invalid projector`(vertx: Vertx, tc: VertxTestContext) {
-    val pgPool = pgPool(vertx)
     testRepo = TestRepository(pgPool)
-    val options = DeploymentOptions().setConfig(config)
+    val options = DeploymentOptions().setConfig(dbConfig)
     cleanDatabase(pgPool)
       .compose { vertx.deployVerticle("service:?", options) }
       .onFailure { tc.completeNow() }

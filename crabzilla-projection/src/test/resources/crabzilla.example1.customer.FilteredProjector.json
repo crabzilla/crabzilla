@@ -1,5 +1,5 @@
 {
-  "main": "io.github.crabzilla.projection.EventsProjectorVerticle",
+  "main": "io.github.crabzilla.projection.verticle.EventsProjectorVerticle",
   "options": {
     "config" : {
       "viewName": "customers",

@@ -8,8 +8,10 @@ import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler
 import io.vertx.core.Promise
-import io.vertx.core.json.JsonArray
+import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
+import io.vertx.pgclient.PgPool
+import io.vertx.pgclient.pubsub.PgSubscriber
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
@@ -17,12 +19,18 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-class EventsProjectorVerticle : PgClientAbstractVerticle() {
+class EventsProjectorPublisher(
+  private val vertx: Vertx,
+  private val pgPool: PgPool,
+  private val subscriber: PgSubscriber,
+  private val options: ProjectorConfig,
+  private val eventsProjector: EventsProjector,
+) {
 
   companion object {
-    private val log = LoggerFactory.getLogger(EventsProjectorVerticle::class.java)
+    private val log = LoggerFactory.getLogger(EventsProjectorPublisher::class.java)
     private val node: String = ManagementFactory.getRuntimeMXBean().name
-    // TODO add endpoint for pause, resume, restart from N, etc (using event sourcing!)
+    // TODO add endpoint for restart from N
   }
 
   private var greedy = false
@@ -30,20 +38,16 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
   private var currentOffset = 0L
   private var isPaused = false
 
-  private lateinit var options: Config
   private lateinit var scanner: EventsScanner
-  private lateinit var eventsProjector: EventsProjector
   private lateinit var projectorEndpoints: ProjectorEndpoints
 
-  override fun start(startPromise: Promise<Void>) {
+  fun start(startPromise: Promise<Void>) {
     fun status(): JsonObject {
       return JsonObject().put("node", node).put("paused", isPaused)
         .put("greedy", greedy).put("failures", failures.get()).put("currentOffset", currentOffset)
     }
 
-    val jsonConfig = config()
-    log.info("Node {} starting with {}", node, jsonConfig.encodePrettily())
-    options = Config.create(jsonConfig)
+    log.info("Node {} starting with {}", node, options)
 
     projectorEndpoints = ProjectorEndpoints(options.projectionName)
 
@@ -81,8 +85,6 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
       options.initialInterval
     )
     scanner = EventsScanner(pgPool, options.projectionName, query)
-    val provider = EventsProjectorProviderFinder().create(config().getString("eventsProjectorFactoryClassName"))
-    eventsProjector = provider.create()
 
     scanner.getCurrentOffset()
       .onSuccess { offset ->
@@ -123,7 +125,7 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
       }
   }
 
-  override fun stop() {
+  fun stop() {
     log.info("Projection [{}] stopped at offset [{}]", options.projectionName, currentOffset)
   }
 
@@ -139,11 +141,13 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
       vertx.setTimer(nextInterval, handler())
       log.debug("Rescheduled to next {} milliseconds", nextInterval)
     }
+
     fun registerSuccessOrStillBusy() {
       failures.set(0)
       vertx.setTimer(options.interval, handler())
       log.debug("Rescheduled to next {} milliseconds", options.interval)
     }
+
     fun justReschedule() {
       vertx.setTimer(options.interval, handler())
     }
@@ -216,45 +220,5 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
           }
         }
       }
-  }
-
-  private data class Config(
-    val projectionName: String,
-    val viewName: String,
-    val initialInterval: Long,
-    val interval: Long,
-    val maxNumberOfRows: Int,
-    val maxInterval: Long,
-    val metricsInterval: Long,
-    val stateTypes: List<String>,
-    val eventTypes: List<String>,
-  ) {
-    companion object {
-      fun create(config: JsonObject): Config {
-        val projectionName = config.getString("projectionName")
-        val viewName = config.getString("viewName")
-        val initialInterval = config.getLong("initialInterval", 15_000)
-        val interval = config.getLong("interval", 5_000)
-        val maxNumberOfRows = config.getInteger("maxNumberOfRows", 250)
-        val maxInterval = config.getLong("maxInterval", 60_000)
-        val metricsInterval = config.getLong("metricsInterval", 60_000)
-        val stateTypesArray = config.getJsonArray("stateTypes") ?: JsonArray()
-        val stateTypes = stateTypesArray.iterator().asSequence().map { it.toString() }.toList()
-        val eventTypesArray = config.getJsonArray("eventTypes") ?: JsonArray()
-        val eventTypes = eventTypesArray.iterator().asSequence().map { it.toString() }.toList()
-
-        return Config(
-          projectionName = projectionName,
-          viewName = viewName,
-          initialInterval = initialInterval,
-          interval = interval,
-          maxInterval = maxInterval,
-          metricsInterval = metricsInterval,
-          maxNumberOfRows = maxNumberOfRows,
-          stateTypes = stateTypes,
-          eventTypes = eventTypes
-        )
-      }
-    }
   }
 }

@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.projection.verticle
 
 import java.nio.file.ProviderNotFoundException
 import java.util.ServiceLoader

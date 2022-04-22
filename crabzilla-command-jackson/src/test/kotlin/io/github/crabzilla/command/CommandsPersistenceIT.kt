@@ -1,5 +1,6 @@
 package io.github.crabzilla.command
 
+import io.github.crabzilla.Jackson.objectMapper
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.core.metadata.CommandMetadata
@@ -9,7 +10,6 @@ import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.objectMapper
 import io.github.crabzilla.pgPool
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -32,7 +32,6 @@ class CommandsPersistenceIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val pgPool = pgPool(vertx)
     commandController = CommandControllerBuilder(vertx, pgPool).build(objectMapper, customerConfig)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)

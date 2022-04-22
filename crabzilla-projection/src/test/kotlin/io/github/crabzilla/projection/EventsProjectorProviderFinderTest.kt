@@ -1,5 +1,6 @@
 package io.github.crabzilla.projection
 
+import io.github.crabzilla.projection.verticle.EventsProjectorProviderFinder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.DisplayName

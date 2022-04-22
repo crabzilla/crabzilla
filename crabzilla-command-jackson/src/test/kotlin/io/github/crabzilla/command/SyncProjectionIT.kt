@@ -1,5 +1,6 @@
 package io.github.crabzilla.command
 
+import io.github.crabzilla.Jackson.objectMapper
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.core.metadata.CommandMetadata
@@ -9,12 +10,10 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivate
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomersEventsProjector
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.objectMapper
 import io.github.crabzilla.pgPool
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.pgclient.PgPool
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -28,13 +27,11 @@ import java.util.UUID
 @DisplayName("Running synchronous projection")
 class SyncProjectionIT {
 
-  private lateinit var pgPool: PgPool
   private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    pgPool = pgPool(vertx)
 
     controller = CommandControllerBuilder(vertx, pgPool)
       .build(objectMapper, customerConfig, CustomersEventsProjector("customers"))

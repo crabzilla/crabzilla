@@ -4,8 +4,8 @@ import io.github.crabzilla.TestRepository
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.command.CommandControllerBuilder
-import io.github.crabzilla.config
 import io.github.crabzilla.core.metadata.CommandMetadata
+import io.github.crabzilla.dbConfig
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
@@ -14,13 +14,12 @@ import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.customer.customerModule
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.projection.ProjectorEndpoints
-import io.github.crabzilla.projection.deployProjector
+import io.github.crabzilla.projection.verticle.deployProjector
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.pgclient.PgPool
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
@@ -35,19 +34,17 @@ class SimpleProjectorIT {
 
   private val projectorEndpoints = ProjectorEndpoints("crabzilla.example1.customer.SimpleProjector")
   private val id: UUID = UUID.randomUUID()
-  private lateinit var pgPool: PgPool
   private lateinit var testRepo: TestRepository
   private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    pgPool = pgPool(vertx)
     testRepo = TestRepository(pgPool)
     controller = CommandControllerBuilder(vertx, pgPool).build(customerModule, customerConfig)
     controller.startPgNotification(1L)
     cleanDatabase(pgPool)
       .compose {
-        vertx.deployProjector(config, "service:crabzilla.example1.customer.SimpleProjector")
+        vertx.deployProjector(dbConfig, "service:crabzilla.example1.customer.SimpleProjector")
       }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }

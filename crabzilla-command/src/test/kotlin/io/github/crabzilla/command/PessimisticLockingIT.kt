@@ -30,7 +30,6 @@ class PessimisticLockingIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val pgPool = pgPool(vertx)
     commandController = CommandController(vertx, pgPool, example1Json, customerConfig)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
