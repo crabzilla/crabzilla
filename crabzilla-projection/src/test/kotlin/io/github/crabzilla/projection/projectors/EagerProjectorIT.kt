@@ -55,41 +55,24 @@ class EagerProjectorIT {
   private fun statusMatches(
     status: JsonObject,
     paused: Boolean,
-    greedy: Boolean,
-    failures: Long,
-    currentOffset: Long
-  ): Boolean {
-    return status.getBoolean("paused") == paused &&
-      status.getBoolean("greedy") == greedy &&
-      status.getLong("failures") == failures &&
-      status.getLong("currentOffset") == currentOffset
-  }
-
-  private fun statusMatches(
-    status: JsonObject,
-    paused: Boolean,
-    greedy: Boolean,
+    greedy: (Boolean) -> Boolean,
     failures: (Long) -> Boolean,
     currentOffset: Long
   ): Boolean {
     return status.getBoolean("paused") == paused &&
-      status.getBoolean("greedy") == greedy &&
+      greedy.invoke(status.getBoolean("greedy")) &&
       failures.invoke(status.getLong("failures")) &&
       status.getLong("currentOffset") == currentOffset
   }
 
   @Test
-  @Order(2)
+  @Order(1)
   fun `after deploy the failures are bigger than 0`(tc: VertxTestContext, vertx: Vertx) {
     Thread.sleep(100)
     vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
       .onFailure { tc.failNow(it) }
       .onSuccess { msg ->
-        if (statusMatches(
-            msg.body(), paused = false, greedy = false, { failures: Long -> failures > 0 },
-            currentOffset = 0L
-          )
-        ) {
+        if (statusMatches(msg.body(), false, { true }, { failures: Long -> failures > 0 }, currentOffset = 0L)) {
           tc.completeNow()
         } else {
           tc.failNow("unexpected status ${msg.body().encodePrettily()}")
@@ -100,6 +83,7 @@ class EagerProjectorIT {
   @Test
   @Order(3)
   fun `after a command then work the currentOffset is 1`(tc: VertxTestContext, vertx: Vertx) {
+    Thread.sleep(100)
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .onFailure { tc.failNow(it) }
       .compose {
@@ -113,7 +97,7 @@ class EagerProjectorIT {
       }
       .onFailure { tc.failNow(it) }
       .onSuccess { msg: Message<JsonObject> ->
-        if (statusMatches(msg.body(), paused = false, greedy = true, failures = 0L, currentOffset = 1L)) {
+        if (statusMatches(msg.body(), paused = false, { true }, { true }, currentOffset = 1L)) {
           tc.completeNow()
         } else {
           tc.failNow("unexpected status ${msg.body().encodePrettily()}")
@@ -165,7 +149,7 @@ class EagerProjectorIT {
       }
       .onFailure { tc.failNow(it) }
       .onSuccess { msg: Message<JsonObject> ->
-        if (statusMatches(msg.body(), paused = false, greedy = true, failures = 0L, currentOffset = 1L)) {
+        if (statusMatches(msg.body(), paused = false, { true }, { true }, currentOffset = 1L)) {
           tc.completeNow()
         } else {
           tc.failNow("unexpected status ${msg.body().encodePrettily()}")
