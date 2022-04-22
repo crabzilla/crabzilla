@@ -1,6 +1,7 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.Jackson.objectMapper
+import io.github.crabzilla.Jackson
+import io.github.crabzilla.Jackson.json
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.core.metadata.CommandMetadata
@@ -31,8 +32,7 @@ class EventsPersistenceIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandControllerBuilder(vertx, pgPool)
-      .build(objectMapper, customerConfig)
+    commandController = CommandController(vertx, pgPool, json, customerConfig)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
@@ -59,7 +59,7 @@ class EventsPersistenceIT {
             assertThat(asJson1.getInteger("version")).isEqualTo(1)
             val expectedEvent1 = CustomerEvent.CustomerRegistered(id, cmd.name)
             val json1 = asJson1.getJsonObject("event_payload").toString()
-            val event1 = objectMapper.readValue(json1, CustomerEvent::class.java)
+            val event1 = json.readValue(json1, CustomerEvent::class.java)
             assertThat(expectedEvent1).isEqualTo(event1)
             assertThat(asJson1.getString("causation_id")).isEqualTo(metadata.commandId.toString())
             assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata.commandId.toString())
@@ -70,7 +70,7 @@ class EventsPersistenceIT {
             assertThat(asJson.getInteger("version")).isEqualTo(2)
             val expectedEvent = CustomerEvent.CustomerActivated(cmd.reason)
             val json = asJson.getJsonObject("event_payload").toString()
-            val event = objectMapper.readValue(json, CustomerEvent::class.java)
+            val event = Jackson.json.readValue(json, CustomerEvent::class.java)
             assertThat(expectedEvent).isEqualTo(event)
             val causationId = asJson1.getString("id")
             assertThat(asJson.getString("causation_id")).isEqualTo(causationId)
@@ -109,7 +109,7 @@ class EventsPersistenceIT {
                 assertThat(asJson1.getInteger("version")).isEqualTo(1)
                 val expectedEvent1 = CustomerEvent.CustomerRegistered(id, cmd1.name)
                 val json1 = asJson1.getString("event_payload")
-                val event1 = objectMapper.readValue(json1, CustomerEvent::class.java)
+                val event1 = json.readValue(json1, CustomerEvent::class.java)
                 assertThat(expectedEvent1).isEqualTo(event1)
                 assertThat(asJson1.getString("causation_id")).isEqualTo(metadata1.commandId.toString())
                 assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata1.commandId.toString())
@@ -121,7 +121,7 @@ class EventsPersistenceIT {
                 assertThat(asJson2.getInteger("version")).isEqualTo(2)
                 val expectedEvent2 = CustomerEvent.CustomerActivated(cmd1.reason)
                 val json2 = asJson2.getString("event_payload")
-                val event2 = objectMapper.readValue(json2, CustomerEvent::class.java)
+                val event2 = json.readValue(json2, CustomerEvent::class.java)
                 assertThat(expectedEvent2).isEqualTo(event2)
                 val causationId2 = asJson1.getString("id")
                 assertThat(asJson2.getString("causation_id")).isEqualTo(causationId2)
@@ -134,7 +134,7 @@ class EventsPersistenceIT {
                 assertThat(asJson3.getInteger("version")).isEqualTo(3)
                 val expectedEvent3 = CustomerEvent.CustomerDeactivated(cmd2.reason)
                 val json3 = asJson3.getString("event_payload")
-                val event3 = objectMapper.readValue(json3, CustomerEvent::class.java)
+                val event3 = json.readValue(json3, CustomerEvent::class.java)
                 assertThat(expectedEvent3).isEqualTo(event3)
                 assertThat(asJson3.getString("causation_id")).isEqualTo(metadata2.causationId.toString())
                 assertThat(asJson3.getString("correlation_id")).isEqualTo(metadata2.correlationId.toString())

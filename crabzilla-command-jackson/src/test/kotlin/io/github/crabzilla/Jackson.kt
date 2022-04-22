@@ -5,5 +5,5 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 
 object Jackson {
 
-  val objectMapper: ObjectMapper = jacksonObjectMapper().findAndRegisterModules()
+  val json: ObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 }

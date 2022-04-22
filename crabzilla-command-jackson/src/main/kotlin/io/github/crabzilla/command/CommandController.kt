@@ -1,7 +1,7 @@
 package io.github.crabzilla.command
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.crabzilla.core.command.CommandControllerConfig
+import io.github.crabzilla.core.command.CommandComponent
 import io.github.crabzilla.core.command.CommandException.LockingException
 import io.github.crabzilla.core.command.CommandException.ValidationException
 import io.github.crabzilla.core.command.CommandHandler
@@ -28,12 +28,23 @@ class CommandController<out S : Any, C : Any, E : Any>(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val json: ObjectMapper,
-  private val config: CommandControllerConfig<S, C, E>,
-  private val eventsProjector: EventsProjector? = null,
+  private val commandComponent: CommandComponent<S, C, E>,
+  private val options: CommandControllerOptions = CommandControllerOptions()
 ) {
 
   companion object {
     private val log = LoggerFactory.getLogger(CommandController::class.java)
+    fun <S : Any, C : Any, E : Any> createAndStart(
+      vertx: Vertx,
+      pgPool: PgPool,
+      json: ObjectMapper,
+      commandComponent: CommandComponent<S, C, E>,
+      options: CommandControllerOptions = CommandControllerOptions()
+    ): CommandController<S, C, E> {
+      val instance = CommandController(vertx, pgPool, json, commandComponent, options)
+      instance.startPgNotification()
+      return instance
+    }
     private const val SQL_LOCK =
       """ SELECT pg_try_advisory_xact_lock($1, $2) as locked
       """
@@ -51,15 +62,12 @@ class CommandController<out S : Any, C : Any, E : Any>(
       """ INSERT 
             INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
-    private const val DEFAULT_NOTIFICATION_INTERVAL = 3000L
-    private const val DEFAULT_EVENT_STREAM_SIZE = 1000
   }
 
-  var eventStreamSize = DEFAULT_EVENT_STREAM_SIZE
-  private val stateSerialName = config.stateClass.simpleName!!
+  private val stateSerialName = commandComponent.stateClassName()
   private val notificationsByStateType = HashSet<String>()
 
-  fun startPgNotification(notificationInterval: Long = DEFAULT_NOTIFICATION_INTERVAL) {
+  fun startPgNotification(): CommandController<S, C, E> {
     fun notifyPg() {
       notificationsByStateType.forEach { stateType ->
         pgPool
@@ -68,14 +76,15 @@ class CommandController<out S : Any, C : Any, E : Any>(
       }
       notificationsByStateType.clear()
     }
-    log.info("Starting notifying Postgres for $stateSerialName each $notificationInterval ms")
+    log.info("Starting notifying Postgres for $stateSerialName each ${options.pgNotificationInterval} ms")
     notificationsByStateType.add(stateSerialName)
-    vertx.setPeriodic(notificationInterval) {
+    vertx.setPeriodic(options.pgNotificationInterval) {
       notifyPg()
     }
+    return this
   }
 
-  private val commandHandler: CommandHandler<S, C, E> = config.commandHandlerFactory.invoke()
+  private val commandHandler: CommandHandler<S, C, E> = commandComponent.commandHandlerFactory.invoke()
 
   fun handle(metadata: CommandMetadata, command: C): Future<CommandSideEffect> {
     return pgPool.withTransaction { conn: SqlConnection ->
@@ -112,8 +121,8 @@ class CommandController<out S : Any, C : Any, E : Any>(
           }.compose { triple ->
             val (_, _, commandSideEffect) = triple
             log.debug("Events appended {}", commandSideEffect.toString())
-            if (eventsProjector != null) {
-              projectEvents(conn, commandSideEffect, eventsProjector, metadata)
+            if (options.eventsProjector != null) {
+              projectEvents(conn, commandSideEffect, options.eventsProjector, metadata)
                 .onSuccess {
                   log.debug("Events projected")
                 }.map { commandSideEffect }
@@ -126,15 +135,18 @@ class CommandController<out S : Any, C : Any, E : Any>(
             val result = CommandSideEffect(it.appendedEvents, it.resultingVersion)
             succeededFuture(result)
           }.compose {
-            // TODO publish to eventbus
+            if (options.publishToEventBus) {
+              log.debug("Published to topic [$stateSerialName]")
+              vertx.eventBus().publish(stateSerialName, it.toJson())
+            }
             succeededFuture(it)
           }
       }
   }
 
   private fun validate(command: C): Future<Void> {
-    if (config.commandValidator != null) {
-      val errors = config.commandValidator!!.validate(command)
+    if (commandComponent.commandValidator != null) {
+      val errors = commandComponent.commandValidator!!.validate(command)
       if (errors.isNotEmpty()) {
         return failedFuture(ValidationException(errors))
       }
@@ -167,15 +179,15 @@ class CommandController<out S : Any, C : Any, E : Any>(
         var latestVersion = 0
         var error: Throwable? = null
         // Fetch N rows at a time
-        val stream: RowStream<Row> = pq.createStream(eventStreamSize, Tuple.of(id))
+        val stream: RowStream<Row> = pq.createStream(options.eventStreamSize, Tuple.of(id))
         // Use the stream
         stream.handler { row: Row ->
           val eventAsJson = JsonObject(row.getValue("event_payload").toString())
           eventAsJson.put("type", row.getString("event_type"))
-          val asEvent = json.readValue(eventAsJson.toString(), config.eventClass.java)
+          val asEvent = json.readValue(eventAsJson.toString(), commandComponent.eventClass.java)
           latestVersion = row.getInteger("version")
           log.debug("Found event {} version {}", asEvent, latestVersion)
-          state = config.eventHandler.handleEvent(state, asEvent)
+          state = commandComponent.eventHandler.handleEvent(state, asEvent)
           log.debug("State {}", state)
         }
         stream.exceptionHandler { error = it }

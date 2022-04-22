@@ -1,4 +1,4 @@
-package io.github.crabzilla.command.json
+package io.github.crabzilla.json
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializer

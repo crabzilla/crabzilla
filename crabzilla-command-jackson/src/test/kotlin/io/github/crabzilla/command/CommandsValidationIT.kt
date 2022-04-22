@@ -1,6 +1,6 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.Jackson.objectMapper
+import io.github.crabzilla.Jackson.json
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.core.metadata.CommandMetadata
@@ -30,8 +30,7 @@ class CommandsValidationIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandControllerBuilder(vertx, pgPool)
-      .build(objectMapper, customerConfig)
+    commandController = CommandController(vertx, pgPool, json, customerConfig)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }

@@ -2,8 +2,6 @@ package io.github.crabzilla
 
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
-import io.vertx.pgclient.PgPool
-import io.vertx.sqlclient.PoolOptions
 import io.vertx.sqlclient.SqlClient
 
 val dbConfig: JsonObject =
@@ -12,8 +10,6 @@ val dbConfig: JsonObject =
     .put("host", "0.0.0.0")
     .put("username", "user1")
     .put("password", "pwd1")
-
-val pgPool: PgPool = PgPool.pool(PgConnectOptionsFactory.from(dbConfig), PoolOptions())
 
 fun cleanDatabase(sqlClient: SqlClient): Future<Void> {
   return sqlClient.query("delete from commands").execute()

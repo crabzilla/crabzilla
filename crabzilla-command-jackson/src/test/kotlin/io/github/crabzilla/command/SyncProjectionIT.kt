@@ -1,6 +1,6 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.Jackson.objectMapper
+import io.github.crabzilla.Jackson.json
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.core.metadata.CommandMetadata
@@ -32,9 +32,8 @@ class SyncProjectionIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-
-    controller = CommandControllerBuilder(vertx, pgPool)
-      .build(objectMapper, customerConfig, CustomersEventsProjector("customers"))
+    val options = CommandControllerOptions(eventsProjector = CustomersEventsProjector("customers"))
+    controller = CommandController(vertx, pgPool, json, customerConfig, options)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }

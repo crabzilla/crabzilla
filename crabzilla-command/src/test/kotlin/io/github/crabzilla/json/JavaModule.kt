@@ -1,4 +1,4 @@
-package io.github.crabzilla.command.json
+package io.github.crabzilla.json
 
 import kotlinx.serialization.modules.SerializersModule
 import java.math.BigDecimal

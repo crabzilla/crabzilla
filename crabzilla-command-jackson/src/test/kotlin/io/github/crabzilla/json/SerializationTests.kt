@@ -1,7 +1,7 @@
-package io.github.crabzilla.command.json
+package io.github.crabzilla.json
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import io.github.crabzilla.Jackson.objectMapper
+import io.github.crabzilla.Jackson.json
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
@@ -25,8 +25,8 @@ class SerializationTests {
     val expectedJson = """
       {"type":"RegisterCustomer","customerId":"${command.customerId}","name":"${command.name}"}
     """.trimIndent()
-    assertThat(objectMapper.writeValueAsString(command)).isEqualTo(expectedJson)
-    assertThat(objectMapper.readValue<CustomerCommand>(expectedJson)).isEqualTo(command)
+    assertThat(json.writeValueAsString(command)).isEqualTo(expectedJson)
+    assertThat(json.readValue<CustomerCommand>(expectedJson)).isEqualTo(command)
   }
 
   @Test
@@ -36,8 +36,8 @@ class SerializationTests {
     val expectedJson = """
       {"type":"CustomerRegistered","id":"${event.id}","name":"${event.name}"}
     """.trimIndent()
-    assertThat(objectMapper.writeValueAsString(event)).isEqualTo(expectedJson)
-    assertThat(objectMapper.readValue<CustomerEvent>(expectedJson)).isEqualTo(event)
+    assertThat(json.writeValueAsString(event)).isEqualTo(expectedJson)
+    assertThat(json.readValue<CustomerEvent>(expectedJson)).isEqualTo(event)
   }
 
   @Test
@@ -45,9 +45,9 @@ class SerializationTests {
   fun testLd() {
     val t = BeanLocalDate(LocalDate.now())
     val expectedJson = """{"ld":"${t.ld}"}"""
-    assertThat(objectMapper.readValue<BeanLocalDate>(expectedJson)).isEqualTo(t)
-    val resultJson = objectMapper.writeValueAsString(t)
-    assertThat(objectMapper.readValue<BeanLocalDate>(resultJson)).isEqualTo(t)
+    assertThat(json.readValue<BeanLocalDate>(expectedJson)).isEqualTo(t)
+    val resultJson = json.writeValueAsString(t)
+    assertThat(json.readValue<BeanLocalDate>(resultJson)).isEqualTo(t)
   }
 
   @Test
@@ -56,9 +56,9 @@ class SerializationTests {
   fun testLdt() {
     val t = BeanLocalDateTime(LocalDateTime.now(), "foo")
     val expectedJson = """{"ldt":"${t.ldt}","newProp1":"foo"}"""
-    assertThat(objectMapper.readValue<BeanLocalDateTime>(expectedJson)).isEqualTo(t)
-    val resultJson = objectMapper.writeValueAsString(t)
-    assertThat(objectMapper.readValue<BeanLocalDateTime>(resultJson)).isEqualTo(t)
+    assertThat(json.readValue<BeanLocalDateTime>(expectedJson)).isEqualTo(t)
+    val resultJson = json.writeValueAsString(t)
+    assertThat(json.readValue<BeanLocalDateTime>(resultJson)).isEqualTo(t)
   }
 
   @Test
@@ -66,8 +66,8 @@ class SerializationTests {
   fun testVo() {
     val t = BeanValueObject(AValueObject("test", 22), "foo")
     val expectedJson = """{"vo":{"x":"test","y":22},"newProp1":"foo"}"""
-    assertThat(objectMapper.writeValueAsString(t)).isEqualTo(expectedJson)
-    assertThat(objectMapper.readValue<BeanValueObject>(expectedJson)).isEqualTo(t)
+    assertThat(json.writeValueAsString(t)).isEqualTo(expectedJson)
+    assertThat(json.readValue<BeanValueObject>(expectedJson)).isEqualTo(t)
   }
 
   @Test
@@ -76,8 +76,8 @@ class SerializationTests {
     val c2 = ActivateCustomer("ya")
     data class CustomerCommands(val events: List<CustomerCommand>) // a container is needed
     val obj = CustomerCommands(listOf(c1, c2))
-    val asJson = objectMapper.writeValueAsString(obj)
-    assertThat(objectMapper.readValue<CustomerCommands>(asJson)).isEqualTo(obj)
+    val asJson = json.writeValueAsString(obj)
+    assertThat(json.readValue<CustomerCommands>(asJson)).isEqualTo(obj)
   }
 
   @Test
@@ -86,16 +86,16 @@ class SerializationTests {
     val event2 = CustomerActivated("because yes")
     data class CustomerEvents(val events: List<CustomerEvent>) // a container is needed
     val obj = CustomerEvents(listOf(event1, event2))
-    val asJson = objectMapper.writeValueAsString(obj)
-    assertThat(objectMapper.readValue<CustomerEvents>(asJson)).isEqualTo(obj)
+    val asJson = json.writeValueAsString(obj)
+    assertThat(json.readValue<CustomerEvents>(asJson)).isEqualTo(obj)
   }
 
   @Test
   @DisplayName("BigDecimal")
   fun testDecimal() {
     val amount = BeanBigDecimal(BigDecimal("34.56332"))
-    val asJson = objectMapper.writeValueAsString(amount)
-    assertThat(objectMapper.readValue<BeanBigDecimal>(asJson)).isEqualTo(amount)
+    val asJson = json.writeValueAsString(amount)
+    assertThat(json.readValue<BeanBigDecimal>(asJson)).isEqualTo(amount)
   }
 }
 

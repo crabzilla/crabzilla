@@ -1,4 +1,4 @@
-package io.github.crabzilla.command.json
+package io.github.crabzilla.json
 
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand

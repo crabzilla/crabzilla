@@ -1,7 +1,6 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.command.json.javaModule
-import io.github.crabzilla.core.command.CommandControllerConfig
+import io.github.crabzilla.core.command.CommandComponent
 import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
@@ -13,10 +12,10 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.json.javaModule
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import java.util.UUID
@@ -162,7 +161,7 @@ class CustomerCommandHandler :
   }
 }
 
-val customerConfig = CommandControllerConfig(
+val customerConfig = CommandComponent(
   Customer::class,
   CustomerCommand::class,
   CustomerEvent::class,
@@ -189,5 +188,3 @@ val customerModule = SerializersModule {
     subclass(CustomerDeactivated::class, CustomerDeactivated.serializer())
   }
 }
-
-val example1Json = Json { serializersModule = customerModule }

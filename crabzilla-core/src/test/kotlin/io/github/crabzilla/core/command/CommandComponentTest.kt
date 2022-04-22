@@ -5,7 +5,7 @@ import io.github.crabzilla.example1.customer.customerConfig
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-internal class CommandControllerConfigTest {
+internal class CommandComponentTest {
 
   @Test
   fun stateSerialName() {

@@ -1,20 +1,20 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.TestRepository
+import io.github.crabzilla.TestsFixtures
+import io.github.crabzilla.TestsFixtures.eventSerDer
+import io.github.crabzilla.TestsFixtures.json
+import io.github.crabzilla.TestsFixtures.pgPool
+import io.github.crabzilla.TestsFixtures.testRepo
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.example1.customer.customerModule
-import io.github.crabzilla.example1.customer.example1Json
-import io.github.crabzilla.pgPool
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import kotlinx.serialization.PolymorphicSerializer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -29,16 +29,10 @@ import java.util.UUID
 class EventsPersistenceIT {
 
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var testRepo: TestRepository
-  private val stateSerDer = PolymorphicSerializer(Customer::class)
-  private val eventSerDer = PolymorphicSerializer(CustomerEvent::class)
-  private val commandSerDer = PolymorphicSerializer(CustomerCommand::class)
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandControllerBuilder(vertx, pgPool)
-      .build(customerModule, customerConfig)
-    testRepo = TestRepository(pgPool)
+    commandController = CommandController(vertx, pgPool, TestsFixtures.json, customerConfig)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
@@ -64,7 +58,7 @@ class EventsPersistenceIT {
             assertThat(asJson1.getInteger("version")).isEqualTo(1)
             val expectedEvent1 = CustomerEvent.CustomerRegistered(id, cmd.name)
             val json1 = asJson1.getJsonObject("event_payload").toString()
-            val event1 = example1Json.decodeFromString(eventSerDer, json1)
+            val event1 = json.decodeFromString(eventSerDer, json1)
             assertThat(expectedEvent1).isEqualTo(event1)
             assertThat(asJson1.getString("causation_id")).isEqualTo(metadata.commandId.toString())
             assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata.commandId.toString())
@@ -74,8 +68,8 @@ class EventsPersistenceIT {
             assertThat(asJson.getString("state_id")).isEqualTo(id.toString())
             assertThat(asJson.getInteger("version")).isEqualTo(2)
             val expectedEvent = CustomerEvent.CustomerActivated(cmd.reason)
-            val json = asJson.getJsonObject("event_payload").toString()
-            val event = example1Json.decodeFromString(eventSerDer, json)
+            val asJson2 = asJson.getJsonObject("event_payload").toString()
+            val event = json.decodeFromString(eventSerDer, asJson2)
             assertThat(expectedEvent).isEqualTo(event)
             val causationId = asJson1.getString("id")
             assertThat(asJson.getString("causation_id")).isEqualTo(causationId)
@@ -114,7 +108,7 @@ class EventsPersistenceIT {
                 assertThat(asJson1.getInteger("version")).isEqualTo(1)
                 val expectedEvent1 = CustomerEvent.CustomerRegistered(id, cmd1.name)
                 val json1 = asJson1.getString("event_payload")
-                val event1 = example1Json.decodeFromString(eventSerDer, json1)
+                val event1 = json.decodeFromString(eventSerDer, json1)
                 assertThat(expectedEvent1).isEqualTo(event1)
                 assertThat(asJson1.getString("causation_id")).isEqualTo(metadata1.commandId.toString())
                 assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata1.commandId.toString())
@@ -126,7 +120,7 @@ class EventsPersistenceIT {
                 assertThat(asJson2.getInteger("version")).isEqualTo(2)
                 val expectedEvent2 = CustomerEvent.CustomerActivated(cmd1.reason)
                 val json2 = asJson2.getString("event_payload")
-                val event2 = example1Json.decodeFromString(eventSerDer, json2)
+                val event2 = json.decodeFromString(eventSerDer, json2)
                 assertThat(expectedEvent2).isEqualTo(event2)
                 val causationId2 = asJson1.getString("id")
                 assertThat(asJson2.getString("causation_id")).isEqualTo(causationId2)
@@ -139,7 +133,7 @@ class EventsPersistenceIT {
                 assertThat(asJson3.getInteger("version")).isEqualTo(3)
                 val expectedEvent3 = CustomerEvent.CustomerDeactivated(cmd2.reason)
                 val json3 = asJson3.getString("event_payload")
-                val event3 = example1Json.decodeFromString(eventSerDer, json3)
+                val event3 = json.decodeFromString(eventSerDer, json3)
                 assertThat(expectedEvent3).isEqualTo(event3)
                 assertThat(asJson3.getString("causation_id")).isEqualTo(metadata2.causationId.toString())
                 assertThat(asJson3.getString("correlation_id")).isEqualTo(metadata2.correlationId.toString())

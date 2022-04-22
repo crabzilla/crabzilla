@@ -1,14 +1,13 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.TestRepository
+import io.github.crabzilla.TestsFixtures.json
+import io.github.crabzilla.TestsFixtures.pgPool
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.example1.customer.example1Json
-import io.github.crabzilla.pgPool
 import io.vertx.core.CompositeFuture
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -26,12 +25,10 @@ import java.util.UUID
 class PessimisticLockingIT {
 
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandController(vertx, pgPool, example1Json, customerConfig)
-    testRepo = TestRepository(pgPool)
+    commandController = CommandController(vertx, pgPool, json, customerConfig)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }

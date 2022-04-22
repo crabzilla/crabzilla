@@ -3,7 +3,7 @@ package io.github.crabzilla.example1.customer
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import io.github.crabzilla.core.command.CommandControllerConfig
+import io.github.crabzilla.core.command.CommandComponent
 import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.command.CommandSession
 import io.github.crabzilla.core.command.CommandValidator
@@ -151,7 +151,7 @@ class CustomerCommandHandler :
   }
 }
 
-val customerConfig = CommandControllerConfig(
+val customerConfig = CommandComponent(
   Customer::class,
   CustomerCommand::class,
   CustomerEvent::class,

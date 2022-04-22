@@ -19,7 +19,7 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-class EventsProjectorPublisher(
+class EventsProjectorWorker(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val subscriber: PgSubscriber,
@@ -28,7 +28,7 @@ class EventsProjectorPublisher(
 ) {
 
   companion object {
-    private val log = LoggerFactory.getLogger(EventsProjectorPublisher::class.java)
+    private val log = LoggerFactory.getLogger(EventsProjectorWorker::class.java)
     private val node: String = ManagementFactory.getRuntimeMXBean().name
     // TODO add endpoint for restart from N
   }
@@ -94,7 +94,6 @@ class EventsProjectorPublisher(
         scanner.getGlobalOffset()
       }
       .onSuccess { globalOffset ->
-
         greedy = globalOffset > currentOffset
         val effectiveInitialInterval = if (greedy) 1 else options.initialInterval
         log.info(
@@ -108,7 +107,6 @@ class EventsProjectorPublisher(
         vertx.setPeriodic(options.metricsInterval) {
           log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
         }
-
         vertx.eventBus().consumer<Void>(projectorEndpoints.work()).handler { msg ->
           action()
             .onFailure {
@@ -118,7 +116,6 @@ class EventsProjectorPublisher(
               msg.reply(status())
             }
         }
-
         startPromise.complete()
       }.onFailure {
         startPromise.fail(it)

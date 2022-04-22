@@ -1,9 +1,9 @@
 package io.github.crabzilla.projection
 
+import io.github.crabzilla.TestsFixtures.json
 import io.github.crabzilla.core.metadata.EventMetadata
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.example1.customer.example1Json
 import io.github.crabzilla.projection.EventRecord.Companion.fromJsonObject
 import io.vertx.core.json.JsonObject
 import kotlinx.serialization.encodeToString
@@ -17,7 +17,7 @@ class EventRecordSerializationTest {
 
   val id = UUID.fromString("c2aeadc1-d6b5-4df6-82a4-7dec4f1df429")
   val event = CustomerRegistered(id, "customer1") as CustomerEvent
-  val eventAsJson = JsonObject(example1Json.encodeToString(event))
+  val eventAsJson = JsonObject(json.encodeToString(event))
   val eventMetadata = EventMetadata(
     "Customer", id, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 1
   )

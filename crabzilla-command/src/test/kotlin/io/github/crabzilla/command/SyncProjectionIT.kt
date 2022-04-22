@@ -1,6 +1,8 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.TestRepository
+import io.github.crabzilla.TestsFixtures
+import io.github.crabzilla.TestsFixtures.pgPool
+import io.github.crabzilla.TestsFixtures.testRepo
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
@@ -9,8 +11,6 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivate
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomersEventsProjector
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.example1.customer.customerModule
-import io.github.crabzilla.pgPool
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -28,13 +28,11 @@ import java.util.UUID
 class SyncProjectionIT {
 
   private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
-  private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    controller = CommandControllerBuilder(vertx, pgPool)
-      .build(customerModule, customerConfig, CustomersEventsProjector("customers"))
-    testRepo = TestRepository(pgPool)
+    val options = CommandControllerOptions(eventsProjector = CustomersEventsProjector("customers"))
+    controller = CommandController(vertx, TestsFixtures.pgPool, TestsFixtures.json, customerConfig, options)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }

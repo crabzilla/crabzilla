@@ -1,6 +1,6 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.command.CommandControllerConfig
+import io.github.crabzilla.core.command.CommandComponent
 import io.github.crabzilla.core.command.CommandException.UnknownCommandException
 import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.command.CommandSession
@@ -162,7 +162,7 @@ class CustomerCommandHandler :
   }
 }
 
-val customerConfig = CommandControllerConfig(
+val customerConfig = CommandComponent(
   Customer::class,
   CustomerCommand::class,
   CustomerEvent::class,

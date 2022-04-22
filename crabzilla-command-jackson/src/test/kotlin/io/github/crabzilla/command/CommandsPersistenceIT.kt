@@ -1,6 +1,6 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.Jackson.objectMapper
+import io.github.crabzilla.Jackson.json
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.core.metadata.CommandMetadata
@@ -32,7 +32,7 @@ class CommandsPersistenceIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandControllerBuilder(vertx, pgPool).build(objectMapper, customerConfig)
+    commandController = CommandController(vertx, pgPool, json, customerConfig)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
@@ -54,7 +54,7 @@ class CommandsPersistenceIT {
             val rowAsJson = list.first()
             assertThat(UUID.fromString(rowAsJson.getString("cmd_id"))).isEqualTo(metadata.commandId)
             val cmdAsJsonFroDb = rowAsJson.getJsonObject("cmd_payload")
-            val cmdFromDb = objectMapper.readValue(cmdAsJsonFroDb.toString(), CustomerCommand::class.java)
+            val cmdFromDb = json.readValue(cmdAsJsonFroDb.toString(), CustomerCommand::class.java)
             assertThat(cmdFromDb).isEqualTo(cmd)
             tc.completeNow()
           }
@@ -86,13 +86,13 @@ class CommandsPersistenceIT {
                 val rowAsJson1 = list.first()
                 assertThat(UUID.fromString(rowAsJson1.getString("cmd_id"))).isEqualTo(metadata1.commandId)
                 val cmdAsJsonFroDb1 = rowAsJson1.getJsonObject("cmd_payload")
-                val cmdFromDb1 = objectMapper.readValue(cmdAsJsonFroDb1.toString(), CustomerCommand::class.java)
+                val cmdFromDb1 = json.readValue(cmdAsJsonFroDb1.toString(), CustomerCommand::class.java)
                 assertThat(cmdFromDb1).isEqualTo(cmd1)
 
                 val rowAsJson2 = list.last()
                 assertThat(UUID.fromString(rowAsJson2.getString("cmd_id"))).isEqualTo(metadata2.commandId)
                 val cmdAsJsonFroDb2 = rowAsJson2.getJsonObject("cmd_payload")
-                val cmdFromDb2 = objectMapper.readValue(cmdAsJsonFroDb2.toString(), CustomerCommand::class.java)
+                val cmdFromDb2 = json.readValue(cmdAsJsonFroDb2.toString(), CustomerCommand::class.java)
                 assertThat(cmdFromDb2).isEqualTo(cmd2)
 
                 tc.completeNow()

@@ -1,9 +1,9 @@
 package io.github.crabzilla.projection.projectors
 
-import io.github.crabzilla.TestRepository
+import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.command.CommandController
-import io.github.crabzilla.command.CommandControllerBuilder
+import io.github.crabzilla.command.CommandControllerOptions
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.dbConfig
 import io.github.crabzilla.example1.customer.Customer
@@ -11,7 +11,6 @@ import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.example1.customer.customerModule
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.projection.ProjectorEndpoints
 import io.github.crabzilla.projection.verticle.deployProjector
@@ -34,14 +33,13 @@ class FilteredProjectorIT {
 
   private val projectorEndpoints = ProjectorEndpoints("crabzilla.example1.customer.FilteredProjector")
   private val id: UUID = UUID.randomUUID()
-  private lateinit var testRepo: TestRepository
   private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    testRepo = TestRepository(pgPool)
-    controller = CommandControllerBuilder(vertx, pgPool).build(customerModule, customerConfig)
-    controller.startPgNotification(1L)
+    val options = CommandControllerOptions(pgNotificationInterval = 1L)
+    controller = CommandController(vertx, TestsFixtures.pgPool, TestsFixtures.json, customerConfig, options)
+      .startPgNotification()
     cleanDatabase(pgPool)
       .compose {
         vertx.deployProjector(dbConfig, "service:crabzilla.example1.customer.FilteredProjector")
