@@ -22,13 +22,12 @@ To handle your Command in a non-blocking way, Crabzilla will :
 
 . Validate your Command using your implementation of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/CommandValidator.kt[CommandValidator].
 . Lock the target State instance using https://www.postgresql.org/docs/13/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks].
-. Retrieve the target https://github.com/crabzilla/crabzilla/blob/main/crabzilla-pgclient/src/main/kotlin/io/github/crabzilla/command/internal/Snapshot.kt[Snapshot].
+. Retrieve the target Snapshot using streams to avoid consuming all events at once.
 . Handle your Command and snapshot state using your implementations of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/CommandHandler.kt[CommandHandler] and https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/EventHandler.kt[EventHandler]:
 . Persist (within a db transaction)
 .. Optionally persist your command as JSON to commands table.
 .. Persist the resulting events + metadata as JSON to events table.
-.. Optionally persist the resulting snapshot (state and version) as JSON to snapshots table.
-.. Optionally project the resulting events to you read model
+.. Optionally project the resulting events to you read model in case you need a set based validation.
 . Return a https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/CommandSessionData.kt[CommandSessionData] to the caller.
 
 === Projections handling
@@ -49,16 +48,16 @@ TODO
 ** [X] `kotlinx-serialization-json`
 * [X] `crabzila-command`
 ** [X] Non-blocking IO using `vertx-pg-client`
-** [X] On Demand snapshotting
-** [X] Persistent snapshotting
+** [X] On Demand snapshotting: no cache, no persistence
 ** [X] State ID locking using Postgres Advisory locks
 ** [X] Correlation and causation IDs
 ** [X] Commands persistence
 ** [X] Events persistence
 ** [X] Optional Command validation
-** [X] Optional "synchronous" Read Model projection: within the same command handler transaction
+** [X] Optional "synchronous" Read Model projection: within the same command handler transaction: set based validation.
 * [X] `crabzila-projection`
-** [X] Based on Verticles (single writer)
+** [X] EventsProjectorWorker can be injected (vertx and pgPool instances)
+** [X] Optionally, based on Verticles (single writer clustered verticles)
 ** [X] Batch projection of many events within a single transaction
 ** [X] Can filter by state types: `Customer`, `Account`, etc.
 ** [X] Can filter by event types: `CustomerRegistered`, `CustomerActivated`, etc.
@@ -68,7 +67,7 @@ TODO
 
 === Requirements
 
-* Java 17 (latest LTS)
+* Java 11 (LTS)
 * Maven
 * Docker compose
 
@@ -122,13 +121,35 @@ mvn clean install
 </dependency>
 ----
 
-. Add `crabzilla-pgclient` to consistently append and project your events as JSON to Postgres.
+. Add `crabzilla-command-kotlinx` to consistently append your events as JSON to Postgres using Kotlin Serialization.
 
 [source,xml]
 ----
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-pgclient</artifactId>
+    <artifactId>crabzilla-command-kotlinx</artifactId>
+    <version>see latest jitpack version</version>
+</dependency>
+----
+
+. Add `crabzilla-command-jackson` to consistently append your events as JSON to Postgres using Jackson Kotlin module.
+
+[source,xml]
+----
+<dependency>
+    <groupId>com.github.crabzilla.crabzilla</groupId>
+    <artifactId>crabzilla-command-jackson</artifactId>
+    <version>see latest jitpack version</version>
+</dependency>
+----
+
+. Add `crabzilla-command-projection` to consistently project your events to your view/read model.
+
+[source,xml]
+----
+<dependency>
+    <groupId>com.github.crabzilla.crabzilla</groupId>
+    <artifactId>crabzilla-command-projection</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ----

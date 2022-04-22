@@ -29,8 +29,8 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 * Using https://vertx.io/docs/vertx-pg-client/java/[Vertx] to implement a `non-blocking IO` event store.
 * Idiomatic Kotlin: type safeness: pattern matching, honouring your constructors.
 * Immutability: state transitions occurs after computing results of pure functions `(State, Event) -> State`.
-* https://github.com/crabzilla/crabzilla/blob/main/crabzilla-command/src/main/kotlin/io/github/crabzilla/command/CommandController.kt[CommandController] is consistent by default: before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]
-* https://github.com/crabzilla/crabzilla/blob/main/crabzilla-projection/src/main/kotlin/io/github/crabzilla/projection/EventsProjectorVerticle.kt[EventsProjectorVerticle] allows handling your read model projection's strait from database: no need to publish your events to Kafka or NATS.
+* CommandController is consistent by default: before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]
+* EventsProjectorWorker allows handling your read model projection's strait from database: no need to publish your events to Kafka or NATS.
 * You can use https://vertx.io/docs/#clustering[Vertx Clustering] to deploy your EventsProjectorVerticle instances. Projections with singleton clustered verticles (singleton writers) and also with High Availability built in Vertx :)
 * JSON serialization using https://kotlinlang.org/docs/serialization.html[Kotlin serialization] or https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]
 
