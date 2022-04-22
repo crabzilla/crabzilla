@@ -12,6 +12,7 @@ import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.pgclient.impl.PgPoolOptions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -47,7 +48,7 @@ class LockingConcurrentCommandsIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { sideEffect ->
         vertx.executeBlocking<Void> {
-          val concurrencyLevel = 10 // please note the default pgPool size is =4
+          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 2
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = CustomerCommand.ActivateCustomer("whatsoever")
           val metadata2 = CommandMetadata(id, metadata.causationId, sideEffect.latestEventId(), UUID.randomUUID())
