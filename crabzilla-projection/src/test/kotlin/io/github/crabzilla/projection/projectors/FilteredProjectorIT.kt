@@ -38,7 +38,7 @@ class FilteredProjectorIT {
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     val options = CommandControllerOptions(pgNotificationInterval = 1L)
-    controller = CommandController(vertx, TestsFixtures.pgPool, TestsFixtures.json, customerConfig, options)
+    controller = CommandController(vertx, pgPool, TestsFixtures.json, customerConfig, options)
       .startPgNotification()
     cleanDatabase(pgPool)
       .compose {

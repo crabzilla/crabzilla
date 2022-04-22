@@ -1,7 +1,7 @@
 package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.metadata.EventMetadata
-import io.github.crabzilla.projection.EventsProjector
+import io.github.crabzilla.stack.EventsProjector
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection

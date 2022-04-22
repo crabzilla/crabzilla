@@ -8,6 +8,7 @@ import io.github.crabzilla.core.command.CommandHandler
 import io.github.crabzilla.core.constants.PgNotificationTopics
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.core.metadata.EventMetadata
+import io.github.crabzilla.stack.EventsProjector
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
@@ -122,7 +123,7 @@ class CommandController<out S : Any, C : Any, E : Any>(
             val (_, _, commandSideEffect) = triple
             log.debug("Events appended {}", commandSideEffect.toString())
             if (options.eventsProjector != null) {
-              projectEvents(conn, commandSideEffect, options.eventsProjector, metadata)
+              projectEvents(conn, commandSideEffect, options.eventsProjector!!, metadata)
                 .onSuccess {
                   log.debug("Events projected")
                 }.map { commandSideEffect }

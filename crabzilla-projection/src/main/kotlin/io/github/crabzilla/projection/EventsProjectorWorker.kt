@@ -3,6 +3,8 @@ package io.github.crabzilla.projection
 import io.github.crabzilla.core.constants.PgNotificationTopics
 import io.github.crabzilla.projection.internal.EventsScanner
 import io.github.crabzilla.projection.internal.QuerySpecification
+import io.github.crabzilla.stack.EventRecord
+import io.github.crabzilla.stack.EventsProjector
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture

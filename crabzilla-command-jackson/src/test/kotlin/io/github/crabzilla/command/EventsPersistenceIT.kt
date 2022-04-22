@@ -88,9 +88,9 @@ class EventsPersistenceIT {
     val metadata1 = CommandMetadata.new(id)
     commandController.handle(metadata1, cmd1)
       .onFailure { tc.failNow(it) }
-      .onSuccess { sideEffect1 ->
+      .onSuccess { sideEffect1: CommandSideEffect ->
         val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-        val metadata2 = CommandMetadata.new(id, sideEffect1.correlationId(), sideEffect1.lastEventId())
+        val metadata2 = CommandMetadata.new(id, sideEffect1.correlationId(), sideEffect1.latestEventId())
         commandController.handle(metadata2, cmd2)
           .onFailure { err -> tc.failNow(err) }
           .onSuccess {

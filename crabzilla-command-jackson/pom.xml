@@ -20,13 +20,8 @@
     </dependency>
 
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-pg-client</artifactId>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-stack</artifactId>
     </dependency>
 
     <dependency>

@@ -4,7 +4,8 @@ import io.github.crabzilla.TestsFixtures.json
 import io.github.crabzilla.core.metadata.EventMetadata
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.projection.EventRecord.Companion.fromJsonObject
+import io.github.crabzilla.stack.EventRecord
+import io.github.crabzilla.stack.EventRecord.Companion.fromJsonObject
 import io.vertx.core.json.JsonObject
 import kotlinx.serialization.encodeToString
 import org.assertj.core.api.Assertions.assertThat
