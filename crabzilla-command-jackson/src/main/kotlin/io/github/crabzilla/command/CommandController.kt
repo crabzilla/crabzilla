@@ -67,6 +67,7 @@ class CommandController<out S : Any, C : Any, E : Any>(
             INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
     const val correlationIdIndex = 2
+    const val eventPayloadIndex = 5
     const val currentVersionIndex = 6
     const val eventIdIndex = 7
   }
@@ -257,11 +258,12 @@ class CommandController<out S : Any, C : Any, E : Any>(
           val correlationId = tuples[index].getUUID(correlationIdIndex)
           val currentVersion = tuples[index].getInteger(currentVersionIndex)
           val eventId = tuples[index].getUUID(eventIdIndex)
+          val eventPayload = tuples[index].getJsonObject(eventPayloadIndex)
           val eventMetadata = EventMetadata(
             stateType = stateSerialName, stateId = metadata.stateId, eventId = eventId,
             correlationId = correlationId, causationId = eventId, eventSequence = sequence, version = currentVersion
           )
-          appendedEventList.add(EventRecord(eventMetadata, tuples[index].getJsonObject(5)))
+          appendedEventList.add(EventRecord(eventMetadata, eventPayload))
           rs = rs!!.next()
         }
       }.map {

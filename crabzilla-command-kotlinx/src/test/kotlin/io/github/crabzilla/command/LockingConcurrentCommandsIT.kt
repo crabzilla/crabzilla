@@ -15,7 +15,6 @@ import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.impl.PgPoolOptions
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Percentage
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
