@@ -228,7 +228,8 @@ class CommandController<out S : Any, C : Any, E : Any>(
       .mapEmpty()
   }
 
-  private fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata): Future<CommandSideEffect> {
+  private fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata)
+  : Future<CommandSideEffect> {
     var resultingVersion = initialVersion
     val eventIds = events.map { UUID.randomUUID() }
     val tuples: List<Tuple> = events.mapIndexed { index, event ->
@@ -271,7 +272,8 @@ class CommandController<out S : Any, C : Any, E : Any>(
       }
   }
 
-  private fun projectEvents(conn: SqlConnection, commandSideEffect: CommandSideEffect, projector: EventsProjector): Future<Void> {
+  private fun projectEvents(conn: SqlConnection, commandSideEffect: CommandSideEffect, projector: EventsProjector)
+  : Future<Void> {
     log.debug("Will project {} events", commandSideEffect.appendedEvents.size)
     val initialFuture = succeededFuture<Void>()
     return commandSideEffect.appendedEvents.fold(

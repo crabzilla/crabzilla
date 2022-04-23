@@ -231,7 +231,8 @@ class CommandController<S : Any, C : Any, E : Any>(
       .mapEmpty()
   }
 
-  private fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata): Future<CommandSideEffect> {
+  private fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata)
+  : Future<CommandSideEffect> {
     var resultingVersion = initialVersion
     val eventIds = events.map { UUID.randomUUID() }
     val tuples: List<Tuple> = events.mapIndexed { index, event ->
