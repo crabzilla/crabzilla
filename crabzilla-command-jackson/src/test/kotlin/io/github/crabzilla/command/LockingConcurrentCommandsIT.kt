@@ -22,6 +22,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
+import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -32,6 +33,9 @@ import java.util.concurrent.TimeUnit
 @DisplayName("Locking concurrent commands")
 class LockingConcurrentCommandsIT {
 
+  companion object {
+    private val log = LoggerFactory.getLogger(LockingConcurrentCommandsIT::class.java)
+  }
   private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
 
   @BeforeEach
@@ -51,7 +55,7 @@ class LockingConcurrentCommandsIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { sideEffect ->
         vertx.executeBlocking<Void> { promise ->
-          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE
+          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 100
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = CustomerCommand.ActivateCustomer("whatsoever")
           val metadata2 = CommandMetadata(id, metadata.causationId, sideEffect.latestEventId(), UUID.randomUUID())
@@ -68,7 +72,8 @@ class LockingConcurrentCommandsIT {
             assertEquals(failures.size, callables.size - 1)
             assertEquals(succeeded.size, 1)
             for (f in failures) {
-              assertThat(f.cause().javaClass.simpleName).isEqualTo(CommandException.LockingException::class.simpleName)
+              log.info("${f.cause().javaClass.simpleName}, ${f.cause().message}")
+              assertThat(f.cause().javaClass.simpleName).isIn("LockingException", "PgException")
             }
             promise.complete(null)
           }.failing<Void> {
