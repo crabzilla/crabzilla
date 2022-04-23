@@ -1,4 +1,4 @@
-package io.github.crabzilla.core.constants
+package io.github.crabzilla.stack
 
 enum class PgNotificationTopics {
   STATE_TOPIC,

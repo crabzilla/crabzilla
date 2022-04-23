@@ -5,10 +5,11 @@ import io.github.crabzilla.core.command.CommandComponent
 import io.github.crabzilla.core.command.CommandException.LockingException
 import io.github.crabzilla.core.command.CommandException.ValidationException
 import io.github.crabzilla.core.command.CommandHandler
-import io.github.crabzilla.core.constants.PgNotificationTopics
 import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.core.metadata.EventMetadata
+import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.EventsProjector
+import io.github.crabzilla.stack.PgNotificationTopics
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
@@ -123,7 +124,7 @@ class CommandController<out S : Any, C : Any, E : Any>(
             val (_, _, commandSideEffect) = triple
             log.debug("Events appended {}", commandSideEffect.toString())
             if (options.eventsProjector != null) {
-              projectEvents(conn, commandSideEffect, options.eventsProjector!!, metadata)
+              projectEvents(conn, commandSideEffect, options.eventsProjector!!)
                 .onSuccess {
                   log.debug("Events projected")
                 }.map { commandSideEffect }
@@ -138,7 +139,7 @@ class CommandController<out S : Any, C : Any, E : Any>(
           }.compose {
             if (options.publishToEventBus) {
               log.debug("Published to topic [$stateSerialName]")
-              vertx.eventBus().publish(stateSerialName, it.toJson())
+              vertx.eventBus().publish(stateSerialName, it.jsonObject())
             }
             succeededFuture(it)
           }
@@ -221,13 +222,8 @@ class CommandController<out S : Any, C : Any, E : Any>(
       .mapEmpty()
   }
 
-  private fun appendEvents(
-    conn: SqlConnection,
-    initialVersion: Int,
-    events: List<E>,
-    metadata: CommandMetadata,
-  ): Future<CommandSideEffect> {
-    var version = initialVersion
+  private fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata): Future<CommandSideEffect> {
+    var resultingVersion = initialVersion
     val eventIds = events.map { UUID.randomUUID() }
     val tuples: List<Tuple> = events.mapIndexed { index, event ->
       val causationId: UUID = if (index == 0) metadata.causationId else eventIds[(index - 1)]
@@ -242,11 +238,11 @@ class CommandController<out S : Any, C : Any, E : Any>(
         stateSerialName,
         metadata.stateId,
         jsonObject,
-        ++version,
+        ++resultingVersion,
         eventId
       )
     }
-    val appendedEventList = mutableListOf<Pair<JsonObject, EventMetadata>>()
+    val appendedEventList = mutableListOf<EventRecord>()
     return conn.preparedQuery(SQL_APPEND_EVENT)
       .executeBatch(tuples)
       .onSuccess { rowSet ->
@@ -254,40 +250,28 @@ class CommandController<out S : Any, C : Any, E : Any>(
         tuples.mapIndexed { index, _ ->
           val sequence = rs!!.iterator().next().getLong("sequence")
           val correlationId = tuples[index].getUUID(2)
+          val currentVersion = tuples[index].getInteger(6)
           val eventId = tuples[index].getUUID(7)
           val eventMetadata = EventMetadata(
-            stateSerialName, stateId = metadata.stateId, eventId,
-            correlationId, eventId, sequence
+            stateType = stateSerialName, stateId = metadata.stateId, eventId = eventId,
+            correlationId = correlationId, causationId = eventId, eventSequence = sequence, version = currentVersion
           )
-          appendedEventList.add(Pair(tuples[index].getJsonObject(5), eventMetadata))
+          appendedEventList.add(EventRecord(eventMetadata, tuples[index].getJsonObject(5)))
           rs = rs!!.next()
         }
       }.map {
-        CommandSideEffect(appendedEventList, version)
+        CommandSideEffect(appendedEventList, resultingVersion)
       }
   }
 
-  private fun projectEvents(
-    conn: SqlConnection,
-    commandSideEffect: CommandSideEffect,
-    projector: EventsProjector,
-    metadata: CommandMetadata,
-  ): Future<Void> {
+  private fun projectEvents(conn: SqlConnection, commandSideEffect: CommandSideEffect, projector: EventsProjector): Future<Void> {
     log.debug("Will project {} events", commandSideEffect.appendedEvents.size)
     val initialFuture = succeededFuture<Void>()
     return commandSideEffect.appendedEvents.fold(
       initialFuture
-    ) { currentFuture: Future<Void>, appendedEvent: Pair<JsonObject, EventMetadata> ->
+    ) { currentFuture: Future<Void>, appendedEvent: EventRecord ->
       currentFuture.compose {
-        val eventMetadata = EventMetadata(
-          stateSerialName,
-          metadata.stateId,
-          appendedEvent.second.eventId,
-          metadata.commandId,
-          appendedEvent.second.causationId,
-          appendedEvent.second.eventSequence
-        )
-        projector.project(conn, appendedEvent.first, eventMetadata)
+        projector.project(conn, appendedEvent.payload, appendedEvent.metadata)
       }
     }.mapEmpty()
   }

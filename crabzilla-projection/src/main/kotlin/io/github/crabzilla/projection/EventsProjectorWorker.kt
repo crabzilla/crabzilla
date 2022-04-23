@@ -1,10 +1,10 @@
 package io.github.crabzilla.projection
 
-import io.github.crabzilla.core.constants.PgNotificationTopics
 import io.github.crabzilla.projection.internal.EventsScanner
 import io.github.crabzilla.projection.internal.QuerySpecification
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.EventsProjector
+import io.github.crabzilla.stack.PgNotificationTopics
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
@@ -178,10 +178,10 @@ class EventsProjectorWorker(
         initialFuture
       ) { currentFuture: Future<Long>, eventRecord: EventRecord ->
         currentFuture.compose {
-          log.debug("Will project event #{}", eventRecord.eventMetadata.eventSequence)
-          eventsProjector.project(conn, eventRecord.eventAsjJson, eventRecord.eventMetadata)
+          log.debug("Will project event #{}", eventRecord.metadata.eventSequence)
+          eventsProjector.project(conn, eventRecord.payload, eventRecord.metadata)
             .transform {
-              if (it.failed()) failedFuture(it.cause()) else succeededFuture(eventRecord.eventMetadata.eventSequence)
+              if (it.failed()) failedFuture(it.cause()) else succeededFuture(eventRecord.metadata.eventSequence)
             }.eventually {
               pgPool
                 .preparedQuery("NOTIFY " + PgNotificationTopics.VIEW_TOPIC.name.lowercase() + ", '${options.viewName}'")
@@ -199,8 +199,8 @@ class EventsProjectorWorker(
           log.debug(
             "Found {} new events. The first is {} and last is {}",
             eventsList.size,
-            eventsList.first().eventMetadata.eventSequence,
-            eventsList.last().eventMetadata.eventSequence
+            eventsList.first().metadata.eventSequence,
+            eventsList.last().metadata.eventSequence
           )
           pgPool.withTransaction { conn ->
             projectEvents(conn, eventsList)

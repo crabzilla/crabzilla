@@ -3,7 +3,7 @@ package io.github.crabzilla.projection.internal
 internal object QuerySpecification {
 
   private const val QUERY = """
-        SELECT event_type, state_type, state_id, event_payload, sequence, id, causation_id, correlation_id
+        SELECT event_type, state_type, state_id, event_payload, sequence, id, causation_id, correlation_id, version
           FROM events
         WHERE sequence > (select sequence from projections where name = $1)"""
 

@@ -8,5 +8,6 @@ data class EventMetadata(
   val eventId: UUID,
   val correlationId: UUID,
   val causationId: UUID,
-  val eventSequence: Long
+  val eventSequence: Long,
+  val version: Int
 )

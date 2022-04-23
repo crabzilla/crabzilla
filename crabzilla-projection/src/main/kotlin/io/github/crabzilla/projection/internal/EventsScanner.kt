@@ -60,7 +60,8 @@ internal class EventsScanner(
             row.getUUID("id"),
             row.getUUID("correlation_id"),
             row.getUUID("causation_id"),
-            row.getLong("sequence")
+            row.getLong("sequence"),
+            row.getInteger("version")
           )
           val jsonObject = JsonObject(row.getValue("event_payload").toString())
           jsonObject.put("type", row.getString("event_type"))
