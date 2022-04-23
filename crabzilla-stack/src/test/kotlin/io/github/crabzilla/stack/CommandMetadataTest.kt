@@ -1,4 +1,4 @@
-package io.github.crabzilla.core.metadata
+package io.github.crabzilla.stack
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

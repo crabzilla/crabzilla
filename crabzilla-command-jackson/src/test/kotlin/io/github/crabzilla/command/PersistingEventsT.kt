@@ -4,12 +4,13 @@ import io.github.crabzilla.Jackson
 import io.github.crabzilla.Jackson.json
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
-import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.pgPool
+import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.CommandSideEffect
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -32,7 +33,7 @@ class PersistingEventsT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandController(vertx, pgPool, json, customerConfig)
+    commandController = CommandController(vertx, pgPool, json, customerComponent)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }

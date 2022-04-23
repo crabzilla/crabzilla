@@ -2,13 +2,14 @@ package io.github.crabzilla.command
 
 import io.github.crabzilla.Jackson.json
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
-import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.pgPool
+import io.github.crabzilla.stack.CommandControllerOptions
+import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -33,7 +34,7 @@ class PublishingToEventbusIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandController(vertx, pgPool, json, customerConfig)
+    commandController = CommandController(vertx, pgPool, json, customerComponent)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
@@ -43,9 +44,9 @@ class PublishingToEventbusIT {
   fun `it can publish to eventbus`(vertx: Vertx, tc: VertxTestContext) {
     val latch = CountDownLatch(1)
     val options = CommandControllerOptions(publishToEventBus = true)
-    val controller = CommandController.createAndStart(vertx, pgPool, json, customerConfig, options)
+    val controller = CommandController.createAndStart(vertx, pgPool, json, customerComponent, options)
     val jsonMessage = AtomicReference<JsonObject>()
-    vertx.eventBus().consumer<JsonObject>(customerConfig.stateClassName()) { msg ->
+    vertx.eventBus().consumer<JsonObject>(customerComponent.stateClassName()) { msg ->
       latch.countDown()
       jsonMessage.set(msg.body())
     }

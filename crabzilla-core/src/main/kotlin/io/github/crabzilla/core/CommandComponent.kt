@@ -1,4 +1,4 @@
-package io.github.crabzilla.core.command
+package io.github.crabzilla.core
 
 import kotlin.reflect.KClass
 

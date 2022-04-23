@@ -1,7 +1,6 @@
 package io.github.crabzilla.stack
 
 import io.github.crabzilla.TestsFixtures.json
-import io.github.crabzilla.core.metadata.EventMetadata
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.stack.EventRecord.Companion.fromJsonObject

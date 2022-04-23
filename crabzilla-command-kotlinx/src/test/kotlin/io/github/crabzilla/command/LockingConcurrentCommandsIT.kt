@@ -3,11 +3,12 @@ package io.github.crabzilla.command
 import io.github.crabzilla.TestsFixtures.json
 import io.github.crabzilla.TestsFixtures.pgPool
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.CommandSideEffect
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension

@@ -4,6 +4,7 @@ import io.github.crabzilla.TestsFixtures.json
 import io.github.crabzilla.TestsFixtures.pgPool
 import io.github.crabzilla.example1.customer.CustomersEventsProjector
 import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.stack.CommandControllerOptions
 import io.vertx.core.Vertx
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.DisplayName

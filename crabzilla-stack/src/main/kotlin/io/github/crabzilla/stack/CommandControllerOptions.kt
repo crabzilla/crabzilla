@@ -1,6 +1,4 @@
-package io.github.crabzilla.command
-
-import io.github.crabzilla.stack.EventsProjector
+package io.github.crabzilla.stack
 
 data class CommandControllerOptions(
   val eventsProjector: EventsProjector? = null,

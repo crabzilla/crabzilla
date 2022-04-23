@@ -2,18 +2,18 @@ package io.github.crabzilla.command
 
 import io.github.crabzilla.Jackson.json
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.core.metadata.CommandMetadata
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
-import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.pgPool
+import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.CommandSideEffect
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.impl.PgPoolOptions
-import io.vertx.sqlclient.PoolOptions.DEFAULT_MAX_SIZE
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -35,7 +35,7 @@ class LockingConcurrentCommandsIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandController(vertx, pgPool, json, customerConfig)
+    commandController = CommandController(vertx, pgPool, json, customerComponent)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }

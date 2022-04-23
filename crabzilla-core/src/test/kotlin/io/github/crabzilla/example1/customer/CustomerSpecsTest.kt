@@ -1,7 +1,6 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.command.CommandException.ValidationException
-import io.github.crabzilla.core.test.TestSpecification
+import io.github.crabzilla.core.TestSpecification
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
@@ -22,7 +21,7 @@ class CustomerSpecsTest {
   @Test
   fun `given a new customer`() {
 
-    TestSpecification(customerConfig)
+    TestSpecification(customerComponent)
       .whenCommand(RegisterCustomer(id, "c1"))
       .then {
         assertThat(it.state())
@@ -36,7 +35,7 @@ class CustomerSpecsTest {
   @Test
   fun `given a registered customer`() {
     // give an existing customer
-    val spec = TestSpecification(customerConfig)
+    val spec = TestSpecification(customerComponent)
       .givenEvents(CustomerRegistered(id, "c1"))
       .whenCommand(ActivateCustomer("bcoz yes"))
       .then {
@@ -73,9 +72,9 @@ class CustomerSpecsTest {
   @Test
   fun `trying to register a bad customer will fail`() {
 
-    assertThatExceptionOfType(ValidationException::class.java)
+    assertThatExceptionOfType(IllegalArgumentException::class.java)
       .isThrownBy {
-        TestSpecification(customerConfig)
+        TestSpecification(customerComponent)
           .whenCommand(RegisterCustomer(id, "bad customer"))
       }.withMessage("[Bad customer!]")
   }

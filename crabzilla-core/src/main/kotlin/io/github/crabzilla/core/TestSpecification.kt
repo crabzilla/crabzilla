@@ -1,9 +1,4 @@
-package io.github.crabzilla.core.test
-
-import io.github.crabzilla.core.command.CommandComponent
-import io.github.crabzilla.core.command.CommandException.ValidationException
-import io.github.crabzilla.core.command.CommandHandler
-import io.github.crabzilla.core.command.CommandSession
+package io.github.crabzilla.core
 
 /**
  * A helper for basic specifications
@@ -20,7 +15,7 @@ class TestSpecification<S : Any, C : Any, E : Any>(val commandComponent: Command
     if (commandComponent.commandValidator != null) {
       val validationErrors = commandComponent.commandValidator.validate(command)
       if (validationErrors.isNotEmpty()) {
-        throw ValidationException(validationErrors)
+        throw IllegalArgumentException(validationErrors.toString())
       }
     }
     val commandHandler: CommandHandler<S, C, E> = commandComponent.commandHandlerFactory.invoke()

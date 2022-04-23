@@ -1,7 +1,7 @@
-package io.github.crabzilla.core.command
+package io.github.crabzilla.stack
 
 sealed class CommandException(message: String) : Exception(message) {
   class ValidationException(errors: List<String>) : CommandException(errors.toString())
   class LockingException(message: String) : CommandException(message)
-  class UnknownCommandException(message: String) : IllegalArgumentException(message)
+  class ApplicationLevelException(message: String) : IllegalArgumentException(message)
 }

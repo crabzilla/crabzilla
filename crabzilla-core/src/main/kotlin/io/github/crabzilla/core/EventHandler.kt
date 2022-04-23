@@ -1,4 +1,4 @@
-package io.github.crabzilla.core.command
+package io.github.crabzilla.core
 
 /**
  * To apply an event to an aggregate root state

@@ -1,6 +1,5 @@
 package io.github.crabzilla.stack
 
-import io.github.crabzilla.core.metadata.EventMetadata
 import io.vertx.core.json.JsonObject
 import java.util.UUID
 
