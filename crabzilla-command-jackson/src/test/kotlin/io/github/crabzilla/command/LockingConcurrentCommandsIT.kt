@@ -7,6 +7,7 @@ import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.pgPool
+import io.github.crabzilla.stack.CommandException
 import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.CommandSideEffect
 import io.vertx.core.Future
@@ -14,8 +15,8 @@ import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.impl.PgPoolOptions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -50,7 +51,7 @@ class LockingConcurrentCommandsIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { sideEffect ->
         vertx.executeBlocking<Void> { promise ->
-          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 2
+          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = CustomerCommand.ActivateCustomer("whatsoever")
           val metadata2 = CommandMetadata(id, metadata.causationId, sideEffect.latestEventId(), UUID.randomUUID())
@@ -67,12 +68,7 @@ class LockingConcurrentCommandsIT {
             assertEquals(failures.size, callables.size - 1)
             assertEquals(succeeded.size, 1)
             for (f in failures) {
-              val acceptable = when (f.cause().javaClass.simpleName) {
-                "LockingException" -> true
-                "PgException" -> true
-                else -> false
-              }
-              assertTrue(acceptable, "Exception unexpected ${f.cause().javaClass.simpleName}")
+              assertThat(f.cause().javaClass.simpleName).isEqualTo(CommandException.LockingException::class.simpleName)
             }
             promise.complete(null)
           }.failing<Void> {
