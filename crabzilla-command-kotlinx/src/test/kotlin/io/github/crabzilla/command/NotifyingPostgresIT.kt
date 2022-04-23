@@ -35,7 +35,7 @@ class NotifyingPostgresIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val options = CommandControllerOptions(pgNotificationInterval = 10L)
+    val options = CommandControllerOptions(pgNotificationInterval = 100L)
     commandController = CommandController(vertx, pgPool, json, customerComponent, options)
     commandController.startPgNotification()
     cleanDatabase(pgPool)
@@ -61,7 +61,7 @@ class NotifyingPostgresIT {
     commandController.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        Thread.sleep(1000)
+        commandController.startPgNotification()
         tc.verify {
           latch.await(2, TimeUnit.SECONDS)
           assertThat(stateTypeMsg.get()).isEqualTo("Customer")
