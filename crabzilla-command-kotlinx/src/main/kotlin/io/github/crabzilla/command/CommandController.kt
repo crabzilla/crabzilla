@@ -67,6 +67,9 @@ class CommandController<S : Any, C : Any, E : Any>(
       """ INSERT 
             INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
+    const val correlationIdIndex = 2
+    const val currentVersionIndex = 6
+    const val eventIdIndex = 7
   }
 
   private val stateSerialName = commandComponent.stateClassName()
@@ -259,9 +262,9 @@ class CommandController<S : Any, C : Any, E : Any>(
         var rs: RowSet<Row>? = rowSet
         tuples.mapIndexed { index, _ ->
           val sequence = rs!!.iterator().next().getLong("sequence")
-          val correlationId = tuples[index].getUUID(2)
-          val currentVersion = tuples[index].getInteger(6)
-          val eventId = tuples[index].getUUID(7)
+          val correlationId = tuples[index].getUUID(correlationIdIndex)
+          val currentVersion = tuples[index].getInteger(currentVersionIndex)
+          val eventId = tuples[index].getUUID(eventIdIndex)
           val eventMetadata = EventMetadata(
             stateType = stateSerialName, stateId = metadata.stateId, eventId = eventId,
             correlationId = correlationId, causationId = eventId, eventSequence = sequence, version = currentVersion
