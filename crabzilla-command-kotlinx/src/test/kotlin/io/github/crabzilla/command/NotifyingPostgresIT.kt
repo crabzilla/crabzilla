@@ -37,7 +37,6 @@ class NotifyingPostgresIT {
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     val options = CommandControllerOptions(pgNotificationInterval = 100L)
     commandController = CommandController(vertx, pgPool, json, customerComponent, options)
-    commandController.startPgNotification()
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
