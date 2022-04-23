@@ -1,10 +1,10 @@
 package io.github.crabzilla.command
 
 import io.github.crabzilla.Jackson.json
-import io.github.crabzilla.example1.customer.CustomersEventsProjector
+import io.github.crabzilla.example1.customer.CustomersPgEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.pgPool
-import io.github.crabzilla.stack.CommandControllerOptions
+import io.github.crabzilla.stack.command.CommandControllerOptions
 import io.vertx.core.Vertx
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.DisplayName
@@ -29,7 +29,7 @@ internal class CommandControllerTest {
 
   @Test
   fun `a command controller can be created with a custom synchronous event projector`() {
-    val options = CommandControllerOptions(eventsProjector = CustomersEventsProjector("customers"))
+    val options = CommandControllerOptions(pgEventProjector = CustomersPgEventProjector())
     val controller = CommandController(vertx, pgPool, json, customerComponent, options)
     assertNotNull(controller)
   }
@@ -43,7 +43,7 @@ internal class CommandControllerTest {
 
   @Test
   fun `a command controller can start notifying to postgres`() {
-    val options = CommandControllerOptions(eventsProjector = CustomersEventsProjector("customers"))
+    val options = CommandControllerOptions(pgEventProjector = CustomersPgEventProjector())
     val controller = CommandController(vertx, pgPool, json, customerComponent, options).startPgNotification()
     assertNotNull(controller) // TODO assert on postgres subscriber latch
   }

@@ -3,15 +3,15 @@ package io.github.crabzilla.command
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.crabzilla.core.CommandComponent
 import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.stack.CommandControllerOptions
-import io.github.crabzilla.stack.CommandException.LockingException
-import io.github.crabzilla.stack.CommandException.ValidationException
-import io.github.crabzilla.stack.CommandMetadata
-import io.github.crabzilla.stack.CommandSideEffect
+import io.github.crabzilla.stack.CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.EventsProjector
-import io.github.crabzilla.stack.PgNotificationTopics
+import io.github.crabzilla.stack.command.CommandControllerOptions
+import io.github.crabzilla.stack.command.CommandException.LockingException
+import io.github.crabzilla.stack.command.CommandException.ValidationException
+import io.github.crabzilla.stack.command.CommandMetadata
+import io.github.crabzilla.stack.command.CommandSideEffect
+import io.github.crabzilla.stack.projection.PgEventProjector
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
@@ -78,9 +78,10 @@ class CommandController<out S : Any, C : Any, E : Any>(
   fun startPgNotification(): CommandController<S, C, E> {
     fun notifyPg() {
       notificationsByStateType.forEach { stateType ->
-        pgPool
-          .preparedQuery("NOTIFY " + PgNotificationTopics.STATE_TOPIC.name.lowercase() + ", '$stateType'")
-          .execute()
+        val query = "NOTIFY $POSTGRES_NOTIFICATION_CHANNEL, '$stateType'"
+        pgPool.preparedQuery(query).execute().onSuccess {
+          log.debug("Notified postgres with: $query")
+        }
       }
       notificationsByStateType.clear()
     }
@@ -129,13 +130,13 @@ class CommandController<out S : Any, C : Any, E : Any>(
           }.compose { triple ->
             val (_, _, commandSideEffect) = triple
             log.debug("Events appended {}", commandSideEffect.toString())
-            if (options.eventsProjector != null) {
-              projectEvents(conn, commandSideEffect, options.eventsProjector!!)
+            if (options.pgEventProjector != null) {
+              projectEvents(conn, commandSideEffect, options.pgEventProjector!!)
                 .onSuccess {
                   log.debug("Events projected")
                 }.map { commandSideEffect }
             } else {
-              log.debug("EventsProjector is null, skipping projecting events")
+              log.debug("PgEventProjector is null, skipping projecting events")
               succeededFuture(commandSideEffect)
             }
           }.compose {
@@ -228,8 +229,7 @@ class CommandController<out S : Any, C : Any, E : Any>(
       .mapEmpty()
   }
 
-  private fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata)
-  : Future<CommandSideEffect> {
+  private fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata): Future<CommandSideEffect> {
     var resultingVersion = initialVersion
     val eventIds = events.map { UUID.randomUUID() }
     val tuples: List<Tuple> = events.mapIndexed { index, event ->
@@ -272,8 +272,7 @@ class CommandController<out S : Any, C : Any, E : Any>(
       }
   }
 
-  private fun projectEvents(conn: SqlConnection, commandSideEffect: CommandSideEffect, projector: EventsProjector)
-  : Future<Void> {
+  private fun projectEvents(conn: SqlConnection, commandSideEffect: CommandSideEffect, projector: PgEventProjector): Future<Void> {
     log.debug("Will project {} events", commandSideEffect.appendedEvents.size)
     val initialFuture = succeededFuture<Void>()
     return commandSideEffect.appendedEvents.fold(

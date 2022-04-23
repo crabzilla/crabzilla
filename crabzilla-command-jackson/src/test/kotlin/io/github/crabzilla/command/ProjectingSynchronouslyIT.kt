@@ -7,11 +7,11 @@ import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
-import io.github.crabzilla.example1.customer.CustomersEventsProjector
+import io.github.crabzilla.example1.customer.CustomersPgEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.pgPool
-import io.github.crabzilla.stack.CommandControllerOptions
-import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.command.CommandControllerOptions
+import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -32,7 +32,7 @@ class ProjectingSynchronouslyIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val options = CommandControllerOptions(eventsProjector = CustomersEventsProjector("customers"))
+    val options = CommandControllerOptions(pgEventProjector = CustomersPgEventProjector())
     controller = CommandController(vertx, pgPool, json, customerComponent, options)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }

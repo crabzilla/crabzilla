@@ -1,5 +1,6 @@
-package io.github.crabzilla.stack
+package io.github.crabzilla.stack.command
 
+import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 

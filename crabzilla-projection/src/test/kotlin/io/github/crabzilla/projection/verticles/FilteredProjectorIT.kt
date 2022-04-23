@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection.projectors
+package io.github.crabzilla.projection.verticles
 
 import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.cleanDatabase
@@ -12,8 +12,8 @@ import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.projection.ProjectorEndpoints
 import io.github.crabzilla.projection.verticle.deployProjector
-import io.github.crabzilla.stack.CommandControllerOptions
-import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.command.CommandControllerOptions
+import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
@@ -29,9 +29,9 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class SimpleProjectorIT {
+class FilteredProjectorIT {
 
-  private val projectorEndpoints = ProjectorEndpoints("crabzilla.example1.customer.SimpleProjector")
+  private val projectorEndpoints = ProjectorEndpoints("crabzilla.example1.customer.FilteredProjector")
   private val id: UUID = UUID.randomUUID()
   private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
 
@@ -42,7 +42,7 @@ class SimpleProjectorIT {
       .startPgNotification()
     cleanDatabase(pgPool)
       .compose {
-        vertx.deployProjector(dbConfig, "service:crabzilla.example1.customer.SimpleProjector")
+        vertx.deployProjector(dbConfig, "service:crabzilla.example1.customer.FilteredProjector")
       }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
@@ -102,6 +102,7 @@ class SimpleProjectorIT {
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .onFailure { tc.failNow(it) }
       .compose {
+        Thread.sleep(100)
         vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
       }
       .onFailure { tc.failNow(it) }
@@ -133,6 +134,70 @@ class SimpleProjectorIT {
           tc.completeNow()
         } else {
           tc.failNow("Nothing projected")
+        }
+      }
+  }
+
+  @Test
+  @Order(5)
+  fun `after a command then pause then work the paused is true and currentOffset is 0`(
+    tc: VertxTestContext,
+    vertx: Vertx
+  ) {
+    controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
+      .onFailure { tc.failNow(it) }
+      .compose {
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
+      }
+      .onFailure { tc.failNow(it) }
+      .compose {
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
+      }
+      .onFailure { tc.failNow(it) }
+      .compose {
+        Thread.sleep(100)
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
+      }
+      .onFailure { tc.failNow(it) }
+      .onSuccess { msg: Message<JsonObject> ->
+        if (statusMatches(msg.body(), paused = true, greedy = true, failures = 0L, currentOffset = 0L)) {
+          tc.completeNow()
+        } else {
+          tc.failNow("unexpected status ${msg.body().encodePrettily()}")
+        }
+      }
+  }
+
+  @Test
+  @Order(6)
+  fun `after a command then pause then resume the paused is false and currentOffset is 1`(
+    tc: VertxTestContext,
+    vertx: Vertx
+  ) {
+    controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
+      .onFailure { tc.failNow(it) }
+      .compose {
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
+      }
+      .onFailure { tc.failNow(it) }
+      .compose {
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.resume(), null)
+      }
+      .onFailure { tc.failNow(it) }
+      .compose {
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
+      }
+      .onFailure { tc.failNow(it) }
+      .compose {
+        Thread.sleep(100)
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
+      }
+      .onFailure { tc.failNow(it) }
+      .onSuccess { msg: Message<JsonObject> ->
+        if (statusMatches(msg.body(), paused = false, greedy = true, failures = 0L, currentOffset = 1L)) {
+          tc.completeNow()
+        } else {
+          tc.failNow("unexpected status ${msg.body().encodePrettily()}")
         }
       }
   }

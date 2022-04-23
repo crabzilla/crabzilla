@@ -161,7 +161,7 @@ class CustomerCommandHandler :
   }
 }
 
-val customerConfig = CommandComponent(
+val customerComponent = CommandComponent(
   Customer::class,
   CustomerCommand::class,
   CustomerEvent::class,

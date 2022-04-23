@@ -1,5 +1,6 @@
 package io.github.crabzilla.stack
 
+import io.github.crabzilla.stack.command.CommandMetadata
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.UUID

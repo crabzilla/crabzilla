@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.ProviderNotFoundException
 
 @DisplayName("Instantiating EventsProjectorProvider")
-internal class EventsProjectorProviderFinderTest {
+internal class PgEventProjectorProviderFinderTest {
 
   @Test
   fun `an unknown provider must fail`() {

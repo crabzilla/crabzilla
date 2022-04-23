@@ -1,10 +1,15 @@
 package io.github.crabzilla.projection
 
+import io.github.crabzilla.projection.EventbusTopicStrategy.GLOBAL
+import io.github.crabzilla.projection.EventbusTopicStrategy.STATE_TYPE
+import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_PUBLISH
+import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
+import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTION
 import io.github.crabzilla.projection.internal.EventsScanner
 import io.github.crabzilla.projection.internal.QuerySpecification
+import io.github.crabzilla.stack.CrabzillaConstants
 import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.EventsProjector
-import io.github.crabzilla.stack.PgNotificationTopics
+import io.github.crabzilla.stack.projection.PgEventProjector
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
@@ -26,7 +31,7 @@ class EventsProjectorWorker(
   private val pgPool: PgPool,
   private val subscriber: PgSubscriber,
   private val options: ProjectorConfig,
-  private val eventsProjector: EventsProjector,
+  private val pgEventProjector: PgEventProjector?
 ) {
 
   companion object {
@@ -54,7 +59,7 @@ class EventsProjectorWorker(
     projectorEndpoints = ProjectorEndpoints(options.projectionName)
 
     subscriber.connect().onSuccess {
-      subscriber.channel(PgNotificationTopics.STATE_TOPIC.name.lowercase())
+      subscriber.channel(CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL)
         .handler { stateType ->
           if (!greedy && (options.stateTypes.isEmpty() || options.stateTypes.contains(stateType))) {
             greedy = true
@@ -179,14 +184,38 @@ class EventsProjectorWorker(
       ) { currentFuture: Future<Long>, eventRecord: EventRecord ->
         currentFuture.compose {
           log.debug("Will project event #{}", eventRecord.metadata.eventSequence)
-          eventsProjector.project(conn, eventRecord.payload, eventRecord.metadata)
-            .transform {
-              if (it.failed()) failedFuture(it.cause()) else succeededFuture(eventRecord.metadata.eventSequence)
-            }.eventually {
-              pgPool
-                .preparedQuery("NOTIFY " + PgNotificationTopics.VIEW_TOPIC.name.lowercase() + ", '${options.viewName}'")
-                .execute()
+          val resultIfSuccess = succeededFuture(eventRecord.metadata.eventSequence)
+          val topic = when (options.eventbusTopicStrategy) {
+            GLOBAL -> CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
+            STATE_TYPE -> eventRecord.metadata.stateType
+          }
+          when (options.projectorStrategy) {
+            POSTGRES_SAME_TRANSACTION -> {
+              pgEventProjector!!.project(conn, eventRecord.payload, eventRecord.metadata)
+                .transform {
+                  if (it.failed()) failedFuture(it.cause()) else resultIfSuccess
+                }
             }
+            EVENTBUS_REQUEST_REPLY -> {
+              val promise = Promise.promise<Void>()
+              vertx.eventBus().request<Void>(topic, eventRecord.toJsonObject()) { result ->
+                if (result.failed()) {
+                  promise.fail(result.cause())
+                } else {
+                  promise.complete()
+                }
+              }
+              if (promise.future().succeeded()) {
+                resultIfSuccess
+              } else {
+                failedFuture(promise.future().cause())
+              }
+            }
+            EVENTBUS_PUBLISH -> {
+              vertx.eventBus().publish(topic, eventRecord.toJsonObject())
+              resultIfSuccess
+            }
+          }
         }
       }
     }
