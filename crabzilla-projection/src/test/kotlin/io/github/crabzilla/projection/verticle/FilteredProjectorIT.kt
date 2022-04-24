@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection.verticles
+package io.github.crabzilla.projection.verticle
 
 import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.cleanDatabase
@@ -11,7 +11,6 @@ import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.projection.ProjectorEndpoints
-import io.github.crabzilla.projection.verticle.deployProjector
 import io.github.crabzilla.stack.command.CommandControllerOptions
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
@@ -19,6 +18,8 @@ import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
@@ -37,7 +38,7 @@ class FilteredProjectorIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val options = CommandControllerOptions(pgNotificationInterval = 1L)
+    val options = CommandControllerOptions(pgNotificationInterval = 10L)
     controller = CommandController(vertx, pgPool, TestsFixtures.json, customerConfig, options)
       .startPgNotification()
     cleanDatabase(pgPool)
@@ -47,8 +48,6 @@ class FilteredProjectorIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
-
-  // TODO test idempotency
 
   private fun statusMatches(
     status: JsonObject,
@@ -79,16 +78,16 @@ class FilteredProjectorIT {
 
   @Test
   @Order(2)
-  fun `after a command the greedy is true`(tc: VertxTestContext, vertx: Vertx) {
-    controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
-      .onFailure { tc.failNow(it) }
+  fun `after pause then a command the greedy is true`(tc: VertxTestContext, vertx: Vertx) {
+    vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
       .compose {
-        Thread.sleep(100)
+        controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
+      }.compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
       }
       .onFailure { tc.failNow(it) }
       .onSuccess { msg: Message<JsonObject> ->
-        if (statusMatches(msg.body(), paused = false, greedy = true, failures = 0L, currentOffset = 0L)) {
+        if (msg.body().getBoolean("paused")) {
           tc.completeNow()
         } else {
           tc.failNow("unexpected status ${msg.body().encodePrettily()}")
@@ -100,19 +99,15 @@ class FilteredProjectorIT {
   @Order(3)
   fun `after a command then work the currentOffset is 1`(tc: VertxTestContext, vertx: Vertx) {
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
-      .onFailure { tc.failNow(it) }
       .compose {
-        Thread.sleep(100)
         vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
       }
-      .onFailure { tc.failNow(it) }
       .compose {
-        Thread.sleep(100)
         vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
       }
       .onFailure { tc.failNow(it) }
       .onSuccess { msg: Message<JsonObject> ->
-        if (statusMatches(msg.body(), paused = false, greedy = true, failures = 0L, currentOffset = 1L)) {
+        if (msg.body().getInteger("currentOffset") == 1) {
           tc.completeNow()
         } else {
           tc.failNow("unexpected status ${msg.body().encodePrettily()}")
@@ -145,25 +140,22 @@ class FilteredProjectorIT {
     vertx: Vertx
   ) {
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
-      .onFailure { tc.failNow(it) }
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
       }
-      .onFailure { tc.failNow(it) }
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
       }
-      .onFailure { tc.failNow(it) }
       .compose {
-        Thread.sleep(100)
         vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
       }
       .onFailure { tc.failNow(it) }
       .onSuccess { msg: Message<JsonObject> ->
-        if (statusMatches(msg.body(), paused = true, greedy = true, failures = 0L, currentOffset = 0L)) {
+        val json = msg.body()
+        tc.verify {
+          assertTrue(json.getBoolean("paused"))
+          assertTrue(json.getLong("currentOffset") == 0L)
           tc.completeNow()
-        } else {
-          tc.failNow("unexpected status ${msg.body().encodePrettily()}")
         }
       }
   }
@@ -179,25 +171,22 @@ class FilteredProjectorIT {
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
       }
-      .onFailure { tc.failNow(it) }
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.resume(), null)
       }
-      .onFailure { tc.failNow(it) }
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
       }
-      .onFailure { tc.failNow(it) }
       .compose {
-        Thread.sleep(100)
         vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
       }
       .onFailure { tc.failNow(it) }
       .onSuccess { msg: Message<JsonObject> ->
-        if (statusMatches(msg.body(), paused = false, greedy = true, failures = 0L, currentOffset = 1L)) {
+        val json = msg.body()
+        tc.verify {
+          assertFalse(json.getBoolean("paused"))
+          assertTrue(json.getLong("currentOffset") == 1L)
           tc.completeNow()
-        } else {
-          tc.failNow("unexpected status ${msg.body().encodePrettily()}")
         }
       }
   }

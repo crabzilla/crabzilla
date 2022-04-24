@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection.verticles
+package io.github.crabzilla.projection.verticle
 
 import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.cleanDatabase
@@ -11,7 +11,6 @@ import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.projection.ProjectorEndpoints
-import io.github.crabzilla.projection.verticle.deployProjector
 import io.github.crabzilla.stack.command.CommandControllerOptions
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
@@ -125,6 +124,7 @@ class SimpleProjectorIT {
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
       .compose {
+        Thread.sleep(100)
         pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() == 1 }
       }.onFailure {
         tc.failNow(it)

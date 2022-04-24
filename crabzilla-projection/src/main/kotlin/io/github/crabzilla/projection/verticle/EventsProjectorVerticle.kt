@@ -16,7 +16,7 @@ class EventsProjectorVerticle : PgClientAbstractVerticle() {
 
     var pgEventProjector: PgEventProjector? = null
     if (config.projectorStrategy == POSTGRES_SAME_TRANSACTION) {
-      val provider = EventsProjectorProviderFinder().create(config().getString("eventsProjectorFactoryClassName"))
+      val provider = EventProjectorProviderFactory().create(config().getString("eventsProjectorFactoryClassName"))
       pgEventProjector = provider.create()
     }
 

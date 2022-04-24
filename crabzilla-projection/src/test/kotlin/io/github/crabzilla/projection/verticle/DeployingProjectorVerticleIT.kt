@@ -1,35 +1,20 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.projection.verticle
 
 import io.github.crabzilla.TestRepository
-import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.dbConfig
-import io.github.crabzilla.pgPool
-import io.github.crabzilla.projection.verticle.deployProjector
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(VertxExtension::class)
-@DisplayName("Deploying events projector")
-@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class RedeployingProjectorIT {
+@DisplayName("Deploying projectors verticles")
+internal class DeployingProjectorVerticleIT {
 
   private lateinit var testRepo: TestRepository
-
-  @BeforeEach
-  fun setup(vertx: Vertx, tc: VertxTestContext) {
-    testRepo = TestRepository(pgPool)
-    cleanDatabase(pgPool)
-      .onFailure { tc.failNow(it) }
-      .onSuccess { tc.completeNow() }
-  }
 
   @Test
   @Order(1)
@@ -59,5 +44,12 @@ class RedeployingProjectorIT {
       }.onSuccess {
         tc.completeNow()
       }
+  }
+
+  @Test
+  fun `deploying an invalid projector`(vertx: Vertx, tc: VertxTestContext) {
+    vertx.deployProjector(dbConfig, "service:?")
+      .onFailure { tc.completeNow() }
+      .onSuccess { tc.failNow("Should fail") }
   }
 }

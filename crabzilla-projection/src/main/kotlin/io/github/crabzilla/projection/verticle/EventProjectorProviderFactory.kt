@@ -3,7 +3,7 @@ package io.github.crabzilla.projection.verticle
 import java.nio.file.ProviderNotFoundException
 import java.util.ServiceLoader
 
-class EventsProjectorProviderFinder {
+class EventProjectorProviderFactory {
   // provider by name
   fun create(providerName: String): EventsProjectorProvider {
     val loader: ServiceLoader<EventsProjectorProvider> =

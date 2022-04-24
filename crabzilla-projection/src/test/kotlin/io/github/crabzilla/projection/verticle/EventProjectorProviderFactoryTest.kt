@@ -1,6 +1,5 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.projection.verticle
 
-import io.github.crabzilla.projection.verticle.EventsProjectorProviderFinder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.DisplayName
@@ -8,12 +7,12 @@ import org.junit.jupiter.api.Test
 import java.nio.file.ProviderNotFoundException
 
 @DisplayName("Instantiating EventsProjectorProvider")
-internal class PgEventProjectorProviderFinderTest {
+internal class EventProjectorProviderFactoryTest {
 
   @Test
   fun `an unknown provider must fail`() {
     try {
-      EventsProjectorProviderFinder().create("?")
+      EventProjectorProviderFactory().create("?")
       fail("Should fail")
     } catch (e: Exception) {
       when (e) {
@@ -28,6 +27,6 @@ internal class PgEventProjectorProviderFinderTest {
 
   @Test
   fun `a provider must work`() {
-    EventsProjectorProviderFinder().create("io.github.crabzilla.example1.customer.CustomersProjectorFactory")
+    EventProjectorProviderFactory().create("io.github.crabzilla.example1.customer.CustomersProjectorFactory")
   }
 }

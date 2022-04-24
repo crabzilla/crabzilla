@@ -24,6 +24,7 @@ import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
@@ -41,18 +42,24 @@ class EventsProjectorComponent(
     private const val GREED_INTERVAL = 100L
   }
 
-  private var greedy = false
+  private var greedy = AtomicBoolean(false)
   private val failures = AtomicLong(0L)
-  private var currentOffset = 0L
-  private var isPaused = false
+  private var currentOffset = AtomicLong(0L)
+  private var isPaused = AtomicBoolean(false)
+  private var isBusy = AtomicBoolean(false)
 
   private lateinit var scanner: EventsScanner
   private lateinit var projectorEndpoints: ProjectorEndpoints
 
   fun start(): Future<Void> {
     fun status(): JsonObject {
-      return JsonObject().put("node", node).put("paused", isPaused)
-        .put("greedy", greedy).put("failures", failures.get()).put("currentOffset", currentOffset)
+      return JsonObject()
+        .put("node", node)
+        .put("paused", isPaused.get())
+        .put("busy", isBusy.get())
+        .put("greedy", greedy.get())
+        .put("failures", failures.get())
+        .put("currentOffset", currentOffset.get())
     }
 
     log.info("Node {} starting with {}", node, options)
@@ -62,8 +69,8 @@ class EventsProjectorComponent(
     subscriber.connect().onSuccess {
       subscriber.channel(CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL)
         .handler { stateType ->
-          if (!greedy && (options.stateTypes.isEmpty() || options.stateTypes.contains(stateType))) {
-            greedy = true
+          if (!greedy.get() && (options.stateTypes.isEmpty() || options.stateTypes.contains(stateType))) {
+            greedy.set(true)
             log.debug("Greedy {}", stateType)
           }
         }
@@ -77,13 +84,13 @@ class EventsProjectorComponent(
 
     vertx.eventBus()
       .consumer<String>(projectorEndpoints.pause()) { msg ->
-        isPaused = true
+        isPaused.set(true)
         msg.reply(status())
       }
 
     vertx.eventBus()
       .consumer<String>(projectorEndpoints.resume()) { msg ->
-        isPaused = false
+        isPaused.set(false)
         msg.reply(status())
       }
 
@@ -98,14 +105,14 @@ class EventsProjectorComponent(
 
     scanner.getCurrentOffset()
       .onSuccess { offset ->
-        currentOffset = offset
+        currentOffset.set(offset)
       }
       .compose {
         scanner.getGlobalOffset()
       }
       .onSuccess { globalOffset ->
-        greedy = globalOffset > currentOffset
-        val effectiveInitialInterval = if (greedy) 1 else options.initialInterval
+        greedy.set(globalOffset > currentOffset.get())
+        val effectiveInitialInterval = if (greedy.get()) 1 else options.initialInterval
         log.info(
           "Projection [{}] current offset [{}] global offset [{}] will start in [{}] ms",
           options.projectionName, currentOffset, globalOffset, effectiveInitialInterval
@@ -140,91 +147,87 @@ class EventsProjectorComponent(
 
   private fun handler(): Handler<Long?> {
     return Handler<Long?> {
-      action().onFailure { log.error("After action 2", it) }
+      action()
+        .onSuccess { log.debug("Success = $it") }
+        .onFailure { log.error("After action 2", it) }
     }
   }
 
-  private fun action(): Future<Int> {
-    fun registerFailure() {
-      val nextInterval = if (greedy) GREED_INTERVAL else
-        min(options.maxInterval, options.interval * failures.incrementAndGet())
-      vertx.setTimer(nextInterval, handler())
-      log.debug("Rescheduled to next {} milliseconds", nextInterval)
+  private fun action(): Future<Void> {
+    fun scanEvents(): Future<List<EventRecord>> {
+      log.debug("Scanning for new events for projection {}", options.projectionName)
+      return scanner.scanPendingEvents(options.maxNumberOfRows)
     }
-
-    fun registerSuccessOrStillBusy() {
-      failures.set(0)
-      val nextInterval = if (greedy) GREED_INTERVAL else options.interval
-      vertx.setTimer(nextInterval, handler())
-      log.debug("Rescheduled to next {} milliseconds", nextInterval)
-    }
-
-    fun justReschedule() {
-      vertx.setTimer(options.interval, handler())
-      log.debug("Rescheduled to next {} milliseconds", options.interval)
-    }
-    if (isPaused) {
-      justReschedule()
-      return succeededFuture(0)
-    }
-    log.debug("Scanning for new events for projection {}", options.projectionName)
-    return scanAndSubmit(options.maxNumberOfRows)
-      .compose { retrievedRows ->
-        when (retrievedRows) {
-          0 -> {
-            log.debug("No new events")
-            greedy = false
-            registerFailure()
-          }
-          else -> {
-            registerSuccessOrStillBusy()
-          }
-        }
-        succeededFuture(retrievedRows)
-      }
-  }
-
-  private fun scanAndSubmit(numberOfRows: Int): Future<Int> {
-    fun projectEvents(conn: SqlConnection, eventsList: List<EventRecord>): Future<Long> {
-      val initialFuture = succeededFuture<Long>()
+    fun projectEvents(conn: SqlConnection, eventsList: List<EventRecord>): Future<Void> {
+      val initialFuture = succeededFuture<Void>()
       return eventsList.fold(
         initialFuture
-      ) { currentFuture: Future<Long>, eventRecord: EventRecord ->
+      ) { currentFuture: Future<Void>, eventRecord: EventRecord ->
         currentFuture.compose {
-          val succeeded = succeededFuture(eventRecord.metadata.eventSequence)
           val topic = when (options.eventbusTopicStrategy) {
             GLOBAL -> CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
             STATE_TYPE -> stateTypeTopic(eventRecord.metadata.stateType)
           }
-          when (options.projectorStrategy) {
+          val publishedOk: Future<out Any> = when (options.projectorStrategy) {
             POSTGRES_SAME_TRANSACTION -> {
               log.debug("Will project event {} to postgres", eventRecord.metadata.eventSequence)
               pgEventProjector!!.project(conn, eventRecord)
-                .transform {
-                  if (it.failed()) failedFuture(it.cause()) else succeeded
-                }
             }
             EVENTBUS_REQUEST_REPLY -> {
               log.debug("Will request/reply event {} to topic {}", eventRecord.metadata.eventSequence, topic)
               vertx.eventBus().request<Void>(topic, eventRecord.toJsonObject())
-                .compose {
-                  succeeded
-                }
             }
             EVENTBUS_PUBLISH -> {
               log.debug("Will notify event {} to topic {}", eventRecord.metadata.eventSequence, topic)
               vertx.eventBus().publish(topic, eventRecord.toJsonObject())
-              succeeded
+              succeededFuture()
             }
+          }
+          publishedOk.transform {
+            if (it.failed()) failedFuture(it.cause()) else succeededFuture()
           }
         }
       }
     }
-
-    return scanner.scanPendingEvents(numberOfRows)
+    fun updateOffset(conn: SqlConnection, offset: Long): Future<Void> {
+      return conn
+        .preparedQuery("update projections set sequence = $2 where name = $1")
+        .execute(Tuple.of(options.projectionName, offset))
+        .mapEmpty()
+    }
+    fun registerNoNewEvents() {
+      greedy.set(false)
+      val nextInterval = min(options.maxInterval, options.interval * failures.incrementAndGet())
+      vertx.setTimer(nextInterval, handler())
+      log.debug("registerNoNewEvents - Rescheduled to next {} milliseconds", nextInterval)
+    }
+    fun registerFailure() {
+      greedy.set(false)
+      val nextInterval = min(options.maxInterval, options.interval * failures.incrementAndGet())
+      vertx.setTimer(nextInterval, handler())
+      log.debug("registerFailure - Rescheduled to next {} milliseconds", nextInterval)
+    }
+    fun registerSuccess() {
+      failures.set(0)
+      val nextInterval = if (greedy.get()) GREED_INTERVAL else options.interval
+      vertx.setTimer(nextInterval, handler())
+      log.debug("Rescheduled to next {} milliseconds", nextInterval)
+    }
+    fun justReschedule() {
+      vertx.setTimer(options.interval, handler())
+      log.info("It is busy=$isBusy or paused=$isPaused. Will just reschedule.")
+      log.debug("Rescheduled to next {} milliseconds", options.interval)
+    }
+    if (isBusy.get() || isPaused.get()) {
+      justReschedule()
+      return succeededFuture()
+    }
+    isBusy.set(true)
+    return scanEvents()
       .compose { eventsList ->
         if (eventsList.isEmpty()) {
-          succeededFuture(0)
+          registerNoNewEvents()
+          succeededFuture<Void>(null)
         } else {
           log.debug(
             "Found {} new events. The first is {} and last is {}",
@@ -234,20 +237,17 @@ class EventsProjectorComponent(
           )
           pgPool.withTransaction { conn ->
             projectEvents(conn, eventsList)
-              .compose { offset ->
-                conn
-                  .preparedQuery("update projections set sequence = $2 where name = $1")
-                  .execute(Tuple.of(options.projectionName, offset))
-                  .map { offset }
-              }.onSuccess {
-                currentOffset = it
-              }.map {
-                numberOfRows
+              .compose { updateOffset(conn, eventsList.last().metadata.eventSequence) }
+              .onSuccess {
+                currentOffset.set(eventsList.last().metadata.eventSequence)
+                registerSuccess()
               }
-          }.onFailure {
-            log.error("After action 3", it)
           }
         }
+      }.onFailure {
+        registerFailure()
+      }.onComplete {
+        isBusy.set(false)
       }
   }
 }

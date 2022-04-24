@@ -60,7 +60,7 @@
 //
 //==== 1.2.2 CommandHandlerFn
 //A possibly blocking and NO side effect free function. Although not being side effect free (throws an exception), command
-//handler verticles will wrap the result of this function into a result type something like https://github.com/crabzilla/crabzilla/blob/master/crabzilla-core/src/main/java/io/github/crabzilla/core/CommandResult.kt[CommandSideEffect]
+//handler verticle will wrap the result of this function into a result type something like https://github.com/crabzilla/crabzilla/blob/master/crabzilla-core/src/main/java/io/github/crabzilla/core/CommandResult.kt[CommandSideEffect]
 //[source,kotlin]
 //.CustomerFunctions.kt
 //----
@@ -111,7 +111,7 @@
 //
 //== 2.0 crabzilla-example1-handler
 //
-//A library of verticles to process the commands.
+//A library of verticle to process the commands.
 //
 //=== 2.1 HandlerModule
 //
@@ -131,7 +131,7 @@
 //
 //== 3.0 crabzilla-example1-handler-service
 //
-//A service using verticles from above library to process the commands.
+//A service using verticle from above library to process the commands.
 //
 //=== 3.4 HandlerServiceComponent
 //
@@ -161,7 +161,7 @@
 //
 //== 4.0 crabzilla-example1-projector
 //
-//A library of verticles to receive the event stream from db and project it to the query model database.
+//A library of verticle to receive the event stream from db and project it to the query model database.
 //
 //TODO
 //
