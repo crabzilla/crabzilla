@@ -2,7 +2,6 @@
   "main": "io.github.crabzilla.projection.verticle.EventsProjectorVerticle",
   "options": {
     "config" : {
-      "viewName": "customers",
       "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
       "initialInterval" : 2
     }

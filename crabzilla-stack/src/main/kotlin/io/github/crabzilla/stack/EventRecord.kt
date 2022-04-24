@@ -6,10 +6,8 @@ import java.util.UUID
 /**
  * An event record
  */
-data class EventRecord(
-  val metadata: EventMetadata,
-  val payload: JsonObject,
-) {
+data class EventRecord(val metadata: EventMetadata, val payload: JsonObject) {
+
   companion object {
     fun fromJsonObject(asJsonObject: JsonObject): EventRecord {
       val eventMetadata = EventMetadata(
@@ -36,4 +34,6 @@ data class EventRecord(
       .put("correlationId", metadata.correlationId.toString())
       .put("version", metadata.version)
   }
+
+  fun extract() = Triple(payload, metadata, metadata.stateId)
 }

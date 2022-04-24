@@ -8,6 +8,7 @@ import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTIO
 import io.github.crabzilla.projection.internal.EventsScanner
 import io.github.crabzilla.projection.internal.QuerySpecification
 import io.github.crabzilla.stack.CrabzillaConstants
+import io.github.crabzilla.stack.CrabzillaConstants.stateTypeTopic
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.projection.PgEventProjector
 import io.vertx.core.Future
@@ -26,7 +27,7 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-class EventsProjectorWorker(
+class EventsProjectorComponent(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val subscriber: PgSubscriber,
@@ -35,9 +36,9 @@ class EventsProjectorWorker(
 ) {
 
   companion object {
-    private val log = LoggerFactory.getLogger(EventsProjectorWorker::class.java)
+    private val log = LoggerFactory.getLogger(EventsProjectorComponent::class.java)
     private val node: String = ManagementFactory.getRuntimeMXBean().name
-    // TODO add endpoint for restart from N
+    private const val GREED_INTERVAL = 100L
   }
 
   private var greedy = false
@@ -48,7 +49,7 @@ class EventsProjectorWorker(
   private lateinit var scanner: EventsScanner
   private lateinit var projectorEndpoints: ProjectorEndpoints
 
-  fun start(startPromise: Promise<Void>) {
+  fun start(): Future<Void> {
     fun status(): JsonObject {
       return JsonObject().put("node", node).put("paused", isPaused)
         .put("greedy", greedy).put("failures", failures.get()).put("currentOffset", currentOffset)
@@ -93,6 +94,8 @@ class EventsProjectorWorker(
     )
     scanner = EventsScanner(pgPool, options.projectionName, query)
 
+    val startPromise = Promise.promise<Void>()
+
     scanner.getCurrentOffset()
       .onSuccess { offset ->
         currentOffset = offset
@@ -117,7 +120,7 @@ class EventsProjectorWorker(
         vertx.eventBus().consumer<Void>(projectorEndpoints.work()).handler { msg ->
           action()
             .onFailure {
-              log.error(it.message, it)
+              log.error("After action", it)
             }
             .onComplete {
               msg.reply(status())
@@ -127,6 +130,8 @@ class EventsProjectorWorker(
       }.onFailure {
         startPromise.fail(it)
       }
+
+    return startPromise.future()
   }
 
   fun stop() {
@@ -135,25 +140,28 @@ class EventsProjectorWorker(
 
   private fun handler(): Handler<Long?> {
     return Handler<Long?> {
-      vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
+      action().onFailure { log.error("After action 2", it) }
     }
   }
 
   private fun action(): Future<Int> {
     fun registerFailure() {
-      val nextInterval = if (greedy) 1 else min(options.maxInterval, options.interval * failures.incrementAndGet())
+      val nextInterval = if (greedy) GREED_INTERVAL else
+        min(options.maxInterval, options.interval * failures.incrementAndGet())
       vertx.setTimer(nextInterval, handler())
       log.debug("Rescheduled to next {} milliseconds", nextInterval)
     }
 
     fun registerSuccessOrStillBusy() {
       failures.set(0)
-      vertx.setTimer(options.interval, handler())
-      log.debug("Rescheduled to next {} milliseconds", options.interval)
+      val nextInterval = if (greedy) GREED_INTERVAL else options.interval
+      vertx.setTimer(nextInterval, handler())
+      log.debug("Rescheduled to next {} milliseconds", nextInterval)
     }
 
     fun justReschedule() {
       vertx.setTimer(options.interval, handler())
+      log.debug("Rescheduled to next {} milliseconds", options.interval)
     }
     if (isPaused) {
       justReschedule()
@@ -183,37 +191,30 @@ class EventsProjectorWorker(
         initialFuture
       ) { currentFuture: Future<Long>, eventRecord: EventRecord ->
         currentFuture.compose {
-          log.debug("Will project event #{}", eventRecord.metadata.eventSequence)
-          val resultIfSuccess = succeededFuture(eventRecord.metadata.eventSequence)
+          val succeeded = succeededFuture(eventRecord.metadata.eventSequence)
           val topic = when (options.eventbusTopicStrategy) {
             GLOBAL -> CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
-            STATE_TYPE -> eventRecord.metadata.stateType
+            STATE_TYPE -> stateTypeTopic(eventRecord.metadata.stateType)
           }
           when (options.projectorStrategy) {
             POSTGRES_SAME_TRANSACTION -> {
-              pgEventProjector!!.project(conn, eventRecord.payload, eventRecord.metadata)
+              log.debug("Will project event {} to postgres", eventRecord.metadata.eventSequence)
+              pgEventProjector!!.project(conn, eventRecord)
                 .transform {
-                  if (it.failed()) failedFuture(it.cause()) else resultIfSuccess
+                  if (it.failed()) failedFuture(it.cause()) else succeeded
                 }
             }
             EVENTBUS_REQUEST_REPLY -> {
-              val promise = Promise.promise<Void>()
-              vertx.eventBus().request<Void>(topic, eventRecord.toJsonObject()) { result ->
-                if (result.failed()) {
-                  promise.fail(result.cause())
-                } else {
-                  promise.complete()
+              log.debug("Will request/reply event {} to topic {}", eventRecord.metadata.eventSequence, topic)
+              vertx.eventBus().request<Void>(topic, eventRecord.toJsonObject())
+                .compose {
+                  succeeded
                 }
-              }
-              if (promise.future().succeeded()) {
-                resultIfSuccess
-              } else {
-                failedFuture(promise.future().cause())
-              }
             }
             EVENTBUS_PUBLISH -> {
+              log.debug("Will notify event {} to topic {}", eventRecord.metadata.eventSequence, topic)
               vertx.eventBus().publish(topic, eventRecord.toJsonObject())
-              resultIfSuccess
+              succeeded
             }
           }
         }
@@ -244,7 +245,7 @@ class EventsProjectorWorker(
                 numberOfRows
               }
           }.onFailure {
-            log.error(it.message)
+            log.error("After action 3", it)
           }
         }
       }

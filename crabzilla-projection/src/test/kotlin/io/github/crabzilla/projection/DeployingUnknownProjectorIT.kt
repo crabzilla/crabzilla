@@ -14,7 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(VertxExtension::class)
 @DisplayName("Deploying an invalid events projector")
-class DeployingUnknownProjectorIT {
+internal class DeployingUnknownProjectorIT {
 
   private lateinit var testRepo: TestRepository
 

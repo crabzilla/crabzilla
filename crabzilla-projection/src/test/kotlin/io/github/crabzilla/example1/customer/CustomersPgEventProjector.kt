@@ -1,22 +1,23 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.stack.EventMetadata
+import io.github.crabzilla.example1.customer.CustomersWriteRepository.updateStatus
+import io.github.crabzilla.example1.customer.CustomersWriteRepository.upsert
+import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.projection.PgEventProjector
 import io.vertx.core.Future
-import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
 
 class CustomersPgEventProjector : PgEventProjector {
 
-  override fun project(conn: SqlConnection, payload: JsonObject, metadata: EventMetadata): Future<Void> {
-    val id = metadata.stateId
+  override fun project(conn: SqlConnection, record: EventRecord): Future<Void> {
+    val (payload, metadata, id) = record.extract()
     return when (payload.getString("type")) {
       "CustomerRegistered" ->
-        CustomersWriteRepository.upsert(conn, id, payload.getString("name"), false)
+        upsert(conn, id, payload.getString("name"), false)
       "CustomerActivated" ->
-        CustomersWriteRepository.updateStatus(conn, id, true)
+        updateStatus(conn, id, true)
       "CustomerDeactivated" ->
-        CustomersWriteRepository.updateStatus(conn, id, false)
+        updateStatus(conn, id, false)
       else -> Future.failedFuture("Unknown event $metadata")
     }
   }

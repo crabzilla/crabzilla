@@ -279,7 +279,7 @@ class CommandController<out S : Any, C : Any, E : Any>(
       initialFuture
     ) { currentFuture: Future<Void>, appendedEvent: EventRecord ->
       currentFuture.compose {
-        projector.project(conn, appendedEvent.payload, appendedEvent.metadata)
+        projector.project(conn, appendedEvent)
       }
     }.mapEmpty()
   }
