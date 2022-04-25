@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.crabzilla.core.CommandComponent
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.stack.CrabzillaConstants
-import io.github.crabzilla.stack.CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.command.CommandControllerOptions
@@ -80,12 +79,12 @@ class CommandController<out S : Any, C : Any, E : Any>(
     log.info("Starting notifying Postgres for $stateSerialName each ${options.pgNotificationInterval} ms")
     notificationsByStateType.add(stateSerialName)
     vertx.setPeriodic(options.pgNotificationInterval) {
-      notifyPg()
+      flushPendingPgNotifications()
     }
     return this
   }
 
-  fun notifyPg(): Future<Void> {
+  fun flushPendingPgNotifications(): Future<Void> {
     val initialFuture = succeededFuture<Void>()
     return notificationsByStateType.fold(
       initialFuture
@@ -93,6 +92,7 @@ class CommandController<out S : Any, C : Any, E : Any>(
       currentFuture.compose {
         val query = "NOTIFY ${CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL}, '$stateType'"
         pgPool.preparedQuery(query).execute()
+          .onSuccess { log.info("Notified postgres: $query") }
           .mapEmpty()
       }
     }.onFailure {

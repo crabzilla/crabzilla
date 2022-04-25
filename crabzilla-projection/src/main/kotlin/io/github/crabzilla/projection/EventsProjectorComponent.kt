@@ -15,7 +15,6 @@ import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler
-import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
@@ -44,6 +43,7 @@ class EventsProjectorComponent(
 
   private var greedy = AtomicBoolean(false)
   private val failures = AtomicLong(0L)
+  private val backOff = AtomicLong(0L)
   private var currentOffset = AtomicLong(0L)
   private var isPaused = AtomicBoolean(false)
   private var isBusy = AtomicBoolean(false)
@@ -59,83 +59,85 @@ class EventsProjectorComponent(
         .put("busy", isBusy.get())
         .put("greedy", greedy.get())
         .put("failures", failures.get())
+        .put("backOff", backOff.get())
         .put("currentOffset", currentOffset.get())
+    }
+    fun startManagementEndpoints() {
+      vertx.eventBus()
+        .consumer<String>(projectorEndpoints.status()) { msg ->
+          log.debug("Status: {}", status().encodePrettily())
+          msg.reply(status())
+        }
+
+      vertx.eventBus()
+        .consumer<String>(projectorEndpoints.pause()) { msg ->
+          isPaused.set(true)
+          msg.reply(status())
+        }
+
+      vertx.eventBus()
+        .consumer<String>(projectorEndpoints.resume()) { msg ->
+          isPaused.set(false)
+          msg.reply(status())
+        }
+    }
+    fun startPgNotificationSubscriber(): Future<Void> {
+      return subscriber.connect().onSuccess {
+        subscriber.channel(CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL)
+          .handler { stateType ->
+            if (!greedy.get() && (options.stateTypes.isEmpty() || options.stateTypes.contains(stateType))) {
+              greedy.set(true)
+              log.debug("Greedy {}", stateType)
+            }
+          }
+      }
+    }
+    fun startEventsScanner() {
+      val query = QuerySpecification.query(options.stateTypes, options.eventTypes)
+      log.info(
+        "Will start projection [{}] using query [{}] in [{}] milliseconds", options.projectionName, query,
+        options.initialInterval
+      )
+      scanner = EventsScanner(pgPool, options.projectionName, query)
+    }
+    fun startProjection(): Future<Void> {
+      return scanner.getCurrentOffset()
+        .onSuccess { offset ->
+          currentOffset.set(offset)
+        }
+        .compose {
+          scanner.getGlobalOffset()
+        }
+        .onSuccess { globalOffset ->
+          greedy.set(globalOffset > currentOffset.get())
+          val effectiveInitialInterval = if (greedy.get()) 1 else options.initialInterval
+          log.info(
+            "Projection [{}] current offset [{}] global offset [{}] will start in [{}] ms",
+            options.projectionName, currentOffset, globalOffset, effectiveInitialInterval
+          )
+          log.info("Projection [{}] started pooling events with {}", options.projectionName, options)
+          // Schedule the first execution
+          vertx.setTimer(effectiveInitialInterval, handler())
+          // Schedule the metrics
+          vertx.setPeriodic(options.metricsInterval) {
+            log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
+          }
+          vertx.eventBus().consumer<Void>(projectorEndpoints.work()).handler { msg ->
+            action()
+              .onComplete {
+                msg.reply(status())
+              }
+          }
+        }.mapEmpty()
     }
 
     log.info("Node {} starting with {}", node, options)
-
     projectorEndpoints = ProjectorEndpoints(options.projectionName)
+    startManagementEndpoints()
+    startEventsScanner()
 
-    subscriber.connect().onSuccess {
-      subscriber.channel(CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL)
-        .handler { stateType ->
-          if (!greedy.get() && (options.stateTypes.isEmpty() || options.stateTypes.contains(stateType))) {
-            greedy.set(true)
-            log.debug("Greedy {}", stateType)
-          }
-        }
-    }
-
-    vertx.eventBus()
-      .consumer<String>(projectorEndpoints.status()) { msg ->
-        log.debug("Status: {}", status().encodePrettily())
-        msg.reply(status())
-      }
-
-    vertx.eventBus()
-      .consumer<String>(projectorEndpoints.pause()) { msg ->
-        isPaused.set(true)
-        msg.reply(status())
-      }
-
-    vertx.eventBus()
-      .consumer<String>(projectorEndpoints.resume()) { msg ->
-        isPaused.set(false)
-        msg.reply(status())
-      }
-
-    val query = QuerySpecification.query(options.stateTypes, options.eventTypes)
-    log.info(
-      "Will start projection [{}] using query [{}] in [{}] milliseconds", options.projectionName, query,
-      options.initialInterval
-    )
-    scanner = EventsScanner(pgPool, options.projectionName, query)
-
-    val startPromise = Promise.promise<Void>()
-
-    scanner.getCurrentOffset()
-      .onSuccess { offset ->
-        currentOffset.set(offset)
-      }
-      .compose {
-        scanner.getGlobalOffset()
-      }
-      .onSuccess { globalOffset ->
-        greedy.set(globalOffset > currentOffset.get())
-        val effectiveInitialInterval = if (greedy.get()) 1 else options.initialInterval
-        log.info(
-          "Projection [{}] current offset [{}] global offset [{}] will start in [{}] ms",
-          options.projectionName, currentOffset, globalOffset, effectiveInitialInterval
-        )
-        log.info("Projection [{}] started pooling events with {}", options.projectionName, options)
-        // Schedule the first execution
-        vertx.setTimer(effectiveInitialInterval, handler())
-        // Schedule the metrics
-        vertx.setPeriodic(options.metricsInterval) {
-          log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
-        }
-        vertx.eventBus().consumer<Void>(projectorEndpoints.work()).handler { msg ->
-          action()
-            .onComplete {
-              msg.reply(status())
-            }
-        }
-        startPromise.complete()
-      }.onFailure {
-        startPromise.fail(it)
-      }
-
-    return startPromise.future()
+    return startPgNotificationSubscriber()
+      .compose { startProjection() }
   }
 
   fun stop() {
@@ -194,7 +196,7 @@ class EventsProjectorComponent(
     }
     fun registerNoNewEvents() {
       greedy.set(false)
-      val nextInterval = min(options.maxInterval, options.interval * failures.incrementAndGet())
+      val nextInterval = min(options.maxInterval, options.interval * backOff.incrementAndGet())
       vertx.setTimer(nextInterval, handler())
       log.debug("registerNoNewEvents - Rescheduled to next {} milliseconds", nextInterval)
     }
@@ -206,6 +208,7 @@ class EventsProjectorComponent(
     }
     fun registerSuccess() {
       failures.set(0)
+      backOff.set(0)
       val nextInterval = if (greedy.get()) GREED_INTERVAL else options.interval
       vertx.setTimer(nextInterval, handler())
       log.debug("Rescheduled to next {} milliseconds", nextInterval)

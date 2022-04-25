@@ -9,7 +9,9 @@
       "maxInterval" : 10000,
       "maxNumberOfRows": 1,
       "stateTypes": ["Customer"],
-      "eventTypes": ["CustomerRegistered", "CustomerActivated"]
+      "eventTypes": ["CustomerRegistered", "CustomerActivated"],
+      "projectorStrategy": "POSTGRES_SAME_TRANSACTION",
+      "eventbusTopicStrategy": "GLOBAL"
     }
   }
 }

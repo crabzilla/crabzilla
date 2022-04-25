@@ -1,6 +1,9 @@
 package io.github.crabzilla.projection
 
 import io.github.crabzilla.projection.EventbusTopicStrategy.GLOBAL
+import io.github.crabzilla.projection.EventbusTopicStrategy.STATE_TYPE
+import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_PUBLISH
+import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
 import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTION
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
@@ -33,6 +36,17 @@ data class ProjectorConfig(
       val stateTypes = stateTypesArray.iterator().asSequence().map { it.toString() }.toList()
       val eventTypesArray = config.getJsonArray("eventTypes") ?: JsonArray()
       val eventTypes = eventTypesArray.iterator().asSequence().map { it.toString() }.toList()
+      val projectorStrategy = when (config.getString("projectorStrategy")) {
+        "POSTGRES_SAME_TRANSACTION" -> POSTGRES_SAME_TRANSACTION
+        "EVENTBUS_REQUEST_REPLY" -> EVENTBUS_REQUEST_REPLY
+        "EVENTBUS_PUBLISH" -> EVENTBUS_PUBLISH
+        else -> throw IllegalArgumentException("Invalid config for projectorStrategy")
+      }
+      val topicStrategy = when (config.getString("eventbusTopicStrategy")) {
+        "GLOBAL" -> GLOBAL
+        "STATE" -> STATE_TYPE
+        else -> throw IllegalArgumentException("Invalid config for eventbusTopicStrategy")
+      }
       return ProjectorConfig(
         projectionName = projectionName,
         initialInterval = initialInterval,
@@ -41,7 +55,9 @@ data class ProjectorConfig(
         metricsInterval = metricsInterval,
         maxNumberOfRows = maxNumberOfRows,
         stateTypes = stateTypes,
-        eventTypes = eventTypes
+        eventTypes = eventTypes,
+        projectorStrategy = projectorStrategy,
+        eventbusTopicStrategy = topicStrategy
       )
     }
   }

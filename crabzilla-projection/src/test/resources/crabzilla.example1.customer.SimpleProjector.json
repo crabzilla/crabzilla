@@ -2,7 +2,9 @@
   "main": "io.github.crabzilla.projection.verticle.EventsProjectorVerticle",
   "options": {
     "config" : {
-      "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory"
+      "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
+      "projectorStrategy": "POSTGRES_SAME_TRANSACTION",
+      "eventbusTopicStrategy": "GLOBAL"
     }
   }
 }

@@ -3,7 +3,6 @@
   "options": {
     "config" : {
       "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
-      "initialInterval" : 2
     }
   }
 }

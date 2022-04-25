@@ -19,31 +19,33 @@ internal class DeployingVerticleIT {
   @Test
   @Order(1)
   fun `if it's not deployed, it will deploy`(tc: VertxTestContext, vertx: Vertx) {
-    vertx.deployProjector(
-      dbConfig, "service:crabzilla.example1.customer.SimpleProjector"
-    )
-      .onFailure {
-        tc.failNow(it)
-      }.onSuccess {
-        tc.completeNow()
-      }
+    vertx.deployProjector(dbConfig, "service:crabzilla.example1.customer.SimpleProjector")
+      .onFailure { tc.failNow(it) }
+      .onSuccess { tc.completeNow() }
+  }
+
+  @Test
+  @Order(1)
+  fun `it will deploy a fully configured projector`(tc: VertxTestContext, vertx: Vertx) {
+    vertx.deployProjector(dbConfig, "service:crabzilla.example1.customer.CustomProjector")
+      .onFailure { tc.failNow(it) }
+      .onSuccess { tc.completeNow() }
+  }
+
+  @Test
+  fun `it will not deploy a bad configured projector`(vertx: Vertx, tc: VertxTestContext) {
+    vertx.deployProjector(dbConfig, "service:crabzilla.example1.customer.BadProjector")
+      .onFailure { tc.completeNow() }
+      .onSuccess { tc.failNow("Should fail") }
   }
 
   @Test
   @Order(2)
   fun `if it's already deployed, it will keep the current instance`(tc: VertxTestContext, vertx: Vertx) {
-    vertx.deployProjector(
-      dbConfig, "service:crabzilla.example1.customer.SimpleProjector"
-    ).compose {
-      vertx.deployProjector(
-        dbConfig, "service:crabzilla.example1.customer.SimpleProjector"
-      )
-    }
-      .onFailure {
-        tc.failNow(it)
-      }.onSuccess {
-        tc.completeNow()
-      }
+    vertx.deployProjector(dbConfig, "service:crabzilla.example1.customer.SimpleProjector")
+      .compose { vertx.deployProjector(dbConfig, "service:crabzilla.example1.customer.SimpleProjector") }
+      .onFailure { tc.failNow(it) }
+      .onSuccess { tc.completeNow() }
   }
 
   @Test
