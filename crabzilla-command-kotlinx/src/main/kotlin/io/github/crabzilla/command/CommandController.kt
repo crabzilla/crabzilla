@@ -79,21 +79,30 @@ class CommandController<S : Any, C : Any, E : Any>(
   private val notificationsByStateType = HashSet<String>()
 
   fun startPgNotification(): CommandController<S, C, E> {
-    fun notifyPg() {
-      notificationsByStateType.forEach { stateType ->
-        val query = "NOTIFY ${CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL}, '$stateType'"
-        pgPool.preparedQuery(query).execute().onSuccess {
-          log.debug("Notified postgres with: $query")
-        }
-      }
-      notificationsByStateType.clear()
-    }
     log.info("Starting notifying Postgres for $stateSerialName each ${options.pgNotificationInterval} ms")
     notificationsByStateType.add(stateSerialName)
     vertx.setPeriodic(options.pgNotificationInterval) {
-      notifyPg()
+      flushPendingPgNotifications()
     }
     return this
+  }
+
+  fun flushPendingPgNotifications(): Future<Void> {
+    val initialFuture = succeededFuture<Void>()
+    return notificationsByStateType.fold(
+      initialFuture
+    ) { currentFuture: Future<Void>, stateType: String ->
+      currentFuture.compose {
+        val query = "NOTIFY ${CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL}, '$stateType'"
+        pgPool.preparedQuery(query).execute()
+          .onSuccess { log.info("Notified postgres: $query") }
+          .mapEmpty()
+      }
+    }.onFailure {
+      log.error("Notification to postgres failed {$stateSerialName}")
+    }.onSuccess {
+      notificationsByStateType.clear()
+    }
   }
 
   private val commandHandler: CommandHandler<S, C, E> = commandComponent.commandHandlerFactory.invoke()

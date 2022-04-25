@@ -5,7 +5,7 @@
       "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
       "initialInterval" : 30000,
       "interval" : 30000,
-      "metricsInterval" : 5,
+      "metricsInterval" : 3000,
       "maxInterval" : 10000,
       "maxNumberOfRows": 1,
       "stateTypes": ["Customer"],

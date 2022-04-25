@@ -16,7 +16,6 @@ import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.pubsub.PgSubscriber
-import jdk.jfr.Timespan.SECONDS
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -59,9 +58,9 @@ internal class ProjectingToEventsBusIT {
       // handle idempotency using the eventId (UUID)
       // "eventually" means when you use msg.fail() (maybe your broker is down) instead of msg.reply(null) (a success)
       // by using this feature, you can publish your events to wherever: Kafka, Pulsar, NATS, etc..
+      latch.countDown()
       messages.add(msg.body())
       msg.reply(null)
-      latch.countDown()
     }
     val options = ProjectorConfig(
       projectionName, initialInterval = 10, interval = 10,
@@ -76,8 +75,12 @@ internal class ProjectingToEventsBusIT {
       }.compose {
         controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes"))
       }
+      .compose {
+        controller.flushPendingPgNotifications()
+      }
       .onFailure { tc.failNow(it) }
       .onSuccess {
+        Thread.sleep(1000)
         tc.verify {
           assertTrue(latch.await(2, TimeUnit.SECONDS))
           val eventsTypes = messages.map { it.getJsonObject("eventPayload").getString("type") }
@@ -112,10 +115,14 @@ internal class ProjectingToEventsBusIT {
       }.compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
       }
+      .compose {
+        controller.flushPendingPgNotifications()
+      }
       .onFailure { tc.failNow(it) }
       .onSuccess {
+        Thread.sleep(1000)
         tc.verify {
-          assertTrue(latch.await(2, TimeUnit.SECONDS))
+          assertTrue(latch.await(3, TimeUnit.SECONDS))
           assertEquals(1, messages.size)
           assertEquals("Customer", messages[0].getString("stateType"))
         }

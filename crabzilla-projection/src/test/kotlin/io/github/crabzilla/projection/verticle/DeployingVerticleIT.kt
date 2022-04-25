@@ -12,7 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(VertxExtension::class)
 @DisplayName("Deploying projectors verticles")
-internal class DeployingProjectorVerticleIT {
+internal class DeployingVerticleIT {
 
   private lateinit var testRepo: TestRepository
 

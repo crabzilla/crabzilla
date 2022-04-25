@@ -58,6 +58,7 @@ class NotifyingPostgresIT {
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata.new(id)
     commandController.handle(metadata, cmd)
+      .compose { commandController.notifyPg() }
       .onFailure { tc.failNow(it) }
       .onSuccess {
         commandController.startPgNotification()

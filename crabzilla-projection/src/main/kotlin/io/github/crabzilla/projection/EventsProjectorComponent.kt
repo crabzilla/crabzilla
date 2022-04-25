@@ -126,9 +126,6 @@ class EventsProjectorComponent(
         }
         vertx.eventBus().consumer<Void>(projectorEndpoints.work()).handler { msg ->
           action()
-            .onFailure {
-              log.error("After action", it)
-            }
             .onComplete {
               msg.reply(status())
             }
@@ -148,8 +145,8 @@ class EventsProjectorComponent(
   private fun handler(): Handler<Long?> {
     return Handler<Long?> {
       action()
-        .onSuccess { log.debug("Success = $it") }
-        .onFailure { log.error("After action 2", it) }
+        .onSuccess { log.debug("Success") }
+        .onFailure { log.error("Error", it) }
     }
   }
 
