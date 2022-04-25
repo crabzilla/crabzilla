@@ -5,7 +5,6 @@ import io.github.crabzilla.stack.PgConfig
 import io.github.crabzilla.stack.PgConnectOptionsFactory
 import io.github.crabzilla.stack.projection.PgEventProjector
 import io.vertx.core.AbstractVerticle
-import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.pgclient.PgPool

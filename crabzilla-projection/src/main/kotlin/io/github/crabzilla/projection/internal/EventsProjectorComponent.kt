@@ -11,7 +11,6 @@ import io.github.crabzilla.stack.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.projection.PgEventProjector
 import io.vertx.core.Future
-import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler
 import io.vertx.core.Promise
@@ -137,7 +136,7 @@ internal class EventsProjectorComponent(
   }
 
   fun stop() {
-    log.info("Projection [{}] stopped at offset [{}]", options.projectionName, currentOffset)
+    log.info("Projection [{}] stopped at offset [{}]", options.projectionName, currentOffset.get())
   }
 
   private fun handler(): Handler<Long?> {
@@ -153,9 +152,9 @@ internal class EventsProjectorComponent(
       log.debug("Scanning for new events for projection {}", options.projectionName)
       return scanner.scanPendingEvents(options.maxNumberOfRows)
     }
-    fun requestEventbusBlocking(eventsList: List<EventRecord>): Future<Long> {
+    fun requestEventbus(eventsList: List<EventRecord>): Future<Long> {
       val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
-      val array: JsonArray = JsonArray(eventsAsJson)
+      val array = JsonArray(eventsAsJson)
       log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
       val promise = Promise.promise<Long>()
       vertx.eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
@@ -169,8 +168,23 @@ internal class EventsProjectorComponent(
         }
       }
       return promise.future()
-    //      vertx.executeBlocking<Long> { promise ->
-//      }
+    }
+    fun requestEventbusBlocking(eventsList: List<EventRecord>): Future<Long> {
+      val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
+      val array: JsonArray = JsonArray(eventsAsJson)
+      log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
+      return vertx.executeBlocking<Long> { promise ->
+        vertx.eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
+          log.info("Received ${it.result().body()}")
+          if (it.failed()) {
+            log.error("Failed", it.cause())
+            promise.fail(it.cause())
+          } else {
+            log.error("Got response {}", it.result().body())
+            promise.complete(eventsList.last().metadata.eventSequence)
+          }
+        }
+      }
     }
     fun projectEventsToPostgres(conn: SqlConnection, eventsList: List<EventRecord>): Future<Void> {
       val initialFuture = succeededFuture<Void>()
@@ -233,24 +247,39 @@ internal class EventsProjectorComponent(
               pgPool.withTransaction { conn ->
                 projectEventsToPostgres(conn, eventsList)
                   .compose { updateOffset(conn, eventsList.last().metadata.eventSequence) }
-                  .onSuccess {
-                    currentOffset.set(eventsList.last().metadata.eventSequence)
-                    registerSuccess()
-                  }
               }.map { eventsList.last().metadata.eventSequence }
+            }
+            EVENTBUS_REQUEST_REPLY-> {
+              requestEventbus(eventsList)
+                .compose { eventSequence -> pgPool.withTransaction { conn ->
+                  updateOffset(conn, eventSequence)
+                  }
+                }
+                .map { eventsList.last().metadata.eventSequence }
             }
             EVENTBUS_REQUEST_REPLY_BLOCKING -> {
               requestEventbusBlocking(eventsList)
+                .compose { eventSequence -> pgPool.withTransaction { conn ->
+                  updateOffset(conn, eventSequence)
+                  }
+                }
+                .map { eventsList.last().metadata.eventSequence }
             }
             EVENTBUS_PUBLISH -> {
-              requestEventbusBlocking(eventsList)
-//              log.debug("Will notify event {} to topic {}", eventRecord.metadata.eventSequence, topic)
-//              vertx.eventBus().publish(topic, eventRecord.toJsonObject())
-              succeededFuture(1L)
+              val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
+              val array = JsonArray(eventsAsJson)
+              log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
+              vertx.eventBus().publish(EVENTBUS_GLOBAL_TOPIC, array)
+              succeededFuture(eventsList.last().metadata.eventSequence)
+                .compose { eventSequence -> pgPool.withTransaction { conn ->
+                  updateOffset(conn, eventSequence)
+                  }
+                }
+                .map { eventsList.last().metadata.eventSequence }
             }
-            EVENTBUS_REQUEST_REPLY-> {
-              requestEventbusBlocking(eventsList)
-            }
+          }.onSuccess {
+            currentOffset.set(it)
+            registerSuccess()
           }
         }
       }.onFailure {

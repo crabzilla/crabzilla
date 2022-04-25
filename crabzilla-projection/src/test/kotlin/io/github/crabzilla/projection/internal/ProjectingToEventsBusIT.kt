@@ -1,46 +1,45 @@
 package io.github.crabzilla.projection.internal
 
-import io.github.crabzilla.TestsFixtures
+import io.github.crabzilla.TestsFixtures.json
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.example1.customer.CustomerCommand
-import io.github.crabzilla.example1.customer.CustomersPgEventProjector
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.pgConfig
 import io.github.crabzilla.pgPool
-import io.github.crabzilla.pgPoolOptions
 import io.github.crabzilla.projection.EventsProjectorFactory
 import io.github.crabzilla.projection.ProjectorConfig
 import io.github.crabzilla.projection.ProjectorEndpoints
 import io.github.crabzilla.projection.ProjectorStrategy
-import io.github.crabzilla.stack.CrabzillaConstants
-import io.github.crabzilla.stack.command.CommandControllerOptions
+import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
+import io.github.crabzilla.stack.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.pgclient.pubsub.PgSubscriber
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.extension.ExtendWith
+import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
-@Disabled
 @ExtendWith(VertxExtension::class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 internal class ProjectingToEventsBusIT {
 
   companion object {
+    private val log = LoggerFactory.getLogger(ProjectingToEventsBusIT::class.java)
     const val projectionName = "crabzilla.example1.customer.SimpleProjector"
   }
 
@@ -49,58 +48,61 @@ internal class ProjectingToEventsBusIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val factory = EventsProjectorFactory(pgPool, pgConfig)
-    val config = ProjectorConfig(
-      projectionName, initialInterval = 10, interval = 500,
-      projectorStrategy = ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
-    )
-    val verticle = factory.createVerticle(config)
     cleanDatabase(pgPool)
-      .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
 
   @Test
   @Order(1)
-  fun `it can publish to eventbus as request reply to global topic`(tc: VertxTestContext, vertx: Vertx) {
-    val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController.createAndStart(vertx, pgPool, TestsFixtures.json, customerConfig, options)
-    val latch = CountDownLatch(2)
-    val messages = mutableListOf<JsonObject>()
-    vertx.eventBus().consumer<JsonObject>(CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC) { msg ->
-      // crabzilla will send your events in order, but eventually it can repeat messages, so you must...
-      // handle idempotency using the eventId (UUID)
-      // "eventually" means when you use msg.fail() (maybe your broker is down) instead of msg.reply(null) (a success)
-      // by using this feature, you can publish your events to wherever: Kafka, Pulsar, NATS, etc..
-      latch.countDown()
-      messages.add(msg.body())
-      msg.reply(null)
-    }
-    val config = ProjectorConfig(
-      projectionName, initialInterval = 10, interval = 10,
-      projectorStrategy = ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
+  fun `it can publish to eventbus using request reply`(tc: VertxTestContext, vertx: Vertx) {
+    val factory = EventsProjectorFactory(pgPool, pgConfig)
+    val config = ProjectorConfig(projectionName, initialInterval = 1, interval = 30_000,
+      projectorStrategy = EVENTBUS_REQUEST_REPLY
     )
-    val pgSubscriber = PgSubscriber.subscriber(vertx, pgPoolOptions)
-    val component = EventsProjectorComponent(vertx, pgPool, pgSubscriber, config, CustomersPgEventProjector())
-    component.start()
-      .compose {
-        controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
-      }.compose {
-        controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes"))
-      }
-      .compose {
-        controller.flushPendingPgNotifications()
-      }
-      .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
-      }
+    val verticle = factory.createVerticle(config)
+    val controller = CommandController(vertx, pgPool, json, customerConfig)
+    val latch = CountDownLatch(1)
+    val message = AtomicReference<JsonArray>()
+    var firstMessage = false
+    vertx.eventBus().consumer<JsonArray>(EVENTBUS_GLOBAL_TOPIC) { msg ->
+       // crabzilla will send your events in order, but eventually it can repeat messages, so you must...
+       // handle idempotency using the eventId (UUID)
+       // "eventually" means when you use msg.fail() (maybe your broker is down) instead of msg.reply(null) (a success)
+       // by using this feature, you can publish your events to wherever: Kafka, Pulsar, NATS, etc..
+       log.info("Received {}", msg.body().encodePrettily())
+       if (!firstMessage) {
+         log.info("*** got first message")
+         firstMessage = true
+         msg.reply(-1L)
+         return@consumer
+       }
+       latch.countDown()
+       message.set(msg.body())
+       val eventSequence: Long = message.get().last()
+         .let { jo -> val json = jo as JsonObject; json.getLong("eventSequence") }
+       msg.reply(eventSequence)
+    }
+
+    val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
+    vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
+      .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
+      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
+      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
+      .compose { controller.flushPendingPgNotifications() }
+      .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
         tc.verify {
-          assertTrue(latch.await(5, TimeUnit.SECONDS))
-          val eventsTypes = messages.map { it.getJsonObject("eventPayload").getString("type") }
-          assertEquals(listOf("CustomerRegistered", "CustomerActivated"), eventsTypes)
+          vertx.executeBlocking<Void> {
+            assertTrue(latch.await(5, TimeUnit.SECONDS))
+            log.info("Received {}", message.get().encodePrettily())
+            val events = message.get().map { jo ->
+              val json = jo as JsonObject
+              Pair(json.getJsonObject("eventPayload").getString("type"), json.getLong("eventSequence"))
+            }
+          assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
+          }
           tc.completeNow()
         }
       }
@@ -108,40 +110,161 @@ internal class ProjectingToEventsBusIT {
 
   @Test
   @Order(2)
-  fun `it can publish to eventbus as request reply to stateType topic`(tc: VertxTestContext, vertx: Vertx) {
-    val options = CommandControllerOptions(pgNotificationInterval = 10L)
-    val controller = CommandController(vertx, pgPool, TestsFixtures.json, customerConfig, options).startPgNotification()
-    val latch = CountDownLatch(1)
-    val messages = mutableListOf<JsonObject>()
-    vertx.eventBus().consumer<JsonObject>(CrabzillaConstants.stateTypeTopic("Customer")) { msg ->
-      messages.add(msg.body())
-      msg.reply(null)
-      latch.countDown()
-    }
-    val config = ProjectorConfig(
-      projectionName, initialInterval = 10, interval = 10,
-      projectorStrategy = ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
+  fun `it can publish to eventbus using request reply with a BLOCKING consumer`(tc: VertxTestContext, vertx: Vertx) {
+    val factory = EventsProjectorFactory(pgPool, pgConfig)
+    val config = ProjectorConfig(projectionName, initialInterval = 1, interval = 30_000,
+      projectorStrategy = EVENTBUS_REQUEST_REPLY
     )
-    val pgSubscriber = PgSubscriber.subscriber(vertx, pgPoolOptions)
-    val component = EventsProjectorComponent(vertx, pgPool, pgSubscriber, config, CustomersPgEventProjector())
-    component.start()
-      .compose {
-        controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
+    val verticle = factory.createVerticle(config)
+    val controller = CommandController(vertx, pgPool, json, customerConfig)
+    val latch = CountDownLatch(1)
+    val message = AtomicReference<JsonArray>()
+    var firstMessage = false
+    vertx.eventBus().consumer<JsonArray>(EVENTBUS_GLOBAL_TOPIC) { msg ->
+      vertx.executeBlocking<Void> { promise ->
+        log.info("Received {}", msg.body().encodePrettily())
+        if (!firstMessage) {
+          log.info("*** got first message")
+          firstMessage = true
+          msg.reply(-1L)
+          promise.complete()
+          return@executeBlocking
+        }
+        latch.countDown()
+        message.set(msg.body())
+        val eventSequence: Long = message.get().last()
+          .let { jo -> val json = jo as JsonObject; json.getLong("eventSequence") }
+        msg.reply(eventSequence)
+        promise.complete()
       }
-      .compose {
-        controller.flushPendingPgNotifications()
-      }
-      .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
-      }
+    }
+
+    val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
+    vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
+      .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
+      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
+      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
+      .compose { controller.flushPendingPgNotifications() }
+      .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
         tc.verify {
-          assertTrue(latch.await(5, TimeUnit.SECONDS))
-          assertEquals(1, messages.size)
-          assertEquals("Customer", messages[0].getString("stateType"))
+          vertx.executeBlocking<Void> {
+            assertTrue(latch.await(5, TimeUnit.SECONDS))
+            log.info("Received {}", message.get().encodePrettily())
+            val events = message.get().map { jo ->
+              val json = jo as JsonObject
+              Pair(json.getJsonObject("eventPayload").getString("type"), json.getLong("eventSequence"))
+            }
+            assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
+          }
+          tc.completeNow()
         }
-        tc.completeNow()
       }
   }
+
+  @Test
+  @Order(3)
+  fun `it can publish to eventbus using BLOCKING request reply`(tc: VertxTestContext, vertx: Vertx) {
+    val factory = EventsProjectorFactory(pgPool, pgConfig)
+    val config = ProjectorConfig(
+      projectionName, initialInterval = 1, interval = 30_000,
+      projectorStrategy = ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
+    )
+    val verticle = factory.createVerticle(config)
+    val controller = CommandController(vertx, pgPool, json, customerConfig)
+    val latch = CountDownLatch(1)
+    val message = AtomicReference<JsonArray>()
+    var firstMessage = false
+    vertx.eventBus().consumer<JsonArray>(EVENTBUS_GLOBAL_TOPIC) { msg ->
+      log.info("Received {}", msg.body().encodePrettily())
+      if (!firstMessage) {
+        log.info("*** got first message")
+        firstMessage = true
+        msg.reply(-1L)
+        return@consumer
+      }
+      latch.countDown()
+      message.set(msg.body())
+      val eventSequence: Long = message.get().last()
+        .let { jo -> val json = jo as JsonObject; json.getLong("eventSequence") }
+      msg.reply(eventSequence)
+    }
+
+    val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
+    vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
+      .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
+      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
+      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
+      .compose { controller.flushPendingPgNotifications() }
+      .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
+      .onFailure { tc.failNow(it) }
+      .onSuccess {
+        tc.verify {
+          vertx.executeBlocking<Void> {
+            assertTrue(latch.await(5, TimeUnit.SECONDS))
+            log.info("Received {}", message.get().encodePrettily())
+            val events = message.get().map { jo ->
+              val json = jo as JsonObject
+              Pair(json.getJsonObject("eventPayload").getString("type"), json.getLong("eventSequence"))
+            }
+            assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
+          }
+          tc.completeNow()
+        }
+      }
+  }
+
+  @Test
+  @Order(4)
+  fun `it can publish to eventbus`(tc: VertxTestContext, vertx: Vertx) {
+    val factory = EventsProjectorFactory(pgPool, pgConfig)
+    val config = ProjectorConfig(
+      projectionName, initialInterval = 1, interval = 30_000,
+      projectorStrategy = ProjectorStrategy.EVENTBUS_PUBLISH
+    )
+    val verticle = factory.createVerticle(config)
+    val controller = CommandController(vertx, pgPool, json, customerConfig)
+    val latch = CountDownLatch(1)
+    val message = AtomicReference<JsonArray>()
+    var firstMessage = false
+    vertx.eventBus().consumer<JsonArray>(EVENTBUS_GLOBAL_TOPIC) { msg ->
+      log.info("Received {}", msg.body().encodePrettily())
+      if (!firstMessage) {
+        log.info("*** got first message")
+        firstMessage = true
+        msg.reply(-1L)
+        return@consumer
+      }
+      latch.countDown()
+      message.set(msg.body())
+      val eventSequence: Long = message.get().last()
+        .let { jo -> val json = jo as JsonObject; json.getLong("eventSequence") }
+      msg.reply(eventSequence)
+    }
+
+    val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
+    vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
+      .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
+      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
+      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
+      .compose { controller.flushPendingPgNotifications() }
+      .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
+      .onFailure { tc.failNow(it) }
+      .onSuccess {
+        tc.verify {
+          vertx.executeBlocking<Void> {
+            assertTrue(latch.await(5, TimeUnit.SECONDS))
+            log.info("Received {}", message.get().encodePrettily())
+            val events = message.get().map { jo ->
+              val json = jo as JsonObject
+              Pair(json.getJsonObject("eventPayload").getString("type"), json.getLong("eventSequence"))
+            }
+            assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
+          }
+          tc.completeNow()
+        }
+      }
+  }
+
 }
