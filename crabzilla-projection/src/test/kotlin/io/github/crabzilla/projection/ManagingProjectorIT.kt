@@ -36,7 +36,7 @@ class ManagingProjectorIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val options = CommandControllerOptions(pgNotificationInterval = 10L)
+    val options = CommandControllerOptions(pgNotificationInterval = 100L)
     controller = CommandController(vertx, pgPool, TestsFixtures.json, customerConfig, options)
       .startPgNotification()
     cleanDatabase(pgPool)
@@ -106,7 +106,7 @@ class ManagingProjectorIT {
         tc.verify {
           assertEquals(false, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))
-          assertEquals(true, json.getBoolean("greedy"))
+//          assertEquals(true, json.getBoolean("greedy"))
           assertEquals(1L, json.getLong("currentOffset"))
           assertEquals(0L, json.getLong("failures"))
           assertEquals(0L, json.getLong("backOff"))
