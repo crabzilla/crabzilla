@@ -1,8 +1,8 @@
 package io.github.crabzilla.projection
 
 data class ProjectorEndpoints(private val name: String) {
-  fun status() = "crabzilla.projectors.$name.status"
-  fun work() = "crabzilla.projectors.$name.handle"
-  fun pause() = "crabzilla.projectors.$name.pause"
-  fun resume() = "crabzilla.projectors.$name.resume"
+  fun status() = "crabzilla.verticle.$name.status"
+  fun work() = "crabzilla.verticle.$name.handle"
+  fun pause() = "crabzilla.verticle.$name.pause"
+  fun resume() = "crabzilla.verticle.$name.resume"
 }

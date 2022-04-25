@@ -60,5 +60,5 @@ CREATE TABLE customer_summary (
 );
 
 INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.SimpleProjector', 0);
-INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.FilteredProjector', 0);
-INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.EagerProjector', 0);
+INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.BadProjector', 0);
+INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.CustomProjector', 0);

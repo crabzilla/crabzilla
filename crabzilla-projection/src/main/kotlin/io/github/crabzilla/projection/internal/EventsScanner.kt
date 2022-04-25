@@ -1,6 +1,6 @@
 package io.github.crabzilla.projection.internal
 
-import io.github.crabzilla.core.metadata.EventMetadata
+import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
@@ -60,7 +60,8 @@ internal class EventsScanner(
             row.getUUID("id"),
             row.getUUID("correlation_id"),
             row.getUUID("causation_id"),
-            row.getLong("sequence")
+            row.getLong("sequence"),
+            row.getInteger("version")
           )
           val jsonObject = JsonObject(row.getValue("event_payload").toString())
           jsonObject.put("type", row.getString("event_type"))

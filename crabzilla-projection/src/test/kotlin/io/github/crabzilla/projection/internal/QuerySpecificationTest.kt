@@ -10,7 +10,7 @@ internal class QuerySpecificationTest {
   @Test
   fun `all events`() {
     val expected = """
-        SELECT event_type, state_type, state_id, event_payload, sequence, id, causation_id, correlation_id
+        SELECT event_type, state_type, state_id, event_payload, sequence, id, causation_id, correlation_id, version
           FROM events
         WHERE sequence > (select sequence from projections where name = $1)
       ORDER BY sequence 
@@ -22,7 +22,7 @@ internal class QuerySpecificationTest {
   @Test
   fun `by aggregate root`() {
     val expected = """
-        SELECT event_type, state_type, state_id, event_payload, sequence, id, causation_id, correlation_id
+        SELECT event_type, state_type, state_id, event_payload, sequence, id, causation_id, correlation_id, version
           FROM events
         WHERE sequence > (select sequence from projections where name = $1) 
         AND state_type IN ('Customer')
@@ -35,7 +35,7 @@ internal class QuerySpecificationTest {
   @Test
   fun `by events`() {
     val expected = """
-        SELECT event_type, state_type, state_id, event_payload, sequence, id, causation_id, correlation_id
+        SELECT event_type, state_type, state_id, event_payload, sequence, id, causation_id, correlation_id, version
           FROM events
         WHERE sequence > (select sequence from projections where name = $1)
          AND event_type IN ('CustomerRegistered','CustomerActivated','CustomerDeactivated')
@@ -51,7 +51,7 @@ internal class QuerySpecificationTest {
   @Test
   fun `by aggregate root and events`() {
     val expected = """
-        SELECT event_type, state_type, state_id, event_payload, sequence, id, causation_id, correlation_id
+        SELECT event_type, state_type, state_id, event_payload, sequence, id, causation_id, correlation_id, version
           FROM events
         WHERE sequence > (select sequence from projections where name = $1) 
         AND state_type IN ('Customer')

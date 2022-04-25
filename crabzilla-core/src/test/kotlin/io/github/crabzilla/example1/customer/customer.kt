@@ -1,11 +1,10 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.command.CommandComponent
-import io.github.crabzilla.core.command.CommandException.UnknownCommandException
-import io.github.crabzilla.core.command.CommandHandler
-import io.github.crabzilla.core.command.CommandSession
-import io.github.crabzilla.core.command.CommandValidator
-import io.github.crabzilla.core.command.EventHandler
+import io.github.crabzilla.core.CommandComponent
+import io.github.crabzilla.core.CommandHandler
+import io.github.crabzilla.core.CommandSession
+import io.github.crabzilla.core.CommandValidator
+import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
@@ -156,13 +155,13 @@ class CustomerCommandHandler :
           .execute { it.deactivate(command.reason) }
       }
       else -> {
-        throw UnknownCommandException(command::class.java.canonicalName)
+        throw IllegalArgumentException(command::class.java.canonicalName)
       }
     }
   }
 }
 
-val customerConfig = CommandComponent(
+val customerComponent = CommandComponent(
   Customer::class,
   CustomerCommand::class,
   CustomerEvent::class,
