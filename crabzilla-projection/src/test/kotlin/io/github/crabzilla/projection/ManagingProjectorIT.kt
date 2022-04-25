@@ -36,7 +36,7 @@ class ManagingProjectorIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val options = CommandControllerOptions(pgNotificationInterval = 100L)
+    val options = CommandControllerOptions(pgNotificationInterval = 1000L)
     controller = CommandController(vertx, pgPool, TestsFixtures.json, customerConfig, options)
       .startPgNotification()
     cleanDatabase(pgPool)
@@ -171,7 +171,6 @@ class ManagingProjectorIT {
     vertx: Vertx
   ) {
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
-      .onFailure { tc.failNow(it) }
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
       }
