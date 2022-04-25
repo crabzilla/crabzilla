@@ -78,9 +78,11 @@ internal class ProjectingToEventsBusIT {
       .compose {
         controller.flushPendingPgNotifications()
       }
+      .compose {
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
+      }
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        Thread.sleep(1000)
         tc.verify {
           assertTrue(latch.await(2, TimeUnit.SECONDS))
           val eventsTypes = messages.map { it.getJsonObject("eventPayload").getString("type") }
@@ -112,15 +114,15 @@ internal class ProjectingToEventsBusIT {
     component.start()
       .compose {
         controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
-      }.compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
       }
       .compose {
         controller.flushPendingPgNotifications()
       }
+      .compose {
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
+      }
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        Thread.sleep(1000)
         tc.verify {
           assertTrue(latch.await(3, TimeUnit.SECONDS))
           assertEquals(1, messages.size)

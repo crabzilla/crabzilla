@@ -62,7 +62,6 @@ internal class ProjectingToPostgresIT {
       .onSuccess {
         controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
           .compose {
-            Thread.sleep(1000)
             pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() == 1 }
           }.onFailure {
             tc.failNow(it)
@@ -88,7 +87,6 @@ internal class ProjectingToPostgresIT {
         controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
           .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
           .compose {
-            Thread.sleep(1000)
             pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() == 1 }
           }.onFailure {
             tc.failNow(it)
