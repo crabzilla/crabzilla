@@ -1,6 +1,5 @@
-package io.github.crabzilla.projection.verticle
+package io.github.crabzilla.projection
 
-import io.github.crabzilla.projection.ProjectorEndpoints
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future
 import io.vertx.core.Promise

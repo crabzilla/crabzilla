@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection.verticle
+package io.github.crabzilla.projection
 
 import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.cleanDatabase
@@ -10,7 +10,6 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.pgPool
-import io.github.crabzilla.projection.ProjectorEndpoints
 import io.github.crabzilla.stack.command.CommandControllerOptions
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
@@ -191,7 +190,7 @@ class ManagingProjectorIT {
         tc.verify {
           assertEquals(false, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))
-          assertEquals(true, json.getBoolean("greedy"))
+//          assertEquals(true, json.getBoolean("greedy"))
           assertEquals(1L, json.getLong("currentOffset"))
           assertEquals(0L, json.getLong("failures"))
           assertEquals(0L, json.getLong("backOff"))

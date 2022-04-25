@@ -143,7 +143,7 @@ class CommandController<S : Any, C : Any, E : Any>(
             val (_, _, commandSideEffect) = triple
             log.debug("Events appended {}", commandSideEffect.toString())
             if (options.pgEventProjector != null) {
-              projectEvents(conn, commandSideEffect, options.pgEventProjector!!)
+              projectEvents(conn, commandSideEffect.appendedEvents, options.pgEventProjector!!)
                 .onSuccess {
                   log.debug("Events projected")
                 }.map { commandSideEffect }
@@ -151,16 +151,12 @@ class CommandController<S : Any, C : Any, E : Any>(
               log.debug("PgEventProjector is null, skipping projecting events")
               succeededFuture(commandSideEffect)
             }
-          }.compose {
-            notificationsByStateType.add(stateSerialName)
-            val result = CommandSideEffect(it.appendedEvents, it.resultingVersion)
-            succeededFuture(result)
-          }.compose {
+          }.onSuccess {
             if (options.publishToEventBus) {
               log.debug("Published to topic [$stateSerialName]")
               vertx.eventBus().publish(stateSerialName, it.jsonObject())
             }
-            succeededFuture(it)
+            notificationsByStateType.add(stateSerialName)
           }
       }
   }
@@ -241,7 +237,8 @@ class CommandController<S : Any, C : Any, E : Any>(
       .mapEmpty()
   }
 
-  private fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata): Future<CommandSideEffect> {
+  private fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata)
+  : Future<CommandSideEffect> {
     var resultingVersion = initialVersion
     val eventIds = events.map { UUID.randomUUID() }
     val tuples: List<Tuple> = events.mapIndexed { index, event ->
@@ -280,18 +277,18 @@ class CommandController<S : Any, C : Any, E : Any>(
           rs = rs!!.next()
         }
       }.map {
-        CommandSideEffect(appendedEventList, resultingVersion)
+        CommandSideEffect(appendedEventList)
       }
   }
 
   private fun projectEvents(
     conn: SqlConnection,
-    commandSideEffect: CommandSideEffect,
+    appendedEvents: List<EventRecord>,
     projector: PgEventProjector
   ): Future<Void> {
-    log.debug("Will project {} events", commandSideEffect.appendedEvents.size)
+    log.debug("Will project {} events", appendedEvents.size)
     val initialFuture = succeededFuture<Void>()
-    return commandSideEffect.appendedEvents.fold(
+    return appendedEvents.fold(
       initialFuture
     ) { currentFuture: Future<Void>, appendedEvent: EventRecord ->
       currentFuture.compose {

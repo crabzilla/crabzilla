@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection.verticle
+package io.github.crabzilla.projection
 
 import io.github.crabzilla.stack.PgConnectOptionsFactory
 import io.vertx.core.AbstractVerticle

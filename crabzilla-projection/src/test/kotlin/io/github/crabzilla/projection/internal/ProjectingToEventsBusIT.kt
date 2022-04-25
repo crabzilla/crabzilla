@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.projection.internal
 
 import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.cleanDatabase
@@ -6,11 +6,17 @@ import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomersPgEventProjector
 import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.pgConfig
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.pgPoolOptions
+import io.github.crabzilla.projection.EventsProjectorFactory
+import io.github.crabzilla.projection.ProjectorConfig
+import io.github.crabzilla.projection.ProjectorEndpoints
+import io.github.crabzilla.projection.ProjectorStrategy
 import io.github.crabzilla.stack.CrabzillaConstants
 import io.github.crabzilla.stack.command.CommandControllerOptions
 import io.github.crabzilla.stack.command.CommandMetadata
+import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -19,6 +25,7 @@ import io.vertx.pgclient.pubsub.PgSubscriber
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
@@ -28,6 +35,7 @@ import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+@Disabled
 @ExtendWith(VertxExtension::class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 internal class ProjectingToEventsBusIT {
@@ -41,7 +49,14 @@ internal class ProjectingToEventsBusIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
+    val factory = EventsProjectorFactory(pgPool, pgConfig)
+    val config = ProjectorConfig(
+      projectionName, initialInterval = 10, interval = 500,
+      projectorStrategy = ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
+    )
+    val verticle = factory.createVerticle(config)
     cleanDatabase(pgPool)
+      .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -49,8 +64,8 @@ internal class ProjectingToEventsBusIT {
   @Test
   @Order(1)
   fun `it can publish to eventbus as request reply to global topic`(tc: VertxTestContext, vertx: Vertx) {
-    val config = CommandControllerOptions(pgNotificationInterval = 10L)
-    val controller = CommandController.createAndStart(vertx, pgPool, TestsFixtures.json, customerConfig, config)
+    val options = CommandControllerOptions(pgNotificationInterval = 1000L)
+    val controller = CommandController.createAndStart(vertx, pgPool, TestsFixtures.json, customerConfig, options)
     val latch = CountDownLatch(2)
     val messages = mutableListOf<JsonObject>()
     vertx.eventBus().consumer<JsonObject>(CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC) { msg ->
@@ -62,13 +77,12 @@ internal class ProjectingToEventsBusIT {
       messages.add(msg.body())
       msg.reply(null)
     }
-    val options = ProjectorConfig(
+    val config = ProjectorConfig(
       projectionName, initialInterval = 10, interval = 10,
-      projectorStrategy = ProjectorStrategy.EVENTBUS_REQUEST_REPLY,
-      eventbusTopicStrategy = EventbusTopicStrategy.GLOBAL
+      projectorStrategy = ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
     )
     val pgSubscriber = PgSubscriber.subscriber(vertx, pgPoolOptions)
-    val component = EventsProjectorComponent(vertx, pgPool, pgSubscriber, options, CustomersPgEventProjector())
+    val component = EventsProjectorComponent(vertx, pgPool, pgSubscriber, config, CustomersPgEventProjector())
     component.start()
       .compose {
         controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
@@ -84,7 +98,7 @@ internal class ProjectingToEventsBusIT {
       .onFailure { tc.failNow(it) }
       .onSuccess {
         tc.verify {
-          assertTrue(latch.await(2, TimeUnit.SECONDS))
+          assertTrue(latch.await(5, TimeUnit.SECONDS))
           val eventsTypes = messages.map { it.getJsonObject("eventPayload").getString("type") }
           assertEquals(listOf("CustomerRegistered", "CustomerActivated"), eventsTypes)
           tc.completeNow()
@@ -95,8 +109,8 @@ internal class ProjectingToEventsBusIT {
   @Test
   @Order(2)
   fun `it can publish to eventbus as request reply to stateType topic`(tc: VertxTestContext, vertx: Vertx) {
-    val config = CommandControllerOptions(pgNotificationInterval = 10L)
-    val controller = CommandController(vertx, pgPool, TestsFixtures.json, customerConfig, config).startPgNotification()
+    val options = CommandControllerOptions(pgNotificationInterval = 10L)
+    val controller = CommandController(vertx, pgPool, TestsFixtures.json, customerConfig, options).startPgNotification()
     val latch = CountDownLatch(1)
     val messages = mutableListOf<JsonObject>()
     vertx.eventBus().consumer<JsonObject>(CrabzillaConstants.stateTypeTopic("Customer")) { msg ->
@@ -104,13 +118,12 @@ internal class ProjectingToEventsBusIT {
       msg.reply(null)
       latch.countDown()
     }
-    val options = ProjectorConfig(
+    val config = ProjectorConfig(
       projectionName, initialInterval = 10, interval = 10,
-      projectorStrategy = ProjectorStrategy.EVENTBUS_REQUEST_REPLY,
-      eventbusTopicStrategy = EventbusTopicStrategy.STATE_TYPE
+      projectorStrategy = ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
     )
     val pgSubscriber = PgSubscriber.subscriber(vertx, pgPoolOptions)
-    val component = EventsProjectorComponent(vertx, pgPool, pgSubscriber, options, CustomersPgEventProjector())
+    val component = EventsProjectorComponent(vertx, pgPool, pgSubscriber, config, CustomersPgEventProjector())
     component.start()
       .compose {
         controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
@@ -124,7 +137,7 @@ internal class ProjectingToEventsBusIT {
       .onFailure { tc.failNow(it) }
       .onSuccess {
         tc.verify {
-          assertTrue(latch.await(3, TimeUnit.SECONDS))
+          assertTrue(latch.await(5, TimeUnit.SECONDS))
           assertEquals(1, messages.size)
           assertEquals("Customer", messages[0].getString("stateType"))
         }

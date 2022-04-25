@@ -1,21 +1,22 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.projection.internal
 
-import io.github.crabzilla.projection.EventbusTopicStrategy.GLOBAL
-import io.github.crabzilla.projection.EventbusTopicStrategy.STATE_TYPE
+import io.github.crabzilla.projection.ProjectorConfig
+import io.github.crabzilla.projection.ProjectorEndpoints
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_PUBLISH
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
+import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
 import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTION
-import io.github.crabzilla.projection.internal.EventsScanner
-import io.github.crabzilla.projection.internal.QuerySpecification
 import io.github.crabzilla.stack.CrabzillaConstants
-import io.github.crabzilla.stack.CrabzillaConstants.stateTypeTopic
+import io.github.crabzilla.stack.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.projection.PgEventProjector
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler
+import io.vertx.core.Promise
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.pgclient.pubsub.PgSubscriber
@@ -27,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-class EventsProjectorComponent(
+internal class EventsProjectorComponent(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val subscriber: PgSubscriber,
@@ -68,13 +69,11 @@ class EventsProjectorComponent(
           log.debug("Status: {}", status().encodePrettily())
           msg.reply(status())
         }
-
       vertx.eventBus()
         .consumer<String>(projectorEndpoints.pause()) { msg ->
           isPaused.set(true)
           msg.reply(status())
         }
-
       vertx.eventBus()
         .consumer<String>(projectorEndpoints.resume()) { msg ->
           isPaused.set(false)
@@ -123,10 +122,7 @@ class EventsProjectorComponent(
             log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
           }
           vertx.eventBus().consumer<Void>(projectorEndpoints.work()).handler { msg ->
-            action()
-              .onComplete {
-                msg.reply(status())
-              }
+            action().onComplete { msg.reply(status()) }
           }
         }.mapEmpty()
     }
@@ -152,39 +148,38 @@ class EventsProjectorComponent(
     }
   }
 
-  private fun action(): Future<Void> {
+  private fun action(): Future<Long> {
     fun scanEvents(): Future<List<EventRecord>> {
       log.debug("Scanning for new events for projection {}", options.projectionName)
       return scanner.scanPendingEvents(options.maxNumberOfRows)
     }
-    fun projectEvents(conn: SqlConnection, eventsList: List<EventRecord>): Future<Void> {
+    fun requestEventbusBlocking(eventsList: List<EventRecord>): Future<Long> {
+      val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
+      val array: JsonArray = JsonArray(eventsAsJson)
+      log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
+      val promise = Promise.promise<Long>()
+      vertx.eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
+        log.info("Received ${it.result().body()}")
+        if (it.failed()) {
+          log.error("Failed", it.cause())
+          promise.fail(it.cause())
+        } else {
+          log.error("Got response {}", it.result().body())
+          promise.complete(eventsList.last().metadata.eventSequence)
+        }
+      }
+      return promise.future()
+    //      vertx.executeBlocking<Long> { promise ->
+//      }
+    }
+    fun projectEventsToPostgres(conn: SqlConnection, eventsList: List<EventRecord>): Future<Void> {
       val initialFuture = succeededFuture<Void>()
       return eventsList.fold(
         initialFuture
       ) { currentFuture: Future<Void>, eventRecord: EventRecord ->
         currentFuture.compose {
-          val topic = when (options.eventbusTopicStrategy) {
-            GLOBAL -> CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
-            STATE_TYPE -> stateTypeTopic(eventRecord.metadata.stateType)
-          }
-          val publishedOk: Future<out Any> = when (options.projectorStrategy) {
-            POSTGRES_SAME_TRANSACTION -> {
-              log.debug("Will project event {} to postgres", eventRecord.metadata.eventSequence)
-              pgEventProjector!!.project(conn, eventRecord)
-            }
-            EVENTBUS_REQUEST_REPLY -> {
-              log.debug("Will request/reply event {} to topic {}", eventRecord.metadata.eventSequence, topic)
-              vertx.eventBus().request<Void>(topic, eventRecord.toJsonObject())
-            }
-            EVENTBUS_PUBLISH -> {
-              log.debug("Will notify event {} to topic {}", eventRecord.metadata.eventSequence, topic)
-              vertx.eventBus().publish(topic, eventRecord.toJsonObject())
-              succeededFuture()
-            }
-          }
-          publishedOk.transform {
-            if (it.failed()) failedFuture(it.cause()) else succeededFuture()
-          }
+          log.debug("Will project event {} to postgres", eventRecord.metadata.eventSequence)
+          pgEventProjector!!.project(conn, eventRecord)
         }
       }
     }
@@ -227,21 +222,35 @@ class EventsProjectorComponent(
       .compose { eventsList ->
         if (eventsList.isEmpty()) {
           registerNoNewEvents()
-          succeededFuture<Void>(null)
+          succeededFuture(0)
         } else {
-          log.debug(
-            "Found {} new events. The first is {} and last is {}",
-            eventsList.size,
+          log.debug("Found {} new events. The first is {} and last is {}", eventsList.size,
             eventsList.first().metadata.eventSequence,
             eventsList.last().metadata.eventSequence
           )
-          pgPool.withTransaction { conn ->
-            projectEvents(conn, eventsList)
-              .compose { updateOffset(conn, eventsList.last().metadata.eventSequence) }
-              .onSuccess {
-                currentOffset.set(eventsList.last().metadata.eventSequence)
-                registerSuccess()
-              }
+          when (options.projectorStrategy) {
+            POSTGRES_SAME_TRANSACTION -> {
+              pgPool.withTransaction { conn ->
+                projectEventsToPostgres(conn, eventsList)
+                  .compose { updateOffset(conn, eventsList.last().metadata.eventSequence) }
+                  .onSuccess {
+                    currentOffset.set(eventsList.last().metadata.eventSequence)
+                    registerSuccess()
+                  }
+              }.map { eventsList.last().metadata.eventSequence }
+            }
+            EVENTBUS_REQUEST_REPLY_BLOCKING -> {
+              requestEventbusBlocking(eventsList)
+            }
+            EVENTBUS_PUBLISH -> {
+              requestEventbusBlocking(eventsList)
+//              log.debug("Will notify event {} to topic {}", eventRecord.metadata.eventSequence, topic)
+//              vertx.eventBus().publish(topic, eventRecord.toJsonObject())
+              succeededFuture(1L)
+            }
+            EVENTBUS_REQUEST_REPLY-> {
+              requestEventbusBlocking(eventsList)
+            }
           }
         }
       }.onFailure {

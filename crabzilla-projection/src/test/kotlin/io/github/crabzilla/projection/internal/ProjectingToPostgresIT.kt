@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.projection.internal
 
 import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.cleanDatabase
@@ -8,6 +8,8 @@ import io.github.crabzilla.example1.customer.CustomersPgEventProjector
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.pgPoolOptions
+import io.github.crabzilla.projection.ProjectorConfig
+import io.github.crabzilla.projection.ProjectorEndpoints
 import io.github.crabzilla.stack.command.CommandControllerOptions
 import io.github.crabzilla.stack.command.CommandMetadata
 import io.vertx.core.Vertx
@@ -16,6 +18,7 @@ import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.pubsub.PgSubscriber
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
@@ -27,6 +30,7 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
+@Disabled
 internal class ProjectingToPostgresIT {
 
   companion object {

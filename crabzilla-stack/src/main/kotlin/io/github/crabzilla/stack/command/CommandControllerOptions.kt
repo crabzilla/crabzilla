@@ -4,8 +4,7 @@ import io.github.crabzilla.stack.projection.PgEventProjector
 
 data class CommandControllerOptions(
   val pgEventProjector: PgEventProjector? = null,
-  val publishToEventBus: Boolean = false, // TODO option to publish to stateType or to stream "all" or both
-  // TODO in case of All, publish or request? (and fail if eventbus request fail?)
+  val publishToEventBus: Boolean = false, // TODO this should be just a topic: String?
   val eventStreamSize: Int = DEFAULT_EVENT_STREAM_SIZE,
   val pgNotificationInterval: Long = DEFAULT_NOTIFICATION_INTERVAL
 ) {

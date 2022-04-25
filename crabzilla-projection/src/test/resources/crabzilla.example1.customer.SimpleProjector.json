@@ -1,10 +1,9 @@
 {
-  "main": "io.github.crabzilla.projection.verticle.EventsProjectorVerticle",
+  "main": "io.github.crabzilla.projection.EventsProjectorVerticle",
   "options": {
     "config" : {
       "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
-      "projectorStrategy": "POSTGRES_SAME_TRANSACTION",
-      "eventbusTopicStrategy": "GLOBAL"
+      "projectorStrategy": "POSTGRES_SAME_TRANSACTION"
     }
   }
 }

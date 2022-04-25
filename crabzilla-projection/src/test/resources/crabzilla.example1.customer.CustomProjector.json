@@ -1,17 +1,16 @@
 {
-  "main": "io.github.crabzilla.projection.verticle.EventsProjectorVerticle",
+  "main": "io.github.crabzilla.projection.EventsProjectorVerticle",
   "options": {
     "config" : {
       "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory",
       "initialInterval" : 30000,
       "interval" : 30000,
-      "metricsInterval" : 3000,
+      "metricsInterval" : 5,
       "maxInterval" : 10000,
       "maxNumberOfRows": 1,
       "stateTypes": ["Customer"],
       "eventTypes": ["CustomerRegistered", "CustomerActivated"],
-      "projectorStrategy": "POSTGRES_SAME_TRANSACTION",
-      "eventbusTopicStrategy": "GLOBAL"
+      "projectorStrategy": "POSTGRES_SAME_TRANSACTION"
     }
   }
 }

@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection.verticle
+package io.github.crabzilla.projection.internal
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
