@@ -9,7 +9,7 @@ import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTIO
 import io.github.crabzilla.stack.CrabzillaConstants
 import io.github.crabzilla.stack.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.projection.PgEventProjector
+import io.github.crabzilla.stack.PgEventProjector
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler

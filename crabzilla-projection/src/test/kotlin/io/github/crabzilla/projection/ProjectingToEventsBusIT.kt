@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection.internal
+package io.github.crabzilla.projection
 
 import io.github.crabzilla.TestsFixtures.json
 import io.github.crabzilla.cleanDatabase
@@ -7,13 +7,9 @@ import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.pgConfig
 import io.github.crabzilla.pgPool
-import io.github.crabzilla.projection.EventsProjectorFactory
-import io.github.crabzilla.projection.ProjectorConfig
-import io.github.crabzilla.projection.ProjectorEndpoints
-import io.github.crabzilla.projection.ProjectorStrategy
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
 import io.github.crabzilla.stack.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
-import io.github.crabzilla.stack.command.CommandMetadata
+import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonArray
@@ -41,10 +37,9 @@ internal class ProjectingToEventsBusIT {
   companion object {
     private val log = LoggerFactory.getLogger(ProjectingToEventsBusIT::class.java)
     const val projectionName = "crabzilla.example1.customer.SimpleProjector"
+    private val projectorEndpoints = ProjectorEndpoints(projectionName)
+    private val id: UUID = UUID.randomUUID()
   }
-
-  private val projectorEndpoints = ProjectorEndpoints(projectionName)
-  private val id: UUID = UUID.randomUUID()
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {

@@ -10,8 +10,8 @@ import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.stack.command.CommandMetadata
-import io.github.crabzilla.stack.command.CommandSideEffect
+import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.CommandSideEffect
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension

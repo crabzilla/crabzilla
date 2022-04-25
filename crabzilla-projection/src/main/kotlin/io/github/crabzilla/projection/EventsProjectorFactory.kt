@@ -3,7 +3,7 @@ package io.github.crabzilla.projection
 import io.github.crabzilla.projection.internal.EventsProjectorComponent
 import io.github.crabzilla.stack.PgConfig
 import io.github.crabzilla.stack.PgConnectOptionsFactory
-import io.github.crabzilla.stack.projection.PgEventProjector
+import io.github.crabzilla.stack.PgEventProjector
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.pgclient.PgConnectOptions

@@ -52,13 +52,13 @@ CREATE TABLE events_2 PARTITION OF events
 
 -- application data
 
+INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.SimpleProjector', 0);
+INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.BadProjector', 0);
+INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.CustomProjector', 0);
+
 CREATE TABLE customer_summary (
     id UUID NOT NULL,
     name VARCHAR(100) NOT NULL,
     is_active BOOLEAN NOT NULL,
     PRIMARY KEY (id)
 );
-
-INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.SimpleProjector', 0);
-INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.BadProjector', 0);
-INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.CustomProjector', 0);

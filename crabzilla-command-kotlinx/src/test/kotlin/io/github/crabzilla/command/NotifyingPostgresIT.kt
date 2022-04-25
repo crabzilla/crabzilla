@@ -9,8 +9,8 @@ import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.stack.CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL
-import io.github.crabzilla.stack.command.CommandControllerOptions
-import io.github.crabzilla.stack.command.CommandMetadata
+import io.github.crabzilla.stack.CommandControllerOptions
+import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext

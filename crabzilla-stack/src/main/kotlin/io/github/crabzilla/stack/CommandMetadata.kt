@@ -1,4 +1,4 @@
-package io.github.crabzilla.stack.command
+package io.github.crabzilla.stack
 
 import java.util.UUID
 

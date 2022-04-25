@@ -1,6 +1,4 @@
-package io.github.crabzilla.stack.command
-
-import io.github.crabzilla.stack.projection.PgEventProjector
+package io.github.crabzilla.stack
 
 data class CommandControllerOptions(
   val pgEventProjector: PgEventProjector? = null,

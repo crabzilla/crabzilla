@@ -1,4 +1,4 @@
-package io.github.crabzilla.stack.projection
+package io.github.crabzilla.stack
 
 import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.Future

@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection.internal
+package io.github.crabzilla.projection
 
 import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.cleanDatabase
@@ -8,17 +8,15 @@ import io.github.crabzilla.example1.customer.CustomersPgEventProjector
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.pgPoolOptions
-import io.github.crabzilla.projection.ProjectorConfig
-import io.github.crabzilla.projection.ProjectorEndpoints
-import io.github.crabzilla.stack.command.CommandControllerOptions
-import io.github.crabzilla.stack.command.CommandMetadata
+import io.github.crabzilla.projection.internal.EventsProjectorComponent
+import io.github.crabzilla.stack.CommandControllerOptions
+import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.pubsub.PgSubscriber
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
@@ -30,7 +28,6 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-@Disabled
 internal class ProjectingToPostgresIT {
 
   companion object {
@@ -50,7 +47,7 @@ internal class ProjectingToPostgresIT {
   @Test
   @Order(1)
   fun `it can project to postgres within an interval`(tc: VertxTestContext, vertx: Vertx) {
-    val options = CommandControllerOptions(pgNotificationInterval = 10L)
+    val options = CommandControllerOptions(pgNotificationInterval = 100L)
     val controller = CommandController.createAndStart(
       vertx = vertx,
       pgPool = pgPool,
@@ -58,7 +55,7 @@ internal class ProjectingToPostgresIT {
       commandComponent = customerConfig,
       options = options
     )
-    val config = ProjectorConfig(projectionName, initialInterval = 10, interval = 10)
+    val config = ProjectorConfig(projectionName, initialInterval = 10, interval = 100)
     val pgSubscriber = PgSubscriber.subscriber(vertx, pgPoolOptions)
     val component = EventsProjectorComponent(vertx, pgPool, pgSubscriber, config, CustomersPgEventProjector())
     component.start()

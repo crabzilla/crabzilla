@@ -10,8 +10,8 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.pgPool
-import io.github.crabzilla.stack.command.CommandControllerOptions
-import io.github.crabzilla.stack.command.CommandMetadata
+import io.github.crabzilla.stack.CommandControllerOptions
+import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject

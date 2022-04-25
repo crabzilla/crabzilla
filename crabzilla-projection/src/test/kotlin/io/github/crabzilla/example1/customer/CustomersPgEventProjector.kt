@@ -3,7 +3,7 @@ package io.github.crabzilla.example1.customer
 import io.github.crabzilla.example1.customer.CustomersWriteRepository.updateStatus
 import io.github.crabzilla.example1.customer.CustomersWriteRepository.upsert
 import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.projection.PgEventProjector
+import io.github.crabzilla.stack.PgEventProjector
 import io.vertx.core.Future
 import io.vertx.sqlclient.SqlConnection
 
