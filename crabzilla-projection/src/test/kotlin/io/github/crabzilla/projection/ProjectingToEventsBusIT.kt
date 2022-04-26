@@ -8,8 +8,8 @@ import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.pgConfig
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
-import io.github.crabzilla.stack.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonArray
