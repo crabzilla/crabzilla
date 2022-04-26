@@ -175,7 +175,6 @@ internal class EventsProjectorComponent(
       log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
       return vertx.executeBlocking<Long> { promise ->
         vertx.eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
-          log.info("Received ${it.result().body()}")
           if (it.failed()) {
             log.error("Failed", it.cause())
             promise.fail(it.cause())
