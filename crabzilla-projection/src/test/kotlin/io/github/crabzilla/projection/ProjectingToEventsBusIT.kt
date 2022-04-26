@@ -92,7 +92,7 @@ internal class ProjectingToEventsBusIT {
       .onSuccess {
         tc.verify {
           vertx.executeBlocking<Void> {
-            assertTrue(latch.await(2, TimeUnit.SECONDS))
+            assertTrue(latch.await(5, TimeUnit.SECONDS))
             log.info("Received {}", message.get().encodePrettily())
             val events = message.get().map { jo ->
               val json = jo as JsonObject
@@ -159,7 +159,7 @@ internal class ProjectingToEventsBusIT {
       .onSuccess {
         tc.verify {
           vertx.executeBlocking<Void> {
-            assertTrue(latch.await(2, TimeUnit.SECONDS))
+            assertTrue(latch.await(5, TimeUnit.SECONDS))
             log.info("Received {}", message.get().encodePrettily())
             val events = message.get().map { jo ->
               val json = jo as JsonObject
@@ -223,7 +223,7 @@ internal class ProjectingToEventsBusIT {
       .onSuccess {
         tc.verify {
           vertx.executeBlocking<Void> {
-            assertTrue(latch.await(2, TimeUnit.SECONDS))
+            assertTrue(latch.await(5, TimeUnit.SECONDS))
             log.info("Received {}", message.get().encodePrettily())
             val events = message.get().map { jo ->
               val json = jo as JsonObject
@@ -286,7 +286,7 @@ internal class ProjectingToEventsBusIT {
       .onSuccess {
         tc.verify {
           vertx.executeBlocking<Void> {
-            assertTrue(latch.await(2, TimeUnit.SECONDS))
+            assertTrue(latch.await(5, TimeUnit.SECONDS))
             log.info("Received {}", message.get().encodePrettily())
             val events = message.get().map { jo ->
               val json = jo as JsonObject
