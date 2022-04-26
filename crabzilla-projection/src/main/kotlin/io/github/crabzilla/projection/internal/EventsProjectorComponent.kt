@@ -171,7 +171,7 @@ internal class EventsProjectorComponent(
     }
     fun requestEventbusBlocking(eventsList: List<EventRecord>): Future<Long> {
       val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
-      val array: JsonArray = JsonArray(eventsAsJson)
+      val array = JsonArray(eventsAsJson)
       log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
       return vertx.executeBlocking<Long> { promise ->
         vertx.eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
@@ -211,8 +211,9 @@ internal class EventsProjectorComponent(
     }
     fun registerFailure() {
       greedy.set(false)
-      val jitter = ((0..5).random() * 500)
-      val nextInterval = min(options.maxInterval, (options.interval * failures.incrementAndGet()) + jitter)
+//      val jitter = ((0..5).random() * 500) // TODO use jitter (but it breaks tests..)
+//      val nextInterval = min(options.maxInterval, (options.interval * failures.incrementAndGet()) + jitter)
+      val nextInterval = min(options.maxInterval, options.interval * failures.incrementAndGet())
       vertx.setTimer(nextInterval, handler())
       log.debug("registerFailure - Rescheduled to next {} milliseconds", nextInterval)
     }
