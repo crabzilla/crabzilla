@@ -36,7 +36,7 @@ class PersistingCommandsT {
   @Test
   fun `it can persist 1 command`(tc: VertxTestContext, vertx: Vertx) {
 
-    val repository = JacksonCommandRepository(json)
+    val repository = JacksonCommandRepository(json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository)
 
     val id = UUID.randomUUID()
@@ -62,7 +62,7 @@ class PersistingCommandsT {
   @Test
   fun `it can persist 2 commands`(tc: VertxTestContext, vertx: Vertx) {
 
-    val repository = JacksonCommandRepository(json)
+    val repository = JacksonCommandRepository(json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository)
 
     val id = UUID.randomUUID()

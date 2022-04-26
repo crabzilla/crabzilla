@@ -1,6 +1,6 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.core.EventHandler
+import io.github.crabzilla.core.CommandComponent
 import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.CommandRepository
 import io.github.crabzilla.stack.CommandSideEffect
@@ -20,22 +20,19 @@ import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
-import kotlin.reflect.KClass
 
-class KotlinxCommandRepository(private val json: Json) : CommandRepository() {
+class KotlinxCommandRepository<S: Any, C: Any, E: Any>(
+  private val json: Json,
+  private val commandComponent: CommandComponent<S, C, E>) : CommandRepository<S, C, E>(commandComponent) {
 
   companion object {
     private val log = LoggerFactory.getLogger(KotlinxCommandRepository::class.java)
   }
 
-  override fun <S : Any, E : Any> getSnapshot(
-    conn: SqlConnection,
-    id: UUID,
-    eventClass: KClass<E>,
-    eventHandler: EventHandler<S, E>,
-    eventStreamSize: Int
-  ): Future<Snapshot<S>?> {
-    val eventSerDer = PolymorphicSerializer(eventClass)
+  private val eventSerDer = PolymorphicSerializer(commandComponent.eventClass)
+  private val commandSerDer = PolymorphicSerializer(commandComponent.commandClass)
+
+  override fun getSnapshot(conn: SqlConnection, id: UUID, eventStreamSize: Int): Future<Snapshot<S>?> {
     val promise = Promise.promise<Snapshot<S>?>()
     return conn
       .prepare(GET_EVENTS_BY_ID)
@@ -52,7 +49,7 @@ class KotlinxCommandRepository(private val json: Json) : CommandRepository() {
           val asEvent = json.decodeFromString(eventSerDer, eventAsJson.toString())
           latestVersion = row.getInteger("version")
           log.debug("Found event {} version {}", asEvent, latestVersion)
-          state = eventHandler.handleEvent(state, asEvent)
+          state = commandComponent.eventHandler.handleEvent(state, asEvent)
           log.debug("State {}", state)
         }
         stream.exceptionHandler { error = it }
@@ -73,13 +70,7 @@ class KotlinxCommandRepository(private val json: Json) : CommandRepository() {
       }
   }
 
-  override fun <C : Any> appendCommand(
-    conn: SqlConnection,
-    command: C,
-    metadata: CommandMetadata,
-    commandClass: KClass<C>
-  ): Future<Void> {
-    val commandSerDer = PolymorphicSerializer(commandClass)
+  override fun appendCommand(conn: SqlConnection, command: C, metadata: CommandMetadata): Future<Void> {
     val cmdAsJson = json.encodeToString(commandSerDer, command)
     log.debug("Will append command {} as {}", command, cmdAsJson)
     val params = Tuple.of(
@@ -91,16 +82,13 @@ class KotlinxCommandRepository(private val json: Json) : CommandRepository() {
       .mapEmpty()
   }
 
-  override fun <E : Any> appendEvents(
+  override fun appendEvents(
     conn: SqlConnection,
     initialVersion: Int,
     events: List<E>,
-    eventClass: KClass<E>,
-    metadata: CommandMetadata,
-    stateTypeName: String
+    metadata: CommandMetadata
   )
   : Future<CommandSideEffect> {
-    val eventSerDer = PolymorphicSerializer(eventClass)
     var resultingVersion = initialVersion
     val eventIds = events.map { UUID.randomUUID() }
     val tuples: List<Tuple> = events.mapIndexed { index, event ->
@@ -113,7 +101,7 @@ class KotlinxCommandRepository(private val json: Json) : CommandRepository() {
         type,
         causationId,
         metadata.correlationId,
-        stateTypeName,
+        commandComponent.stateClassName(),
         metadata.stateId,
         jsonObject,
         ++resultingVersion,
@@ -132,7 +120,7 @@ class KotlinxCommandRepository(private val json: Json) : CommandRepository() {
           val eventId = tuples[index].getUUID(eventIdIndex)
           val eventPayload = tuples[index].getJsonObject(eventPayloadIndex)
           val eventMetadata = EventMetadata(
-            stateType = stateTypeName, stateId = metadata.stateId, eventId = eventId,
+            stateType = commandComponent.stateClassName(), stateId = metadata.stateId, eventId = eventId,
             correlationId = correlationId, causationId = eventId, eventSequence = sequence, version = currentVersion
           )
           appendedEventList.add(EventRecord(eventMetadata, eventPayload))

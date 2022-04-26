@@ -1,12 +1,11 @@
 package io.github.crabzilla.stack
 
-import io.github.crabzilla.core.EventHandler
+import io.github.crabzilla.core.CommandComponent
 import io.vertx.core.Future
 import io.vertx.sqlclient.SqlConnection
 import java.util.UUID
-import kotlin.reflect.KClass
 
-abstract class CommandRepository {
+abstract class CommandRepository<S : Any, C : Any, E : Any>(private val commandComponent: CommandComponent<S, C, E>) {
 
   companion object {
     const val GET_EVENTS_BY_ID =
@@ -29,27 +28,22 @@ abstract class CommandRepository {
     const val eventIdIndex = 7
   }
 
-  abstract fun <S : Any, E : Any> getSnapshot(
+  abstract fun getSnapshot(
     conn: SqlConnection,
     id: UUID,
-    eventClass: KClass<E>,
-    eventHandler: EventHandler<S, E>,
     eventStreamSize: Int = 1000)
       : Future<Snapshot<S>?>
 
-  abstract fun <C : Any> appendCommand(
+  abstract fun appendCommand(
     conn: SqlConnection,
     command: C,
-    metadata: CommandMetadata,
-    commandClass: KClass<C>,)
+    metadata: CommandMetadata)
       : Future<Void>
 
-  abstract fun <E : Any> appendEvents(
+  abstract fun appendEvents(
     conn: SqlConnection,
     initialVersion: Int,
     events: List<E>,
-    eventClass: KClass<E>,
-    metadata: CommandMetadata,
-    stateTypeName: String)
+    metadata: CommandMetadata)
       : Future<CommandSideEffect>
 }

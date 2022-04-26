@@ -47,7 +47,7 @@ class LockingConcurrentCommandsIT {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
     val metadata = CommandMetadata.new(id)
-    val repository = JacksonCommandRepository(json)
+    val repository = JacksonCommandRepository(json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository)
     controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }

@@ -37,7 +37,7 @@ class PublishingToEventbusIT {
   @Test
   fun `it can publish to eventbus`(vertx: Vertx, tc: VertxTestContext) {
 
-    val repository = KotlinxCommandRepository(json)
+    val repository = KotlinxCommandRepository(json, customerComponent)
     val options = CommandControllerOptions(eventBusTopic = "MY_TOPIC")
     val controller = CommandController(vertx, pgPool, customerComponent, repository, options).startPgNotification()
 

@@ -45,7 +45,7 @@ class LockingConcurrentCommandsIT {
   @Test
   fun `it can pessimistically lock the target state id`(vertx: Vertx, tc: VertxTestContext) {
 
-    val repository = KotlinxCommandRepository(json)
+    val repository = KotlinxCommandRepository(json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository)
 
     val id = UUID.randomUUID()

@@ -16,7 +16,7 @@ class CommandController<S : Any, C : Any, E : Any>(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val commandComponent: CommandComponent<S, C, E>,
-  private val repository: CommandRepository,
+  private val repository: CommandRepository<S, C, E>,
   private val options: CommandControllerOptions = CommandControllerOptions()
 ) {
 
@@ -69,6 +69,50 @@ class CommandController<S : Any, C : Any, E : Any>(
   }
 
   fun handle(conn: SqlConnection, metadata: CommandMetadata, command: C): Future<CommandSideEffect> {
+    fun validate(command: C): Future<Void> {
+      if (commandComponent.commandValidator != null) {
+        val errors = commandComponent.commandValidator!!.validate(command)
+        if (errors.isNotEmpty()) {
+          return Future.failedFuture(CommandException.ValidationException(errors))
+        }
+      }
+      return Future.succeededFuture()
+    }
+    fun lock(conn: SqlConnection, lockId: Int, metadata: CommandMetadata): Future<Void> {
+      return conn
+        .preparedQuery(SQL_LOCK)
+        .execute(Tuple.of(stateTypeName.hashCode(), lockId))
+        .compose { pgRow ->
+          if (pgRow.first().getBoolean("locked")) {
+            Future.succeededFuture()
+          } else {
+            Future.failedFuture(CommandException.LockingException("Can't be locked ${metadata.stateId}"))
+          }
+        }
+    }
+    fun getSnapshot(conn: SqlConnection, id: UUID): Future<Snapshot<S>?> {
+      return repository.getSnapshot(conn, id)
+    }
+    fun appendCommand(conn: SqlConnection, command: C, metadata: CommandMetadata): Future<Void> {
+      return repository.appendCommand(conn, command, metadata)
+    }
+    fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata)
+            : Future<CommandSideEffect> {
+      return repository.appendEvents(conn, initialVersion, events, metadata)
+    }
+    fun projectEvents(conn: SqlConnection, appendedEvents: List<EventRecord>, projector: EventProjector)
+            : Future<Void> {
+      log.debug("Will project {} events", appendedEvents.size)
+      val initialFuture = Future.succeededFuture<Void>()
+      return appendedEvents.fold(
+        initialFuture
+      ) { currentFuture: Future<Void>, appendedEvent: EventRecord ->
+        currentFuture.compose {
+          projector.project(conn, appendedEvent)
+        }
+      }.mapEmpty()
+    }
+
     return validate(command)
       .compose {
         log.debug("Command validated")
@@ -114,58 +158,6 @@ class CommandController<S : Any, C : Any, E : Any>(
             }
             notificationsByStateType.add(stateTypeName)
           }
-
       }
   }
-
-  private fun validate(command: C): Future<Void> {
-    if (commandComponent.commandValidator != null) {
-      val errors = commandComponent.commandValidator!!.validate(command)
-      if (errors.isNotEmpty()) {
-        return Future.failedFuture(CommandException.ValidationException(errors))
-      }
-    }
-    return Future.succeededFuture()
-  }
-
-  private fun lock(conn: SqlConnection, lockId: Int, metadata: CommandMetadata): Future<Void> {
-    return conn
-      .preparedQuery(SQL_LOCK)
-      .execute(Tuple.of(stateTypeName.hashCode(), lockId))
-      .compose { pgRow ->
-        if (pgRow.first().getBoolean("locked")) {
-          Future.succeededFuture()
-        } else {
-          Future.failedFuture(CommandException.LockingException("Can't be locked ${metadata.stateId}"))
-        }
-      }
-  }
-
-  private fun getSnapshot(conn: SqlConnection, id: UUID): Future<Snapshot<S>?> {
-    return repository.getSnapshot<S, E>(conn, id, commandComponent.eventClass, commandComponent.eventHandler)
-  }
-
-  private fun appendCommand(conn: SqlConnection, command: C, metadata: CommandMetadata): Future<Void> {
-    return repository.appendCommand<C>(conn, command, metadata, commandComponent.commandClass)
-  }
-
-  private fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata)
-          : Future<CommandSideEffect> {
-    return repository.appendEvents<E>(conn, initialVersion, events, commandComponent.eventClass,
-      metadata, stateTypeName)
-  }
-
-  private fun projectEvents(conn: SqlConnection, appendedEvents: List<EventRecord>, projector: EventProjector)
-          : Future<Void> {
-    log.debug("Will project {} events", appendedEvents.size)
-    val initialFuture = Future.succeededFuture<Void>()
-    return appendedEvents.fold(
-      initialFuture
-    ) { currentFuture: Future<Void>, appendedEvent: EventRecord ->
-      currentFuture.compose {
-        projector.project(conn, appendedEvent)
-      }
-    }.mapEmpty()
-  }
-
 }

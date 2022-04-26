@@ -40,7 +40,7 @@ class NotifyingPostgresIT {
   @Test
   fun `it can notify Postgres`(vertx: Vertx, tc: VertxTestContext) {
 
-    val repository = JacksonCommandRepository(json)
+    val repository = JacksonCommandRepository(json, customerComponent)
     val options = CommandControllerOptions(pgNotificationInterval = 100L)
     val controller = CommandController(vertx, pgPool, customerComponent, repository, options)
 

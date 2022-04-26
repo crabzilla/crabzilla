@@ -49,7 +49,7 @@ internal class ProjectingToPostgresIT {
   @Test
   @Order(1)
   fun `it can project to postgres within an interval`(tc: VertxTestContext, vertx: Vertx) {
-    val repository = KotlinxCommandRepository(TestsFixtures.json)
+    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
     val options = CommandControllerOptions(pgNotificationInterval = 100L)
     val controller = CommandController(vertx, pgPool, customerComponent, repository, options)
 
@@ -78,7 +78,7 @@ internal class ProjectingToPostgresIT {
   @Order(2)
   fun `it can project to postgres when explicit calling it`(tc: VertxTestContext, vertx: Vertx) {
 
-    val repository = KotlinxCommandRepository(TestsFixtures.json)
+    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository)
 
     val config = ProjectorConfig(projectionName, projectorStrategy = POSTGRES_SAME_TRANSACTION)

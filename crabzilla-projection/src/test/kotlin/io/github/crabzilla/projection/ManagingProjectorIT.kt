@@ -4,10 +4,7 @@ import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.command.KotlinxCommandRepository
 import io.github.crabzilla.dbConfig
-import io.github.crabzilla.example1.customer.Customer
-import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.stack.CommandController
@@ -37,7 +34,7 @@ class ManagingProjectorIT {
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val repository = KotlinxCommandRepository(TestsFixtures.json)
+    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository, options).startPgNotification()
     cleanDatabase(pgPool)
       .compose {
@@ -70,7 +67,7 @@ class ManagingProjectorIT {
   @Order(2)
   fun `after pause then a command`(tc: VertxTestContext, vertx: Vertx) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val repository = KotlinxCommandRepository(TestsFixtures.json)
+    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository, options).startPgNotification()
 
     vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
@@ -98,7 +95,7 @@ class ManagingProjectorIT {
   @Order(3)
   fun `after a command then work the currentOffset is 1`(tc: VertxTestContext, vertx: Vertx) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val repository = KotlinxCommandRepository(TestsFixtures.json)
+    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository, options).startPgNotification()
 
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
@@ -127,7 +124,7 @@ class ManagingProjectorIT {
   @Order(4)
   fun `after a command then work, the projection is done`(tc: VertxTestContext, vertx: Vertx) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val repository = KotlinxCommandRepository(TestsFixtures.json)
+    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository, options).startPgNotification()
 
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
@@ -152,7 +149,7 @@ class ManagingProjectorIT {
     vertx: Vertx
   ) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val repository = KotlinxCommandRepository(TestsFixtures.json)
+    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository, options).startPgNotification()
 
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
@@ -187,7 +184,7 @@ class ManagingProjectorIT {
     vertx: Vertx
   ) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val repository = KotlinxCommandRepository(TestsFixtures.json)
+    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository, options).startPgNotification()
 
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))

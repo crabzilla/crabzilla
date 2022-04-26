@@ -1,7 +1,7 @@
 package io.github.crabzilla.command
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.crabzilla.core.EventHandler
+import io.github.crabzilla.core.CommandComponent
 import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.CommandRepository
 import io.github.crabzilla.stack.CommandSideEffect
@@ -19,21 +19,16 @@ import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.util.UUID
-import kotlin.reflect.KClass
 
-class JacksonCommandRepository(private val json: ObjectMapper) : CommandRepository() {
+class JacksonCommandRepository<S: Any, C: Any, E: Any>(
+  private val json: ObjectMapper,
+  private val commandComponent: CommandComponent<S, C, E>) : CommandRepository<S, C, E>(commandComponent) {
 
   companion object {
     private val log = LoggerFactory.getLogger(JacksonCommandRepository::class.java)
   }
 
-  override fun <S : Any, E : Any> getSnapshot(
-    conn: SqlConnection,
-    id: UUID,
-    eventClass: KClass<E>,
-    eventHandler: EventHandler<S, E>,
-    eventStreamSize: Int
-  ): Future<Snapshot<S>?> {
+  override fun getSnapshot(conn: SqlConnection, id: UUID, eventStreamSize: Int): Future<Snapshot<S>?> {
     val promise = Promise.promise<Snapshot<S>?>()
     return conn
       .prepare(GET_EVENTS_BY_ID)
@@ -47,10 +42,10 @@ class JacksonCommandRepository(private val json: ObjectMapper) : CommandReposito
         stream.handler { row: Row ->
           val eventAsJson = JsonObject(row.getValue("event_payload").toString())
           eventAsJson.put("type", row.getString("event_type"))
-          val asEvent = json.readValue(eventAsJson.toString(), eventClass.java)
+          val asEvent = json.readValue(eventAsJson.toString(), commandComponent.eventClass.java)
           latestVersion = row.getInteger("version")
           log.debug("Found event {} version {}", asEvent, latestVersion)
-          state = eventHandler.handleEvent(state, asEvent)
+          state = commandComponent.eventHandler.handleEvent(state, asEvent)
           log.debug("State {}", state)
         }
         stream.exceptionHandler { error = it }
@@ -71,12 +66,7 @@ class JacksonCommandRepository(private val json: ObjectMapper) : CommandReposito
       }
   }
 
-  override fun <C : Any> appendCommand(
-    conn: SqlConnection,
-    command: C,
-    metadata: CommandMetadata,
-    commandClass: KClass<C>
-  ): Future<Void> {
+  override fun appendCommand(conn: SqlConnection, command: C, metadata: CommandMetadata): Future<Void> {
     val cmdAsJson = json.writeValueAsString(command)
     log.debug("Will append command {} as {}", command, cmdAsJson)
     val params = Tuple.of(
@@ -88,13 +78,11 @@ class JacksonCommandRepository(private val json: ObjectMapper) : CommandReposito
       .mapEmpty()
   }
 
-  override fun <E : Any> appendEvents(
+  override fun appendEvents(
     conn: SqlConnection,
     initialVersion: Int,
     events: List<E>,
-    eventClass: KClass<E>,
-    metadata: CommandMetadata,
-    stateTypeName: String
+    metadata: CommandMetadata
   )
   : Future<CommandSideEffect> {
     var resultingVersion = initialVersion
@@ -109,7 +97,7 @@ class JacksonCommandRepository(private val json: ObjectMapper) : CommandReposito
         type,
         causationId,
         metadata.correlationId,
-        stateTypeName,
+        commandComponent.stateClassName(),
         metadata.stateId,
         jsonObject,
         ++resultingVersion,
@@ -128,7 +116,7 @@ class JacksonCommandRepository(private val json: ObjectMapper) : CommandReposito
           val eventId = tuples[index].getUUID(eventIdIndex)
           val eventPayload = tuples[index].getJsonObject(eventPayloadIndex)
           val eventMetadata = EventMetadata(
-            stateType = stateTypeName, stateId = metadata.stateId, eventId = eventId,
+            stateType = commandComponent.stateClassName(), stateId = metadata.stateId, eventId = eventId,
             correlationId = correlationId, causationId = eventId, eventSequence = sequence, version = currentVersion
           )
           appendedEventList.add(EventRecord(eventMetadata, eventPayload))

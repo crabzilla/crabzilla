@@ -38,7 +38,7 @@ class ProjectingSynchronouslyIT {
   @Test
   fun `it can project to view model synchronously`(vertx: Vertx, tc: VertxTestContext) {
 
-    val repository = JacksonCommandRepository(json)
+    val repository = JacksonCommandRepository(json, customerComponent)
     val options = CommandControllerOptions(eventProjector = CustomersEventProjector())
     val controller = CommandController(vertx, pgPool, customerComponent, repository, options)
 

@@ -38,7 +38,7 @@ class PersistingEventsT {
   @Test
   @DisplayName("appending 1 command with 2 events results in version 2 ")
   fun s1(tc: VertxTestContext, vertx: Vertx) {
-    val repository = KotlinxCommandRepository(json)
+    val repository = KotlinxCommandRepository(json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository)
 
     val id = UUID.randomUUID()
@@ -83,7 +83,7 @@ class PersistingEventsT {
   @DisplayName("appending 2 commands with 2 and 1 event, respectively results in version 3")
   fun s11(tc: VertxTestContext, vertx: Vertx) {
 
-    val repository = KotlinxCommandRepository(json)
+    val repository = KotlinxCommandRepository(json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository)
 
     val id = UUID.randomUUID()

@@ -34,7 +34,7 @@ class ValidatingCommandIT {
   @Test
   fun `it can validate before command handler`(tc: VertxTestContext, vertx: Vertx) {
 
-    val repository = JacksonCommandRepository(json)
+    val repository = JacksonCommandRepository(json, customerComponent)
     val options = CommandControllerOptions(eventBusTopic = "MY_TOPIC")
     val controller = CommandController(vertx, pgPool, customerComponent, repository, options)
 
@@ -54,7 +54,7 @@ class ValidatingCommandIT {
   @Test
   fun `it can validate within command handler`(tc: VertxTestContext, vertx: Vertx) {
 
-    val repository = JacksonCommandRepository(json)
+    val repository = JacksonCommandRepository(json, customerComponent)
     val options = CommandControllerOptions(eventBusTopic = "MY_TOPIC")
     val controller = CommandController(vertx, pgPool, customerComponent, repository, options)
 

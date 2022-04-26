@@ -37,7 +37,7 @@ class ProjectingSynchronouslyIT {
   @Test
   fun `it can project to view model synchronously`(vertx: Vertx, tc: VertxTestContext) {
 
-    val repository = KotlinxCommandRepository(json)
+    val repository = KotlinxCommandRepository(json, customerComponent)
     val options = CommandControllerOptions(eventProjector = CustomersEventProjector())
     val controller = CommandController(vertx, pgPool, customerComponent, repository, options)
 

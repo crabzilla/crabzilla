@@ -33,7 +33,7 @@ class ValidatingCommandIT {
   @Test
   fun `it can validate before command handler`(tc: VertxTestContext, vertx: Vertx) {
 
-    val repository = KotlinxCommandRepository(TestsFixtures.json)
+    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository)
 
     val id = UUID.randomUUID()
@@ -52,7 +52,7 @@ class ValidatingCommandIT {
   @Test
   fun `it can validate within command handler`(tc: VertxTestContext, vertx: Vertx) {
 
-    val repository = KotlinxCommandRepository(TestsFixtures.json)
+    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
     val controller = CommandController(vertx, pgPool, customerComponent, repository)
 
     val id = UUID.randomUUID()
