@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 @ExtendWith(VertxExtension::class)
-@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 internal class ProjectingToEventsBusIT {
 
   companion object {
@@ -53,7 +52,6 @@ internal class ProjectingToEventsBusIT {
   }
 
   @Test
-  @Order(1)
   fun `it can publish to eventbus using request reply`(tc: VertxTestContext, vertx: Vertx) {
     val factory = EventsProjectorFactory(pgPool, pgConfig)
     val config = ProjectorConfig(projectionName, initialInterval = 1, interval = 30_000,
@@ -120,7 +118,6 @@ internal class ProjectingToEventsBusIT {
   }
 
   @Test
-  @Order(2)
   @Disabled // instead, use EVENTBUS_REQUEST_REPLY_BLOCKING
   fun `it can publish to eventbus using request reply with a BLOCKING consumer`(tc: VertxTestContext, vertx: Vertx) {
     val factory = EventsProjectorFactory(pgPool, pgConfig)
@@ -188,7 +185,6 @@ internal class ProjectingToEventsBusIT {
   }
 
   @Test
-  @Order(3)
   fun `it can publish to eventbus using BLOCKING request reply`(tc: VertxTestContext, vertx: Vertx) {
     val factory = EventsProjectorFactory(pgPool, pgConfig)
     val config = ProjectorConfig(
@@ -208,7 +204,7 @@ internal class ProjectingToEventsBusIT {
         msg.reply(-1L)
         return@consumer
       }
-      Thread.sleep(1000) // just to prove we can block
+      Thread.sleep(500) // just to prove we can block
       latch.countDown()
       message.set(msg.body())
       val eventSequence: Long = message.get().last()
@@ -253,7 +249,6 @@ internal class ProjectingToEventsBusIT {
   }
 
   @Test
-  @Order(4)
   fun `it can publish to eventbus`(tc: VertxTestContext, vertx: Vertx) {
     val factory = EventsProjectorFactory(pgPool, pgConfig)
     val config = ProjectorConfig(
