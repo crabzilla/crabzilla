@@ -50,7 +50,7 @@ internal class CommandControllerTest {
 
   @Test
   fun `a command controller can be customized to publish to eventbus`() {
-    val options = CommandControllerOptions(publishToEventBus = true)
+    val options = CommandControllerOptions(eventBusTopic = "MY_TOPIC")
     val controller = CommandController(vertx, pgPool, json, customerComponent, options)
     assertNotNull(controller) // TODO assert on eventbus latch
   }

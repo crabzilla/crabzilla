@@ -42,10 +42,10 @@ class PublishingToEventbusIT {
   @Test
   fun `it can publish to eventbus`(vertx: Vertx, tc: VertxTestContext) {
     val latch = CountDownLatch(1)
-    val options = CommandControllerOptions(publishToEventBus = true)
+    val options = CommandControllerOptions(eventBusTopic = "MY_TOPIC")
     val controller = CommandController.createAndStart(vertx, pgPool, json, customerComponent, options)
     val jsonMessage = AtomicReference<JsonObject>()
-    vertx.eventBus().consumer<JsonObject>(customerComponent.stateClassName()) { msg ->
+    vertx.eventBus().consumer<JsonObject>("MY_TOPIC") { msg ->
       latch.countDown()
       jsonMessage.set(msg.body())
     }

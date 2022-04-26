@@ -26,6 +26,7 @@ import io.vertx.sqlclient.RowStream
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
+import java.time.Instant
 import java.util.UUID
 
 class CommandController<out S : Any, C : Any, E : Any>(
@@ -72,12 +73,12 @@ class CommandController<out S : Any, C : Any, E : Any>(
     const val eventIdIndex = 7
   }
 
-  private val stateSerialName = commandComponent.stateClassName()
+  private val stateTypeName = commandComponent.stateClassName()
   private val notificationsByStateType = HashSet<String>()
 
   fun startPgNotification(): CommandController<S, C, E> {
-    log.info("Starting notifying Postgres for $stateSerialName each ${options.pgNotificationInterval} ms")
-    notificationsByStateType.add(stateSerialName)
+    log.info("Starting notifying Postgres for $stateTypeName each ${options.pgNotificationInterval} ms")
+    notificationsByStateType.add(stateTypeName)
     vertx.setPeriodic(options.pgNotificationInterval) {
       flushPendingPgNotifications()
     }
@@ -96,7 +97,7 @@ class CommandController<out S : Any, C : Any, E : Any>(
           .mapEmpty()
       }
     }.onFailure {
-      log.error("Notification to postgres failed {$stateSerialName}")
+      log.error("Notification to postgres failed {$stateTypeName}")
     }.onSuccess {
       notificationsByStateType.clear()
     }
@@ -149,11 +150,16 @@ class CommandController<out S : Any, C : Any, E : Any>(
               succeededFuture(commandSideEffect)
             }
           }.onSuccess {
-            if (options.publishToEventBus) {
-              log.debug("Published to topic [$stateSerialName]") // TODO must supply the target topic
-              vertx.eventBus().publish(stateSerialName, it.jsonObject())
+            if (options.eventBusTopic != null) {
+              val message = JsonObject()
+                .put("stateType", stateTypeName)
+                .put("commandMetadata", metadata.toJsonObject())
+                .put("events", it.toJsonArray())
+                .put("timestamp", Instant.now())
+              vertx.eventBus().publish(options.eventBusTopic, message)
+              log.debug("Published to ${message.encodePrettily()} to topic ${options.eventBusTopic}")
             }
-            notificationsByStateType.add(stateSerialName)
+            notificationsByStateType.add(stateTypeName)
           }
 
       }
@@ -172,7 +178,7 @@ class CommandController<out S : Any, C : Any, E : Any>(
   private fun lock(conn: SqlConnection, lockId: Int, metadata: CommandMetadata): Future<Void> {
     return conn
       .preparedQuery(SQL_LOCK)
-      .execute(Tuple.of(stateSerialName.hashCode(), lockId))
+      .execute(Tuple.of(stateTypeName.hashCode(), lockId))
       .compose { pgRow ->
         if (pgRow.first().getBoolean("locked")) {
           succeededFuture()
@@ -249,7 +255,7 @@ class CommandController<out S : Any, C : Any, E : Any>(
         type,
         causationId,
         metadata.correlationId,
-        stateSerialName,
+        stateTypeName,
         metadata.stateId,
         jsonObject,
         ++resultingVersion,
@@ -268,7 +274,7 @@ class CommandController<out S : Any, C : Any, E : Any>(
           val eventId = tuples[index].getUUID(eventIdIndex)
           val eventPayload = tuples[index].getJsonObject(eventPayloadIndex)
           val eventMetadata = EventMetadata(
-            stateType = stateSerialName, stateId = metadata.stateId, eventId = eventId,
+            stateType = stateTypeName, stateId = metadata.stateId, eventId = eventId,
             correlationId = correlationId, causationId = eventId, eventSequence = sequence, version = currentVersion
           )
           appendedEventList.add(EventRecord(eventMetadata, eventPayload))
