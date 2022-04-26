@@ -7,10 +7,14 @@ import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.pgConfig
 import io.github.crabzilla.pgPool
+import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_PUBLISH
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
+import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
 import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
 import io.vertx.core.DeploymentOptions
+import io.vertx.core.Future
+import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
@@ -54,9 +58,7 @@ internal class ProjectingToEventsBusIT {
   @Test
   fun `it can publish to eventbus using request reply`(tc: VertxTestContext, vertx: Vertx) {
     val factory = EventsProjectorFactory(pgPool, pgConfig)
-    val config = ProjectorConfig(projectionName, initialInterval = 1, interval = 30_000,
-      projectorStrategy = EVENTBUS_REQUEST_REPLY
-    )
+    val config = ProjectorConfig(projectionName, projectorStrategy = EVENTBUS_REQUEST_REPLY, interval = 10_000)
     val verticle = factory.createVerticle(config)
     val controller = CommandController(vertx, pgPool, json, customerConfig)
     val latch = CountDownLatch(1)
@@ -101,17 +103,11 @@ internal class ProjectingToEventsBusIT {
             assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
             it.complete()
           }.compose {
-            pgPool
-              .preparedQuery("select sequence from projections where name = $1")
-              .execute(Tuple.of(projectionName))
-              .map { row: RowSet<Row> ->
-                log.info("offset: ${row.first().toJson().encodePrettily()}")
-                assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
-              }.onSuccess {
-                tc.completeNow()
-              }.onFailure {
-                tc.failNow(it)
-              }
+            checkOffset(1, 2L)
+          }.onSuccess {
+            tc.completeNow()
+          }.onFailure {
+            tc.failNow(it)
           }
         }
       }
@@ -168,17 +164,11 @@ internal class ProjectingToEventsBusIT {
             assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
             it.complete()
           }.compose {
-            pgPool
-              .preparedQuery("select sequence from projections where name = $1")
-              .execute(Tuple.of(projectionName))
-              .map { row: RowSet<Row> ->
-                log.info("offset: ${row.first().toJson().encodePrettily()}")
-                assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
-              }.onSuccess {
-                tc.completeNow()
-              }.onFailure {
-                tc.failNow(it)
-              }
+            checkOffset(1, 2L)
+          }.onSuccess {
+            tc.completeNow()
+          }.onFailure {
+            tc.failNow(it)
           }
         }
       }
@@ -187,10 +177,7 @@ internal class ProjectingToEventsBusIT {
   @Test
   fun `it can publish to eventbus using BLOCKING request reply`(tc: VertxTestContext, vertx: Vertx) {
     val factory = EventsProjectorFactory(pgPool, pgConfig)
-    val config = ProjectorConfig(
-      projectionName, initialInterval = 1, interval = 30_000,
-      projectorStrategy = ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
-    )
+    val config = ProjectorConfig(projectionName, projectorStrategy = EVENTBUS_REQUEST_REPLY_BLOCKING, interval = 10_000)
     val verticle = factory.createVerticle(config)
     val controller = CommandController(vertx, pgPool, json, customerConfig)
     val latch = CountDownLatch(1)
@@ -232,17 +219,11 @@ internal class ProjectingToEventsBusIT {
             assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
             it.complete()
           }.compose {
-            pgPool
-              .preparedQuery("select sequence from projections where name = $1")
-              .execute(Tuple.of(projectionName))
-              .map { row: RowSet<Row> ->
-                log.info("offset: ${row.first().toJson().encodePrettily()}")
-                assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
-              }.onSuccess {
-                tc.completeNow()
-              }.onFailure {
-                tc.failNow(it)
-              }
+            checkOffset(1, 2L)
+          }.onSuccess {
+            tc.completeNow()
+          }.onFailure {
+            tc.failNow(it)
           }
         }
       }
@@ -251,10 +232,7 @@ internal class ProjectingToEventsBusIT {
   @Test
   fun `it can publish to eventbus`(tc: VertxTestContext, vertx: Vertx) {
     val factory = EventsProjectorFactory(pgPool, pgConfig)
-    val config = ProjectorConfig(
-      projectionName, initialInterval = 1, interval = 30_000,
-      projectorStrategy = ProjectorStrategy.EVENTBUS_PUBLISH
-    )
+    val config = ProjectorConfig(projectionName, projectorStrategy = EVENTBUS_PUBLISH, interval = 10_000)
     val verticle = factory.createVerticle(config)
     val controller = CommandController(vertx, pgPool, json, customerConfig)
     val latch = CountDownLatch(1)
@@ -295,20 +273,31 @@ internal class ProjectingToEventsBusIT {
             assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
             it.complete()
            }.compose {
-            pgPool
-              .preparedQuery("select sequence from projections where name = $1")
-              .execute(Tuple.of(projectionName))
-              .map { row: RowSet<Row> ->
-                log.info("offset: ${row.first().toJson().encodePrettily()}")
-                assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
-              }.onSuccess {
-                tc.completeNow()
-              }.onFailure {
-                tc.failNow(it)
-              }
+            checkOffset(1, 2L)
+           }.onSuccess {
+             tc.completeNow()
+          }.onFailure {
+            tc.failNow(it)
           }
         }
       }
   }
 
+  private fun checkOffset(size: Int, sequence: Long): Future<Void> {
+    val promise = Promise.promise<Void>()
+    pgPool
+      .preparedQuery("select sequence from projections where name = $1")
+      .execute(Tuple.of(projectionName))
+      .onSuccess { row: RowSet<Row> ->
+        log.info("offset: ${row.first().toJson().encodePrettily()}")
+        if (row.size() == size && row.value().first().getLong("sequence") == sequence) {
+          promise.complete()
+        } else {
+          promise.fail("unexpected size or sequence ${row.size()}, ${row.first().toJson()}")
+        }
+      }.onFailure {
+        promise.fail(it)
+      }
+    return promise.future()
+  }
 }
