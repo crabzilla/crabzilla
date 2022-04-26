@@ -208,6 +208,7 @@ internal class ProjectingToEventsBusIT {
         msg.reply(-1L)
         return@consumer
       }
+      Thread.sleep(1000) // just to prove we can block
       latch.countDown()
       message.set(msg.body())
       val eventSequence: Long = message.get().last()
