@@ -100,10 +100,13 @@ internal class ProjectingToEventsBusIT {
               Pair(json.getJsonObject("eventPayload").getString("type"), json.getLong("eventSequence"))
             }
             assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
+            it.complete()
+          }.compose {
             pgPool
               .preparedQuery("select sequence from projections where name = $1")
               .execute(Tuple.of(projectionName))
               .map { row: RowSet<Row> ->
+                log.info("offset: ${row.first().toJson().encodePrettily()}")
                 assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
               }.onSuccess {
                 tc.completeNow()
@@ -164,10 +167,13 @@ internal class ProjectingToEventsBusIT {
               Pair(json.getJsonObject("eventPayload").getString("type"), json.getLong("eventSequence"))
             }
             assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
+            it.complete()
+          }.compose {
             pgPool
               .preparedQuery("select sequence from projections where name = $1")
               .execute(Tuple.of(projectionName))
               .map { row: RowSet<Row> ->
+                log.info("offset: ${row.first().toJson().encodePrettily()}")
                 assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
               }.onSuccess {
                 tc.completeNow()
@@ -225,17 +231,20 @@ internal class ProjectingToEventsBusIT {
               Pair(json.getJsonObject("eventPayload").getString("type"), json.getLong("eventSequence"))
             }
             assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
+            it.complete()
+          }.compose {
+            pgPool
+              .preparedQuery("select sequence from projections where name = $1")
+              .execute(Tuple.of(projectionName))
+              .map { row: RowSet<Row> ->
+                log.info("offset: ${row.first().toJson().encodePrettily()}")
+                assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
+              }.onSuccess {
+                tc.completeNow()
+              }.onFailure {
+                tc.failNow(it)
+              }
           }
-          pgPool
-            .preparedQuery("select sequence from projections where name = $1")
-            .execute(Tuple.of(projectionName))
-            .map { row: RowSet<Row> ->
-              assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
-            }.onSuccess {
-              tc.completeNow()
-            }.onFailure {
-              tc.failNow(it)
-            }
         }
       }
   }
@@ -286,17 +295,20 @@ internal class ProjectingToEventsBusIT {
               Pair(json.getJsonObject("eventPayload").getString("type"), json.getLong("eventSequence"))
             }
             assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
+            it.complete()
+           }.compose {
+            pgPool
+              .preparedQuery("select sequence from projections where name = $1")
+              .execute(Tuple.of(projectionName))
+              .map { row: RowSet<Row> ->
+                log.info("offset: ${row.first().toJson().encodePrettily()}")
+                assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
+              }.onSuccess {
+                tc.completeNow()
+              }.onFailure {
+                tc.failNow(it)
+              }
           }
-          pgPool
-            .preparedQuery("select sequence from projections where name = $1")
-            .execute(Tuple.of(projectionName))
-            .map { row: RowSet<Row> ->
-              assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
-            }.onSuccess {
-              tc.completeNow()
-            }.onFailure {
-              tc.failNow(it)
-            }
         }
       }
   }
