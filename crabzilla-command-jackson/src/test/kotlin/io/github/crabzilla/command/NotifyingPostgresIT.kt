@@ -2,15 +2,14 @@ package io.github.crabzilla.command
 
 import io.github.crabzilla.Jackson.json
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
-import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.pgPoolOptions
-import io.github.crabzilla.stack.CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL
+import io.github.crabzilla.stack.CommandController
 import io.github.crabzilla.stack.CommandControllerOptions
 import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -31,12 +30,8 @@ import java.util.concurrent.atomic.AtomicReference
 @DisplayName("Notifying postgres")
 class NotifyingPostgresIT {
 
-  private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
-
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val options = CommandControllerOptions(pgNotificationInterval = 100L)
-    commandController = CommandController(vertx, pgPool, json, customerComponent, options)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
@@ -44,6 +39,11 @@ class NotifyingPostgresIT {
 
   @Test
   fun `it can notify Postgres`(vertx: Vertx, tc: VertxTestContext) {
+
+    val repository = JacksonCommandRepository(json, customerComponent)
+    val options = CommandControllerOptions(pgNotificationInterval = 100L)
+    val controller = CommandController(vertx, pgPool, customerComponent, repository, options)
+
     val latch = CountDownLatch(1)
     val stateTypeMsg = AtomicReference<String>()
     val pgSubscriber = PgSubscriber.subscriber(vertx, pgPoolOptions)
@@ -57,11 +57,11 @@ class NotifyingPostgresIT {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata.new(id)
-    commandController.handle(metadata, cmd)
-      .compose { commandController.flushPendingPgNotifications() }
+    controller.handle(metadata, cmd)
+      .compose { controller.flushPendingPgNotifications() }
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        commandController.startPgNotification()
+        controller.startPgNotification()
         tc.verify {
           latch.await(2, TimeUnit.SECONDS)
           assertThat(stateTypeMsg.get()).isEqualTo("Customer")

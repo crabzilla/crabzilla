@@ -3,10 +3,9 @@ package io.github.crabzilla.command
 import io.github.crabzilla.TestsFixtures.json
 import io.github.crabzilla.TestsFixtures.pgPool
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
-import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.stack.CommandController
 import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.CommandSideEffect
 import io.vertx.core.Future
@@ -36,11 +35,8 @@ class LockingConcurrentCommandsIT {
     private val log = LoggerFactory.getLogger(LockingConcurrentCommandsIT::class.java)
   }
 
-  private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
-
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandController(vertx, pgPool, json, customerComponent)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
@@ -48,10 +44,14 @@ class LockingConcurrentCommandsIT {
 
   @Test
   fun `it can pessimistically lock the target state id`(vertx: Vertx, tc: VertxTestContext) {
+
+    val repository = KotlinxCommandRepository(json, customerComponent)
+    val controller = CommandController(vertx, pgPool, customerComponent, repository)
+
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
     val metadata = CommandMetadata.new(id)
-    commandController.handle(metadata, cmd)
+    controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess { sideEffect ->
         vertx.executeBlocking<Void> { promise ->
@@ -61,7 +61,7 @@ class LockingConcurrentCommandsIT {
           val metadata2 = CommandMetadata(id, metadata.causationId, sideEffect.latestEventId(), UUID.randomUUID())
           val callables = mutableSetOf<Callable<Future<CommandSideEffect>>>()
           for (i: Int in 1..concurrencyLevel) {
-            callables.add(Callable { commandController.handle(metadata2, cmd2) })
+            callables.add(Callable { controller.handle(metadata2, cmd2) })
           }
           val futures = executorService.invokeAll(callables)
           executorService.awaitTermination(3, TimeUnit.SECONDS)

@@ -1,15 +1,14 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.TestsFixtures.eventSerDer
 import io.github.crabzilla.TestsFixtures.json
 import io.github.crabzilla.TestsFixtures.pgPool
 import io.github.crabzilla.TestsFixtures.testRepo
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.stack.CommandController
 import io.github.crabzilla.stack.CommandMetadata
 import io.github.crabzilla.stack.CommandSideEffect
 import io.vertx.core.Vertx
@@ -29,11 +28,8 @@ import java.util.UUID
 @DisplayName("Persisting events")
 class PersistingEventsT {
 
-  private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
-
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandController(vertx, pgPool, TestsFixtures.json, customerComponent)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
@@ -41,11 +37,14 @@ class PersistingEventsT {
 
   @Test
   @DisplayName("appending 1 command with 2 events results in version 2 ")
-  fun s1(tc: VertxTestContext) {
+  fun s1(tc: VertxTestContext, vertx: Vertx) {
+    val repository = KotlinxCommandRepository(json, customerComponent)
+    val controller = CommandController(vertx, pgPool, customerComponent, repository)
+
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata.new(id)
-    commandController.handle(metadata, cmd)
+    controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         testRepo.scanEvents(0, 10)
@@ -82,16 +81,20 @@ class PersistingEventsT {
 
   @Test
   @DisplayName("appending 2 commands with 2 and 1 event, respectively results in version 3")
-  fun s11(tc: VertxTestContext) {
+  fun s11(tc: VertxTestContext, vertx: Vertx) {
+
+    val repository = KotlinxCommandRepository(json, customerComponent)
+    val controller = CommandController(vertx, pgPool, customerComponent, repository)
+
     val id = UUID.randomUUID()
     val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")
     val metadata1 = CommandMetadata.new(id)
-    commandController.handle(metadata1, cmd1)
+    controller.handle(metadata1, cmd1)
       .onFailure { tc.failNow(it) }
       .onSuccess { sideEffect1: CommandSideEffect ->
         val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
         val metadata2 = CommandMetadata.new(id, sideEffect1.correlationId(), sideEffect1.latestEventId())
-        commandController.handle(metadata2, cmd2)
+        controller.handle(metadata2, cmd2)
           .onFailure { err -> tc.failNow(err) }
           .onSuccess { sideEffect2 ->
             testRepo.scanEvents(0, 10)

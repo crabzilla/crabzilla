@@ -8,8 +8,8 @@ import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY_B
 import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTION
 import io.github.crabzilla.stack.CrabzillaConstants
 import io.github.crabzilla.stack.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
+import io.github.crabzilla.stack.EventProjector
 import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.PgEventProjector
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler
@@ -32,7 +32,7 @@ internal class EventsProjectorComponent(
   private val pgPool: PgPool,
   private val subscriber: PgSubscriber,
   private val options: ProjectorConfig,
-  private val pgEventProjector: PgEventProjector?
+  private val eventProjector: EventProjector?
 ) {
 
   companion object {
@@ -192,7 +192,7 @@ internal class EventsProjectorComponent(
       ) { currentFuture: Future<Void>, eventRecord: EventRecord ->
         currentFuture.compose {
           log.debug("Will project event {} to postgres", eventRecord.metadata.eventSequence)
-          pgEventProjector!!.project(conn, eventRecord)
+          eventProjector!!.project(conn, eventRecord)
         }
       }
     }
