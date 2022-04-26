@@ -16,6 +16,9 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.sqlclient.Row
+import io.vertx.sqlclient.RowSet
+import io.vertx.sqlclient.Tuple
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -96,9 +99,18 @@ internal class ProjectingToEventsBusIT {
               val json = jo as JsonObject
               Pair(json.getJsonObject("eventPayload").getString("type"), json.getLong("eventSequence"))
             }
-          assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
+            assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
+            pgPool
+              .preparedQuery("select sequence from projections where name = $1")
+              .execute(Tuple.of(projectionName))
+              .map { row: RowSet<Row> ->
+                assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
+              }.onSuccess {
+                tc.completeNow()
+              }.onFailure {
+                tc.failNow(it)
+              }
           }
-          tc.completeNow()
         }
       }
   }
@@ -152,8 +164,17 @@ internal class ProjectingToEventsBusIT {
               Pair(json.getJsonObject("eventPayload").getString("type"), json.getLong("eventSequence"))
             }
             assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
+            pgPool
+              .preparedQuery("select sequence from projections where name = $1")
+              .execute(Tuple.of(projectionName))
+              .map { row: RowSet<Row> ->
+                assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
+              }.onSuccess {
+                tc.completeNow()
+              }.onFailure {
+                tc.failNow(it)
+              }
           }
-          tc.completeNow()
         }
       }
   }
@@ -205,7 +226,16 @@ internal class ProjectingToEventsBusIT {
             }
             assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
           }
-          tc.completeNow()
+          pgPool
+            .preparedQuery("select sequence from projections where name = $1")
+            .execute(Tuple.of(projectionName))
+            .map { row: RowSet<Row> ->
+              assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
+            }.onSuccess {
+              tc.completeNow()
+            }.onFailure {
+              tc.failNow(it)
+            }
         }
       }
   }
@@ -257,7 +287,16 @@ internal class ProjectingToEventsBusIT {
             }
             assertEquals(listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L)), events)
           }
-          tc.completeNow()
+          pgPool
+            .preparedQuery("select sequence from projections where name = $1")
+            .execute(Tuple.of(projectionName))
+            .map { row: RowSet<Row> ->
+              assertTrue(row.size() == 1 && row.value().first().getLong("sequence") == 2L)
+            }.onSuccess {
+              tc.completeNow()
+            }.onFailure {
+              tc.failNow(it)
+            }
         }
       }
   }

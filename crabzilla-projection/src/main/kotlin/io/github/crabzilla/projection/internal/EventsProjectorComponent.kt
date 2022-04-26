@@ -211,7 +211,8 @@ internal class EventsProjectorComponent(
     }
     fun registerFailure() {
       greedy.set(false)
-      val nextInterval = min(options.maxInterval, options.interval * failures.incrementAndGet())
+      val jitter = ((0..10).random() * 500)
+      val nextInterval = min(options.maxInterval, (options.interval * failures.incrementAndGet()) + jitter)
       vertx.setTimer(nextInterval, handler())
       log.debug("registerFailure - Rescheduled to next {} milliseconds", nextInterval)
     }

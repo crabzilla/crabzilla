@@ -8,6 +8,7 @@ import io.github.crabzilla.example1.customer.CustomersPgEventProjector
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.pgPoolOptions
+import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTION
 import io.github.crabzilla.projection.internal.EventsProjectorComponent
 import io.github.crabzilla.stack.CommandControllerOptions
 import io.github.crabzilla.stack.CommandMetadata
@@ -55,7 +56,8 @@ internal class ProjectingToPostgresIT {
       commandComponent = customerConfig,
       options = options
     )
-    val config = ProjectorConfig(projectionName, initialInterval = 10, interval = 100)
+    val config = ProjectorConfig(projectionName, initialInterval = 10, interval = 100,
+      projectorStrategy = POSTGRES_SAME_TRANSACTION)
     val pgSubscriber = PgSubscriber.subscriber(vertx, pgPoolOptions)
     val component = EventsProjectorComponent(vertx, pgPool, pgSubscriber, config, CustomersPgEventProjector())
     component.start()
@@ -79,9 +81,9 @@ internal class ProjectingToPostgresIT {
   @Order(2)
   fun `it can project to postgres when explicit calling it`(tc: VertxTestContext, vertx: Vertx) {
     val controller = CommandController(vertx, pgPool, TestsFixtures.json, customerConfig)
-    val options = ProjectorConfig(projectionName)
+    val config = ProjectorConfig(projectionName, projectorStrategy = POSTGRES_SAME_TRANSACTION)
     val pgSubscriber = PgSubscriber.subscriber(vertx, pgPoolOptions)
-    val component = EventsProjectorComponent(vertx, pgPool, pgSubscriber, options, CustomersPgEventProjector())
+    val component = EventsProjectorComponent(vertx, pgPool, pgSubscriber, config, CustomersPgEventProjector())
     component.start()
       .onFailure { tc.failNow(it) }
       .onSuccess {

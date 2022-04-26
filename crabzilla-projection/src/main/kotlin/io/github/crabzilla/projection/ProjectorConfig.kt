@@ -16,7 +16,7 @@ data class ProjectorConfig(
   val metricsInterval: Long = DEFAULT_MAX_INTERVAL,
   val stateTypes: List<String> = listOf(),
   val eventTypes: List<String> = listOf(),
-  val projectorStrategy: ProjectorStrategy = POSTGRES_SAME_TRANSACTION,
+  val projectorStrategy: ProjectorStrategy
 ) {
   companion object {
     private const val DEFAULT_INITIAL_INTERVAL = 15_000L
