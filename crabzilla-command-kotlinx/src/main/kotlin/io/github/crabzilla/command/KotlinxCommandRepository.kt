@@ -1,55 +1,41 @@
 package io.github.crabzilla.command
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.crabzilla.core.CommandComponent
-import io.github.crabzilla.stack.CommandController
-import io.github.crabzilla.stack.CommandControllerOptions
+import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.CommandRepository
 import io.github.crabzilla.stack.CommandSideEffect
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.Snapshot
 import io.vertx.core.Future
 import io.vertx.core.Promise
-import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
-import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.PreparedStatement
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.RowStream
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
+import kotlinx.serialization.PolymorphicSerializer
+import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
+import kotlin.reflect.KClass
 
-class JacksonCommandController<S : Any, C : Any, E : Any>(
-  vertx: Vertx,
-  pgPool: PgPool,
-  private val json: ObjectMapper,
-  private val commandComponent: CommandComponent<S, C, E>,
-  private val options: CommandControllerOptions = CommandControllerOptions()
-) : CommandController<S, C, E>(vertx, pgPool, commandComponent, options) {
+class KotlinxCommandRepository(private val json: Json) : CommandRepository() {
 
   companion object {
-    private val log = LoggerFactory.getLogger(JacksonCommandController::class.java)
-    fun <S : Any, C : Any, E : Any> createAndStart(
-      vertx: Vertx,
-      pgPool: PgPool,
-      json: ObjectMapper,
-      commandComponent: CommandComponent<S, C, E>,
-      options: CommandControllerOptions = CommandControllerOptions()
-    ): JacksonCommandController<S, C, E> {
-      val instance = JacksonCommandController(vertx, pgPool, json, commandComponent, options)
-      instance.startPgNotification()
-      return instance
-    }
+    private val log = LoggerFactory.getLogger(KotlinxCommandRepository::class.java)
   }
 
-  override fun getSnapshot(
+  override fun <S : Any, E : Any> getSnapshot(
     conn: SqlConnection,
     id: UUID,
+    eventClass: KClass<E>,
+    eventHandler: EventHandler<S, E>,
+    eventStreamSize: Int
   ): Future<Snapshot<S>?> {
+    val eventSerDer = PolymorphicSerializer(eventClass)
     val promise = Promise.promise<Snapshot<S>?>()
     return conn
       .prepare(GET_EVENTS_BY_ID)
@@ -57,16 +43,16 @@ class JacksonCommandController<S : Any, C : Any, E : Any>(
         var state: S? = null
         var latestVersion = 0
         var error: Throwable? = null
-        // Fetch N rows at a time
-        val stream: RowStream<Row> = pq.createStream(options.eventStreamSize, Tuple.of(id))
+        // Fetch 1000 rows at a time
+        val stream: RowStream<Row> = pq.createStream(eventStreamSize, Tuple.of(id))
         // Use the stream
         stream.handler { row: Row ->
           val eventAsJson = JsonObject(row.getValue("event_payload").toString())
           eventAsJson.put("type", row.getString("event_type"))
-          val asEvent = json.readValue(eventAsJson.toString(), commandComponent.eventClass.java)
+          val asEvent = json.decodeFromString(eventSerDer, eventAsJson.toString())
           latestVersion = row.getInteger("version")
           log.debug("Found event {} version {}", asEvent, latestVersion)
-          state = commandComponent.eventHandler.handleEvent(state, asEvent)
+          state = eventHandler.handleEvent(state, asEvent)
           log.debug("State {}", state)
         }
         stream.exceptionHandler { error = it }
@@ -87,8 +73,14 @@ class JacksonCommandController<S : Any, C : Any, E : Any>(
       }
   }
 
-  override fun appendCommand(conn: SqlConnection, command: C, metadata: CommandMetadata): Future<Void> {
-    val cmdAsJson = json.writeValueAsString(command)
+  override fun <C : Any> appendCommand(
+    conn: SqlConnection,
+    command: C,
+    metadata: CommandMetadata,
+    commandClass: KClass<C>
+  ): Future<Void> {
+    val commandSerDer = PolymorphicSerializer(commandClass)
+    val cmdAsJson = json.encodeToString(commandSerDer, command)
     log.debug("Will append command {} as {}", command, cmdAsJson)
     val params = Tuple.of(
       metadata.commandId,
@@ -99,13 +91,21 @@ class JacksonCommandController<S : Any, C : Any, E : Any>(
       .mapEmpty()
   }
 
-  override fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata)
+  override fun <E : Any> appendEvents(
+    conn: SqlConnection,
+    initialVersion: Int,
+    events: List<E>,
+    eventClass: KClass<E>,
+    metadata: CommandMetadata,
+    stateTypeName: String
+  )
   : Future<CommandSideEffect> {
+    val eventSerDer = PolymorphicSerializer(eventClass)
     var resultingVersion = initialVersion
     val eventIds = events.map { UUID.randomUUID() }
     val tuples: List<Tuple> = events.mapIndexed { index, event ->
       val causationId: UUID = if (index == 0) metadata.causationId else eventIds[(index - 1)]
-      val eventAsJson = json.writeValueAsString(event)
+      val eventAsJson = json.encodeToString(eventSerDer, event)
       val eventId = eventIds[index]
       val jsonObject = JsonObject(eventAsJson)
       val type = jsonObject.getString("type")

@@ -6,7 +6,7 @@ import io.vertx.sqlclient.SqlConnection
 import java.util.UUID
 import kotlin.reflect.KClass
 
-abstract class PgCommandRepository<S : Any, C : Any, E : Any> {
+abstract class CommandRepository {
 
   companion object {
     const val GET_EVENTS_BY_ID =
@@ -29,14 +29,27 @@ abstract class PgCommandRepository<S : Any, C : Any, E : Any> {
     const val eventIdIndex = 7
   }
 
-  abstract fun getSnapshot(conn: SqlConnection, id: UUID, eventClass: KClass<E>, eventHandler: EventHandler<S, E>,
-      eventStreamSize: Int = 1000)
+  abstract fun <S : Any, E : Any> getSnapshot(
+    conn: SqlConnection,
+    id: UUID,
+    eventClass: KClass<E>,
+    eventHandler: EventHandler<S, E>,
+    eventStreamSize: Int = 1000)
       : Future<Snapshot<S>?>
 
-  abstract fun appendCommand(conn: SqlConnection, command: C, metadata: CommandMetadata)
+  abstract fun <C : Any> appendCommand(
+    conn: SqlConnection,
+    command: C,
+    metadata: CommandMetadata,
+    commandClass: KClass<C>,)
       : Future<Void>
 
-  abstract fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>,
-                            metadata: CommandMetadata, stateTypeName: String)
+  abstract fun <E : Any> appendEvents(
+    conn: SqlConnection,
+    initialVersion: Int,
+    events: List<E>,
+    eventClass: KClass<E>,
+    metadata: CommandMetadata,
+    stateTypeName: String)
       : Future<CommandSideEffect>
 }

@@ -16,7 +16,7 @@ class CommandController<S : Any, C : Any, E : Any>(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val commandComponent: CommandComponent<S, C, E>,
-  private val repository: PgCommandRepository<S, C, E>,
+  private val repository: CommandRepository,
   private val options: CommandControllerOptions = CommandControllerOptions()
 ) {
 
@@ -93,13 +93,13 @@ class CommandController<S : Any, C : Any, E : Any>(
           }.compose { triple ->
             val (_, _, commandSideEffect) = triple
             log.debug("Events appended {}", commandSideEffect.toString())
-            if (options.pgEventProjector != null) {
-              projectEvents(conn, commandSideEffect.appendedEvents, options.pgEventProjector!!)
+            if (options.eventProjector != null) {
+              projectEvents(conn, commandSideEffect.appendedEvents, options.eventProjector!!)
                 .onSuccess {
                   log.debug("Events projected")
                 }.map { commandSideEffect }
             } else {
-              log.debug("PgEventProjector is null, skipping projecting events")
+              log.debug("EventProjector is null, skipping projecting events")
               Future.succeededFuture(commandSideEffect)
             }
           }.onSuccess {
@@ -142,19 +142,20 @@ class CommandController<S : Any, C : Any, E : Any>(
   }
 
   private fun getSnapshot(conn: SqlConnection, id: UUID): Future<Snapshot<S>?> {
-    return repository.getSnapshot(conn, id, commandComponent.eventClass, commandComponent.eventHandler)
+    return repository.getSnapshot<S, E>(conn, id, commandComponent.eventClass, commandComponent.eventHandler)
   }
 
   private fun appendCommand(conn: SqlConnection, command: C, metadata: CommandMetadata): Future<Void> {
-    return repository.appendCommand(conn, command, metadata)
+    return repository.appendCommand<C>(conn, command, metadata, commandComponent.commandClass)
   }
 
   private fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata)
           : Future<CommandSideEffect> {
-    return repository.appendEvents(conn, initialVersion, events, metadata, stateTypeName)
+    return repository.appendEvents<E>(conn, initialVersion, events, commandComponent.eventClass,
+      metadata, stateTypeName)
   }
 
-  private fun projectEvents(conn: SqlConnection, appendedEvents: List<EventRecord>, projector: PgEventProjector)
+  private fun projectEvents(conn: SqlConnection, appendedEvents: List<EventRecord>, projector: EventProjector)
           : Future<Void> {
     log.debug("Will project {} events", appendedEvents.size)
     val initialFuture = Future.succeededFuture<Void>()

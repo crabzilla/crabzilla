@@ -3,10 +3,10 @@ package io.github.crabzilla.command
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.stack.CommandMetadata
+import io.github.crabzilla.stack.CommandRepository
 import io.github.crabzilla.stack.CommandSideEffect
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.PgCommandRepository
 import io.github.crabzilla.stack.Snapshot
 import io.vertx.core.Future
 import io.vertx.core.Promise
@@ -21,14 +21,13 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 import kotlin.reflect.KClass
 
-class JacksonCommandRepository<S : Any, C : Any, E : Any>(private val json: ObjectMapper)
-  : PgCommandRepository<S, C, E>() {
+class JacksonCommandRepository(private val json: ObjectMapper) : CommandRepository() {
 
   companion object {
     private val log = LoggerFactory.getLogger(JacksonCommandRepository::class.java)
   }
 
-  override fun getSnapshot(
+  override fun <S : Any, E : Any> getSnapshot(
     conn: SqlConnection,
     id: UUID,
     eventClass: KClass<E>,
@@ -72,7 +71,12 @@ class JacksonCommandRepository<S : Any, C : Any, E : Any>(private val json: Obje
       }
   }
 
-  override fun appendCommand(conn: SqlConnection, command: C, metadata: CommandMetadata): Future<Void> {
+  override fun <C : Any> appendCommand(
+    conn: SqlConnection,
+    command: C,
+    metadata: CommandMetadata,
+    commandClass: KClass<C>
+  ): Future<Void> {
     val cmdAsJson = json.writeValueAsString(command)
     log.debug("Will append command {} as {}", command, cmdAsJson)
     val params = Tuple.of(
@@ -84,11 +88,14 @@ class JacksonCommandRepository<S : Any, C : Any, E : Any>(private val json: Obje
       .mapEmpty()
   }
 
-  override fun appendEvents(conn: SqlConnection,
-                            initialVersion: Int,
-                            events: List<E>,
-                            metadata: CommandMetadata,
-                            stateTypeName: String)
+  override fun <E : Any> appendEvents(
+    conn: SqlConnection,
+    initialVersion: Int,
+    events: List<E>,
+    eventClass: KClass<E>,
+    metadata: CommandMetadata,
+    stateTypeName: String
+  )
   : Future<CommandSideEffect> {
     var resultingVersion = initialVersion
     val eventIds = events.map { UUID.randomUUID() }

@@ -3,13 +3,12 @@ package io.github.crabzilla.command
 import io.github.crabzilla.Jackson.json
 import io.github.crabzilla.TestRepository.Companion.testRepo
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerEvent
-import io.github.crabzilla.example1.customer.CustomersPgEventProjector
+import io.github.crabzilla.example1.customer.CustomersEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.pgPool
+import io.github.crabzilla.stack.CommandController
 import io.github.crabzilla.stack.CommandControllerOptions
 import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
@@ -28,12 +27,9 @@ import java.util.UUID
 @DisplayName("Projecting to view model synchronously")
 class ProjectingSynchronouslyIT {
 
-  private lateinit var controller: JacksonCommandController<Customer, CustomerCommand, CustomerEvent>
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val options = CommandControllerOptions(pgEventProjector = CustomersPgEventProjector())
-    controller = JacksonCommandController(vertx, pgPool, json, customerComponent, options)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
@@ -41,6 +37,11 @@ class ProjectingSynchronouslyIT {
 
   @Test
   fun `it can project to view model synchronously`(vertx: Vertx, tc: VertxTestContext) {
+
+    val repository = JacksonCommandRepository(json)
+    val options = CommandControllerOptions(eventProjector = CustomersEventProjector())
+    val controller = CommandController(vertx, pgPool, customerComponent, repository, options)
+
     val id = UUID.randomUUID()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
     val metadata1 = CommandMetadata.new(id)

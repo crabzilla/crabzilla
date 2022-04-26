@@ -1,7 +1,7 @@
 package io.github.crabzilla.projection
 
-import io.github.crabzilla.stack.PgEventProjector
+import io.github.crabzilla.stack.EventProjector
 
 interface EventsProjectorProvider {
-  fun create(): PgEventProjector
+  fun create(): EventProjector
 }

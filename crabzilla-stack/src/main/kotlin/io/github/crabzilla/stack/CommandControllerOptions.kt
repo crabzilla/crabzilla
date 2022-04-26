@@ -1,7 +1,7 @@
 package io.github.crabzilla.stack
 
 data class CommandControllerOptions(
-  val pgEventProjector: PgEventProjector? = null,
+  val eventProjector: EventProjector? = null,
   val eventBusTopic: String? = null,
   val eventStreamSize: Int = DEFAULT_EVENT_STREAM_SIZE,
   val pgNotificationInterval: Long = DEFAULT_NOTIFICATION_INTERVAL

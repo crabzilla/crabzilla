@@ -3,10 +3,9 @@ package io.github.crabzilla.command
 import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.TestsFixtures.pgPool
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
-import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.stack.CommandController
 import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -24,22 +23,23 @@ import java.util.UUID
 @DisplayName("Validating commands")
 class ValidatingCommandIT {
 
-  private lateinit var commandController: KotlinxCommandController<Customer, CustomerCommand, CustomerEvent>
-
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = KotlinxCommandController(vertx, pgPool, TestsFixtures.json, customerComponent)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
 
   @Test
-  fun `it can validate before command handler`(tc: VertxTestContext) {
+  fun `it can validate before command handler`(tc: VertxTestContext, vertx: Vertx) {
+
+    val repository = KotlinxCommandRepository(TestsFixtures.json)
+    val controller = CommandController(vertx, pgPool, customerComponent, repository)
+
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "bad customer")
     val metadata = CommandMetadata.new(id)
-    commandController.handle(metadata, cmd)
+    controller.handle(metadata, cmd)
       .onFailure {
         assertEquals(it.message, "[Bad customer!]")
         tc.completeNow()
@@ -50,13 +50,17 @@ class ValidatingCommandIT {
   }
 
   @Test
-  fun `it can validate within command handler`(tc: VertxTestContext) {
+  fun `it can validate within command handler`(tc: VertxTestContext, vertx: Vertx) {
+
+    val repository = KotlinxCommandRepository(TestsFixtures.json)
+    val controller = CommandController(vertx, pgPool, customerComponent, repository)
+
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
     val metadata = CommandMetadata.new(id)
-    commandController.handle(metadata, cmd)
+    controller.handle(metadata, cmd)
       .compose {
-        commandController.handle(
+        controller.handle(
           CommandMetadata.new(id),
           CustomerCommand.ActivateCustomer("because I want it")
         )

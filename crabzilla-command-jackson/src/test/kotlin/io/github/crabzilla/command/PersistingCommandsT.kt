@@ -3,13 +3,12 @@ package io.github.crabzilla.command
 import io.github.crabzilla.Jackson.json
 import io.github.crabzilla.TestRepository.Companion.testRepo
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.pgPool
+import io.github.crabzilla.stack.CommandController
 import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -27,22 +26,23 @@ import java.util.UUID
 @DisplayName("Persisting commands")
 class PersistingCommandsT {
 
-  private lateinit var commandController: JacksonCommandController<Customer, CustomerCommand, CustomerEvent>
-
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = JacksonCommandController(vertx, pgPool, json, customerComponent)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
 
   @Test
-  fun `it can persist 1 command `(tc: VertxTestContext) {
+  fun `it can persist 1 command`(tc: VertxTestContext, vertx: Vertx) {
+
+    val repository = JacksonCommandRepository(json)
+    val controller = CommandController(vertx, pgPool, customerComponent, repository)
+
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata.new(id)
-    commandController.handle(metadata, cmd)
+    controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         testRepo.getAllCommands()
@@ -60,7 +60,10 @@ class PersistingCommandsT {
   }
 
   @Test
-  fun `it can persist 2 commands `(tc: VertxTestContext) {
+  fun `it can persist 2 commands`(tc: VertxTestContext, vertx: Vertx) {
+
+    val repository = JacksonCommandRepository(json)
+    val controller = CommandController(vertx, pgPool, customerComponent, repository)
 
     val id = UUID.randomUUID()
 
@@ -70,10 +73,10 @@ class PersistingCommandsT {
     val cmd2 = DeactivateCustomer("it's not needed anymore")
     val metadata2 = CommandMetadata.new(id)
 
-    commandController.handle(metadata1, cmd1)
+    controller.handle(metadata1, cmd1)
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        commandController.handle(metadata2, cmd2)
+        controller.handle(metadata2, cmd2)
           .onFailure { tc.failNow(it) }
           .onSuccess {
             testRepo.getAllCommands()
