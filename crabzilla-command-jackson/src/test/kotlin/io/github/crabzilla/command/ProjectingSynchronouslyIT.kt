@@ -28,12 +28,12 @@ import java.util.UUID
 @DisplayName("Projecting to view model synchronously")
 class ProjectingSynchronouslyIT {
 
-  private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var controller: JacksonCommandController<Customer, CustomerCommand, CustomerEvent>
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     val options = CommandControllerOptions(pgEventProjector = CustomersPgEventProjector())
-    controller = CommandController(vertx, pgPool, json, customerComponent, options)
+    controller = JacksonCommandController(vertx, pgPool, json, customerComponent, options)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }

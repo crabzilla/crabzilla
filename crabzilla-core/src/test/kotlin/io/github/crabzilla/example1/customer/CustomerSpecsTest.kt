@@ -14,13 +14,12 @@ import org.junit.jupiter.api.Test
 import java.util.UUID
 
 @DisplayName("Customer scenarios")
-class CustomerSpecsTest {
+internal class CustomerSpecsTest {
 
-  val id = UUID.randomUUID()
+  val id: UUID = UUID.randomUUID()
 
   @Test
-  fun `given a new customer`() {
-
+  fun `given a new customer after a command`() {
     TestSpecification(customerComponent)
       .whenCommand(RegisterCustomer(id, "c1"))
       .then {
@@ -33,8 +32,7 @@ class CustomerSpecsTest {
   }
 
   @Test
-  fun `given a registered customer`() {
-    // give an existing customer
+  fun `given a registered customer given events`() {
     val spec = TestSpecification(customerComponent)
       .givenEvents(CustomerRegistered(id, "c1"))
       .whenCommand(ActivateCustomer("bcoz yes"))
@@ -57,7 +55,7 @@ class CustomerSpecsTest {
         assertThat(spec.state())
           .isEqualTo(Customer(id, "c1", false, "bcoz bad customer"))
       }.then {
-        // an it has these 3 events
+        // and it has these 3 events
         assertThat(spec.events())
           .isEqualTo(
             listOf(
@@ -71,7 +69,6 @@ class CustomerSpecsTest {
 
   @Test
   fun `trying to register a bad customer will fail`() {
-
     assertThatExceptionOfType(IllegalArgumentException::class.java)
       .isThrownBy {
         TestSpecification(customerComponent)

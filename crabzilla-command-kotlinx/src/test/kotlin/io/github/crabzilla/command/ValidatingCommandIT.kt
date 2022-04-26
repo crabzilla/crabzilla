@@ -24,11 +24,11 @@ import java.util.UUID
 @DisplayName("Validating commands")
 class ValidatingCommandIT {
 
-  private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var commandController: KotlinxCommandController<Customer, CustomerCommand, CustomerEvent>
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandController(vertx, pgPool, TestsFixtures.json, customerComponent)
+    commandController = KotlinxCommandController(vertx, pgPool, TestsFixtures.json, customerComponent)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }

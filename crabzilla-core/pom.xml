@@ -18,7 +18,6 @@
       <artifactId>kotlinx-serialization-json</artifactId>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
 
 

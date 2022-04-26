@@ -2,7 +2,7 @@ package io.github.crabzilla.projection
 
 import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandController
+import io.github.crabzilla.command.KotlinxCommandController
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomersPgEventProjector
 import io.github.crabzilla.example1.customer.customerConfig
@@ -49,7 +49,7 @@ internal class ProjectingToPostgresIT {
   @Order(1)
   fun `it can project to postgres within an interval`(tc: VertxTestContext, vertx: Vertx) {
     val options = CommandControllerOptions(pgNotificationInterval = 100L)
-    val controller = CommandController.createAndStart(
+    val controller = KotlinxCommandController.createAndStart(
       vertx = vertx,
       pgPool = pgPool,
       json = TestsFixtures.json,
@@ -80,7 +80,7 @@ internal class ProjectingToPostgresIT {
   @Test
   @Order(2)
   fun `it can project to postgres when explicit calling it`(tc: VertxTestContext, vertx: Vertx) {
-    val controller = CommandController(vertx, pgPool, TestsFixtures.json, customerConfig)
+    val controller = KotlinxCommandController(vertx, pgPool, TestsFixtures.json, customerConfig)
     val config = ProjectorConfig(projectionName, projectorStrategy = POSTGRES_SAME_TRANSACTION)
     val pgSubscriber = PgSubscriber.subscriber(vertx, pgPoolOptions)
     val component = EventsProjectorComponent(vertx, pgPool, pgSubscriber, config, CustomersPgEventProjector())

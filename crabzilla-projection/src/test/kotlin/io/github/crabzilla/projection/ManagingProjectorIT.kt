@@ -2,7 +2,7 @@ package io.github.crabzilla.projection
 
 import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandController
+import io.github.crabzilla.command.KotlinxCommandController
 import io.github.crabzilla.dbConfig
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
@@ -32,12 +32,12 @@ class ManagingProjectorIT {
 
   private val projectorEndpoints = ProjectorEndpoints("crabzilla.example1.customer.SimpleProjector")
   private val id: UUID = UUID.randomUUID()
-  private lateinit var controller: CommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var controller: KotlinxCommandController<Customer, CustomerCommand, CustomerEvent>
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    controller = CommandController(vertx, pgPool, TestsFixtures.json, customerConfig, options)
+    controller = KotlinxCommandController(vertx, pgPool, TestsFixtures.json, customerConfig, options)
       .startPgNotification()
     cleanDatabase(pgPool)
       .compose {

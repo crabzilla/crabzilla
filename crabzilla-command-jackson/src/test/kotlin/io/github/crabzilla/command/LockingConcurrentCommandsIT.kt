@@ -35,11 +35,11 @@ class LockingConcurrentCommandsIT {
   companion object {
     private val log = LoggerFactory.getLogger(LockingConcurrentCommandsIT::class.java)
   }
-  private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var commandController: JacksonCommandController<Customer, CustomerCommand, CustomerEvent>
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandController(vertx, pgPool, json, customerComponent)
+    commandController = JacksonCommandController(vertx, pgPool, json, customerComponent)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }

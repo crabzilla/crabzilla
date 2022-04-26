@@ -2,7 +2,7 @@ package io.github.crabzilla.projection
 
 import io.github.crabzilla.TestsFixtures.json
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandController
+import io.github.crabzilla.command.KotlinxCommandController
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.pgConfig
@@ -27,10 +27,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.MethodOrderer
-import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -60,7 +57,7 @@ internal class ProjectingToEventsBusIT {
     val factory = EventsProjectorFactory(pgPool, pgConfig)
     val config = ProjectorConfig(projectionName, projectorStrategy = EVENTBUS_REQUEST_REPLY, interval = 10_000)
     val verticle = factory.createVerticle(config)
-    val controller = CommandController(vertx, pgPool, json, customerConfig)
+    val controller = KotlinxCommandController(vertx, pgPool, json, customerConfig)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -82,7 +79,6 @@ internal class ProjectingToEventsBusIT {
          .let { jo -> val json = jo as JsonObject; json.getLong("eventSequence") }
        msg.reply(eventSequence)
     }
-
     val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
     vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
       .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
@@ -121,7 +117,7 @@ internal class ProjectingToEventsBusIT {
       projectorStrategy = EVENTBUS_REQUEST_REPLY
     )
     val verticle = factory.createVerticle(config)
-    val controller = CommandController(vertx, pgPool, json, customerConfig)
+    val controller = KotlinxCommandController(vertx, pgPool, json, customerConfig)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -143,7 +139,6 @@ internal class ProjectingToEventsBusIT {
         promise.complete()
       }
     }
-
     val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
     vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
       .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
@@ -179,7 +174,7 @@ internal class ProjectingToEventsBusIT {
     val factory = EventsProjectorFactory(pgPool, pgConfig)
     val config = ProjectorConfig(projectionName, projectorStrategy = EVENTBUS_REQUEST_REPLY_BLOCKING, interval = 10_000)
     val verticle = factory.createVerticle(config)
-    val controller = CommandController(vertx, pgPool, json, customerConfig)
+    val controller = KotlinxCommandController(vertx, pgPool, json, customerConfig)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -198,7 +193,6 @@ internal class ProjectingToEventsBusIT {
         .let { jo -> val json = jo as JsonObject; json.getLong("eventSequence") }
       msg.reply(eventSequence)
     }
-
     val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
     vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
       .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
@@ -234,7 +228,7 @@ internal class ProjectingToEventsBusIT {
     val factory = EventsProjectorFactory(pgPool, pgConfig)
     val config = ProjectorConfig(projectionName, projectorStrategy = EVENTBUS_PUBLISH, interval = 10_000)
     val verticle = factory.createVerticle(config)
-    val controller = CommandController(vertx, pgPool, json, customerConfig)
+    val controller = KotlinxCommandController(vertx, pgPool, json, customerConfig)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -252,7 +246,6 @@ internal class ProjectingToEventsBusIT {
         .let { jo -> val json = jo as JsonObject; json.getLong("eventSequence") }
       msg.reply(eventSequence)
     }
-
     val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
     vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
       .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }

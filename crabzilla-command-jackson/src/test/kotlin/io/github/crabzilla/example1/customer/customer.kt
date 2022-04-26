@@ -36,7 +36,6 @@ sealed class CustomerEvent {
 /**
  * Customer commands
  */
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
 @JsonSubTypes(
@@ -57,7 +56,7 @@ sealed class CustomerCommand {
 }
 
 /**
- * Customer aggregate root
+ * Customer state "aggregate root"
  */
 data class Customer(
   val id: UUID,

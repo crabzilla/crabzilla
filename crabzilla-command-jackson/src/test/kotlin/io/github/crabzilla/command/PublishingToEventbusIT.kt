@@ -29,11 +29,11 @@ import java.util.concurrent.atomic.AtomicReference
 @DisplayName("Publishing to eventbus")
 class PublishingToEventbusIT {
 
-  private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var commandController: JacksonCommandController<Customer, CustomerCommand, CustomerEvent>
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandController(vertx, pgPool, json, customerComponent)
+    commandController = JacksonCommandController(vertx, pgPool, json, customerComponent)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
@@ -42,7 +42,7 @@ class PublishingToEventbusIT {
   @Test
   fun `it can publish to eventbus`(vertx: Vertx, tc: VertxTestContext) {
     val options = CommandControllerOptions(eventBusTopic = "MY_TOPIC")
-    val controller = CommandController.createAndStart(vertx, pgPool, json, customerComponent, options)
+    val controller = JacksonCommandController.createAndStart(vertx, pgPool, json, customerComponent, options)
     val jsonMessage = AtomicReference<JsonObject>()
     val latch = CountDownLatch(1)
     vertx.eventBus().consumer<JsonObject>("MY_TOPIC") { msg ->

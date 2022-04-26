@@ -28,12 +28,12 @@ import java.util.UUID
 @DisplayName("Persisting events")
 class PersistingEventsT {
 
-  private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var commandController: JacksonCommandController<Customer, CustomerCommand, CustomerEvent>
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    commandController = CommandController(vertx, pgPool, json, customerComponent)
+    commandController = JacksonCommandController(vertx, pgPool, json, customerComponent)
     testRepo = TestRepository(pgPool)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }

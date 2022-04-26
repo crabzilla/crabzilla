@@ -31,12 +31,12 @@ import java.util.concurrent.atomic.AtomicReference
 @DisplayName("Notifying postgres")
 class NotifyingPostgresIT {
 
-  private lateinit var commandController: CommandController<Customer, CustomerCommand, CustomerEvent>
+  private lateinit var commandController: KotlinxCommandController<Customer, CustomerCommand, CustomerEvent>
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     val options = CommandControllerOptions(pgNotificationInterval = 100L)
-    commandController = CommandController(vertx, pgPool, json, customerComponent, options)
+    commandController = KotlinxCommandController(vertx, pgPool, json, customerComponent, options)
     cleanDatabase(pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
