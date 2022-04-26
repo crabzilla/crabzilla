@@ -22,6 +22,7 @@ import io.vertx.sqlclient.Tuple
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
@@ -93,7 +94,7 @@ internal class ProjectingToEventsBusIT {
       .onSuccess {
         tc.verify {
           vertx.executeBlocking<Void> {
-            assertTrue(latch.await(5, TimeUnit.SECONDS))
+            assertTrue(latch.await(2, TimeUnit.SECONDS))
             log.info("Received {}", message.get().encodePrettily())
             val events = message.get().map { jo ->
               val json = jo as JsonObject
@@ -120,6 +121,7 @@ internal class ProjectingToEventsBusIT {
 
   @Test
   @Order(2)
+  @Disabled // instead, use EVENTBUS_REQUEST_REPLY_BLOCKING
   fun `it can publish to eventbus using request reply with a BLOCKING consumer`(tc: VertxTestContext, vertx: Vertx) {
     val factory = EventsProjectorFactory(pgPool, pgConfig)
     val config = ProjectorConfig(projectionName, initialInterval = 1, interval = 30_000,
@@ -160,7 +162,7 @@ internal class ProjectingToEventsBusIT {
       .onSuccess {
         tc.verify {
           vertx.executeBlocking<Void> {
-            assertTrue(latch.await(5, TimeUnit.SECONDS))
+            assertTrue(latch.await(2, TimeUnit.SECONDS))
             log.info("Received {}", message.get().encodePrettily())
             val events = message.get().map { jo ->
               val json = jo as JsonObject
@@ -224,7 +226,7 @@ internal class ProjectingToEventsBusIT {
       .onSuccess {
         tc.verify {
           vertx.executeBlocking<Void> {
-            assertTrue(latch.await(5, TimeUnit.SECONDS))
+            assertTrue(latch.await(2, TimeUnit.SECONDS))
             log.info("Received {}", message.get().encodePrettily())
             val events = message.get().map { jo ->
               val json = jo as JsonObject
@@ -288,7 +290,7 @@ internal class ProjectingToEventsBusIT {
       .onSuccess {
         tc.verify {
           vertx.executeBlocking<Void> {
-            assertTrue(latch.await(5, TimeUnit.SECONDS))
+            assertTrue(latch.await(2, TimeUnit.SECONDS))
             log.info("Received {}", message.get().encodePrettily())
             val events = message.get().map { jo ->
               val json = jo as JsonObject
