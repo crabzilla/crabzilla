@@ -14,18 +14,12 @@ import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import java.util.UUID
 
-/**
- * Customer events
- */
 sealed class CustomerEvent {
   data class CustomerRegistered(val id: UUID, val name: String) : CustomerEvent()
   data class CustomerActivated(val reason: String) : CustomerEvent()
   data class CustomerDeactivated(val reason: String) : CustomerEvent()
 }
 
-/**
- * Customer commands
- */
 sealed class CustomerCommand {
   data class RegisterCustomer(val customerId: UUID, val name: String) : CustomerCommand()
   data class ActivateCustomer(val reason: String) : CustomerCommand()
@@ -37,16 +31,7 @@ sealed class CustomerCommand {
   ) : CustomerCommand()
 }
 
-/**
- * Customer aggregate root
- */
-data class Customer(
-  val id: UUID,
-  val name: String,
-  val isActive: Boolean = false,
-  val reason: String? = null
-) {
-
+data class Customer(val id: UUID, val name: String, val isActive: Boolean = false, val reason: String? = null) {
   companion object {
     fun create(id: UUID, name: String): List<CustomerEvent> {
       return listOf(CustomerRegistered(id = id, name = name))
@@ -55,19 +40,14 @@ data class Customer(
       return Customer(id = event.id, name = event.name, isActive = false)
     }
   }
-
   fun activate(reason: String): List<CustomerEvent> {
     return listOf(CustomerActivated(reason))
   }
-
   fun deactivate(reason: String): List<CustomerEvent> {
     return listOf(CustomerDeactivated(reason))
   }
 }
 
-/**
- * A command validator. You could use https://github.com/konform-kt/konform
- */
 val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
   when (command) {
     is RegisterCustomer -> if (command.name == "bad customer") listOf("Bad customer!") else listOf()
@@ -77,9 +57,6 @@ val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
   }
 }
 
-/**
- * This function will apply an event to customer state
- */
 val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event ->
   when (event) {
     is CustomerRegistered -> Customer.fromEvent(event)
@@ -88,14 +65,8 @@ val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event 
   }
 }
 
-/**
- * Customer errors
- */
 class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id already exists")
 
-/**
- * Customer command handler
- */
 class CustomerCommandHandler :
   CommandHandler<Customer, CustomerCommand, CustomerEvent>(customerEventHandler) {
 

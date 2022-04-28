@@ -8,8 +8,8 @@ import io.vertx.core.json.JsonObject
 class JacksonJsonObjectSerDer<S: Any, C: Any, E: Any>(
   private val json: ObjectMapper,
   private val commandComponent: CommandComponent<S, C, E>) : JsonObjectSerDer<S, C, E> {
-  override fun eventFromJson(eventAsJson: String): E {
-    return json.readValue(eventAsJson, commandComponent.eventClass.java)
+  override fun eventFromJson(json: JsonObject): E {
+    return this.json.readValue(json.toString(), commandComponent.eventClass.java)
   }
   override fun eventToJsonObject(event: E): JsonObject {
     return JsonObject(json.writeValueAsString(event))

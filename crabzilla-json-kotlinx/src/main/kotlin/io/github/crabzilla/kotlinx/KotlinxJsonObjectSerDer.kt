@@ -12,8 +12,8 @@ class KotlinxJsonObjectSerDer<S: Any, C : Any, E : Any>(
 ): JsonObjectSerDer<S, C, E> {
   private val eventSerDer = PolymorphicSerializer(commandComponent.eventClass)
   private val commandSerDer = PolymorphicSerializer(commandComponent.commandClass)
-  override fun eventFromJson(eventAsJson: String): E {
-    return json.decodeFromString(eventSerDer, eventAsJson)
+  override fun eventFromJson(json: JsonObject): E {
+    return this.json.decodeFromString(eventSerDer, json.toString())
   }
   override fun eventToJsonObject(event: E): JsonObject {
     return JsonObject(json.encodeToString(eventSerDer, event))

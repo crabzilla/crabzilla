@@ -127,7 +127,7 @@ class CommandController<S : Any, C : Any, E : Any>(
           stream.handler { row: Row ->
             val eventAsJson = JsonObject(row.getValue("event_payload").toString())
             eventAsJson.put("type", row.getString("event_type"))
-            val asEvent = serDer.eventFromJson(eventAsJson.toString())
+            val asEvent = serDer.eventFromJson(eventAsJson)
             latestVersion = row.getInteger("version")
             log.debug("Found event {} version {}", asEvent, latestVersion)
             state = commandComponent.eventHandler.handleEvent(state, asEvent)

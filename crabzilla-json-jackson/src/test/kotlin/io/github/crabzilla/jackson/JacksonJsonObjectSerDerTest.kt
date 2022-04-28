@@ -22,7 +22,7 @@ internal class JacksonJsonObjectSerDerTest {
       .put("type", "CustomerRegistered")
       .put("id", id)
       .put("name", "c1")
-    assertThat(serDer.eventFromJson(json.toString())).isEqualTo(CustomerRegistered(id, "c1"))
+    assertThat(serDer.eventFromJson(json)).isEqualTo(CustomerRegistered(id, "c1"))
   }
 
   @Test
