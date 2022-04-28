@@ -72,10 +72,10 @@
 
   <modules>
     <module>crabzilla-core</module>
-    <module>crabzilla-stack</module>
+    <module>crabzilla-command</module>
     <module>crabzilla-json-kotlinx</module>
     <module>crabzilla-json-jackson</module>
-    <module>crabzilla-projection</module>
+    <module>crabzilla-stack</module>
     <module>coverage-report</module>
   </modules>
 
@@ -93,7 +93,7 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-stack</artifactId>
+        <artifactId>crabzilla-command</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -111,7 +111,7 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-projection</artifactId>
+        <artifactId>crabzilla-stack</artifactId>
         <version>${project.version}</version>
       </dependency>
 

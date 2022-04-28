@@ -67,24 +67,34 @@ val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event 
 
 class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id already exists")
 
-class CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, CustomerEvent>(customerEventHandler) {
-  override fun handleCommand(command: CustomerCommand, state: Customer?): CommandSession<Customer, CustomerEvent> {
+class CustomerCommandHandler :
+  CommandHandler<Customer, CustomerCommand, CustomerEvent>(customerEventHandler) {
+
+  override fun handleCommand(
+    command: CustomerCommand,
+    state: Customer?
+  ): CommandSession<Customer, CustomerEvent> {
+
     return when (command) {
+
       is RegisterCustomer -> {
         if (state != null) throw CustomerAlreadyExists(command.customerId)
         withNew(Customer.create(id = command.customerId, name = command.name))
       }
+
       is RegisterAndActivateCustomer -> {
         if (state != null) throw CustomerAlreadyExists(command.customerId)
         withNew(Customer.create(id = command.customerId, name = command.name))
           .execute { it.activate(command.reason) }
       }
+
       is ActivateCustomer -> {
         if (command.reason == "because I want it")
           throw IllegalArgumentException("Reason cannot be = [${command.reason}], please be polite.")
         with(state)
           .execute { it.activate(command.reason) }
       }
+
       is DeactivateCustomer -> {
         with(state)
           .execute { it.deactivate(command.reason) }

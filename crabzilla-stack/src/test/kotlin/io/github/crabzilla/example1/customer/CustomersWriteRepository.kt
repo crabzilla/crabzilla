@@ -6,7 +6,7 @@ import io.vertx.sqlclient.Tuple
 import java.util.UUID
 
 /**
- * Read model repository
+ * Read model jsonSerDer
  */
 object CustomersWriteRepository {
 

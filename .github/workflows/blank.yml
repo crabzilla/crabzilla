@@ -39,7 +39,7 @@ jobs:
         run: docker-compose up -d
 
       - name: Build and test
-        run: mvn clean install
+        run: mvn clean verify
 
       - name: Upload reports to codecov
         run: bash <(curl -s https://codecov.io/bash)

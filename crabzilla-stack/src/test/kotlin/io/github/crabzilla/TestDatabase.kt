@@ -1,8 +1,10 @@
 package io.github.crabzilla
 
+import io.github.crabzilla.stack.PgConfig
 import io.github.crabzilla.stack.PgConnectOptionsFactory
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
+import io.vertx.pgclient.PgConnectOptions
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.PoolOptions
 import io.vertx.sqlclient.SqlClient
@@ -14,8 +16,8 @@ val dbConfig: JsonObject =
     .put("username", "user1")
     .put("password", "pwd1")
 
-val pgConfig = PgConnectOptionsFactory.from(dbConfig)
-val pgPoolOptions = PgConnectOptionsFactory.from(pgConfig)
+val pgConfig: PgConfig = PgConnectOptionsFactory.from(dbConfig)
+val pgPoolOptions: PgConnectOptions = PgConnectOptionsFactory.from(pgConfig)
 val pgPool: PgPool = PgPool.pool(pgPoolOptions, PoolOptions())
 
 fun cleanDatabase(sqlClient: SqlClient): Future<Void> {

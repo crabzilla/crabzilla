@@ -113,7 +113,7 @@ class CommandController<S : Any, C : Any, E : Any>(
           }
         }
     }
-    fun getSnapshot(conn: SqlConnection, id: UUID, eventStreamSize: Int): Future<Snapshot<S>?> {
+    fun getSnapshot(conn: SqlConnection, id: UUID): Future<Snapshot<S>?> {
       val promise = Promise.promise<Snapshot<S>?>()
       return conn
         .prepare(GET_EVENTS_BY_ID)
@@ -122,11 +122,10 @@ class CommandController<S : Any, C : Any, E : Any>(
           var latestVersion = 0
           var error: Throwable? = null
           // Fetch 1000 rows at a time
-          val stream: RowStream<Row> = pq.createStream(eventStreamSize, Tuple.of(id))
+          val stream: RowStream<Row> = pq.createStream( options.eventStreamSize, Tuple.of(id))
           // Use the stream
           stream.handler { row: Row ->
             val eventAsJson = JsonObject(row.getValue("event_payload").toString())
-            eventAsJson.put("type", row.getString("event_type"))
             val asEvent = serDer.eventFromJson(eventAsJson)
             latestVersion = row.getInteger("version")
             log.debug("Found event {} version {}", asEvent, latestVersion)
@@ -226,7 +225,7 @@ class CommandController<S : Any, C : Any, E : Any>(
         lock(conn, metadata.stateId.hashCode(), metadata)
           .compose {
             log.debug("State locked")
-            getSnapshot(conn, metadata.stateId, options.eventStreamSize)
+            getSnapshot(conn, metadata.stateId)
           }.compose { snapshot ->
             log.debug("Got snapshot {}", snapshot)
             Future.succeededFuture(Pair(snapshot, commandHandler.handleCommand(command, snapshot?.state)))
