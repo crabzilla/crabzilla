@@ -1,7 +1,7 @@
 package io.github.crabzilla.projection.internal
 
-import io.github.crabzilla.stack.EventMetadata
-import io.github.crabzilla.stack.EventRecord
+import io.github.crabzilla.EventMetadata
+import io.github.crabzilla.EventRecord
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row

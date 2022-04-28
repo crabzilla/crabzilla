@@ -1,7 +1,5 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.stack.PgConfig
-import io.github.crabzilla.stack.PgConnectOptionsFactory
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions

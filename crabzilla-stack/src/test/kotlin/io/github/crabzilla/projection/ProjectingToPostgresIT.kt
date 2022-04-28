@@ -2,6 +2,9 @@ package io.github.crabzilla.projection
 
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
+import io.github.crabzilla.command.CommandController
+import io.github.crabzilla.command.CommandControllerOptions
+import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomersEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
@@ -9,9 +12,6 @@ import io.github.crabzilla.pgPool
 import io.github.crabzilla.pgPoolOptions
 import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTION
 import io.github.crabzilla.projection.internal.EventsProjectorComponent
-import io.github.crabzilla.stack.CommandController
-import io.github.crabzilla.stack.CommandControllerOptions
-import io.github.crabzilla.stack.CommandMetadata
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension

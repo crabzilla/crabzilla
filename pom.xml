@@ -72,7 +72,6 @@
 
   <modules>
     <module>crabzilla-core</module>
-    <module>crabzilla-command</module>
     <module>crabzilla-json-kotlinx</module>
     <module>crabzilla-json-jackson</module>
     <module>crabzilla-stack</module>
@@ -88,12 +87,6 @@
       <dependency>
         <groupId>io.github.crabzilla</groupId>
         <artifactId>crabzilla-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-command</artifactId>
         <version>${project.version}</version>
       </dependency>
 

@@ -1,17 +1,17 @@
 package io.github.crabzilla.projection.internal
 
-import io.github.crabzilla.projection.EventsProjectorProvider
+import io.github.crabzilla.projection.EventProjectorProvider
 import java.nio.file.ProviderNotFoundException
 import java.util.ServiceLoader
 
 internal class EventProjectorProviderFactory {
   // provider by name
-  fun create(providerName: String): EventsProjectorProvider {
-    val loader: ServiceLoader<EventsProjectorProvider> =
-      ServiceLoader.load(EventsProjectorProvider::class.java)
-    val it: Iterator<EventsProjectorProvider> = loader.iterator()
+  fun create(providerName: String): EventProjectorProvider {
+    val loader: ServiceLoader<EventProjectorProvider> =
+      ServiceLoader.load(EventProjectorProvider::class.java)
+    val it: Iterator<EventProjectorProvider> = loader.iterator()
     while (it.hasNext()) {
-      val provider: EventsProjectorProvider = it.next()
+      val provider: EventProjectorProvider = it.next()
       if (providerName == provider::class.java.name) {
         return provider
       }

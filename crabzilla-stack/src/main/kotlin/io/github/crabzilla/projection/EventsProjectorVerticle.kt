@@ -1,9 +1,9 @@
 package io.github.crabzilla.projection
 
+import io.github.crabzilla.EventProjector
 import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTION
 import io.github.crabzilla.projection.internal.EventProjectorProviderFactory
 import io.github.crabzilla.projection.internal.EventsProjectorComponent
-import io.github.crabzilla.stack.EventProjector
 import io.vertx.core.Promise
 
 class EventsProjectorVerticle : PgClientAbstractVerticle() {

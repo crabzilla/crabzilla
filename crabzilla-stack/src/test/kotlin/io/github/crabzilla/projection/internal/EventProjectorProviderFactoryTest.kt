@@ -6,7 +6,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.nio.file.ProviderNotFoundException
 
-@DisplayName("Instantiating EventsProjectorProvider")
+@DisplayName("Instantiating EventProjectorProvider")
 internal class EventProjectorProviderFactoryTest {
 
   @Test

@@ -1,7 +1,7 @@
 package io.github.crabzilla.kotlinx
 
+import io.github.crabzilla.JsonObjectSerDer
 import io.github.crabzilla.core.CommandComponent
-import io.github.crabzilla.stack.JsonObjectSerDer
 import io.vertx.core.json.JsonObject
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
@@ -15,10 +15,10 @@ class KotlinxJsonObjectSerDer<S: Any, C : Any, E : Any>(
   override fun eventFromJson(json: JsonObject): E {
     return this.json.decodeFromString(eventSerDer, json.toString())
   }
-  override fun eventToJsonObject(event: E): JsonObject {
+  override fun eventToJson(event: E): JsonObject {
     return JsonObject(json.encodeToString(eventSerDer, event))
   }
-  override fun commandToJsonObject(command: C) : JsonObject {
+  override fun commandToJson(command: C) : JsonObject {
     return JsonObject(json.encodeToString(commandSerDer, command))
   }
 }

@@ -1,7 +1,10 @@
 package io.github.crabzilla.projection
 
+import io.github.crabzilla.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
+import io.github.crabzilla.command.CommandController
+import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.pgConfig
@@ -9,9 +12,6 @@ import io.github.crabzilla.pgPool
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_PUBLISH
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
-import io.github.crabzilla.stack.CommandController
-import io.github.crabzilla.stack.CommandMetadata
-import io.github.crabzilla.stack.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future
 import io.vertx.core.Promise

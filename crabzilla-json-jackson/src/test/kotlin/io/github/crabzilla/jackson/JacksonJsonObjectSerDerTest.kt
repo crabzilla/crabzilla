@@ -28,12 +28,12 @@ internal class JacksonJsonObjectSerDerTest {
   @Test
   fun eventToJsonObject() {
     val event = CustomerRegistered(UUID.randomUUID(), "c1")
-    assertThat(serDer.eventToJsonObject(event).getString("type")).isEqualTo("CustomerRegistered")
+    assertThat(serDer.eventToJson(event).getString("type")).isEqualTo("CustomerRegistered")
   }
 
   @Test
   fun commandToJsonObject() {
     val command = RegisterCustomer(UUID.randomUUID(), "c1")
-    assertThat(serDer.commandToJsonObject(command).getString("type")).isEqualTo("RegisterCustomer")
+    assertThat(serDer.commandToJson(command).getString("type")).isEqualTo("RegisterCustomer")
   }
 }

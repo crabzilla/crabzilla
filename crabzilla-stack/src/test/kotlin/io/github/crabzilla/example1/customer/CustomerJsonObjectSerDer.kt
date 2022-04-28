@@ -1,5 +1,6 @@
 package io.github.crabzilla.example1.customer
 
+import io.github.crabzilla.JsonObjectSerDer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
@@ -7,7 +8,6 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.stack.JsonObjectSerDer
 import io.vertx.core.json.JsonObject
 import java.util.UUID
 
@@ -22,7 +22,7 @@ class CustomerJsonObjectSerDer: JsonObjectSerDer<Customer, CustomerCommand, Cust
     }
   }
 
-  override fun eventToJsonObject(event: CustomerEvent): JsonObject {
+  override fun eventToJson(event: CustomerEvent): JsonObject {
     return when (event) {
       is CustomerRegistered -> JsonObject()
         .put("type", event::class.simpleName)
@@ -38,7 +38,7 @@ class CustomerJsonObjectSerDer: JsonObjectSerDer<Customer, CustomerCommand, Cust
     }
   }
 
-  override fun commandToJsonObject(command: CustomerCommand): JsonObject {
+  override fun commandToJson(command: CustomerCommand): JsonObject {
     return when (command) {
       is RegisterCustomer -> JsonObject()
         .put("type", command::class.simpleName)

@@ -1,9 +1,9 @@
 package io.github.crabzilla.projection
 
+import io.github.crabzilla.EventProjector
+import io.github.crabzilla.PgConfig
+import io.github.crabzilla.PgConnectOptionsFactory
 import io.github.crabzilla.projection.internal.EventsProjectorComponent
-import io.github.crabzilla.stack.EventProjector
-import io.github.crabzilla.stack.PgConfig
-import io.github.crabzilla.stack.PgConnectOptionsFactory
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.pgclient.PgConnectOptions

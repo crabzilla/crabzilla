@@ -1,15 +1,15 @@
 package io.github.crabzilla.projection.internal
 
+import io.github.crabzilla.CrabzillaConstants
+import io.github.crabzilla.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
+import io.github.crabzilla.EventProjector
+import io.github.crabzilla.EventRecord
 import io.github.crabzilla.projection.ProjectorConfig
 import io.github.crabzilla.projection.ProjectorEndpoints
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_PUBLISH
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
 import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTION
-import io.github.crabzilla.stack.CrabzillaConstants
-import io.github.crabzilla.stack.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
-import io.github.crabzilla.stack.EventProjector
-import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler

@@ -1,9 +1,9 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.projection.EventsProjectorProvider
-import io.github.crabzilla.stack.EventProjector
+import io.github.crabzilla.EventProjector
+import io.github.crabzilla.projection.EventProjectorProvider
 
-class CustomersProjectorFactory : EventsProjectorProvider {
+class CustomersProjectorFactory : EventProjectorProvider {
   override fun create(): EventProjector {
     return CustomersEventProjector()
   }
