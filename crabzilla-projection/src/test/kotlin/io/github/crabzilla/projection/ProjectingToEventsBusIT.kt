@@ -2,9 +2,9 @@ package io.github.crabzilla.projection
 
 import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.KotlinxCommandRepository
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.kotlinx.KotlinxJsonObjectSerDer
 import io.github.crabzilla.pgConfig
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_PUBLISH
@@ -59,8 +59,8 @@ internal class ProjectingToEventsBusIT {
     val config = ProjectorConfig(projectionName, projectorStrategy = EVENTBUS_REQUEST_REPLY, interval = 10_000)
     val verticle = factory.createVerticle(config)
 
-    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
-    val controller = CommandController(vertx, pgPool, customerComponent, repository)
+    val jsonSerDer = KotlinxJsonObjectSerDer(TestsFixtures.json, customerComponent)
+    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer)
 
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
@@ -121,8 +121,8 @@ internal class ProjectingToEventsBusIT {
       projectorStrategy = EVENTBUS_REQUEST_REPLY
     )
     val verticle = factory.createVerticle(config)
-    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
-    val controller = CommandController(vertx, pgPool, customerComponent, repository)
+    val jsonSerDer = KotlinxJsonObjectSerDer(TestsFixtures.json, customerComponent)
+    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -179,8 +179,8 @@ internal class ProjectingToEventsBusIT {
     val factory = EventsProjectorFactory(pgPool, pgConfig)
     val config = ProjectorConfig(projectionName, projectorStrategy = EVENTBUS_REQUEST_REPLY_BLOCKING, interval = 10_000)
     val verticle = factory.createVerticle(config)
-    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
-    val controller = CommandController(vertx, pgPool, customerComponent, repository)
+    val jsonSerDer = KotlinxJsonObjectSerDer(TestsFixtures.json, customerComponent)
+    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -234,8 +234,8 @@ internal class ProjectingToEventsBusIT {
     val factory = EventsProjectorFactory(pgPool, pgConfig)
     val config = ProjectorConfig(projectionName, projectorStrategy = EVENTBUS_PUBLISH, interval = 10_000)
     val verticle = factory.createVerticle(config)
-    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
-    val controller = CommandController(vertx, pgPool, customerComponent, repository)
+    val jsonSerDer = KotlinxJsonObjectSerDer(TestsFixtures.json, customerComponent)
+    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false

@@ -2,10 +2,10 @@ package io.github.crabzilla.projection
 
 import io.github.crabzilla.TestsFixtures
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.KotlinxCommandRepository
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomersEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.kotlinx.KotlinxJsonObjectSerDer
 import io.github.crabzilla.pgPool
 import io.github.crabzilla.pgPoolOptions
 import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTION
@@ -49,9 +49,9 @@ internal class ProjectingToPostgresIT {
   @Test
   @Order(1)
   fun `it can project to postgres within an interval`(tc: VertxTestContext, vertx: Vertx) {
-    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
+    val jsonSerDer = KotlinxJsonObjectSerDer(TestsFixtures.json, customerComponent)
     val options = CommandControllerOptions(pgNotificationInterval = 100L)
-    val controller = CommandController(vertx, pgPool, customerComponent, repository, options)
+    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
 
     val config = ProjectorConfig(projectionName, initialInterval = 10, interval = 100,
       projectorStrategy = POSTGRES_SAME_TRANSACTION)
@@ -78,8 +78,8 @@ internal class ProjectingToPostgresIT {
   @Order(2)
   fun `it can project to postgres when explicit calling it`(tc: VertxTestContext, vertx: Vertx) {
 
-    val repository = KotlinxCommandRepository(TestsFixtures.json, customerComponent)
-    val controller = CommandController(vertx, pgPool, customerComponent, repository)
+    val jsonSerDer = KotlinxJsonObjectSerDer(TestsFixtures.json, customerComponent)
+    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer)
 
     val config = ProjectorConfig(projectionName, projectorStrategy = POSTGRES_SAME_TRANSACTION)
     val pgSubscriber = PgSubscriber.subscriber(vertx, pgPoolOptions)

@@ -121,24 +121,24 @@ mvn clean install
 </dependency>
 ----
 
-. Add `crabzilla-command-kotlinx` to consistently append your events as JSON to Postgres using Kotlin Serialization.
+. Add `crabzilla-json-kotlinx` to consistently append your events as JSON to Postgres using Kotlin Serialization.
 
 [source,xml]
 ----
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-command-kotlinx</artifactId>
+    <artifactId>crabzilla-json-kotlinx</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ----
 
-. Add `crabzilla-command-jackson` to consistently append your events as JSON to Postgres using Jackson Kotlin module.
+. Add `crabzilla-json-jackson` to consistently append your events as JSON to Postgres using Jackson Kotlin module.
 
 [source,xml]
 ----
 <dependency>
     <groupId>com.github.crabzilla.crabzilla</groupId>
-    <artifactId>crabzilla-command-jackson</artifactId>
+    <artifactId>crabzilla-json-jackson</artifactId>
     <version>see latest jitpack version</version>
 </dependency>
 ----

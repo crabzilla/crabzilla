@@ -26,12 +26,12 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-command-kotlinx</artifactId>
+      <artifactId>crabzilla-json-kotlinx</artifactId>
     </dependency>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-command-jackson</artifactId>
+      <artifactId>crabzilla-json-jackson</artifactId>
     </dependency>
 
     <dependency>

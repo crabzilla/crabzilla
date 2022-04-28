@@ -3,9 +3,14 @@ package io.github.crabzilla.stack
 import io.github.crabzilla.core.CommandComponent
 import io.github.crabzilla.core.CommandHandler
 import io.vertx.core.Future
+import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
+import io.vertx.sqlclient.PreparedStatement
+import io.vertx.sqlclient.Row
+import io.vertx.sqlclient.RowSet
+import io.vertx.sqlclient.RowStream
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
@@ -16,7 +21,7 @@ class CommandController<S : Any, C : Any, E : Any>(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val commandComponent: CommandComponent<S, C, E>,
-  private val repository: CommandRepository<S, C, E>,
+  private val serDer: JsonObjectSerDer<S, C, E>,
   private val options: CommandControllerOptions = CommandControllerOptions()
 ) {
 
@@ -25,6 +30,24 @@ class CommandController<S : Any, C : Any, E : Any>(
     const val SQL_LOCK =
       """ SELECT pg_try_advisory_xact_lock($1, $2) as locked
       """
+    const val GET_EVENTS_BY_ID =
+      """
+      SELECT event_type, event_payload, version
+      FROM events
+      WHERE state_id = $1
+      ORDER BY sequence
+    """
+    const val SQL_APPEND_CMD =
+      """ INSERT INTO commands (cmd_id, cmd_payload)
+          VALUES ($1, $2)"""
+    const val SQL_APPEND_EVENT =
+      """ INSERT 
+            INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
+    const val correlationIdIndex = 2
+    const val eventPayloadIndex = 5
+    const val currentVersionIndex = 6
+    const val eventIdIndex = 7
   }
 
   private val stateTypeName = commandComponent.stateClassName()
@@ -90,15 +113,99 @@ class CommandController<S : Any, C : Any, E : Any>(
           }
         }
     }
-    fun getSnapshot(conn: SqlConnection, id: UUID): Future<Snapshot<S>?> {
-      return repository.getSnapshot(conn, id)
+    fun getSnapshot(conn: SqlConnection, id: UUID, eventStreamSize: Int): Future<Snapshot<S>?> {
+      val promise = Promise.promise<Snapshot<S>?>()
+      return conn
+        .prepare(GET_EVENTS_BY_ID)
+        .compose { pq: PreparedStatement ->
+          var state: S? = null
+          var latestVersion = 0
+          var error: Throwable? = null
+          // Fetch 1000 rows at a time
+          val stream: RowStream<Row> = pq.createStream(eventStreamSize, Tuple.of(id))
+          // Use the stream
+          stream.handler { row: Row ->
+            val eventAsJson = JsonObject(row.getValue("event_payload").toString())
+            eventAsJson.put("type", row.getString("event_type"))
+            val asEvent = serDer.eventFromJson(eventAsJson.toString())
+            latestVersion = row.getInteger("version")
+            log.debug("Found event {} version {}", asEvent, latestVersion)
+            state = commandComponent.eventHandler.handleEvent(state, asEvent)
+            log.debug("State {}", state)
+          }
+          stream.exceptionHandler { error = it }
+          stream.endHandler {
+            stream.close()
+            log.debug("End of stream")
+            if (error != null) {
+              promise.fail(error)
+            } else {
+              if (latestVersion == 0) {
+                promise.complete(null)
+              } else {
+                promise.complete(Snapshot(state!!, latestVersion))
+              }
+            }
+          }
+          promise.future()
+        }
     }
     fun appendCommand(conn: SqlConnection, command: C, metadata: CommandMetadata): Future<Void> {
-      return repository.appendCommand(conn, command, metadata)
+      val cmdAsJson = serDer.commandToJsonObject(command)
+      log.debug("Will append command {} as {}", command, cmdAsJson)
+      val params = Tuple.of(
+        metadata.commandId,
+        cmdAsJson
+      )
+      return conn.preparedQuery(SQL_APPEND_CMD)
+        .execute(params)
+        .mapEmpty()
     }
-    fun appendEvents(conn: SqlConnection, initialVersion: Int, events: List<E>, metadata: CommandMetadata)
-            : Future<CommandSideEffect> {
-      return repository.appendEvents(conn, initialVersion, events, metadata)
+    fun appendEvents(
+      conn: SqlConnection,
+      initialVersion: Int,
+      events: List<E>,
+      metadata: CommandMetadata
+    ): Future<CommandSideEffect> {
+      var resultingVersion = initialVersion
+      val eventIds = events.map { UUID.randomUUID() }
+      val tuples: List<Tuple> = events.mapIndexed { index, event ->
+        val causationId: UUID = if (index == 0) metadata.causationId else eventIds[(index - 1)]
+        val eventAsJsonObject = serDer.eventToJsonObject(event)
+        val eventId = eventIds[index]
+        val type = eventAsJsonObject.getString("type")
+        Tuple.of(
+          type,
+          causationId,
+          metadata.correlationId,
+          commandComponent.stateClassName(),
+          metadata.stateId,
+          eventAsJsonObject,
+          ++resultingVersion,
+          eventId
+        )
+      }
+      val appendedEventList = mutableListOf<EventRecord>()
+      return conn.preparedQuery(SQL_APPEND_EVENT)
+        .executeBatch(tuples)
+        .onSuccess { rowSet ->
+          var rs: RowSet<Row>? = rowSet
+          tuples.mapIndexed { index, _ ->
+            val sequence = rs!!.iterator().next().getLong("sequence")
+            val correlationId = tuples[index].getUUID(correlationIdIndex)
+            val currentVersion = tuples[index].getInteger(currentVersionIndex)
+            val eventId = tuples[index].getUUID(eventIdIndex)
+            val eventPayload = tuples[index].getJsonObject(eventPayloadIndex)
+            val eventMetadata = EventMetadata(
+              stateType = commandComponent.stateClassName(), stateId = metadata.stateId, eventId = eventId,
+              correlationId = correlationId, causationId = eventId, eventSequence = sequence, version = currentVersion
+            )
+            appendedEventList.add(EventRecord(eventMetadata, eventPayload))
+            rs = rs!!.next()
+          }
+        }.map {
+          CommandSideEffect(appendedEventList)
+        }
     }
     fun projectEvents(conn: SqlConnection, appendedEvents: List<EventRecord>, projector: EventProjector)
             : Future<Void> {
@@ -119,7 +226,7 @@ class CommandController<S : Any, C : Any, E : Any>(
         lock(conn, metadata.stateId.hashCode(), metadata)
           .compose {
             log.debug("State locked")
-            getSnapshot(conn, metadata.stateId)
+            getSnapshot(conn, metadata.stateId, options.eventStreamSize)
           }.compose { snapshot ->
             log.debug("Got snapshot {}", snapshot)
             Future.succeededFuture(Pair(snapshot, commandHandler.handleCommand(command, snapshot?.state)))
@@ -154,10 +261,12 @@ class CommandController<S : Any, C : Any, E : Any>(
                 .put("events", it.toJsonArray())
                 .put("timestamp", Instant.now())
               vertx.eventBus().publish(options.eventBusTopic, message)
-              log.debug("Published to ${message.encodePrettily()} to topic ${options.eventBusTopic}")
+              log.debug("Published to topic ${options.eventBusTopic} the message ${message.encodePrettily()}")
             }
             notificationsByStateType.add(stateTypeName)
           }
       }
   }
+
+
 }
