@@ -1,15 +1,15 @@
-package io.github.crabzilla.projection.internal
+package io.github.crabzilla.projection
 
 import io.github.crabzilla.CrabzillaConstants
 import io.github.crabzilla.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.EventProjector
 import io.github.crabzilla.EventRecord
-import io.github.crabzilla.projection.ProjectorConfig
-import io.github.crabzilla.projection.ProjectorEndpoints
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_PUBLISH
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
 import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTION
+import io.github.crabzilla.projection.internal.EventsScanner
+import io.github.crabzilla.projection.internal.QuerySpecification
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler
@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-internal class EventsProjectorComponent(
+class EventsProjectorComponent(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val subscriber: PgSubscriber,
@@ -135,9 +135,12 @@ internal class EventsProjectorComponent(
       .compose { startProjection() }
   }
 
+  // TODO this really does not stop...
   fun stop() {
     log.info("Projection [{}] stopped at offset [{}]", options.projectionName, currentOffset.get())
   }
+  // TODO status, work, pause and resume methods
+  
 
   private fun handler(): Handler<Long?> {
     return Handler<Long?> {
@@ -158,7 +161,6 @@ internal class EventsProjectorComponent(
       log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
       val promise = Promise.promise<Long>()
       vertx.eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
-        log.info("Received ${it.result().body()}")
         if (it.failed()) {
           log.error("Failed", it.cause())
           promise.fail(it.cause())

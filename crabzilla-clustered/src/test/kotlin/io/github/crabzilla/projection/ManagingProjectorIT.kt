@@ -5,12 +5,10 @@ import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.command.CommandControllerOptions
 import io.github.crabzilla.command.CommandMetadata
+import io.github.crabzilla.dbConfig
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.customer.CustomersEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.pgConfig
 import io.github.crabzilla.pgPool
-import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTION
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
@@ -34,12 +32,9 @@ class ManagingProjectorIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val factory = EventsProjectorFactory(pgPool, pgConfig)
-    val config = ProjectorConfig(projectorEndpoints.name, projectorStrategy = POSTGRES_SAME_TRANSACTION)
-    val verticle = factory.createVerticle(config, CustomersEventProjector())
     cleanDatabase(pgPool)
       .compose {
-        vertx.deployVerticle(verticle)
+        vertx.deployProjector(dbConfig, "service:crabzilla.example1.customer.SimpleProjector")
       }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
