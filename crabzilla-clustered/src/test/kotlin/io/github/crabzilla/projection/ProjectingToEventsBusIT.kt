@@ -86,7 +86,6 @@ internal class ProjectingToEventsBusIT {
       .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
-      .compose { controller.flushPendingPgNotifications() }
       .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -146,7 +145,6 @@ internal class ProjectingToEventsBusIT {
       .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
-      .compose { controller.flushPendingPgNotifications() }
       .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -200,7 +198,6 @@ internal class ProjectingToEventsBusIT {
       .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
-      .compose { controller.flushPendingPgNotifications() }
       .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -253,7 +250,6 @@ internal class ProjectingToEventsBusIT {
       .compose { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
-      .compose { controller.flushPendingPgNotifications() }
       .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {

@@ -57,10 +57,8 @@ class NotifyingPostgresIT {
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata.new(id)
     controller.handle(metadata, cmd)
-      .compose { controller.flushPendingPgNotifications() }
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        controller.startPgNotification()
         tc.verify {
           latch.await(2, TimeUnit.SECONDS)
           assertThat(stateTypeMsg.get()).isEqualTo("Customer")

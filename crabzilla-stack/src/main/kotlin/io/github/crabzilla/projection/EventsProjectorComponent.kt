@@ -140,7 +140,7 @@ class EventsProjectorComponent(
     log.info("Projection [{}] stopped at offset [{}]", options.projectionName, currentOffset.get())
   }
   // TODO status, work, pause and resume methods
-  
+
 
   private fun handler(): Handler<Long?> {
     return Handler<Long?> {

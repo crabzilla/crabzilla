@@ -68,7 +68,7 @@ class ManagingProjectorIT {
   @Order(2)
   fun `after pause then a command`(tc: VertxTestContext, vertx: Vertx) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options).startPgNotification()
+    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
 
     vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
       .compose {
@@ -95,7 +95,7 @@ class ManagingProjectorIT {
   @Order(3)
   fun `after a command then work the currentOffset is 1`(tc: VertxTestContext, vertx: Vertx) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options).startPgNotification()
+    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
 
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
@@ -123,7 +123,7 @@ class ManagingProjectorIT {
   @Order(4)
   fun `after a command then work, the projection is done`(tc: VertxTestContext, vertx: Vertx) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options).startPgNotification()
+    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
 
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
@@ -147,8 +147,7 @@ class ManagingProjectorIT {
     vertx: Vertx
   ) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options).startPgNotification()
-
+    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
@@ -181,7 +180,7 @@ class ManagingProjectorIT {
     vertx: Vertx
   ) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options).startPgNotification()
+    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
 
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
