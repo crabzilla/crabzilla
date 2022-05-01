@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.UUID
 
-class CommandController<S : Any, C : Any, E : Any>(
+open class CommandController<S : Any, C : Any, E : Any>(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val commandComponent: CommandComponent<S, C, E>,
@@ -81,17 +81,17 @@ class CommandController<S : Any, C : Any, E : Any>(
     }
   }
 
-  fun handle(metadata: CommandMetadata, command: C): Future<CommandSideEffect> {
+  open fun handle(metadata: CommandMetadata, command: C): Future<CommandSideEffect> {
     return pgPool.withTransaction { conn: SqlConnection ->
       handle(conn, metadata, command)
     }
   }
 
-  fun compose(f: (SqlConnection) -> Future<CommandSideEffect>): Future<CommandSideEffect> {
+  open fun compose(f: (SqlConnection) -> Future<CommandSideEffect>): Future<CommandSideEffect> {
     return pgPool.withTransaction(f)
   }
 
-  fun handle(conn: SqlConnection, metadata: CommandMetadata, command: C): Future<CommandSideEffect> {
+  open fun handle(conn: SqlConnection, metadata: CommandMetadata, command: C): Future<CommandSideEffect> {
     fun validate(command: C): Future<Void> {
       if (commandComponent.commandValidator != null) {
         val errors = commandComponent.commandValidator!!.validate(command)
