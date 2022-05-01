@@ -1,8 +1,8 @@
 package io.github.crabzilla.projection
 
-import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_PUBLISH
-import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
-import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
+import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_PUBLISH
+import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY
+import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 
@@ -15,7 +15,7 @@ data class ProjectorConfig(
   val metricsInterval: Long = DEFAULT_MAX_INTERVAL,
   val stateTypes: List<String> = listOf(),
   val eventTypes: List<String> = listOf(),
-  val projectorStrategy: ProjectorStrategy? = null
+  val eventBusStrategy: EventBusStrategy? = null
 ) {
   companion object {
     private const val DEFAULT_INITIAL_INTERVAL = 15_000L
@@ -33,11 +33,11 @@ data class ProjectorConfig(
       val stateTypes = stateTypesArray.iterator().asSequence().map { it.toString() }.toList()
       val eventTypesArray = config.getJsonArray("eventTypes") ?: JsonArray()
       val eventTypes = eventTypesArray.iterator().asSequence().map { it.toString() }.toList()
-      val projectorStrategy = when (config.getString("projectorStrategy")) {
+      val projectorStrategy = when (config.getString("eventBusStrategy")) {
         "EVENTBUS_REQUEST_REPLY" -> EVENTBUS_REQUEST_REPLY
         "EVENTBUS_REQUEST_REPLY_BLOCKING" -> EVENTBUS_REQUEST_REPLY_BLOCKING
         "EVENTBUS_PUBLISH" -> EVENTBUS_PUBLISH
-        else -> throw IllegalArgumentException("Invalid config for projectorStrategy")
+        else -> throw IllegalArgumentException("Invalid config for eventBusStrategy")
       }
       return ProjectorConfig(
         projectionName = projectionName,
@@ -48,7 +48,7 @@ data class ProjectorConfig(
         maxNumberOfRows = maxNumberOfRows,
         stateTypes = stateTypes,
         eventTypes = eventTypes,
-        projectorStrategy = projectorStrategy
+        eventBusStrategy = projectorStrategy
       )
     }
   }

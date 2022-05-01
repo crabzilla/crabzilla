@@ -5,6 +5,7 @@ import io.github.crabzilla.EventMetadata
 import io.github.crabzilla.EventProjector
 import io.github.crabzilla.EventRecord
 import io.github.crabzilla.JsonObjectSerDer
+import io.github.crabzilla.command.internal.Snapshot
 import io.github.crabzilla.core.CommandComponent
 import io.github.crabzilla.core.CommandHandler
 import io.vertx.core.Future

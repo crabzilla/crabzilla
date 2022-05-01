@@ -1,14 +1,14 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.projection.internal
 
 import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.EventProjector
 import io.github.crabzilla.EventRecord
-import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_PUBLISH
-import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
-import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
-import io.github.crabzilla.projection.internal.EventsScanner
-import io.github.crabzilla.projection.internal.QuerySpecification
+import io.github.crabzilla.projection.ProjectorConfig
+import io.github.crabzilla.projection.ProjectorEndpoints
+import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_PUBLISH
+import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY
+import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler
@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-class EventsProjectorComponent(
+internal class EventsProjectorComponent(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val subscriber: PgSubscriber,
@@ -257,7 +257,7 @@ class EventsProjectorComponent(
             .compose { updateOffset(conn, eventsList.last().metadata.eventSequence) }
         }
       } else {
-        when (options.projectorStrategy ?: EVENTBUS_REQUEST_REPLY) {
+        when (options.eventBusStrategy ?: EVENTBUS_REQUEST_REPLY) {
           EVENTBUS_REQUEST_REPLY -> {
             requestEventbus(eventsList)
               .compose { eventSequence ->

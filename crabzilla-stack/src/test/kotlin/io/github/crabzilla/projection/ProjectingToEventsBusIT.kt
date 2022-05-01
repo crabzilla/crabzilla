@@ -8,9 +8,9 @@ import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_PUBLISH
-import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
-import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
+import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_PUBLISH
+import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY
+import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Future
 import io.vertx.core.Promise
@@ -56,7 +56,7 @@ internal class ProjectingToEventsBusIT {
 
   @Test
   fun `it can publish to eventbus using request reply`(tc: VertxTestContext, vertx: Vertx) {
-    val config = ProjectorConfig(projectionName, projectorStrategy = EVENTBUS_REQUEST_REPLY, interval = 10_000)
+    val config = ProjectorConfig(projectionName, eventBusStrategy = EVENTBUS_REQUEST_REPLY, interval = 10_000)
     val projector = context.eventBusProjector(config)
     val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
@@ -113,7 +113,7 @@ internal class ProjectingToEventsBusIT {
   @Disabled // instead, use EVENTBUS_REQUEST_REPLY_BLOCKING
   fun `it can publish to eventbus using request reply with a BLOCKING consumer`(tc: VertxTestContext, vertx: Vertx) {
     val config = ProjectorConfig(projectionName, initialInterval = 1, interval = 30_000,
-      projectorStrategy = EVENTBUS_REQUEST_REPLY
+      eventBusStrategy = EVENTBUS_REQUEST_REPLY
     )
     val projector = context.eventBusProjector(config)
     val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer)
@@ -169,7 +169,7 @@ internal class ProjectingToEventsBusIT {
 
   @Test
   fun `it can publish to eventbus using BLOCKING request reply`(tc: VertxTestContext, vertx: Vertx) {
-    val config = ProjectorConfig(projectionName, projectorStrategy = EVENTBUS_REQUEST_REPLY_BLOCKING, interval = 10_000)
+    val config = ProjectorConfig(projectionName, eventBusStrategy = EVENTBUS_REQUEST_REPLY_BLOCKING, interval = 10_000)
     val projector = context.eventBusProjector(config)
     val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
@@ -221,7 +221,7 @@ internal class ProjectingToEventsBusIT {
 
   @Test
   fun `it can publish to eventbus`(tc: VertxTestContext, vertx: Vertx) {
-    val config = ProjectorConfig(projectionName, projectorStrategy = EVENTBUS_PUBLISH, interval = 10_000)
+    val config = ProjectorConfig(projectionName, eventBusStrategy = EVENTBUS_PUBLISH, interval = 10_000)
     val projector = context.eventBusProjector(config)
     val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)

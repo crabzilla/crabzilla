@@ -3,7 +3,7 @@ package io.github.crabzilla
 import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.command.CommandControllerOptions
 import io.github.crabzilla.core.CommandComponent
-import io.github.crabzilla.projection.EventsProjectorComponent
+import io.github.crabzilla.projection.internal.EventsProjectorComponent
 import io.github.crabzilla.projection.ProjectorConfig
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
