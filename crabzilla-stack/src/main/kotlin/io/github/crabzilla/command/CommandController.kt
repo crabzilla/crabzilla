@@ -32,7 +32,6 @@ class CommandController<S : Any, C : Any, E : Any>(
 ) {
 
   companion object {
-    private val log = LoggerFactory.getLogger(CommandController::class.java)
     const val SQL_LOCK =
       """ SELECT pg_try_advisory_xact_lock($1, $2) as locked
       """
@@ -57,6 +56,7 @@ class CommandController<S : Any, C : Any, E : Any>(
   }
 
   private val stateTypeName = commandComponent.stateClassName()
+  private val log = LoggerFactory.getLogger("${CommandController::class.java.simpleName}-$stateTypeName")
   private val notificationsByStateType = HashSet<String>()
   private val commandHandler: CommandHandler<S, C, E> = commandComponent.commandHandlerFactory.invoke()
 
@@ -128,14 +128,14 @@ class CommandController<S : Any, C : Any, E : Any>(
             val eventAsJson = JsonObject(row.getValue("event_payload").toString())
             val asEvent = serDer.eventFromJson(eventAsJson)
             latestVersion = row.getInteger("version")
-            log.debug("Found event {} version {}", asEvent, latestVersion)
+            log.trace("Found event {} version {}", asEvent, latestVersion)
             state = commandComponent.eventHandler.handleEvent(state, asEvent)
-            log.debug("State {}", state)
+            log.trace("State {}", state)
           }
           stream.exceptionHandler { error = it }
           stream.endHandler {
             stream.close()
-            log.debug("End of stream")
+            log.trace("End of stream")
             if (error != null) {
               promise.fail(error)
             } else {
@@ -208,7 +208,7 @@ class CommandController<S : Any, C : Any, E : Any>(
     }
     fun projectEvents(conn: SqlConnection, appendedEvents: List<EventRecord>, projector: EventProjector)
             : Future<Void> {
-      log.debug("Will project {} events", appendedEvents.size)
+      log.trace("Will project {} events", appendedEvents.size)
       val initialFuture = Future.succeededFuture<Void>()
       return appendedEvents.fold(
         initialFuture
@@ -246,7 +246,7 @@ class CommandController<S : Any, C : Any, E : Any>(
             if (options.eventProjector != null) {
               projectEvents(conn, commandSideEffect.appendedEvents, options.eventProjector!!)
                 .onSuccess {
-                  log.debug("Events projected")
+                  log.trace("Events projected")
                 }.map { commandSideEffect }
             } else {
               log.debug("EventProjector is null, skipping projecting events")

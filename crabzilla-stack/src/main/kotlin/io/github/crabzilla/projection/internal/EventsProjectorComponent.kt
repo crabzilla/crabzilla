@@ -4,6 +4,7 @@ import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.EventProjector
 import io.github.crabzilla.EventRecord
+import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.projection.ProjectorConfig
 import io.github.crabzilla.projection.ProjectorEndpoints
 import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_PUBLISH
@@ -35,11 +36,12 @@ internal class EventsProjectorComponent(
 ) {
 
   companion object {
-    private val log = LoggerFactory.getLogger(EventsProjectorComponent::class.java)
     private val node: String = ManagementFactory.getRuntimeMXBean().name
     private const val GREED_INTERVAL = 100L
   }
 
+  private val log = LoggerFactory
+    .getLogger("${EventsProjectorComponent::class.java.simpleName}-${options.projectionName}")
   private var greedy = AtomicBoolean(false)
   private val failures = AtomicLong(0L)
   private val backOff = AtomicLong(0L)
@@ -203,7 +205,7 @@ internal class EventsProjectorComponent(
         initialFuture
       ) { currentFuture: Future<Void>, eventRecord: EventRecord ->
         currentFuture.compose {
-          log.debug("Will project event {} to postgres", eventRecord.metadata.eventSequence)
+          log.trace("Will project event {} to postgres", eventRecord.metadata.eventSequence)
           eventProjector!!.project(conn, eventRecord)
         }
       }
@@ -218,14 +220,15 @@ internal class EventsProjectorComponent(
 
     fun registerNoNewEvents() {
       greedy.set(false)
-      val nextInterval = min(options.maxInterval, options.interval * backOff.incrementAndGet())
+      val jitter = ((0..5).random() * 200)
+      val nextInterval = min(options.maxInterval, options.interval * backOff.incrementAndGet() + jitter)
       vertx.setTimer(nextInterval, handler())
       log.debug("registerNoNewEvents - Rescheduled to next {} milliseconds", nextInterval)
     }
 
     fun registerFailure(throwable: Throwable) {
       greedy.set(false)
-      val jitter = ((0..5).random() * 200) // this may break test
+      val jitter = ((0..5).random() * 200)
       val nextInterval = min(options.maxInterval, (options.interval * failures.incrementAndGet()) + jitter)
       vertx.setTimer(nextInterval, handler())
       log.error("registerFailure - Rescheduled to next {} milliseconds", nextInterval,throwable)
