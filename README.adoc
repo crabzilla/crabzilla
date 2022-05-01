@@ -29,19 +29,15 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 * Using https://vertx.io/docs/vertx-pg-client/java/[Vertx] to implement a `non-blocking IO` event store.
 * Idiomatic Kotlin: type safeness: pattern matching, honouring your constructors.
 * Immutability: state transitions occurs after computing results of pure functions `(State, Event) -> State`.
-* CommandController is consistent by default: before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]
-* EventsProjectorWorker allows handling your read model projection's strait from database: no need to publish your events to Kafka or NATS.
-* You can use https://vertx.io/docs/#clustering[Vertx Clustering] to deploy your EventsProjectorVerticle instances. Projections with singleton clustered verticles (singleton writers) and also with High Availability built in Vertx :)
-* JSON serialization using https://kotlinlang.org/docs/serialization.html[Kotlin serialization] or https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]
+* Your domain can be tested in BDD way (given events, when command, then assertion) without any dependency to Crabzilla or Vertx.
+* Your commands are consistently handled by default: before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]
+* Your events are serialized to JSON using https://kotlinlang.org/docs/serialization.html[Kotlin serialization] or https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]
+* Your events can be consistently projected to your view model or to Vertx EventBus using request reply, blocking request reply or just publishing to it.
 
-== Example application
+== Example application (a work in progress)
 
-https://github.com/rodolfodpk/accounts-z[Accounts]
+https://github.com/crabzilla/accounts-quarkus
 
 == Status
 
 Seems like it's finally reaching stable status :)
-
-== More info
-
-https://crabzilla.github.io/crabzilla/docs/index.html[Documentation]
