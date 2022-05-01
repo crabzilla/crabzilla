@@ -1,13 +1,14 @@
 package io.github.crabzilla.usecases
 
+import io.github.crabzilla.CrabzillaContext
+import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.command.CommandControllerOptions
 import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.pgPool
+import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -24,9 +25,14 @@ import java.util.UUID
 @DisplayName("Validating commands")
 class ValidatingCommandIT {
 
+  private lateinit var context : CrabzillaContext
+  private lateinit var testRepo: TestRepository
+
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    cleanDatabase(pgPool)
+    context = CrabzillaContext.new(vertx, testDbConfig)
+    testRepo = TestRepository(context.pgPool)
+    cleanDatabase(context.pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -35,7 +41,7 @@ class ValidatingCommandIT {
   fun `it can validate before command handler`(tc: VertxTestContext, vertx: Vertx) {
 
     val options = CommandControllerOptions(eventBusTopic = "MY_TOPIC")
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
+    val controller = context.commandController(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "bad customer")
@@ -54,7 +60,7 @@ class ValidatingCommandIT {
   fun `it can validate within command handler`(tc: VertxTestContext, vertx: Vertx) {
 
     val options = CommandControllerOptions(eventBusTopic = "MY_TOPIC")
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
+    val controller = context.commandController(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "good customer")

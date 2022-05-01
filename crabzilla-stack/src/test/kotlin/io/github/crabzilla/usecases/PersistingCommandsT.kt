@@ -1,14 +1,15 @@
 package io.github.crabzilla.usecases
 
+import io.github.crabzilla.CrabzillaContext
+import io.github.crabzilla.CrabzillaContext.Companion.new
+import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
-import io.github.crabzilla.TestsFixtures.testRepo
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.pgPool
+import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -25,18 +26,21 @@ import java.util.UUID
 @DisplayName("Persisting commands")
 class PersistingCommandsT {
 
+  private lateinit var context : CrabzillaContext
+  private lateinit var testRepo: TestRepository
+
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    cleanDatabase(pgPool)
+    context = new(vertx, testDbConfig)
+    testRepo = TestRepository(context.pgPool)
+    cleanDatabase(context.pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
 
   @Test
   fun `it can persist 1 command`(tc: VertxTestContext, vertx: Vertx) {
-
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer)
-
+    val controller = context.commandController(customerComponent, jsonSerDer)
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata.new(id)
@@ -61,7 +65,7 @@ class PersistingCommandsT {
   @Test
   fun `it can persist 2 commands`(tc: VertxTestContext, vertx: Vertx) {
 
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer)
+    val controller = context.commandController(customerComponent, jsonSerDer)
 
     val id = UUID.randomUUID()
 

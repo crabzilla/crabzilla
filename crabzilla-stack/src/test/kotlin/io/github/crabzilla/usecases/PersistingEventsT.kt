@@ -1,15 +1,15 @@
 package io.github.crabzilla.usecases
 
+import io.github.crabzilla.CrabzillaContext
+import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
-import io.github.crabzilla.TestsFixtures.testRepo
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.command.CommandSideEffect
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerJsonObjectSerDer
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.pgPool
+import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -27,9 +27,14 @@ import java.util.UUID
 @DisplayName("Persisting events")
 class PersistingEventsT {
 
+  private lateinit var context : CrabzillaContext
+  private lateinit var testRepo: TestRepository
+
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    cleanDatabase(pgPool)
+    context = CrabzillaContext.new(vertx, testDbConfig)
+    testRepo = TestRepository(context.pgPool)
+    cleanDatabase(context.pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -38,7 +43,7 @@ class PersistingEventsT {
   @DisplayName("appending 1 command with 2 events results in version 2 ")
   fun s1(tc: VertxTestContext, vertx: Vertx) {
 
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer)
+    val controller = context.commandController(customerComponent, jsonSerDer)
 
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
@@ -81,7 +86,7 @@ class PersistingEventsT {
   fun s11(tc: VertxTestContext, vertx: Vertx) {
 
     val jsonSerDer = CustomerJsonObjectSerDer()
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer)
+    val controller = context.commandController(customerComponent, jsonSerDer)
 
     val id = UUID.randomUUID()
     val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")

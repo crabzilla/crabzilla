@@ -5,7 +5,6 @@ import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.command.CommandControllerOptions
 import io.github.crabzilla.command.CommandMetadata
-import io.github.crabzilla.dbConfig
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.pgPool
@@ -94,7 +93,7 @@ class ManagingProjectorIT {
 
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null)
       }
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
@@ -121,7 +120,7 @@ class ManagingProjectorIT {
     val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
 
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
-      .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
+      .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null) }
       .compose {
         pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() == 1 }
       }.onFailure {
@@ -149,7 +148,7 @@ class ManagingProjectorIT {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
       }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null)
       }
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
@@ -186,7 +185,7 @@ class ManagingProjectorIT {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.resume(), null)
       }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null)
       }
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)

@@ -1,5 +1,6 @@
 package io.github.crabzilla.projection
 
+import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.command.CommandController
@@ -8,9 +9,7 @@ import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomersEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.pgConfig
-import io.github.crabzilla.pgPool
-import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTION
+import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
@@ -32,15 +31,15 @@ class ManagingProjectorIT {
   private val projectorEndpoints = ProjectorEndpoints("crabzilla.example1.customer.SimpleProjector")
   private val id: UUID = UUID.randomUUID()
 
+  private lateinit var context : CrabzillaContext
+
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    val factory = EventsProjectorFactory(pgPool, pgConfig)
-    val config = ProjectorConfig(projectorEndpoints.name, projectorStrategy = POSTGRES_SAME_TRANSACTION)
-    val verticle = factory.createVerticle(config, CustomersEventProjector())
-    cleanDatabase(pgPool)
-      .compose {
-        vertx.deployVerticle(verticle)
-      }
+    context = CrabzillaContext.new(vertx, testDbConfig)
+    val config = ProjectorConfig(projectorEndpoints.name)
+    val verticle = context.postgresProjector(config, CustomersEventProjector())
+    cleanDatabase(context.pgPool)
+      .compose { vertx.deployVerticle(verticle) }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -48,7 +47,7 @@ class ManagingProjectorIT {
   @Test
   @Order(1)
   fun `after deploy the status is intact`(tc: VertxTestContext, vertx: Vertx) {
-    vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
+      vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
       .onFailure { tc.failNow(it) }
       .onSuccess { msg: Message<JsonObject> ->
         val json = msg.body()
@@ -67,10 +66,9 @@ class ManagingProjectorIT {
   @Test
   @Order(2)
   fun `after pause then a command`(tc: VertxTestContext, vertx: Vertx) {
-    val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
-
-    vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
+    val options = CommandControllerOptions(pgNotificationInterval = 100L)
+    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+      vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
       .compose {
         controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       }.compose {
@@ -94,14 +92,13 @@ class ManagingProjectorIT {
   @Test
   @Order(3)
   fun `after a command then work the currentOffset is 1`(tc: VertxTestContext, vertx: Vertx) {
-    val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
-
+    val options = CommandControllerOptions(pgNotificationInterval = 100L)
+    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
-      }
-      .compose {
+        Thread.sleep(1000)
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null)
+      }.compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
       }
       .onFailure { tc.failNow(it) }
@@ -123,22 +120,21 @@ class ManagingProjectorIT {
   @Order(4)
   fun `after a command then work, the projection is done`(tc: VertxTestContext, vertx: Vertx) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
-
-    controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
-      .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
-      .compose {
-        pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() == 1 }
-      }.onFailure {
-        tc.failNow(it)
-      }.onSuccess {
-        if (it) {
-          tc.completeNow()
-        } else {
-          tc.failNow("Nothing projected")
+    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+      controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
+        .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null)
+        }.compose {
+          context.pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() == 1 }
+        }.onFailure {
+          tc.failNow(it)
+        }.onSuccess {
+          if (it) {
+            tc.completeNow()
+          } else {
+            tc.failNow("Nothing projected")
+          }
         }
-      }
-  }
+    }
 
   @Test
   @Order(5)
@@ -147,13 +143,13 @@ class ManagingProjectorIT {
     vertx: Vertx
   ) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
-    controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
+    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+      controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
       }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null)
       }
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
@@ -180,8 +176,7 @@ class ManagingProjectorIT {
     vertx: Vertx
   ) {
     val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
-
+    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
@@ -190,7 +185,7 @@ class ManagingProjectorIT {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.resume(), null)
       }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null)
+        vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null)
       }
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
@@ -201,8 +196,8 @@ class ManagingProjectorIT {
         tc.verify {
           assertEquals(false, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))
-//          assertEquals(true, json.getBoolean("greedy"))
           assertEquals(1L, json.getLong("currentOffset"))
+          //          assertEquals(true, json.getBoolean("greedy"))
           assertEquals(0L, json.getLong("failures"))
           assertEquals(0L, json.getLong("backOff"))
           tc.completeNow()

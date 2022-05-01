@@ -1,13 +1,12 @@
 package io.github.crabzilla.projection
 
-import io.github.crabzilla.CrabzillaConstants
-import io.github.crabzilla.CrabzillaConstants.EVENTBUS_GLOBAL_TOPIC
+import io.github.crabzilla.CrabzillaContext
+import io.github.crabzilla.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.EventProjector
 import io.github.crabzilla.EventRecord
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_PUBLISH
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY
 import io.github.crabzilla.projection.ProjectorStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
-import io.github.crabzilla.projection.ProjectorStrategy.POSTGRES_SAME_TRANSACTION
 import io.github.crabzilla.projection.internal.EventsScanner
 import io.github.crabzilla.projection.internal.QuerySpecification
 import io.vertx.core.Future
@@ -32,7 +31,7 @@ class EventsProjectorComponent(
   private val pgPool: PgPool,
   private val subscriber: PgSubscriber,
   private val options: ProjectorConfig,
-  private val eventProjector: EventProjector?
+  private val eventProjector: EventProjector?,
 ) {
 
   companion object {
@@ -44,7 +43,7 @@ class EventsProjectorComponent(
   private var greedy = AtomicBoolean(false)
   private val failures = AtomicLong(0L)
   private val backOff = AtomicLong(0L)
-  private var currentOffset = AtomicLong(0L)
+  private var currentOffset = 0L
   private var isPaused = AtomicBoolean(false)
   private var isBusy = AtomicBoolean(false)
 
@@ -60,8 +59,9 @@ class EventsProjectorComponent(
         .put("greedy", greedy.get())
         .put("failures", failures.get())
         .put("backOff", backOff.get())
-        .put("currentOffset", currentOffset.get())
+        .put("currentOffset", currentOffset)
     }
+
     fun startManagementEndpoints() {
       vertx.eventBus()
         .consumer<String>(projectorEndpoints.status()) { msg ->
@@ -78,18 +78,27 @@ class EventsProjectorComponent(
           isPaused.set(false)
           msg.reply(status())
         }
+      log.info("Projection management endpoints")
     }
+
     fun startPgNotificationSubscriber(): Future<Void> {
-      return subscriber.connect().onSuccess {
-        subscriber.channel(CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL)
-          .handler { stateType ->
-            if (!greedy.get() && (options.stateTypes.isEmpty() || options.stateTypes.contains(stateType))) {
-              greedy.set(true)
-              log.debug("Greedy {}", stateType)
+      val promise = Promise.promise<Void>()
+      subscriber.connect()
+        .onSuccess {
+          subscriber.channel(CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL)
+            .handler { stateType ->
+              if (!greedy.get() && (options.stateTypes.isEmpty() || options.stateTypes.contains(stateType))) {
+                greedy.set(true)
+                log.debug("Greedy {}", stateType)
+              }
             }
-          }
-      }
+          promise.complete()
+        }.onFailure {
+          promise.fail(it)
+        }
+      return promise.future()
     }
+
     fun startEventsScanner() {
       val query = QuerySpecification.query(options.stateTypes, options.eventTypes)
       log.info(
@@ -98,16 +107,17 @@ class EventsProjectorComponent(
       )
       scanner = EventsScanner(pgPool, options.projectionName, query)
     }
+
     fun startProjection(): Future<Void> {
       return scanner.getCurrentOffset()
         .onSuccess { offset ->
-          currentOffset.set(offset)
+          currentOffset = offset
         }
         .compose {
           scanner.getGlobalOffset()
         }
         .onSuccess { globalOffset ->
-          greedy.set(globalOffset > currentOffset.get())
+          greedy.set(globalOffset > currentOffset)
           val effectiveInitialInterval = if (greedy.get()) 1 else options.initialInterval
           log.info(
             "Projection [{}] current offset [{}] global offset [{}] will start in [{}] ms",
@@ -120,8 +130,9 @@ class EventsProjectorComponent(
           vertx.setPeriodic(options.metricsInterval) {
             log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
           }
-          vertx.eventBus().consumer<Void>(projectorEndpoints.work()).handler { msg ->
-            action().onComplete { msg.reply(status()) }
+          vertx.eventBus().consumer<Void>(projectorEndpoints.handle()).handler { msg ->
+            action()
+              .onComplete { msg.reply(status()) }
           }
         }.mapEmpty()
     }
@@ -135,26 +146,23 @@ class EventsProjectorComponent(
       .compose { startProjection() }
   }
 
-  // TODO this really does not stop...
   fun stop() {
-    log.info("Projection [{}] stopped at offset [{}]", options.projectionName, currentOffset.get())
+    isPaused.set(true)
+    log.info("Projection [{}] stopped at offset [{}]", options.projectionName, currentOffset)
   }
-  // TODO status, work, pause and resume methods
 
-
-  private fun handler(): Handler<Long?> {
-    return Handler<Long?> {
+  private fun handler(): Handler<Long> {
+    return Handler<Long> {
       action()
-        .onSuccess { log.debug("Success") }
-        .onFailure { log.error("Error", it) }
     }
   }
 
-  private fun action(): Future<Long> {
+  private fun action(): Future<Void> {
     fun scanEvents(): Future<List<EventRecord>> {
       log.debug("Scanning for new events for projection {}", options.projectionName)
       return scanner.scanPendingEvents(options.maxNumberOfRows)
     }
+
     fun requestEventbus(eventsList: List<EventRecord>): Future<Long> {
       val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
       val array = JsonArray(eventsAsJson)
@@ -171,6 +179,7 @@ class EventsProjectorComponent(
       }
       return promise.future()
     }
+
     fun requestEventbusBlocking(eventsList: List<EventRecord>): Future<Long> {
       val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
       val array = JsonArray(eventsAsJson)
@@ -187,6 +196,7 @@ class EventsProjectorComponent(
         }
       }
     }
+
     fun projectEventsToPostgres(conn: SqlConnection, eventsList: List<EventRecord>): Future<Void> {
       val initialFuture = succeededFuture<Void>()
       return eventsList.fold(
@@ -198,36 +208,86 @@ class EventsProjectorComponent(
         }
       }
     }
+
     fun updateOffset(conn: SqlConnection, offset: Long): Future<Void> {
       return conn
         .preparedQuery("update projections set sequence = $2 where name = $1")
         .execute(Tuple.of(options.projectionName, offset))
         .mapEmpty()
     }
+
     fun registerNoNewEvents() {
       greedy.set(false)
       val nextInterval = min(options.maxInterval, options.interval * backOff.incrementAndGet())
       vertx.setTimer(nextInterval, handler())
       log.debug("registerNoNewEvents - Rescheduled to next {} milliseconds", nextInterval)
     }
-    fun registerFailure() {
+
+    fun registerFailure(throwable: Throwable) {
       greedy.set(false)
       val jitter = ((0..5).random() * 200) // this may break test
       val nextInterval = min(options.maxInterval, (options.interval * failures.incrementAndGet()) + jitter)
       vertx.setTimer(nextInterval, handler())
-      log.debug("registerFailure - Rescheduled to next {} milliseconds", nextInterval)
+      log.error("registerFailure - Rescheduled to next {} milliseconds", nextInterval,throwable)
     }
-    fun registerSuccess() {
+
+    fun registerSuccess(eventSequence: Long) {
+      currentOffset = eventSequence
       failures.set(0)
       backOff.set(0)
       val nextInterval = if (greedy.get()) GREED_INTERVAL else options.interval
       vertx.setTimer(nextInterval, handler())
-      log.debug("Rescheduled to next {} milliseconds", nextInterval)
+      log.debug("registerSuccess - Rescheduled to next {} milliseconds", nextInterval)
     }
+
     fun justReschedule() {
       vertx.setTimer(options.interval, handler())
       log.info("It is busy=$isBusy or paused=$isPaused. Will just reschedule.")
-      log.debug("Rescheduled to next {} milliseconds", options.interval)
+      log.debug("justReschedule - Rescheduled to next {} milliseconds", options.interval)
+    }
+
+    fun project(eventsList: List<EventRecord>): Future<Void> {
+      log.debug("Found {} new events. The first is {} and last is {}", eventsList.size,
+        eventsList.first().metadata.eventSequence,
+        eventsList.last().metadata.eventSequence
+      )
+      return if (eventProjector != null) {
+        pgPool.withTransaction { conn ->
+          projectEventsToPostgres(conn, eventsList)
+            .compose { updateOffset(conn, eventsList.last().metadata.eventSequence) }
+        }
+      } else {
+        when (options.projectorStrategy ?: EVENTBUS_REQUEST_REPLY) {
+          EVENTBUS_REQUEST_REPLY -> {
+            requestEventbus(eventsList)
+              .compose { eventSequence ->
+                pgPool.withTransaction { conn ->
+                  updateOffset(conn, eventSequence)
+                }
+              }
+          }
+          EVENTBUS_REQUEST_REPLY_BLOCKING -> {
+            requestEventbusBlocking(eventsList)
+              .compose { eventSequence ->
+                pgPool.withTransaction { conn ->
+                  updateOffset(conn, eventSequence)
+                }
+              }
+          }
+          EVENTBUS_PUBLISH -> {
+            val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
+            val array = JsonArray(eventsAsJson)
+            log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
+            vertx.eventBus().publish(EVENTBUS_GLOBAL_TOPIC, array)
+            succeededFuture(eventsList.last().metadata.eventSequence)
+              .compose { eventSequence ->
+                pgPool.withTransaction { conn ->
+                  updateOffset(conn, eventSequence)
+                }
+              }
+          }
+        }
+      }
     }
     if (isBusy.get() || isPaused.get()) {
       justReschedule()
@@ -238,56 +298,18 @@ class EventsProjectorComponent(
       .compose { eventsList ->
         if (eventsList.isEmpty()) {
           registerNoNewEvents()
-          succeededFuture(0)
+          succeededFuture()
         } else {
-          log.debug("Found {} new events. The first is {} and last is {}", eventsList.size,
-            eventsList.first().metadata.eventSequence,
-            eventsList.last().metadata.eventSequence
-          )
-          when (options.projectorStrategy) {
-            POSTGRES_SAME_TRANSACTION -> {
-              pgPool.withTransaction { conn ->
-                projectEventsToPostgres(conn, eventsList)
-                  .compose { updateOffset(conn, eventsList.last().metadata.eventSequence) }
-              }.map { eventsList.last().metadata.eventSequence }
+          project(eventsList)
+            .onSuccess {
+              registerSuccess(eventsList.last().metadata.eventSequence)
             }
-            EVENTBUS_REQUEST_REPLY-> {
-              requestEventbus(eventsList)
-                .compose { eventSequence -> pgPool.withTransaction { conn ->
-                  updateOffset(conn, eventSequence)
-                  }
-                }
-                .map { eventsList.last().metadata.eventSequence }
-            }
-            EVENTBUS_REQUEST_REPLY_BLOCKING -> {
-              requestEventbusBlocking(eventsList)
-                .compose { eventSequence -> pgPool.withTransaction { conn ->
-                  updateOffset(conn, eventSequence)
-                  }
-                }
-                .map { eventsList.last().metadata.eventSequence }
-            }
-            EVENTBUS_PUBLISH -> {
-              val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
-              val array = JsonArray(eventsAsJson)
-              log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
-              vertx.eventBus().publish(EVENTBUS_GLOBAL_TOPIC, array)
-              succeededFuture(eventsList.last().metadata.eventSequence)
-                .compose { eventSequence -> pgPool.withTransaction { conn ->
-                  updateOffset(conn, eventSequence)
-                  }
-                }
-                .map { eventsList.last().metadata.eventSequence }
-            }
-          }.onSuccess {
-            currentOffset.set(it)
-            registerSuccess()
-          }
         }
       }.onFailure {
-        registerFailure()
+        registerFailure(it)
       }.onComplete {
         isBusy.set(false)
       }
   }
+
 }

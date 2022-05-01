@@ -75,7 +75,7 @@
     <module>crabzilla-json-kotlinx</module>
     <module>crabzilla-json-jackson</module>
     <module>crabzilla-stack</module>
-    <module>crabzilla-clustered</module>
+<!--    <module>crabzilla-clustered</module>-->
     <module>coverage-report</module>
   </modules>
 
@@ -109,11 +109,11 @@
         <version>${project.version}</version>
       </dependency>
 
-      <dependency>
-        <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-clustered</artifactId>
-        <version>${project.version}</version>
-      </dependency>
+<!--      <dependency>-->
+<!--        <groupId>io.github.crabzilla</groupId>-->
+<!--        <artifactId>crabzilla-clustered</artifactId>-->
+<!--        <version>${project.version}</version>-->
+<!--      </dependency>-->
 
       <!-- vertx -->
 

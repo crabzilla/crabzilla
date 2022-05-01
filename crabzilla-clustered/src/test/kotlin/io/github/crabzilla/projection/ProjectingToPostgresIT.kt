@@ -84,7 +84,7 @@ internal class ProjectingToPostgresIT {
       .onFailure { tc.failNow(it) }
       .onSuccess {
         controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
-          .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.work(), null) }
+          .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null) }
           .compose {
             pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() == 1 }
           }.onFailure {

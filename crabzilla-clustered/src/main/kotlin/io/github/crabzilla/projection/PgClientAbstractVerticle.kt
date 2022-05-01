@@ -1,6 +1,5 @@
 package io.github.crabzilla.projection
 
-import io.github.crabzilla.PgConnectOptionsFactory
 import io.vertx.core.AbstractVerticle
 import io.vertx.pgclient.PgPool
 import io.vertx.pgclient.pubsub.PgSubscriber

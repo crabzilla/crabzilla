@@ -1,6 +1,6 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.CrabzillaConstants
+import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.EventMetadata
 import io.github.crabzilla.EventProjector
 import io.github.crabzilla.EventRecord
@@ -67,7 +67,7 @@ class CommandController<S : Any, C : Any, E : Any>(
         initialFuture
       ) { currentFuture: Future<Void>, stateType: String ->
         currentFuture.compose {
-          val query = "NOTIFY ${CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL}, '$stateType'"
+          val query = "NOTIFY ${CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL}, '$stateType'"
           pgPool.preparedQuery(query).execute()
             .onSuccess { log.info("Notified postgres: $query") }
             .mapEmpty()
@@ -188,7 +188,7 @@ class CommandController<S : Any, C : Any, E : Any>(
         .executeBatch(tuples)
         .onSuccess { rowSet ->
           var rs: RowSet<Row>? = rowSet
-          tuples.mapIndexed { index, _ ->
+          List(tuples.size) { index ->
             val sequence = rs!!.iterator().next().getLong("sequence")
             val correlationId = tuples[index].getUUID(correlationIdIndex)
             val currentVersion = tuples[index].getInteger(currentVersionIndex)

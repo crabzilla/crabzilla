@@ -1,20 +1,20 @@
 package io.github.crabzilla.usecases
 
-import io.github.crabzilla.CrabzillaConstants.POSTGRES_NOTIFICATION_CHANNEL
+import io.github.crabzilla.CrabzillaContext
+import io.github.crabzilla.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
+import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.command.CommandControllerOptions
 import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.pgPool
-import io.github.crabzilla.pgPoolOptions
+import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.pgclient.pubsub.PgSubscriber
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -30,9 +30,14 @@ import java.util.concurrent.atomic.AtomicReference
 @DisplayName("Notifying postgres")
 class NotifyingPostgresIT {
 
+  private lateinit var context : CrabzillaContext
+  private lateinit var testRepo: TestRepository
+
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    cleanDatabase(pgPool)
+    context = CrabzillaContext.new(vertx, testDbConfig)
+    testRepo = TestRepository(context.pgPool)
+    cleanDatabase(context.pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -41,11 +46,11 @@ class NotifyingPostgresIT {
   fun `it can notify Postgres`(vertx: Vertx, tc: VertxTestContext) {
 
     val options = CommandControllerOptions(pgNotificationInterval = 100L)
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
+    val controller = context.commandController(customerComponent, jsonSerDer, options)
 
     val latch = CountDownLatch(1)
     val stateTypeMsg = AtomicReference<String>()
-    val pgSubscriber = PgSubscriber.subscriber(vertx, pgPoolOptions)
+    val pgSubscriber = context.pgSubscriber()
     pgSubscriber.connect().onSuccess {
       pgSubscriber.channel(POSTGRES_NOTIFICATION_CHANNEL)
         .handler { stateType ->
@@ -60,7 +65,7 @@ class NotifyingPostgresIT {
       .onFailure { tc.failNow(it) }
       .onSuccess {
         tc.verify {
-          latch.await(2, TimeUnit.SECONDS)
+          assertTrue(latch.await(2, TimeUnit.SECONDS))
           assertThat(stateTypeMsg.get()).isEqualTo("Customer")
           tc.completeNow()
         }

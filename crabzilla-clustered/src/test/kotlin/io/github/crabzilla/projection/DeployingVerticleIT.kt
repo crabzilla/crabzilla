@@ -1,7 +1,6 @@
 package io.github.crabzilla.projection
 
 import io.github.crabzilla.TestRepository
-import io.github.crabzilla.dbConfig
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext

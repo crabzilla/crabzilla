@@ -1,13 +1,14 @@
 package io.github.crabzilla.usecases
 
+import io.github.crabzilla.CrabzillaContext
+import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.command.CommandSideEffect
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.pgPool
+import io.github.crabzilla.testDbConfig
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -35,9 +36,14 @@ class LockingConcurrentCommandsIT {
     private val log = LoggerFactory.getLogger(LockingConcurrentCommandsIT::class.java)
   }
 
+  private lateinit var context : CrabzillaContext
+  private lateinit var testRepo: TestRepository
+
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    cleanDatabase(pgPool)
+    context = CrabzillaContext.new(vertx, testDbConfig)
+    testRepo = TestRepository(context.pgPool)
+    cleanDatabase(context.pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -47,7 +53,7 @@ class LockingConcurrentCommandsIT {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
     val metadata = CommandMetadata.new(id)
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer)
+    val controller = context.commandController(customerComponent, jsonSerDer)
     controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess { sideEffect ->

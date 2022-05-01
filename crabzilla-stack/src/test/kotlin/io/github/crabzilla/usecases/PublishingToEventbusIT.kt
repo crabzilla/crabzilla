@@ -1,13 +1,14 @@
 package io.github.crabzilla.usecases
 
+import io.github.crabzilla.CrabzillaContext
+import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.command.CommandControllerOptions
 import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.pgPool
+import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -28,10 +29,14 @@ import java.util.concurrent.atomic.AtomicReference
 @DisplayName("Publishing to eventbus")
 class PublishingToEventbusIT {
 
+  private lateinit var context : CrabzillaContext
+  private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    cleanDatabase(pgPool)
+    context = CrabzillaContext.new(vertx, testDbConfig)
+    testRepo = TestRepository(context.pgPool)
+    cleanDatabase(context.pgPool)
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -39,7 +44,7 @@ class PublishingToEventbusIT {
   @Test
   fun `it can publish to eventbus`(vertx: Vertx, tc: VertxTestContext) {
     val options = CommandControllerOptions(eventBusTopic = "MY_TOPIC")
-    val controller = CommandController(vertx, pgPool, customerComponent, jsonSerDer, options)
+    val controller = context.commandController(customerComponent, jsonSerDer, options)
 
     val jsonMessage = AtomicReference<JsonObject>()
     val latch = CountDownLatch(1)
