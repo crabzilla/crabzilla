@@ -11,9 +11,12 @@ import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonArray
+import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -45,19 +48,17 @@ class HandlingUnitOfWorkIT {
   @Test
   fun `it can handle 2 commands within more than 1 instances of the same state`(vertx: Vertx, tc: VertxTestContext) {
 
-    val options = FeatureOptions(pgNotificationInterval = 100L)
+    val options = FeatureOptions(eventBusTopic = "MY_TOPIC", pgNotificationInterval = 100)
     val controller = context.commandController(customerComponent, jsonSerDer, options)
 
     val latch = CountDownLatch(2)
-    val stateTypeMsg = AtomicReference<String>()
-    val pgSubscriber = context.pgSubscriber()
-    pgSubscriber.connect().onSuccess {
-      pgSubscriber.channel(POSTGRES_NOTIFICATION_CHANNEL)
-        .handler { stateType ->
-          stateTypeMsg.set(stateType)
-          latch.countDown()
-        }
+    val stateTypeMsg = AtomicReference(mutableListOf<JsonObject>())
+    vertx.eventBus().consumer<JsonObject>("MY_TOPIC") { msg ->
+      stateTypeMsg.get().add(msg.body())
+      latch.countDown()
+      msg.reply(null)
     }
+
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata.new(id)
@@ -74,7 +75,7 @@ class HandlingUnitOfWorkIT {
         vertx.executeBlocking<Void> {
           tc.verify {
             latch.await(2, TimeUnit.SECONDS)
-            assertThat(stateTypeMsg.get()).isEqualTo("Customer")
+            assertEquals(2, stateTypeMsg.get().size)
             it.complete()
           }
         }.onSuccess {
