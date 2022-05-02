@@ -33,7 +33,7 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 
 == Features
 
-* Your domain can be tested in BDD way without any dependency to Crabzilla or Vertx.
+* Your domain can be tested in BDD way without any dependency to Vertx: only to `crabzilla-core.
 ** given command, then assertion
 ** given events, when command, then assertion
 ** given commands or events in any order, then assertion
