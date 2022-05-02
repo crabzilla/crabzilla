@@ -4,7 +4,7 @@ import io.github.crabzilla.example1.customer.customerComponent
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-internal class CommandComponentTest {
+internal class FeatureComponentTest {
 
   @Test
   fun stateSerialName() {

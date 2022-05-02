@@ -5,8 +5,8 @@ import io.github.crabzilla.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHAN
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandControllerOptions
 import io.github.crabzilla.command.CommandMetadata
+import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.testDbConfig
@@ -45,7 +45,7 @@ class NotifyingPostgresIT {
   @Test
   fun `it can notify Postgres`(vertx: Vertx, tc: VertxTestContext) {
 
-    val options = CommandControllerOptions(pgNotificationInterval = 100L)
+    val options = FeatureOptions(pgNotificationInterval = 100L)
     val controller = context.commandController(customerComponent, jsonSerDer, options)
 
     val latch = CountDownLatch(1)

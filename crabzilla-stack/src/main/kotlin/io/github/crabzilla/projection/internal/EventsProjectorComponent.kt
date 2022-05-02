@@ -4,12 +4,11 @@ import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.EventProjector
 import io.github.crabzilla.EventRecord
-import io.github.crabzilla.command.CommandController
-import io.github.crabzilla.projection.ProjectorConfig
-import io.github.crabzilla.projection.ProjectorEndpoints
 import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_PUBLISH
 import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY
 import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
+import io.github.crabzilla.projection.ProjectorConfig
+import io.github.crabzilla.projection.ProjectorEndpoints
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler

@@ -14,16 +14,16 @@ import org.junit.jupiter.api.Test
 import java.util.Arrays.asList
 import java.util.UUID
 
-@DisplayName("A CommandSession")
-internal class CommandSessionTest {
+@DisplayName("A FeatureSession")
+internal class FeatureSessionTest {
 
-  lateinit var commandSession: CommandSession<Customer, CustomerEvent>
+  lateinit var featureSession: FeatureSession<Customer, CustomerEvent>
 
   val customer = Customer(id = UUID.randomUUID(), name = "c1")
 
   @Test
   fun can_be_instantiated() {
-    CommandSession(customer, customerEventHandler)
+    FeatureSession(customer, customerEventHandler)
   }
 
   // TODO test
@@ -39,22 +39,22 @@ internal class CommandSessionTest {
 
     @BeforeEach
     fun instantiate() {
-      commandSession = CommandSession(customer, customerEventHandler)
+      featureSession = FeatureSession(customer, customerEventHandler)
     }
 
     @Test
     fun is_empty() {
-      assertThat(commandSession.appliedEvents().size).isEqualTo(0)
+      assertThat(featureSession.appliedEvents().size).isEqualTo(0)
     }
 
     @Test
     fun has_empty_state() {
-      assertThat(commandSession.currentState).isEqualTo(customer)
+      assertThat(featureSession.currentState).isEqualTo(customer)
     }
 
     @Test
     fun statusData_matches() {
-      val sessionData = commandSession.toSessionData()
+      val sessionData = featureSession.toSessionData()
       assertThat(sessionData.newState).isEqualTo(customer)
       assertThat(sessionData.originalState).isEqualTo(customer)
       assertThat(sessionData.events).isEmpty()
@@ -70,23 +70,23 @@ internal class CommandSessionTest {
 
       @BeforeEach
       fun apply_create_event() {
-        commandSession.execute { customer -> listOf(customerCreated) }
+        featureSession.execute { customer -> listOf(customerCreated) }
       }
 
       @Test
       fun has_new_state() {
-        assertThat(commandSession.currentState).isEqualTo(expectedCustomer)
+        assertThat(featureSession.currentState).isEqualTo(expectedCustomer)
       }
 
       @Test
       fun has_only_create_event() {
-        assertThat(commandSession.appliedEvents()).contains(customerCreated)
-        assertThat(commandSession.appliedEvents().size).isEqualTo(1)
+        assertThat(featureSession.appliedEvents()).contains(customerCreated)
+        assertThat(featureSession.appliedEvents().size).isEqualTo(1)
       }
 
       @Test
       fun statusData_matches() {
-        val sessionData = commandSession.toSessionData()
+        val sessionData = featureSession.toSessionData()
         assertThat(sessionData.newState).isEqualTo(expectedCustomer)
         assertThat(sessionData.originalState).isEqualTo(customer)
         assertThat(sessionData.events).containsOnly(customerCreated)
@@ -104,19 +104,19 @@ internal class CommandSessionTest {
 
         @BeforeEach
         fun apply_activate_event() {
-          commandSession.execute { customer -> listOf(customerActivated) }
+          featureSession.execute { customer -> listOf(customerActivated) }
         }
 
         @Test
         fun has_new_state() {
-          assertThat(commandSession.currentState).isEqualTo(expectedCustomer)
+          assertThat(featureSession.currentState).isEqualTo(expectedCustomer)
         }
 
         @Test
         fun has_both_create_and_activated_evenst() {
-          assertThat(commandSession.appliedEvents()[0]).isEqualTo(customerCreated)
-          assertThat(commandSession.appliedEvents()[1]).isEqualTo(customerActivated)
-          assertThat(commandSession.appliedEvents().size).isEqualTo(2)
+          assertThat(featureSession.appliedEvents()[0]).isEqualTo(customerCreated)
+          assertThat(featureSession.appliedEvents()[1]).isEqualTo(customerActivated)
+          assertThat(featureSession.appliedEvents().size).isEqualTo(2)
         }
       }
     }
@@ -136,23 +136,23 @@ internal class CommandSessionTest {
     @BeforeEach
     fun instantiate() {
       // given
-      commandSession = CommandSession(customer, customerEventHandler)
+      featureSession = FeatureSession(customer, customerEventHandler)
       // when
-      commandSession.execute { customer -> asList(customerCreated, customerActivated) }
+      featureSession.execute { customer -> asList(customerCreated, customerActivated) }
     }
 
     // then
 
     @Test
     fun has_new_state() {
-      assertThat(commandSession.currentState).isEqualTo(expectedCustomer)
+      assertThat(featureSession.currentState).isEqualTo(expectedCustomer)
     }
 
     @Test
     fun has_both_event() {
-      assertThat(commandSession.appliedEvents()).contains(customerCreated)
-      assertThat(commandSession.appliedEvents()).contains(customerActivated)
-      assertThat(commandSession.appliedEvents().size).isEqualTo(2)
+      assertThat(featureSession.appliedEvents()).contains(customerCreated)
+      assertThat(featureSession.appliedEvents()).contains(customerActivated)
+      assertThat(featureSession.appliedEvents().size).isEqualTo(2)
     }
   }
 
@@ -161,7 +161,7 @@ internal class CommandSessionTest {
 
     Assertions.assertThatExceptionOfType(IllegalArgumentException::class.java)
       .isThrownBy {
-        TestSpecification(customerComponent)
+        FeatureSpecification(customerComponent)
           .whenCommand(UnknownCommand("?"))
       }.withMessage(UnknownCommand::class.java.canonicalName)
   }

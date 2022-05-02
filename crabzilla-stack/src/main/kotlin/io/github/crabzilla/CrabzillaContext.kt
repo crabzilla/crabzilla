@@ -1,10 +1,10 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.command.CommandController
-import io.github.crabzilla.command.CommandControllerOptions
-import io.github.crabzilla.core.CommandComponent
-import io.github.crabzilla.projection.internal.EventsProjectorComponent
+import io.github.crabzilla.command.FeatureController
+import io.github.crabzilla.command.FeatureOptions
+import io.github.crabzilla.core.FeatureComponent
 import io.github.crabzilla.projection.ProjectorConfig
+import io.github.crabzilla.projection.internal.EventsProjectorComponent
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
@@ -48,12 +48,12 @@ open class CrabzillaContext private constructor(val vertx: Vertx, val pgPool: Pg
     }
   }
 
-  open fun <S: Any, C: Any, E: Any> commandController(component: CommandComponent<S, C, E>,
-                                          jsonObjectSerDer: JsonObjectSerDer<S, C, E>,
-                                          options: CommandControllerOptions = CommandControllerOptions()
+  open fun <S: Any, C: Any, E: Any> commandController(component: FeatureComponent<S, C, E>,
+                                                      jsonObjectSerDer: JsonObjectSerDer<S, C, E>,
+                                                      options: FeatureOptions = FeatureOptions()
   )
-  : CommandController<S, C, E> {
-      return CommandController(vertx, pgPool, component, jsonObjectSerDer, options)
+  : FeatureController<S, C, E> {
+      return FeatureController(vertx, pgPool, component, jsonObjectSerDer, options)
   }
 
   open fun postgresProjector(config: ProjectorConfig, eventProjector: EventProjector): AbstractVerticle {

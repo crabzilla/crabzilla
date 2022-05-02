@@ -4,8 +4,8 @@ import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandControllerOptions
 import io.github.crabzilla.command.CommandMetadata
+import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.testDbConfig
@@ -40,7 +40,7 @@ class ValidatingCommandIT {
   @Test
   fun `it can validate before command handler`(tc: VertxTestContext, vertx: Vertx) {
 
-    val options = CommandControllerOptions(eventBusTopic = "MY_TOPIC")
+    val options = FeatureOptions(eventBusTopic = "MY_TOPIC")
     val controller = context.commandController(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()
@@ -59,7 +59,7 @@ class ValidatingCommandIT {
   @Test
   fun `it can validate within command handler`(tc: VertxTestContext, vertx: Vertx) {
 
-    val options = CommandControllerOptions(eventBusTopic = "MY_TOPIC")
+    val options = FeatureOptions(eventBusTopic = "MY_TOPIC")
     val controller = context.commandController(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()

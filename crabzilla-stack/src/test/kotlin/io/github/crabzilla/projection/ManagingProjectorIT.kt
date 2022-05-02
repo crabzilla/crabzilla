@@ -3,9 +3,9 @@ package io.github.crabzilla.projection
 import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandController
-import io.github.crabzilla.command.CommandControllerOptions
 import io.github.crabzilla.command.CommandMetadata
+import io.github.crabzilla.command.FeatureController
+import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomersEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
@@ -66,8 +66,8 @@ class ManagingProjectorIT {
   @Test
   @Order(2)
   fun `after pause then a command`(tc: VertxTestContext, vertx: Vertx) {
-    val options = CommandControllerOptions(pgNotificationInterval = 100L)
-    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+    val options = FeatureOptions(pgNotificationInterval = 100L)
+    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
       vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
       .compose {
         controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
@@ -92,8 +92,8 @@ class ManagingProjectorIT {
   @Test
   @Order(3)
   fun `after a command then work the currentOffset is 1`(tc: VertxTestContext, vertx: Vertx) {
-    val options = CommandControllerOptions(pgNotificationInterval = 100L)
-    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+    val options = FeatureOptions(pgNotificationInterval = 100L)
+    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
         Thread.sleep(1000)
@@ -119,8 +119,8 @@ class ManagingProjectorIT {
   @Test
   @Order(4)
   fun `after a command then work, the projection is done`(tc: VertxTestContext, vertx: Vertx) {
-    val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+    val options = FeatureOptions(pgNotificationInterval = 1000L)
+    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
       controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
         .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null)
         }.compose {
@@ -142,8 +142,8 @@ class ManagingProjectorIT {
     tc: VertxTestContext,
     vertx: Vertx
   ) {
-    val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+    val options = FeatureOptions(pgNotificationInterval = 1000L)
+    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
       controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
@@ -175,8 +175,8 @@ class ManagingProjectorIT {
     tc: VertxTestContext,
     vertx: Vertx
   ) {
-    val options = CommandControllerOptions(pgNotificationInterval = 1000L)
-    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+    val options = FeatureOptions(pgNotificationInterval = 1000L)
+    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
         vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)

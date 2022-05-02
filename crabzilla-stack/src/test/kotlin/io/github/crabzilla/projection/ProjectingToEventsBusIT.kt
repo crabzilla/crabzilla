@@ -4,8 +4,8 @@ import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandController
 import io.github.crabzilla.command.CommandMetadata
+import io.github.crabzilla.command.FeatureController
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_PUBLISH
@@ -58,7 +58,7 @@ internal class ProjectingToEventsBusIT {
   fun `it can publish to eventbus using request reply`(tc: VertxTestContext, vertx: Vertx) {
     val config = ProjectorConfig(projectionName, eventBusStrategy = EVENTBUS_REQUEST_REPLY, interval = 10_000)
     val projector = context.eventBusProjector(config)
-    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer)
+    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -116,7 +116,7 @@ internal class ProjectingToEventsBusIT {
       eventBusStrategy = EVENTBUS_REQUEST_REPLY
     )
     val projector = context.eventBusProjector(config)
-    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer)
+    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -171,7 +171,7 @@ internal class ProjectingToEventsBusIT {
   fun `it can publish to eventbus using BLOCKING request reply`(tc: VertxTestContext, vertx: Vertx) {
     val config = ProjectorConfig(projectionName, eventBusStrategy = EVENTBUS_REQUEST_REPLY_BLOCKING, interval = 10_000)
     val projector = context.eventBusProjector(config)
-    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer)
+    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -223,7 +223,7 @@ internal class ProjectingToEventsBusIT {
   fun `it can publish to eventbus`(tc: VertxTestContext, vertx: Vertx) {
     val config = ProjectorConfig(projectionName, eventBusStrategy = EVENTBUS_PUBLISH, interval = 10_000)
     val projector = context.eventBusProjector(config)
-    val controller = CommandController(vertx, context.pgPool, customerComponent, jsonSerDer)
+    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false

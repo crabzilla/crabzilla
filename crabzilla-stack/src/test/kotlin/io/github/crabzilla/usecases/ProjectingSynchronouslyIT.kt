@@ -4,8 +4,8 @@ import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandControllerOptions
 import io.github.crabzilla.command.CommandMetadata
+import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomersEventProjector
@@ -41,7 +41,7 @@ class ProjectingSynchronouslyIT {
 
   @Test
   fun `it can project to view model synchronously`(vertx: Vertx, tc: VertxTestContext) {
-    val options = CommandControllerOptions(eventProjector = CustomersEventProjector())
+    val options = FeatureOptions(eventProjector = CustomersEventProjector())
     val controller = context.commandController(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()

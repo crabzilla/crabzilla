@@ -1,6 +1,6 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.TestSpecification
+import io.github.crabzilla.core.FeatureSpecification
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
@@ -20,7 +20,7 @@ internal class CustomerSpecsTest {
 
   @Test
   fun `given a new customer after a command`() {
-    TestSpecification(customerComponent)
+    FeatureSpecification(customerComponent)
       .whenCommand(RegisterCustomer(id, "c1"))
       .then {
         assertThat(it.state())
@@ -33,7 +33,7 @@ internal class CustomerSpecsTest {
 
   @Test
   fun `given a registered customer given events`() {
-    val spec = TestSpecification(customerComponent)
+    val spec = FeatureSpecification(customerComponent)
       .givenEvents(CustomerRegistered(id, "c1"))
       .whenCommand(ActivateCustomer("bcoz yes"))
       .then {
@@ -71,7 +71,7 @@ internal class CustomerSpecsTest {
   fun `trying to register a bad customer will fail`() {
     assertThatExceptionOfType(IllegalArgumentException::class.java)
       .isThrownBy {
-        TestSpecification(customerComponent)
+        FeatureSpecification(customerComponent)
           .whenCommand(RegisterCustomer(id, "bad customer"))
       }.withMessage("[Bad customer!]")
   }

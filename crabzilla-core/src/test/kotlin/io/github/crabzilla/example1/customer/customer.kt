@@ -1,10 +1,10 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.CommandComponent
 import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.CommandSession
 import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.EventHandler
+import io.github.crabzilla.core.FeatureComponent
+import io.github.crabzilla.core.FeatureSession
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
@@ -93,7 +93,7 @@ class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id 
  * Customer command handler
  */
 class CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, CustomerEvent>(customerEventHandler) {
-  override fun handleCommand(command: CustomerCommand, state: Customer?): CommandSession<Customer, CustomerEvent> {
+  override fun handleCommand(command: CustomerCommand, state: Customer?): FeatureSession<Customer, CustomerEvent> {
     return when (command) {
       is RegisterCustomer -> {
         if (state != null) throw CustomerAlreadyExists(command.customerId)
@@ -121,7 +121,7 @@ class CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custome
   }
 }
 
-val customerComponent = CommandComponent(
+val customerComponent = FeatureComponent(
   Customer::class,
   CustomerCommand::class,
   CustomerEvent::class,

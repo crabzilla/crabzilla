@@ -1,10 +1,10 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.CommandComponent
 import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.CommandSession
 import io.github.crabzilla.core.CommandValidator
 import io.github.crabzilla.core.EventHandler
+import io.github.crabzilla.core.FeatureComponent
+import io.github.crabzilla.core.FeatureSession
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
@@ -131,7 +131,7 @@ class CustomerCommandHandler :
   override fun handleCommand(
     command: CustomerCommand,
     state: Customer?
-  ): CommandSession<Customer, CustomerEvent> {
+  ): FeatureSession<Customer, CustomerEvent> {
 
     return when (command) {
 
@@ -161,7 +161,7 @@ class CustomerCommandHandler :
   }
 }
 
-val customerComponent = CommandComponent(
+val customerComponent = FeatureComponent(
   Customer::class,
   CustomerCommand::class,
   CustomerEvent::class,

@@ -6,8 +6,8 @@ import io.github.crabzilla.EventProjector
 import io.github.crabzilla.EventRecord
 import io.github.crabzilla.JsonObjectSerDer
 import io.github.crabzilla.command.internal.Snapshot
-import io.github.crabzilla.core.CommandComponent
 import io.github.crabzilla.core.CommandHandler
+import io.github.crabzilla.core.FeatureComponent
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
@@ -23,12 +23,12 @@ import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.UUID
 
-open class CommandController<S : Any, C : Any, E : Any>(
+open class FeatureController<S : Any, C : Any, E : Any>(
   private val vertx: Vertx,
   private val pgPool: PgPool,
-  private val commandComponent: CommandComponent<S, C, E>,
+  private val featureComponent: FeatureComponent<S, C, E>,
   private val serDer: JsonObjectSerDer<S, C, E>,
-  private val options: CommandControllerOptions = CommandControllerOptions()
+  private val options: FeatureOptions = FeatureOptions()
 ) {
 
   companion object {
@@ -55,10 +55,10 @@ open class CommandController<S : Any, C : Any, E : Any>(
     const val eventIdIndex = 7
   }
 
-  private val stateTypeName = commandComponent.stateClassName()
-  private val log = LoggerFactory.getLogger("${CommandController::class.java.simpleName}-$stateTypeName")
+  private val stateTypeName = featureComponent.stateClassName()
+  private val log = LoggerFactory.getLogger("${FeatureController::class.java.simpleName}-$stateTypeName")
   private val notificationsByStateType = HashSet<String>()
-  private val commandHandler: CommandHandler<S, C, E> = commandComponent.commandHandlerFactory.invoke()
+  private val commandHandler: CommandHandler<S, C, E> = featureComponent.commandHandlerFactory.invoke()
 
   init {
     log.info("Starting notifying Postgres for $stateTypeName each ${options.pgNotificationInterval} ms")
@@ -93,8 +93,8 @@ open class CommandController<S : Any, C : Any, E : Any>(
 
   open fun handle(conn: SqlConnection, metadata: CommandMetadata, command: C): Future<CommandSideEffect> {
     fun validate(command: C): Future<Void> {
-      if (commandComponent.commandValidator != null) {
-        val errors = commandComponent.commandValidator!!.validate(command)
+      if (featureComponent.commandValidator != null) {
+        val errors = featureComponent.commandValidator!!.validate(command)
         if (errors.isNotEmpty()) {
           return Future.failedFuture(CommandException.ValidationException(errors))
         }
@@ -129,7 +129,7 @@ open class CommandController<S : Any, C : Any, E : Any>(
             val asEvent = serDer.eventFromJson(eventAsJson)
             latestVersion = row.getInteger("version")
             log.trace("Found event {} version {}", asEvent, latestVersion)
-            state = commandComponent.eventHandler.handleEvent(state, asEvent)
+            state = featureComponent.eventHandler.handleEvent(state, asEvent)
             log.trace("State {}", state)
           }
           stream.exceptionHandler { error = it }
@@ -177,7 +177,7 @@ open class CommandController<S : Any, C : Any, E : Any>(
           type,
           causationId,
           metadata.correlationId,
-          commandComponent.stateClassName(),
+          featureComponent.stateClassName(),
           metadata.stateId,
           eventAsJsonObject,
           ++resultingVersion,
@@ -196,7 +196,7 @@ open class CommandController<S : Any, C : Any, E : Any>(
             val eventId = tuples[index].getUUID(eventIdIndex)
             val eventPayload = tuples[index].getJsonObject(eventPayloadIndex)
             val eventMetadata = EventMetadata(
-              stateType = commandComponent.stateClassName(), stateId = metadata.stateId, eventId = eventId,
+              stateType = featureComponent.stateClassName(), stateId = metadata.stateId, eventId = eventId,
               correlationId = correlationId, causationId = eventId, eventSequence = sequence, version = currentVersion
             )
             appendedEventList.add(EventRecord(eventMetadata, eventPayload))

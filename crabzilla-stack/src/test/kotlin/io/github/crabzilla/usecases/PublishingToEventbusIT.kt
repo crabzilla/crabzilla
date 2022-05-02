@@ -4,8 +4,8 @@ import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandControllerOptions
 import io.github.crabzilla.command.CommandMetadata
+import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.testDbConfig
@@ -43,7 +43,7 @@ class PublishingToEventbusIT {
 
   @Test
   fun `it can publish to eventbus`(vertx: Vertx, tc: VertxTestContext) {
-    val options = CommandControllerOptions(eventBusTopic = "MY_TOPIC")
+    val options = FeatureOptions(eventBusTopic = "MY_TOPIC")
     val controller = context.commandController(customerComponent, jsonSerDer, options)
 
     val jsonMessage = AtomicReference<JsonObject>()

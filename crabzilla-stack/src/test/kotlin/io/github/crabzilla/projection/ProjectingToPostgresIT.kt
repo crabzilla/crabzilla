@@ -3,8 +3,8 @@ package io.github.crabzilla.projection
 import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandControllerOptions
 import io.github.crabzilla.command.CommandMetadata
+import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomersEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
@@ -46,7 +46,7 @@ internal class ProjectingToPostgresIT {
   @Test
   @Order(1)
   fun `it can project to postgres within an interval`(tc: VertxTestContext, vertx: Vertx) {
-    val options = CommandControllerOptions(pgNotificationInterval = 100L)
+    val options = FeatureOptions(pgNotificationInterval = 100L)
     val controller = context.commandController(customerComponent, jsonSerDer, options)
     val config = ProjectorConfig(projectionName, initialInterval = 10, interval = 100)
     val projector = context.postgresProjector(config, CustomersEventProjector())
