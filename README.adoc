@@ -62,10 +62,10 @@ After handling your commands and appending the respective events, you can use an
 
 * Your events can be consistently and ordered projected to your view model in Postgres.
 * Your events can be consistently and ordered published to Vertx EventBus. You must handle idempotency.
-** Using request reply
-** Using blocking request reply
+** Using request reply.
+** Using blocking request reply.
 ** Using or just publishing to it.
-* You can consume your events in plain `JsonObject` objects or to leverage your Json framework (`Jackson` and `Kotlinx`) to consume them statically.
+* You can consume your events in plain https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject] objects or to leverage your Json framework (https://kotlinlang.org/docs/serialization.html[Kotlin serialization]` or https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]) to consume them statically.
 
 == Example application (a work in progress)
 
