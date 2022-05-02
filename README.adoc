@@ -30,11 +30,22 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 * Using https://vertx.io/docs/vertx-pg-client/java/[Vertx] to implement a `non-blocking IO` event store.
 * Idiomatic Kotlin: type safeness: pattern matching, honouring your constructors.
 * Immutability: state transitions occurs after computing results of pure functions `(State, Event) -> State`.
-* Your domain can be tested in BDD way (given events, when command, then assertion) without any dependency to Crabzilla or Vertx.
-* Your commands are consistently handled by default: before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]
-* Your events are serialized to JSON using https://kotlinlang.org/docs/serialization.html[Kotlin serialization] or https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]
+* Your domain can be tested in BDD way without any dependency to Crabzilla or Vertx.
+** given command, then assertion
+** given events, when command, then assertion
+** given commands or events in any order, then assertion
+* Your commands are consistently
+** Before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]
+** After a successful command, your projector will be notified (even in another machine) by using https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify]. This helps to reduce eventual consistency delay.
+** You can optionally project to view model within the same command transaction. This helps set based validation.
+* Your events are serialized to JSON
+** Using https://kotlinlang.org/docs/serialization.html[Kotlin serialization]
+** Using https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]
 * Your events can be consistently and ordered projected to your view model in Postgres.
-* Your events can be consistently and ordered published to Vertx EventBus using request reply, blocking request reply or just publishing to it. You must handle idempotency.
+* Your events can be consistently and ordered published to Vertx EventBus. You must handle idempotency.
+** Using request reply
+** Using blocking request reply
+** Using or just publishing to it.
 
 == Example application (a work in progress)
 
