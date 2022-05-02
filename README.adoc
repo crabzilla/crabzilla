@@ -30,11 +30,14 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 * Using https://vertx.io/docs/vertx-pg-client/java/[Vertx] to implement a `non-blocking IO` event store.
 * Idiomatic Kotlin: type safeness: pattern matching, honouring your constructors.
 * Immutability: state transitions occurs after computing results of pure functions `(State, Event) -> State`.
+
+== Features
+
 * Your domain can be tested in BDD way without any dependency to Crabzilla or Vertx.
 ** given command, then assertion
 ** given events, when command, then assertion
 ** given commands or events in any order, then assertion
-* Your commands are consistently
+* Your commands are consistently handled
 ** Before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]
 ** After a successful command, your projector will be notified (even in another machine) by using https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify]. This helps to reduce eventual consistency delay.
 ** You can optionally project to view model within the same command transaction. This helps set based validation.
