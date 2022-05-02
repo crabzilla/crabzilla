@@ -4,14 +4,14 @@ import io.github.crabzilla.EventMetadata
 import io.github.crabzilla.EventRecord
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
+import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
-import io.vertx.sqlclient.SqlClient
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
 internal class EventsScanner(
-  private val sqlClient: SqlClient,
+  private val pgPool: PgPool,
   private val name: String,
   private val querySpecification: String
 ) {
@@ -31,7 +31,7 @@ internal class EventsScanner(
   }
 
   fun getCurrentOffset(): Future<Long> {
-    return sqlClient
+    return pgPool
       .preparedQuery(selectCurrentOffset)
       .execute(Tuple.of(name))
       .map {
@@ -40,7 +40,7 @@ internal class EventsScanner(
   }
 
   fun getGlobalOffset(): Future<Long> {
-    return sqlClient
+    return pgPool
       .preparedQuery(selectGlobalOffset)
       .execute()
       .map {
@@ -49,7 +49,7 @@ internal class EventsScanner(
   }
 
   fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
-    return sqlClient
+    return pgPool
       .preparedQuery(querySpecification)
       .execute(Tuple.of(name, numberOfRows))
       .map { rowSet: RowSet<Row> ->
