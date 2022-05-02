@@ -40,7 +40,7 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 * Your commands are consistently handled:
 ** Before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]. This helps to increase consistency.
 ** After a successful command, your projector will be notified (even in another machine) by using https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify]. This helps to reduce eventual consistency delay.
-** You can optionally project to view model within the same database transaction. This helps set based validation.de
+** You can optionally project to view model within the same database transaction. This helps set based validation.
 ** You can optionally handle commands against 2 instances of the same state type (for example, account) within the same database transaction. This helps to use https://martinfowler.com/eaaCatalog/unitOfWork.html[UnitOfWork]
 * Your events are serialized to JSON
 ** Using https://kotlinlang.org/docs/serialization.html[Kotlin serialization]
