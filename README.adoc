@@ -22,7 +22,7 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 
 . Allows writing your testable `CQRS/ES` model with minimal dependencies.
 . Allows consistently handling your commands and save resulting events into `Postgres`.
-. Allows consistently and ordered projecting your events to your view models in Postgres.
+. Allows consistently and ordered projecting your events to your view models in `Postgres`.
 . Allows consistently and ordered publishing your events to Vertx eventbus, so you can integrate with any message broker, database, cache, etc.
 
 == Approach
@@ -59,7 +59,7 @@ Your commands and events are serialized to `JSON` and stored into `Postgres`
 
 === Projection
 
-After handling your commands and appending the respective events, you can use any mechanism to publish our events: CDC, pooling, etc. But there are some interesting ways to do it in Crabzilla:
+After handling your commands and appending the respective events, you can use any mechanism to publish our events: CDC, pooling, etc. But there are some fair ways to do it in Crabzilla:
 
 * Your events can be consistently and ordered projected to your view model in Postgres.
 * Your events can be consistently and ordered published to Vertx EventBus. You must handle idempotency.
@@ -67,6 +67,7 @@ After handling your commands and appending the respective events, you can use an
 ** Using blocking request reply.
 ** Using or just publishing to it.
 * You can consume your events in plain https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject] objects or to leverage your Json implementation (https://kotlinlang.org/docs/serialization.html[Kotlin serialization] or https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]) to consume them statically.
+* Your projector can be triggered via https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify] mechanism.
 
 == Example application (a work in progress)
 
