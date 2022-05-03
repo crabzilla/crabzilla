@@ -41,6 +41,8 @@ class HandlingUnitOfWorkIT {
       .onSuccess { tc.completeNow() }
   }
 
+  // https://martinfowler.com/eaaCatalog/unitOfWork.html
+
   @Test
   fun `it can handle 2 commands within more than 1 instances of the same state`(vertx: Vertx, tc: VertxTestContext) {
     val options = FeatureOptions(eventBusTopic = "MY_TOPIC", pgNotificationInterval = 100)
