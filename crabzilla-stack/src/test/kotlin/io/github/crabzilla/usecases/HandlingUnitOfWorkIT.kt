@@ -79,7 +79,14 @@ class HandlingUnitOfWorkIT {
             it.complete()
           }
         }.onSuccess {
-          tc.completeNow()
+          testRepo.getAllCommands()
+            .onFailure { tc.failNow(it) }
+            .onSuccess { list ->
+                tc.verify {
+                  assertEquals(2, list.size)
+                  tc.completeNow()
+                }
+            }
         }.onFailure {
           tc.failNow(it)
         }

@@ -25,4 +25,13 @@ internal class CommandMetadataTest {
     assertEquals(m.correlationId, correlationID)
     assertEquals(m.causationId, causationId)
   }
+
+  @Test
+  fun `to and from JsonObject`() {
+    val metadata = CommandMetadata.new(UUID.randomUUID())
+    val json = metadata.toJsonObject()
+    println(json.encodePrettily())
+    assertEquals(json, CommandMetadata.fromJsonObject(json).toJsonObject())
+  }
+
 }

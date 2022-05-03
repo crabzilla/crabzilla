@@ -17,6 +17,13 @@ data class CommandMetadata(
     fun new(stateId: UUID, correlationId: UUID, causationId: UUID): CommandMetadata {
       return CommandMetadata(stateId, correlationId, causationId, UUID.randomUUID())
     }
+    fun fromJsonObject(json: JsonObject) : CommandMetadata {
+      return CommandMetadata(
+        UUID.fromString(json.getString("stateId")),
+        UUID.fromString(json.getString("correlationId")),
+        UUID.fromString(json.getString("causationId")),
+        UUID.fromString(json.getString("commandId")))
+    }
   }
   fun toJsonObject() : JsonObject {
     return JsonObject()
