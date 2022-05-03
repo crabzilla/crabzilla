@@ -1,7 +1,6 @@
 package io.github.crabzilla.usecases
 
 import io.github.crabzilla.CrabzillaContext
-import io.github.crabzilla.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
@@ -11,13 +10,10 @@ import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
-import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -47,10 +43,8 @@ class HandlingUnitOfWorkIT {
 
   @Test
   fun `it can handle 2 commands within more than 1 instances of the same state`(vertx: Vertx, tc: VertxTestContext) {
-
     val options = FeatureOptions(eventBusTopic = "MY_TOPIC", pgNotificationInterval = 100)
     val controller = context.commandController(customerComponent, jsonSerDer, options)
-
     val latch = CountDownLatch(2)
     val stateTypeMsg = AtomicReference(mutableListOf<JsonObject>())
     vertx.eventBus().consumer<JsonObject>("MY_TOPIC") { msg ->
@@ -58,18 +52,15 @@ class HandlingUnitOfWorkIT {
       latch.countDown()
       msg.reply(null)
     }
-
-    val id = UUID.randomUUID()
+    val id = UUID.randomUUID(); val metadata = CommandMetadata.new(id)
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata.new(id)
-
-    val id2 = UUID.randomUUID()
+    val id2 = UUID.randomUUID(); val metadata2 = CommandMetadata.new(id2)
     val cmd2 = CustomerCommand.RegisterAndActivateCustomer(id2, "c2", "is needed")
-    val metadata2 = CommandMetadata.new(id2)
-
     controller
-      .compose { controller.handle(metadata, cmd)}
-      .compose { controller.handle(metadata2, cmd2) }
+      .withinTransaction {
+        controller.handle(metadata, cmd)
+          .compose { controller.handle(metadata2, cmd2) }
+      }
       .onFailure { tc.failNow(it) }
       .onSuccess {
         vertx.executeBlocking<Void> {

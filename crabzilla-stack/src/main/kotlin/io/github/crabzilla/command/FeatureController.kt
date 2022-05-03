@@ -87,7 +87,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
     }
   }
 
-  open fun compose(f: (SqlConnection) -> Future<CommandSideEffect>): Future<CommandSideEffect> {
+  open fun withinTransaction(f: (SqlConnection) -> Future<CommandSideEffect>): Future<CommandSideEffect> {
     return pgPool.withTransaction(f)
   }
 
