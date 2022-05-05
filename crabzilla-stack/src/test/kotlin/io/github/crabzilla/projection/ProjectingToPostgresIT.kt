@@ -47,7 +47,7 @@ internal class ProjectingToPostgresIT {
   @Order(1)
   fun `it can project to postgres within an interval`(tc: VertxTestContext, vertx: Vertx) {
     val options = FeatureOptions(pgNotificationInterval = 100L)
-    val controller = context.commandController(customerComponent, jsonSerDer, options)
+    val controller = context.featureController(customerComponent, jsonSerDer, options)
     val config = ProjectorConfig(projectionName, initialInterval = 10, interval = 100)
     val projector = context.postgresProjector(config, CustomersEventProjector())
     vertx.deployVerticle(projector)
@@ -70,7 +70,7 @@ internal class ProjectingToPostgresIT {
   @Test
   @Order(2)
   fun `it can project to postgres when explicit calling it`(tc: VertxTestContext, vertx: Vertx) {
-    val controller = context.commandController(customerComponent, jsonSerDer)
+    val controller = context.featureController(customerComponent, jsonSerDer)
     val config = ProjectorConfig(projectionName)
     val projector = context.postgresProjector(config, CustomersEventProjector())
     vertx.deployVerticle(projector)

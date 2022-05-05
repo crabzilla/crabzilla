@@ -41,7 +41,7 @@ class ValidatingCommandIT {
   fun `it can validate before command handler`(tc: VertxTestContext, vertx: Vertx) {
 
     val options = FeatureOptions(eventBusTopic = "MY_TOPIC")
-    val controller = context.commandController(customerComponent, jsonSerDer, options)
+    val controller = context.featureController(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "bad customer")
@@ -60,7 +60,7 @@ class ValidatingCommandIT {
   fun `it can validate within command handler`(tc: VertxTestContext, vertx: Vertx) {
 
     val options = FeatureOptions(eventBusTopic = "MY_TOPIC")
-    val controller = context.commandController(customerComponent, jsonSerDer, options)
+    val controller = context.featureController(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "good customer")

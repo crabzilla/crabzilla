@@ -46,7 +46,7 @@ class NotifyingPostgresIT {
   fun `it can notify Postgres`(vertx: Vertx, tc: VertxTestContext) {
 
     val options = FeatureOptions(pgNotificationInterval = 100L)
-    val controller = context.commandController(customerComponent, jsonSerDer, options)
+    val controller = context.featureController(customerComponent, jsonSerDer, options)
 
     val latch = CountDownLatch(1)
     val stateTypeMsg = AtomicReference<String>()

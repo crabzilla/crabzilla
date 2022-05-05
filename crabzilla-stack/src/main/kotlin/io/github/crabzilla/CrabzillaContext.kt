@@ -16,7 +16,8 @@ import io.vertx.sqlclient.PoolOptions
 import org.slf4j.LoggerFactory
 import java.net.URI
 
-open class CrabzillaContext private constructor(val vertx: Vertx, val pgPool: PgPool, val pgConfig: JsonObject) {
+open class CrabzillaContext private constructor(val vertx: Vertx, val pgPool: PgPool,
+                                                private val pgConfig: JsonObject) {
 
   companion object {
 
@@ -25,15 +26,17 @@ open class CrabzillaContext private constructor(val vertx: Vertx, val pgPool: Pg
     const val POSTGRES_NOTIFICATION_CHANNEL = "crabzilla_channel"
     const val EVENTBUS_GLOBAL_TOPIC = "crabzilla.eventbus.global-topic"
 
-    fun new(vertx: Vertx, pgConfig: JsonObject) : CrabzillaContext {
+    fun new(vertx: Vertx, pgConfig: JsonObject): CrabzillaContext {
       log.info("Creating without pgPool")
       return CrabzillaContext(vertx, toPgPool(toPgConnectionOptions(pgConfig)), pgConfig)
     }
-    fun new(vertx: Vertx, pgPool: PgPool, pgConfig: JsonObject) : CrabzillaContext {
+
+    fun new(vertx: Vertx, pgPool: PgPool, pgConfig: JsonObject): CrabzillaContext {
       log.info("Creating with pgPool")
       return CrabzillaContext(vertx, pgPool, pgConfig)
     }
-    fun toPgConnectionOptions(pgConfig: JsonObject): PgConnectOptions {
+
+    private fun toPgConnectionOptions(pgConfig: JsonObject): PgConnectOptions {
       val options = PgConnectOptions()
       val uri = URI.create(pgConfig.getString("url"))
       options.host = uri.host
@@ -43,22 +46,24 @@ open class CrabzillaContext private constructor(val vertx: Vertx, val pgPool: Pg
       options.password = pgConfig.getString("password")
       return options
     }
+
     private fun toPgPool(options: PgConnectOptions): PgPool {
       return PgPool.pool(options, PoolOptions())
     }
+
   }
 
-  open fun <S: Any, C: Any, E: Any> commandController(component: FeatureComponent<S, C, E>,
-                                                      jsonObjectSerDer: JsonObjectSerDer<S, C, E>,
-                                                      options: FeatureOptions = FeatureOptions()
-  )
-  : FeatureController<S, C, E> {
-      return FeatureController(vertx, pgPool, component, jsonObjectSerDer, options)
+  open fun <S : Any, C : Any, E : Any> featureController(
+    component: FeatureComponent<S, C, E>,
+    jsonObjectSerDer: JsonObjectSerDer<S, C, E>,
+    options: FeatureOptions = FeatureOptions(),
+  ): FeatureController<S, C, E> {
+    return FeatureController(vertx, pgPool, component, jsonObjectSerDer, options)
   }
 
   open fun postgresProjector(config: ProjectorConfig, eventProjector: EventProjector): AbstractVerticle {
     log.info("Creating postgres projector")
-    return object: AbstractVerticle() {
+    return object : AbstractVerticle() {
       private lateinit var projector: EventsProjectorComponent
       override fun start(promise: Promise<Void>) {
         projector = EventsProjectorComponent(vertx, pgPool, pgSubscriber(), config, eventProjector)
@@ -71,7 +76,7 @@ open class CrabzillaContext private constructor(val vertx: Vertx, val pgPool: Pg
 
   open fun eventBusProjector(config: ProjectorConfig): AbstractVerticle {
     log.info("Creating eventBus projector")
-    return object: AbstractVerticle() {
+    return object : AbstractVerticle() {
       private lateinit var projector: EventsProjectorComponent
       override fun start(promise: Promise<Void>) {
         projector = EventsProjectorComponent(vertx, pgPool, pgSubscriber(), config, null)

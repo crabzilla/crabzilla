@@ -43,7 +43,7 @@ class PersistingEventsT {
   @DisplayName("appending 1 command with 2 events results in version 2 ")
   fun s1(tc: VertxTestContext, vertx: Vertx) {
 
-    val controller = context.commandController(customerComponent, jsonSerDer)
+    val controller = context.featureController(customerComponent, jsonSerDer)
 
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
@@ -86,7 +86,7 @@ class PersistingEventsT {
   fun s11(tc: VertxTestContext, vertx: Vertx) {
 
     val jsonSerDer = CustomerJsonObjectSerDer()
-    val controller = context.commandController(customerComponent, jsonSerDer)
+    val controller = context.featureController(customerComponent, jsonSerDer)
 
     val id = UUID.randomUUID()
     val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")

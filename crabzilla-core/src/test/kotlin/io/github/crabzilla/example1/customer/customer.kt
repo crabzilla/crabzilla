@@ -119,6 +119,7 @@ class CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custome
       }
     }
   }
+
 }
 
 val customerComponent = FeatureComponent(

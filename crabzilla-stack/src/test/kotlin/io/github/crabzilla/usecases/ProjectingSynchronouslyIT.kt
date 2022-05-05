@@ -42,7 +42,7 @@ class ProjectingSynchronouslyIT {
   @Test
   fun `it can project to view model synchronously`(vertx: Vertx, tc: VertxTestContext) {
     val options = FeatureOptions(eventProjector = CustomersEventProjector())
-    val controller = context.commandController(customerComponent, jsonSerDer, options)
+    val controller = context.featureController(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")

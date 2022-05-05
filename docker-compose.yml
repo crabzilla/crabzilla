@@ -7,14 +7,10 @@ services:
     environment:
       POSTGRES_USER: user1
       POSTGRES_PASSWORD: pwd1
-#        PGDATA: /data/command
     volumes:
-#        - /data/command:/data/command
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
-#      networks:
-#        - command
     restart: unless-stopped
     networks:
       - crabzilla

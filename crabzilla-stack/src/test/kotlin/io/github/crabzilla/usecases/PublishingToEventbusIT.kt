@@ -44,7 +44,7 @@ class PublishingToEventbusIT {
   @Test
   fun `it can publish to eventbus`(vertx: Vertx, tc: VertxTestContext) {
     val options = FeatureOptions(eventBusTopic = "MY_TOPIC")
-    val controller = context.commandController(customerComponent, jsonSerDer, options)
+    val controller = context.featureController(customerComponent, jsonSerDer, options)
 
     val jsonMessage = AtomicReference<JsonObject>()
     val latch = CountDownLatch(1)

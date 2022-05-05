@@ -71,11 +71,13 @@ internal class EventsProjectorComponent(
         }
       vertx.eventBus()
         .consumer<String>(projectorEndpoints.pause()) { msg ->
+          log.debug("Status: {}", status().encodePrettily())
           isPaused.set(true)
           msg.reply(status())
         }
       vertx.eventBus()
         .consumer<String>(projectorEndpoints.resume()) { msg ->
+          log.debug("Status: {}", status().encodePrettily())
           isPaused.set(false)
           msg.reply(status())
         }
@@ -132,8 +134,12 @@ internal class EventsProjectorComponent(
             log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
           }
           vertx.eventBus().consumer<Void>(projectorEndpoints.handle()).handler { msg ->
+            log.info("Will handle")
             action()
-              .onComplete { msg.reply(status()) }
+              .onComplete {
+                log.info("Handle finished")
+                msg.reply(status())
+              }
           }
         }.mapEmpty()
     }

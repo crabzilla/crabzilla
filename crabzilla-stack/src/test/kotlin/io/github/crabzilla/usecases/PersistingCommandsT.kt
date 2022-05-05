@@ -40,7 +40,7 @@ class PersistingCommandsT {
 
   @Test
   fun `it can persist 1 command`(tc: VertxTestContext, vertx: Vertx) {
-    val controller = context.commandController(customerComponent, jsonSerDer)
+    val controller = context.featureController(customerComponent, jsonSerDer)
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata.new(id)
@@ -65,7 +65,7 @@ class PersistingCommandsT {
   @Test
   fun `it can persist 2 commands`(tc: VertxTestContext, vertx: Vertx) {
 
-    val controller = context.commandController(customerComponent, jsonSerDer)
+    val controller = context.featureController(customerComponent, jsonSerDer)
 
     val id = UUID.randomUUID()
 

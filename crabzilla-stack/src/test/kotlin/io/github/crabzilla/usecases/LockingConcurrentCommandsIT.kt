@@ -53,7 +53,7 @@ class LockingConcurrentCommandsIT {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
     val metadata = CommandMetadata.new(id)
-    val controller = context.commandController(customerComponent, jsonSerDer)
+    val controller = context.featureController(customerComponent, jsonSerDer)
     controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess { sideEffect ->

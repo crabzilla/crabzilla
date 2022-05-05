@@ -46,7 +46,7 @@ class HandlingUnitOfWorkIT {
   @Test
   fun `it can handle 2 commands within more than 1 instances of the same state`(vertx: Vertx, tc: VertxTestContext) {
     val options = FeatureOptions(eventBusTopic = "MY_TOPIC", pgNotificationInterval = 100)
-    val controller = context.commandController(customerComponent, jsonSerDer, options)
+    val controller = context.featureController(customerComponent, jsonSerDer, options)
     val latch = CountDownLatch(2)
     val stateTypeMsg = AtomicReference(mutableListOf<JsonObject>())
     vertx.eventBus().consumer<JsonObject>("MY_TOPIC") { msg ->
