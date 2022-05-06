@@ -69,9 +69,11 @@ After handling your commands and appending the respective events, you can use an
 * You can consume your events in plain https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject] objects or to leverage your Json implementation (https://kotlinlang.org/docs/serialization.html[Kotlin serialization] or https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]) to consume them statically.
 * Your projector can be triggered via https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify] mechanism.
 
-== Example application (a work in progress)
+== Example applications (a work in progress)
 
-https://github.com/crabzilla/accounts-quarkus
+https://github.com/crabzilla/accounts-quarkus[accounts-quarkus] A full implementation of the example app using Quarkus and Jackson.
+
+https://github.com/crabzilla/accounts-vertx[accounts-vertx] A partial implementation of the example app using Vertx and Kotlin Serialization.
 
 == Status
 
