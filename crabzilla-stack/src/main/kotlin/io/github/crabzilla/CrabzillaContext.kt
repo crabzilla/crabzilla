@@ -28,7 +28,7 @@ open class CrabzillaContext private constructor(val vertx: Vertx, val pgPool: Pg
 
     fun new(vertx: Vertx, pgConfig: JsonObject): CrabzillaContext {
       log.info("Creating without pgPool")
-      return CrabzillaContext(vertx, toPgPool(toPgConnectionOptions(pgConfig)), pgConfig)
+      return CrabzillaContext(vertx, toPgPool(vertx, toPgConnectionOptions(pgConfig)), pgConfig)
     }
 
     fun new(vertx: Vertx, pgPool: PgPool, pgConfig: JsonObject): CrabzillaContext {
@@ -47,8 +47,8 @@ open class CrabzillaContext private constructor(val vertx: Vertx, val pgPool: Pg
       return options
     }
 
-    private fun toPgPool(options: PgConnectOptions): PgPool {
-      return PgPool.pool(options, PoolOptions())
+    private fun toPgPool(vertx: Vertx, options: PgConnectOptions): PgPool {
+      return PgPool.pool(vertx, options, PoolOptions())
     }
 
   }

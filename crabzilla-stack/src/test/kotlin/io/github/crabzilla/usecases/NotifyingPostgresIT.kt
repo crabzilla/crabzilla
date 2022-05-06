@@ -64,11 +64,15 @@ class NotifyingPostgresIT {
     controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        tc.verify {
-          assertTrue(latch.await(2, TimeUnit.SECONDS))
-          assertThat(stateTypeMsg.get()).isEqualTo("Customer")
-          tc.completeNow()
+        vertx.executeBlocking<Void> {
+          tc.verify {
+            assertTrue(latch.await(4, TimeUnit.SECONDS))
+            assertThat(stateTypeMsg.get()).isEqualTo("Customer")
+            it.complete()
+          }
         }
+        .onSuccess { tc.completeNow() }
+        .onFailure { tc.failNow(it) }
       }
   }
 }

@@ -5,7 +5,7 @@ import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.command.FeatureOptions
-import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomersEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.testDbConfig
@@ -13,15 +13,19 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
-import org.junit.jupiter.api.assertTimeout
 import org.junit.jupiter.api.extension.ExtendWith
-import java.time.Duration
 import java.util.UUID
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 @ExtendWith(VertxExtension::class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
@@ -33,7 +37,7 @@ internal class ProjectingToPostgresIT {
 
   private val projectorEndpoints = ProjectorEndpoints(projectionName)
   private val id: UUID = UUID.randomUUID()
-  private lateinit var context : CrabzillaContext
+  private lateinit var context: CrabzillaContext
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
@@ -48,22 +52,41 @@ internal class ProjectingToPostgresIT {
   fun `it can project to postgres within an interval`(tc: VertxTestContext, vertx: Vertx) {
     val options = FeatureOptions(pgNotificationInterval = 100L)
     val controller = context.featureController(customerComponent, jsonSerDer, options)
-    val config = ProjectorConfig(projectionName, initialInterval = 10, interval = 100)
+    val config = ProjectorConfig(projectionName, initialInterval = 10, interval = 100, maxInterval = 100)
     val projector = context.postgresProjector(config, CustomersEventProjector())
+
+    val latch = CountDownLatch(1)
+    val stateTypeMsg = AtomicReference<String>()
+    val pgSubscriber = context.pgSubscriber()
+    pgSubscriber.connect().onSuccess {
+      pgSubscriber.channel(CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL)
+        .handler { stateType ->
+          println("received")
+          stateTypeMsg.set(stateType)
+          latch.countDown()
+        }
+    }
+
     vertx.deployVerticle(projector)
+      .compose { controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id")) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
-          .compose {
-            context.pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() == 1 }
-          }.onFailure {
-            tc.failNow(it)
-          }.onSuccess {
-            tc.verify {
-              assertTimeout(Duration.ofMillis(1000)) { it }
-              tc.completeNow()
-            }
+        vertx.executeBlocking<Void> {
+          tc.verify {
+            assertTrue(latch.await(2, TimeUnit.SECONDS))
+            assertThat(stateTypeMsg.get()).isEqualTo("Customer")
+            it.complete()
           }
+        }.compose {
+          context.pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() }
+        }.onFailure {
+          tc.failNow(it)
+        }.onSuccess {
+          tc.verify {
+            assertEquals(1, it)
+            tc.completeNow()
+          }
+        }
       }
   }
 
@@ -76,15 +99,15 @@ internal class ProjectingToPostgresIT {
     vertx.deployVerticle(projector)
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id"))
+        controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
           .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null) }
           .compose {
-            context.pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() == 1 }
+            context.pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() }
           }.onFailure {
             tc.failNow(it)
           }.onSuccess {
             tc.verify {
-              assertTimeout(Duration.ofMillis(1000)) { it }
+              assertEquals(1, it)
               tc.completeNow()
             }
           }
