@@ -70,7 +70,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
         currentFuture.compose {
           val query = "NOTIFY ${CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL}, '$stateType'"
           pgPool.preparedQuery(query).execute()
-            .onSuccess { log.info("Notified postgres: $query") }
+            .onSuccess { log.debug("Notified postgres: $query") }
             .mapEmpty()
         }
       }.onFailure {
