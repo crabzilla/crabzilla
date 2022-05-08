@@ -59,14 +59,18 @@ Your commands and events are serialized to `JSON` and stored into `Postgres`
 
 === Subscription
 
-After handling your commands and appending the respective events, you can use any mechanism to publish your events: CDC, pooling, etc. But there are some fair ways to do it in Crabzilla:
+After handling your commands and appending the respective events, you can use any mechanism to publish your events: CDC, pooling WAL or events table, etc. Optionally, you can use Crabzilla subscription:
 
-* Your subscription can specify what events to subscribe, filtering by state type (aggregate root) or event type.
-* Your events can be consistently and ordered projected to your view model in Postgres.
-* Your events can be consistently and ordered published to Vertx EventBus. You must handle idempotency.
-** Using request reply.
-** Using blocking request reply.
-** Using or just publishing to it.
+* It pulls events table periodically. Events are consumed in strict order using `events.sequence` column. You can specify:
+** what events to subscribe, filtering by state type (aggregate root) or event type.
+** a very simple interval policy resulting in an exponential backoff behavior. Crabzilla applies 1-second jitter.
+** a sink:
+*** to an implementation of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-command/src/main/java/io/github/crabzilla/EventProjector.kt[EventProjector] implementation in order to update your view model in Postgres.
+*** to Vertx EventBus. You must handle idempotency.
+**** using request reply (at least once).
+**** using blocking request reply (at least once).
+**** using publishing (no guaranties).
+
 * You can consume your events in plain https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject] objects or to leverage Json implementations (https://kotlinlang.org/docs/serialization.html[Kotlin serialization] or https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]) to consume events statically.
 * Your subscription can be triggered via https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify] mechanism.
 
@@ -78,4 +82,4 @@ https://github.com/crabzilla/accounts-vertx[accounts-vertx] A partial implementa
 
 == Status
 
-Seems like it's finally reaching stable status :)
+Seems like it's finally reaching stable status ;)
