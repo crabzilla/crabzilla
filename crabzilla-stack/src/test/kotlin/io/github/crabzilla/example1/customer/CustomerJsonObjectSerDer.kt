@@ -57,4 +57,15 @@ class CustomerJsonObjectSerDer: JsonObjectSerDer<Customer, CustomerCommand, Cust
         .put("reason", command.reason)
     }
   }
+
+  override fun commandFromJson(json: JsonObject): CustomerCommand {
+    return when (val commandType = json.getString("type")) {
+      "RegisterCustomer" -> RegisterCustomer(UUID.fromString(json.getString("ID")), json.getString("name"))
+      "ActivateCustomer" -> ActivateCustomer(json.getString("reason"))
+      "DeactivateCustomer" -> DeactivateCustomer(json.getString("reason"))
+      "RegisterAndActivateCustomer" -> RegisterAndActivateCustomer(UUID.fromString(json.getString("ID")),
+        json.getString("name"), json.getString("reason"))
+      else -> throw IllegalArgumentException("Unknown command $commandType")
+    }
+  }
 }

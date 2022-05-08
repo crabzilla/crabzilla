@@ -17,4 +17,7 @@ class JacksonJsonObjectSerDer<S: Any, C: Any, E: Any>(
   override fun commandToJson(command: C): JsonObject {
     return JsonObject(json.writeValueAsString(command))
   }
+  override fun commandFromJson(json: JsonObject): C {
+    return this.json.readValue(json.toString(), featureComponent.commandClass.java)
+  }
 }

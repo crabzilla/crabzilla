@@ -36,4 +36,15 @@ internal class JacksonJsonObjectSerDerTest {
     val command = RegisterCustomer(UUID.randomUUID(), "c1")
     assertThat(serDer.commandToJson(command).getString("type")).isEqualTo("RegisterCustomer")
   }
+
+  @Test
+  fun commandFromJson() {
+    val id = UUID.randomUUID()
+    val json = JsonObject()
+      .put("type", "RegisterCustomer")
+      .put("customerId", id.toString())
+      .put("name", "c1")
+    assertThat(serDer.commandFromJson(json)).isEqualTo(RegisterCustomer(id, "c1"))
+  }
+
 }

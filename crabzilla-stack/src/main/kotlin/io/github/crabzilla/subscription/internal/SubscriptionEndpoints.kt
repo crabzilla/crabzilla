@@ -1,6 +1,6 @@
-package io.github.crabzilla.projection.internal
+package io.github.crabzilla.subscription.internal
 
-internal data class ProjectorEndpoints(val name: String) {
+internal data class SubscriptionEndpoints(val name: String) {
   fun status() = "crabzilla.verticle.$name.status"
   fun handle() = "crabzilla.verticle.$name.handle"
   fun pause() = "crabzilla.verticle.$name.pause"

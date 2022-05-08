@@ -1,11 +1,11 @@
-package io.github.crabzilla.projection.internal
+package io.github.crabzilla.subscription.internal
 
 internal object QuerySpecification {
 
   private const val QUERY = """
         SELECT event_type, state_type, state_id, event_payload, sequence, id, causation_id, correlation_id, version
           FROM events
-        WHERE sequence > (select sequence from projections where name = $1)"""
+        WHERE sequence > (select sequence from subscriptions where name = $1)"""
 
   fun query(stateTypes: List<String>, eventTypes: List<String>): String {
     var sql = QUERY

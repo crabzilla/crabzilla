@@ -21,4 +21,7 @@ class KotlinxJsonObjectSerDer<S: Any, C : Any, E : Any>(
   override fun commandToJson(command: C) : JsonObject {
     return JsonObject(json.encodeToString(commandSerDer, command))
   }
+  override fun commandFromJson(json: JsonObject): C {
+    return this.json.decodeFromString(commandSerDer, json.toString())
+  }
 }

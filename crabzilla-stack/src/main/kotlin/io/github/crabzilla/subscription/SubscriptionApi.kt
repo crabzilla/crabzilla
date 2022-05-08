@@ -1,12 +1,12 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.subscription
 
-import io.github.crabzilla.projection.internal.ProjectorEndpoints
+import io.github.crabzilla.subscription.internal.SubscriptionEndpoints
 import io.vertx.core.Future
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.json.JsonObject
 
-class ProjectorApi(private val bus: EventBus, projectionName: String) {
-  private val endpoints: ProjectorEndpoints = ProjectorEndpoints(projectionName)
+class SubscriptionApi(private val bus: EventBus, subscriptionName: String) {
+  private val endpoints: SubscriptionEndpoints = SubscriptionEndpoints(subscriptionName)
   fun pause(): Future<JsonObject> {
     return bus.request<JsonObject>(endpoints.pause(), null)
       .map{ it.body() }

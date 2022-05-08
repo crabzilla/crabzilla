@@ -72,7 +72,7 @@ class TestRepository(private val pgPool: PgPool) {
   }
 
   fun getProjections(name: String): Future<Long> {
-    return pgPool.query("SELECT sequence FROM projections where name = '$name'")
+    return pgPool.query("SELECT sequence FROM subscriptions where name = '$name'")
       .execute()
       .map { rowSet: RowSet<Row> ->
         rowSet.first().getLong(0)

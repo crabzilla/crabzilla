@@ -2,7 +2,7 @@ CREATE DATABASE ex1_crabzilla OWNER user1;
 
 \connect ex1_crabzilla ;
 
-CREATE TABLE projections (
+CREATE TABLE subscriptions (
    name TEXT PRIMARY KEY NOT NULL,
    sequence BIGINT
 );
@@ -52,9 +52,9 @@ CREATE TABLE events_2 PARTITION OF events
 
 -- application data
 
-INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.SimpleProjector', 0);
-INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.BadProjector', 0);
-INSERT INTO projections (name, sequence) values ('crabzilla.example1.customer.CustomProjector', 0);
+INSERT INTO subscriptions (name, sequence) values ('crabzilla.example1.customer.SimpleProjector', 0);
+INSERT INTO subscriptions (name, sequence) values ('crabzilla.example1.customer.BadProjector', 0);
+INSERT INTO subscriptions (name, sequence) values ('crabzilla.example1.customer.CustomProjector', 0);
 
 CREATE TABLE customer_summary (
     id UUID NOT NULL,

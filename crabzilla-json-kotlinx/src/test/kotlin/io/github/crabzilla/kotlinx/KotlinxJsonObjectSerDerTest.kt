@@ -1,6 +1,7 @@
 package io.github.crabzilla.kotlinx
 
 import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.example1.customer.customerModule
@@ -33,7 +34,18 @@ internal class KotlinxJsonObjectSerDerTest {
 
   @Test
   fun commandToJsonObject() {
-    val command = CustomerCommand.RegisterCustomer(UUID.randomUUID(), "c1")
+    val command = RegisterCustomer(UUID.randomUUID(), "c1")
     assertThat(serDer.commandToJson(command).getString("type")).isEqualTo("RegisterCustomer")
   }
+
+  @Test
+  fun commandFromJson() {
+    val id = UUID.randomUUID()
+    val json = JsonObject()
+      .put("type", "RegisterCustomer")
+      .put("customerId", id.toString())
+      .put("name", "c1")
+    assertThat(serDer.commandFromJson(json)).isEqualTo(RegisterCustomer(id, "c1"))
+  }
+
 }

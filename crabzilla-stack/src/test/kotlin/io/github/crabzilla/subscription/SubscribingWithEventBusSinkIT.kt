@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.subscription
 
 import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPIC
@@ -8,10 +8,10 @@ import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.command.FeatureController
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_PUBLISH
-import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY
-import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
-import io.github.crabzilla.projection.internal.ProjectorEndpoints
+import io.github.crabzilla.subscription.EventBusStrategy.EVENTBUS_PUBLISH
+import io.github.crabzilla.subscription.EventBusStrategy.EVENTBUS_REQUEST_REPLY
+import io.github.crabzilla.subscription.EventBusStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
+import io.github.crabzilla.subscription.internal.SubscriptionEndpoints
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Future
 import io.vertx.core.Promise
@@ -36,12 +36,12 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 @ExtendWith(VertxExtension::class)
-internal class ProjectingToEventsBusIT {
+internal class SubscribingWithEventBusSinkIT {
 
   companion object {
-    private val log = LoggerFactory.getLogger(ProjectingToEventsBusIT::class.java)
-    const val projectionName = "crabzilla.example1.customer.SimpleProjector"
-    private val projectorEndpoints = ProjectorEndpoints(projectionName)
+    private val log = LoggerFactory.getLogger(SubscribingWithEventBusSinkIT::class.java)
+    const val subscriptionName = "crabzilla.example1.customer.SimpleProjector"
+    private val subscriptionEndpoints = SubscriptionEndpoints(subscriptionName)
     private val id: UUID = UUID.randomUUID()
   }
 
@@ -57,8 +57,8 @@ internal class ProjectingToEventsBusIT {
 
   @Test
   fun `it can publish to eventbus using request reply`(tc: VertxTestContext, vertx: Vertx) {
-    val config = ProjectorConfig(projectionName, eventBusStrategy = EVENTBUS_REQUEST_REPLY, interval = 10_000)
-    val projector = context.eventBusProjector(config)
+    val config = SubscriptionConfig(subscriptionName, eventBusStrategy = EVENTBUS_REQUEST_REPLY, interval = 10_000)
+    val subscription = context.subscriptionWithEventBusSink(config)
     val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
@@ -83,10 +83,10 @@ internal class ProjectingToEventsBusIT {
     }
     val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
     vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
-      .compose { vertx.deployVerticle(projector) }
+      .compose { vertx.deployVerticle(subscription) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
-      .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null) }
+      .compose { vertx.eventBus().request<JsonObject>(subscriptionEndpoints.handle(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
         tc.verify {
@@ -113,10 +113,10 @@ internal class ProjectingToEventsBusIT {
   @Test
   @Disabled // instead, use EVENTBUS_REQUEST_REPLY_BLOCKING
   fun `it can publish to eventbus using request reply with a BLOCKING consumer`(tc: VertxTestContext, vertx: Vertx) {
-    val config = ProjectorConfig(projectionName, initialInterval = 1, interval = 30_000,
+    val config = SubscriptionConfig(subscriptionName, initialInterval = 1, interval = 30_000,
       eventBusStrategy = EVENTBUS_REQUEST_REPLY
     )
-    val projector = context.eventBusProjector(config)
+    val subscription = context.subscriptionWithEventBusSink(config)
     val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
@@ -141,10 +141,10 @@ internal class ProjectingToEventsBusIT {
     }
     val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
     vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
-      .compose { vertx.deployVerticle(projector) }
+      .compose { vertx.deployVerticle(subscription) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
-      .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null) }
+      .compose { vertx.eventBus().request<JsonObject>(subscriptionEndpoints.handle(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
         tc.verify {
@@ -170,8 +170,8 @@ internal class ProjectingToEventsBusIT {
 
   @Test
   fun `it can publish to eventbus using BLOCKING request reply`(tc: VertxTestContext, vertx: Vertx) {
-    val config = ProjectorConfig(projectionName, eventBusStrategy = EVENTBUS_REQUEST_REPLY_BLOCKING, interval = 10_000)
-    val projector = context.eventBusProjector(config)
+    val config = SubscriptionConfig(subscriptionName, eventBusStrategy = EVENTBUS_REQUEST_REPLY_BLOCKING, interval = 10_000)
+    val subscription = context.subscriptionWithEventBusSink(config)
     val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
@@ -193,10 +193,10 @@ internal class ProjectingToEventsBusIT {
     }
     val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
     vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
-      .compose { vertx.deployVerticle(projector) }
+      .compose { vertx.deployVerticle(subscription) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
-      .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null) }
+      .compose { vertx.eventBus().request<JsonObject>(subscriptionEndpoints.handle(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
         tc.verify {
@@ -222,8 +222,8 @@ internal class ProjectingToEventsBusIT {
 
   @Test
   fun `it can publish to eventbus`(tc: VertxTestContext, vertx: Vertx) {
-    val config = ProjectorConfig(projectionName, eventBusStrategy = EVENTBUS_PUBLISH, interval = 10_000)
-    val projector = context.eventBusProjector(config)
+    val config = SubscriptionConfig(subscriptionName, eventBusStrategy = EVENTBUS_PUBLISH, interval = 10_000)
+    val subscription = context.subscriptionWithEventBusSink(config)
     val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
@@ -244,10 +244,10 @@ internal class ProjectingToEventsBusIT {
     }
     val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
     vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
-      .compose { vertx.deployVerticle(projector) }
+      .compose { vertx.deployVerticle(subscription) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
       .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
-      .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null) }
+      .compose { vertx.eventBus().request<JsonObject>(subscriptionEndpoints.handle(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
         tc.verify {
@@ -274,8 +274,8 @@ internal class ProjectingToEventsBusIT {
   private fun checkOffset(size: Int, sequence: Long): Future<Void> {
     val promise = Promise.promise<Void>()
     context.pgPool
-      .preparedQuery("select sequence from projections where name = $1")
-      .execute(Tuple.of(projectionName))
+      .preparedQuery("select sequence from subscriptions where name = $1")
+      .execute(Tuple.of(subscriptionName))
       .onSuccess { row: RowSet<Row> ->
         log.info("offset: ${row.first().toJson().encodePrettily()}")
         if (row.size() == size && row.value().first().getLong("sequence") == sequence) {

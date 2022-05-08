@@ -48,26 +48,27 @@ Your commands are consistently handled:
 
 ** Before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]. This helps to increase consistency.
 ** After a successful command, your projector will be notified (even in another machine) by using https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify]. This helps to reduce eventual consistency delay.
-** You can optionally project to view model within the same database transaction. This helps set based validation.
+** You can optionally project the command events to view model within the same database transaction. This helps set based validation.
 ** You can optionally handle commands against 2 instances of the same state type (for example, transferring $ from account1 to account2) within the same database transaction. This helps to use https://martinfowler.com/eaaCatalog/unitOfWork.html[UnitOfWork]
 
 Your commands and events are serialized to `JSON` and stored into `Postgres`
 
-** Using your own implementation based on from/to https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject]
+** Using your own implementation
 ** Using https://kotlinlang.org/docs/serialization.html[Kotlin serialization]
 ** Using https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]
 
-=== Projection
+=== Subscription
 
-After handling your commands and appending the respective events, you can use any mechanism to publish our events: CDC, pooling, etc. But there are some fair ways to do it in Crabzilla:
+After handling your commands and appending the respective events, you can use any mechanism to publish your events: CDC, pooling, etc. But there are some fair ways to do it in Crabzilla:
 
+* Your subscription can specify what events to subscribe, filtering by state type (aggregate root) or event type.
 * Your events can be consistently and ordered projected to your view model in Postgres.
 * Your events can be consistently and ordered published to Vertx EventBus. You must handle idempotency.
 ** Using request reply.
 ** Using blocking request reply.
 ** Using or just publishing to it.
-* You can consume your events in plain https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject] objects or to leverage your Json implementation (https://kotlinlang.org/docs/serialization.html[Kotlin serialization] or https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]) to consume them statically.
-* Your projector can be triggered via https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify] mechanism.
+* You can consume your events in plain https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject] objects or to leverage Json implementations (https://kotlinlang.org/docs/serialization.html[Kotlin serialization] or https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]) to consume events statically.
+* Your subscription can be triggered via https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify] mechanism.
 
 == Example applications (a work in progress)
 

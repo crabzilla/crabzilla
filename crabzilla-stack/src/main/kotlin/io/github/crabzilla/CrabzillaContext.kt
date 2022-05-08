@@ -3,9 +3,9 @@ package io.github.crabzilla
 import io.github.crabzilla.command.FeatureController
 import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.core.FeatureComponent
-import io.github.crabzilla.projection.ProjectorApi
-import io.github.crabzilla.projection.ProjectorConfig
-import io.github.crabzilla.projection.internal.EventsProjectorComponent
+import io.github.crabzilla.subscription.SubscriptionApi
+import io.github.crabzilla.subscription.SubscriptionConfig
+import io.github.crabzilla.subscription.internal.SubscriptionComponent
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
@@ -62,28 +62,28 @@ open class CrabzillaContext private constructor(val vertx: Vertx, val pgPool: Pg
     return FeatureController(vertx, pgPool, component, jsonObjectSerDer, options)
   }
 
-  open fun postgresProjector(config: ProjectorConfig, eventProjector: EventProjector)
-  : Pair<AbstractVerticle, ProjectorApi> {
-    log.info("Creating postgres projector")
+  open fun subscriptionWithPostgresSink(config: SubscriptionConfig, eventProjector: EventProjector)
+  : Pair<AbstractVerticle, SubscriptionApi> {
+    log.info("Creating subscription with postgres sink")
     val verticle = object : AbstractVerticle() {
-      private lateinit var projector: EventsProjectorComponent
+      private lateinit var subscription: SubscriptionComponent
       override fun start(promise: Promise<Void>) {
-        projector = EventsProjectorComponent(vertx, pgPool, pgSubscriber(), config, eventProjector)
-        projector.start()
+        subscription = SubscriptionComponent(vertx, pgPool, pgSubscriber(), config, eventProjector)
+        subscription.start()
           .onSuccess { promise.complete() }
           .onFailure { promise.fail(it) }
       }
     }
-    return Pair(verticle, ProjectorApi(vertx.eventBus(), config.projectionName))
+    return Pair(verticle, SubscriptionApi(vertx.eventBus(), config.subscriptionName))
   }
 
-  open fun eventBusProjector(config: ProjectorConfig): AbstractVerticle {
-    log.info("Creating eventBus projector")
+  open fun subscriptionWithEventBusSink(config: SubscriptionConfig): AbstractVerticle {
+    log.info("Creating subscription with eventbus sink")
     return object : AbstractVerticle() {
-      private lateinit var projector: EventsProjectorComponent
+      private lateinit var subscription: SubscriptionComponent
       override fun start(promise: Promise<Void>) {
-        projector = EventsProjectorComponent(vertx, pgPool, pgSubscriber(), config, null)
-        projector.start()
+        subscription = SubscriptionComponent(vertx, pgPool, pgSubscriber(), config, null)
+        subscription.start()
           .onSuccess { promise.complete() }
           .onFailure { promise.fail(it) }
       }

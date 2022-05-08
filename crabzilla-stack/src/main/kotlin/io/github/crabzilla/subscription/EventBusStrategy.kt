@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.subscription
 
 enum class EventBusStrategy {
   EVENTBUS_PUBLISH,

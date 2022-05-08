@@ -6,7 +6,7 @@
 -- https://verraes.net/2019/05/ddd-msg-arch/
 -- https://foojay.io/today/optimizing-relational-database-access/
 
-* projections
+* subscriptions
 -- https://github.com/tobyhede/postgresql-event-sourcing/
 -- https://domaincentric.net/blog/event-sourcing-projection-patterns-deduplication-strategies
 -- https://www.continuousimprover.com/2018/07/dealing-with-non-transient-exceptions.html

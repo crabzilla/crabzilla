@@ -1,13 +1,13 @@
-package io.github.crabzilla.projection.internal
+package io.github.crabzilla.subscription.internal
 
 import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.EventProjector
 import io.github.crabzilla.EventRecord
-import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_PUBLISH
-import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY
-import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
-import io.github.crabzilla.projection.ProjectorConfig
+import io.github.crabzilla.subscription.EventBusStrategy.EVENTBUS_PUBLISH
+import io.github.crabzilla.subscription.EventBusStrategy.EVENTBUS_REQUEST_REPLY
+import io.github.crabzilla.subscription.EventBusStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
+import io.github.crabzilla.subscription.SubscriptionConfig
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler
@@ -25,11 +25,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-internal class EventsProjectorComponent(
+internal class SubscriptionComponent(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val subscriber: PgSubscriber,
-  private val options: ProjectorConfig,
+  private val options: SubscriptionConfig,
   private val eventProjector: EventProjector?,
 ) {
 
@@ -39,7 +39,7 @@ internal class EventsProjectorComponent(
   }
 
   private val log = LoggerFactory
-    .getLogger("${EventsProjectorComponent::class.java.simpleName}-${options.projectionName}")
+    .getLogger("${SubscriptionComponent::class.java.simpleName}-${options.subscriptionName}")
   private var greedy = AtomicBoolean(false)
   private val failures = AtomicLong(0L)
   private val backOff = AtomicLong(0L)
@@ -48,7 +48,7 @@ internal class EventsProjectorComponent(
   private var isBusy = AtomicBoolean(false)
 
   private lateinit var scanner: EventsScanner
-  private lateinit var projectorEndpoints: ProjectorEndpoints
+  private lateinit var subscriptionEndpoints: SubscriptionEndpoints
 
   fun start(): Future<Void> {
     fun status(): JsonObject {
@@ -64,18 +64,18 @@ internal class EventsProjectorComponent(
 
     fun startManagementEndpoints() {
       vertx.eventBus()
-        .consumer<String>(projectorEndpoints.status()) { msg ->
+        .consumer<String>(subscriptionEndpoints.status()) { msg ->
           log.debug("Status: {}", status().encodePrettily())
           msg.reply(status())
         }
       vertx.eventBus()
-        .consumer<String>(projectorEndpoints.pause()) { msg ->
+        .consumer<String>(subscriptionEndpoints.pause()) { msg ->
           log.debug("Status: {}", status().encodePrettily())
           isPaused.set(true)
           msg.reply(status())
         }
       vertx.eventBus()
-        .consumer<String>(projectorEndpoints.resume()) { msg ->
+        .consumer<String>(subscriptionEndpoints.resume()) { msg ->
           log.debug("Status: {}", status().encodePrettily())
           isPaused.set(false)
           msg.reply(status())
@@ -104,10 +104,10 @@ internal class EventsProjectorComponent(
     fun startEventsScanner() {
       val query = QuerySpecification.query(options.stateTypes, options.eventTypes)
       log.info(
-        "Will start projection [{}] using query [{}] in [{}] milliseconds", options.projectionName, query,
+        "Will start subscription [{}] using query [{}] in [{}] milliseconds", options.subscriptionName, query,
         options.initialInterval
       )
-      scanner = EventsScanner(pgPool, options.projectionName, query)
+      scanner = EventsScanner(pgPool, options.subscriptionName, query)
     }
 
     fun startProjection(): Future<Void> {
@@ -123,16 +123,16 @@ internal class EventsProjectorComponent(
           val effectiveInitialInterval = if (greedy.get()) 1 else options.initialInterval
           log.info(
             "Projection [{}] current offset [{}] global offset [{}] will start in [{}] ms",
-            options.projectionName, currentOffset, globalOffset, effectiveInitialInterval
+            options.subscriptionName, currentOffset, globalOffset, effectiveInitialInterval
           )
-          log.info("Projection [{}] started pooling events with {}", options.projectionName, options)
+          log.info("Projection [{}] started pooling events with {}", options.subscriptionName, options)
           // Schedule the first execution
           vertx.setTimer(effectiveInitialInterval, handler())
           // Schedule the metrics
           vertx.setPeriodic(options.metricsInterval) {
-            log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
+            log.info("Projection [{}] current offset [{}]", options.subscriptionName, currentOffset)
           }
-          vertx.eventBus().consumer<Nothing>(projectorEndpoints.handle()).handler { msg ->
+          vertx.eventBus().consumer<Nothing>(subscriptionEndpoints.handle()).handler { msg ->
             log.info("Will handle")
             action()
               .onComplete {
@@ -144,7 +144,7 @@ internal class EventsProjectorComponent(
     }
 
     log.info("Node {} starting with {}", node, options)
-    projectorEndpoints = ProjectorEndpoints(options.projectionName)
+    subscriptionEndpoints = SubscriptionEndpoints(options.subscriptionName)
     startManagementEndpoints()
     startEventsScanner()
 
@@ -154,7 +154,7 @@ internal class EventsProjectorComponent(
 
   fun stop() {
     isPaused.set(true)
-    log.info("Projection [{}] stopped at offset [{}]", options.projectionName, currentOffset)
+    log.info("Projection [{}] stopped at offset [{}]", options.subscriptionName, currentOffset)
   }
 
   private fun handler(): Handler<Long> {
@@ -165,7 +165,7 @@ internal class EventsProjectorComponent(
 
   private fun action(): Future<Void> {
     fun scanEvents(): Future<List<EventRecord>> {
-      log.debug("Scanning for new events for projection {}", options.projectionName)
+      log.debug("Scanning for new events for subscription {}", options.subscriptionName)
       return scanner.scanPendingEvents(options.maxNumberOfRows)
     }
 
@@ -217,8 +217,8 @@ internal class EventsProjectorComponent(
 
     fun updateOffset(conn: SqlConnection, offset: Long): Future<Void> {
       return conn
-        .preparedQuery("update projections set sequence = $2 where name = $1")
-        .execute(Tuple.of(options.projectionName, offset))
+        .preparedQuery("update subscriptions set sequence = $2 where name = $1")
+        .execute(Tuple.of(options.subscriptionName, offset))
         .mapEmpty()
     }
 

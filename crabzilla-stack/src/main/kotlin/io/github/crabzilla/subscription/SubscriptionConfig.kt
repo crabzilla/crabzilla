@@ -1,7 +1,7 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.subscription
 
-data class ProjectorConfig(
-  val projectionName: String,
+data class SubscriptionConfig(
+  val subscriptionName: String,
   val initialInterval: Long = DEFAULT_INITIAL_INTERVAL,
   val interval: Long = DEFAULT_INTERVAL,
   val maxNumberOfRows: Int = DEFAULT_NUMBER_ROWS,

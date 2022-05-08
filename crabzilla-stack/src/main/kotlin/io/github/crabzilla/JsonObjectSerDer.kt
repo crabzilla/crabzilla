@@ -9,4 +9,5 @@ interface JsonObjectSerDer<S: Any, C: Any, E: Any> {
   fun eventFromJson(json: JsonObject): E
   fun eventToJson(event: E): JsonObject
   fun commandToJson(command: C): JsonObject
+  fun commandFromJson(json: JsonObject): C
 }

@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection.internal
+package io.github.crabzilla.subscription.internal
 
 import io.github.crabzilla.EventMetadata
 import io.github.crabzilla.EventRecord
@@ -19,7 +19,7 @@ internal class EventsScanner(
   companion object {
     private val log = LoggerFactory.getLogger(EventsScanner::class.java)
     private const val selectCurrentOffset = """
-      select sequence from projections where name = $1
+      select sequence from subscriptions where name = $1
     """
     private const val selectGlobalOffset = """
       select max(sequence) as sequence from events
@@ -27,7 +27,7 @@ internal class EventsScanner(
   }
 
   init {
-    log.info("Starting for projection {}", name)
+    log.info("Starting for subscription {}", name)
   }
 
   fun getCurrentOffset(): Future<Long> {

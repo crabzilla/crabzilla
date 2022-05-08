@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.subscription
 
 import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.TestsFixtures.jsonSerDer
@@ -25,21 +25,21 @@ import java.util.UUID
 
 @ExtendWith(VertxExtension::class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class ManagingProjectorIT {
+class ManagingSubscriptionIT {
 
   companion object {
-    const val projectorName = "crabzilla.example1.customer.SimpleProjector"
+    const val subscriptionName = "crabzilla.example1.customer.SimpleProjector"
     private val id: UUID = UUID.randomUUID()
   }
 
   private lateinit var context : CrabzillaContext
-  private lateinit var api: ProjectorApi
+  private lateinit var api: SubscriptionApi
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     context = CrabzillaContext.new(vertx, testDbConfig)
-    val config = ProjectorConfig(projectorName)
-    val pair: Pair<AbstractVerticle, ProjectorApi> = context.postgresProjector(config, CustomersEventProjector())
+    val config = SubscriptionConfig(subscriptionName)
+    val pair: Pair<AbstractVerticle, SubscriptionApi> = context.subscriptionWithPostgresSink(config, CustomersEventProjector())
     api = pair.second
     cleanDatabase(context.pgPool)
       .compose { vertx.deployVerticle(pair.first) }
@@ -117,7 +117,7 @@ class ManagingProjectorIT {
 
   @Test
   @Order(4)
-  fun `after a command then work, the projection is done`(tc: VertxTestContext, vertx: Vertx) {
+  fun `after a command then work, the subscription is done`(tc: VertxTestContext, vertx: Vertx) {
     val options = FeatureOptions(pgNotificationInterval = 1000L)
     val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
       controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))

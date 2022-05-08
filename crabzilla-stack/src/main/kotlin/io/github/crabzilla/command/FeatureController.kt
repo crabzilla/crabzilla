@@ -206,7 +206,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
           CommandSideEffect(appendedEventList)
         }
     }
-    fun projectEvents(conn: SqlConnection, appendedEvents: List<EventRecord>, projector: EventProjector)
+    fun projectEvents(conn: SqlConnection, appendedEvents: List<EventRecord>, subscription: EventProjector)
             : Future<Void> {
       log.trace("Will project {} events", appendedEvents.size)
       val initialFuture = Future.succeededFuture<Void>()
@@ -214,7 +214,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
         initialFuture
       ) { currentFuture: Future<Void>, appendedEvent: EventRecord ->
         currentFuture.compose {
-          projector.project(conn, appendedEvent)
+          subscription.project(conn, appendedEvent)
         }
       }.mapEmpty()
     }

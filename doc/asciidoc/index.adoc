@@ -55,10 +55,10 @@ TODO
 ** [X] Events persistence
 ** [X] Optional Command validation
 ** [X] Optional "synchronous" Read Model projection: within the same command handler transaction: set based validation.
-* [X] `crabzila-projection`
+* [X] `crabzila-subscription`
 ** [X] EventsProjectorWorker can be injected (vertx and pgPool instances)
 ** [X] Optionally, based on Verticles (single writer clustered verticles)
-** [X] Batch projection of many events within a single transaction
+** [X] Batch subscription of many events within a single transaction
 ** [X] Can filter by state types: `Customer`, `Account`, etc.
 ** [X] Can filter by event types: `CustomerRegistered`, `CustomerActivated`, etc.
 * [X] A working sample application

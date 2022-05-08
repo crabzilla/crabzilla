@@ -1,4 +1,4 @@
-package io.github.crabzilla.projection
+package io.github.crabzilla.subscription
 
 import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.TestsFixtures.jsonSerDer
@@ -28,10 +28,10 @@ import java.util.concurrent.atomic.AtomicReference
 
 @ExtendWith(VertxExtension::class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-internal class ProjectingToPostgresIT {
+internal class SubscribingWithPostgresSinkIT {
 
   companion object {
-    const val projectionName = "crabzilla.example1.customer.SimpleProjector"
+    const val subscriptionName = "crabzilla.example1.customer.SimpleProjector"
   }
 
   private val id: UUID = UUID.randomUUID()
@@ -50,8 +50,8 @@ internal class ProjectingToPostgresIT {
   fun `it can project to postgres within an interval`(tc: VertxTestContext, vertx: Vertx) {
     val options = FeatureOptions(pgNotificationInterval = 100L)
     val controller = context.featureController(customerComponent, jsonSerDer, options)
-    val config = ProjectorConfig(projectionName, initialInterval = 10, interval = 100, maxInterval = 100)
-    val (projector, api) = context.postgresProjector(config, CustomersEventProjector())
+    val config = SubscriptionConfig(subscriptionName, initialInterval = 10, interval = 100, maxInterval = 100)
+    val (subscription, api) = context.subscriptionWithPostgresSink(config, CustomersEventProjector())
 
     val latch = CountDownLatch(1)
     val stateTypeMsg = AtomicReference<String>()
@@ -65,7 +65,7 @@ internal class ProjectingToPostgresIT {
         }
     }
 
-    vertx.deployVerticle(projector)
+    vertx.deployVerticle(subscription)
       .compose { controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id")) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -92,9 +92,9 @@ internal class ProjectingToPostgresIT {
   @Order(2)
   fun `it can project to postgres when explicit calling it`(tc: VertxTestContext, vertx: Vertx) {
     val controller = context.featureController(customerComponent, jsonSerDer)
-    val config = ProjectorConfig(projectionName)
-    val (projector, api) = context.postgresProjector(config, CustomersEventProjector())
-    vertx.deployVerticle(projector)
+    val config = SubscriptionConfig(subscriptionName)
+    val (subscription, api) = context.subscriptionWithPostgresSink(config, CustomersEventProjector())
+    vertx.deployVerticle(subscription)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
