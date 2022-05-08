@@ -27,20 +27,21 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 
 == Approach
 
-* Using key https://vertx.io/docs/vertx-pg-client/java/[Vertx] features to implement a `non-blocking IO` command and query engine.
-* Using key `Postgres` features: json, notification and advisory locks.
-* Idiomatic Kotlin: type safeness: pattern matching, honouring your constructors.
-* Immutability: state transitions occurs after computing results of pure functions `(State, Event) -> State`.
+* It uses https://vertx.io/docs/vertx-pg-client/java/[Vertx] `non-blocking IO` Postgres driver.
+* It uses key `Postgres` features: json, notification and advisory locks.
+* It tries to use idiomatic Kotlin: type safeness: immutability, pattern matching, honouring your constructors.
 
-== Features
+== crabzilla-core
 
-=== Domain model
+To express your domain model.
 
-Your domain can be tested in BDD way without any dependency to Vertx: only to `crabzilla-core`:
-
+* State transitions occurs after computing results of pure functions `(State, Event) -> State`.
+* Tests in BDD way without any dependency to Vertx: only to `crabzilla-core`:
 ** given command, then assertion
 ** given events, when command, then assertion
 ** given commands or events in any order, then assertion
+
+== crabzilla-stack
 
 === Command
 
@@ -53,7 +54,7 @@ Your commands are consistently handled:
 
 Your commands and events are serialized to `JSON` and stored into `Postgres`
 
-** Using your own https://github.com/crabzilla/crabzilla/blob/main/crabzilla-command/src/main/java/io/github/crabzilla/JsonObjectSerDer.kt[JsonObjectSerDer] implementation.
+** Using your own https://github.com/crabzilla/crabzilla/blob/main/crabzilla-stack/src/main/java/io/github/crabzilla/JsonObjectSerDer.kt[JsonObjectSerDer] implementation.
 ** Using `crabzilla-json-kotlinx` implementation based on https://kotlinlang.org/docs/serialization.html[Kotlin serialization] .
 ** Using `crabzilla-json-jackson`  implementation based on https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module].
 
@@ -65,7 +66,7 @@ After handling your commands and appending the respective events, you can use an
 ** what events to subscribe, filtering by state type (aggregate root) or event type.
 ** a very simple interval policy resulting in an exponential backoff behavior. Crabzilla applies a jitter from 0 up to 1 second.
 ** a sink:
-*** to an implementation of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-command/src/main/java/io/github/crabzilla/EventProjector.kt[EventProjector] implementation in order to update your view model in Postgres.
+*** to an implementation of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-stack/src/main/java/io/github/crabzilla/EventProjector.kt[EventProjector] implementation in order to update your view model in Postgres.
 *** to Vertx EventBus. You must handle idempotency.
 **** using request reply (at least once).
 **** using blocking request reply (at least once).
