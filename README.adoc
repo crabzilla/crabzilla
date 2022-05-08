@@ -63,7 +63,7 @@ After handling your commands and appending the respective events, you can use an
 
 * It pulls events table periodically. Events are consumed in strict order using `events.sequence` column. You can specify:
 ** what events to subscribe, filtering by state type (aggregate root) or event type.
-** a very simple interval policy resulting in an exponential backoff behavior. Crabzilla applies 1-second jitter.
+** a very simple interval policy resulting in an exponential backoff behavior. Crabzilla applies a jitter from 0 up to 1 second.
 ** a sink:
 *** to an implementation of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-command/src/main/java/io/github/crabzilla/EventProjector.kt[EventProjector] implementation in order to update your view model in Postgres.
 *** to Vertx EventBus. You must handle idempotency.
