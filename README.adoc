@@ -27,9 +27,9 @@ https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.
 
 == Approach
 
-* It uses https://vertx.io/docs/vertx-pg-client/java/[Vertx] `non-blocking IO` Postgres driver.
-* It uses key `Postgres` features: json, notification and advisory locks.
-* It tries to use idiomatic Kotlin: type safeness: immutability, pattern matching, honouring your constructors.
+* Using https://vertx.io/docs/vertx-pg-client/java/[Vertx] `non-blocking IO` Postgres driver.
+* Using key `Postgres` features: json, notification and advisory locks.
+* Trying to be idiomatic Kotlin: type safeness: immutability, pattern matching, honouring your constructors.
 
 == crabzilla-core
 
@@ -72,7 +72,7 @@ After handling your commands and appending the respective events, you can use an
 **** using blocking request reply (at least once).
 **** using publishing (no guaranties).
 * Your subscription can be triggered via https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify] mechanism. It will become in `greedy` state.
-* You can consume your events in plain https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject] objects or to leverage `crabzilla-json-jackson` or `crabzilla-json-kotlinx` implementations.
+* You can consume your events in plain https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject] objects. You can use `crabzilla-json-jackson` or `crabzilla-json-kotlinx` implementations within your EventProjector implementations.
 
 == Example applications (a work in progress)
 
