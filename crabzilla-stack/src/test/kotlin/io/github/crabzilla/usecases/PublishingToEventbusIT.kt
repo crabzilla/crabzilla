@@ -49,7 +49,6 @@ class PublishingToEventbusIT {
     val jsonMessage = AtomicReference<JsonObject>()
     val latch = CountDownLatch(1)
     vertx.eventBus().consumer<JsonObject>("MY_TOPIC") { msg ->
-      println("received " + msg.body().encodePrettily())
       jsonMessage.set(msg.body())
       latch.countDown()
     }

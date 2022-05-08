@@ -10,9 +10,8 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomersEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.testDbConfig
+import io.vertx.core.AbstractVerticle
 import io.vertx.core.Vertx
-import io.vertx.core.eventbus.Message
-import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -28,18 +27,22 @@ import java.util.UUID
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class ManagingProjectorIT {
 
-  private val projectorEndpoints = ProjectorEndpoints("crabzilla.example1.customer.SimpleProjector")
-  private val id: UUID = UUID.randomUUID()
+  companion object {
+    const val projectorName = "crabzilla.example1.customer.SimpleProjector"
+    private val id: UUID = UUID.randomUUID()
+  }
 
   private lateinit var context : CrabzillaContext
+  private lateinit var api: ProjectorApi
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
     context = CrabzillaContext.new(vertx, testDbConfig)
-    val config = ProjectorConfig(projectorEndpoints.name)
-    val verticle = context.postgresProjector(config, CustomersEventProjector())
+    val config = ProjectorConfig(projectorName)
+    val pair: Pair<AbstractVerticle, ProjectorApi> = context.postgresProjector(config, CustomersEventProjector())
+    api = pair.second
     cleanDatabase(context.pgPool)
-      .compose { vertx.deployVerticle(verticle) }
+      .compose { vertx.deployVerticle(pair.first) }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -47,10 +50,9 @@ class ManagingProjectorIT {
   @Test
   @Order(1)
   fun `after deploy the status is intact`(tc: VertxTestContext, vertx: Vertx) {
-      vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
+      api.status()
       .onFailure { tc.failNow(it) }
-      .onSuccess { msg: Message<JsonObject> ->
-        val json = msg.body()
+      .onSuccess { json ->
         tc.verify {
           assertEquals(false, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))
@@ -68,15 +70,14 @@ class ManagingProjectorIT {
   fun `after pause then a command`(tc: VertxTestContext, vertx: Vertx) {
     val options = FeatureOptions(pgNotificationInterval = 100L)
     val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
-      vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
+      api.pause()
       .compose {
         controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       }.compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
+        api.status()
       }
       .onFailure { tc.failNow(it) }
-      .onSuccess { msg: Message<JsonObject> ->
-        val json = msg.body()
+      .onSuccess { json ->
         tc.verify {
           assertEquals(true, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))
@@ -96,14 +97,12 @@ class ManagingProjectorIT {
     val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
-        Thread.sleep(1000)
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null)
+        api.handle()
       }.compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
+        api.status()
       }
       .onFailure { tc.failNow(it) }
-      .onSuccess { msg: Message<JsonObject> ->
-        val json = msg.body()
+      .onSuccess { json ->
         tc.verify {
           assertEquals(false, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))
@@ -122,7 +121,7 @@ class ManagingProjectorIT {
     val options = FeatureOptions(pgNotificationInterval = 1000L)
     val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
       controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
-        .compose { vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null)
+        .compose { api.handle()
         }.compose {
           context.pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() == 1 }
         }.onFailure {
@@ -146,17 +145,16 @@ class ManagingProjectorIT {
     val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
       controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
+        api.pause()
       }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null)
+        api.handle()
       }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
+        api.status()
       }
       .onFailure { tc.failNow(it) }
-      .onSuccess { msg: Message<JsonObject> ->
-        val json = msg.body()
+      .onSuccess { json ->
         tc.verify {
           assertEquals(true, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))
@@ -179,20 +177,19 @@ class ManagingProjectorIT {
     val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
     controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.pause(), null)
+        api.pause()
       }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.resume(), null)
+        api.resume()
       }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.handle(), null)
+        api.handle()
       }
       .compose {
-        vertx.eventBus().request<JsonObject>(projectorEndpoints.status(), null)
+        api.status()
       }
       .onFailure { tc.failNow(it) }
-      .onSuccess { msg: Message<JsonObject> ->
-        val json = msg.body()
+      .onSuccess { json ->
         tc.verify {
           assertEquals(false, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))

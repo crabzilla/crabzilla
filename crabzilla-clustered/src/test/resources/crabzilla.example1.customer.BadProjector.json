@@ -1,8 +1,0 @@
-{
-  "main": "io.github.crabzilla.projection.EventsProjectorVerticle",
-  "options": {
-    "config" : {
-      "eventsProjectorFactoryClassName": "io.github.crabzilla.example1.customer.CustomersProjectorFactory"
-    }
-  }
-}

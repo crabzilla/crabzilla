@@ -3,6 +3,7 @@ package io.github.crabzilla
 import io.github.crabzilla.command.FeatureController
 import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.core.FeatureComponent
+import io.github.crabzilla.projection.ProjectorApi
 import io.github.crabzilla.projection.ProjectorConfig
 import io.github.crabzilla.projection.internal.EventsProjectorComponent
 import io.vertx.core.AbstractVerticle
@@ -61,9 +62,10 @@ open class CrabzillaContext private constructor(val vertx: Vertx, val pgPool: Pg
     return FeatureController(vertx, pgPool, component, jsonObjectSerDer, options)
   }
 
-  open fun postgresProjector(config: ProjectorConfig, eventProjector: EventProjector): AbstractVerticle {
+  open fun postgresProjector(config: ProjectorConfig, eventProjector: EventProjector)
+  : Pair<AbstractVerticle, ProjectorApi> {
     log.info("Creating postgres projector")
-    return object : AbstractVerticle() {
+    val verticle = object : AbstractVerticle() {
       private lateinit var projector: EventsProjectorComponent
       override fun start(promise: Promise<Void>) {
         projector = EventsProjectorComponent(vertx, pgPool, pgSubscriber(), config, eventProjector)
@@ -72,6 +74,7 @@ open class CrabzillaContext private constructor(val vertx: Vertx, val pgPool: Pg
           .onFailure { promise.fail(it) }
       }
     }
+    return Pair(verticle, ProjectorApi(vertx.eventBus(), config.projectionName))
   }
 
   open fun eventBusProjector(config: ProjectorConfig): AbstractVerticle {

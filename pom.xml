@@ -109,12 +109,6 @@
         <version>${project.version}</version>
       </dependency>
 
-<!--      <dependency>-->
-<!--        <groupId>io.github.crabzilla</groupId>-->
-<!--        <artifactId>crabzilla-clustered</artifactId>-->
-<!--        <version>${project.version}</version>-->
-<!--      </dependency>-->
-
       <!-- vertx -->
 
       <dependency>

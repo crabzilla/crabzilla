@@ -11,6 +11,7 @@ import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_PUBLISH
 import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY
 import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
+import io.github.crabzilla.projection.internal.ProjectorEndpoints
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Future
 import io.vertx.core.Promise

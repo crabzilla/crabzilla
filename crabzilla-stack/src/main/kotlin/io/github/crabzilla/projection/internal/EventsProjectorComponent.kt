@@ -8,7 +8,6 @@ import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_PUBLISH
 import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY
 import io.github.crabzilla.projection.EventBusStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
 import io.github.crabzilla.projection.ProjectorConfig
-import io.github.crabzilla.projection.ProjectorEndpoints
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler
@@ -133,7 +132,7 @@ internal class EventsProjectorComponent(
           vertx.setPeriodic(options.metricsInterval) {
             log.info("Projection [{}] current offset [{}]", options.projectionName, currentOffset)
           }
-          vertx.eventBus().consumer<Void>(projectorEndpoints.handle()).handler { msg ->
+          vertx.eventBus().consumer<Nothing>(projectorEndpoints.handle()).handler { msg ->
             log.info("Will handle")
             action()
               .onComplete {
