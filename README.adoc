@@ -70,9 +70,8 @@ After handling your commands and appending the respective events, you can use an
 **** using request reply (at least once).
 **** using blocking request reply (at least once).
 **** using publishing (no guaranties).
-
-* You can consume your events in plain https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject] objects or to leverage Json implementations (https://kotlinlang.org/docs/serialization.html[Kotlin serialization] or https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]) to consume events statically.
-* Your subscription can be triggered via https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify] mechanism.
+* Your subscription can be triggered via https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify] mechanism. It will become in `greedy` state.
+* You can consume your events in plain https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject] objects or to leverage `crabzilla-json-jackson` or `crabzilla-json-kotlinx` implementations.
 
 == Example applications (a work in progress)
 
