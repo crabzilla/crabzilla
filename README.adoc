@@ -66,7 +66,7 @@ After handling your commands and appending the respective events, you can use an
 ** what events to subscribe, filtering by state type (aggregate root) or event type.
 ** a very simple interval policy resulting in an exponential backoff behavior. Crabzilla applies a jitter from 0 up to 1 second.
 ** a sink:
-*** to your view models in Postgres by implementing https://github.com/crabzilla/crabzilla/blob/main/crabzilla-stack/src/main/kotlin/io/github/crabzilla/EventProjector.kt[EventProjector]. It is `at most once` since the update on both view model and `subscriptions.offset` table occurs within the same database transaction.
+*** to your view models in Postgres by implementing https://github.com/crabzilla/crabzilla/blob/main/crabzilla-stack/src/main/kotlin/io/github/crabzilla/EventProjector.kt[EventProjector]. It is `at most once` since the update on both view model and `subscriptions.sequence` column occurs within the same database transaction.
 *** to Vertx EventBus. You must handle idempotency.
 **** using request reply (at least once).
 **** using blocking request reply (at least once).
