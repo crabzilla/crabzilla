@@ -47,15 +47,15 @@ Your domain can be tested in BDD way without any dependency to Vertx: only to `c
 Your commands are consistently handled:
 
 ** Before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]. This helps to increase consistency.
-** After a successful command, your projector will be notified (even in another machine) by using https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify]. This helps to reduce eventual consistency delay.
+** After a successful command, your projector will be notified (even in another machine) by using https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify]. This helps to be reactive via Postgres and hopefully reduce eventual consistency delay.
 ** You can optionally project the command events to view model within the same database transaction. This helps set based validation.
 ** You can optionally handle commands against 2 instances of the same state type (for example, transferring $ from account1 to account2) within the same database transaction. This helps to use https://martinfowler.com/eaaCatalog/unitOfWork.html[UnitOfWork]
 
 Your commands and events are serialized to `JSON` and stored into `Postgres`
 
-** Using your own implementation
-** Using https://kotlinlang.org/docs/serialization.html[Kotlin serialization]
-** Using https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module]
+** Using your own https://github.com/crabzilla/crabzilla/blob/main/crabzilla-command/src/main/java/io/github/crabzilla/JsonObjectSerDer.kt[JsonObjectSerDer] implementation.
+** Using `crabzilla-json-kotlinx` implementation based on https://kotlinlang.org/docs/serialization.html[Kotlin serialization] .
+** Using `crabzilla-json-jackson`  implementation based on https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module].
 
 === Subscription
 
