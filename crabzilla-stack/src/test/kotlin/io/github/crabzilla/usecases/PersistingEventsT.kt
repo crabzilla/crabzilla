@@ -7,6 +7,7 @@ import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.command.CommandSideEffect
 import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerJsonObjectSerDer
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.testDbConfig
@@ -42,11 +43,9 @@ class PersistingEventsT {
   @Test
   @DisplayName("appending 1 command with 2 events results in version 2 ")
   fun s1(tc: VertxTestContext, vertx: Vertx) {
-
     val controller = context.featureController(customerComponent, jsonSerDer)
-
     val id = UUID.randomUUID()
-    val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
+    val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     val metadata = CommandMetadata.new(id)
     controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
@@ -58,13 +57,14 @@ class PersistingEventsT {
               assertThat(eventsList.size).isEqualTo(2)
               // check register event
               val asJson1 = eventsList[0]
+              val eventId1 = asJson1.getString("id")
               assertThat(asJson1.getString("state_type")).isEqualTo("Customer")
               assertThat(asJson1.getString("state_id")).isEqualTo(id.toString())
               assertThat(asJson1.getInteger("version")).isEqualTo(1)
               assertThat(asJson1.getJsonObject("event_payload").getString("type"))
                 .isEqualTo("CustomerRegistered")
-              assertThat(asJson1.getString("causation_id")).isEqualTo(metadata.commandId.toString())
-              assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata.commandId.toString())
+              assertThat(asJson1.getString("causation_id")).isEqualTo(eventId1)
+              assertThat(asJson1.getString("correlation_id")).isEqualTo(eventId1)
               // check activate event
               val asJson2 = eventsList[1]
               assertThat(asJson2.getString("state_type")).isEqualTo("Customer")
@@ -72,9 +72,8 @@ class PersistingEventsT {
               assertThat(asJson2.getInteger("version")).isEqualTo(2)
               assertThat(asJson2.getJsonObject("event_payload").getString("type"))
                 .isEqualTo("CustomerActivated")
-              val causationId = asJson1.getString("id")
-              assertThat(asJson2.getString("causation_id")).isEqualTo(causationId)
-              assertThat(asJson2.getString("correlation_id")).isEqualTo(metadata.commandId.toString())
+              assertThat(asJson2.getString("causation_id")).isEqualTo(eventId1)
+              assertThat(asJson2.getString("correlation_id")).isEqualTo(eventId1)
               tc.completeNow()
             }
           }
@@ -84,18 +83,16 @@ class PersistingEventsT {
   @Test
   @DisplayName("appending 2 commands with 2 and 1 event, respectively results in version 3")
   fun s11(tc: VertxTestContext, vertx: Vertx) {
-
     val jsonSerDer = CustomerJsonObjectSerDer()
     val controller = context.featureController(customerComponent, jsonSerDer)
-
     val id = UUID.randomUUID()
-    val cmd1 = CustomerCommand.RegisterAndActivateCustomer(id, "customer#1", "is needed")
+    val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
     val metadata1 = CommandMetadata.new(id)
     controller.handle(metadata1, cmd1)
       .onFailure { tc.failNow(it) }
       .onSuccess { sideEffect1: CommandSideEffect ->
         val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-        val metadata2 = CommandMetadata.new(id, sideEffect1.correlationId(), sideEffect1.latestEventId())
+        val metadata2 = CommandMetadata.new(id)
         controller.handle(metadata2, cmd2)
           .onFailure { err -> tc.failNow(err) }
           .onSuccess {
@@ -105,39 +102,42 @@ class PersistingEventsT {
                 eventsList.forEachIndexed { index, it ->
                   println("$index -> ${it.encodePrettily()}")
                 }
-                assertThat(eventsList.size).isEqualTo(3)
-                // check register event
-                val asJson1 = eventsList[0]
-                // println(asJson1.encodePrettily())
-                assertThat(asJson1.getString("state_type")).isEqualTo("Customer")
-                assertThat(asJson1.getString("state_id")).isEqualTo(id.toString())
-                assertThat(asJson1.getInteger("version")).isEqualTo(1)
-                assertThat(asJson1.getJsonObject("event_payload").getString("type"))
-                  .isEqualTo("CustomerRegistered")
-                assertThat(asJson1.getString("causation_id")).isEqualTo(metadata1.commandId.toString())
-                assertThat(asJson1.getString("correlation_id")).isEqualTo(metadata1.commandId.toString())
-                // check activate event
-                val asJson2 = eventsList[1]
-                // println(asJson2.encodePrettily())
-                assertThat(asJson2.getString("state_type")).isEqualTo("Customer")
-                assertThat(asJson2.getString("state_id")).isEqualTo(id.toString())
-                assertThat(asJson2.getInteger("version")).isEqualTo(2)
-                assertThat(asJson2.getJsonObject("event_payload").getString("type"))
-                  .isEqualTo("CustomerActivated")
-                val causationId2 = asJson1.getString("id")
-                assertThat(asJson2.getString("causation_id")).isEqualTo(causationId2)
-                assertThat(asJson2.getString("correlation_id")).isEqualTo(metadata1.commandId.toString())
-                // check deactivate events
-                val asJson3 = eventsList[2]
-                // println(asJson3.encodePrettily())
-                assertThat(asJson3.getString("state_type")).isEqualTo("Customer")
-                assertThat(asJson3.getString("state_id")).isEqualTo(id.toString())
-                assertThat(asJson3.getInteger("version")).isEqualTo(3)
-                assertThat(asJson3.getJsonObject("event_payload").getString("type"))
-                  .isEqualTo("CustomerDeactivated")
-                assertThat(asJson3.getString("causation_id")).isEqualTo(metadata2.causationId.toString())
-                assertThat(asJson3.getString("correlation_id")).isEqualTo(metadata2.correlationId.toString())
-                tc.completeNow()
+                tc.verify {
+                  assertThat(eventsList.size).isEqualTo(3)
+                  // check register event
+                  val asJson1 = eventsList[0]
+                  // println(asJson1.encodePrettily())
+                  val eventId1 = asJson1.getString("id")
+                  assertThat(asJson1.getString("state_type")).isEqualTo("Customer")
+                  assertThat(asJson1.getString("state_id")).isEqualTo(id.toString())
+                  assertThat(asJson1.getInteger("version")).isEqualTo(1)
+                  assertThat(asJson1.getJsonObject("event_payload").getString("type"))
+                    .isEqualTo("CustomerRegistered")
+                  assertThat(asJson1.getString("causation_id")).isEqualTo(eventId1)
+                  assertThat(asJson1.getString("correlation_id")).isEqualTo(eventId1)
+                  // check activate event
+                  val asJson2 = eventsList[1]
+                  // println(asJson2.encodePrettily())
+                  val eventId2 = asJson2.getString("id")
+                  assertThat(asJson2.getString("state_type")).isEqualTo("Customer")
+                  assertThat(asJson2.getString("state_id")).isEqualTo(id.toString())
+                  assertThat(asJson2.getInteger("version")).isEqualTo(2)
+                  assertThat(asJson2.getJsonObject("event_payload").getString("type"))
+                    .isEqualTo("CustomerActivated")
+                  assertThat(asJson2.getString("causation_id")).isEqualTo(eventId1)
+                  assertThat(asJson2.getString("correlation_id")).isEqualTo(eventId1)
+                  // check deactivate events
+                  val asJson3 = eventsList[2]
+                  // println(asJson3.encodePrettily())
+                  assertThat(asJson3.getString("state_type")).isEqualTo("Customer")
+                  assertThat(asJson3.getString("state_id")).isEqualTo(id.toString())
+                  assertThat(asJson3.getInteger("version")).isEqualTo(3)
+                  assertThat(asJson3.getJsonObject("event_payload").getString("type"))
+                    .isEqualTo("CustomerDeactivated")
+                  assertThat(asJson3.getString("causation_id")).isEqualTo(eventId2)
+                  assertThat(asJson3.getString("correlation_id")).isEqualTo(eventId1)
+                  tc.completeNow()
+                }
               }
           }
       }

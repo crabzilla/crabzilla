@@ -22,7 +22,8 @@ internal class EventRecordTest {
     correlationId = UUID.randomUUID(),
     causationId = UUID.randomUUID(),
     eventSequence = 1,
-    version = 1
+    version = 1,
+    eventType = CustomerRegistered::class.java.simpleName
   )
 
   @Test

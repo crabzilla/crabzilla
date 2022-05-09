@@ -52,21 +52,22 @@ class ProjectingSynchronouslyIT {
     val metadata2 = CommandMetadata.new(id)
 
     controller.handle(metadata1, cmd1)
+      .compose {
+        controller.handle(metadata2, cmd2)
+      }
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        controller.handle(metadata2, cmd2)
+        testRepo.getAllCustomers()
           .onFailure { tc.failNow(it) }
-          .onSuccess {
-            testRepo.getAllCustomers()
-              .onFailure { tc.failNow(it) }
-              .onSuccess { customersList ->
-                assertThat(customersList.size).isEqualTo(1)
-                val json = customersList.first()
-                assertThat(UUID.fromString(json.getString("id"))).isEqualTo(id)
-                assertThat(json.getString("name")).isEqualTo(cmd1.name)
-                assertThat(json.getBoolean("is_active")).isEqualTo(false)
-                tc.completeNow()
-              }
+          .onSuccess { customersList ->
+            tc.verify {
+              assertThat(customersList.size).isEqualTo(1)
+              val json = customersList.first()
+              assertThat(UUID.fromString(json.getString("id"))).isEqualTo(id)
+              assertThat(json.getString("name")).isEqualTo(cmd1.name)
+              assertThat(json.getBoolean("is_active")).isEqualTo(false)
+              tc.completeNow()
+            }
           }
       }
   }

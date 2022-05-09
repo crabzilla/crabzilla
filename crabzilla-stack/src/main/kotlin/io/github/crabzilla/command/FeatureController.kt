@@ -9,6 +9,8 @@ import io.github.crabzilla.command.internal.Snapshot
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.FeatureComponent
 import io.vertx.core.Future
+import io.vertx.core.Future.failedFuture
+import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -37,14 +39,11 @@ open class FeatureController<S : Any, C : Any, E : Any>(
       """
     const val GET_EVENTS_BY_ID =
       """
-      SELECT event_type, event_payload, version
-      FROM events
-      WHERE state_id = $1
-      ORDER BY sequence
+      SELECT id, event_type, event_payload, version, causation_id, correlation_id
+        FROM events
+       WHERE state_id = $1
+       ORDER BY sequence
     """
-    const val SQL_APPEND_CMD =
-      """ INSERT INTO commands (cmd_id, cmd_payload)
-          VALUES ($1, $2)"""
     const val SQL_APPEND_EVENT =
       """ INSERT 
             INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
@@ -63,7 +62,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
   init {
     log.info("Starting notifying Postgres for $stateTypeName each ${options.pgNotificationInterval} ms")
     vertx.setPeriodic(options.pgNotificationInterval) {
-      val initialFuture = Future.succeededFuture<Void>()
+      val initialFuture = succeededFuture<Void>()
       notificationsByStateType.fold(
         initialFuture
       ) { currentFuture: Future<Void>, stateType: String ->
@@ -96,10 +95,10 @@ open class FeatureController<S : Any, C : Any, E : Any>(
       if (featureComponent.commandValidator != null) {
         val errors = featureComponent.commandValidator!!.validate(command)
         if (errors.isNotEmpty()) {
-          return Future.failedFuture(CommandException.ValidationException(errors))
+          return failedFuture(CommandException.ValidationException(errors))
         }
       }
-      return Future.succeededFuture()
+      return succeededFuture()
     }
     fun lock(conn: SqlConnection, lockId: Int, metadata: CommandMetadata): Future<Void> {
       return conn
@@ -107,9 +106,9 @@ open class FeatureController<S : Any, C : Any, E : Any>(
         .execute(Tuple.of(stateTypeName.hashCode(), lockId))
         .compose { pgRow ->
           if (pgRow.first().getBoolean("locked")) {
-            Future.succeededFuture()
+            succeededFuture()
           } else {
-            Future.failedFuture(CommandException.LockingException("Can't be locked ${metadata.stateId}"))
+            failedFuture(CommandException.LockingException("Can't be locked ${metadata.stateId}"))
           }
         }
     }
@@ -120,6 +119,8 @@ open class FeatureController<S : Any, C : Any, E : Any>(
         .compose { pq: PreparedStatement ->
           var state: S? = null
           var latestVersion = 0
+          var lastCausationId: UUID? = null
+          var lastCorrelationId: UUID? = null
           var error: Throwable? = null
           // Fetch 1000 rows at a time
           val stream: RowStream<Row> = pq.createStream( options.eventStreamSize, Tuple.of(id))
@@ -128,7 +129,10 @@ open class FeatureController<S : Any, C : Any, E : Any>(
             val eventAsJson = JsonObject(row.getValue("event_payload").toString())
             val asEvent = serDer.eventFromJson(eventAsJson)
             latestVersion = row.getInteger("version")
-            log.trace("Found event {} version {}", asEvent, latestVersion)
+            lastCausationId = row.getUUID("id")
+            lastCorrelationId = row.getUUID("correlation_id")
+            log.trace("Found event {} version {}, causationId {}, correlationId {}", asEvent,
+              latestVersion, lastCausationId, lastCorrelationId)
             state = featureComponent.eventHandler.handleEvent(state, asEvent)
             log.trace("State {}", state)
           }
@@ -142,46 +146,34 @@ open class FeatureController<S : Any, C : Any, E : Any>(
               if (latestVersion == 0) {
                 promise.complete(null)
               } else {
-                promise.complete(Snapshot(state!!, latestVersion))
+                promise.complete(Snapshot(state!!, latestVersion, lastCausationId!!, lastCorrelationId!!))
               }
             }
           }
           promise.future()
         }
     }
-    fun appendCommand(conn: SqlConnection, command: C, metadata: CommandMetadata): Future<Void> {
-      val cmdAsJson = serDer.commandToJson(command)
-      log.debug("Will append command {} as {}", command, cmdAsJson)
-      val params = Tuple.of(
-        metadata.commandId,
-        cmdAsJson
-      )
-      return conn.preparedQuery(SQL_APPEND_CMD)
-        .execute(params)
-        .mapEmpty()
-    }
     fun appendEvents(
       conn: SqlConnection,
-      initialVersion: Int,
-      events: List<E>,
-      metadata: CommandMetadata
+      snapshot: Snapshot<S>?,
+      events: List<E>
     ): Future<CommandSideEffect> {
-      var resultingVersion = initialVersion
+      var resultingVersion = snapshot?.version ?: 0
       val eventIds = events.map { UUID.randomUUID() }
-      val tuples: List<Tuple> = events.mapIndexed { index, event ->
-        val causationId: UUID = if (index == 0) metadata.causationId else eventIds[(index - 1)]
+      val causationIds = eventIds.toMutableList()
+      val correlationIds = eventIds.toMutableList()
+      val tuples = events.mapIndexed { index, event ->
+        correlationIds[index] = snapshot?.correlationId ?: causationIds[0]
         val eventAsJsonObject = serDer.eventToJson(event)
         val eventId = eventIds[index]
         val type = eventAsJsonObject.getString("type")
-        Tuple.of(
-          type,
-          causationId,
-          metadata.correlationId,
-          featureComponent.stateClassName(),
-          metadata.stateId,
-          eventAsJsonObject,
-          ++resultingVersion,
-          eventId
+        if (index == 0) {
+          causationIds[0] = snapshot?.causationId ?: eventIds[0]
+        } else {
+          causationIds[index] = eventIds[(index - 1)]
+        }
+        Tuple.of(type, causationIds[index], correlationIds[index], featureComponent.stateClassName(),
+          metadata.stateId, eventAsJsonObject, ++resultingVersion, eventId
         )
       }
       val appendedEventList = mutableListOf<EventRecord>()
@@ -197,7 +189,8 @@ open class FeatureController<S : Any, C : Any, E : Any>(
             val eventPayload = tuples[index].getJsonObject(eventPayloadIndex)
             val eventMetadata = EventMetadata(
               stateType = featureComponent.stateClassName(), stateId = metadata.stateId, eventId = eventId,
-              correlationId = correlationId, causationId = eventId, eventSequence = sequence, version = currentVersion
+              correlationId = correlationId, causationId = eventId, eventSequence = sequence, version = currentVersion,
+              tuples[index].getString(0)
             )
             appendedEventList.add(EventRecord(eventMetadata, eventPayload))
             rs = rs!!.next()
@@ -209,7 +202,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
     fun projectEvents(conn: SqlConnection, appendedEvents: List<EventRecord>, subscription: EventProjector)
             : Future<Void> {
       log.trace("Will project {} events", appendedEvents.size)
-      val initialFuture = Future.succeededFuture<Void>()
+      val initialFuture = succeededFuture<Void>()
       return appendedEvents.fold(
         initialFuture
       ) { currentFuture: Future<Void>, appendedEvent: EventRecord ->
@@ -224,39 +217,46 @@ open class FeatureController<S : Any, C : Any, E : Any>(
         log.debug("Command validated")
         lock(conn, metadata.stateId.hashCode(), metadata)
           .compose {
-            log.debug("State locked")
+            log.trace("State locked")
             getSnapshot(conn, metadata.stateId)
-          }.compose { snapshot ->
+          }.compose { snapshot: Snapshot<S>? ->
+            if (snapshot == null) {
+              succeededFuture(null)
+            } else {
+              log.debug("Got snapshot {}", snapshot)
+              succeededFuture(snapshot)
+            }
+          }.compose { snapshot: Snapshot<S>? ->
             log.debug("Got snapshot {}", snapshot)
-            Future.succeededFuture(Pair(snapshot, commandHandler.handleCommand(command, snapshot?.state)))
-          }.compose { pair ->
-            val (_, session) = pair
-            log.debug("Command handled {}", session.toSessionData())
-            appendCommand(conn, command, metadata)
-              .map { pair }
+            if (metadata.causationId != null && snapshot != null && metadata.causationId != snapshot.causationId) {
+                failedFuture(CommandException.LockingException("TODO this message"))
+              } else {
+                succeededFuture(Pair(snapshot, commandHandler.handleCommand(command, snapshot?.state)))
+              }
           }.compose { pair ->
             val (snapshot, session) = pair
-            log.debug("Command appended")
-            val originalVersion = snapshot?.version ?: 0
-            appendEvents(conn, originalVersion, session.appliedEvents(), metadata)
+            log.debug("Command handled")
+            appendEvents(conn, snapshot, session.appliedEvents())
               .map { Triple(snapshot, session, it) }
           }.compose { triple ->
             val (_, _, commandSideEffect) = triple
             log.debug("Events appended {}", commandSideEffect.toString())
             if (options.eventProjector != null) {
-              projectEvents(conn, commandSideEffect.appendedEvents, options.eventProjector!!)
+              val eventsToProject = commandSideEffect.appendedEvents
+              projectEvents(conn, eventsToProject, options.eventProjector)
                 .onSuccess {
                   log.trace("Events projected")
                 }.map { commandSideEffect }
             } else {
               log.debug("EventProjector is null, skipping projecting events")
-              Future.succeededFuture(commandSideEffect)
+              succeededFuture(commandSideEffect)
             }
           }.onSuccess {
             if (options.eventBusTopic != null) {
               val message = JsonObject()
                 .put("stateType", stateTypeName)
                 .put("commandMetadata", metadata.toJsonObject())
+                .put("command", serDer.commandToJson(command))
                 .put("events", it.toJsonArray())
                 .put("timestamp", Instant.now())
               vertx.eventBus().publish(options.eventBusTopic, message)

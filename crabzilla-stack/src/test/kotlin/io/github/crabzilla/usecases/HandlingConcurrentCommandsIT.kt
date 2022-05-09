@@ -7,6 +7,7 @@ import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.command.CommandSideEffect
 import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Future
@@ -29,11 +30,11 @@ import java.util.concurrent.TimeUnit
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DisplayName("Locking concurrent commands")
-class LockingConcurrentCommandsIT {
+@DisplayName("Handling concurrent commands")
+class HandlingConcurrentCommandsIT {
 
   companion object {
-    private val log = LoggerFactory.getLogger(LockingConcurrentCommandsIT::class.java)
+    private val log = LoggerFactory.getLogger(HandlingConcurrentCommandsIT::class.java)
   }
 
   private lateinit var context : CrabzillaContext
@@ -49,7 +50,7 @@ class LockingConcurrentCommandsIT {
   }
 
   @Test
-  fun `it can pessimistically lock the target state id`(vertx: Vertx, tc: VertxTestContext) {
+  fun `when many concurrent commands with same causationId, just one will succeed`(vertx: Vertx, tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
     val metadata = CommandMetadata.new(id)
@@ -60,8 +61,8 @@ class LockingConcurrentCommandsIT {
         vertx.executeBlocking<Void> { promise ->
           val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 100
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
-          val cmd2 = CustomerCommand.ActivateCustomer("whatsoever")
-          val metadata2 = CommandMetadata(id, metadata.causationId, sideEffect.latestEventId(), UUID.randomUUID())
+          val cmd2 = ActivateCustomer("whatsoever")
+          val metadata2 = CommandMetadata.new(id, sideEffect.latestEventId())
           val callables = mutableSetOf<Callable<Future<CommandSideEffect>>>()
           for (i: Int in 1..concurrencyLevel) {
             callables.add(Callable { controller.handle(metadata2, cmd2) })
@@ -73,7 +74,7 @@ class LockingConcurrentCommandsIT {
           log.info("Callables ${callables.size}, successes: ${succeeded.size}")
           tc.verify {
             assertEquals(futures.size, callables.size)
-            assertThat(callables.size - failures.size).isIn(1, 2) // at most 2 successes
+            assertThat(callables.size - failures.size).isEqualTo(1)
             for (f in failures) {
               log.info("${f.cause().javaClass.simpleName}, ${f.cause().message}")
               assertThat(f.cause().javaClass.simpleName).isIn("LockingException", "PgException")
@@ -90,4 +91,49 @@ class LockingConcurrentCommandsIT {
         }
       }
   }
+
+
+  @Test
+  fun `when many concurrent commands without causationId, more than 1 will succeed`(vertx: Vertx, tc: VertxTestContext) {
+    val id = UUID.randomUUID()
+    val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
+    val metadata = CommandMetadata.new(id)
+    val controller = context.featureController(customerComponent, jsonSerDer)
+    controller.handle(metadata, cmd)
+      .onFailure { tc.failNow(it) }
+      .onSuccess {
+        vertx.executeBlocking<Void> { promise ->
+          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 10
+          val executorService = Executors.newFixedThreadPool(concurrencyLevel)
+          val cmd2 = ActivateCustomer("whatsoever")
+          val metadata2 = CommandMetadata.new(id)
+          val callables = mutableSetOf<Callable<Future<CommandSideEffect>>>()
+          for (i: Int in 1..concurrencyLevel) {
+            callables.add(Callable { controller.handle(metadata2, cmd2) })
+          }
+          val futures = executorService.invokeAll(callables)
+          executorService.awaitTermination(3, TimeUnit.SECONDS)
+          val failures = futures.map { it.get() }.filter { it.failed() }
+          val succeeded = futures.map { it.get() }.filter { it.succeeded() }
+          log.info("Callables ${callables.size}, successes: ${succeeded.size}")
+          tc.verify {
+            assertEquals(futures.size, callables.size)
+            assertThat(callables.size - failures.size).isGreaterThan(1)
+            for (f in failures) {
+              log.info("${f.cause().javaClass.simpleName}, ${f.cause().message}")
+              assertThat(f.cause().javaClass.simpleName).isIn("LockingException", "PgException")
+            }
+            promise.complete(null)
+          }.failing<Void> {
+            promise.fail(it)
+          }
+          executorService.shutdown()
+        }.onSuccess {
+          tc.completeNow()
+        }.onFailure {
+          tc.failNow(it)
+        }
+      }
+  }
+
 }

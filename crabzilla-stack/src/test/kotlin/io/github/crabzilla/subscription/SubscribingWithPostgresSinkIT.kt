@@ -59,7 +59,6 @@ internal class SubscribingWithPostgresSinkIT {
     pgSubscriber.connect().onSuccess {
       pgSubscriber.channel(CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL)
         .handler { stateType ->
-          println("received")
           stateTypeMsg.set(stateType)
           latch.countDown()
         }
