@@ -72,7 +72,8 @@ class HandlingConcurrentCommandsIT {
           log.info("Callables ${callables.size}, successes: ${succeeded.size}")
           tc.verify {
             assertEquals(futures.size, callables.size)
-            assertThat(callables.size - failures.size).isEqualTo(1)
+            assertThat(succeeded.size).isEqualTo(1)
+            assertEquals(failures.size + succeeded.size, callables.size)
             for (f in failures) {
               log.info("${f.cause().javaClass.simpleName}, ${f.cause().message}")
               assertThat(f.cause().javaClass.simpleName).isIn("LockingException", "PgException")

@@ -73,7 +73,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
         currentFuture.compose {
           val query = "NOTIFY ${CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL}, '$stateType'"
           pgPool.preparedQuery(query).execute()
-            .onSuccess { log.trace("Notified postgres: $query") }
+            .onSuccess { log.debug("Notified postgres: $query") }
             .mapEmpty()
         }
       }.onFailure {
@@ -138,15 +138,15 @@ open class FeatureController<S : Any, C : Any, E : Any>(
             latestVersion = row.getInteger("version")
             lastCausationId = row.getUUID("id")
             lastCorrelationId = row.getUUID("correlation_id")
-            log.trace("Found event {} version {}, causationId {}, correlationId {}", asEvent,
+            log.debug("Found event {} version {}, causationId {}, correlationId {}", asEvent,
               latestVersion, lastCausationId, lastCorrelationId)
             state = featureComponent.eventHandler.handleEvent(state, asEvent)
-            log.trace("State {}", state)
+            log.debug("State {}", state)
           }
           stream.exceptionHandler { error = it }
           stream.endHandler {
             stream.close()
-            log.trace("End of stream")
+            log.debug("End of stream")
             if (error != null) {
               promise.fail(error)
             } else {
@@ -210,7 +210,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
 
     fun projectEvents(conn: SqlConnection, appendedEvents: List<EventRecord>, subscription: EventProjector)
             : Future<Void> {
-      log.trace("Will project {} events", appendedEvents.size)
+      log.debug("Will project {} events", appendedEvents.size)
       val initialFuture = succeededFuture<Void>()
       return appendedEvents.fold(
         initialFuture
@@ -222,17 +222,17 @@ open class FeatureController<S : Any, C : Any, E : Any>(
     }
 
     fun appendCommand(conn: SqlConnection, cmdAsJson: JsonObject, stateId: UUID, causationId: UUID): Future<Void> {
-      log.trace("Will append command {} as {}", command, cmdAsJson)
+      log.debug("Will append command {} as {}", command, cmdAsJson)
       val params = Tuple.of(stateId, causationId, cmdAsJson)
       return conn.preparedQuery(SQL_APPEND_CMD).execute(params).mapEmpty()
     }
 
     return validate(command)
       .compose {
-        log.trace("Command validated")
+        log.debug("Command validated")
         lock(conn)
           .compose {
-            log.trace("State locked {}", metadata.stateId.hashCode())
+            log.debug("State locked {}", metadata.stateId.hashCode())
             getSnapshot(conn, metadata.stateId)
           }.compose { snapshot: Snapshot<S>? ->
             if (snapshot == null) {
@@ -241,8 +241,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
               succeededFuture(snapshot)
             }
           }.compose { snapshot: Snapshot<S>? ->
-            log.info("Staled? {} command {}", snapshot?.causationId != metadata.causationId, command)
-            log.trace("Got snapshot {}", snapshot)
+            log.debug("Got snapshot {}", snapshot)
             if (metadata.causationId != null && snapshot != null && metadata.causationId != snapshot.causationId) {
               val error = "Current causation id ${snapshot.causationId} is " +
                       "newer than the expected causationId ${metadata.causationId}"
@@ -257,15 +256,15 @@ open class FeatureController<S : Any, C : Any, E : Any>(
               .map { Triple(snapshot, session, it) }
           }.compose { triple ->
             val (_, _, commandSideEffect) = triple
-            log.trace("Events appended {}", commandSideEffect.toString())
+            log.debug("Events appended {}", commandSideEffect.toString())
             if (options.eventProjector != null) {
               val eventsToProject = commandSideEffect.appendedEvents
               projectEvents(conn, eventsToProject, options.eventProjector)
                 .onSuccess {
-                  log.trace("Events projected")
+                  log.debug("Events projected")
                 }.map { triple }
             } else {
-              log.trace("EventProjector is null, skipping projecting events")
+              log.debug("EventProjector is null, skipping projecting events")
               succeededFuture(triple)
             }
           }.compose {
@@ -275,7 +274,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
               snapshot?.causationId ?: sideEffects.causationId())
               .map { Pair(sideEffects, cmdAsJson) }
           }.compose {
-            log.trace("Command was appended")
+            log.debug("Command was appended")
             val (sideEffects, cmdAsJson) = it
             if (options.eventBusTopic != null) {
               val message = JsonObject()
@@ -285,15 +284,15 @@ open class FeatureController<S : Any, C : Any, E : Any>(
                 .put("events", sideEffects.toJsonArray())
                 .put("timestamp", Instant.now())
               vertx.eventBus().publish(options.eventBusTopic, message)
-              log.trace("Published to topic ${options.eventBusTopic} the message ${message.encodePrettily()}")
+              log.debug("Published to topic ${options.eventBusTopic} the message ${message.encodePrettily()}")
             }
             succeededFuture(sideEffects)
           }
       }.onSuccess {
         notificationsByStateType.add(stateTypeName)
-        log.trace("Transaction committed")
+        log.debug("Transaction committed")
       }.onFailure {
-        log.trace("Transaction aborted {}", it.message)
+        log.debug("Transaction aborted {}", it.message)
       }
   }
 
