@@ -2,6 +2,14 @@ CREATE DATABASE ex1_crabzilla OWNER user1;
 
 \connect ex1_crabzilla ;
 
+CREATE TABLE commands (
+  state_id UUID NOT NULL,
+  causation_id UUID NOT NULL,
+  cmd_payload JSON NOT NULL
+);
+
+-- TODO indices
+
 CREATE TABLE events (
       sequence BIGSERIAL NOT NULL PRIMARY KEY,
       event_type TEXT NOT NULL,

@@ -1,11 +1,10 @@
-package io.github.crabzilla.usecases
+package io.github.crabzilla.command
 
 import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.CrabzillaContext.Companion.new
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.customerComponent
@@ -15,7 +14,6 @@ import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -25,7 +23,6 @@ import java.util.UUID
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Persisting commands")
-@Disabled // TODO perhaps saving the command as an event to not break correlationId trace
 class PersistingCommandsT {
 
   private lateinit var context : CrabzillaContext
@@ -48,14 +45,14 @@ class PersistingCommandsT {
     val metadata = CommandMetadata.new(id)
     controller.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
-      .onSuccess {
+      .onSuccess { sideEffect ->
         testRepo.getAllCommands()
           .onFailure { tc.failNow(it) }
           .onSuccess { list ->
             tc.verify {
               assertThat(list.size).isEqualTo(1)
               val rowAsJson = list.first()
-//              assertThat(UUID.fromString(rowAsJson.getString("cmd_id"))).isEqualTo(metadata.commandId)
+              assertThat(UUID.fromString(rowAsJson.getString("causation_id"))).isEqualTo(sideEffect.appendedEvents.first().metadata.causationId)
               val cmdAsJsonFroDb = rowAsJson.getJsonObject("cmd_payload")
               assertThat(cmdAsJsonFroDb.getString("type")).isEqualTo("RegisterAndActivateCustomer")
             }

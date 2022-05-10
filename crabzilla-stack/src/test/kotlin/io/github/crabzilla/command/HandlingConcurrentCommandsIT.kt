@@ -1,11 +1,9 @@
-package io.github.crabzilla.usecases
+package io.github.crabzilla.command
 
 import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandMetadata
-import io.github.crabzilla.command.CommandSideEffect
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.customerComponent
