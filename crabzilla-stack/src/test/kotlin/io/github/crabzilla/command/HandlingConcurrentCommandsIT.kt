@@ -4,8 +4,8 @@ import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Future
@@ -50,7 +50,7 @@ class HandlingConcurrentCommandsIT {
   @Test
   fun `when many concurrent commands with same causationId, just one will succeed`(vertx: Vertx, tc: VertxTestContext) {
     val id = UUID.randomUUID()
-    val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
+    val cmd = RegisterCustomer(id, "good customer")
     val metadata = CommandMetadata.new(id)
     val controller = context.featureController(customerComponent, jsonSerDer)
     controller.handle(metadata, cmd)
@@ -94,7 +94,7 @@ class HandlingConcurrentCommandsIT {
   @Test
   fun `when many concurrent commands without causationId, more than 1 will succeed`(vertx: Vertx, tc: VertxTestContext) {
     val id = UUID.randomUUID()
-    val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
+    val cmd = RegisterCustomer(id, "good customer")
     val metadata = CommandMetadata.new(id)
     val controller = context.featureController(customerComponent, jsonSerDer)
     controller.handle(metadata, cmd)

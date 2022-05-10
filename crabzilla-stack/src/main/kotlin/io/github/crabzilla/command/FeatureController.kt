@@ -73,7 +73,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
         currentFuture.compose {
           val query = "NOTIFY ${CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL}, '$stateType'"
           pgPool.preparedQuery(query).execute()
-            .onSuccess { log.debug("Notified postgres: $query") }
+            .onSuccess { log.trace("Notified postgres: $query") }
             .mapEmpty()
         }
       }.onFailure {
@@ -95,6 +95,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
   }
 
   open fun handle(conn: SqlConnection, metadata: CommandMetadata, command: C): Future<CommandSideEffect> {
+
     fun validate(command: C): Future<Void> {
       if (featureComponent.commandValidator != null) {
         val errors = featureComponent.commandValidator!!.validate(command)
@@ -105,10 +106,10 @@ open class FeatureController<S : Any, C : Any, E : Any>(
       return succeededFuture()
     }
 
-    fun lock(conn: SqlConnection, lockId: Int, metadata: CommandMetadata): Future<Void> {
+    fun lock(conn: SqlConnection): Future<Void> {
       return conn
         .preparedQuery(SQL_LOCK)
-        .execute(Tuple.of(stateTypeName.hashCode(), lockId))
+        .execute(Tuple.of(stateTypeName.hashCode(), metadata.stateId.hashCode()))
         .compose { pgRow ->
           if (pgRow.first().getBoolean("locked")) {
             succeededFuture()
@@ -221,33 +222,27 @@ open class FeatureController<S : Any, C : Any, E : Any>(
     }
 
     fun appendCommand(conn: SqlConnection, cmdAsJson: JsonObject, stateId: UUID, causationId: UUID): Future<Void> {
-      log.debug("Will append command {} as {}", command, cmdAsJson)
-      val params = Tuple.of(
-        stateId,
-        causationId,
-        cmdAsJson
-      )
-      return conn.preparedQuery(SQL_APPEND_CMD)
-        .execute(params)
-        .mapEmpty()
+      log.trace("Will append command {} as {}", command, cmdAsJson)
+      val params = Tuple.of(stateId, causationId, cmdAsJson)
+      return conn.preparedQuery(SQL_APPEND_CMD).execute(params).mapEmpty()
     }
 
     return validate(command)
       .compose {
-        log.debug("Command validated")
-        lock(conn, metadata.stateId.hashCode(), metadata)
+        log.trace("Command validated")
+        lock(conn)
           .compose {
-            log.trace("State locked")
+            log.trace("State locked {}", metadata.stateId.hashCode())
             getSnapshot(conn, metadata.stateId)
           }.compose { snapshot: Snapshot<S>? ->
             if (snapshot == null) {
               succeededFuture(null)
             } else {
-              log.debug("Got snapshot {}", snapshot)
               succeededFuture(snapshot)
             }
           }.compose { snapshot: Snapshot<S>? ->
-            log.debug("Got snapshot {}", snapshot)
+            log.info("Staled? {} command {}", snapshot?.causationId != metadata.causationId, command)
+            log.trace("Got snapshot {}", snapshot)
             if (metadata.causationId != null && snapshot != null && metadata.causationId != snapshot.causationId) {
               val error = "Current causation id ${snapshot.causationId} is " +
                       "newer than the expected causationId ${metadata.causationId}"
@@ -262,15 +257,15 @@ open class FeatureController<S : Any, C : Any, E : Any>(
               .map { Triple(snapshot, session, it) }
           }.compose { triple ->
             val (_, _, commandSideEffect) = triple
-            log.debug("Events appended {}", commandSideEffect.toString())
+            log.trace("Events appended {}", commandSideEffect.toString())
             if (options.eventProjector != null) {
               val eventsToProject = commandSideEffect.appendedEvents
               projectEvents(conn, eventsToProject, options.eventProjector)
                 .onSuccess {
-                  log.debug("Events projected")
+                  log.trace("Events projected")
                 }.map { triple }
             } else {
-              log.debug("EventProjector is null, skipping projecting events")
+              log.trace("EventProjector is null, skipping projecting events")
               succeededFuture(triple)
             }
           }.compose {
@@ -280,7 +275,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
               snapshot?.causationId ?: sideEffects.causationId())
               .map { Pair(sideEffects, cmdAsJson) }
           }.compose {
-            log.debug("Command was appended")
+            log.trace("Command was appended")
             val (sideEffects, cmdAsJson) = it
             if (options.eventBusTopic != null) {
               val message = JsonObject()
@@ -290,12 +285,15 @@ open class FeatureController<S : Any, C : Any, E : Any>(
                 .put("events", sideEffects.toJsonArray())
                 .put("timestamp", Instant.now())
               vertx.eventBus().publish(options.eventBusTopic, message)
-              log.debug("Published to topic ${options.eventBusTopic} the message ${message.encodePrettily()}")
+              log.trace("Published to topic ${options.eventBusTopic} the message ${message.encodePrettily()}")
             }
             succeededFuture(sideEffects)
           }
       }.onSuccess {
         notificationsByStateType.add(stateTypeName)
+        log.trace("Transaction committed")
+      }.onFailure {
+        log.trace("Transaction aborted {}", it.message)
       }
   }
 
