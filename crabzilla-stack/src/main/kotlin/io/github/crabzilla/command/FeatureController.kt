@@ -249,7 +249,9 @@ open class FeatureController<S : Any, C : Any, E : Any>(
           }.compose { snapshot: Snapshot<S>? ->
             log.debug("Got snapshot {}", snapshot)
             if (metadata.causationId != null && snapshot != null && metadata.causationId != snapshot.causationId) {
-              failedFuture(LockingException("TODO this message"))
+              val error = "Current causation id ${snapshot.causationId} is " +
+                      "newer than the expected causationId ${metadata.causationId}"
+              failedFuture(LockingException(error))
             } else {
               succeededFuture(Pair(snapshot, commandHandler.handleCommand(command, snapshot?.state)))
             }
@@ -265,7 +267,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
               val eventsToProject = commandSideEffect.appendedEvents
               projectEvents(conn, eventsToProject, options.eventProjector)
                 .onSuccess {
-                  log.trace("Events projected")
+                  log.debug("Events projected")
                 }.map { triple }
             } else {
               log.debug("EventProjector is null, skipping projecting events")
@@ -278,6 +280,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
               snapshot?.causationId ?: sideEffects.causationId())
               .map { Pair(sideEffects, cmdAsJson) }
           }.compose {
+            log.debug("Command was appended")
             val (sideEffects, cmdAsJson) = it
             if (options.eventBusTopic != null) {
               val message = JsonObject()

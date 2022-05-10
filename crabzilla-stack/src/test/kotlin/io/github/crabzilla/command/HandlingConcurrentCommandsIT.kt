@@ -57,7 +57,7 @@ class HandlingConcurrentCommandsIT {
       .onFailure { tc.failNow(it) }
       .onSuccess { sideEffect ->
         vertx.executeBlocking<Void> { promise ->
-          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 100
+          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 200
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = ActivateCustomer("whatsoever")
           val metadata2 = CommandMetadata.new(id, sideEffect.latestEventId())
