@@ -39,20 +39,20 @@ class PersistingCommandsT {
 
   @Test
   fun `it can persist 1 command`(tc: VertxTestContext, vertx: Vertx) {
-    val controller = context.featureController(customerComponent, jsonSerDer)
+    val service = context.featureService(customerComponent, jsonSerDer)
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata.new(id)
-    controller.handle(metadata, cmd)
+    service.handle(id, cmd)
       .onFailure { tc.failNow(it) }
-      .onSuccess { sideEffect ->
+      .onSuccess { appendedEvents ->
         testRepo.getAllCommands()
           .onFailure { tc.failNow(it) }
           .onSuccess { list ->
             tc.verify {
               assertThat(list.size).isEqualTo(1)
               val rowAsJson = list.first()
-              assertThat(UUID.fromString(rowAsJson.getString("causation_id"))).isEqualTo(sideEffect.appendedEvents.first().metadata.causationId)
+              assertThat(UUID.fromString(rowAsJson.getString("causation_id")))
+                .isEqualTo(appendedEvents.first().metadata.causationId)
               val cmdAsJsonFroDb = rowAsJson.getJsonObject("cmd_payload")
               assertThat(cmdAsJsonFroDb.getString("type")).isEqualTo("RegisterAndActivateCustomer")
             }
@@ -64,36 +64,27 @@ class PersistingCommandsT {
   @Test
   fun `it can persist 2 commands`(tc: VertxTestContext, vertx: Vertx) {
 
-    val controller = context.featureController(customerComponent, jsonSerDer)
+    val service = context.featureService(customerComponent, jsonSerDer)
 
     val id = UUID.randomUUID()
-
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
-    val metadata1 = CommandMetadata.new(id)
-
     val cmd2 = DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata.new(id)
 
-    controller.handle(metadata1, cmd1)
+    service.handle(id, cmd1)
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        controller.handle(metadata2, cmd2)
+        service.handle(id, cmd2)
           .onFailure { tc.failNow(it) }
           .onSuccess {
             testRepo.getAllCommands()
               .onFailure { tc.failNow(it) }
               .onSuccess { list ->
                 tc.verify {
-
                   assertThat(list.size).isEqualTo(2)
-
                   val rowAsJson1 = list.first()
-//                  assertThat(UUID.fromString(rowAsJson1.getString("cmd_id"))).isEqualTo(metadata1.commandId)
                   val cmdAsJsonFroDb1 = rowAsJson1.getJsonObject("cmd_payload")
                   assertThat(cmdAsJsonFroDb1.getString("type")).isEqualTo("RegisterAndActivateCustomer")
-
                   val rowAsJson2 = list[1]
-//                  assertThat(UUID.fromString(rowAsJson2.getString("cmd_id"))).isEqualTo(metadata2.commandId)
                   val cmdAsJsonFroDb2 = rowAsJson2.getJsonObject("cmd_payload")
                   assertThat(cmdAsJsonFroDb2.getString("type")).isEqualTo("DeactivateCustomer")
                   tc.completeNow()

@@ -5,6 +5,8 @@ import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
@@ -39,12 +41,11 @@ class ValidatingCommandIT {
   fun `it can validate before command handler`(tc: VertxTestContext, vertx: Vertx) {
 
     val options = FeatureOptions(eventBusTopic = "MY_TOPIC")
-    val controller = context.featureController(customerComponent, jsonSerDer, options)
+    val service = context.featureService(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()
-    val cmd = CustomerCommand.RegisterCustomer(id, "bad customer")
-    val metadata = CommandMetadata.new(id)
-    controller.handle(metadata, cmd)
+    val cmd = RegisterCustomer(id, "bad customer")
+    service.handle(id, cmd)
       .onFailure {
         assertEquals(it.message, "[Bad customer!]")
         tc.completeNow()
@@ -58,17 +59,13 @@ class ValidatingCommandIT {
   fun `it can validate within command handler`(tc: VertxTestContext, vertx: Vertx) {
 
     val options = FeatureOptions(eventBusTopic = "MY_TOPIC")
-    val controller = context.featureController(customerComponent, jsonSerDer, options)
+    val service = context.featureService(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()
-    val cmd = CustomerCommand.RegisterCustomer(id, "good customer")
-    val metadata = CommandMetadata.new(id)
-    controller.handle(metadata, cmd)
+    val cmd = RegisterCustomer(id, "good customer")
+    service.handle(id, cmd)
       .compose {
-        controller.handle(
-          CommandMetadata.new(id),
-          CustomerCommand.ActivateCustomer("because I want it")
-        )
+        service.handle(id, ActivateCustomer("because I want it"))
       }
       .onFailure {
         tc.completeNow()

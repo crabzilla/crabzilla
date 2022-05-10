@@ -44,7 +44,7 @@ class NotifyingPostgresIT {
   fun `it can notify Postgres`(vertx: Vertx, tc: VertxTestContext) {
 
     val options = FeatureOptions(pgNotificationInterval = 100L)
-    val controller = context.featureController(customerComponent, jsonSerDer, options)
+    val service = context.featureService(customerComponent, jsonSerDer, options)
 
     val latch = CountDownLatch(1)
     val stateTypeMsg = AtomicReference<String>()
@@ -58,8 +58,7 @@ class NotifyingPostgresIT {
     }
     val id = UUID.randomUUID()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata.new(id)
-    controller.handle(metadata, cmd)
+    service.handle(id, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         vertx.executeBlocking<Void> {

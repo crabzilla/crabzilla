@@ -42,7 +42,7 @@ class FeatureSession<S, E> {
     return apply(newEvents)
   }
 
-  fun toSessionData(): CommandResponse<S, E> {
+  fun response(): CommandResponse<S, E> {
     return CommandResponse(originalState, appliedEvents, currentState)
   }
 }

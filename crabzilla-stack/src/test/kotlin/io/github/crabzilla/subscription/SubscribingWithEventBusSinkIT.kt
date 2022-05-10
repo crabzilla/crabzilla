@@ -4,8 +4,7 @@ import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandMetadata
-import io.github.crabzilla.command.FeatureController
+import io.github.crabzilla.command.FeatureService
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.subscription.EventBusStrategy.EVENTBUS_PUBLISH
@@ -59,7 +58,7 @@ internal class SubscribingWithEventBusSinkIT {
   fun `it can publish to eventbus using request reply`(tc: VertxTestContext, vertx: Vertx) {
     val config = SubscriptionConfig(subscriptionName, eventBusStrategy = EVENTBUS_REQUEST_REPLY, interval = 10_000)
     val subscription = context.subscriptionWithEventBusSink(config)
-    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer)
+    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -84,8 +83,8 @@ internal class SubscribingWithEventBusSinkIT {
     val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
     vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
       .compose { vertx.deployVerticle(subscription) }
-      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
-      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
+      .compose { service.handle(id, CustomerCommand.RegisterCustomer(id, "cust#$id")) }
+      .compose { service.handle(id, CustomerCommand.ActivateCustomer("because yes")) }
       .compose { vertx.eventBus().request<JsonObject>(subscriptionEndpoints.handle(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -117,7 +116,7 @@ internal class SubscribingWithEventBusSinkIT {
       eventBusStrategy = EVENTBUS_REQUEST_REPLY
     )
     val subscription = context.subscriptionWithEventBusSink(config)
-    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer)
+    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -142,8 +141,8 @@ internal class SubscribingWithEventBusSinkIT {
     val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
     vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
       .compose { vertx.deployVerticle(subscription) }
-      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
-      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
+      .compose { service.handle(id, CustomerCommand.RegisterCustomer(id, "cust#$id")) }
+      .compose { service.handle(id, CustomerCommand.ActivateCustomer("because yes")) }
       .compose { vertx.eventBus().request<JsonObject>(subscriptionEndpoints.handle(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -172,7 +171,7 @@ internal class SubscribingWithEventBusSinkIT {
   fun `it can publish to eventbus using BLOCKING request reply`(tc: VertxTestContext, vertx: Vertx) {
     val config = SubscriptionConfig(subscriptionName, eventBusStrategy = EVENTBUS_REQUEST_REPLY_BLOCKING, interval = 10_000)
     val subscription = context.subscriptionWithEventBusSink(config)
-    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer)
+    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -194,8 +193,8 @@ internal class SubscribingWithEventBusSinkIT {
     val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
     vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
       .compose { vertx.deployVerticle(subscription) }
-      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
-      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
+      .compose { service.handle(id, CustomerCommand.RegisterCustomer(id, "cust#$id")) }
+      .compose { service.handle(id, CustomerCommand.ActivateCustomer("because yes")) }
       .compose { vertx.eventBus().request<JsonObject>(subscriptionEndpoints.handle(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -224,7 +223,7 @@ internal class SubscribingWithEventBusSinkIT {
   fun `it can publish to eventbus`(tc: VertxTestContext, vertx: Vertx) {
     val config = SubscriptionConfig(subscriptionName, eventBusStrategy = EVENTBUS_PUBLISH, interval = 10_000)
     val subscription = context.subscriptionWithEventBusSink(config)
-    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer)
+    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -245,8 +244,8 @@ internal class SubscribingWithEventBusSinkIT {
     val pingMessage = JsonArray().add(JsonObject().put("ping", 1))
     vertx.eventBus().request<Void>(EVENTBUS_GLOBAL_TOPIC, pingMessage)
       .compose { vertx.deployVerticle(subscription) }
-      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.RegisterCustomer(id, "cust#$id")) }
-      .compose { controller.handle(CommandMetadata.new(id), CustomerCommand.ActivateCustomer("because yes")) }
+      .compose { service.handle(id, CustomerCommand.RegisterCustomer(id, "cust#$id")) }
+      .compose { service.handle(id, CustomerCommand.ActivateCustomer("because yes")) }
       .compose { vertx.eventBus().request<JsonObject>(subscriptionEndpoints.handle(), null) }
       .onFailure { tc.failNow(it) }
       .onSuccess {

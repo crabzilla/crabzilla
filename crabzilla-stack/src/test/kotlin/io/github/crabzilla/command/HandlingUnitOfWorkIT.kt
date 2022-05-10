@@ -44,7 +44,7 @@ class HandlingUnitOfWorkIT {
   @Test
   fun `it can handle 2 commands within more than 1 instances of the same state`(vertx: Vertx, tc: VertxTestContext) {
     val options = FeatureOptions(eventBusTopic = "MY_TOPIC", pgNotificationInterval = 100)
-    val controller = context.featureController(customerComponent, jsonSerDer, options)
+    val service = context.featureService(customerComponent, jsonSerDer, options)
     val latch = CountDownLatch(2)
     val stateTypeMsg = AtomicReference(mutableListOf<JsonObject>())
     vertx.eventBus().consumer<JsonObject>("MY_TOPIC") { msg ->
@@ -52,14 +52,14 @@ class HandlingUnitOfWorkIT {
       latch.countDown()
       msg.reply(null)
     }
-    val id = UUID.randomUUID(); val metadata = CommandMetadata.new(id)
+    val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
-    val id2 = UUID.randomUUID(); val metadata2 = CommandMetadata.new(id2)
+    val id2 = UUID.randomUUID()
     val cmd2 = RegisterAndActivateCustomer(id2, "c2", "is needed")
-    controller
+    service
       .withinTransaction {
-        controller.handle(metadata, cmd)
-          .compose { controller.handle(metadata2, cmd2) }
+        service.handle(id, cmd)
+          .compose { service.handle(id2, cmd2) }
       }
       .onFailure { tc.failNow(it) }
       .onSuccess {

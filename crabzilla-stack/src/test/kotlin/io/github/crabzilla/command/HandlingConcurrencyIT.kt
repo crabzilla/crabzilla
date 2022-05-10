@@ -1,6 +1,7 @@
 package io.github.crabzilla.command
 
 import io.github.crabzilla.CrabzillaContext
+import io.github.crabzilla.EventRecord
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
@@ -29,10 +30,10 @@ import java.util.concurrent.TimeUnit
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Handling concurrent commands")
-class HandlingConcurrentCommandsIT {
+class HandlingConcurrencyIT {
 
   companion object {
-    private val log = LoggerFactory.getLogger(HandlingConcurrentCommandsIT::class.java)
+    private val log = LoggerFactory.getLogger(HandlingConcurrencyIT::class.java)
   }
 
   private lateinit var context : CrabzillaContext
@@ -48,22 +49,20 @@ class HandlingConcurrentCommandsIT {
   }
 
   @Test
-  fun `when many concurrent commands agaist same version, just one will succeed`(vertx: Vertx, tc: VertxTestContext) {
+  fun `when many concurrent commands against same version, just one will succeed`(vertx: Vertx, tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = RegisterCustomer(id, "good customer")
-    val metadata = CommandMetadata.new(id)
-    val controller = context.featureController(customerComponent, jsonSerDer)
-    controller.handle(metadata, cmd)
+    val service = context.featureService(customerComponent, jsonSerDer)
+    service.handle(id, cmd)
       .onFailure { tc.failNow(it) }
-      .onSuccess { sideEffect ->
+      .onSuccess {
         vertx.executeBlocking<Void> { promise ->
           val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 200
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = ActivateCustomer("whatsoever")
-          val metadata2 = CommandMetadata.new(id) { currentVersion -> currentVersion == 1 }
-          val callables = mutableSetOf<Callable<Future<CommandSideEffect>>>()
+          val callables = mutableSetOf<Callable<Future<List<EventRecord>>>>()
           for (i: Int in 1..concurrencyLevel) {
-            callables.add(Callable { controller.handle(metadata2, cmd2) })
+            callables.add(Callable { service.handle(id, cmd2) { currentVersion -> currentVersion == 1 } })
           }
           val futures = executorService.invokeAll(callables)
           executorService.awaitTermination(3, TimeUnit.SECONDS)
@@ -75,14 +74,19 @@ class HandlingConcurrentCommandsIT {
             assertThat(succeeded.size).isEqualTo(1)
             for (f in failures) {
               log.info("${f.cause().javaClass.simpleName}, ${f.cause().message}")
-              assertThat(f.cause().javaClass.simpleName).isIn("LockingException", "PgException")
+              assertThat(f.cause().javaClass.simpleName).isIn("ConcurrencyException", "PgException")
             }
             promise.complete(null)
           }.failing<Void> {
             promise.fail(it)
           }
           executorService.shutdown()
-        }.onSuccess {
+        }.compose {
+          service.getCurrentVersion(id)
+        }.onSuccess {version ->
+          tc.verify {
+            assertEquals(2, version)
+          }
           tc.completeNow()
         }.onFailure {
           tc.failNow(it)
@@ -96,19 +100,17 @@ class HandlingConcurrentCommandsIT {
     vertx: Vertx, tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = RegisterCustomer(id, "good customer")
-    val metadata = CommandMetadata.new(id)
-    val controller = context.featureController(customerComponent, jsonSerDer)
-    controller.handle(metadata, cmd)
+    val service = context.featureService(customerComponent, jsonSerDer)
+    service.handle(id, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         vertx.executeBlocking<Void> { promise ->
-          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 10
+          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 100
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = ActivateCustomer("whatsoever")
-          val metadata2 = CommandMetadata.new(id)
-          val callables = mutableSetOf<Callable<Future<CommandSideEffect>>>()
+          val callables = mutableSetOf<Callable<Future<List<EventRecord>>>>()
           for (i: Int in 1..concurrencyLevel) {
-            callables.add(Callable { controller.handle(metadata2, cmd2) })
+            callables.add(Callable { service.handle(id, cmd2) })
           }
           val futures = executorService.invokeAll(callables)
           executorService.awaitTermination(3, TimeUnit.SECONDS)
@@ -120,7 +122,7 @@ class HandlingConcurrentCommandsIT {
             assertThat(callables.size - failures.size).isGreaterThan(1)
             for (f in failures) {
               log.info("${f.cause().javaClass.simpleName}, ${f.cause().message}")
-              assertThat(f.cause().javaClass.simpleName).isIn("LockingException", "PgException")
+              assertThat(f.cause().javaClass.simpleName).isIn("ConcurrencyException", "PgException")
             }
             promise.complete(null)
           }.failing<Void> {

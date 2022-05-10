@@ -40,18 +40,15 @@ class ProjectingSynchronouslyIT {
   @Test
   fun `it can project to view model synchronously`(vertx: Vertx, tc: VertxTestContext) {
     val options = FeatureOptions(eventProjector = CustomersEventProjector())
-    val controller = context.featureController(customerComponent, jsonSerDer, options)
+    val service = context.featureService(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
-    val metadata1 = CommandMetadata.new(id)
-
     val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-    val metadata2 = CommandMetadata.new(id)
 
-    controller.handle(metadata1, cmd1)
+    service.handle(id, cmd1)
       .compose {
-        controller.handle(metadata2, cmd2)
+        service.handle(id, cmd2)
       }
       .onFailure { tc.failNow(it) }
       .onSuccess {

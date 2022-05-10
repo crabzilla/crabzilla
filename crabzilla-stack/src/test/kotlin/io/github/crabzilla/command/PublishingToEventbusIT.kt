@@ -42,7 +42,7 @@ class PublishingToEventbusIT {
   @Test
   fun `it can publish to eventbus`(vertx: Vertx, tc: VertxTestContext) {
     val options = FeatureOptions(eventBusTopic = "MY_TOPIC")
-    val controller = context.featureController(customerComponent, jsonSerDer, options)
+    val service = context.featureService(customerComponent, jsonSerDer, options)
 
     val jsonMessage = AtomicReference<JsonObject>()
     val latch = CountDownLatch(1)
@@ -52,8 +52,7 @@ class PublishingToEventbusIT {
     }
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata.new(id)
-    controller.handle(metadata, cmd)
+    service.handle(id, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         tc.verify {

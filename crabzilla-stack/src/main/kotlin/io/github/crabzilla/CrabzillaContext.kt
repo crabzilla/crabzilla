@@ -1,6 +1,6 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.command.FeatureController
+import io.github.crabzilla.command.FeatureService
 import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.core.FeatureComponent
 import io.github.crabzilla.subscription.SubscriptionApi
@@ -54,12 +54,12 @@ open class CrabzillaContext private constructor(val vertx: Vertx, val pgPool: Pg
 
   }
 
-  open fun <S : Any, C : Any, E : Any> featureController(
+  open fun <S : Any, C : Any, E : Any> featureService(
     component: FeatureComponent<S, C, E>,
     jsonObjectSerDer: JsonObjectSerDer<S, C, E>,
     options: FeatureOptions = FeatureOptions(),
-  ): FeatureController<S, C, E> {
-    return FeatureController(vertx, pgPool, component, jsonObjectSerDer, options)
+  ): FeatureService<S, C, E> {
+    return FeatureService(vertx, pgPool, component, jsonObjectSerDer, options)
   }
 
   open fun subscriptionWithPostgresSink(config: SubscriptionConfig, eventProjector: EventProjector)

@@ -132,10 +132,11 @@ internal class SubscriptionComponent(
             log.info("Subscription [{}] current offset [{}]", options.subscriptionName, currentOffset)
           }
           vertx.eventBus().consumer<Nothing>(subscriptionEndpoints.handle()).handler { msg ->
-            log.info("Will handle")
+            log.debug("Will handle")
             action()
+              .onFailure { log.error(it.message) }
+              .onSuccess { log.debug("Handle finished") }
               .onComplete {
-                log.info("Handle finished")
                 msg.reply(status())
               }
           }
@@ -208,7 +209,7 @@ internal class SubscriptionComponent(
         initialFuture
       ) { currentFuture: Future<Void>, eventRecord: EventRecord ->
         currentFuture.compose {
-          log.trace("Will project event {} to postgres", eventRecord.metadata.eventSequence)
+          log.info("Will project event {} to postgres", eventRecord.metadata.eventSequence)
           eventProjector!!.project(conn, eventRecord)
         }
       }

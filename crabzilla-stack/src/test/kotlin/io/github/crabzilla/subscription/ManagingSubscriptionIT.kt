@@ -3,8 +3,7 @@ package io.github.crabzilla.subscription
 import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandMetadata
-import io.github.crabzilla.command.FeatureController
+import io.github.crabzilla.command.FeatureService
 import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomersEventProjector
@@ -69,10 +68,10 @@ class ManagingSubscriptionIT {
   @Order(2)
   fun `after pause then a command`(tc: VertxTestContext, vertx: Vertx) {
     val options = FeatureOptions(pgNotificationInterval = 100L)
-    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer, options)
       api.pause()
       .compose {
-        controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
+        service.handle(id, RegisterCustomer(id, "cust#$id"))
       }.compose {
         api.status()
       }
@@ -94,8 +93,8 @@ class ManagingSubscriptionIT {
   @Order(3)
   fun `after a command then work the currentOffset is 1`(tc: VertxTestContext, vertx: Vertx) {
     val options = FeatureOptions(pgNotificationInterval = 100L)
-    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
-    controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
+    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+    service.handle(id, RegisterCustomer(id, "cust#$id"))
       .compose {
         api.handle()
       }.compose {
@@ -119,8 +118,8 @@ class ManagingSubscriptionIT {
   @Order(4)
   fun `after a command then work, the subscription is done`(tc: VertxTestContext, vertx: Vertx) {
     val options = FeatureOptions(pgNotificationInterval = 1000L)
-    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
-      controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
+    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+      service.handle(id, RegisterCustomer(id, "cust#$id"))
         .compose { api.handle()
         }.compose {
           context.pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() == 1 }
@@ -142,8 +141,8 @@ class ManagingSubscriptionIT {
     vertx: Vertx
   ) {
     val options = FeatureOptions(pgNotificationInterval = 1000L)
-    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
-      controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
+    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+      service.handle(id, RegisterCustomer(id, "cust#$id"))
       .compose {
         api.pause()
       }
@@ -174,8 +173,8 @@ class ManagingSubscriptionIT {
     vertx: Vertx
   ) {
     val options = FeatureOptions(pgNotificationInterval = 1000L)
-    val controller = FeatureController(vertx, context.pgPool, customerComponent, jsonSerDer, options)
-    controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
+    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+    service.handle(id, RegisterCustomer(id, "cust#$id"))
       .compose {
         api.pause()
       }

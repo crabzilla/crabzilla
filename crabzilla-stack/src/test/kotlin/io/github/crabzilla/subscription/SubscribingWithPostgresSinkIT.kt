@@ -3,7 +3,6 @@ package io.github.crabzilla.subscription
 import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.command.CommandMetadata
 import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomersEventProjector
@@ -49,7 +48,7 @@ internal class SubscribingWithPostgresSinkIT {
   @Order(1)
   fun `it can project to postgres within an interval`(tc: VertxTestContext, vertx: Vertx) {
     val options = FeatureOptions(pgNotificationInterval = 100L)
-    val controller = context.featureController(customerComponent, jsonSerDer, options)
+    val service = context.featureService(customerComponent, jsonSerDer, options)
     val config = SubscriptionConfig(subscriptionName, initialInterval = 10, interval = 100, maxInterval = 100)
     val (subscription, api) = context.subscriptionWithPostgresSink(config, CustomersEventProjector())
 
@@ -65,7 +64,7 @@ internal class SubscribingWithPostgresSinkIT {
     }
 
     vertx.deployVerticle(subscription)
-      .compose { controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id")) }
+      .compose { service.handle(id, RegisterCustomer(id, "cust#$id")) }
       .onFailure { tc.failNow(it) }
       .onSuccess {
         vertx.executeBlocking<Void> {
@@ -90,13 +89,13 @@ internal class SubscribingWithPostgresSinkIT {
   @Test
   @Order(2)
   fun `it can project to postgres when explicit calling it`(tc: VertxTestContext, vertx: Vertx) {
-    val controller = context.featureController(customerComponent, jsonSerDer)
+    val service = context.featureService(customerComponent, jsonSerDer)
     val config = SubscriptionConfig(subscriptionName)
     val (subscription, api) = context.subscriptionWithPostgresSink(config, CustomersEventProjector())
     vertx.deployVerticle(subscription)
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        controller.handle(CommandMetadata.new(id), RegisterCustomer(id, "cust#$id"))
+        service.handle(id, RegisterCustomer(id, "cust#$id"))
           .compose { api.handle() }
           .compose {
             context.pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() }

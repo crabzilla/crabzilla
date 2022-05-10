@@ -41,11 +41,11 @@ class PersistingEventsIT {
   @Test
   @DisplayName("appending 1 command with 2 events results in version 2 ")
   fun s1(tc: VertxTestContext, vertx: Vertx) {
-    val controller = context.featureController(customerComponent, jsonSerDer)
+    val service = context.featureService(customerComponent, jsonSerDer)
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
-    val metadata = CommandMetadata.new(id)
-    controller.handle(metadata, cmd)
+    val metadata = id
+    service.handle(metadata, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         testRepo.scanEvents(0, 10)
@@ -82,16 +82,14 @@ class PersistingEventsIT {
   @DisplayName("appending 2 commands with 2 and 1 event, respectively results in version 3")
   fun s11(tc: VertxTestContext, vertx: Vertx) {
     val jsonSerDer = CustomerJsonObjectSerDer()
-    val controller = context.featureController(customerComponent, jsonSerDer)
+    val service = context.featureService(customerComponent, jsonSerDer)
     val id = UUID.randomUUID()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
-    val metadata1 = CommandMetadata.new(id)
-    controller.handle(metadata1, cmd1)
+    service.handle(id, cmd1)
       .onFailure { tc.failNow(it) }
-      .onSuccess { sideEffect1: CommandSideEffect ->
+      .onSuccess {
         val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-        val metadata2 = CommandMetadata.new(id)
-        controller.handle(metadata2, cmd2)
+        service.handle(id, cmd2)
           .onFailure { err -> tc.failNow(err) }
           .onSuccess {
             testRepo.scanEvents(0, 10)
