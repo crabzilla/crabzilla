@@ -1,8 +1,8 @@
 package io.github.crabzilla.jackson
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.crabzilla.JsonObjectSerDer
 import io.github.crabzilla.core.FeatureComponent
+import io.github.crabzilla.stack.JsonObjectSerDer
 import io.vertx.core.json.JsonObject
 
 class JacksonJsonObjectSerDer<S: Any, C: Any, E: Any>(
