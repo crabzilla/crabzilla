@@ -152,11 +152,6 @@ internal class SubscriptionComponent(
       .compose { startProjection() }
   }
 
-  fun stop() {
-    isPaused.set(true)
-    log.info("Projection [{}] stopped at offset [{}]", options.subscriptionName, currentOffset)
-  }
-
   private fun handler(): Handler<Long> {
     return Handler<Long> {
       action()
@@ -209,7 +204,7 @@ internal class SubscriptionComponent(
         initialFuture
       ) { currentFuture: Future<Void>, eventRecord: EventRecord ->
         currentFuture.compose {
-          log.info("Will project event {} to postgres", eventRecord.metadata.eventSequence)
+          log.debug("Will project event {} to postgres", eventRecord.metadata.eventSequence)
           eventProjector!!.project(conn, eventRecord)
         }
       }
@@ -249,7 +244,7 @@ internal class SubscriptionComponent(
 
     fun justReschedule() {
       vertx.setTimer(options.interval, handler())
-      log.info("It is busy=$isBusy or paused=$isPaused. Will just reschedule.")
+      log.debug("It is busy=$isBusy or paused=$isPaused. Will just reschedule.")
       log.debug("justReschedule - Rescheduled to next {} milliseconds", options.interval)
     }
 
