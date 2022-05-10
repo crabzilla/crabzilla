@@ -1,7 +1,7 @@
 package io.github.crabzilla.core
 
 /**
- * A helper for basic specifications
+ * A helper for basic test specifications
  */
 class FeatureSpecification<S : Any, C : Any, E : Any>(private val featureComponent: FeatureComponent<S, C, E>) {
 

@@ -36,7 +36,7 @@ class TestRepository(private val pgPool: PgPool) {
             json.put("state_id", row.getUUID("state_id").toString())
             json.put("version", row.getInteger("version"))
             json.put("id", row.getUUID("id").toString())
-            json.put("causation_id", row.getUUID("causation_id").toString())
+            json.put("causation_id", row.getUUID("causation_id")?.toString())
             json.put("correlation_id", row.getUUID("correlation_id").toString())
             json
           }.toList()
@@ -64,7 +64,8 @@ class TestRepository(private val pgPool: PgPool) {
       .map { rowSet: RowSet<Row> ->
         rowSet.iterator().asSequence().map { row: Row ->
           val json = JsonObject()
-          json.put("cmd_id", row.getUUID("cmd_id").toString())
+          json.put("state_id", row.getUUID("state_id").toString())
+          json.put("causation_id", row.getUUID("causation_id").toString())
           json.put("cmd_payload", row.getJsonObject("cmd_payload"))
           json
         }.toList()

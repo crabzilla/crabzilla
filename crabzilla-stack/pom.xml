@@ -18,7 +18,7 @@
     <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>v0.5.2</version>
+    <version>v0.5.3</version>
   </parent>
 
     <artifactId>crabzilla-stack</artifactId>

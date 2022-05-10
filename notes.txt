@@ -23,7 +23,30 @@
 
 https://www.youtube.com/watch?v=o51kMltuSuQ
 
-* TODO
 https://www.logicbig.com/tutorials/core-java-tutorial/modules/service-provider-method.html
-
 https://medium.com/swlh/microservices-on-kubernetes-quarkus-eks-e4fac1efbef5
+
+* TODO
+
+schema
+* manter uuids por segurança
+* both correlation and causationId references event id
+* em vez de salvar comando em outra tabela, salvar evento com o payload do comando pra não perder trilha
+  causation e correlation
+
+
+crabzilla-app
+    * quarkus, htmlx and jooq (blocking) or https://github.com/72services/vaadin-jooq
+    * consume postgres channel
+    * subscriptions by name
+    * command by id
+    * event by correlationId (CTE for hierarchical?)
+    * event by ...
+
+crabzilla-local-admin
+    * vertx-web
+    * interface to manage subscriptions (pause, resume, etc)
+    * it runs in another port (admin port) (what about global view?)s
+    * consume eventbus for success and errors events for commands and subscriptions (eventbus = same process)
+    * publish admin events with micrometer
+    * then prometheus and grafana

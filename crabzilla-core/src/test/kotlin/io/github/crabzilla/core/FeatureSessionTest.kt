@@ -54,7 +54,7 @@ internal class FeatureSessionTest {
 
     @Test
     fun statusData_matches() {
-      val sessionData = featureSession.toSessionData()
+      val sessionData = featureSession.response()
       assertThat(sessionData.newState).isEqualTo(customer)
       assertThat(sessionData.originalState).isEqualTo(customer)
       assertThat(sessionData.events).isEmpty()
@@ -86,7 +86,7 @@ internal class FeatureSessionTest {
 
       @Test
       fun statusData_matches() {
-        val sessionData = featureSession.toSessionData()
+        val sessionData = featureSession.response()
         assertThat(sessionData.newState).isEqualTo(expectedCustomer)
         assertThat(sessionData.originalState).isEqualTo(customer)
         assertThat(sessionData.events).containsOnly(customerCreated)
