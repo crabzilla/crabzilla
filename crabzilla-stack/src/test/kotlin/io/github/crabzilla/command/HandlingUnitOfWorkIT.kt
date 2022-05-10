@@ -4,7 +4,7 @@ import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
-import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
@@ -53,9 +53,9 @@ class HandlingUnitOfWorkIT {
       msg.reply(null)
     }
     val id = UUID.randomUUID(); val metadata = CommandMetadata.new(id)
-    val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
+    val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     val id2 = UUID.randomUUID(); val metadata2 = CommandMetadata.new(id2)
-    val cmd2 = CustomerCommand.RegisterAndActivateCustomer(id2, "c2", "is needed")
+    val cmd2 = RegisterAndActivateCustomer(id2, "c2", "is needed")
     controller
       .withinTransaction {
         controller.handle(metadata, cmd)

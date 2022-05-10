@@ -80,7 +80,6 @@ internal class SubscriptionComponent(
           isPaused.set(false)
           msg.reply(status())
         }
-      log.info("Projection management endpoints")
     }
 
     fun startPgNotificationSubscriber(): Future<Void> {
@@ -122,15 +121,15 @@ internal class SubscriptionComponent(
           greedy.set(globalOffset > currentOffset)
           val effectiveInitialInterval = if (greedy.get()) 1 else options.initialInterval
           log.info(
-            "Projection [{}] current offset [{}] global offset [{}] will start in [{}] ms",
+            "Subscription [{}] current offset [{}] global offset [{}] will start in [{}] ms",
             options.subscriptionName, currentOffset, globalOffset, effectiveInitialInterval
           )
-          log.info("Projection [{}] started pooling events with {}", options.subscriptionName, options)
+          log.info("Subscription [{}] started pooling events with {}", options.subscriptionName, options)
           // Schedule the first execution
           vertx.setTimer(effectiveInitialInterval, handler())
           // Schedule the metrics
           vertx.setPeriodic(options.metricsInterval) {
-            log.info("Projection [{}] current offset [{}]", options.subscriptionName, currentOffset)
+            log.info("Subscription [{}] current offset [{}]", options.subscriptionName, currentOffset)
           }
           vertx.eventBus().consumer<Nothing>(subscriptionEndpoints.handle()).handler { msg ->
             log.info("Will handle")
@@ -172,14 +171,14 @@ internal class SubscriptionComponent(
     fun requestEventbus(eventsList: List<EventRecord>): Future<Long> {
       val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
       val array = JsonArray(eventsAsJson)
-      log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
+      log.debug("Will publish {} events", eventsAsJson.size)
       val promise = Promise.promise<Long>()
       vertx.eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
         if (it.failed()) {
           log.error("Failed", it.cause())
           promise.fail(it.cause())
         } else {
-          log.error("Got response {}", it.result().body())
+          log.debug("Got response {}", it.result().body())
           promise.complete(eventsList.last().metadata.eventSequence)
         }
       }
@@ -189,14 +188,14 @@ internal class SubscriptionComponent(
     fun requestEventbusBlocking(eventsList: List<EventRecord>): Future<Long> {
       val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
       val array = JsonArray(eventsAsJson)
-      log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
+      log.debug("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
       return vertx.executeBlocking<Long> { promise ->
         vertx.eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
           if (it.failed()) {
             log.error("Failed", it.cause())
             promise.fail(it.cause())
           } else {
-            log.error("Got response {}", it.result().body())
+            log.debug("Got response {}", it.result().body())
             promise.complete(eventsList.last().metadata.eventSequence)
           }
         }

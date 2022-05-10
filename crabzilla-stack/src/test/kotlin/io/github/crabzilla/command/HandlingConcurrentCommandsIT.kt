@@ -48,7 +48,7 @@ class HandlingConcurrentCommandsIT {
   }
 
   @Test
-  fun `when many concurrent commands with same causationId, just one will succeed`(vertx: Vertx, tc: VertxTestContext) {
+  fun `when many concurrent commands agaist same version, just one will succeed`(vertx: Vertx, tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = RegisterCustomer(id, "good customer")
     val metadata = CommandMetadata.new(id)
@@ -60,7 +60,7 @@ class HandlingConcurrentCommandsIT {
           val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 200
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = ActivateCustomer("whatsoever")
-          val metadata2 = CommandMetadata.new(id, sideEffect.latestEventId())
+          val metadata2 = CommandMetadata.new(id) { currentVersion -> currentVersion == 1 }
           val callables = mutableSetOf<Callable<Future<CommandSideEffect>>>()
           for (i: Int in 1..concurrencyLevel) {
             callables.add(Callable { controller.handle(metadata2, cmd2) })
@@ -92,7 +92,8 @@ class HandlingConcurrentCommandsIT {
 
 
   @Test
-  fun `when many concurrent commands without causationId, more than 1 will succeed`(vertx: Vertx, tc: VertxTestContext) {
+  fun `when many concurrent commands without versionValidation function, more than 1 will succeed`(
+    vertx: Vertx, tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = RegisterCustomer(id, "good customer")
     val metadata = CommandMetadata.new(id)

@@ -24,7 +24,7 @@ import java.util.UUID
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Persisting events")
-class PersistingEventsT {
+class PersistingEventsIT {
 
   private lateinit var context : CrabzillaContext
   private lateinit var testRepo: TestRepository

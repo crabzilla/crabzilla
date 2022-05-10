@@ -242,9 +242,8 @@ open class FeatureController<S : Any, C : Any, E : Any>(
             }
           }.compose { snapshot: Snapshot<S>? ->
             log.debug("Got snapshot {}", snapshot)
-            if (metadata.causationId != null && snapshot != null && metadata.causationId != snapshot.causationId) {
-              val error = "Current causation id ${snapshot.causationId} is " +
-                      "newer than the expected causationId ${metadata.causationId}"
+            if (metadata.versionValidation != null && !metadata.versionValidation.invoke(snapshot?.version?:0)) {
+              val error = "Current version ${snapshot?.causationId?:0} is invalid"
               failedFuture(LockingException(error))
             } else {
               succeededFuture(Pair(snapshot, commandHandler.handleCommand(command, snapshot?.state)))
@@ -279,7 +278,7 @@ open class FeatureController<S : Any, C : Any, E : Any>(
             if (options.eventBusTopic != null) {
               val message = JsonObject()
                 .put("stateType", stateTypeName)
-                .put("commandMetadata", metadata.toJsonObject())
+                .put("stateId", metadata.stateId.toString())
                 .put("command", cmdAsJson)
                 .put("events", sideEffects.toJsonArray())
                 .put("timestamp", Instant.now())
