@@ -18,8 +18,8 @@ CREATE TABLE events (
       state_id UUID NOT NULL,
       version INTEGER NOT NULL,
       id UUID NOT NULL UNIQUE,
-      causation_id UUID REFERENCES events (id),
-      correlation_id UUID REFERENCES events (id),
+      causation_id UUID NOT NULL REFERENCES events (id),
+      correlation_id UUID NOT NULL REFERENCES events (id),
       inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       UNIQUE (state_id, version)
      )
