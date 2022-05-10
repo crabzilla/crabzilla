@@ -48,9 +48,9 @@ To express your domain model.
 Your commands are consistently handled:
 
 ** Before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]. This helps to increase consistency.
-** After a successful command, your projector will be notified (even in another machine) by using https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify]. This helps to be reactive via Postgres and hopefully reduce eventual consistency delay.
+** After a successful command, your subscription will be notified (even in another machine) by using https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify]. This helps to be reactive via Postgres and hopefully reduce eventual consistency delay.
 ** You can optionally project the command events to view model within the same database transaction. This helps set based validation.
-** You can optionally handle commands against 2 instances of the same state type (for example, transferring $ from account1 to account2) within the same database transaction. This helps to use https://martinfowler.com/eaaCatalog/unitOfWork.html[UnitOfWork]
+** You can optionally handle commands against more than 1 instance of a state type within the same database transaction. For example, transferring $ from account1 to account2. This helps to use https://martinfowler.com/eaaCatalog/unitOfWork.html[UnitOfWork]
 
 Your commands and events are serialized to `JSON` and stored into `Postgres`
 
