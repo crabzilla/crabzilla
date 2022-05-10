@@ -1,5 +1,6 @@
 package io.github.crabzilla.stack
 
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import java.util.UUID
 
@@ -9,6 +10,7 @@ import java.util.UUID
 data class EventRecord(val metadata: EventMetadata, val payload: JsonObject) {
 
   companion object {
+    fun List<EventRecord>.toJsonArray() = JsonArray(this.map { it.toJsonObject() })
     fun fromJsonObject(asJsonObject: JsonObject): EventRecord {
       val eventMetadata = EventMetadata(
         asJsonObject.getString("stateType"),
