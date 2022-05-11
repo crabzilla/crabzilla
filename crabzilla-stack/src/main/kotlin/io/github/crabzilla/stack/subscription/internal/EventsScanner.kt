@@ -17,17 +17,12 @@ internal class EventsScanner(
 ) {
 
   companion object {
-    private val log = LoggerFactory.getLogger(EventsScanner::class.java)
     private const val selectCurrentOffset = """
       select sequence from subscriptions where name = $1
     """
     private const val selectGlobalOffset = """
       select max(sequence) as sequence from events
     """
-  }
-
-  init {
-    log.info("Starting for subscription {}", name)
   }
 
   fun getCurrentOffset(): Future<Long> {

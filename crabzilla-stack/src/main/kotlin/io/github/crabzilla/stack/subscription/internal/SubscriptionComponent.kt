@@ -102,7 +102,7 @@ internal class SubscriptionComponent(
 
     fun startEventsScanner() {
       val query = QuerySpecification.query(options.stateTypes, options.eventTypes)
-      log.info(
+      log.debug(
         "Will start subscription [{}] using query [{}] in [{}] milliseconds", options.subscriptionName, query,
         options.initialInterval
       )
@@ -121,8 +121,8 @@ internal class SubscriptionComponent(
           greedy.set(globalOffset > currentOffset)
           val effectiveInitialInterval = if (greedy.get()) 1 else options.initialInterval
           log.info(
-            "Subscription [{}] current offset [{}] global offset [{}] will start in [{}] ms",
-            options.subscriptionName, currentOffset, globalOffset, effectiveInitialInterval
+            "Subscription [{}] current offset [{}] global offset [{}]",
+            options.subscriptionName, currentOffset, globalOffset
           )
           log.info("Subscription [{}] started pooling events with {}", options.subscriptionName, options)
           // Schedule the first execution

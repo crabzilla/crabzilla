@@ -42,7 +42,7 @@ class FeatureSession<S, E> {
     return apply(newEvents)
   }
 
-  fun response(): CommandResponse<S, E> {
-    return CommandResponse(originalState, appliedEvents, currentState)
+  fun response(): Triple<S, List<E>, S> {
+    return Triple(originalState, appliedEvents, currentState)
   }
 }

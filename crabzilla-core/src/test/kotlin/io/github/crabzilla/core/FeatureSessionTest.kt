@@ -54,10 +54,10 @@ internal class FeatureSessionTest {
 
     @Test
     fun statusData_matches() {
-      val sessionData = featureSession.response()
-      assertThat(sessionData.newState).isEqualTo(customer)
-      assertThat(sessionData.originalState).isEqualTo(customer)
-      assertThat(sessionData.events).isEmpty()
+      val (newState, events, originalState) = featureSession.response()
+      assertThat(newState).isEqualTo(customer)
+      assertThat(originalState).isEqualTo(customer)
+      assertThat(events).isEmpty()
     }
 
     @Nested
@@ -86,10 +86,10 @@ internal class FeatureSessionTest {
 
       @Test
       fun statusData_matches() {
-        val sessionData = featureSession.response()
-        assertThat(sessionData.newState).isEqualTo(expectedCustomer)
-        assertThat(sessionData.originalState).isEqualTo(customer)
-        assertThat(sessionData.events).containsOnly(customerCreated)
+        val (originalState, events, newState) = featureSession.response()
+        assertThat(newState).isEqualTo(expectedCustomer)
+        assertThat(originalState).isEqualTo(customer)
+        assertThat(events).containsOnly(customerCreated)
       }
 
       @Nested

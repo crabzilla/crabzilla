@@ -91,7 +91,7 @@ open class CrabzillaContext private constructor(val vertx: Vertx, val pgPool: Pg
   }
 
   open fun pgSubscriber(): PgSubscriber {
-    log.info("Creating postgres subscriber with ${pgConfig.encodePrettily()}")
+    log.info("Creating postgres subscriber")
     return PgSubscriber.subscriber(vertx, toPgConnectionOptions(pgConfig))
   }
 
