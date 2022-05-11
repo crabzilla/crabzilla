@@ -218,7 +218,7 @@ open class FeatureService<S : Any, C : Any, E : Any>(
                 val session = commandHandler.handleCommand(command, snapshot?.state)
                 succeededFuture(Pair(snapshot, session))
               } catch (e: Exception) {
-                val error = FeatureException.BusinessException(e.message!!)
+                val error = FeatureException.BusinessException(e.message?:"Unknown")
                 failedFuture(error)
               }
             }
