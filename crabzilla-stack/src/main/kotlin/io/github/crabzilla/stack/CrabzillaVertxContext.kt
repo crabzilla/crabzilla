@@ -1,17 +1,13 @@
 package io.github.crabzilla.stack
 
 import io.github.crabzilla.core.FeatureComponent
+import io.github.crabzilla.stack.command.CommandServiceApi
 import io.github.crabzilla.stack.command.CommandServiceOptions
 import io.github.crabzilla.stack.command.internal.CommandService
-import io.github.crabzilla.stack.command.CommandServiceApi
 import io.github.crabzilla.stack.subscription.SubscriptionApi
 import io.github.crabzilla.stack.subscription.SubscriptionConfig
 import io.github.crabzilla.stack.subscription.internal.SubscriptionComponent
-import io.vertx.core.AbstractVerticle
-import io.vertx.core.DeploymentOptions
-import io.vertx.core.Future
-import io.vertx.core.Promise
-import io.vertx.core.Vertx
+import io.vertx.core.*
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.pgclient.PgPool
@@ -19,8 +15,6 @@ import io.vertx.pgclient.pubsub.PgSubscriber
 import io.vertx.sqlclient.PoolOptions
 import org.slf4j.LoggerFactory
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.atomic.AtomicReferenceArray
 
 class CrabzillaVertxContext constructor(
   private val vertx: Vertx,

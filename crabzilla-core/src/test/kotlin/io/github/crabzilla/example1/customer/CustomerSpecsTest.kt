@@ -1,17 +1,13 @@
 package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.FeatureSpecification
-import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.example1.customer.CustomerCommand.*
+import io.github.crabzilla.example1.customer.CustomerEvent.*
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import java.util.UUID
+import java.util.*
 
 @DisplayName("Customer scenarios")
 internal class CustomerSpecsTest {

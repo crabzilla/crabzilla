@@ -2,12 +2,9 @@ package io.github.crabzilla.stack.subscription.internal
 
 import io.github.crabzilla.stack.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.stack.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
-import io.github.crabzilla.stack.CrabzillaVertxContext
 import io.github.crabzilla.stack.EventProjector
 import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.subscription.EventBusStrategy.EVENTBUS_PUBLISH
-import io.github.crabzilla.stack.subscription.EventBusStrategy.EVENTBUS_REQUEST_REPLY
-import io.github.crabzilla.stack.subscription.EventBusStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
+import io.github.crabzilla.stack.subscription.EventBusStrategy.*
 import io.github.crabzilla.stack.subscription.SubscriptionConfig
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture

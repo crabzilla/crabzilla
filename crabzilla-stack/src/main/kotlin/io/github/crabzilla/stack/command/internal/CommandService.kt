@@ -3,8 +3,11 @@ package io.github.crabzilla.stack.command.internal
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.FeatureComponent
 import io.github.crabzilla.core.FeatureSession
-import io.github.crabzilla.stack.*
 import io.github.crabzilla.stack.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
+import io.github.crabzilla.stack.EventMetadata
+import io.github.crabzilla.stack.EventProjector
+import io.github.crabzilla.stack.EventRecord
+import io.github.crabzilla.stack.JsonObjectSerDer
 import io.github.crabzilla.stack.command.CommandServiceApi
 import io.github.crabzilla.stack.command.CommandServiceException
 import io.github.crabzilla.stack.command.CommandServiceException.ConcurrencyException
@@ -17,15 +20,10 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
-import io.vertx.sqlclient.PreparedStatement
-import io.vertx.sqlclient.Row
-import io.vertx.sqlclient.RowSet
-import io.vertx.sqlclient.RowStream
-import io.vertx.sqlclient.SqlConnection
-import io.vertx.sqlclient.Tuple
+import io.vertx.sqlclient.*
 import org.slf4j.LoggerFactory
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 class CommandService<S : Any, C : Any, E : Any>(
   private val vertx: Vertx,
@@ -70,18 +68,18 @@ class CommandService<S : Any, C : Any, E : Any>(
     }
   }
 
-  override fun handle(stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)?): Future<List<EventRecord>> {
+  override fun handle(stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)?): Future<EventMetadata> {
     return pgPool.withTransaction { conn: SqlConnection ->
       handle(conn, stateId, command, versionPredicate)
     }
   }
 
-  override fun withinTransaction(f: (SqlConnection) -> Future<List<EventRecord>>): Future<List<EventRecord>> {
+  override fun withinTransaction(f: (SqlConnection) -> Future<EventMetadata>): Future<EventMetadata> {
     return pgPool.withTransaction(f)
   }
 
   override fun handle(conn: SqlConnection, stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)?)
-  : Future<List<EventRecord>> {
+  : Future<EventMetadata> {
 
     fun validate(command: C): Future<Void> {
       if (featureComponent.commandValidator != null) {
@@ -235,13 +233,12 @@ class CommandService<S : Any, C : Any, E : Any>(
               vertx.eventBus().publish(options.eventBusTopic, message)
               log.debug("Published to topic ${options.eventBusTopic} the message ${message.encodePrettily()}")
             }
-            succeededFuture(appendedEvents)
+            succeededFuture(appendedEvents.last().metadata)
           }
-      }.onSuccess {events ->
+      }.onSuccess {
         val query = "NOTIFY $POSTGRES_NOTIFICATION_CHANNEL, '$stateTypeName'"
         pgPool.preparedQuery(query).execute()
           .onSuccess { log.debug("Notified postgres: $query") }
-          .map { events }
         log.debug("Transaction committed")
       }.onFailure {
         log.debug("Transaction aborted {}", it.message)

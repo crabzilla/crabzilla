@@ -7,7 +7,7 @@ import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.stack.CrabzillaVertxContext
-import io.github.crabzilla.stack.EventRecord
+import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Future
 import io.vertx.core.Vertx
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -60,7 +60,7 @@ class HandlingConcurrencyIT {
           val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 200
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = ActivateCustomer("whatsoever")
-          val callables = mutableSetOf<Callable<Future<List<EventRecord>>>>()
+          val callables = mutableSetOf<Callable<Future<EventMetadata>>>()
           for (i: Int in 1..concurrencyLevel) {
             callables.add(Callable { service.handle(id, cmd2) { currentVersion -> currentVersion == 1 } })
           }
@@ -108,7 +108,7 @@ class HandlingConcurrencyIT {
           val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 100
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = ActivateCustomer("whatsoever")
-          val callables = mutableSetOf<Callable<Future<List<EventRecord>>>>()
+          val callables = mutableSetOf<Callable<Future<EventMetadata>>>()
           for (i: Int in 1..concurrencyLevel) {
             callables.add(Callable { service.handle(id, cmd2) })
           }

@@ -11,8 +11,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.util.*
 import java.util.Arrays.asList
-import java.util.UUID
 
 @DisplayName("A FeatureSession")
 internal class FeatureSessionTest {

@@ -8,7 +8,7 @@ import io.github.crabzilla.stack.EventRecord.Companion.toJsonArray
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import java.util.UUID
+import java.util.*
 
 @DisplayName("Serializing EventRecord")
 internal class EventRecordTest {

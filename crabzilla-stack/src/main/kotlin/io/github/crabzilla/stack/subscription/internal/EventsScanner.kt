@@ -8,7 +8,6 @@ import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
-import org.slf4j.LoggerFactory
 
 internal class EventsScanner(
   private val pgPool: PgPool,

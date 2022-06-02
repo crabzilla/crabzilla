@@ -1,8 +1,6 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.example1.customer.CustomerEvent.*
 import io.github.crabzilla.example1.customer.CustomersWriteRepository.updateStatus
 import io.github.crabzilla.example1.customer.CustomersWriteRepository.upsert
 import io.github.crabzilla.stack.EventProjector

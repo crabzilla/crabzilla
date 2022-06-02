@@ -2,7 +2,7 @@ package io.github.crabzilla.stack
 
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import java.util.UUID
+import java.util.*
 
 /**
  * An event record

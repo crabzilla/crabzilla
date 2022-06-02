@@ -7,9 +7,7 @@ import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.stack.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.stack.CrabzillaVertxContext
 import io.github.crabzilla.stack.command.internal.CommandService
-import io.github.crabzilla.stack.subscription.EventBusStrategy.EVENTBUS_PUBLISH
-import io.github.crabzilla.stack.subscription.EventBusStrategy.EVENTBUS_REQUEST_REPLY
-import io.github.crabzilla.stack.subscription.EventBusStrategy.EVENTBUS_REQUEST_REPLY_BLOCKING
+import io.github.crabzilla.stack.subscription.EventBusStrategy.*
 import io.github.crabzilla.stack.subscription.internal.SubscriptionEndpoints
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Future
@@ -29,7 +27,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference

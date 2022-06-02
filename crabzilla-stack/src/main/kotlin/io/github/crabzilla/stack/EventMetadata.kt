@@ -1,6 +1,6 @@
 package io.github.crabzilla.stack
 
-import java.util.UUID
+import java.util.*
 
 data class EventMetadata(
   val stateType: String,

@@ -18,7 +18,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.UUID
+import java.util.*
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -44,15 +44,13 @@ class PersistingCommandsT {
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     service.handle(id, cmd)
       .onFailure { tc.failNow(it) }
-      .onSuccess { appendedEvents ->
+      .onSuccess {
         testRepo.getAllCommands()
           .onFailure { tc.failNow(it) }
           .onSuccess { list ->
             tc.verify {
               assertThat(list.size).isEqualTo(1)
               val rowAsJson = list.first()
-              assertThat(UUID.fromString(rowAsJson.getString("causation_id")))
-                .isEqualTo(appendedEvents.first().metadata.causationId)
               val cmdAsJsonFroDb = rowAsJson.getJsonObject("cmd_payload")
               assertThat(cmdAsJsonFroDb.getString("type")).isEqualTo("RegisterAndActivateCustomer")
             }
