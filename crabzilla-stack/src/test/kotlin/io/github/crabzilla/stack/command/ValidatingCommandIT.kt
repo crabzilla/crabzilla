@@ -6,7 +6,7 @@ import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.stack.CrabzillaContext
+import io.github.crabzilla.stack.CrabzillaVertxContext
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -24,14 +24,14 @@ import java.util.UUID
 @DisplayName("Validating commands")
 class ValidatingCommandIT {
 
-  private lateinit var context : CrabzillaContext
+  private lateinit var context : CrabzillaVertxContext
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    context = CrabzillaContext.new(vertx, testDbConfig)
-    testRepo = TestRepository(context.pgPool)
-    cleanDatabase(context.pgPool)
+    context = CrabzillaVertxContext.new(vertx, testDbConfig)
+    testRepo = TestRepository(context.pgPool())
+    cleanDatabase(context.pgPool())
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -39,8 +39,8 @@ class ValidatingCommandIT {
   @Test
   fun `it can validate before command handler`(tc: VertxTestContext, vertx: Vertx) {
 
-    val options = FeatureOptions(eventBusTopic = "MY_TOPIC")
-    val service = context.featureService(customerComponent, jsonSerDer, options)
+    val options = CommandServiceOptions(eventBusTopic = "MY_TOPIC")
+    val service = context.commandService(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()
     val cmd = RegisterCustomer(id, "bad customer")
@@ -57,8 +57,8 @@ class ValidatingCommandIT {
   @Test
   fun `it can validate within command handler`(tc: VertxTestContext, vertx: Vertx) {
 
-    val options = FeatureOptions(eventBusTopic = "MY_TOPIC")
-    val service = context.featureService(customerComponent, jsonSerDer, options)
+    val options = CommandServiceOptions(eventBusTopic = "MY_TOPIC")
+    val service = context.commandService(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()
     val cmd = RegisterCustomer(id, "good customer")

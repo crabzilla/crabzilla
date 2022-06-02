@@ -1,13 +1,12 @@
-package io.github.crabzilla.stack.command
+package io.github.crabzilla.kotlinx
 
 import io.github.crabzilla.TestRepository
-import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.example1.customer.customerModule
 import io.github.crabzilla.stack.CrabzillaVertxContext
-import io.github.crabzilla.stack.CrabzillaVertxContext.Companion.new
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -18,7 +17,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.UUID
+import java.util.*
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -30,7 +29,7 @@ class PersistingCommandsT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    context = new(vertx, testDbConfig)
+    context = CrabzillaVertxContext.new(vertx, testDbConfig)
     testRepo = TestRepository(context.pgPool())
     cleanDatabase(context.pgPool())
       .onFailure { tc.failNow(it) }
@@ -39,7 +38,7 @@ class PersistingCommandsT {
 
   @Test
   fun `it can persist 1 command`(tc: VertxTestContext, vertx: Vertx) {
-    val service = context.commandService(customerComponent, jsonSerDer)
+    val service = context.kotlinxCommandService(customerComponent, customerModule)
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     service.handle(id, cmd)
@@ -64,7 +63,7 @@ class PersistingCommandsT {
   @Test
   fun `it can persist 2 commands`(tc: VertxTestContext, vertx: Vertx) {
 
-    val service = context.commandService(customerComponent, jsonSerDer)
+    val service = context.kotlinxCommandService(customerComponent, customerModule)
 
     val id = UUID.randomUUID()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")

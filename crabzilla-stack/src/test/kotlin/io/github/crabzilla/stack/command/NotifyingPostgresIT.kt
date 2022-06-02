@@ -5,8 +5,8 @@ import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.stack.CrabzillaContext
 import io.github.crabzilla.stack.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
+import io.github.crabzilla.stack.CrabzillaVertxContext
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -28,14 +28,14 @@ import java.util.concurrent.atomic.AtomicReference
 @DisplayName("Notifying postgres")
 class NotifyingPostgresIT {
 
-  private lateinit var context : CrabzillaContext
+  private lateinit var context : CrabzillaVertxContext
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    context = CrabzillaContext.new(vertx, testDbConfig)
-    testRepo = TestRepository(context.pgPool)
-    cleanDatabase(context.pgPool)
+    context = CrabzillaVertxContext.new(vertx, testDbConfig)
+    testRepo = TestRepository(context.pgPool())
+    cleanDatabase(context.pgPool())
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -43,8 +43,8 @@ class NotifyingPostgresIT {
   @Test
   fun `it can notify Postgres`(vertx: Vertx, tc: VertxTestContext) {
 
-    val options = FeatureOptions(pgNotificationInterval = 100L)
-    val service = context.featureService(customerComponent, jsonSerDer, options)
+    val options = CommandServiceOptions()
+    val service = context.commandService(customerComponent, jsonSerDer, options)
 
     val latch = CountDownLatch(1)
     val stateTypeMsg = AtomicReference<String>()

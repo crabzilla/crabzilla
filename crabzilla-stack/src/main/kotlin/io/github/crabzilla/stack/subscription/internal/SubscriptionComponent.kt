@@ -1,7 +1,8 @@
 package io.github.crabzilla.stack.subscription.internal
 
-import io.github.crabzilla.stack.CrabzillaContext
 import io.github.crabzilla.stack.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPIC
+import io.github.crabzilla.stack.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
+import io.github.crabzilla.stack.CrabzillaVertxContext
 import io.github.crabzilla.stack.EventProjector
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.subscription.EventBusStrategy.EVENTBUS_PUBLISH
@@ -64,29 +65,47 @@ internal class SubscriptionComponent(
 
     fun startManagementEndpoints() {
       vertx.eventBus()
-        .consumer<String>(subscriptionEndpoints.status()) { msg ->
+        .consumer<Nothing>(subscriptionEndpoints.status()) { msg ->
           log.debug("Status: {}", status().encodePrettily())
           msg.reply(status())
         }
       vertx.eventBus()
-        .consumer<String>(subscriptionEndpoints.pause()) { msg ->
+        .consumer<Nothing>(subscriptionEndpoints.pause()) { msg ->
           log.debug("Status: {}", status().encodePrettily())
           isPaused.set(true)
           msg.reply(status())
         }
       vertx.eventBus()
-        .consumer<String>(subscriptionEndpoints.resume()) { msg ->
+        .consumer<Nothing>(subscriptionEndpoints.resume()) { msg ->
           log.debug("Status: {}", status().encodePrettily())
           isPaused.set(false)
           msg.reply(status())
         }
+      vertx.eventBus().consumer<Nothing>(subscriptionEndpoints.handle()) { msg ->
+        log.debug("Will handle")
+        action()
+          .onFailure { log.error(it.message) }
+          .onSuccess { log.debug("Handle finished") }
+          .onComplete {
+            msg.reply(status())
+          }
+      }
+      vertx.eventBus().consumer<Nothing>("vai-porra") { msg ->
+        log.debug("Will handle")
+        action()
+          .onFailure { log.error(it.message) }
+          .onSuccess { log.debug("Handle finished") }
+          .onComplete {
+            msg.reply(status())
+          }
+      }
     }
 
     fun startPgNotificationSubscriber(): Future<Void> {
       val promise = Promise.promise<Void>()
       subscriber.connect()
         .onSuccess {
-          subscriber.channel(CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL)
+          subscriber.channel(POSTGRES_NOTIFICATION_CHANNEL)
             .handler { stateType ->
               if (!greedy.get() && (options.stateTypes.isEmpty() || options.stateTypes.contains(stateType))) {
                 greedy.set(true)
@@ -130,15 +149,6 @@ internal class SubscriptionComponent(
           // Schedule the metrics
           vertx.setPeriodic(options.metricsInterval) {
             log.info("Subscription [{}] current offset [{}]", options.subscriptionName, currentOffset)
-          }
-          vertx.eventBus().consumer<Nothing>(subscriptionEndpoints.handle()).handler { msg ->
-            log.debug("Will handle")
-            action()
-              .onFailure { log.error(it.message) }
-              .onSuccess { log.debug("Handle finished") }
-              .onComplete {
-                msg.reply(status())
-              }
           }
         }.mapEmpty()
     }

@@ -3,7 +3,7 @@ package io.github.crabzilla.example1.customer
 import io.vertx.core.Future
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
-import java.util.UUID
+import java.util.*
 
 /**
  * Read model jsonSerDer

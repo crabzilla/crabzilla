@@ -2,7 +2,7 @@ package io.github.crabzilla.stack.command
 
 import io.github.crabzilla.stack.EventProjector
 
-data class FeatureOptions(
+data class CommandServiceOptions(
   val eventProjector: EventProjector? = null,
   val eventBusTopic: String? = null,
   val eventStreamSize: Int = DEFAULT_EVENT_STREAM_SIZE,

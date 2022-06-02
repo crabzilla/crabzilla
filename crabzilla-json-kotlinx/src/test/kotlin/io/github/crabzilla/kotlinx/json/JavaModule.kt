@@ -4,7 +4,7 @@ import kotlinx.serialization.modules.SerializersModule
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 
 @kotlinx.serialization.ExperimentalSerializationApi
 val javaModule = SerializersModule {

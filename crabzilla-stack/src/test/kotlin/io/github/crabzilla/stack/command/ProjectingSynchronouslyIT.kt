@@ -7,7 +7,7 @@ import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomersEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.stack.CrabzillaContext
+import io.github.crabzilla.stack.CrabzillaVertxContext
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -25,22 +25,22 @@ import java.util.UUID
 @DisplayName("Projecting to view model synchronously")
 class ProjectingSynchronouslyIT {
 
-  private lateinit var context : CrabzillaContext
+  private lateinit var context : CrabzillaVertxContext
   private lateinit var testRepo: TestRepository
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    context = CrabzillaContext.new(vertx, testDbConfig)
-    testRepo = TestRepository(context.pgPool)
-    cleanDatabase(context.pgPool)
+    context = CrabzillaVertxContext.new(vertx, testDbConfig)
+    testRepo = TestRepository(context.pgPool())
+    cleanDatabase(context.pgPool())
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
 
   @Test
   fun `it can project to view model synchronously`(vertx: Vertx, tc: VertxTestContext) {
-    val options = FeatureOptions(eventProjector = CustomersEventProjector())
-    val service = context.featureService(customerComponent, jsonSerDer, options)
+    val options = CommandServiceOptions(eventProjector = CustomersEventProjector())
+    val service = context.commandService(customerComponent, jsonSerDer, options)
 
     val id = UUID.randomUUID()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")

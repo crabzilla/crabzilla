@@ -8,7 +8,7 @@ import io.vertx.core.json.JsonObject
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.UUID
+import java.util.*
 
 internal class KotlinxJsonObjectSerDerTest {
 

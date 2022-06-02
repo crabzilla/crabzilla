@@ -1,24 +1,15 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.CommandValidator
-import io.github.crabzilla.core.EventHandler
-import io.github.crabzilla.core.FeatureComponent
-import io.github.crabzilla.core.FeatureSession
-import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.core.*
+import io.github.crabzilla.example1.customer.CustomerCommand.*
+import io.github.crabzilla.example1.customer.CustomerEvent.*
 import io.github.crabzilla.kotlinx.json.javaModule
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
-import java.util.UUID
+import java.util.*
 
 /**
  * Customer events

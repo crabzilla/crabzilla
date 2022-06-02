@@ -1,15 +1,14 @@
-package io.github.crabzilla.stack.command
+package io.github.crabzilla.stack.command.internal
 
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.FeatureComponent
 import io.github.crabzilla.core.FeatureSession
-import io.github.crabzilla.stack.CrabzillaContext
-import io.github.crabzilla.stack.EventMetadata
-import io.github.crabzilla.stack.EventProjector
-import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.JsonObjectSerDer
-import io.github.crabzilla.stack.command.FeatureException.ConcurrencyException
-import io.github.crabzilla.stack.command.internal.Snapshot
+import io.github.crabzilla.stack.*
+import io.github.crabzilla.stack.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
+import io.github.crabzilla.stack.command.CommandServiceApi
+import io.github.crabzilla.stack.command.CommandServiceException
+import io.github.crabzilla.stack.command.CommandServiceException.ConcurrencyException
+import io.github.crabzilla.stack.command.CommandServiceOptions
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
@@ -28,13 +27,13 @@ import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.UUID
 
-open class FeatureService<S : Any, C : Any, E : Any>(
+class CommandService<S : Any, C : Any, E : Any>(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val featureComponent: FeatureComponent<S, C, E>,
   private val serDer: JsonObjectSerDer<S, C, E>,
-  private val options: FeatureOptions = FeatureOptions(),
-) {
+  private val options: CommandServiceOptions = CommandServiceOptions(),
+) : CommandServiceApi<C> {
 
   companion object {
     const val SQL_LOCK =
@@ -48,7 +47,7 @@ open class FeatureService<S : Any, C : Any, E : Any>(
        ORDER BY sequence
     """
     const val SQL_APPEND_EVENT =
-      """ INSERT 
+      """ INSERT
             INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
     const val SQL_APPEND_CMD =
@@ -61,56 +60,34 @@ open class FeatureService<S : Any, C : Any, E : Any>(
   }
 
   private val stateTypeName = featureComponent.stateClassName()
-  private val log = LoggerFactory.getLogger("${FeatureService::class.java.simpleName}-$stateTypeName")
-  private val notificationsByStateType = HashSet<String>()
+  private val log = LoggerFactory.getLogger("${CommandService::class.java.simpleName}-$stateTypeName")
   private val commandHandler: CommandHandler<S, C, E> = featureComponent.commandHandlerFactory.invoke()
 
-  init {
-    log.info("Starting notifying Postgres for $stateTypeName each ${options.pgNotificationInterval} ms")
-    vertx.setPeriodic(options.pgNotificationInterval) {
-      val initialFuture = succeededFuture<Void>()
-      notificationsByStateType.fold(
-        initialFuture
-      ) { currentFuture: Future<Void>, stateType: String ->
-        currentFuture.compose {
-          val query = "NOTIFY ${CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL}, '$stateType'"
-          pgPool.preparedQuery(query).execute()
-            .onSuccess { log.debug("Notified postgres: $query") }
-            .mapEmpty()
-        }
-      }.onFailure {
-        log.warn("Notification to postgres failed {}", it.message)
-      }.onSuccess {
-        notificationsByStateType.clear()
-      }
-    }
-  }
-
-  open fun getCurrentVersion(stateId: UUID): Future<Int> {
+  override fun getCurrentVersion(stateId: UUID): Future<Int> {
     return pgPool.withConnection { conn ->
       getSnapshot(conn, stateId)
         .map { it?.version ?: 0 }
     }
   }
 
-  open fun handle(stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)? = null): Future<List<EventRecord>> {
+  override fun handle(stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)?): Future<List<EventRecord>> {
     return pgPool.withTransaction { conn: SqlConnection ->
       handle(conn, stateId, command, versionPredicate)
     }
   }
 
-  open fun withinTransaction(f: (SqlConnection) -> Future<List<EventRecord>>): Future<List<EventRecord>> {
+  override fun withinTransaction(f: (SqlConnection) -> Future<List<EventRecord>>): Future<List<EventRecord>> {
     return pgPool.withTransaction(f)
   }
 
-  open fun handle(conn: SqlConnection, stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)? = null)
+  override fun handle(conn: SqlConnection, stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)?)
   : Future<List<EventRecord>> {
 
     fun validate(command: C): Future<Void> {
       if (featureComponent.commandValidator != null) {
         val errors = featureComponent.commandValidator!!.validate(command)
         if (errors.isNotEmpty()) {
-          return failedFuture(FeatureException.ValidationException(errors))
+          return failedFuture(CommandServiceException.ValidationException(errors))
         }
       }
       return succeededFuture()
@@ -218,7 +195,7 @@ open class FeatureService<S : Any, C : Any, E : Any>(
                 val session = commandHandler.handleCommand(command, snapshot?.state)
                 succeededFuture(Pair(snapshot, session))
               } catch (e: Exception) {
-                val error = FeatureException.BusinessException(e.message?:"Unknown")
+                val error = CommandServiceException.BusinessException(e.message ?: "Unknown")
                 failedFuture(error)
               }
             }
@@ -260,8 +237,11 @@ open class FeatureService<S : Any, C : Any, E : Any>(
             }
             succeededFuture(appendedEvents)
           }
-      }.onSuccess {
-        notificationsByStateType.add(stateTypeName)
+      }.onSuccess {events ->
+        val query = "NOTIFY $POSTGRES_NOTIFICATION_CHANNEL, '$stateTypeName'"
+        pgPool.preparedQuery(query).execute()
+          .onSuccess { log.debug("Notified postgres: $query") }
+          .map { events }
         log.debug("Transaction committed")
       }.onFailure {
         log.debug("Transaction aborted {}", it.message)

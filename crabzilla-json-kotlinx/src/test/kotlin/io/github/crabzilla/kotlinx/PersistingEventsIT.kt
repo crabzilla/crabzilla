@@ -1,12 +1,11 @@
-package io.github.crabzilla.stack.command
+package io.github.crabzilla.kotlinx
 
 import io.github.crabzilla.TestRepository
-import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerJsonObjectSerDer
 import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.example1.customer.customerModule
 import io.github.crabzilla.stack.CrabzillaVertxContext
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
@@ -19,7 +18,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.UUID
+import java.util.*
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -41,7 +40,7 @@ class PersistingEventsIT {
   @Test
   @DisplayName("appending 1 command with 2 events results in version 2 ")
   fun s1(tc: VertxTestContext, vertx: Vertx) {
-    val service = context.commandService(customerComponent, jsonSerDer)
+    val service = context.kotlinxCommandService(customerComponent, customerModule)
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     service.handle(id, cmd)
@@ -80,8 +79,7 @@ class PersistingEventsIT {
   @Test
   @DisplayName("appending 2 commands with 2 and 1 event, respectively results in version 3")
   fun s11(tc: VertxTestContext, vertx: Vertx) {
-    val jsonSerDer = CustomerJsonObjectSerDer()
-    val service = context.commandService(customerComponent, jsonSerDer)
+    val service = context.kotlinxCommandService(customerComponent, customerModule)
     val id = UUID.randomUUID()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
     service.handle(id, cmd1)

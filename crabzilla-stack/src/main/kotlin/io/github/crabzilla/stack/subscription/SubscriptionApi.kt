@@ -9,18 +9,18 @@ class SubscriptionApi(private val bus: EventBus, subscriptionName: String) {
   private val endpoints: SubscriptionEndpoints = SubscriptionEndpoints(subscriptionName)
   fun pause(): Future<JsonObject> {
     return bus.request<JsonObject>(endpoints.pause(), null)
-      .map{ it.body() }
+      .map { it.body() }
   }
   fun resume(): Future<JsonObject> {
     return bus.request<JsonObject>(endpoints.resume(), null)
-      .map{ it.body() }
+      .map { it.body() }
   }
   fun status(): Future<JsonObject> {
     return bus.request<JsonObject>(endpoints.status(), null)
-      .map{ it.body() }
+      .map { it.body() }
   }
   fun handle(): Future<JsonObject> {
     return bus.request<JsonObject>(endpoints.handle(), null)
-      .map{ it.body() }
+      .map { it.body() }
   }
 }

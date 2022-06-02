@@ -5,9 +5,9 @@ import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomersEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.stack.CrabzillaContext
-import io.github.crabzilla.stack.command.FeatureOptions
-import io.github.crabzilla.stack.command.FeatureService
+import io.github.crabzilla.stack.CrabzillaVertxContext
+import io.github.crabzilla.stack.command.CommandServiceOptions
+import io.github.crabzilla.stack.command.internal.CommandService
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Vertx
@@ -31,17 +31,16 @@ class ManagingSubscriptionIT {
     private val id: UUID = UUID.randomUUID()
   }
 
-  private lateinit var context : CrabzillaContext
+  private lateinit var context : CrabzillaVertxContext
   private lateinit var api: SubscriptionApi
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    context = CrabzillaContext.new(vertx, testDbConfig)
+    context = CrabzillaVertxContext.new(vertx, testDbConfig)
     val config = SubscriptionConfig(subscriptionName)
-    val pair: Pair<AbstractVerticle, SubscriptionApi> = context.subscriptionWithPostgresSink(config, CustomersEventProjector())
-    api = pair.second
-    cleanDatabase(context.pgPool)
-      .compose { vertx.deployVerticle(pair.first) }
+    api = context.subscription(config, CustomersEventProjector())
+    cleanDatabase(context.pgPool())
+      .compose { context.deploy() }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
@@ -67,8 +66,8 @@ class ManagingSubscriptionIT {
   @Test
   @Order(2)
   fun `after pause then a command`(tc: VertxTestContext, vertx: Vertx) {
-    val options = FeatureOptions(pgNotificationInterval = 100L)
-    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+    val options = CommandServiceOptions()
+    val service = CommandService(vertx, context.pgPool(), customerComponent, jsonSerDer, options)
       api.pause()
       .compose {
         service.handle(id, RegisterCustomer(id, "cust#$id"))
@@ -92,8 +91,8 @@ class ManagingSubscriptionIT {
   @Test
   @Order(3)
   fun `after a command then work the currentOffset is 1`(tc: VertxTestContext, vertx: Vertx) {
-    val options = FeatureOptions(pgNotificationInterval = 100L)
-    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+    val options = CommandServiceOptions()
+    val service = CommandService(vertx, context.pgPool(), customerComponent, jsonSerDer, options)
     service.handle(id, RegisterCustomer(id, "cust#$id"))
       .compose {
         api.handle()
@@ -117,12 +116,12 @@ class ManagingSubscriptionIT {
   @Test
   @Order(4)
   fun `after a command then work, the subscription is done`(tc: VertxTestContext, vertx: Vertx) {
-    val options = FeatureOptions(pgNotificationInterval = 1000L)
-    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+    val options = CommandServiceOptions()
+    val service = CommandService(vertx, context.pgPool(), customerComponent, jsonSerDer, options)
       service.handle(id, RegisterCustomer(id, "cust#$id"))
         .compose { api.handle()
         }.compose {
-          context.pgPool.preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() == 1 }
+          context.pgPool().preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() == 1 }
         }.onFailure {
           tc.failNow(it)
         }.onSuccess {
@@ -140,8 +139,8 @@ class ManagingSubscriptionIT {
     tc: VertxTestContext,
     vertx: Vertx
   ) {
-    val options = FeatureOptions(pgNotificationInterval = 1000L)
-    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+    val options = CommandServiceOptions()
+    val service = CommandService(vertx, context.pgPool(), customerComponent, jsonSerDer, options)
       service.handle(id, RegisterCustomer(id, "cust#$id"))
       .compose {
         api.pause()
@@ -172,8 +171,8 @@ class ManagingSubscriptionIT {
     tc: VertxTestContext,
     vertx: Vertx
   ) {
-    val options = FeatureOptions(pgNotificationInterval = 1000L)
-    val service = FeatureService(vertx, context.pgPool, customerComponent, jsonSerDer, options)
+    val options = CommandServiceOptions()
+    val service = CommandService(vertx, context.pgPool(), customerComponent, jsonSerDer, options)
     service.handle(id, RegisterCustomer(id, "cust#$id"))
       .compose {
         api.pause()
