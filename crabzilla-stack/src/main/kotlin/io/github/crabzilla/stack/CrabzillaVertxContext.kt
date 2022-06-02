@@ -87,7 +87,7 @@ class CrabzillaVertxContext constructor(
 
   override fun subscription(config: SubscriptionConfig, eventProjector: EventProjector?)
   : SubscriptionApi {
-    log.info("Creating subscription with postgres sink")
+    log.info("Creating subscription")
     val verticle = object : AbstractVerticle() {
       private lateinit var subscription: SubscriptionComponent
       override fun start(promise: Promise<Void>) {
