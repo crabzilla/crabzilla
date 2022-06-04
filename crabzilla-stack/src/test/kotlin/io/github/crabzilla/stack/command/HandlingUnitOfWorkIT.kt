@@ -40,9 +40,9 @@ class HandlingUnitOfWorkIT: AbstractCommandIT() {
     val id2 = UUID.randomUUID()
     val cmd2 = RegisterAndActivateCustomer(id2, "c2", "is needed")
     service
-      .withinTransaction {
-        service.handle(id, cmd)
-          .compose { service.handle(id2, cmd2) }
+      .withinTransaction { tx ->
+        service.handle(tx, id, cmd)
+          .compose { service.handle(tx, id2, cmd2) }
       }
       .onFailure { tc.failNow(it) }
       .onSuccess {

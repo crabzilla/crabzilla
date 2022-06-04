@@ -11,6 +11,7 @@ import io.github.crabzilla.stack.subscription.SubscriptionSink.POSTGRES_PROJECTO
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
@@ -39,6 +40,8 @@ class ManagingSubscriptionIT : AbstractSubscriptionIT() {
       .onFailure { tc.failNow(it) }
       .onSuccess { json ->
         tc.verify {
+          assertThat(api.name()).isEqualTo(subscriptionName)
+          assertThat(api.isDeployed()).isTrue
           assertEquals(false, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))
           assertEquals(false, json.getBoolean("greedy"))
