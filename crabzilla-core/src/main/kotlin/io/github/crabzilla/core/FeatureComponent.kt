@@ -14,5 +14,5 @@ class FeatureComponent<S : Any, C : Any, E : Any>(
   val commandValidator: CommandValidator<C>? = null
 // TODO Consider using QuerySpecification to query and project just some events types to your feature state
 ) {
-  fun stateClassName() = stateClass.simpleName!!
+  fun streamName() = stateClass.simpleName!!
 }

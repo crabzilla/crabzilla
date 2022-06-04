@@ -19,7 +19,7 @@ class FeatureSpecification<S : Any, C : Any, E : Any>(private val featureCompone
       }
     }
     val commandHandler: CommandHandler<S, C, E> = featureComponent.commandHandlerFactory.invoke()
-    val session: FeatureSession<S, E> = commandHandler.handleCommand(command, state)
+    val session: FeatureSession<S, E> = commandHandler.handle(command, state)
     state = session.currentState
     events.addAll(session.appliedEvents())
     return this
@@ -32,7 +32,7 @@ class FeatureSpecification<S : Any, C : Any, E : Any>(private val featureCompone
 
   fun givenEvents(vararg fixtureEvents: E): FeatureSpecification<S, C, E> {
     fixtureEvents.forEach { e ->
-      val newState = featureComponent.eventHandler.handleEvent(state, e)
+      val newState = featureComponent.eventHandler.handle(state, e)
       state = newState
       events.add(e)
     }

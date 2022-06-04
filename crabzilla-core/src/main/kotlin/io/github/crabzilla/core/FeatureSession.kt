@@ -19,7 +19,7 @@ class FeatureSession<S, E> {
     this.eventHandler = eventHandler
     val state: S? = events.fold(null) { s: S?, e: E ->
       appliedEvents.add(e)
-      eventHandler.handleEvent(s, e)
+      eventHandler.handle(s, e)
     }
     this.originalState = state!!
     this.currentState = originalState
@@ -31,8 +31,15 @@ class FeatureSession<S, E> {
 
   fun apply(events: List<E>): FeatureSession<S, E> {
     events.forEach { domainEvent ->
-      currentState = eventHandler.handleEvent(currentState, domainEvent)
-      appliedEvents.add(domainEvent)
+      apply(domainEvent)
+    }
+    return this
+  }
+
+  fun apply(vararg event: E): FeatureSession<S, E> {
+    event.forEach {
+      currentState = eventHandler.handle(currentState, it)
+      appliedEvents.add(it)
     }
     return this
   }

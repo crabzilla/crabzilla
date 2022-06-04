@@ -5,30 +5,31 @@ import io.github.crabzilla.example1.customer.CustomerCommand.*
 import io.github.crabzilla.example1.customer.CustomerEvent.*
 import java.util.*
 
-sealed class CustomerEvent {
-  data class CustomerRegistered(val id: UUID, val name: String) : CustomerEvent()
-  data class CustomerActivated(val reason: String) : CustomerEvent()
-  data class CustomerDeactivated(val reason: String) : CustomerEvent()
+sealed interface CustomerEvent {
+  data class CustomerRegistered(val id: UUID) : CustomerEvent
+  data class CustomerRegisteredPrivate(val name: String) : CustomerEvent
+  data class CustomerActivated(val reason: String) : CustomerEvent
+  data class CustomerDeactivated(val reason: String) : CustomerEvent
 }
 
-sealed class CustomerCommand {
-  data class RegisterCustomer(val customerId: UUID, val name: String) : CustomerCommand()
-  data class ActivateCustomer(val reason: String) : CustomerCommand()
-  data class DeactivateCustomer(val reason: String) : CustomerCommand()
+sealed interface CustomerCommand {
+  data class RegisterCustomer(val customerId: UUID, val name: String) : CustomerCommand
+  data class ActivateCustomer(val reason: String) : CustomerCommand
+  data class DeactivateCustomer(val reason: String) : CustomerCommand
   data class RegisterAndActivateCustomer(
     val customerId: UUID,
     val name: String,
     val reason: String
-  ) : CustomerCommand()
+  ) : CustomerCommand
 }
 
-data class Customer(val id: UUID, val name: String, val isActive: Boolean = false, val reason: String? = null) {
+data class Customer(val id: UUID, val name: String? = null, val isActive: Boolean = false, val reason: String? = null) {
   companion object {
     fun create(id: UUID, name: String): List<CustomerEvent> {
-      return listOf(CustomerRegistered(id = id, name = name))
+      return listOf(CustomerRegistered(id = id), CustomerRegisteredPrivate(name))
     }
     fun fromEvent(event: CustomerRegistered): Customer {
-      return Customer(id = event.id, name = event.name, isActive = false)
+      return Customer(id = event.id, isActive = false)
     }
   }
   fun activate(reason: String): List<CustomerEvent> {
@@ -42,15 +43,14 @@ data class Customer(val id: UUID, val name: String, val isActive: Boolean = fals
 val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
   when (command) {
     is RegisterCustomer -> if (command.name == "bad customer") listOf("Bad customer!") else listOf()
-    is RegisterAndActivateCustomer -> listOf()
-    is ActivateCustomer -> listOf()
-    is DeactivateCustomer -> listOf()
+    else -> listOf()
   }
 }
 
 val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event ->
   when (event) {
     is CustomerRegistered -> Customer.fromEvent(event)
+    is CustomerRegisteredPrivate -> state!!.copy(name = event.name)
     is CustomerActivated -> state!!.copy(isActive = true, reason = event.reason)
     is CustomerDeactivated -> state!!.copy(isActive = false, reason = event.reason)
   }
@@ -59,15 +59,15 @@ val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event 
 class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id already exists")
 
 class CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, CustomerEvent>(customerEventHandler) {
-  override fun handleCommand(command: CustomerCommand, state: Customer?): FeatureSession<Customer, CustomerEvent> {
+  override fun handle(command: CustomerCommand, state: Customer?): FeatureSession<Customer, CustomerEvent> {
     return when (command) {
       is RegisterCustomer -> {
         if (state != null) throw CustomerAlreadyExists(command.customerId)
-        withNew(Customer.create(id = command.customerId, name = command.name))
+        withNew(Customer.create(command.customerId, command.name))
       }
       is RegisterAndActivateCustomer -> {
         if (state != null) throw CustomerAlreadyExists(command.customerId)
-        withNew(Customer.create(id = command.customerId, name = command.name))
+        withNew(Customer.create(command.customerId, command.name))
           .execute { it.activate(command.reason) }
       }
       is ActivateCustomer -> {

@@ -10,7 +10,8 @@ class CustomerJsonObjectSerDer: JsonObjectSerDer<Customer, CustomerCommand, Cust
 
   override fun eventFromJson(json: JsonObject): CustomerEvent {
     return when (val eventType = json.getString("type")) {
-      "CustomerRegistered" -> CustomerRegistered(UUID.fromString(json.getString("id")), json.getString("name"))
+      "CustomerRegistered" -> CustomerRegistered(UUID.fromString(json.getString("id")))
+      "CustomerRegisteredPrivate" -> CustomerRegisteredPrivate(json.getString("name"))
       "CustomerActivated" -> CustomerActivated(json.getString("reason"))
       "CustomerDeactivated" -> CustomerDeactivated(json.getString("reason"))
       else -> throw IllegalArgumentException("Unknown event $eventType")
@@ -22,6 +23,8 @@ class CustomerJsonObjectSerDer: JsonObjectSerDer<Customer, CustomerCommand, Cust
       is CustomerRegistered -> JsonObject()
         .put("type", event::class.simpleName)
         .put("id", event.id.toString())
+      is CustomerRegisteredPrivate -> JsonObject()
+        .put("type", event::class.simpleName)
         .put("name", event.name)
       is CustomerActivated ->
         JsonObject()

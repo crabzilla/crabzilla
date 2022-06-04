@@ -1,11 +1,8 @@
 package io.github.crabzilla.core
 
 import io.github.crabzilla.example1.customer.Customer
-import io.github.crabzilla.example1.customer.CustomerCommand.UnknownCommand
 import io.github.crabzilla.example1.customer.CustomerEvent
-import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.example1.customer.customerEventHandler
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -156,13 +153,4 @@ internal class FeatureSessionTest {
     }
   }
 
-  @Test
-  fun `a UnknownCommand will fail`() {
-
-    Assertions.assertThatExceptionOfType(IllegalArgumentException::class.java)
-      .isThrownBy {
-        FeatureSpecification(customerComponent)
-          .whenCommand(UnknownCommand("?"))
-      }.withMessage(UnknownCommand::class.java.canonicalName)
-  }
 }

@@ -4,7 +4,6 @@ import io.github.crabzilla.core.FeatureSpecification
 import io.github.crabzilla.example1.customer.CustomerCommand.*
 import io.github.crabzilla.example1.customer.CustomerEvent.*
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -63,12 +62,4 @@ internal class CustomerSpecsTest {
       }
   }
 
-  @Test
-  fun `trying to register a bad customer will fail`() {
-    assertThatExceptionOfType(IllegalArgumentException::class.java)
-      .isThrownBy {
-        FeatureSpecification(customerComponent)
-          .whenCommand(RegisterCustomer(id, "bad customer"))
-      }.withMessage("[Bad customer!]")
-  }
 }

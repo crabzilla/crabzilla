@@ -4,8 +4,8 @@ import io.github.crabzilla.stack.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPI
 import io.github.crabzilla.stack.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.stack.EventProjector
 import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.subscription.EventBusStrategy.*
 import io.github.crabzilla.stack.subscription.SubscriptionConfig
+import io.github.crabzilla.stack.subscription.SubscriptionSink.*
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler
@@ -79,15 +79,6 @@ internal class SubscriptionComponent(
           msg.reply(status())
         }
       vertx.eventBus().consumer<Nothing>(subscriptionEndpoints.handle()) { msg ->
-        log.debug("Will handle")
-        action()
-          .onFailure { log.error(it.message) }
-          .onSuccess { log.debug("Handle finished") }
-          .onComplete {
-            msg.reply(status())
-          }
-      }
-      vertx.eventBus().consumer<Nothing>("vai-porra") { msg ->
         log.debug("Will handle")
         action()
           .onFailure { log.error(it.message) }
@@ -178,7 +169,6 @@ internal class SubscriptionComponent(
       val promise = Promise.promise<Long>()
       vertx.eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
         if (it.failed()) {
-          log.error("Failed", it.cause())
           promise.fail(it.cause())
         } else {
           log.debug("Got response {}", it.result().body())
@@ -195,7 +185,6 @@ internal class SubscriptionComponent(
       return vertx.executeBlocking<Long> { promise ->
         vertx.eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
           if (it.failed()) {
-            log.error("Failed", it.cause())
             promise.fail(it.cause())
           } else {
             log.debug("Got response {}", it.result().body())
@@ -237,7 +226,7 @@ internal class SubscriptionComponent(
       val jitter = ((0..5).random() * 200)
       val nextInterval = min(options.maxInterval, (options.interval * failures.incrementAndGet()) + jitter)
       vertx.setTimer(nextInterval, handler())
-      log.error("registerFailure - Rescheduled to next {} milliseconds", nextInterval,throwable)
+      log.error("registerFailure - Rescheduled to next {} milliseconds", nextInterval, throwable)
     }
 
     fun registerSuccess(eventSequence: Long) {
@@ -260,41 +249,40 @@ internal class SubscriptionComponent(
         eventsList.first().metadata.eventSequence,
         eventsList.last().metadata.eventSequence
       )
-      return if (eventProjector != null) {
-        pgPool.withTransaction { conn ->
-          projectEventsToPostgres(conn, eventsList)
-            .compose { updateOffset(conn, eventsList.last().metadata.eventSequence) }
+      return when (options.sink ?: EVENTBUS_REQUEST_REPLY) {
+        POSTGRES_PROJECTOR -> {
+          pgPool.withTransaction { conn ->
+            projectEventsToPostgres(conn, eventsList)
+              .compose { updateOffset(conn, eventsList.last().metadata.eventSequence) }
+          }
         }
-      } else {
-        when (options.eventBusStrategy ?: EVENTBUS_REQUEST_REPLY) {
-          EVENTBUS_REQUEST_REPLY -> {
-            requestEventbus(eventsList)
-              .compose { eventSequence ->
-                pgPool.withTransaction { conn ->
-                  updateOffset(conn, eventSequence)
-                }
+        EVENTBUS_REQUEST_REPLY -> {
+          requestEventbus(eventsList)
+            .compose { eventSequence ->
+              pgPool.withTransaction { conn ->
+                updateOffset(conn, eventSequence)
               }
-          }
-          EVENTBUS_REQUEST_REPLY_BLOCKING -> {
-            requestEventbusBlocking(eventsList)
-              .compose { eventSequence ->
-                pgPool.withTransaction { conn ->
-                  updateOffset(conn, eventSequence)
-                }
+            }
+        }
+        EVENTBUS_REQUEST_REPLY_BLOCKING -> {
+          requestEventbusBlocking(eventsList)
+            .compose { eventSequence ->
+              pgPool.withTransaction { conn ->
+                updateOffset(conn, eventSequence)
               }
-          }
-          EVENTBUS_PUBLISH -> {
-            val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
-            val array = JsonArray(eventsAsJson)
-            log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
-            vertx.eventBus().publish(EVENTBUS_GLOBAL_TOPIC, array)
-            succeededFuture(eventsList.last().metadata.eventSequence)
-              .compose { eventSequence ->
-                pgPool.withTransaction { conn ->
-                  updateOffset(conn, eventSequence)
-                }
+            }
+        }
+        EVENTBUS_PUBLISH -> {
+          val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
+          val array = JsonArray(eventsAsJson)
+          log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
+          vertx.eventBus().publish(EVENTBUS_GLOBAL_TOPIC, array)
+          succeededFuture(eventsList.last().metadata.eventSequence)
+            .compose { eventSequence ->
+              pgPool.withTransaction { conn ->
+                updateOffset(conn, eventSequence)
               }
-          }
+            }
         }
       }
     }

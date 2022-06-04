@@ -7,8 +7,6 @@ import java.util.*
 
 interface CommandServiceApi<C : Any> {
 
-  fun getCurrentVersion(stateId: UUID): Future<Int>
-
   fun handle(stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)? = null): Future<EventMetadata>
 
   fun withinTransaction(f: (SqlConnection) -> Future<EventMetadata>): Future<EventMetadata>

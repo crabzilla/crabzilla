@@ -14,7 +14,7 @@ import java.util.*
 internal class EventRecordTest {
 
   val id: UUID = UUID.fromString("c2aeadc1-d6b5-4df6-82a4-7dec4f1df429")
-  val event = CustomerRegistered(id, "customer1") as CustomerEvent
+  val event = CustomerRegistered(id) as CustomerEvent
   private val eventAsJson = CustomerJsonObjectSerDer().eventToJson(event)
   private val eventMetadata = EventMetadata(
     stateType = "Customer",

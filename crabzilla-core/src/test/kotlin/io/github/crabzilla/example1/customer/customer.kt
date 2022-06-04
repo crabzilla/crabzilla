@@ -5,39 +5,24 @@ import io.github.crabzilla.example1.customer.CustomerCommand.*
 import io.github.crabzilla.example1.customer.CustomerEvent.*
 import java.util.*
 
-/**
- * Customer events
- */
-sealed class CustomerEvent {
-  data class CustomerRegistered(val id: UUID, val name: String) : CustomerEvent()
-  data class CustomerActivated(val reason: String) : CustomerEvent()
-  data class CustomerDeactivated(val reason: String) : CustomerEvent()
+sealed interface CustomerEvent {
+  data class CustomerRegistered(val id: UUID, val name: String) : CustomerEvent
+  data class CustomerActivated(val reason: String) : CustomerEvent
+  data class CustomerDeactivated(val reason: String) : CustomerEvent
 }
 
-/**
- * Customer commands
- */
-sealed class CustomerCommand {
-  data class UnknownCommand(val x: String) : CustomerCommand()
-  data class RegisterCustomer(val customerId: UUID, val name: String) : CustomerCommand()
-  data class ActivateCustomer(val reason: String) : CustomerCommand()
-  data class DeactivateCustomer(val reason: String) : CustomerCommand()
+sealed interface CustomerCommand {
+  data class RegisterCustomer(val customerId: UUID, val name: String) : CustomerCommand
+  data class ActivateCustomer(val reason: String) : CustomerCommand
+  data class DeactivateCustomer(val reason: String) : CustomerCommand
   data class RegisterAndActivateCustomer(
     val customerId: UUID,
     val name: String,
     val reason: String
-  ) : CustomerCommand()
+  ) : CustomerCommand
 }
 
-/**
- * Customer aggregate root
- */
-data class Customer(
-  val id: UUID,
-  val name: String,
-  val isActive: Boolean = false,
-  val reason: String? = null
-) {
+data class Customer(val id: UUID, val name: String, val isActive: Boolean = false, val reason: String? = null) {
   companion object {
     fun create(id: UUID, name: String): List<CustomerEvent> {
       return listOf(CustomerRegistered(id = id, name = name))
@@ -64,9 +49,6 @@ val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
   }
 }
 
-/**
- * This function will apply an event to customer state
- */
 val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event ->
   when (event) {
     is CustomerRegistered -> Customer.fromEvent(event)
@@ -75,16 +57,10 @@ val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event 
   }
 }
 
-/**
- * Customer errors
- */
 class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id already exists")
 
-/**
- * Customer command handler
- */
 class CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, CustomerEvent>(customerEventHandler) {
-  override fun handleCommand(command: CustomerCommand, state: Customer?): FeatureSession<Customer, CustomerEvent> {
+  override fun handle(command: CustomerCommand, state: Customer?): FeatureSession<Customer, CustomerEvent> {
     return when (command) {
       is RegisterCustomer -> {
         if (state != null) throw CustomerAlreadyExists(command.customerId)
@@ -105,12 +81,8 @@ class CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custome
         with(state)
           .execute { it.deactivate(command.reason) }
       }
-      else -> {
-        throw IllegalArgumentException(command::class.java.canonicalName)
-      }
     }
   }
-
 }
 
 val customerComponent = FeatureComponent(

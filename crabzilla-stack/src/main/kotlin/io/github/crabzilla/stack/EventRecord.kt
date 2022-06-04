@@ -27,16 +27,8 @@ data class EventRecord(val metadata: EventMetadata, val payload: JsonObject) {
   }
 
   fun toJsonObject(): JsonObject {
-    return JsonObject()
+    return metadata.toJsonObject()
       .put("eventPayload", payload)
-      .put("stateType", metadata.stateType)
-      .put("stateId", metadata.stateId.toString())
-      .put("eventSequence", metadata.eventSequence)
-      .put("eventId", metadata.eventId.toString())
-      .put("causationId", metadata.causationId.toString())
-      .put("correlationId", metadata.correlationId.toString())
-      .put("version", metadata.version)
-      .put("eventType", metadata.eventType)
   }
 
   fun extract() = Triple(payload, metadata, metadata.stateId)

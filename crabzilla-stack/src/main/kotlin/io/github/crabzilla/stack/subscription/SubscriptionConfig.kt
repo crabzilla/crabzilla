@@ -9,7 +9,7 @@ data class SubscriptionConfig(
   val metricsInterval: Long = DEFAULT_MAX_INTERVAL,
   val stateTypes: List<String> = listOf(),
   val eventTypes: List<String> = listOf(),
-  val eventBusStrategy: EventBusStrategy? = null
+  val sink: SubscriptionSink
 ) {
   companion object {
     private const val DEFAULT_INITIAL_INTERVAL = 15_000L

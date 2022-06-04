@@ -1,18 +1,13 @@
 package io.github.crabzilla.stack.command
 
-import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
-import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.stack.CrabzillaVertxContext
-import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -25,27 +20,15 @@ import java.util.concurrent.atomic.AtomicReference
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Handling Unit Of Work")
-class HandlingUnitOfWorkIT {
-
-  private lateinit var context: CrabzillaVertxContext
-  private lateinit var testRepo: TestRepository
-
-  @BeforeEach
-  fun setup(vertx: Vertx, tc: VertxTestContext) {
-    context = CrabzillaVertxContext.new(vertx, testDbConfig)
-    testRepo = TestRepository(context.pgPool())
-    cleanDatabase(context.pgPool())
-      .onFailure { tc.failNow(it) }
-      .onSuccess { tc.completeNow() }
-  }
+class HandlingUnitOfWorkIT: AbstractCommandIT() {
 
   // https://martinfowler.com/eaaCatalog/unitOfWork.html
 
   @Test
   fun `it can handle 2 commands within more than 1 instances of the same state`(vertx: Vertx, tc: VertxTestContext) {
     val options = CommandServiceOptions(eventBusTopic = "MY_TOPIC")
-    val service = context.commandService(customerComponent, jsonSerDer, options)
-    val latch = CountDownLatch(2)
+    val service = factory.commandService(customerComponent, jsonSerDer, options)
+    val latch = CountDownLatch(4)
     val stateTypeMsg = AtomicReference(mutableListOf<JsonObject>())
     vertx.eventBus().consumer<JsonObject>("MY_TOPIC") { msg ->
       stateTypeMsg.get().add(msg.body())
@@ -74,7 +57,7 @@ class HandlingUnitOfWorkIT {
             .onFailure { tc.failNow(it) }
             .onSuccess { list ->
                 tc.verify {
-                  assertEquals(4, list.size)
+                  assertEquals(6, list.size)
                   tc.completeNow()
                 }
             }

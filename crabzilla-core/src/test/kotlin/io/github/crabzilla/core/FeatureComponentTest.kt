@@ -8,6 +8,6 @@ internal class FeatureComponentTest {
 
   @Test
   fun stateSerialName() {
-    assertEquals(customerComponent.stateClassName(), "Customer")
+    assertEquals(customerComponent.streamName(), "Customer")
   }
 }

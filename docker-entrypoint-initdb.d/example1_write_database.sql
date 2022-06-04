@@ -2,18 +2,11 @@ CREATE DATABASE ex1_crabzilla OWNER user1;
 
 \connect ex1_crabzilla ;
 
-CREATE TABLE commands (
-  state_id UUID NOT NULL,
-  causation_id UUID NOT NULL,
-  cmd_payload JSON NOT NULL
-);
-
--- TODO indices
-
 CREATE TABLE events (
       sequence BIGSERIAL NOT NULL PRIMARY KEY,
       event_type TEXT NOT NULL,
       event_payload JSON NOT NULL,
+      is_private BOOLEAN, -- TODO lgpd, grpd
       state_type text NOT NULL,
       state_id UUID NOT NULL,
       version INTEGER NOT NULL,
@@ -35,6 +28,14 @@ CREATE TABLE subscriptions (
    sequence BIGINT
 );
 
+CREATE TABLE commands (
+  state_id UUID NOT NULL,
+  causation_id UUID NOT NULL,
+  last_causation_id UUID NOT NULL,
+  cmd_payload JSON NOT NULL,
+  private_payload JSON -- TODO LGPD, GPDR
+);
+
 -- application data
 
 INSERT INTO subscriptions (name, sequence) values ('crabzilla.example1.customer.SimpleProjector', 0);
@@ -42,8 +43,7 @@ INSERT INTO subscriptions (name, sequence) values ('crabzilla.example1.customer.
 INSERT INTO subscriptions (name, sequence) values ('crabzilla.example1.customer.CustomProjector', 0);
 
 CREATE TABLE customer_summary (
-    id UUID NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    is_active BOOLEAN NOT NULL,
-    PRIMARY KEY (id)
+    id UUID NOT NULL PRIMARY KEY,
+    name VARCHAR(100),
+    is_active BOOLEAN NOT NULL
 );

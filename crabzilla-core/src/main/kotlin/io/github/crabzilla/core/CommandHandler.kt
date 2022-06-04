@@ -11,5 +11,5 @@ abstract class CommandHandler<S, C, E>(private val applier: EventHandler<S, E>) 
   protected fun with(state: S?): FeatureSession<S, E> {
     return FeatureSession(state!!, applier)
   }
-  abstract fun handleCommand(command: C, state: S?): FeatureSession<S, E>
+  abstract fun handle(command: C, state: S?): FeatureSession<S, E>
 }

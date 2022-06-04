@@ -1,8 +1,9 @@
 package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.example1.customer.CustomerEvent.*
-import io.github.crabzilla.example1.customer.CustomersWriteRepository.updateStatus
-import io.github.crabzilla.example1.customer.CustomersWriteRepository.upsert
+import io.github.crabzilla.example1.customer.CustomersWriteDao.updateName
+import io.github.crabzilla.example1.customer.CustomersWriteDao.updateStatus
+import io.github.crabzilla.example1.customer.CustomersWriteDao.upsert
 import io.github.crabzilla.stack.EventProjector
 import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.Future
@@ -16,7 +17,9 @@ class CustomersEventProjector : EventProjector {
     val (payload, _, id) = record.extract()
     return when (val event = serDer.eventFromJson(payload)) {
       is CustomerRegistered ->
-        upsert(conn, id, event.name, false)
+        upsert(conn, id,false)
+      is CustomerRegisteredPrivate ->
+        updateName(conn, id, event.name)
       is CustomerActivated ->
         updateStatus(conn, id, true)
       is CustomerDeactivated ->

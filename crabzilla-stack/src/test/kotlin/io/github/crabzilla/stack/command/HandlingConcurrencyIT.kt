@@ -1,14 +1,10 @@
 package io.github.crabzilla.stack.command
 
-import io.github.crabzilla.TestRepository
 import io.github.crabzilla.TestsFixtures.jsonSerDer
-import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.customerComponent
-import io.github.crabzilla.stack.CrabzillaVertxContext
 import io.github.crabzilla.stack.EventMetadata
-import io.github.crabzilla.testDbConfig
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -16,7 +12,6 @@ import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.impl.PgPoolOptions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -30,29 +25,17 @@ import java.util.concurrent.TimeUnit
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Handling concurrent commands")
-class HandlingConcurrencyIT {
+class HandlingConcurrencyIT: AbstractCommandIT() {
 
   companion object {
     private val log = LoggerFactory.getLogger(HandlingConcurrencyIT::class.java)
-  }
-
-  private lateinit var context : CrabzillaVertxContext
-  private lateinit var testRepo: TestRepository
-
-  @BeforeEach
-  fun setup(vertx: Vertx, tc: VertxTestContext) {
-    context = CrabzillaVertxContext.new(vertx, testDbConfig)
-    testRepo = TestRepository(context.pgPool())
-    cleanDatabase(context.pgPool())
-      .onFailure { tc.failNow(it) }
-      .onSuccess { tc.completeNow() }
   }
 
   @Test
   fun `when many concurrent commands against same version, just one will succeed`(vertx: Vertx, tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = RegisterCustomer(id, "good customer")
-    val service = context.commandService(customerComponent, jsonSerDer)
+    val service = factory.commandService(customerComponent, jsonSerDer, CommandServiceOptions(persistCommands = false))
     service.handle(id, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -62,7 +45,7 @@ class HandlingConcurrencyIT {
           val cmd2 = ActivateCustomer("whatsoever")
           val callables = mutableSetOf<Callable<Future<EventMetadata>>>()
           for (i: Int in 1..concurrencyLevel) {
-            callables.add(Callable { service.handle(id, cmd2) { currentVersion -> currentVersion == 1 } })
+            callables.add(Callable { service.handle(id, cmd2) { currentVersion -> currentVersion == 2 } })
           }
           val futures = executorService.invokeAll(callables)
           executorService.awaitTermination(3, TimeUnit.SECONDS)
@@ -81,12 +64,7 @@ class HandlingConcurrencyIT {
             promise.fail(it)
           }
           executorService.shutdown()
-        }.compose {
-          service.getCurrentVersion(id)
-        }.onSuccess {version ->
-          tc.verify {
-            assertEquals(2, version)
-          }
+        }.onSuccess {
           tc.completeNow()
         }.onFailure {
           tc.failNow(it)
@@ -100,7 +78,7 @@ class HandlingConcurrencyIT {
     vertx: Vertx, tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = RegisterCustomer(id, "good customer")
-    val service = context.commandService(customerComponent, jsonSerDer)
+    val service = factory.commandService(customerComponent, jsonSerDer, CommandServiceOptions(persistCommands = false))
     service.handle(id, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {

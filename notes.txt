@@ -25,6 +25,7 @@ https://www.youtube.com/watch?v=o51kMltuSuQ
 
 https://www.logicbig.com/tutorials/core-java-tutorial/modules/service-provider-method.html
 https://medium.com/swlh/microservices-on-kubernetes-quarkus-eks-e4fac1efbef5
+https://www.eventstore.com/blog/protecting-sensitive-data-in-event-sourced-systems-with-crypto-shredding-1
 
 * TODO
 

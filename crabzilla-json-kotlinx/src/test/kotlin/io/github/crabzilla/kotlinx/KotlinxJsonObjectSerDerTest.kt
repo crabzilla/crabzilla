@@ -12,7 +12,7 @@ import java.util.*
 
 internal class KotlinxJsonObjectSerDerTest {
 
-  val json = Json { serializersModule = customerModule }
+  private val json = Json { serializersModule = customerModule }
   private val serDer = KotlinxJsonObjectSerDer(json, customerComponent)
 
   @Test
