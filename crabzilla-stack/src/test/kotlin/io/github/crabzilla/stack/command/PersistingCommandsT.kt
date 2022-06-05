@@ -35,7 +35,7 @@ class PersistingCommandsT: AbstractCommandIT() {
           assertThat(events.size).isEqualTo(3)
           val rowAsJson = commands.first()
           assertThat(rowAsJson.getString("causation_id")).isEqualTo(events.first().getString("id"))
-          // assertThat(rowAsJson.getString("causation_id")).isEqualTo(events.first().getString("id"))
+          assertThat(rowAsJson.getString("last_causation_id")).isEqualTo(events.last().getString("id"))
           val cmdAsJsonFroDb = rowAsJson.getJsonObject("cmd_payload")
           assertThat(cmdAsJsonFroDb.getString("type")).isEqualTo("RegisterAndActivateCustomer")
         }
@@ -71,12 +71,12 @@ class PersistingCommandsT: AbstractCommandIT() {
           assertThat(events.size).isEqualTo(4)
           val rowAsJson1 = commands.first()
           assertThat(rowAsJson1.getString("causation_id")).isEqualTo(events.first().getString("id"))
-          // assertThat(rowAsJson1.getString("last_causation_id")).isEqualTo(events.last().getString("id"))
+          assertThat(rowAsJson1.getString("last_causation_id")).isEqualTo(events.last().getString("id"))
           val cmdAsJsonFroDb1 = rowAsJson1.getJsonObject("cmd_payload")
           assertThat(cmdAsJsonFroDb1.getString("type")).isEqualTo("RegisterAndActivateCustomer")
           val rowAsJson2 = commands[1]
           assertThat(rowAsJson2.getString("causation_id")).isEqualTo(events[3].getString("id"))
-          // assertThat(rowAsJson2.getString("last_causation_id")).isEqualTo(events.last().getString("id"))
+          assertThat(rowAsJson2.getString("last_causation_id")).isEqualTo(events.last().getString("id"))
           val cmdAsJsonFroDb2 = rowAsJson2.getJsonObject("cmd_payload")
           assertThat(cmdAsJsonFroDb2.getString("type")).isEqualTo("DeactivateCustomer")
           tc.completeNow()

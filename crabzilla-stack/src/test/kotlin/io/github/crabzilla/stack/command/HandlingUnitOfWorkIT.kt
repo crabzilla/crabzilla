@@ -25,7 +25,7 @@ class HandlingUnitOfWorkIT: AbstractCommandIT() {
   // https://martinfowler.com/eaaCatalog/unitOfWork.html
 
   @Test
-  fun `it can handle 2 commands within more than 1 instances of the same state`(vertx: Vertx, tc: VertxTestContext) {
+  fun `it can handle 2 commands within a transaction`(vertx: Vertx, tc: VertxTestContext) {
     val options = CommandServiceOptions(eventBusTopic = "MY_TOPIC")
     val service = factory.commandService(customerComponent, jsonSerDer, options)
     val latch = CountDownLatch(4)
@@ -66,4 +66,27 @@ class HandlingUnitOfWorkIT: AbstractCommandIT() {
         }
       }
    }
+
+  @Test
+  fun `it can rollback when handling 2 commands within a transaction `(vertx: Vertx, tc: VertxTestContext) {
+    val service = factory.commandService(customerComponent, jsonSerDer)
+    val id = UUID.randomUUID()
+    val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
+    val cmd2 = RegisterAndActivateCustomer(id, "c1", "is needed")
+    service
+      .withinTransaction { tx ->
+        service.handle(tx, id, cmd)
+          .compose { service.handle(tx, id, cmd2) }
+          .onComplete {
+            testRepo.scanEvents(0, 1000)
+              .onFailure { tc.failNow(it) }
+              .onSuccess { list ->
+                tc.verify {
+                  assertEquals(0, list.size)
+                  tc.completeNow()
+                }
+              }
+          }
+        }
+      }
 }

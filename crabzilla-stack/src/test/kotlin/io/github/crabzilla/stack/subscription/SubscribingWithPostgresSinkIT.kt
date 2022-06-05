@@ -5,11 +5,15 @@ import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomersEventProjector
 import io.github.crabzilla.example1.customer.customerComponent
 import io.github.crabzilla.stack.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
+import io.github.crabzilla.stack.EventProjector
+import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.command.CommandServiceOptions
 import io.github.crabzilla.stack.subscription.SubscriptionSink.POSTGRES_PROJECTOR
+import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.sqlclient.SqlConnection
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -93,6 +97,31 @@ internal class SubscribingWithPostgresSinkIT: AbstractSubscriptionIT() {
       }.onSuccess {
         tc.verify {
           assertEquals(1, it)
+          tc.completeNow()
+        }
+      }
+  }
+
+  @Test
+  @Order(3)
+  fun `error scenario`(tc: VertxTestContext, vertx: Vertx) {
+    val service = factory.commandService(customerComponent, jsonSerDer)
+    val config = SubscriptionConfig(subscriptionName, sink = POSTGRES_PROJECTOR)
+    val api = subsFactory.subscription(config, object: EventProjector {
+      override fun project(conn: SqlConnection, eventRecord: EventRecord): Future<Void> {
+        return Future.failedFuture("I am bad")
+      }
+    })
+    api.deploy()
+      .compose { service.handle(id, RegisterCustomer(id, "cust#$id")) }
+      .compose { api.handle() }
+      .compose {
+        context.pgPool().preparedQuery("select * from customer_summary").execute().map { rs -> rs.size() }
+      }.onFailure {
+        tc.failNow(it)
+      }.onSuccess {
+        tc.verify {
+          assertEquals(0, it)
           tc.completeNow()
         }
       }
