@@ -19,8 +19,7 @@ class DefaultSubscriptionApiFactory(private val crabzilla: CrabzillaContext) : S
     val verticle = object : AbstractVerticle() {
       private lateinit var subscription: SubscriptionComponent
       override fun start(promise: Promise<Void>) {
-        subscription = SubscriptionComponent(vertx, crabzilla.pgPool(), crabzilla.pgSubscriber(),
-          config, eventProjector)
+        subscription = SubscriptionComponent(crabzilla, config, eventProjector)
         subscription.start()
           .onSuccess {
             log.info("Subscription [${config.subscriptionName}] started")

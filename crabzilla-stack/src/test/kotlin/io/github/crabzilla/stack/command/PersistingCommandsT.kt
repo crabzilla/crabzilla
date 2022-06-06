@@ -71,7 +71,7 @@ class PersistingCommandsT: AbstractCommandIT() {
           assertThat(events.size).isEqualTo(4)
           val rowAsJson1 = commands.first()
           assertThat(rowAsJson1.getString("causation_id")).isEqualTo(events.first().getString("id"))
-          assertThat(rowAsJson1.getString("last_causation_id")).isEqualTo(events.last().getString("id"))
+          assertThat(rowAsJson1.getString("last_causation_id")).isEqualTo(events[2].getString("id"))
           val cmdAsJsonFroDb1 = rowAsJson1.getJsonObject("cmd_payload")
           assertThat(cmdAsJsonFroDb1.getString("type")).isEqualTo("RegisterAndActivateCustomer")
           val rowAsJson2 = commands[1]

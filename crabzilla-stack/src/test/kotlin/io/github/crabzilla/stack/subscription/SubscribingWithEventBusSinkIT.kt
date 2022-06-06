@@ -41,7 +41,7 @@ internal class SubscribingWithEventBusSinkIT: AbstractSubscriptionIT() {
   fun `it can publish to eventbus using request reply`(tc: VertxTestContext, vertx: Vertx) {
     val config = SubscriptionConfig(subscriptionName, sink = EVENTBUS_REQUEST_REPLY, interval = 10_000)
     val subscriptionApi = subsFactory.subscription(config)
-    val service = DefaultCommandServiceApi(vertx, context.pgPool(), customerComponent, jsonSerDer)
+    val service = DefaultCommandServiceApi(context, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -102,7 +102,7 @@ internal class SubscribingWithEventBusSinkIT: AbstractSubscriptionIT() {
       sink = EVENTBUS_REQUEST_REPLY
     )
     val subscriptionApi = subsFactory.subscription(config)
-    val service = DefaultCommandServiceApi(vertx, context.pgPool(), customerComponent, jsonSerDer)
+    val service = DefaultCommandServiceApi(context, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -157,7 +157,7 @@ internal class SubscribingWithEventBusSinkIT: AbstractSubscriptionIT() {
   fun `it can publish to eventbus using BLOCKING request reply`(tc: VertxTestContext, vertx: Vertx) {
     val config = SubscriptionConfig(subscriptionName, sink = EVENTBUS_REQUEST_REPLY_BLOCKING, interval = 10_000)
     val subscriptionApi = subsFactory.subscription(config)
-    val service = DefaultCommandServiceApi(vertx, context.pgPool(), customerComponent, jsonSerDer)
+    val service = DefaultCommandServiceApi(context, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -212,7 +212,7 @@ internal class SubscribingWithEventBusSinkIT: AbstractSubscriptionIT() {
   fun `it can publish to eventbus`(tc: VertxTestContext, vertx: Vertx) {
     val config = SubscriptionConfig(subscriptionName, sink = EVENTBUS_PUBLISH, interval = 10_000)
     val subscriptionApi = subsFactory.subscription(config)
-    val service = DefaultCommandServiceApi(vertx, context.pgPool(), customerComponent, jsonSerDer)
+    val service = DefaultCommandServiceApi(context, customerComponent, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false

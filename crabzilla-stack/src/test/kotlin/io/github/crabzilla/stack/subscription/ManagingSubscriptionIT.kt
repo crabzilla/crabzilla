@@ -179,7 +179,7 @@ fun `after a command then pause then resume the paused is false and currentOffse
   val config = SubscriptionConfig(subscriptionName, sink = EVENTBUS_PUBLISH)
   val api = subsFactory.subscription(config, CustomersEventProjector())
   val options = CommandServiceOptions()
-  val service = DefaultCommandServiceApi(vertx, context.pgPool(), customerComponent, jsonSerDer, options)
+  val service = DefaultCommandServiceApi(context, customerComponent, jsonSerDer, options)
   api.deploy()
     .compose {
       service.handle(id, RegisterCustomer(id, "cust#$id")) }
