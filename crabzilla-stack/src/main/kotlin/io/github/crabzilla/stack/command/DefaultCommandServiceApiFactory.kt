@@ -10,6 +10,6 @@ class DefaultCommandServiceApiFactory(private val crabzilla: CrabzillaContext) :
     component: FeatureComponent<S, C, E>,
     jsonObjectSerDer: JsonObjectSerDer<S, C, E>,
     options: CommandServiceOptions): CommandServiceApi<C> {
-    return DefaultCommandServiceApi(crabzilla.vertx(), crabzilla.pgPool(), component, jsonObjectSerDer, options)
+    return DefaultCommandServiceApi(crabzilla, component, jsonObjectSerDer, options)
   }
 }

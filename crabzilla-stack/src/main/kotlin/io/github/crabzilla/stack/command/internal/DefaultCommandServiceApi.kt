@@ -3,11 +3,8 @@ package io.github.crabzilla.stack.command.internal
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.FeatureComponent
 import io.github.crabzilla.core.FeatureSession
+import io.github.crabzilla.stack.*
 import io.github.crabzilla.stack.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
-import io.github.crabzilla.stack.EventMetadata
-import io.github.crabzilla.stack.EventProjector
-import io.github.crabzilla.stack.EventRecord
-import io.github.crabzilla.stack.JsonObjectSerDer
 import io.github.crabzilla.stack.command.CommandServiceApi
 import io.github.crabzilla.stack.command.CommandServiceException
 import io.github.crabzilla.stack.command.CommandServiceException.ConcurrencyException
@@ -16,18 +13,15 @@ import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Promise
-import io.vertx.core.Vertx
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.*
 import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.*
 
 internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
-  private val vertx: Vertx,
-  private val pgPool: PgPool,
+  private val crabzillaContext: CrabzillaContext,
   private val featureComponent: FeatureComponent<S, C, E>,
   private val serDer: JsonObjectSerDer<S, C, E>,
   private val options: CommandServiceOptions = CommandServiceOptions(),
@@ -62,13 +56,13 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
   private val commandHandler: CommandHandler<S, C, E> = featureComponent.commandHandlerFactory.invoke()
 
   override fun handle(stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)?): Future<EventMetadata> {
-    return pgPool.withTransaction { conn: SqlConnection ->
+    return crabzillaContext.pgPool().withTransaction { conn: SqlConnection ->
       handle(conn, stateId, command, versionPredicate)
     }
   }
 
   override fun withinTransaction(f: (SqlConnection) -> Future<EventMetadata>): Future<EventMetadata> {
-    return pgPool.withTransaction(f)
+    return crabzillaContext.pgPool().withTransaction(f)
   }
 
   override fun handle(conn: SqlConnection, stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)?)
@@ -229,14 +223,14 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
                 .put("command", cmdAsJson)
                 .put("events", JsonArray(appendedEvents.map { e -> e.toJsonObject() }))
                 .put("timestamp", Instant.now())
-              vertx.eventBus().publish(options.eventBusTopic, message)
+              crabzillaContext.vertx().eventBus().publish(options.eventBusTopic, message)
               log.debug("Published to topic ${options.eventBusTopic} the message ${message.encodePrettily()}")
             }
             succeededFuture(appendedEvents.last().metadata)
           }
       }.onSuccess {
         val query = "NOTIFY $POSTGRES_NOTIFICATION_CHANNEL, '$streamName'"
-        pgPool.preparedQuery(query).execute()
+        crabzillaContext.pgPool().preparedQuery(query).execute()
           .onSuccess { log.debug("Notified postgres: $query") }
         log.debug("Transaction committed")
       }.onFailure {

@@ -1,5 +1,6 @@
 package io.github.crabzilla.stack.subscription.internal
 
+import io.github.crabzilla.stack.CrabzillaContext
 import io.github.crabzilla.stack.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.stack.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.stack.EventProjector
@@ -10,11 +11,8 @@ import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.core.Handler
 import io.vertx.core.Promise
-import io.vertx.core.Vertx
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import io.vertx.pgclient.PgPool
-import io.vertx.pgclient.pubsub.PgSubscriber
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
@@ -24,9 +22,7 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
 internal class SubscriptionComponent(
-  private val vertx: Vertx,
-  private val pgPool: PgPool,
-  private val subscriber: PgSubscriber,
+  private val crabzillaContext: CrabzillaContext,
   private val options: SubscriptionConfig,
   private val eventProjector: EventProjector?,
 ) {
@@ -61,24 +57,24 @@ internal class SubscriptionComponent(
     }
 
     fun startManagementEndpoints() {
-      vertx.eventBus()
+      crabzillaContext.vertx().eventBus()
         .consumer<Nothing>(subscriptionEndpoints.status()) { msg ->
           log.debug("Status: {}", status().encodePrettily())
           msg.reply(status())
         }
-      vertx.eventBus()
+      crabzillaContext.vertx().eventBus()
         .consumer<Nothing>(subscriptionEndpoints.pause()) { msg ->
           log.debug("Status: {}", status().encodePrettily())
           isPaused.set(true)
           msg.reply(status())
         }
-      vertx.eventBus()
+      crabzillaContext.vertx().eventBus()
         .consumer<Nothing>(subscriptionEndpoints.resume()) { msg ->
           log.debug("Status: {}", status().encodePrettily())
           isPaused.set(false)
           msg.reply(status())
         }
-      vertx.eventBus().consumer<Nothing>(subscriptionEndpoints.handle()) { msg ->
+      crabzillaContext.vertx().eventBus().consumer<Nothing>(subscriptionEndpoints.handle()) { msg ->
         log.debug("Will handle")
         action()
           .onFailure { log.error(it.message) }
@@ -91,6 +87,7 @@ internal class SubscriptionComponent(
 
     fun startPgNotificationSubscriber(): Future<Void> {
       val promise = Promise.promise<Void>()
+      val subscriber = crabzillaContext.pgSubscriber()
       subscriber.connect()
         .onSuccess {
           subscriber.channel(POSTGRES_NOTIFICATION_CHANNEL)
@@ -113,7 +110,7 @@ internal class SubscriptionComponent(
         "Will start subscription [{}] using query [{}] in [{}] milliseconds", options.subscriptionName, query,
         options.initialInterval
       )
-      scanner = EventsScanner(pgPool, options.subscriptionName, query)
+      scanner = EventsScanner(crabzillaContext.pgPool(), options.subscriptionName, query)
     }
 
     fun startProjection(): Future<Void> {
@@ -133,9 +130,9 @@ internal class SubscriptionComponent(
           )
           log.info("Subscription [{}] started pooling events with {}", options.subscriptionName, options)
           // Schedule the first execution
-          vertx.setTimer(effectiveInitialInterval, handler())
+          crabzillaContext.vertx().setTimer(effectiveInitialInterval, handler())
           // Schedule the metrics
-          vertx.setPeriodic(options.metricsInterval) {
+          crabzillaContext.vertx().setPeriodic(options.metricsInterval) {
             log.info("Subscription [{}] current offset [{}]", options.subscriptionName, currentOffset)
           }
         }.mapEmpty()
@@ -167,7 +164,7 @@ internal class SubscriptionComponent(
       val array = JsonArray(eventsAsJson)
       log.debug("Will publish {} events", eventsAsJson.size)
       val promise = Promise.promise<Long>()
-      vertx.eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
+      crabzillaContext.vertx().eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
         if (it.failed()) {
           promise.fail(it.cause())
         } else {
@@ -182,8 +179,8 @@ internal class SubscriptionComponent(
       val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
       val array = JsonArray(eventsAsJson)
       log.debug("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
-      return vertx.executeBlocking<Long> { promise ->
-        vertx.eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
+      return crabzillaContext.vertx().executeBlocking<Long> { promise ->
+        crabzillaContext.vertx().eventBus().request<Long>(EVENTBUS_GLOBAL_TOPIC, array) {
           if (it.failed()) {
             promise.fail(it.cause())
           } else {
@@ -217,7 +214,7 @@ internal class SubscriptionComponent(
       greedy.set(false)
       val jitter = ((0..5).random() * 200)
       val nextInterval = min(options.maxInterval, options.interval * backOff.incrementAndGet() + jitter)
-      vertx.setTimer(nextInterval, handler())
+      crabzillaContext.vertx().setTimer(nextInterval, handler())
       log.debug("registerNoNewEvents - Rescheduled to next {} milliseconds", nextInterval)
     }
 
@@ -225,7 +222,7 @@ internal class SubscriptionComponent(
       greedy.set(false)
       val jitter = ((0..5).random() * 200)
       val nextInterval = min(options.maxInterval, (options.interval * failures.incrementAndGet()) + jitter)
-      vertx.setTimer(nextInterval, handler())
+      crabzillaContext.vertx().setTimer(nextInterval, handler())
       log.error("registerFailure - Rescheduled to next {} milliseconds", nextInterval, throwable)
     }
 
@@ -234,12 +231,12 @@ internal class SubscriptionComponent(
       failures.set(0)
       backOff.set(0)
       val nextInterval = if (greedy.get()) GREED_INTERVAL else options.interval
-      vertx.setTimer(nextInterval, handler())
+      crabzillaContext.vertx().setTimer(nextInterval, handler())
       log.debug("registerSuccess - Rescheduled to next {} milliseconds", nextInterval)
     }
 
     fun justReschedule() {
-      vertx.setTimer(options.interval, handler())
+      crabzillaContext.vertx().setTimer(options.interval, handler())
       log.debug("It is busy=$isBusy or paused=$isPaused. Will just reschedule.")
       log.debug("justReschedule - Rescheduled to next {} milliseconds", options.interval)
     }
@@ -251,7 +248,7 @@ internal class SubscriptionComponent(
       )
       return when (options.sink ?: EVENTBUS_REQUEST_REPLY) {
         POSTGRES_PROJECTOR -> {
-          pgPool.withTransaction { conn ->
+          crabzillaContext.pgPool().withTransaction { conn ->
             projectEventsToPostgres(conn, eventsList)
               .compose { updateOffset(conn, eventsList.last().metadata.eventSequence) }
           }
@@ -259,7 +256,7 @@ internal class SubscriptionComponent(
         EVENTBUS_REQUEST_REPLY -> {
           requestEventbus(eventsList)
             .compose { eventSequence ->
-              pgPool.withTransaction { conn ->
+              crabzillaContext.pgPool().withTransaction { conn ->
                 updateOffset(conn, eventSequence)
               }
             }
@@ -267,7 +264,7 @@ internal class SubscriptionComponent(
         EVENTBUS_REQUEST_REPLY_BLOCKING -> {
           requestEventbusBlocking(eventsList)
             .compose { eventSequence ->
-              pgPool.withTransaction { conn ->
+              crabzillaContext.pgPool().withTransaction { conn ->
                 updateOffset(conn, eventSequence)
               }
             }
@@ -276,10 +273,10 @@ internal class SubscriptionComponent(
           val eventsAsJson: List<JsonObject> = eventsList.map { it.toJsonObject() }
           val array = JsonArray(eventsAsJson)
           log.info("Will publish ${eventsAsJson.size}  -> ${array.encodePrettily()}")
-          vertx.eventBus().publish(EVENTBUS_GLOBAL_TOPIC, array)
+          crabzillaContext.vertx().eventBus().publish(EVENTBUS_GLOBAL_TOPIC, array)
           succeededFuture(eventsList.last().metadata.eventSequence)
             .compose { eventSequence ->
-              pgPool.withTransaction { conn ->
+              crabzillaContext.pgPool().withTransaction { conn ->
                 updateOffset(conn, eventSequence)
               }
             }

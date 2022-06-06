@@ -60,8 +60,11 @@ Your commands and events are serialized to `JSON` and stored into `Postgres`
 
 === Subscription
 
-After handling your commands and appending the respective events, you can use any mechanism to publish your events: CDC, pooling WAL or events table, etc. Optionally, you can use Crabzilla subscription. It pulls events table periodically. Events are consumed in strict order using `events.sequence` column. You can specify:
+After handling your commands and appending the respective events, you can use any mechanism to publish your events: CDC, pooling WAL or events table, etc. Optionally, you can use Crabzilla subscription. It pulls events table periodically. Events are consumed in strict order using `events.sequence` column.
 
+** Your subscription can be triggered via https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify] mechanism. It will become in `greedy` state.
+** You can consume your events in plain https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject] objects. You can use `crabzilla-json-jackson` or `crabzilla-json-kotlinx` implementations within your EventProjector implementations.
+** For each subscription, you can specify:
 ** what events to subscribe, filtering by state type (aggregate root) or event type.
 ** a very simple interval policy resulting in an exponential backoff behavior. Crabzilla applies a jitter from 0 up to 1 second.
 ** a sink:
@@ -70,8 +73,6 @@ After handling your commands and appending the respective events, you can use an
 **** using request reply (at least once).
 **** using blocking request reply (at least once).
 **** using publishing (no guaranties).
-* Your subscription can be triggered via https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify] mechanism. It will become in `greedy` state.
-* You can consume your events in plain https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject] objects. You can use `crabzilla-json-jackson` or `crabzilla-json-kotlinx` implementations within your EventProjector implementations.
 
 == Example applications (a work in progress)
 
