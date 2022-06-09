@@ -1,4 +1,4 @@
-package io.github.crabzilla.stack.store
+package io.github.crabzilla.store
 
 import io.github.crabzilla.stack.EventMetadata
 import io.github.crabzilla.stack.EventRecord
