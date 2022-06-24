@@ -3,7 +3,7 @@ package io.github.crabzilla.stack.command
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.example1.customer.customerConfig
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -21,7 +21,7 @@ class PersistingCommandsT: AbstractCommandIT() {
 
   @Test
   fun `it can persist 1 command`(tc: VertxTestContext, vertx: Vertx) {
-    val service = factory.commandService(customerComponent, jsonSerDer)
+    val service = factory.commandService(customerConfig, jsonSerDer)
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     service.handle(id, cmd)
@@ -46,7 +46,7 @@ class PersistingCommandsT: AbstractCommandIT() {
   @Test
   fun `it can persist 2 commands`(tc: VertxTestContext, vertx: Vertx) {
 
-    val service = factory.commandService(customerComponent, jsonSerDer)
+    val service = factory.commandService(customerConfig, jsonSerDer)
 
     val id = UUID.randomUUID()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")

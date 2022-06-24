@@ -3,7 +3,7 @@ package io.github.crabzilla.stack.command
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.stack.EventMetadata
 import io.vertx.core.Future
 import io.vertx.core.Vertx
@@ -35,7 +35,7 @@ class HandlingConcurrencyIT: AbstractCommandIT() {
   fun `when many concurrent commands against same version, just one will succeed`(vertx: Vertx, tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = RegisterCustomer(id, "good customer")
-    val service = factory.commandService(customerComponent, jsonSerDer, CommandServiceOptions(persistCommands = false))
+    val service = factory.commandService(customerConfig, jsonSerDer, CommandServiceOptions(persistCommands = false))
     service.handle(id, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -78,7 +78,7 @@ class HandlingConcurrencyIT: AbstractCommandIT() {
     vertx: Vertx, tc: VertxTestContext) {
     val id = UUID.randomUUID()
     val cmd = RegisterCustomer(id, "good customer")
-    val service = factory.commandService(customerComponent, jsonSerDer, CommandServiceOptions(persistCommands = false))
+    val service = factory.commandService(customerConfig, jsonSerDer, CommandServiceOptions(persistCommands = false))
     service.handle(id, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {

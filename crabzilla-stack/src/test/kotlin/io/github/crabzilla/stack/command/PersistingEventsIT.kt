@@ -4,7 +4,7 @@ import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerJsonObjectSerDer
-import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.example1.customer.customerConfig
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -24,7 +24,7 @@ class PersistingEventsIT: AbstractCommandIT() {
   @Test
   @DisplayName("appending 1 command with 3 events results in version 3 ")
   fun s1(tc: VertxTestContext, vertx: Vertx) {
-    val service = factory.commandService(customerComponent, jsonSerDer)
+    val service = factory.commandService(customerConfig, jsonSerDer)
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     service.handle(id, cmd)
@@ -74,7 +74,7 @@ class PersistingEventsIT: AbstractCommandIT() {
   @DisplayName("appending 2 commands with 3 and 1 event, respectively results in version 4")
   fun s11(tc: VertxTestContext, vertx: Vertx) {
     val jsonSerDer = CustomerJsonObjectSerDer()
-    val service = factory.commandService(customerComponent, jsonSerDer)
+    val service = factory.commandService(customerConfig, jsonSerDer)
     val id = UUID.randomUUID()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
     service.handle(id, cmd1)

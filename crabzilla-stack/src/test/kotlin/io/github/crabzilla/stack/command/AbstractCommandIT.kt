@@ -3,7 +3,7 @@ package io.github.crabzilla.stack.command
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.stack.CrabzillaContext
-import io.github.crabzilla.stack.DefaultVertxContextFactory
+import io.github.crabzilla.stack.DefaultCrabzillaContextFactory
 import io.github.crabzilla.testDbConfig
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxTestContext
@@ -17,7 +17,7 @@ open class AbstractCommandIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    context = DefaultVertxContextFactory().new(vertx, testDbConfig)
+    context = DefaultCrabzillaContextFactory().new(vertx, testDbConfig)
     factory = DefaultCommandServiceApiFactory(context)
     testRepo = TestRepository(context.pgPool())
     cleanDatabase(context.pgPool())

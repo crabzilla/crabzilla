@@ -1,13 +1,13 @@
 package io.github.crabzilla.jackson
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.crabzilla.core.FeatureComponent
 import io.github.crabzilla.stack.JsonObjectSerDer
+import io.github.crabzilla.stack.command.CommandServiceConfig
 import io.vertx.core.json.JsonObject
 
 class JacksonJsonObjectSerDer<S: Any, C: Any, E: Any>(
   private val json: ObjectMapper,
-  private val featureComponent: FeatureComponent<S, C, E>) : JsonObjectSerDer<S, C, E> {
+  private val featureComponent: CommandServiceConfig<S, C, E>) : JsonObjectSerDer<S, C, E> {
   override fun eventFromJson(json: JsonObject): E {
     return this.json.readValue(json.toString(), featureComponent.eventClass.java)
   }

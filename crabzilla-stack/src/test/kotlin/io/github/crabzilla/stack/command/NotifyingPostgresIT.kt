@@ -2,7 +2,7 @@ package io.github.crabzilla.stack.command
 
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.example1.customer.CustomerCommand
-import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.stack.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -27,7 +27,7 @@ class NotifyingPostgresIT: AbstractCommandIT() {
   fun `it can notify Postgres`(vertx: Vertx, tc: VertxTestContext) {
 
     val options = CommandServiceOptions()
-    val service = factory.commandService(customerComponent, jsonSerDer, options)
+    val service = factory.commandService(customerConfig, jsonSerDer, options)
 
     val latch = CountDownLatch(1)
     val stateTypeMsg = AtomicReference<String>()

@@ -7,17 +7,17 @@ import io.vertx.pgclient.PgConnectOptions
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.PoolOptions
 
-class DefaultVertxContextFactory : CrabzillaContextFactory {
+class DefaultCrabzillaContextFactory : CrabzillaContextFactory {
 
   override fun new(vertx: Vertx, pgConfig: JsonObject): CrabzillaContext {
     fun toPgPool(vertx: Vertx, options: PgConnectOptions): PgPool {
       return PgPool.pool(vertx, options, PoolOptions())
     }
-    return DefaultVertxContext(vertx, toPgPool(vertx, toPgConnectionOptions(pgConfig)), pgConfig)
+    return DefaultCrabzillaContext(vertx, toPgPool(vertx, toPgConnectionOptions(pgConfig)), pgConfig)
   }
 
   override fun new(vertx: Vertx, pgConfig: JsonObject, pgPool: PgPool): CrabzillaContext {
-    return DefaultVertxContext(vertx, pgPool, pgConfig)
+    return DefaultCrabzillaContext(vertx, pgPool, pgConfig)
   }
 
 }

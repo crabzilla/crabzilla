@@ -1,11 +1,10 @@
 package io.github.crabzilla.stack.command.internal
 
-import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.FeatureComponent
-import io.github.crabzilla.core.FeatureSession
+import io.github.crabzilla.core.CommandSession
 import io.github.crabzilla.stack.*
 import io.github.crabzilla.stack.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.stack.command.CommandServiceApi
+import io.github.crabzilla.stack.command.CommandServiceConfig
 import io.github.crabzilla.stack.command.CommandServiceException
 import io.github.crabzilla.stack.command.CommandServiceException.ConcurrencyException
 import io.github.crabzilla.stack.command.CommandServiceOptions
@@ -22,7 +21,7 @@ import java.util.*
 
 internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
   private val crabzillaContext: CrabzillaContext,
-  private val featureComponent: FeatureComponent<S, C, E>,
+  private val commandServiceConfig: CommandServiceConfig<S, C, E>,
   private val serDer: JsonObjectSerDer<S, C, E>,
   private val options: CommandServiceOptions = CommandServiceOptions(),
 ) : CommandServiceApi<C> {
@@ -51,9 +50,8 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
     const val eventIdIndex = 7
   }
 
-  private val streamName = featureComponent.streamName()
+  private val streamName = commandServiceConfig.stateClass.simpleName!!
   private val log = LoggerFactory.getLogger("${DefaultCommandServiceApi::class.java.simpleName}-$streamName")
-  private val commandHandler: CommandHandler<S, C, E> = featureComponent.commandHandlerFactory.invoke()
 
   override fun handle(stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)?): Future<EventMetadata> {
     return crabzillaContext.pgPool().withTransaction { conn: SqlConnection ->
@@ -66,17 +64,7 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
   }
 
   override fun handle(conn: SqlConnection, stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)?)
-  : Future<EventMetadata> {
-
-    fun validate(command: C): Future<Void> {
-      if (featureComponent.commandValidator != null) {
-        val errors = featureComponent.commandValidator!!.validate(command)
-        if (errors.isNotEmpty()) {
-          return failedFuture(CommandServiceException.ValidationException(errors))
-        }
-      }
-      return succeededFuture()
-    }
+    : Future<EventMetadata> {
 
     fun lock(conn: SqlConnection): Future<Void> {
       return conn
@@ -110,7 +98,7 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
         } else {
           causationIds[index] = eventIds[(index - 1)]
         }
-        Tuple.of(type, causationIds[index], correlationIds[index], featureComponent.streamName(),
+        Tuple.of(type, causationIds[index], correlationIds[index], streamName,
           stateId, eventAsJsonObject, ++resultingVersion, eventId
         )
       }
@@ -126,7 +114,7 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
             val eventId = tuples[index].getUUID(eventIdIndex)
             val eventPayload = tuples[index].getJsonObject(eventPayloadIndex)
             val eventMetadata = EventMetadata(
-              stateType = featureComponent.streamName(), stateId = stateId, eventId = eventId,
+              stateType = streamName, stateId = stateId, eventId = eventId,
               correlationId = correlationId, causationId = eventId, eventSequence = sequence, version = currentVersion,
               tuples[index].getString(0)
             )
@@ -139,7 +127,7 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
     }
 
     fun projectEvents(conn: SqlConnection, appendedEvents: List<EventRecord>, subscription: EventProjector)
-            : Future<Void> {
+      : Future<Void> {
       log.debug("Will project {} events", appendedEvents.size)
       val initialFuture = succeededFuture<Void>()
       return appendedEvents.fold(
@@ -158,76 +146,72 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
       return conn.preparedQuery(SQL_APPEND_CMD).execute(params).mapEmpty()
     }
 
-    return validate(command)
+    return lock(conn)
       .compose {
-        log.debug("Command validated")
-        lock(conn)
-          .compose {
-            log.debug("State locked {}", stateId.hashCode())
-            getSnapshot(conn, stateId)
-          }.compose { snapshot: Snapshot<S>? ->
-            if (snapshot == null) {
-              succeededFuture(null)
-            } else {
-              succeededFuture(snapshot)
-            }
-          }.compose { snapshot: Snapshot<S>? ->
-            log.debug("Got snapshot {}", snapshot)
-            if (versionPredicate != null && !versionPredicate.invoke(snapshot?.version?:0)) {
-              val error = "Current version ${snapshot?.version?:0} is invalid"
-              failedFuture(ConcurrencyException(error))
-            } else {
-              try {
-                val session = commandHandler.handle(command, snapshot?.state)
-                succeededFuture(Pair(snapshot, session))
-              } catch (e: Exception) {
-                val error = CommandServiceException.BusinessException(e.message ?: "Unknown")
-                failedFuture(error)
-              }
-            }
-          }.compose { pair ->
-            val (snapshot: Snapshot<S>?, session: FeatureSession<S, E>) = pair
-            log.debug("Command handled")
-            appendEvents(conn, snapshot, session.appliedEvents())
-              .map { Triple(snapshot, session, it) }
-          }.compose { triple ->
-            val (_, _, appendedEvents) = triple
-            log.debug("Events appended {}", appendedEvents)
-            if (options.eventProjector != null) {
-              projectEvents(conn, appendedEvents, options.eventProjector)
-                .onSuccess {
-                  log.debug("Events projected")
-                }.map { triple }
-            } else {
-              log.debug("EventProjector is null, skipping projecting events")
-              succeededFuture(triple)
-            }
-          }.compose {
-            val (_, _, appendedEvents) = it
-            val cmdAsJson = serDer.commandToJson(command)
-            if (options.persistCommands) {
-              appendCommand(conn, cmdAsJson, stateId,
-                appendedEvents.first().metadata.causationId,
-                appendedEvents.last().metadata.causationId)
-                .map { Pair(appendedEvents, cmdAsJson) }
-            } else {
-              succeededFuture(Pair(appendedEvents, cmdAsJson))
-            }
-          }.compose {
-            log.debug("Command was appended")
-            val (appendedEvents, cmdAsJson) = it
-            if (options.eventBusTopic != null) {
-              val message = JsonObject()
-                .put("stateType", streamName)
-                .put("stateId", stateId.toString())
-                .put("command", cmdAsJson)
-                .put("events", JsonArray(appendedEvents.map { e -> e.toJsonObject() }))
-                .put("timestamp", Instant.now())
-              crabzillaContext.vertx().eventBus().publish(options.eventBusTopic, message)
-              log.debug("Published to topic ${options.eventBusTopic} the message ${message.encodePrettily()}")
-            }
-            succeededFuture(appendedEvents.last().metadata)
+        log.debug("State locked {}", stateId.hashCode())
+        getSnapshot(conn, stateId)
+      }.compose { snapshot: Snapshot<S>? ->
+        if (snapshot == null) {
+          succeededFuture(null)
+        } else {
+          succeededFuture(snapshot)
+        }
+      }.compose { snapshot: Snapshot<S>? ->
+        log.debug("Got snapshot {}", snapshot)
+        if (versionPredicate != null && !versionPredicate.invoke(snapshot?.version ?: 0)) {
+          val error = "Current version ${snapshot?.version ?: 0} is invalid"
+          failedFuture(ConcurrencyException(error))
+        } else {
+          try {
+            val session = commandServiceConfig.commandHandler.handle(command, snapshot?.state)
+            succeededFuture(Pair(snapshot, session))
+          } catch (e: Exception) {
+            val error = CommandServiceException.BusinessException(e.message ?: "Unknown")
+            failedFuture(error)
           }
+        }
+      }.compose { pair ->
+        val (snapshot: Snapshot<S>?, session: CommandSession<S, E>) = pair
+        log.debug("Command handled")
+        appendEvents(conn, snapshot, session.appliedEvents())
+          .map { Triple(snapshot, session, it) }
+      }.compose { triple ->
+        val (_, _, appendedEvents) = triple
+        log.debug("Events appended {}", appendedEvents)
+        if (options.eventProjector != null) {
+          projectEvents(conn, appendedEvents, options.eventProjector)
+            .onSuccess {
+              log.debug("Events projected")
+            }.map { triple }
+        } else {
+          log.debug("EventProjector is null, skipping projecting events")
+          succeededFuture(triple)
+        }
+      }.compose {
+        val (_, _, appendedEvents) = it
+        val cmdAsJson = serDer.commandToJson(command)
+        if (options.persistCommands) {
+          appendCommand(conn, cmdAsJson, stateId,
+            appendedEvents.first().metadata.causationId,
+            appendedEvents.last().metadata.causationId)
+            .map { Pair(appendedEvents, cmdAsJson) }
+        } else {
+          succeededFuture(Pair(appendedEvents, cmdAsJson))
+        }
+      }.compose {
+        log.debug("Command was appended")
+        val (appendedEvents, cmdAsJson) = it
+        if (options.eventBusTopic != null) {
+          val message = JsonObject()
+            .put("stateType", streamName)
+            .put("stateId", stateId.toString())
+            .put("command", cmdAsJson)
+            .put("events", JsonArray(appendedEvents.map { e -> e.toJsonObject() }))
+            .put("timestamp", Instant.now())
+          crabzillaContext.vertx().eventBus().publish(options.eventBusTopic, message)
+          log.debug("Published to topic ${options.eventBusTopic} the message ${message.encodePrettily()}")
+        }
+        succeededFuture(appendedEvents.last().metadata)
       }.onSuccess {
         val query = "NOTIFY $POSTGRES_NOTIFICATION_CHANNEL, '$streamName'"
         crabzillaContext.pgPool().preparedQuery(query).execute()
@@ -257,7 +241,7 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
           lastCorrelationId = row.getUUID("correlation_id")
           log.debug("Found event version {}, causationId {}, correlationId {}",
             latestVersion, lastCausationId, lastCorrelationId)
-          state = featureComponent.eventHandler
+          state = commandServiceConfig.eventHandler
             .handle(state, serDer.eventFromJson(JsonObject(row.getValue("event_payload").toString())))
           log.debug("State {}", state)
         }

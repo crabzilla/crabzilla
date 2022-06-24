@@ -5,11 +5,11 @@ package io.github.crabzilla.core
  */
 abstract class CommandHandler<S, C, E>(private val applier: EventHandler<S, E>) {
 
-  protected fun withNew(events: List<E>): FeatureSession<S, E> {
-    return FeatureSession(events, applier)
+  protected fun withNew(events: List<E>): CommandSession<S, E> {
+    return CommandSession(events, applier)
   }
-  protected fun with(state: S?): FeatureSession<S, E> {
-    return FeatureSession(state!!, applier)
+  protected fun with(state: S?): CommandSession<S, E> {
+    return CommandSession(state!!, applier)
   }
-  abstract fun handle(command: C, state: S?): FeatureSession<S, E>
+  abstract fun handle(command: C, state: S?): CommandSession<S, E>
 }

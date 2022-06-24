@@ -2,7 +2,7 @@ package io.github.crabzilla.kotlinx
 
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.example1.customer.customerModule
 import io.vertx.core.json.JsonObject
 import kotlinx.serialization.json.Json
@@ -13,7 +13,7 @@ import java.util.*
 internal class KotlinxJsonObjectSerDerTest {
 
   private val json = Json { serializersModule = customerModule }
-  private val serDer = KotlinxJsonObjectSerDer(json, customerComponent)
+  private val serDer = KotlinxJsonObjectSerDer(json, customerConfig)
 
   @Test
   fun eventFromJson() {

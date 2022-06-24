@@ -3,9 +3,12 @@ package io.github.crabzilla.example1.customer
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import io.github.crabzilla.core.*
+import io.github.crabzilla.core.CommandHandler
+import io.github.crabzilla.core.CommandSession
+import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.example1.customer.CustomerCommand.*
 import io.github.crabzilla.example1.customer.CustomerEvent.*
+import io.github.crabzilla.stack.command.CommandServiceConfig
 import java.util.*
 
 /**
@@ -75,18 +78,6 @@ data class Customer(
 }
 
 /**
- * A command validator. You could use https://github.com/konform-kt/konform
- */
-val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
-  when (command) {
-    is RegisterCustomer -> if (command.name == "bad customer") listOf("Bad customer!") else listOf()
-    is RegisterAndActivateCustomer -> listOf()
-    is ActivateCustomer -> listOf()
-    is DeactivateCustomer -> listOf()
-  }
-}
-
-/**
  * This function will apply an event to customer state
  */
 val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event ->
@@ -111,7 +102,7 @@ class CustomerCommandHandler :
   override fun handle(
     command: CustomerCommand,
     state: Customer?
-  ): FeatureSession<Customer, CustomerEvent> {
+  ): CommandSession<Customer, CustomerEvent> {
 
     return when (command) {
 
@@ -141,11 +132,10 @@ class CustomerCommandHandler :
   }
 }
 
-val customerComponent = FeatureComponent(
+val customerComponent = CommandServiceConfig(
   Customer::class,
   CustomerCommand::class,
   CustomerEvent::class,
   customerEventHandler,
-  { CustomerCommandHandler() },
-  customerCmdValidator
+  CustomerCommandHandler()
 )

@@ -2,7 +2,7 @@ package io.github.crabzilla.stack.subscription
 
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.example1.customer.CustomerCommand
-import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.stack.CrabzillaContext.Companion.EVENTBUS_GLOBAL_TOPIC
 import io.github.crabzilla.stack.command.internal.DefaultCommandServiceApi
 import io.github.crabzilla.stack.subscription.SubscriptionSink.*
@@ -41,7 +41,7 @@ internal class SubscribingWithEventBusSinkIT: AbstractSubscriptionIT() {
   fun `it can publish to eventbus using request reply`(tc: VertxTestContext, vertx: Vertx) {
     val config = SubscriptionConfig(subscriptionName, sink = EVENTBUS_REQUEST_REPLY, interval = 10_000)
     val subscriptionApi = subsFactory.subscription(config)
-    val service = DefaultCommandServiceApi(context, customerComponent, jsonSerDer)
+    val service = DefaultCommandServiceApi(context, customerConfig, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -102,7 +102,7 @@ internal class SubscribingWithEventBusSinkIT: AbstractSubscriptionIT() {
       sink = EVENTBUS_REQUEST_REPLY
     )
     val subscriptionApi = subsFactory.subscription(config)
-    val service = DefaultCommandServiceApi(context, customerComponent, jsonSerDer)
+    val service = DefaultCommandServiceApi(context, customerConfig, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -157,7 +157,7 @@ internal class SubscribingWithEventBusSinkIT: AbstractSubscriptionIT() {
   fun `it can publish to eventbus using BLOCKING request reply`(tc: VertxTestContext, vertx: Vertx) {
     val config = SubscriptionConfig(subscriptionName, sink = EVENTBUS_REQUEST_REPLY_BLOCKING, interval = 10_000)
     val subscriptionApi = subsFactory.subscription(config)
-    val service = DefaultCommandServiceApi(context, customerComponent, jsonSerDer)
+    val service = DefaultCommandServiceApi(context, customerConfig, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false
@@ -212,7 +212,7 @@ internal class SubscribingWithEventBusSinkIT: AbstractSubscriptionIT() {
   fun `it can publish to eventbus`(tc: VertxTestContext, vertx: Vertx) {
     val config = SubscriptionConfig(subscriptionName, sink = EVENTBUS_PUBLISH, interval = 10_000)
     val subscriptionApi = subsFactory.subscription(config)
-    val service = DefaultCommandServiceApi(context, customerComponent, jsonSerDer)
+    val service = DefaultCommandServiceApi(context, customerConfig, jsonSerDer)
     val latch = CountDownLatch(1)
     val message = AtomicReference<JsonArray>()
     var firstMessage = false

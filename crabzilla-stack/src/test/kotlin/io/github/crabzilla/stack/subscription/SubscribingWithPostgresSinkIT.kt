@@ -3,7 +3,7 @@ package io.github.crabzilla.stack.subscription
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomersEventProjector
-import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.stack.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.stack.EventProjector
 import io.github.crabzilla.stack.EventRecord
@@ -45,7 +45,7 @@ internal class SubscribingWithPostgresSinkIT: AbstractSubscriptionIT() {
   fun `it can project to postgres within an interval`(tc: VertxTestContext, vertx: Vertx) {
     val api = subsFactory.subscription(config, CustomersEventProjector())
     val options = CommandServiceOptions()
-    val service = factory.commandService(customerComponent, jsonSerDer, options)
+    val service = factory.commandService(customerConfig, jsonSerDer, options)
     val latch = CountDownLatch(1)
     val stateTypeMsg = AtomicReference<String>()
     val pgSubscriber = context.pgSubscriber()
@@ -84,7 +84,7 @@ internal class SubscribingWithPostgresSinkIT: AbstractSubscriptionIT() {
   @Test
   @Order(2)
   fun `it can project to postgres when explicit calling it`(tc: VertxTestContext, vertx: Vertx) {
-    val service = factory.commandService(customerComponent, jsonSerDer)
+    val service = factory.commandService(customerConfig, jsonSerDer)
     val config = SubscriptionConfig(subscriptionName, sink = POSTGRES_PROJECTOR)
     val api = subsFactory.subscription(config, CustomersEventProjector())
     api.deploy()
@@ -105,7 +105,7 @@ internal class SubscribingWithPostgresSinkIT: AbstractSubscriptionIT() {
   @Test
   @Order(3)
   fun `error scenario`(tc: VertxTestContext, vertx: Vertx) {
-    val service = factory.commandService(customerComponent, jsonSerDer)
+    val service = factory.commandService(customerConfig, jsonSerDer)
     val config = SubscriptionConfig(subscriptionName, sink = POSTGRES_PROJECTOR)
     val api = subsFactory.subscription(config, object: EventProjector {
       override fun project(conn: SqlConnection, eventRecord: EventRecord): Future<Void> {

@@ -2,7 +2,7 @@ package io.github.crabzilla.stack.command
 
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.example1.customer.customerConfig
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -27,7 +27,7 @@ class HandlingUnitOfWorkIT: AbstractCommandIT() {
   @Test
   fun `it can handle 2 commands within a transaction`(vertx: Vertx, tc: VertxTestContext) {
     val options = CommandServiceOptions(eventBusTopic = "MY_TOPIC")
-    val service = factory.commandService(customerComponent, jsonSerDer, options)
+    val service = factory.commandService(customerConfig, jsonSerDer, options)
     val latch = CountDownLatch(4)
     val stateTypeMsg = AtomicReference(mutableListOf<JsonObject>())
     vertx.eventBus().consumer<JsonObject>("MY_TOPIC") { msg ->
@@ -69,7 +69,7 @@ class HandlingUnitOfWorkIT: AbstractCommandIT() {
 
   @Test
   fun `it can rollback when handling 2 commands within a transaction `(vertx: Vertx, tc: VertxTestContext) {
-    val service = factory.commandService(customerComponent, jsonSerDer)
+    val service = factory.commandService(customerConfig, jsonSerDer)
     val id = UUID.randomUUID()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     val cmd2 = RegisterAndActivateCustomer(id, "c1", "is needed")

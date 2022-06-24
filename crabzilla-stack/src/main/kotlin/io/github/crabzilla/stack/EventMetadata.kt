@@ -12,6 +12,7 @@ data class EventMetadata(
   val eventSequence: Long,
   val version: Int,
   val eventType: String
+  // TODO app metadata
 ) {
   fun toJsonObject(): JsonObject {
     return JsonObject()

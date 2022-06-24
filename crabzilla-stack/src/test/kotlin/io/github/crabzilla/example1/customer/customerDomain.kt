@@ -1,6 +1,8 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.*
+import io.github.crabzilla.core.CommandHandler
+import io.github.crabzilla.core.CommandSession
+import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.example1.customer.CustomerCommand.*
 import io.github.crabzilla.example1.customer.CustomerEvent.*
 import java.util.*
@@ -40,13 +42,6 @@ data class Customer(val id: UUID, val name: String? = null, val isActive: Boolea
   }
 }
 
-val customerCmdValidator = CommandValidator<CustomerCommand> { command ->
-  when (command) {
-    is RegisterCustomer -> if (command.name == "bad customer") listOf("Bad customer!") else listOf()
-    else -> listOf()
-  }
-}
-
 val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event ->
   when (event) {
     is CustomerRegistered -> Customer.fromEvent(event)
@@ -59,7 +54,7 @@ val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event 
 class CustomerAlreadyExists(val id: UUID) : IllegalStateException("Customer $id already exists")
 
 class CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, CustomerEvent>(customerEventHandler) {
-  override fun handle(command: CustomerCommand, state: Customer?): FeatureSession<Customer, CustomerEvent> {
+  override fun handle(command: CustomerCommand, state: Customer?): CommandSession<Customer, CustomerEvent> {
     return when (command) {
       is RegisterCustomer -> {
         if (state != null) throw CustomerAlreadyExists(command.customerId)
@@ -83,12 +78,3 @@ class CustomerCommandHandler : CommandHandler<Customer, CustomerCommand, Custome
     }
   }
 }
-
-val customerComponent = FeatureComponent(
-  Customer::class,
-  CustomerCommand::class,
-  CustomerEvent::class,
-  customerEventHandler,
-  { CustomerCommandHandler() },
-  customerCmdValidator
-)

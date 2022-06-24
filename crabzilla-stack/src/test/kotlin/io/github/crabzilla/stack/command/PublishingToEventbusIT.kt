@@ -2,7 +2,7 @@ package io.github.crabzilla.stack.command
 
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.example1.customer.customerConfig
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -25,7 +25,7 @@ class PublishingToEventbusIT: AbstractCommandIT() {
   @Test
   fun `it can publish to eventbus`(vertx: Vertx, tc: VertxTestContext) {
     val options = CommandServiceOptions(eventBusTopic = "MY_TOPIC")
-    val service = factory.commandService(customerComponent, jsonSerDer, options)
+    val service = factory.commandService(customerConfig, jsonSerDer, options)
 
     val jsonMessage = AtomicReference<JsonObject>()
     val latch = CountDownLatch(3)

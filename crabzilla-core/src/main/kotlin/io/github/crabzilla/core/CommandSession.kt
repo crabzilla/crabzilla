@@ -3,7 +3,7 @@ package io.github.crabzilla.core
 /**
  * To apply and track events against state
  */
-class FeatureSession<S, E> {
+class CommandSession<S, E> {
   private val originalState: S
   private val eventHandler: EventHandler<S, E>
   private val appliedEvents = mutableListOf<E>()
@@ -29,14 +29,14 @@ class FeatureSession<S, E> {
     return appliedEvents
   }
 
-  fun apply(events: List<E>): FeatureSession<S, E> {
+  fun apply(events: List<E>): CommandSession<S, E> {
     events.forEach { domainEvent ->
       apply(domainEvent)
     }
     return this
   }
 
-  fun apply(vararg event: E): FeatureSession<S, E> {
+  fun apply(vararg event: E): CommandSession<S, E> {
     event.forEach {
       currentState = eventHandler.handle(currentState, it)
       appliedEvents.add(it)
@@ -44,7 +44,7 @@ class FeatureSession<S, E> {
     return this
   }
 
-  inline fun execute(fn: (S) -> List<E>): FeatureSession<S, E> {
+  inline fun execute(fn: (S) -> List<E>): CommandSession<S, E> {
     val newEvents = fn.invoke(currentState)
     return apply(newEvents)
   }

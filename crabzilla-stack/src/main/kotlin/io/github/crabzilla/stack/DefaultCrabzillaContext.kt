@@ -6,7 +6,7 @@ import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
 import io.vertx.pgclient.pubsub.PgSubscriber
 
-class DefaultVertxContext(
+class DefaultCrabzillaContext(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val pgConfig: JsonObject) : CrabzillaContext {

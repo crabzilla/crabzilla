@@ -3,7 +3,7 @@ package io.github.crabzilla.stack.subscription
 import io.github.crabzilla.TestsFixtures.jsonSerDer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomersEventProjector
-import io.github.crabzilla.example1.customer.customerComponent
+import io.github.crabzilla.example1.customer.customerConfig
 import io.github.crabzilla.stack.command.CommandServiceOptions
 import io.github.crabzilla.stack.command.internal.DefaultCommandServiceApi
 import io.github.crabzilla.stack.subscription.SubscriptionSink.EVENTBUS_PUBLISH
@@ -59,7 +59,7 @@ class ManagingSubscriptionIT : AbstractSubscriptionIT() {
     val config = SubscriptionConfig(subscriptionName, sink = EVENTBUS_PUBLISH)
     val api = subsFactory.subscription(config, CustomersEventProjector())
     val options = CommandServiceOptions()
-    val service = factory.commandService(customerComponent, jsonSerDer, options)
+    val service = factory.commandService(customerConfig, jsonSerDer, options)
     api.deploy()
       .compose { api.pause() }
       .compose {
@@ -87,7 +87,7 @@ class ManagingSubscriptionIT : AbstractSubscriptionIT() {
     val config = SubscriptionConfig(subscriptionName, sink = EVENTBUS_PUBLISH)
     val api = subsFactory.subscription(config, CustomersEventProjector())
     val options = CommandServiceOptions()
-    val service = factory.commandService(customerComponent, jsonSerDer, options)
+    val service = factory.commandService(customerConfig, jsonSerDer, options)
     api.deploy()
       .compose {
         service.handle(id, RegisterCustomer(id, "cust#$id"))
@@ -116,7 +116,7 @@ class ManagingSubscriptionIT : AbstractSubscriptionIT() {
     val config = SubscriptionConfig(subscriptionName, sink = POSTGRES_PROJECTOR)
     val api = subsFactory.subscription(config, CustomersEventProjector())
     val options = CommandServiceOptions()
-    val service = factory.commandService(customerComponent, jsonSerDer, options)
+    val service = factory.commandService(customerConfig, jsonSerDer, options)
     api.deploy()
       .compose {
         service.handle(id, RegisterCustomer(id, "cust#$id"))
@@ -144,7 +144,7 @@ fun `after a command then pause then work the paused is true and currentOffset i
   val config = SubscriptionConfig(subscriptionName, sink = EVENTBUS_PUBLISH)
   val api = subsFactory.subscription(config, CustomersEventProjector())
   val options = CommandServiceOptions()
-  val service = factory.commandService(customerComponent, jsonSerDer, options)
+  val service = factory.commandService(customerConfig, jsonSerDer, options)
   api.deploy()
     .compose {  service.handle(id, RegisterCustomer(id, "cust#$id")) }
     .compose {
@@ -179,7 +179,7 @@ fun `after a command then pause then resume the paused is false and currentOffse
   val config = SubscriptionConfig(subscriptionName, sink = EVENTBUS_PUBLISH)
   val api = subsFactory.subscription(config, CustomersEventProjector())
   val options = CommandServiceOptions()
-  val service = DefaultCommandServiceApi(context, customerComponent, jsonSerDer, options)
+  val service = DefaultCommandServiceApi(context, customerConfig, jsonSerDer, options)
   api.deploy()
     .compose {
       service.handle(id, RegisterCustomer(id, "cust#$id")) }

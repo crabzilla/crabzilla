@@ -3,7 +3,7 @@ package io.github.crabzilla.stack.subscription
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.cleanDatabase
 import io.github.crabzilla.stack.CrabzillaContext
-import io.github.crabzilla.stack.DefaultVertxContextFactory
+import io.github.crabzilla.stack.DefaultCrabzillaContextFactory
 import io.github.crabzilla.stack.command.CommandServiceApiFactory
 import io.github.crabzilla.stack.command.DefaultCommandServiceApiFactory
 import io.github.crabzilla.testDbConfig
@@ -21,7 +21,7 @@ abstract class AbstractSubscriptionIT {
 
   @BeforeEach
   fun setup(vertx: Vertx, tc: VertxTestContext) {
-    context = DefaultVertxContextFactory().new(vertx, testDbConfig)
+    context = DefaultCrabzillaContextFactory().new(vertx, testDbConfig)
     factory = DefaultCommandServiceApiFactory(context)
     subsFactory = DefaultSubscriptionApiFactory(context)
     testRepo = TestRepository(context.pgPool())

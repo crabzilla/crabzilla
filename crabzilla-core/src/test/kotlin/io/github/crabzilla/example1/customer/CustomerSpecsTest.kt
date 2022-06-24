@@ -1,6 +1,6 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.FeatureSpecification
+import io.github.crabzilla.core.CommandTestSpecification
 import io.github.crabzilla.example1.customer.CustomerCommand.*
 import io.github.crabzilla.example1.customer.CustomerEvent.*
 import org.assertj.core.api.Assertions.assertThat
@@ -15,7 +15,7 @@ internal class CustomerSpecsTest {
 
   @Test
   fun `given a new customer after a command`() {
-    FeatureSpecification(customerComponent)
+    CommandTestSpecification(CustomerCommandHandler(), customerEventHandler)
       .whenCommand(RegisterCustomer(id, "c1"))
       .then {
         assertThat(it.state())
@@ -28,7 +28,7 @@ internal class CustomerSpecsTest {
 
   @Test
   fun `given a registered customer given events`() {
-    val spec = FeatureSpecification(customerComponent)
+    val spec = CommandTestSpecification(CustomerCommandHandler(), customerEventHandler)
       .givenEvents(CustomerRegistered(id, "c1"))
       .whenCommand(ActivateCustomer("bcoz yes"))
       .then {
