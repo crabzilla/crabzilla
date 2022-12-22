@@ -103,14 +103,8 @@ val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event 
 
 class CustomerAlreadyExists(id: UUID) : IllegalStateException("Customer $id already exists")
 
-class IllegalStateTransition(state: String, command: String) : IllegalStateException("State $state -> $command")
-
 class CustomerCommandHandler
   : CommandHandler<Customer, CustomerCommand, CustomerEvent>(applier = customerEventHandler) {
-
-  private fun buildException(state: Customer, command: CustomerCommand): IllegalStateTransition {
-    return IllegalStateTransition(state::class.java.name, command::class.java.name)
-  }
 
   override fun handle(command: CustomerCommand, state: Customer): CommandSession<Customer, CustomerEvent> {
     return when (command) {

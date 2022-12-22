@@ -11,7 +11,7 @@ import java.util.*
 @DisplayName("Customer scenarios")
 internal class CustomerSpecsTest {
 
-  val id: UUID = UUID.randomUUID()
+  val id: String = UUID.randomUUID().toString()
 
   @Test
   fun `after a RegisterCustomer command, the state and events match`() {

@@ -62,7 +62,7 @@ internal class CommandSessionTest {
     @DisplayName("when adding a create customer event")
     internal inner class WhenAddingNewEvent {
 
-      val id = UUID.randomUUID()
+      val id = UUID.randomUUID().toString()
       private val customerCreated = CustomerRegistered(id, "customer-1")
       private val expectedCustomer = Customer.Inactive(id, "customer-1")
 
@@ -122,7 +122,7 @@ internal class CommandSessionTest {
   internal inner class WhenAddingCreateActivateEvent {
 
     private val isOk = "is ok"
-    private val id: UUID = UUID.randomUUID()
+    private val id: String = UUID.randomUUID().toString()
     private val customerCreated = CustomerRegistered(id, "customer-1")
     private val customerActivated = CustomerActivated(isOk)
     private val expectedCustomer = Customer.Active(id, "customer-1", isOk)

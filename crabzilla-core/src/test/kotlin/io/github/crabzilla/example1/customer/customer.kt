@@ -5,22 +5,21 @@ import io.github.crabzilla.core.CommandSession
 import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.example1.customer.CustomerCommand.*
 import io.github.crabzilla.example1.customer.CustomerEvent.*
-import java.util.*
 
 // https://event-driven.io/en/writing_and_testing_business_logic_in_fsharp/
 
 sealed interface CustomerEvent {
-  data class CustomerRegistered(val id: UUID, val name: String) : CustomerEvent
+  data class CustomerRegistered(val id: String, val name: String) : CustomerEvent
   data class CustomerActivated(val reason: String) : CustomerEvent
   data class CustomerDeactivated(val reason: String) : CustomerEvent
 }
 
 sealed interface CustomerCommand {
-  data class RegisterCustomer(val customerId: UUID, val name: String) : CustomerCommand
+  data class RegisterCustomer(val customerId: String, val name: String) : CustomerCommand
   data class ActivateCustomer(val reason: String) : CustomerCommand
   data class DeactivateCustomer(val reason: String) : CustomerCommand
   data class RegisterAndActivateCustomer(
-    val customerId: UUID,
+    val customerId: String,
     val name: String,
     val reason: String
   ) : CustomerCommand
@@ -28,14 +27,14 @@ sealed interface CustomerCommand {
 
 sealed class Customer {
   object Initial: Customer() {
-    fun create(id: UUID, name: String): List<CustomerEvent> {
+    fun create(id: String, name: String): List<CustomerEvent> {
       return listOf(CustomerRegistered(id = id, name = name))
     }
-    fun createAndActivate(id: UUID, name: String, reason: String): List<CustomerEvent> {
+    fun createAndActivate(id: String, name: String, reason: String): List<CustomerEvent> {
       return listOf(CustomerRegistered(id = id, name = name), CustomerActivated(reason = reason))
     }
   }
-  data class Active(val id: UUID, val name: String, val reason: String): Customer() {
+  data class Active(val id: String, val name: String, val reason: String): Customer() {
     fun deactivate(reason: String): List<CustomerEvent> {
       return listOf(CustomerDeactivated(reason))
     }
@@ -43,7 +42,7 @@ sealed class Customer {
       return Inactive(id, name, reason)
     }
   }
-  data class Inactive(val id: UUID, val name: String, val reason: String? = null): Customer() {
+  data class Inactive(val id: String, val name: String, val reason: String? = null): Customer() {
     fun activate(reason: String): List<CustomerEvent> {
       return listOf(CustomerActivated(reason))
     }
@@ -76,16 +75,10 @@ val customerEventHandler = EventHandler<Customer, CustomerEvent> { state, event 
   }
 }
 
-class CustomerAlreadyExists(id: UUID) : IllegalStateException("Customer $id already exists")
-
-class IllegalStateTransition(state: String, command: String) : IllegalStateException("State $state -> $command")
+class CustomerAlreadyExists(id: String) : IllegalStateException("Customer $id already exists")
 
 class CustomerCommandHandler
   : CommandHandler<Customer, CustomerCommand, CustomerEvent>(applier = customerEventHandler) {
-
-  private fun buildException(state: Customer, command: CustomerCommand): IllegalStateTransition {
-    return IllegalStateTransition(state::class.java.name, command::class.java.name)
-  }
 
   override fun handle(command: CustomerCommand, state: Customer): CommandSession<Customer, CustomerEvent> {
     return when (command) {
