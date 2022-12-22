@@ -34,7 +34,7 @@ internal class SubscribingWithPostgresSinkIT: AbstractSubscriptionIT() {
   override val subscriptionName = "crabzilla.example1.customer.SimpleProjector"
 
   companion object {
-    private val id: UUID = UUID.randomUUID()
+    private val id: String = UUID.randomUUID().toString()
   }
 
   private val config =

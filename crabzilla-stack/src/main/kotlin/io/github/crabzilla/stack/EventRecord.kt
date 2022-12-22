@@ -2,7 +2,6 @@ package io.github.crabzilla.stack
 
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import java.util.*
 
 /**
  * An event record
@@ -14,10 +13,10 @@ data class EventRecord(val metadata: EventMetadata, val payload: JsonObject) {
     fun fromJsonObject(asJsonObject: JsonObject): EventRecord {
       val eventMetadata = EventMetadata(
         asJsonObject.getString("stateType"),
-        UUID.fromString(asJsonObject.getString("stateId")),
-        UUID.fromString(asJsonObject.getString("eventId")),
-        UUID.fromString(asJsonObject.getString("correlationId")),
-        UUID.fromString(asJsonObject.getString("causationId")),
+        asJsonObject.getString("stateId"),
+        asJsonObject.getString("eventId"),
+        asJsonObject.getString("correlationId"),
+        asJsonObject.getString("causationId"),
         asJsonObject.getLong("eventSequence"),
         asJsonObject.getInteger("version"),
         asJsonObject.getString("eventType")

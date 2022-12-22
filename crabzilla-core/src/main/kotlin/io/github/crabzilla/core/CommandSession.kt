@@ -3,25 +3,13 @@ package io.github.crabzilla.core
 /**
  * To apply and track events against state
  */
-class CommandSession<S, E> {
-  private val originalState: S
-  private val eventHandler: EventHandler<S, E>
-  private val appliedEvents = mutableListOf<E>()
+class CommandSession<S, E>(state: S, private val eventHandler: EventHandler<S, E>) {
+
+  private val originalState: S = state
+  val appliedEvents = mutableListOf<E>()
   var currentState: S
 
-  constructor(state: S, eventHandler: EventHandler<S, E>) {
-    this.originalState = state
-    this.eventHandler = eventHandler
-    this.currentState = originalState
-  }
-
-  constructor(events: List<E>, eventHandler: EventHandler<S, E>) {
-    this.eventHandler = eventHandler
-    val state: S? = events.fold(null) { s: S?, e: E ->
-      appliedEvents.add(e)
-      eventHandler.handle(s, e)
-    }
-    this.originalState = state!!
+  init {
     this.currentState = originalState
   }
 
@@ -36,6 +24,7 @@ class CommandSession<S, E> {
     return this
   }
 
+  @Suppress
   fun apply(vararg event: E): CommandSession<S, E> {
     event.forEach {
       currentState = eventHandler.handle(currentState, it)

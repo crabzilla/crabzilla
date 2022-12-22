@@ -22,10 +22,10 @@ import java.util.*
 class PersistingEventsIT: AbstractCommandIT() {
 
   @Test
-  @DisplayName("appending 1 command with 3 events results in version 3 ")
+  @DisplayName("appending 1 command with 2 events results in version 2 ")
   fun s1(tc: VertxTestContext, vertx: Vertx) {
     val service = factory.commandService(customerConfig, jsonSerDer)
-    val id = UUID.randomUUID()
+    val id = UUID.randomUUID().toString()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     service.handle(id, cmd)
       .onFailure { tc.failNow(it) }
@@ -34,7 +34,7 @@ class PersistingEventsIT: AbstractCommandIT() {
           .onFailure { it2 -> tc.failNow(it2) }
           .onSuccess { eventsList ->
             tc.verify {
-              assertThat(eventsList.size).isEqualTo(3)
+              assertThat(eventsList.size).isEqualTo(2)
               // check register event
               val asJson1 = eventsList[0]
               val eventId1 = asJson1.getString("id")
@@ -45,25 +45,16 @@ class PersistingEventsIT: AbstractCommandIT() {
                 .isEqualTo("CustomerRegistered")
               assertThat(asJson1.getString("causation_id")).isEqualTo(eventId1)
               assertThat(asJson1.getString("correlation_id")).isEqualTo(eventId1)
-              // check register private event
+              // check activate event
               val asJson2 = eventsList[1]
               val eventId2 = asJson2.getString("id")
               assertThat(asJson2.getString("state_type")).isEqualTo("Customer")
               assertThat(asJson2.getString("state_id")).isEqualTo(id.toString())
               assertThat(asJson2.getInteger("version")).isEqualTo(2)
               assertThat(asJson2.getJsonObject("event_payload").getString("type"))
-                .isEqualTo("CustomerRegisteredPrivate")
+                .isEqualTo("CustomerActivated")
               assertThat(asJson2.getString("causation_id")).isEqualTo(eventId1)
               assertThat(asJson2.getString("correlation_id")).isEqualTo(eventId1)
-              // check activate event
-              val asJson3 = eventsList[2]
-              assertThat(asJson3.getString("state_type")).isEqualTo("Customer")
-              assertThat(asJson3.getString("state_id")).isEqualTo(id.toString())
-              assertThat(asJson3.getInteger("version")).isEqualTo(3)
-              assertThat(asJson3.getJsonObject("event_payload").getString("type"))
-                .isEqualTo("CustomerActivated")
-              assertThat(asJson3.getString("causation_id")).isEqualTo(eventId2)
-              assertThat(asJson3.getString("correlation_id")).isEqualTo(eventId1)
               tc.completeNow()
             }
           }
@@ -71,11 +62,11 @@ class PersistingEventsIT: AbstractCommandIT() {
   }
 
   @Test
-  @DisplayName("appending 2 commands with 3 and 1 event, respectively results in version 4")
+  @DisplayName("appending 2 commands with 2 and 1 event, respectively results in version 3")
   fun s11(tc: VertxTestContext, vertx: Vertx) {
     val jsonSerDer = CustomerJsonObjectSerDer()
     val service = factory.commandService(customerConfig, jsonSerDer)
-    val id = UUID.randomUUID()
+    val id = UUID.randomUUID().toString()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
     service.handle(id, cmd1)
       .onFailure { tc.failNow(it) }
@@ -91,7 +82,7 @@ class PersistingEventsIT: AbstractCommandIT() {
                   println("$index -> ${it.encodePrettily()}")
                 }
                 tc.verify {
-                  assertThat(eventsList.size).isEqualTo(4)
+                  assertThat(eventsList.size).isEqualTo(3)
                   // check register event
                   val asJson1 = eventsList[0]
                   val eventId1 = asJson1.getString("id")
@@ -109,30 +100,19 @@ class PersistingEventsIT: AbstractCommandIT() {
                   assertThat(asJson2.getString("state_id")).isEqualTo(id.toString())
                   assertThat(asJson2.getInteger("version")).isEqualTo(2)
                   assertThat(asJson2.getJsonObject("event_payload").getString("type"))
-                    .isEqualTo("CustomerRegisteredPrivate")
+                    .isEqualTo("CustomerActivated")
                   assertThat(asJson2.getString("causation_id")).isEqualTo(eventId1)
                   assertThat(asJson2.getString("correlation_id")).isEqualTo(eventId1)
-                  // check activate event
+                  // check deactivate events
                   val asJson3 = eventsList[2]
-                  val eventId3 = asJson3.getString("id")
+                  // println(asJson3.encodePrettily())
                   assertThat(asJson3.getString("state_type")).isEqualTo("Customer")
                   assertThat(asJson3.getString("state_id")).isEqualTo(id.toString())
                   assertThat(asJson3.getInteger("version")).isEqualTo(3)
                   assertThat(asJson3.getJsonObject("event_payload").getString("type"))
-                    .isEqualTo("CustomerActivated")
+                    .isEqualTo("CustomerDeactivated")
                   assertThat(asJson3.getString("causation_id")).isEqualTo(eventId2)
                   assertThat(asJson3.getString("correlation_id")).isEqualTo(eventId1)
-                  tc.completeNow()
-                  // check deactivate events
-                  val asJson4 = eventsList[3]
-                  // println(asJson3.encodePrettily())
-                  assertThat(asJson4.getString("state_type")).isEqualTo("Customer")
-                  assertThat(asJson4.getString("state_id")).isEqualTo(id.toString())
-                  assertThat(asJson4.getInteger("version")).isEqualTo(4)
-                  assertThat(asJson4.getJsonObject("event_payload").getString("type"))
-                    .isEqualTo("CustomerDeactivated")
-                  assertThat(asJson4.getString("causation_id")).isEqualTo(eventId3)
-                  assertThat(asJson4.getString("correlation_id")).isEqualTo(eventId1)
                   tc.completeNow()
                 }
               }

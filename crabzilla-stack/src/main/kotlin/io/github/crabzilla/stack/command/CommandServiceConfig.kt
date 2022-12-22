@@ -12,5 +12,6 @@ class CommandServiceConfig<S : Any, C : Any, E : Any>(
   val commandClass: KClass<C>,
   val eventClass: KClass<E>,
   val eventHandler: EventHandler<S, E>,
-  val commandHandler: CommandHandler<S, C, E>
+  val commandHandler: CommandHandler<S, C, E>,
+  val initialState: S
 )

@@ -35,9 +35,9 @@ class HandlingUnitOfWorkIT: AbstractCommandIT() {
       latch.countDown()
       msg.reply(null)
     }
-    val id = UUID.randomUUID()
+    val id = UUID.randomUUID().toString()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
-    val id2 = UUID.randomUUID()
+    val id2 = UUID.randomUUID().toString()
     val cmd2 = RegisterAndActivateCustomer(id2, "c2", "is needed")
     service
       .withinTransaction { tx ->
@@ -57,7 +57,7 @@ class HandlingUnitOfWorkIT: AbstractCommandIT() {
             .onFailure { tc.failNow(it) }
             .onSuccess { list ->
                 tc.verify {
-                  assertEquals(6, list.size)
+                  assertEquals(4, list.size)
                   tc.completeNow()
                 }
             }
@@ -70,7 +70,7 @@ class HandlingUnitOfWorkIT: AbstractCommandIT() {
   @Test
   fun `it can rollback when handling 2 commands within a transaction `(vertx: Vertx, tc: VertxTestContext) {
     val service = factory.commandService(customerConfig, jsonSerDer)
-    val id = UUID.randomUUID()
+    val id = UUID.randomUUID().toString()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     val cmd2 = RegisterAndActivateCustomer(id, "c1", "is needed")
     service

@@ -1,6 +1,5 @@
 package io.github.crabzilla.kotlinx.json
 
-import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
@@ -26,9 +25,6 @@ class SerializationTests {
   @kotlinx.serialization.ExperimentalSerializationApi
   val customerModule = SerializersModule {
     include(javaModule)
-    polymorphic(Customer::class) {
-      subclass(Customer::class, Customer.serializer())
-    }
     polymorphic(CustomerCommand::class) {
       subclass(RegisterCustomer::class, RegisterCustomer.serializer())
       subclass(ActivateCustomer::class, ActivateCustomer.serializer())

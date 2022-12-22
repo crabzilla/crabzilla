@@ -17,7 +17,6 @@ import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.*
 import org.slf4j.LoggerFactory
 import java.time.Instant
-import java.util.*
 
 internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
   private val crabzillaContext: CrabzillaContext,
@@ -53,7 +52,7 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
   private val streamName = commandServiceConfig.stateClass.simpleName!!
   private val log = LoggerFactory.getLogger("${DefaultCommandServiceApi::class.java.simpleName}-$streamName")
 
-  override fun handle(stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)?): Future<EventMetadata> {
+  override fun handle(stateId: String, command: C, versionPredicate: ((Int) -> Boolean)?): Future<EventMetadata> {
     return crabzillaContext.pgPool().withTransaction { conn: SqlConnection ->
       handle(conn, stateId, command, versionPredicate)
     }
@@ -63,7 +62,7 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
     return crabzillaContext.pgPool().withTransaction(f)
   }
 
-  override fun handle(conn: SqlConnection, stateId: UUID, command: C, versionPredicate: ((Int) -> Boolean)?)
+  override fun handle(conn: SqlConnection, stateId: String, command: C, versionPredicate: ((Int) -> Boolean)?)
     : Future<EventMetadata> {
 
     fun lock(conn: SqlConnection): Future<Void> {
@@ -74,27 +73,28 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
           if (pgRow.first().getBoolean("locked")) {
             succeededFuture()
           } else {
-            failedFuture(ConcurrencyException("Can't be locked ${stateId}"))
+            failedFuture(ConcurrencyException("Can't be locked $stateId"))
           }
         }
     }
 
     fun appendEvents(
       conn: SqlConnection,
-      snapshot: Snapshot<S>?,
+      snapshot: Snapshot<S>,
       events: List<E>,
     ): Future<List<EventRecord>> {
-      var resultingVersion = snapshot?.version ?: 0
-      val eventIds = events.map { UUID.randomUUID() }
+      log.debug("Will append events {}", events)
+      var resultingVersion = snapshot.version
+      val eventIds = events.map { crabzillaContext.nextUlid() }
       val causationIds = eventIds.toMutableList()
       val correlationIds = eventIds.toMutableList()
       val tuples = events.mapIndexed { index, event ->
-        correlationIds[index] = snapshot?.correlationId ?: causationIds[0]
+        correlationIds[index] = snapshot.correlationId ?: causationIds[0]
         val eventAsJsonObject = serDer.eventToJson(event)
         val eventId = eventIds[index]
         val type = eventAsJsonObject.getString("type")
         if (index == 0) {
-          causationIds[0] = snapshot?.causationId ?: eventIds[0]
+          causationIds[0] = snapshot.causationId ?: eventIds[0]
         } else {
           causationIds[index] = eventIds[(index - 1)]
         }
@@ -109,9 +109,9 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
           var rs: RowSet<Row>? = rowSet
           List(tuples.size) { index ->
             val sequence = rs!!.iterator().next().getLong("sequence")
-            val correlationId = tuples[index].getUUID(correlationIdIndex)
+            val correlationId = tuples[index].getString(correlationIdIndex)
             val currentVersion = tuples[index].getInteger(currentVersionIndex)
-            val eventId = tuples[index].getUUID(eventIdIndex)
+            val eventId = tuples[index].getString(eventIdIndex)
             val eventPayload = tuples[index].getJsonObject(eventPayloadIndex)
             val eventMetadata = EventMetadata(
               stateType = streamName, stateId = stateId, eventId = eventId,
@@ -139,8 +139,8 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
       }.mapEmpty()
     }
 
-    fun appendCommand(conn: SqlConnection, cmdAsJson: JsonObject, stateId: UUID,
-                      causationId: UUID, lastCausationId: UUID): Future<Void> {
+    fun appendCommand(conn: SqlConnection, cmdAsJson: JsonObject, stateId: String,
+                      causationId: String, lastCausationId: String): Future<Void> {
       log.debug("Will append command {} as {}", command, cmdAsJson)
       val params = Tuple.of(stateId, causationId, lastCausationId, cmdAsJson)
       return conn.preparedQuery(SQL_APPEND_CMD).execute(params).mapEmpty()
@@ -150,20 +150,14 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
       .compose {
         log.debug("State locked {}", stateId.hashCode())
         getSnapshot(conn, stateId)
-      }.compose { snapshot: Snapshot<S>? ->
-        if (snapshot == null) {
-          succeededFuture(null)
-        } else {
-          succeededFuture(snapshot)
-        }
-      }.compose { snapshot: Snapshot<S>? ->
+      }.compose { snapshot: Snapshot<S> ->
         log.debug("Got snapshot {}", snapshot)
-        if (versionPredicate != null && !versionPredicate.invoke(snapshot?.version ?: 0)) {
-          val error = "Current version ${snapshot?.version ?: 0} is invalid"
+        if (versionPredicate != null && !versionPredicate.invoke(snapshot.version)) {
+          val error = "Current version ${snapshot.version} is invalid"
           failedFuture(ConcurrencyException(error))
         } else {
           try {
-            val session = commandServiceConfig.commandHandler.handle(command, snapshot?.state)
+            val session = commandServiceConfig.commandHandler.handle(command, snapshot.state)
             succeededFuture(Pair(snapshot, session))
           } catch (e: Exception) {
             val error = CommandServiceException.BusinessException(e.message ?: "Unknown")
@@ -171,7 +165,7 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
           }
         }
       }.compose { pair ->
-        val (snapshot: Snapshot<S>?, session: CommandSession<S, E>) = pair
+        val (snapshot: Snapshot<S>, session: CommandSession<S, E>) = pair
         log.debug("Command handled")
         appendEvents(conn, snapshot, session.appliedEvents())
           .map { Triple(snapshot, session, it) }
@@ -222,23 +216,23 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
       }
   }
 
-  private fun getSnapshot(conn: SqlConnection, id: UUID): Future<Snapshot<S>?> {
-    val promise = Promise.promise<Snapshot<S>?>()
+  private fun getSnapshot(conn: SqlConnection, id: String): Future<Snapshot<S>> {
+    val promise = Promise.promise<Snapshot<S>>()
     return conn
       .prepare(GET_EVENTS_BY_ID)
       .compose { pq: PreparedStatement ->
-        var state: S? = null
+        var state: S = commandServiceConfig.initialState
         var latestVersion = 0
-        var lastCausationId: UUID? = null
-        var lastCorrelationId: UUID? = null
+        var lastCausationId: String? = null
+        var lastCorrelationId: String? = null
         var error: Throwable? = null
         // Fetch 1000 rows at a time
         val stream: RowStream<Row> = pq.createStream(options.eventStreamSize, Tuple.of(id))
         // Use the stream
         stream.handler { row: Row ->
           latestVersion = row.getInteger("version")
-          lastCausationId = row.getUUID("id")
-          lastCorrelationId = row.getUUID("correlation_id")
+          lastCausationId = row.getString("id")
+          lastCorrelationId = row.getString("correlation_id")
           log.debug("Found event version {}, causationId {}, correlationId {}",
             latestVersion, lastCausationId, lastCorrelationId)
           state = commandServiceConfig.eventHandler
@@ -253,9 +247,9 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
             promise.fail(error)
           } else {
             if (latestVersion == 0) {
-              promise.complete(null)
+              promise.complete(Snapshot(state, latestVersion, null, null))
             } else {
-              promise.complete(Snapshot(state!!, latestVersion, lastCausationId!!, lastCorrelationId!!))
+              promise.complete(Snapshot(state, latestVersion, lastCausationId!!, lastCorrelationId!!))
             }
           }
         }

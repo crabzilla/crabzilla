@@ -22,7 +22,7 @@ class PersistingCommandsT: AbstractCommandIT() {
   @Test
   fun `it can persist 1 command`(tc: VertxTestContext, vertx: Vertx) {
     val service = factory.commandService(customerConfig, jsonSerDer)
-    val id = UUID.randomUUID()
+    val id = UUID.randomUUID().toString()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     service.handle(id, cmd)
       .compose { testRepo.getAllCommands() }
@@ -32,7 +32,7 @@ class PersistingCommandsT: AbstractCommandIT() {
         val (commands, events) = pair
         tc.verify {
           assertThat(commands.size).isEqualTo(1)
-          assertThat(events.size).isEqualTo(3)
+          assertThat(events.size).isEqualTo(2)
           val rowAsJson = commands.first()
           assertThat(rowAsJson.getString("causation_id")).isEqualTo(events.first().getString("id"))
           assertThat(rowAsJson.getString("last_causation_id")).isEqualTo(events.last().getString("id"))
@@ -48,7 +48,7 @@ class PersistingCommandsT: AbstractCommandIT() {
 
     val service = factory.commandService(customerConfig, jsonSerDer)
 
-    val id = UUID.randomUUID()
+    val id = UUID.randomUUID().toString()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
     val cmd2 = DeactivateCustomer("it's not needed anymore")
 
@@ -68,14 +68,14 @@ class PersistingCommandsT: AbstractCommandIT() {
         }
         tc.verify {
           assertThat(commands.size).isEqualTo(2)
-          assertThat(events.size).isEqualTo(4)
+          assertThat(events.size).isEqualTo(3)
           val rowAsJson1 = commands.first()
           assertThat(rowAsJson1.getString("causation_id")).isEqualTo(events.first().getString("id"))
-          assertThat(rowAsJson1.getString("last_causation_id")).isEqualTo(events[2].getString("id"))
+          assertThat(rowAsJson1.getString("last_causation_id")).isEqualTo(events[1].getString("id"))
           val cmdAsJsonFroDb1 = rowAsJson1.getJsonObject("cmd_payload")
           assertThat(cmdAsJsonFroDb1.getString("type")).isEqualTo("RegisterAndActivateCustomer")
           val rowAsJson2 = commands[1]
-          assertThat(rowAsJson2.getString("causation_id")).isEqualTo(events[3].getString("id"))
+          assertThat(rowAsJson2.getString("causation_id")).isEqualTo(events[2].getString("id"))
           assertThat(rowAsJson2.getString("last_causation_id")).isEqualTo(events.last().getString("id"))
           val cmdAsJsonFroDb2 = rowAsJson2.getJsonObject("cmd_payload")
           assertThat(cmdAsJsonFroDb2.getString("type")).isEqualTo("DeactivateCustomer")

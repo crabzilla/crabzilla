@@ -28,5 +28,8 @@ interface CrabzillaContext {
 
   fun pgPool(): PgPool
 
-  fun pgSubscriber(): PgSubscriber // TODO param topic
+  fun pgSubscriber(): PgSubscriber
+
+  fun nextUlid(): String
+
 }

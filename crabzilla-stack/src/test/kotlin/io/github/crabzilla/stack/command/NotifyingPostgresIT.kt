@@ -39,7 +39,7 @@ class NotifyingPostgresIT: AbstractCommandIT() {
           latch.countDown()
         }
     }
-    val id = UUID.randomUUID()
+    val id = UUID.randomUUID().toString()
     val cmd = CustomerCommand.RegisterAndActivateCustomer(id, "c1", "is needed")
     service.handle(id, cmd)
       .onFailure { tc.failNow(it) }
