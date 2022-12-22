@@ -13,7 +13,7 @@ abstract class CommandHandler<S, C, E>(private val applier: EventHandler<S, E>) 
 
   fun buildException(state: S, command: C): IllegalStateException {
     return IllegalStateException("Illegal transition. " +
-      "state: ${state!!::class.java.name} command: ${command!!::class.java.name}")
+      "state: ${state!!::class.java.simpleName} command: ${command!!::class.java.simpleName}")
   }
 
 }
