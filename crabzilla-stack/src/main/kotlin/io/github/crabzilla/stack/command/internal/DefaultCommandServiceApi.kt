@@ -62,6 +62,7 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
     return crabzillaContext.pgPool().withTransaction(f)
   }
 
+  @Suppress
   override fun handle(conn: SqlConnection, stateId: String, command: C, versionPredicate: ((Int) -> Boolean)?)
     : Future<EventMetadata> {
 
