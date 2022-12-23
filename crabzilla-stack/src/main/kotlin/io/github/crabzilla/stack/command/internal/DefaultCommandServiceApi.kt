@@ -74,7 +74,7 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
           if (pgRow.first().getBoolean("locked")) {
             succeededFuture()
           } else {
-            failedFuture(ConcurrencyException(IllegalStateException("Can't be locked $stateId")))
+            failedFuture(ConcurrencyException("Can't be locked $stateId"))
           }
         }
     }
@@ -155,14 +155,14 @@ internal class DefaultCommandServiceApi<S : Any, C : Any, E : Any>(
         log.debug("Got snapshot {}", snapshot)
         if (versionPredicate != null && !versionPredicate.invoke(snapshot.version)) {
           val error = "Current version ${snapshot.version} is invalid"
-          failedFuture(ConcurrencyException(IllegalStateException(error)))
+          failedFuture(ConcurrencyException(error))
         } else {
           try {
             log.debug("Will handle command $command on state $snapshot")
             val session = commandServiceConfig.commandHandler.handle(command, snapshot.state)
             succeededFuture(Pair(snapshot, session))
           } catch (e: Exception) {
-            val error = CommandServiceException.BusinessException(e)
+            val error = CommandServiceException.BusinessException(e.message?:"Unknown", e)
             failedFuture(error)
           }
         }
