@@ -2,6 +2,8 @@ package io.github.crabzilla.core
 
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerEvent
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.example1.customer.customerEventHandler
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -9,14 +11,13 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.*
-import java.util.Arrays.asList
 
 @DisplayName("A FeatureSession")
 internal class CommandSessionTest {
 
   lateinit var commandSession: CommandSession<Customer, CustomerEvent>
 
-  val customer = Customer(id = UUID.randomUUID(), name = "c1")
+  val customer = Customer.Initial
 
   @Test
   fun can_be_instantiated() {
@@ -41,7 +42,7 @@ internal class CommandSessionTest {
 
     @Test
     fun is_empty() {
-      assertThat(commandSession.appliedEvents().size).isEqualTo(0)
+      assertThat(commandSession.appliedEvents.size).isEqualTo(0)
     }
 
     @Test
@@ -61,9 +62,9 @@ internal class CommandSessionTest {
     @DisplayName("when adding a create customer event")
     internal inner class WhenAddingNewEvent {
 
-      val id = UUID.randomUUID()
-      private val customerCreated = CustomerEvent.CustomerRegistered(id, "customer-1")
-      private val expectedCustomer = Customer(id, "customer-1", false, null)
+      val id = UUID.randomUUID().toString()
+      private val customerCreated = CustomerRegistered(id, "customer-1")
+      private val expectedCustomer = Customer.Inactive(id, "customer-1")
 
       @BeforeEach
       fun apply_create_event() {
@@ -77,8 +78,8 @@ internal class CommandSessionTest {
 
       @Test
       fun has_only_create_event() {
-        assertThat(commandSession.appliedEvents()).contains(customerCreated)
-        assertThat(commandSession.appliedEvents().size).isEqualTo(1)
+        assertThat(commandSession.appliedEvents).contains(customerCreated)
+        assertThat(commandSession.appliedEvents.size).isEqualTo(1)
       }
 
       @Test
@@ -93,11 +94,8 @@ internal class CommandSessionTest {
       @DisplayName("when adding an activate customer event")
       internal inner class WhenAddingActivateEvent {
 
-        private val customerActivated = CustomerEvent.CustomerActivated("is ok")
-        private val expectedCustomer = Customer(
-          id, "customer-1", true,
-          customerActivated.reason
-        )
+        private val customerActivated = CustomerActivated("is ok")
+        private val expectedCustomer = Customer.Active(id, "customer-1", customerActivated.reason)
 
         @BeforeEach
         fun apply_activate_event() {
@@ -111,9 +109,9 @@ internal class CommandSessionTest {
 
         @Test
         fun has_both_create_and_activated_evenst() {
-          assertThat(commandSession.appliedEvents()[0]).isEqualTo(customerCreated)
-          assertThat(commandSession.appliedEvents()[1]).isEqualTo(customerActivated)
-          assertThat(commandSession.appliedEvents().size).isEqualTo(2)
+          assertThat(commandSession.appliedEvents[0]).isEqualTo(customerCreated)
+          assertThat(commandSession.appliedEvents[1]).isEqualTo(customerActivated)
+          assertThat(commandSession.appliedEvents.size).isEqualTo(2)
         }
       }
     }
@@ -123,19 +121,18 @@ internal class CommandSessionTest {
   @DisplayName("when adding both create and activate events")
   internal inner class WhenAddingCreateActivateEvent {
 
-    val isOk = "is ok"
-
-    val id = UUID.randomUUID()
-    private val customerCreated = CustomerEvent.CustomerRegistered(id, "customer-1")
-    private val customerActivated = CustomerEvent.CustomerActivated(isOk)
-    private val expectedCustomer = Customer(id, "customer-1", true, isOk)
+    private val isOk = "is ok"
+    private val id: String = UUID.randomUUID().toString()
+    private val customerCreated = CustomerRegistered(id, "customer-1")
+    private val customerActivated = CustomerActivated(isOk)
+    private val expectedCustomer = Customer.Active(id, "customer-1", isOk)
 
     @BeforeEach
     fun instantiate() {
       // given
       commandSession = CommandSession(customer, customerEventHandler)
       // when
-      commandSession.execute { customer -> asList(customerCreated, customerActivated) }
+      commandSession.execute { listOf(customerCreated, customerActivated) }
     }
 
     // then
@@ -147,9 +144,9 @@ internal class CommandSessionTest {
 
     @Test
     fun has_both_event() {
-      assertThat(commandSession.appliedEvents()).contains(customerCreated)
-      assertThat(commandSession.appliedEvents()).contains(customerActivated)
-      assertThat(commandSession.appliedEvents().size).isEqualTo(2)
+      assertThat(commandSession.appliedEvents).contains(customerCreated)
+      assertThat(commandSession.appliedEvents).contains(customerActivated)
+      assertThat(commandSession.appliedEvents.size).isEqualTo(2)
     }
   }
 

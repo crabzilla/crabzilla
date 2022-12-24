@@ -18,7 +18,7 @@
     <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>v0.5.6</version>
+    <version>v0.5.7</version>
   </parent>
 
     <artifactId>crabzilla-stack</artifactId>
@@ -42,6 +42,13 @@
     </dependency>
 
     <!-- test -->
+
+    <dependency>
+      <groupId>dev.shamil</groupId>
+      <artifactId>ulid4j</artifactId>
+      <version>1.0</version>
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
 

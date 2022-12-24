@@ -11,31 +11,32 @@ import java.util.*
 @DisplayName("Customer scenarios")
 internal class CustomerSpecsTest {
 
-  val id: UUID = UUID.randomUUID()
+  val id: String = UUID.randomUUID().toString()
 
   @Test
-  fun `given a new customer after a command`() {
-    CommandTestSpecification(CustomerCommandHandler(), customerEventHandler)
+  fun `after a RegisterCustomer command, the state and events match`() {
+    CommandTestSpecification(Customer.Initial, CustomerCommandHandler(), customerEventHandler)
       .whenCommand(RegisterCustomer(id, "c1"))
       .then {
-        assertThat(it.state())
-          .isEqualTo(Customer(id, "c1"))
+        assertThat(it.state)
+          .isEqualTo(Customer.Inactive(id, "c1"))
       }.then {
-        assertThat(it.events())
+        assertThat(it.events)
           .isEqualTo(listOf(CustomerRegistered(id, "c1")))
       }
   }
 
   @Test
-  fun `given a registered customer given events`() {
-    val spec = CommandTestSpecification(CustomerCommandHandler(), customerEventHandler)
+  fun `given a CustomerRegistered event then an ActivateCustomer, the state and events match`() {
+    val spec = CommandTestSpecification(Customer.Inactive(id, "c1"), CustomerCommandHandler(),
+      customerEventHandler)
       .givenEvents(CustomerRegistered(id, "c1"))
       .whenCommand(ActivateCustomer("bcoz yes"))
       .then {
-        assertThat(it.state())
-          .isEqualTo(Customer(id, "c1", true, "bcoz yes"))
+        assertThat(it.state)
+          .isEqualTo(Customer.Active(id, "c1", "bcoz yes"))
       }.then {
-        assertThat(it.events())
+        assertThat(it.events)
           .isEqualTo(
             listOf(
               CustomerRegistered(id, "c1"),
@@ -47,11 +48,11 @@ internal class CustomerSpecsTest {
     spec.whenCommand(DeactivateCustomer("bcoz bad customer"))
       .then {
         // then it's deactivated
-        assertThat(spec.state())
-          .isEqualTo(Customer(id, "c1", false, "bcoz bad customer"))
+        assertThat(spec.state)
+          .isEqualTo(Customer.Inactive(id, "c1","bcoz bad customer"))
       }.then {
         // and it has these 3 events
-        assertThat(spec.events())
+        assertThat(spec.events)
           .isEqualTo(
             listOf(
               CustomerRegistered(id, "c1"),

@@ -28,19 +28,19 @@ class PublishingToEventbusIT: AbstractCommandIT() {
     val service = factory.commandService(customerConfig, jsonSerDer, options)
 
     val jsonMessage = AtomicReference<JsonObject>()
-    val latch = CountDownLatch(3)
+    val latch = CountDownLatch(2)
     vertx.eventBus().consumer<JsonObject>("MY_TOPIC") { msg ->
       jsonMessage.set(msg.body())
       latch.countDown()
     }
-    val id = UUID.randomUUID()
+    val id = UUID.randomUUID().toString()
     val cmd = RegisterAndActivateCustomer(id, "c1", "is needed")
     service.handle(id, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         tc.verify {
           latch.await(2, TimeUnit.SECONDS)
-          assertTrue(jsonMessage.get().getJsonArray("events").size() == 3)
+          assertTrue(jsonMessage.get().getJsonArray("events").size() == 2)
           tc.completeNow()
         }
       }

@@ -6,8 +6,8 @@ import io.vertx.pgclient.PgPool
 
 interface CrabzillaContextFactory {
 
-  fun new(vertx: Vertx, pgConfig: JsonObject): CrabzillaContext
+  fun new(vertx: Vertx, pgConfig: JsonObject, ulidFunction: () -> String): CrabzillaContext
 
-  fun new(vertx: Vertx, pgConfig: JsonObject, pgPool: PgPool): CrabzillaContext
+  fun new(vertx: Vertx, pgConfig: JsonObject, pgPool: PgPool, ulidFunction: () -> String): CrabzillaContext
 
 }

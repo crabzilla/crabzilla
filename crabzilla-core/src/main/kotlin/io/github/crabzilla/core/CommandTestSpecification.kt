@@ -4,20 +4,17 @@ package io.github.crabzilla.core
  * A helper for basic test specifications
  */
 class CommandTestSpecification<S : Any, C : Any, E : Any>(
+  var state: S,
   private val commandHandler: CommandHandler<S, C, E>,
   private val eventHandler: EventHandler<S, E>
 ) {
 
-  private var state: S? = null
-  private val events: MutableList<E> = mutableListOf()
-
-  fun state(): S? = state
-  fun events(): List<E> = events.toList()
+  val events: MutableList<E> = mutableListOf()
 
   fun whenCommand(command: C): CommandTestSpecification<S, C, E> {
     val session: CommandSession<S, E> = commandHandler.handle(command, state)
     state = session.currentState
-    events.addAll(session.appliedEvents())
+    events.addAll(session.appliedEvents)
     return this
   }
 

@@ -34,7 +34,7 @@ internal class SubscribingWithEventBusSinkIT: AbstractSubscriptionIT() {
 
   companion object {
     private val log = LoggerFactory.getLogger(SubscribingWithEventBusSinkIT::class.java)
-    private val id: UUID = UUID.randomUUID()
+    private val id: String = UUID.randomUUID().toString()
   }
 
   @Test
@@ -80,12 +80,11 @@ internal class SubscribingWithEventBusSinkIT: AbstractSubscriptionIT() {
               Pair(json.getJsonObject("eventPayload").getString("type"), json.getLong("eventSequence"))
             }
             val expected =
-              listOf(Pair("CustomerRegistered", 1L),
-                Pair("CustomerRegisteredPrivate", 2L), Pair("CustomerActivated", 3L))
+              listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L))
             assertEquals(expected, events)
             it.complete()
           }.compose {
-            checkOffset(1, 3L)
+            checkOffset(1, 2L)
           }.onSuccess {
             tc.completeNow()
           }.onFailure {
@@ -193,12 +192,11 @@ internal class SubscribingWithEventBusSinkIT: AbstractSubscriptionIT() {
               Pair(json.getJsonObject("eventPayload").getString("type"), json.getLong("eventSequence"))
             }
             val expected =
-              listOf(Pair("CustomerRegistered", 1L),
-                Pair("CustomerRegisteredPrivate", 2L), Pair("CustomerActivated", 3L))
+              listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L))
             assertEquals(expected, events)
             it.complete()
           }.compose {
-            checkOffset(1, 3L)
+            checkOffset(1, 2L)
           }.onSuccess {
             tc.completeNow()
           }.onFailure {
@@ -247,12 +245,11 @@ internal class SubscribingWithEventBusSinkIT: AbstractSubscriptionIT() {
               Pair(json.getJsonObject("eventPayload").getString("type"), json.getLong("eventSequence"))
             }
             val expected =
-              listOf(Pair("CustomerRegistered", 1L),
-                Pair("CustomerRegisteredPrivate", 2L), Pair("CustomerActivated", 3L))
+              listOf(Pair("CustomerRegistered", 1L), Pair("CustomerActivated", 2L))
             assertEquals(expected, events)
             it.complete()
            }.compose {
-            checkOffset(1, 3L)
+            checkOffset(1, 2L)
            }.onSuccess {
              tc.completeNow()
           }.onFailure {

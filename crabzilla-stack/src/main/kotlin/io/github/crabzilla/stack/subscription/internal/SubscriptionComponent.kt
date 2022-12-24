@@ -40,12 +40,13 @@ internal class SubscriptionComponent(
   private var currentOffset = 0L
   private var isPaused = AtomicBoolean(false)
   private var isBusy = AtomicBoolean(false)
+  // TODO add isLenient (ignore failed projections) to status, SubscriptionEndpoints and projection
 
   private lateinit var scanner: EventsScanner
   private lateinit var subscriptionEndpoints: SubscriptionEndpoints
 
   fun start(): Future<Void> {
-    fun status(): JsonObject {
+    fun currentStatus(): JsonObject {
       return JsonObject()
         .put("node", node)
         .put("paused", isPaused.get())
@@ -57,31 +58,34 @@ internal class SubscriptionComponent(
     }
 
     fun startManagementEndpoints() {
-      crabzillaContext.vertx().eventBus()
-        .consumer<Nothing>(subscriptionEndpoints.status()) { msg ->
-          log.debug("Status: {}", status().encodePrettily())
-          msg.reply(status())
-        }
-      crabzillaContext.vertx().eventBus()
-        .consumer<Nothing>(subscriptionEndpoints.pause()) { msg ->
-          log.debug("Status: {}", status().encodePrettily())
-          isPaused.set(true)
-          msg.reply(status())
-        }
-      crabzillaContext.vertx().eventBus()
-        .consumer<Nothing>(subscriptionEndpoints.resume()) { msg ->
-          log.debug("Status: {}", status().encodePrettily())
-          isPaused.set(false)
-          msg.reply(status())
-        }
-      crabzillaContext.vertx().eventBus().consumer<Nothing>(subscriptionEndpoints.handle()) { msg ->
-        log.debug("Will handle")
-        action()
-          .onFailure { log.error(it.message) }
-          .onSuccess { log.debug("Handle finished") }
-          .onComplete {
-            msg.reply(status())
+      val eventBus = crabzillaContext.vertx().eventBus()
+      with(subscriptionEndpoints) {
+        eventBus
+          .consumer<Nothing>(status()) { msg ->
+            log.debug("Status: {}", currentStatus().encodePrettily())
+            msg.reply(currentStatus())
           }
+        eventBus
+          .consumer<Nothing>(pause()) { msg ->
+            log.debug("Status: {}", currentStatus().encodePrettily())
+            isPaused.set(true)
+            msg.reply(currentStatus())
+          }
+        eventBus
+          .consumer<Nothing>(resume()) { msg ->
+            log.debug("Status: {}", currentStatus().encodePrettily())
+            isPaused.set(false)
+            msg.reply(currentStatus())
+          }
+        eventBus.consumer<Nothing>(handle()) { msg ->
+          log.debug("Will handle")
+          action()
+            .onFailure { log.error(it.message) }
+            .onSuccess { log.debug("Handle finished") }
+            .onComplete {
+              msg.reply(currentStatus())
+            }
+        }
       }
     }
 
@@ -246,7 +250,7 @@ internal class SubscriptionComponent(
         eventsList.first().metadata.eventSequence,
         eventsList.last().metadata.eventSequence
       )
-      return when (options.sink ?: EVENTBUS_REQUEST_REPLY) {
+      return when (options.sink) {
         POSTGRES_PROJECTOR -> {
           crabzillaContext.pgPool().withTransaction { conn ->
             projectEventsToPostgres(conn, eventsList)

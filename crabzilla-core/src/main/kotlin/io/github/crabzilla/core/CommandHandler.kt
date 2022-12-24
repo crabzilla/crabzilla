@@ -5,11 +5,15 @@ package io.github.crabzilla.core
  */
 abstract class CommandHandler<S, C, E>(private val applier: EventHandler<S, E>) {
 
-  protected fun withNew(events: List<E>): CommandSession<S, E> {
-    return CommandSession(events, applier)
+  protected fun with(state: S): CommandSession<S, E> {
+    return CommandSession(state, applier)
   }
-  protected fun with(state: S?): CommandSession<S, E> {
-    return CommandSession(state!!, applier)
+
+  abstract fun handle(command: C, state: S): CommandSession<S, E>
+
+  fun buildException(state: S, command: C): IllegalStateException {
+    return IllegalStateException("Illegal transition. " +
+      "state: ${state!!::class.java.simpleName} command: ${command!!::class.java.simpleName}")
   }
-  abstract fun handle(command: C, state: S?): CommandSession<S, E>
+
 }

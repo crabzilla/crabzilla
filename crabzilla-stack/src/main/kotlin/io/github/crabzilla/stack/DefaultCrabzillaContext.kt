@@ -9,13 +9,18 @@ import io.vertx.pgclient.pubsub.PgSubscriber
 class DefaultCrabzillaContext(
   private val vertx: Vertx,
   private val pgPool: PgPool,
-  private val pgConfig: JsonObject) : CrabzillaContext {
+  private val pgConfig: JsonObject,
+  private val ulidFunction: () -> String) : CrabzillaContext {
 
   override fun vertx(): Vertx = vertx
   override fun pgPool(): PgPool = pgPool
 
   override fun pgSubscriber(): PgSubscriber {
     return PgSubscriber.subscriber(vertx, toPgConnectionOptions(pgConfig))
+  }
+
+  override fun nextUlid(): String {
+    return ulidFunction.invoke()
   }
 
 }

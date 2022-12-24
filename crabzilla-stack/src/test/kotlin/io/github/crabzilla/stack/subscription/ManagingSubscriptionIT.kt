@@ -27,7 +27,7 @@ class ManagingSubscriptionIT : AbstractSubscriptionIT() {
   override val subscriptionName = "crabzilla.example1.customer.SimpleProjector"
 
   companion object {
-    private val id: UUID = UUID.randomUUID()
+    private val id: String = UUID.randomUUID().toString()
   }
 
   @Test
@@ -83,7 +83,7 @@ class ManagingSubscriptionIT : AbstractSubscriptionIT() {
 
   @Test
   @Order(3)
-  fun `after a command then work the currentOffset is 2`(tc: VertxTestContext, vertx: Vertx) {
+  fun `after a command then work the currentOffset is 1`(tc: VertxTestContext, vertx: Vertx) {
     val config = SubscriptionConfig(subscriptionName, sink = EVENTBUS_PUBLISH)
     val api = subsFactory.subscription(config, CustomersEventProjector())
     val options = CommandServiceOptions()
@@ -102,7 +102,7 @@ class ManagingSubscriptionIT : AbstractSubscriptionIT() {
           assertEquals(false, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))
 //          assertEquals(true, json.getBoolean("greedy"))
-          assertEquals(2L, json.getLong("currentOffset"))
+          assertEquals(1L, json.getLong("currentOffset"))
           assertEquals(0L, json.getLong("failures"))
           assertEquals(0L, json.getLong("backOff"))
           tc.completeNow()
@@ -200,7 +200,7 @@ fun `after a command then pause then resume the paused is false and currentOffse
       tc.verify {
         assertEquals(false, json.getBoolean("paused"))
         assertEquals(false, json.getBoolean("busy"))
-        assertEquals(2L, json.getLong("currentOffset"))
+        assertEquals(1L, json.getLong("currentOffset"))
         //          assertEquals(true, json.getBoolean("greedy"))
         assertEquals(0L, json.getLong("failures"))
         assertEquals(0L, json.getLong("backOff"))

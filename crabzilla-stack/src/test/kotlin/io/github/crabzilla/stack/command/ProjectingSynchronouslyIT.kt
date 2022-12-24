@@ -1,7 +1,7 @@
 package io.github.crabzilla.stack.command
 
 import io.github.crabzilla.TestsFixtures.jsonSerDer
-import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomersEventProjector
 import io.github.crabzilla.example1.customer.customerConfig
@@ -25,9 +25,9 @@ class ProjectingSynchronouslyIT: AbstractCommandIT() {
     val options = CommandServiceOptions(eventProjector = CustomersEventProjector())
     val service = factory.commandService(customerConfig, jsonSerDer, options)
 
-    val id = UUID.randomUUID()
+    val id = UUID.randomUUID().toString()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
-    val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
+    val cmd2 = DeactivateCustomer("it's not needed anymore")
 
     service.handle(id, cmd1)
       .compose {
@@ -41,7 +41,7 @@ class ProjectingSynchronouslyIT: AbstractCommandIT() {
             tc.verify {
               assertThat(customersList.size).isEqualTo(1)
               val json = customersList.first()
-              assertThat(UUID.fromString(json.getString("id"))).isEqualTo(id)
+              assertThat(json.getString("id")).isEqualTo(id)
               assertThat(json.getString("name")).isEqualTo(cmd1.name)
               assertThat(json.getBoolean("is_active")).isEqualTo(false)
               tc.completeNow()
