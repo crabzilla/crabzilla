@@ -6,7 +6,7 @@ import io.vertx.sqlclient.SqlClient
 
 val testDbConfig: JsonObject =
   JsonObject()
-    .put("url", "postgresql://localhost:5432/ex1_crabzilla")
+    .put("url", "postgresql://localhost:5432/crabzilla")
     .put("username", "user1")
     .put("password", "pwd1")
 
