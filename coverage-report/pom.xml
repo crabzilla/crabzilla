@@ -31,8 +31,13 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-stack</artifactId>
+      <artifactId>crabzilla-command</artifactId>
     </dependency>
+
+<!--    <dependency>-->
+<!--      <groupId>io.github.crabzilla</groupId>-->
+<!--      <artifactId>crabzilla-subscription</artifactId>-->
+<!--    </dependency>-->
 
   </dependencies>
 

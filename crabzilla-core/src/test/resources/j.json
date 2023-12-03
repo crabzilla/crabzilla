@@ -1,0 +1,45 @@
+{
+  "name": "K",
+  "connectedDevices": [
+    {
+      "name": "X",
+      "trackingType": "optical",
+      "wheelCount": 5,
+      "type": "mouse",
+      "buttonCount": 0
+    },
+    {
+      "name": "o",
+      "trackingType": "optical",
+      "wheelCount": 1,
+      "type": "mouse",
+      "buttonCount": 10
+    },
+    {
+      "name": "k",
+      "trackingType": "optical",
+      "wheelCount": 2,
+      "type": "mouse",
+      "buttonCount": 1
+    },
+    {
+      "name": "B",
+      "trackingType": "ball",
+      "wheelCount": 2,
+      "type": "mouse",
+      "buttonCount": 1
+    },
+    {
+      "name": "Z",
+      "trackingType": "optical",
+      "wheelCount": 0,
+      "type": "mouse",
+      "buttonCount": 6
+    },
+    {
+      "name": "W",
+      "type": "usb_hub"
+    }
+  ],
+  "type": "usb_hub"
+}

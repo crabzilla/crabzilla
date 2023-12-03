@@ -10,7 +10,7 @@
 
   <properties>
 
-    <java.version>11</java.version>
+    <java.version>17</java.version>
 
     <vertx.version>4.3.7</vertx.version>
     <kotlin.version>1.7.20</kotlin.version>
@@ -70,9 +70,11 @@
 
   <modules>
     <module>crabzilla-core</module>
+    <module>crabzilla-postgres</module>
+    <module>crabzilla-command</module>
+<!--    <module>crabzilla-subscription</module>-->
     <module>crabzilla-json-kotlinx</module>
     <module>crabzilla-json-jackson</module>
-    <module>crabzilla-stack</module>
     <module>coverage-report</module>
   </modules>
 
@@ -102,9 +104,21 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-stack</artifactId>
+        <artifactId>crabzilla-postgres</artifactId>
         <version>${project.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>io.github.crabzilla</groupId>
+        <artifactId>crabzilla-command</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+<!--      <dependency>-->
+<!--        <groupId>io.github.crabzilla</groupId>-->
+<!--        <artifactId>crabzilla-subscription</artifactId>-->
+<!--        <version>${project.version}</version>-->
+<!--      </dependency>-->
 
       <!-- vertx -->
 
@@ -224,7 +238,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.2.3</version>
+      <version>1.2.9</version>
       <scope>test</scope>
     </dependency>
 
@@ -260,6 +274,9 @@
             <goals>
               <goal>compile</goal>
             </goals>
+            <configuration>
+              <args> -Xcontext-receivers</args>
+            </configuration>
           </execution>
           <execution>
             <id>test-compile</id>
@@ -400,20 +417,20 @@
         </executions>
       </plugin>
 
-<!--      <plugin>-->
-<!--        <groupId>com.github.gantsign.maven</groupId>-->
-<!--        <artifactId>ktlint-maven-plugin</artifactId>-->
-<!--        <version>1.13.0</version>-->
-<!--        <executions>-->
-<!--          <execution>-->
-<!--            <id>format-and-check</id>-->
-<!--            <goals>-->
-<!--              <goal>format</goal>-->
-<!--              <goal>check</goal>-->
-<!--            </goals>-->
-<!--          </execution>-->
-<!--        </executions>-->
-<!--      </plugin>-->
+      <plugin>
+        <groupId>com.github.gantsign.maven</groupId>
+        <artifactId>ktlint-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>format-and-check</id>
+            <goals>
+              <goal>format</goal>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
     </plugins>
 

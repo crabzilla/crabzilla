@@ -1,8 +1,15 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.CommandTestSpecification
-import io.github.crabzilla.example1.customer.CustomerCommand.*
-import io.github.crabzilla.example1.customer.CustomerEvent.*
+import io.github.crabzilla.core.CommandsSession
+import io.github.crabzilla.core.TestSpecification
+import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RenameCustomer
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRenamed
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -10,57 +17,77 @@ import java.util.*
 
 @DisplayName("Customer scenarios")
 internal class CustomerSpecsTest {
-
   val id: String = UUID.randomUUID().toString()
 
+  // TODO add test for exceptions
+
   @Test
-  fun `after a RegisterCustomer command, the state and events match`() {
-    CommandTestSpecification(Customer.Initial, CustomerCommandHandler(), customerEventHandler)
-      .whenCommand(RegisterCustomer(id, "c1"))
+  fun `given a CustomerRegistered event, the state is correct`() {
+    val session = CommandsSession(Customer.Initial, customerEventHandler, customerCommandHandler)
+    TestSpecification(session)
+      .givenEvents(CustomerRegistered(id, "c1"))
       .then {
-        assertThat(it.state)
-          .isEqualTo(Customer.Inactive(id, "c1"))
-      }.then {
-        assertThat(it.events)
-          .isEqualTo(listOf(CustomerRegistered(id, "c1")))
+        assertThat(it.currentState()).isEqualTo(Customer.Inactive(id, "c1"))
       }
   }
 
   @Test
-  fun `given a CustomerRegistered event then an ActivateCustomer, the state and events match`() {
-    val spec = CommandTestSpecification(Customer.Inactive(id, "c1"), CustomerCommandHandler(),
-      customerEventHandler)
+  fun `given a RegisterCustomer command, the state and events are correct`() {
+    val session = CommandsSession(Customer.Initial, customerEventHandler, customerCommandHandler)
+    TestSpecification(session)
+      .whenCommand(RegisterCustomer(id, "c1"))
+      .then {
+        assertThat(it.appliedEvents()).isEqualTo(listOf(CustomerRegistered(id, "c1")))
+      }.then {
+        assertThat(it.currentState()).isEqualTo(Customer.Inactive(id, "c1"))
+      }
+  }
+
+  @Test
+  fun `given a RegisterCustomer and RenameCustomer commands, the state and events are correct`() {
+    val session = CommandsSession(Customer.Initial, customerEventHandler, customerCommandHandler)
+    val expectedEvents = listOf(CustomerRegistered(id, "c1"), CustomerRenamed("c1-renamed"))
+    TestSpecification(session)
+      .whenCommand(RegisterCustomer(id, "c1"))
+      .whenCommand(RenameCustomer("c1-renamed"))
+      .then {
+        assertThat(it.appliedEvents()).isEqualTo(expectedEvents)
+      }.then {
+        assertThat(it.currentState()).isEqualTo(Customer.Inactive(id, "c1-renamed"))
+      }
+  }
+
+  @Test
+  fun `given a CustomerRegistered event then an ActivateCustomer, the state and events are correct`() {
+    val session = CommandsSession(Customer.Inactive(id, "c1"), customerEventHandler, customerCommandHandler)
+    TestSpecification(session)
       .givenEvents(CustomerRegistered(id, "c1"))
       .whenCommand(ActivateCustomer("bcoz yes"))
       .then {
-        assertThat(it.state)
-          .isEqualTo(Customer.Active(id, "c1", "bcoz yes"))
-      }.then {
-        assertThat(it.events)
-          .isEqualTo(
-            listOf(
-              CustomerRegistered(id, "c1"),
-              CustomerActivated("bcoz yes")
-            )
-          )
+        val expectedState = Customer.Active(id, "c1", "bcoz yes")
+        assertThat(it.currentState()).isEqualTo(expectedState)
       }
-    // when deactivated
-    spec.whenCommand(DeactivateCustomer("bcoz bad customer"))
       .then {
-        // then it's deactivated
-        assertThat(spec.state)
-          .isEqualTo(Customer.Inactive(id, "c1","bcoz bad customer"))
-      }.then {
-        // and it has these 3 events
-        assertThat(spec.events)
-          .isEqualTo(
-            listOf(
-              CustomerRegistered(id, "c1"),
-              CustomerActivated("bcoz yes"),
-              CustomerDeactivated("bcoz bad customer")
-            )
+        val expectedEvents =
+          listOf(
+            CustomerRegistered(id, "c1"),
+            CustomerActivated("bcoz yes"),
           )
+        assertThat(it.appliedEvents()).isEqualTo(expectedEvents)
+      }
+      .whenCommand(DeactivateCustomer("bcoz bad customer"))
+      .then {
+        val expectedState = Customer.Inactive(id, "c1", "bcoz bad customer")
+        assertThat(it.currentState()).isEqualTo(expectedState)
+      }
+      .then {
+        val expectedEvents =
+          listOf(
+            CustomerRegistered(id, "c1"),
+            CustomerActivated("bcoz yes"),
+            CustomerDeactivated("bcoz bad customer"),
+          )
+        assertThat(it.appliedEvents()).isEqualTo(expectedEvents)
       }
   }
-
 }

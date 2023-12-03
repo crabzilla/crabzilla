@@ -80,9 +80,9 @@
 //
 //An aggregate runs *side effect free* business logic and returns events. It can uses internal services and repositories.
 //[source,kotlin]
-//.Customer.kt
+//.CustomerModel.kt
 //----
-//include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/Customer.kt[tags=aggregate]
+//include::./crabzilla-example1/crabzilla-example1-core/src/main/java/io/github/crabzilla/example1/customer/CustomerModel.kt[tags=aggregate]
 //----
 //
 //=== 1.4 Internal Services

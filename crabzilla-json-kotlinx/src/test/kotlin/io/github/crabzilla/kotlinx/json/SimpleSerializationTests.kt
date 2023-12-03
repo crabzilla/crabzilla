@@ -1,7 +1,12 @@
 package io.github.crabzilla.kotlinx.json
 
-import io.github.crabzilla.example1.customer.CustomerCommand.*
-import io.github.crabzilla.example1.customer.CustomerEvent.*
+import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -11,13 +16,14 @@ import java.util.*
 import kotlin.reflect.KClass
 
 class SimpleSerializationTests {
-
   companion object {
     val json = Json { serializersModule = javaModule }
     val commandsMap =
       listOf(
-        RegisterCustomer::class, ActivateCustomer::class, DeactivateCustomer::class,
-        RegisterAndActivateCustomer::class
+        RegisterCustomer::class,
+        ActivateCustomer::class,
+        DeactivateCustomer::class,
+        RegisterAndActivateCustomer::class,
       )
         .map { Pair(it.simpleName, it) }
     val eventsMap =
@@ -29,25 +35,30 @@ class SimpleSerializationTests {
     return json.encodeToString(value)
   }
 
-  inline fun <reified T : Any> decodeFromString(klass: KClass<T>, value: String): T {
+  inline fun <reified T : Any> decodeFromString(
+    klass: KClass<T>,
+    value: String,
+  ): T {
     return json.decodeFromString(value)
   }
 
   @Test
   fun `command encode`() {
     val command = RegisterCustomer(customerId = UUID.randomUUID(), name = "name1")
-    val expectedJson = """
+    val expectedJson =
+      """
       {"customerId":"${command.customerId}","name":"${command.name}"}
-    """.trimIndent()
+      """.trimIndent()
     assertThat(encodeToString(command)).isEqualTo(expectedJson)
   }
 
   @Test
   fun `command decode`() {
     val command = RegisterCustomer(customerId = UUID.randomUUID(), name = "name1")
-    val expectedJson = """
+    val expectedJson =
+      """
       {"customerId":"${command.customerId}","name":"${command.name}"}
-    """.trimIndent()
+      """.trimIndent()
     assertThat(decodeFromString(RegisterCustomer::class, expectedJson)).isEqualTo(command)
   }
 }

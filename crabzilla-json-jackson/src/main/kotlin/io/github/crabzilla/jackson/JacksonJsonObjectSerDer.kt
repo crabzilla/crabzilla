@@ -1,23 +1,19 @@
 package io.github.crabzilla.jackson
 
+import JsonObjectSerDer
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.crabzilla.stack.JsonObjectSerDer
-import io.github.crabzilla.stack.command.CommandServiceConfig
 import io.vertx.core.json.JsonObject
+import kotlin.reflect.KClass
 
-class JacksonJsonObjectSerDer<S: Any, C: Any, E: Any>(
+class JacksonJsonObjectSerDer<T : Any>(
   private val json: ObjectMapper,
-  private val featureComponent: CommandServiceConfig<S, C, E>) : JsonObjectSerDer<S, C, E> {
-  override fun eventFromJson(json: JsonObject): E {
-    return this.json.readValue(json.toString(), featureComponent.eventClass.java)
+  private val clazz: KClass<T>,
+) : JsonObjectSerDer<T> {
+  override fun toJson(instance: T): JsonObject {
+    return JsonObject(json.writeValueAsString(instance))
   }
-  override fun eventToJson(event: E): JsonObject {
-    return JsonObject(json.writeValueAsString(event))
-  }
-  override fun commandToJson(command: C): JsonObject {
-    return JsonObject(json.writeValueAsString(command))
-  }
-  override fun commandFromJson(json: JsonObject): C {
-    return this.json.readValue(json.toString(), featureComponent.commandClass.java)
+
+  override fun fromJson(json: JsonObject): T {
+    return this.json.readValue(json.toString(), clazz.java)
   }
 }

@@ -10,9 +10,13 @@ import java.time.format.DateTimeFormatter
 @kotlinx.serialization.ExperimentalSerializationApi
 @Serializer(forClass = LocalDateTime::class)
 object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
-  override fun serialize(encoder: Encoder, value: LocalDateTime) {
+  override fun serialize(
+    encoder: Encoder,
+    value: LocalDateTime,
+  ) {
     encoder.encodeString(value.format(DateTimeFormatter.ISO_DATE_TIME))
   }
+
   override fun deserialize(decoder: Decoder): LocalDateTime {
     return LocalDateTime.parse(decoder.decodeString(), DateTimeFormatter.ISO_DATE_TIME)
   }
