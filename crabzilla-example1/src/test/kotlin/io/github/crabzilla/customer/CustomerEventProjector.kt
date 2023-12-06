@@ -1,10 +1,10 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.customer
 
 import EventProjector
 import EventRecord
-import io.github.crabzilla.example1.CustomerEvent.CustomerActivated
-import io.github.crabzilla.example1.CustomerEvent.CustomerDeactivated
-import io.github.crabzilla.example1.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.customer.CustomerEvent.CustomerActivated
+import io.github.crabzilla.customer.CustomerEvent.CustomerDeactivated
+import io.github.crabzilla.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
 import io.vertx.core.Future
 import io.vertx.sqlclient.SqlConnection

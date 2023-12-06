@@ -1,4 +1,4 @@
-package io.github.crabzilla.example1
+package io.github.crabzilla.customer
 
 import DefaultCrabzillaContextFactory
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -6,9 +6,9 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.github.crabzilla.command.CommandComponentConfig
 import io.github.crabzilla.command.DefaultCommandComponent
-import io.github.crabzilla.example1.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.example1.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.example1.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.customer.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.customer.CustomerCommand.DeactivateCustomer
+import io.github.crabzilla.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
 import io.vertx.core.Vertx
 import ulid4j.Ulid
