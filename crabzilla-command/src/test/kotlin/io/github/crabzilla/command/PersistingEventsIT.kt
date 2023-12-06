@@ -2,7 +2,6 @@ package io.github.crabzilla.command
 
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerEventsSerDer
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -66,7 +65,6 @@ class PersistingEventsIT : AbstractCommandIT() {
     tc: VertxTestContext,
     vertx: Vertx,
   ) {
-    val jsonSerDer = CustomerEventsSerDer()
     val id = UUID.randomUUID().toString()
     val cmd1 = RegisterAndActivateCustomer(id, "customer#1", "is needed")
     commandComponent.handle(id, cmd1)

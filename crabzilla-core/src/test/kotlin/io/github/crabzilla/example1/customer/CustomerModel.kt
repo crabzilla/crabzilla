@@ -20,6 +20,22 @@ sealed interface CustomerEvent {
   data class CustomerDeactivated(val reason: String) : CustomerEvent
 }
 
+sealed interface CustomerCommand {
+  data class RegisterCustomer(val customerId: String, val name: String) : CustomerCommand
+
+  data class RenameCustomer(val name: String) : CustomerCommand
+
+  data class ActivateCustomer(val reason: String) : CustomerCommand
+
+  data class DeactivateCustomer(val reason: String) : CustomerCommand
+
+  data class RegisterAndActivateCustomer(
+    val customerId: String,
+    val name: String,
+    val reason: String,
+  ) : CustomerCommand
+}
+
 sealed class Customer {
   object Initial : Customer() {
     fun create(
@@ -80,22 +96,6 @@ val customerEventHandler: (Customer, CustomerEvent) -> Customer = { state: Custo
   } else {
     state
   }
-}
-
-sealed interface CustomerCommand {
-  data class RegisterCustomer(val customerId: String, val name: String) : CustomerCommand
-
-  data class RenameCustomer(val name: String) : CustomerCommand
-
-  data class ActivateCustomer(val reason: String) : CustomerCommand
-
-  data class DeactivateCustomer(val reason: String) : CustomerCommand
-
-  data class RegisterAndActivateCustomer(
-    val customerId: String,
-    val name: String,
-    val reason: String,
-  ) : CustomerCommand
 }
 
 val customerCommandHandler: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->

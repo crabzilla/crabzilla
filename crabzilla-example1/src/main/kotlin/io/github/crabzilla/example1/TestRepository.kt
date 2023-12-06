@@ -1,4 +1,4 @@
-package io.github.crabzilla
+package io.github.crabzilla.example1
 
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
@@ -9,9 +9,15 @@ import io.vertx.sqlclient.SqlClient
 import io.vertx.sqlclient.Tuple
 
 class TestRepository(private val pgPool: PgPool) {
-  fun scanEvents(
-    afterSequence: Long,
-    numberOfRows: Int,
+  fun cleanDatabase(sqlClient: SqlClient): Future<Void> {
+    return sqlClient.query("truncate events, commands, customer_summary restart identity").execute()
+      .compose { sqlClient.query("update subscriptions set sequence = 0").execute() }
+      .mapEmpty()
+  }
+
+  fun getAllEvents(
+    afterSequence: Long = 0,
+    numberOfRows: Int = Int.MAX_VALUE,
   ): Future<List<JsonObject>> {
     return pgPool.withConnection { client ->
       client.prepare(SELECT_AFTER_OFFSET)
@@ -24,7 +30,7 @@ class TestRepository(private val pgPool: PgPool) {
             json.put("sequence", row.getLong("sequence"))
             json.put("event_payload", payload)
             json.put("state_type", row.getString("state_type"))
-            json.put("state_id", row.getUUID("state_id").toString())
+            json.put("state_id", row.getString("state_id"))
             json.put("version", row.getInteger("version"))
             json.put("id", row.getString("id").toString())
             json.put("causation_id", row.getString("causation_id")?.toString())
@@ -81,17 +87,11 @@ class TestRepository(private val pgPool: PgPool) {
       ORDER BY sequence
       limit $2
     """
+
+    val DATABASE_CONFIG: JsonObject =
+      JsonObject()
+        .put("url", "postgresql://localhost:5432/crabzilla")
+        .put("username", "user1")
+        .put("password", "pwd1")
   }
 }
-
-fun cleanDatabase(sqlClient: SqlClient): Future<Void> {
-  return sqlClient.query("truncate events, commands, customer_summary restart identity").execute()
-    .compose { sqlClient.query("update subscriptions set sequence = 0").execute() }
-    .mapEmpty()
-}
-
-val testDbConfig: JsonObject =
-  JsonObject()
-    .put("url", "postgresql://localhost:5432/crabzilla")
-    .put("username", "user1")
-    .put("password", "pwd1")

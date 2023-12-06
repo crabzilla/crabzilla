@@ -75,6 +75,7 @@
 <!--    <module>crabzilla-subscription</module>-->
     <module>crabzilla-json-kotlinx</module>
     <module>crabzilla-json-jackson</module>
+    <module>crabzilla-example1</module>
     <module>coverage-report</module>
   </modules>
 

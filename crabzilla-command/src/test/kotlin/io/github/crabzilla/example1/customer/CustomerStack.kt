@@ -94,29 +94,26 @@ class CustomersEventProjector : EventProjector {
     val (payload, _, id) = eventRecord.extract()
     return when (val event = serDer.fromJson(payload)) {
       is CustomerRegistered ->
-        CustomersWriteDao.upsert(conn, id, event.name, false)
+        insert(conn, id, event.name)
       is CustomerActivated ->
-        CustomersWriteDao.updateStatus(conn, id, true)
+        updateStatus(conn, id, true)
       is CustomerDeactivated ->
-        CustomersWriteDao.updateStatus(conn, id, false)
+        updateStatus(conn, id, false)
     }
   }
-}
 
-object CustomersWriteDao {
-  fun upsert(
+  private fun insert(
     conn: SqlConnection,
     id: String,
     name: String,
-    isActive: Boolean,
   ): Future<Void> {
     return conn
       .preparedQuery("INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)")
-      .execute(Tuple.of(id, name, isActive))
+      .execute(Tuple.of(id, name, false))
       .mapEmpty()
   }
 
-  fun updateStatus(
+  private fun updateStatus(
     conn: SqlConnection,
     id: String,
     isActive: Boolean,

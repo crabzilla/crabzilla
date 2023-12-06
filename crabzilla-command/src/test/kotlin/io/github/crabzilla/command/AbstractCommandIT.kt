@@ -35,7 +35,7 @@ open class AbstractCommandIT {
   }
 
   companion object {
-    val ulidGenerator = Ulid()
-    val ulidFunction = { ulidGenerator.next() }
+    private val ulidGenerator = Ulid()
+    val ulidFunction: () -> String = { ulidGenerator.next() }
   }
 }

@@ -21,7 +21,7 @@ import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.time.Instant
 
-internal class DefaultCommandComponent<S : Any, C : Any, E : Any>(
+class DefaultCommandComponent<S : Any, C : Any, E : Any>(
   private val crabzillaContext: CrabzillaContext,
   private val config: CommandComponentConfig<S, C, E>,
 ) : CommandComponent<C> {

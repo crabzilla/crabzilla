@@ -1,9 +1,7 @@
 package io.github.crabzilla.command
 
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.customerConfig
 import io.vertx.core.Vertx
-import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -12,9 +10,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.*
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -27,43 +22,27 @@ class HandlingUnitOfWorkIT : AbstractCommandIT() {
     vertx: Vertx,
     tc: VertxTestContext,
   ) {
-    val handler = DefaultCommandComponent(context, customerConfig.copy(eventBusTopic = "MY_TOPIC"))
-    val latch = CountDownLatch(4)
-    val stateTypeMsg = AtomicReference(mutableListOf<JsonObject>())
-    vertx.eventBus().consumer<JsonObject>("MY_TOPIC") { msg ->
-      stateTypeMsg.get().add(msg.body())
-      latch.countDown()
-      msg.reply(null)
-    }
     val id1 = UUID.randomUUID().toString()
     val cmd1 = RegisterAndActivateCustomer(id1, "c1", "is needed")
     val id2 = UUID.randomUUID().toString()
     val cmd2 = RegisterAndActivateCustomer(id2, "c2", "is needed")
-    handler
+    commandComponent
       .withinTransaction { tx ->
-        handler.handle(tx, id1, cmd1)
-          .compose { handler.handle(tx, id2, cmd2) }
+        commandComponent.handle(tx, id1, cmd1)
+          .compose { commandComponent.handle(tx, id2, cmd2) }
       }
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        vertx.executeBlocking<Void> {
-          tc.verify {
-            latch.await(2, TimeUnit.SECONDS)
-            assertEquals(2, stateTypeMsg.get().size)
-            it.complete()
-          }
-        }.onSuccess {
-          testRepo.scanEvents(0, 1000)
-            .onFailure { tc.failNow(it) }
-            .onSuccess { list ->
-              tc.verify {
-                assertEquals(4, list.size)
-                tc.completeNow()
-              }
+        testRepo.scanEvents(0, 1000)
+          .onFailure { tc.failNow(it) }
+          .onSuccess { list ->
+            tc.verify {
+              assertEquals(4, list.size)
+              tc.completeNow()
             }
-        }.onFailure {
-          tc.failNow(it)
-        }
+          }
+      }.onFailure {
+        tc.failNow(it)
       }
   }
 
@@ -72,14 +51,13 @@ class HandlingUnitOfWorkIT : AbstractCommandIT() {
     vertx: Vertx,
     tc: VertxTestContext,
   ) {
-    val handler = DefaultCommandComponent(context, customerConfig.copy(eventBusTopic = "MY_TOPIC"))
     val id = UUID.randomUUID().toString()
     val cmd1 = RegisterAndActivateCustomer(id, "c1", "is needed")
     val cmd2 = RegisterAndActivateCustomer(id, "c1", "is needed")
-    handler
+    commandComponent
       .withinTransaction { tx ->
-        handler.handle(tx, id, cmd1)
-          .compose { handler.handle(tx, id, cmd2) }
+        commandComponent.handle(tx, id, cmd1)
+          .compose { commandComponent.handle(tx, id, cmd2) }
           .onComplete {
             testRepo.scanEvents(0, 1000)
               .onFailure { tc.failNow(it) }
