@@ -1,5 +1,6 @@
 package io.github.crabzilla.example1.customer
 
+import io.github.crabzilla.core.buildException
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
@@ -83,36 +84,56 @@ sealed class Customer {
 }
 
 val customerEventHandler: (Customer, CustomerEvent) -> Customer = { state: Customer, event: CustomerEvent ->
-  if (state is Customer.Initial && event is CustomerRegistered) {
-    Customer.Inactive(id = event.id, name = event.name)
-  } else if (state is Customer.Inactive && event is CustomerActivated) {
-    state.toActive(reason = event.reason)
-  } else if (state is Customer.Active && event is CustomerDeactivated) {
-    state.toInactive(reason = event.reason)
-  } else if (state is Customer.Active && event is CustomerRenamed) {
-    state.copy(name = event.name)
-  } else if (state is Customer.Inactive && event is CustomerRenamed) {
-    state.copy(name = event.name)
-  } else {
-    state
+  when (state) {
+    is Customer.Initial -> {
+      when (event) {
+        is CustomerRegistered -> Customer.Inactive(id = event.id, name = event.name)
+        else -> state
+      }
+    }
+    is Customer.Active -> {
+      when (event) {
+        is CustomerDeactivated -> state.toInactive(event.reason)
+        is CustomerRenamed -> state.copy(name = event.name)
+        else -> state
+      }
+    }
+    is Customer.Inactive -> {
+      when (event) {
+        is CustomerActivated -> state.toActive(reason = event.reason)
+        is CustomerRenamed -> state.copy(name = event.name)
+        else -> state
+      }
+    }
   }
 }
 
 val customerCommandHandler: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->
-  if (state is Customer.Initial && command is RegisterCustomer) {
-    state.create(id = command.customerId, name = command.name)
-  } else if (state is Customer.CustomerProfile && command is RenameCustomer) {
-    state.rename(command.name)
-  } else if (state is Customer.Initial && command is RegisterAndActivateCustomer) {
-    state.createAndActivate(id = command.customerId, name = command.name, reason = command.reason)
-  } else if (state is Customer.Inactive && command is ActivateCustomer) {
-    state.activate(reason = command.reason)
-  } else if (state is Customer.Active && command is DeactivateCustomer) {
-    state.deactivate(reason = command.reason)
-  } else {
-    throw IllegalStateException(
-      "Illegal transition. " +
-        "state: ${state::class.java.simpleName} command: ${command::class.java.simpleName}",
-    )
+  when (state) {
+    is Customer.Initial -> {
+      when (command) {
+        is RegisterCustomer ->
+          state.create(id = command.customerId, name = command.name)
+        is RegisterAndActivateCustomer ->
+          state.createAndActivate(id = command.customerId, name = command.name, reason = command.reason)
+        else -> throw buildException(state, command)
+      }
+    }
+    is Customer.Active -> {
+      when (command) {
+        is DeactivateCustomer -> state.deactivate(reason = command.reason)
+        is RenameCustomer -> state.rename(command.name)
+        else -> throw buildException(state, command)
+      }
+    }
+    is Customer.Inactive -> {
+      when (command) {
+        is ActivateCustomer -> {
+          state.activate(reason = command.reason)
+        }
+        is RenameCustomer -> state.rename(command.name)
+        else -> throw buildException(state, command)
+      }
+    }
   }
 }

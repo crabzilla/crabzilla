@@ -4,6 +4,7 @@ import io.github.crabzilla.core.CommandsSession
 import io.github.crabzilla.core.TestSpecification
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RenameCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
@@ -11,19 +12,23 @@ import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRenamed
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.util.*
 
 @DisplayName("Customer scenarios")
 internal class CustomerSpecsTest {
-  val id: String = UUID.randomUUID().toString()
+  private val id: String = UUID.randomUUID().toString()
+  private lateinit var session: CommandsSession<CustomerCommand, Customer, CustomerEvent>
 
-  // TODO add test for exceptions
+  @BeforeEach
+  fun setup() {
+    session = CommandsSession(Customer.Initial, customerEventHandler, customerCommandHandler)
+  }
 
   @Test
   fun `given a CustomerRegistered event, the state is correct`() {
-    val session = CommandsSession(Customer.Initial, customerEventHandler, customerCommandHandler)
     TestSpecification(session)
       .givenEvents(CustomerRegistered(id, "c1"))
       .then {
@@ -32,8 +37,21 @@ internal class CustomerSpecsTest {
   }
 
   @Test
+  fun `given a RegisterAndActivateCustomer command, the state and events are correct`() {
+    TestSpecification(session)
+      .whenCommand(RegisterAndActivateCustomer(id, "c1", reason = "cool"))
+      .then {
+        val expectedState = Customer.Active(id, "c1", reason = "cool")
+        assertThat(it.currentState()).isEqualTo(expectedState)
+      }
+      .then {
+        val expectedEvents = listOf(CustomerRegistered(id, "c1"), CustomerActivated("cool"))
+        assertThat(it.appliedEvents()).isEqualTo(expectedEvents)
+      }
+  }
+
+  @Test
   fun `given a RegisterCustomer command, the state and events are correct`() {
-    val session = CommandsSession(Customer.Initial, customerEventHandler, customerCommandHandler)
     TestSpecification(session)
       .whenCommand(RegisterCustomer(id, "c1"))
       .then {
@@ -45,7 +63,6 @@ internal class CustomerSpecsTest {
 
   @Test
   fun `given a RegisterCustomer and RenameCustomer commands, the state and events are correct`() {
-    val session = CommandsSession(Customer.Initial, customerEventHandler, customerCommandHandler)
     val expectedEvents = listOf(CustomerRegistered(id, "c1"), CustomerRenamed("c1-renamed"))
     TestSpecification(session)
       .whenCommand(RegisterCustomer(id, "c1"))
@@ -59,7 +76,6 @@ internal class CustomerSpecsTest {
 
   @Test
   fun `given a CustomerRegistered event then an ActivateCustomer, the state and events are correct`() {
-    val session = CommandsSession(Customer.Inactive(id, "c1"), customerEventHandler, customerCommandHandler)
     TestSpecification(session)
       .givenEvents(CustomerRegistered(id, "c1"))
       .whenCommand(ActivateCustomer("bcoz yes"))
@@ -88,6 +104,17 @@ internal class CustomerSpecsTest {
             CustomerDeactivated("bcoz bad customer"),
           )
         assertThat(it.appliedEvents()).isEqualTo(expectedEvents)
+      }
+  }
+
+  @Test
+  fun `given a error, it will be caught`() {
+    val forbiddenReason = "because I want it"
+    TestSpecification(session)
+      .givenEvents(CustomerRegistered(id, "c1"))
+      .whenCommand(ActivateCustomer(forbiddenReason))
+      .then {
+        assertThat(it.lastException()!!.message).isEqualTo("Reason cannot be = [$forbiddenReason], please be polite.")
       }
   }
 }

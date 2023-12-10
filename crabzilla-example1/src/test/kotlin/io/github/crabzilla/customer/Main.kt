@@ -18,6 +18,8 @@ val ulidFunction: () -> String = { ulidGenerator.next() }
 
 val json: ObjectMapper = jacksonObjectMapper().findAndRegisterModules().enable(SerializationFeature.INDENT_OUTPUT)
 
+// TODO https://www.profissionaisti.com.br/apache-kafka-kubernetes-zookeeper/
+
 fun main() {
   val vertx = Vertx.vertx()
   val context = DefaultCrabzillaContextFactory().new(vertx, TestRepository.DATABASE_CONFIG, ulidFunction)

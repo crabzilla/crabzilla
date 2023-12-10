@@ -1,12 +1,15 @@
 package io.github.crabzilla.example1.customer
 
+import io.github.crabzilla.core.buildException
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RenameCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRenamed
 
 sealed interface CustomerEvent {
   data class CustomerRegistered(val id: String, val name: String) : CustomerEvent
@@ -14,10 +17,14 @@ sealed interface CustomerEvent {
   data class CustomerActivated(val reason: String) : CustomerEvent
 
   data class CustomerDeactivated(val reason: String) : CustomerEvent
+
+  data class CustomerRenamed(val name: String) : CustomerEvent
 }
 
 sealed interface CustomerCommand {
   data class RegisterCustomer(val customerId: String, val name: String) : CustomerCommand
+
+  data class RenameCustomer(val name: String) : CustomerCommand
 
   data class ActivateCustomer(val reason: String) : CustomerCommand
 
@@ -48,7 +55,11 @@ sealed class Customer {
     }
   }
 
-  data class Active(val id: String, val name: String, val reason: String) : Customer() {
+  interface CustomerProfile {
+    fun rename(name: String): List<CustomerRenamed> = listOf(CustomerRenamed(name))
+  }
+
+  data class Active(val id: String, val name: String, val reason: String) : Customer(), CustomerProfile {
     fun deactivate(reason: String): List<CustomerEvent> {
       return listOf(CustomerDeactivated(reason))
     }
@@ -58,8 +69,11 @@ sealed class Customer {
     }
   }
 
-  data class Inactive(val id: String, val name: String, val reason: String? = null) : Customer() {
+  data class Inactive(val id: String, val name: String, val reason: String? = null) : Customer(), CustomerProfile {
     fun activate(reason: String): List<CustomerEvent> {
+      if (reason == "because I want it") {
+        throw IllegalArgumentException("Reason cannot be = [$reason], please be polite.")
+      }
       return listOf(CustomerActivated(reason))
     }
 
@@ -70,33 +84,56 @@ sealed class Customer {
 }
 
 val customerEventHandler: (Customer, CustomerEvent) -> Customer = { state: Customer, event: CustomerEvent ->
-  if (state is Customer.Initial && event is CustomerRegistered) {
-    Customer.Inactive(id = event.id, name = event.name)
-  } else if (state is Customer.Inactive && event is CustomerActivated) {
-    state.toActive(reason = event.reason)
-  } else if (state is Customer.Active && event is CustomerDeactivated) {
-    state.toInactive(reason = event.reason)
-  } else {
-    state
+  when (state) {
+    is Customer.Initial -> {
+      when (event) {
+        is CustomerRegistered -> Customer.Inactive(id = event.id, name = event.name)
+        else -> state
+      }
+    }
+    is Customer.Active -> {
+      when (event) {
+        is CustomerDeactivated -> state.toInactive(event.reason)
+        is CustomerRenamed -> state.copy(name = event.name)
+        else -> state
+      }
+    }
+    is Customer.Inactive -> {
+      when (event) {
+        is CustomerActivated -> state.toActive(reason = event.reason)
+        is CustomerRenamed -> state.copy(name = event.name)
+        else -> state
+      }
+    }
   }
 }
 
 val customerCommandHandler: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->
-  if (command is RegisterCustomer && state is Customer.Initial) {
-    state.create(id = command.customerId, name = command.name)
-  } else if (command is RegisterAndActivateCustomer && state is Customer.Initial) {
-    state.createAndActivate(id = command.customerId, name = command.name, reason = command.reason)
-  } else if (command is ActivateCustomer && state is Customer.Inactive) {
-    if (command.reason == "because I want it") {
-      throw IllegalArgumentException("Reason cannot be = [${command.reason}], please be polite.")
+  when (state) {
+    is Customer.Initial -> {
+      when (command) {
+        is RegisterCustomer ->
+          state.create(id = command.customerId, name = command.name)
+        is RegisterAndActivateCustomer ->
+          state.createAndActivate(id = command.customerId, name = command.name, reason = command.reason)
+        else -> throw buildException(state, command)
+      }
     }
-    state.activate(reason = command.reason)
-  } else if (command is DeactivateCustomer && state is Customer.Active) {
-    state.deactivate(reason = command.reason)
-  } else {
-    throw IllegalStateException(
-      "Illegal transition. " +
-        "state: ${state::class.java.simpleName} command: ${command::class.java.simpleName}",
-    )
+    is Customer.Active -> {
+      when (command) {
+        is DeactivateCustomer -> state.deactivate(reason = command.reason)
+        is RenameCustomer -> state.rename(command.name)
+        else -> throw buildException(state, command)
+      }
+    }
+    is Customer.Inactive -> {
+      when (command) {
+        is ActivateCustomer -> {
+          state.activate(reason = command.reason)
+        }
+        is RenameCustomer -> state.rename(command.name)
+        else -> throw buildException(state, command)
+      }
+    }
   }
 }

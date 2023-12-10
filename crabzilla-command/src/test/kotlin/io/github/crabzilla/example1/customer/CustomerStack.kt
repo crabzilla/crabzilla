@@ -8,9 +8,11 @@ import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RenameCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRenamed
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
@@ -45,6 +47,9 @@ class CustomerSerDer : JsonObjectSerDer<CustomerCommand> {
           .put("id", instance.customerId)
           .put("name", instance.name)
           .put("reason", instance.reason)
+      is RenameCustomer ->
+        json
+          .put("name", instance.name)
     }
   }
 
@@ -53,6 +58,7 @@ class CustomerSerDer : JsonObjectSerDer<CustomerCommand> {
       "RegisterCustomer" -> RegisterCustomer(json.getString("ID"), json.getString("name"))
       "ActivateCustomer" -> ActivateCustomer(json.getString("reason"))
       "DeactivateCustomer" -> DeactivateCustomer(json.getString("reason"))
+      "RenameCustomer" -> RenameCustomer(json.getString("name"))
       "RegisterAndActivateCustomer" ->
         RegisterAndActivateCustomer(
           json.getString("ID"),
@@ -70,6 +76,7 @@ class CustomerEventsSerDer : JsonObjectSerDer<CustomerEvent> {
       "CustomerRegistered" -> CustomerRegistered(json.getString("id"), json.getString("name"))
       "CustomerActivated" -> CustomerActivated(json.getString("reason"))
       "CustomerDeactivated" -> CustomerDeactivated(json.getString("reason"))
+      "CustomerRenamed" -> CustomerRenamed(json.getString("name"))
       else -> throw IllegalArgumentException("Unknown event $eventType")
     }
   }
@@ -80,6 +87,7 @@ class CustomerEventsSerDer : JsonObjectSerDer<CustomerEvent> {
       is CustomerRegistered -> json.put("id", instance.id).put("name", instance.name)
       is CustomerActivated -> json.put("reason", instance.reason)
       is CustomerDeactivated -> json.put("reason", instance.reason)
+      is CustomerRenamed -> json.put("name", instance.name)
     }
   }
 }
@@ -99,6 +107,7 @@ class CustomersEventProjector : EventProjector {
         updateStatus(conn, id, true)
       is CustomerDeactivated ->
         updateStatus(conn, id, false)
+      is CustomerRenamed -> TODO()
     }
   }
 
