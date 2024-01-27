@@ -20,6 +20,7 @@ import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.time.Instant
+import java.util.*
 
 class DefaultCommandComponent<S : Any, C : Any, E : Any>(
   private val crabzillaContext: CrabzillaContext,
@@ -33,13 +34,9 @@ class DefaultCommandComponent<S : Any, C : Any, E : Any>(
     command: C,
     versionPredicate: ((Int) -> Boolean)?,
   ): Future<EventMetadata> {
-    return crabzillaContext.pgPool().withTransaction { conn: SqlConnection ->
+    return crabzillaContext.withinTransaction { conn: SqlConnection ->
       handle(conn, stateId, command, versionPredicate)
     }
-  }
-
-  override fun withinTransaction(f: (SqlConnection) -> Future<EventMetadata>): Future<EventMetadata> {
-    return crabzillaContext.pgPool().withTransaction(f)
   }
 
   override fun handle(
@@ -68,7 +65,7 @@ class DefaultCommandComponent<S : Any, C : Any, E : Any>(
     ): Future<List<EventRecord>> {
       log.debug("Will append events {}", events)
       var resultingVersion = snapshot.version
-      val eventIds = events.map { crabzillaContext.nextUlid() }
+      val eventIds = events.map { crabzillaContext.newUUID() }
       val causationIds = eventIds.toMutableList()
       val correlationIds = eventIds.toMutableList()
       val tuples: List<Tuple> =
@@ -100,9 +97,9 @@ class DefaultCommandComponent<S : Any, C : Any, E : Any>(
           var rs: RowSet<Row>? = rowSet
           List(tuples.size) { index ->
             val sequence = rs!!.iterator().next().getLong("sequence")
-            val correlationId = tuples[index].getString(CORRELATION_ID_INDEX)
+            val correlationId = tuples[index].getUUID(CORRELATION_ID_INDEX)
             val currentVersion = tuples[index].getInteger(CURRENT_VERSION_INDEX)
-            val eventId = tuples[index].getString(EVENT_ID_INDEX)
+            val eventId = tuples[index].getUUID(EVENT_ID_INDEX)
             val eventPayload = tuples[index].getJsonObject(EVENT_PAYLOAD_INDEX)
             val eventMetadata =
               EventMetadata(
@@ -143,11 +140,11 @@ class DefaultCommandComponent<S : Any, C : Any, E : Any>(
       conn: SqlConnection,
       cmdAsJson: JsonObject,
       stateId: String,
-      causationId: String,
-      lastCausationId: String,
+      causationId: UUID?,
+      correlationId: UUID?,
     ): Future<Void> {
       log.debug("Will append command {} as {}", command, cmdAsJson)
-      val params = Tuple.of(stateId, causationId, lastCausationId, cmdAsJson)
+      val params = Tuple.of(stateId, causationId, correlationId, cmdAsJson)
       return conn.preparedQuery(SQL_APPEND_CMD).execute(params).mapEmpty()
     }
 
@@ -194,7 +191,7 @@ class DefaultCommandComponent<S : Any, C : Any, E : Any>(
           succeededFuture(triple)
         }
       }.compose {
-        val (_, _, appendedEvents) = it
+        val (snapshot, _, appendedEvents) = it
         if (config.commandSerDer == null) {
           succeededFuture(Pair(appendedEvents, null))
         } else {
@@ -203,8 +200,8 @@ class DefaultCommandComponent<S : Any, C : Any, E : Any>(
             conn,
             cmdAsJson,
             stateId,
-            appendedEvents.first().metadata.causationId,
-            appendedEvents.last().metadata.causationId,
+            snapshot.causationId,
+            snapshot.correlationId,
           )
             .map { Pair(appendedEvents, cmdAsJson) }
         }
@@ -245,16 +242,16 @@ class DefaultCommandComponent<S : Any, C : Any, E : Any>(
       .compose { pq: PreparedStatement ->
         var state: S = config.initialState
         var latestVersion = 0
-        var lastCausationId: String? = null
-        var lastCorrelationId: String? = null
+        var lastCausationId: UUID? = null
+        var lastCorrelationId: UUID? = null
         var error: Throwable? = null
         // Fetch eventStreamSize rows at a time
         val stream: RowStream<Row> = pq.createStream(config.eventStreamSize, Tuple.of(id))
         // Use the stream
         stream.handler { row: Row ->
           latestVersion = row.getInteger("version")
-          lastCausationId = row.getString("id")
-          lastCorrelationId = row.getString("correlation_id")
+          lastCausationId = row.getUUID("id")
+          lastCorrelationId = row.getUUID("correlation_id")
           log.debug(
             "Found event version {}, causationId {}, correlationId {}",
             latestVersion,
@@ -300,7 +297,7 @@ class DefaultCommandComponent<S : Any, C : Any, E : Any>(
             INTO events (event_type, causation_id, correlation_id, state_type, state_id, event_payload, version, id)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) returning sequence"""
     const val SQL_APPEND_CMD =
-      """ INSERT INTO commands (state_id, causation_id, last_causation_id, cmd_payload)
+      """ INSERT INTO commands (state_id, causation_id, correlation_id, cmd_payload)
           VALUES ($1, $2, $3, $4)"""
     const val CORRELATION_ID_INDEX = 2
     const val EVENT_PAYLOAD_INDEX = 5
@@ -312,6 +309,6 @@ class DefaultCommandComponent<S : Any, C : Any, E : Any>(
 internal data class Snapshot<S : Any>(
   val state: S,
   val version: Int,
-  val causationId: String?,
-  val correlationId: String?,
+  val causationId: UUID?,
+  val correlationId: UUID?,
 )

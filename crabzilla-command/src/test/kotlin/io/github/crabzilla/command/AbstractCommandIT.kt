@@ -12,7 +12,6 @@ import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
-import ulid4j.Ulid
 
 @ExtendWith(VertxExtension::class)
 open class AbstractCommandIT {
@@ -25,17 +24,12 @@ open class AbstractCommandIT {
     vertx: Vertx,
     tc: VertxTestContext,
   ) {
-    context = DefaultCrabzillaContextFactory().new(vertx, testDbConfig, ulidFunction)
+    context = DefaultCrabzillaContextFactory().new(vertx, testDbConfig)
     commandComponent = DefaultCommandComponent(context, customerConfig)
     testRepo = TestRepository(context.pgPool())
 
     cleanDatabase(context.pgPool())
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
-  }
-
-  companion object {
-    private val ulidGenerator = Ulid()
-    val ulidFunction: () -> String = { ulidGenerator.next() }
   }
 }

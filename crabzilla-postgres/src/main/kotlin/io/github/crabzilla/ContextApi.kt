@@ -6,6 +6,7 @@ import io.vertx.pgclient.PgPool
 import io.vertx.pgclient.pubsub.PgSubscriber
 import io.vertx.sqlclient.SqlConnection
 import java.net.URI
+import java.util.*
 
 interface CrabzillaContext {
   companion object {
@@ -30,21 +31,23 @@ interface CrabzillaContext {
 
   fun pgSubscriber(): PgSubscriber
 
-  fun nextUlid(): String
+  fun newUUID(): UUID
+
+  fun withinTransaction(commandOperation: (SqlConnection) -> Future<EventMetadata>): Future<EventMetadata>
 }
 
 interface CrabzillaContextFactory {
   fun new(
     vertx: Vertx,
     pgConfig: JsonObject,
-    ulidFunction: () -> String,
+    uuidFunction: () -> UUID = { UUID.randomUUID() },
   ): CrabzillaContext
 
   fun new(
     vertx: Vertx,
     pgConfig: JsonObject,
     pgPool: PgPool,
-    ulidFunction: () -> String,
+    uuidFunction: () -> UUID = { UUID.randomUUID() },
   ): CrabzillaContext
 }
 

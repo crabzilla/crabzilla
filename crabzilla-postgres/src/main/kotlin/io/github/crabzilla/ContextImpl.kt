@@ -1,15 +1,18 @@
+import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.pgclient.PgPool
 import io.vertx.pgclient.pubsub.PgSubscriber
 import io.vertx.sqlclient.PoolOptions
+import io.vertx.sqlclient.SqlConnection
+import java.util.*
 
 internal class DefaultCrabzillaContext(
   private val vertx: Vertx,
   private val pgPool: PgPool,
   private val pgConfig: JsonObject,
-  private val ulidFunction: () -> String,
+  private val uuidFunction: () -> UUID = { UUID.randomUUID() },
 ) : CrabzillaContext {
   override fun vertx(): Vertx = vertx
 
@@ -19,8 +22,12 @@ internal class DefaultCrabzillaContext(
     return PgSubscriber.subscriber(vertx, CrabzillaContext.toPgConnectionOptions(pgConfig))
   }
 
-  override fun nextUlid(): String {
-    return ulidFunction.invoke()
+  override fun newUUID(): UUID {
+    return uuidFunction.invoke()
+  }
+
+  override fun withinTransaction(commandOperation: (SqlConnection) -> Future<EventMetadata>): Future<EventMetadata> {
+    return pgPool().withTransaction(commandOperation)
   }
 }
 
@@ -28,7 +35,7 @@ class DefaultCrabzillaContextFactory : CrabzillaContextFactory {
   override fun new(
     vertx: Vertx,
     pgConfig: JsonObject,
-    ulidFunction: () -> String,
+    uuidFunction: () -> UUID,
   ): CrabzillaContext {
     fun toPgPool(
       vertx: Vertx,
@@ -40,7 +47,7 @@ class DefaultCrabzillaContextFactory : CrabzillaContextFactory {
       vertx,
       toPgPool(vertx, CrabzillaContext.toPgConnectionOptions(pgConfig)),
       pgConfig,
-      ulidFunction,
+      uuidFunction,
     )
   }
 
@@ -48,8 +55,8 @@ class DefaultCrabzillaContextFactory : CrabzillaContextFactory {
     vertx: Vertx,
     pgConfig: JsonObject,
     pgPool: PgPool,
-    ulidFunction: () -> String,
+    uuidFunction: () -> UUID,
   ): CrabzillaContext {
-    return DefaultCrabzillaContext(vertx, pgPool, pgConfig, ulidFunction)
+    return DefaultCrabzillaContext(vertx, pgPool, pgConfig, uuidFunction)
   }
 }

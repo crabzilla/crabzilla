@@ -11,10 +11,6 @@ import io.github.crabzilla.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
 import io.vertx.core.Vertx
-import ulid4j.Ulid
-
-val ulidGenerator = Ulid()
-val ulidFunction: () -> String = { ulidGenerator.next() }
 
 val json: ObjectMapper = jacksonObjectMapper().findAndRegisterModules().enable(SerializationFeature.INDENT_OUTPUT)
 
@@ -22,7 +18,7 @@ val json: ObjectMapper = jacksonObjectMapper().findAndRegisterModules().enable(S
 
 fun main() {
   val vertx = Vertx.vertx()
-  val context = DefaultCrabzillaContextFactory().new(vertx, TestRepository.DATABASE_CONFIG, ulidFunction)
+  val context = DefaultCrabzillaContextFactory().new(vertx, TestRepository.DATABASE_CONFIG)
 
   val customerConfig =
     CommandComponentConfig(
@@ -36,9 +32,8 @@ fun main() {
   val commandComponent = DefaultCommandComponent(context, customerConfig)
 
   val customerId = "C1"
-  val command1 = RegisterCustomer(customerId = customerId, name = "customer1")
 
-  commandComponent.handle(customerId, command1)
+  commandComponent.handle(customerId, RegisterCustomer(customerId = customerId, name = "customer1"))
     .compose { commandComponent.handle(customerId, ActivateCustomer("because it's needed")) }
     .compose { commandComponent.handle(customerId, DeactivateCustomer("because it's not needed")) }
     .compose { commandComponent.handle(customerId, ActivateCustomer("because it's needed")) }

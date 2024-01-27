@@ -10,7 +10,7 @@ import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import ulid4j.Ulid
+import java.util.*
 
 @DisplayName("Serializing EventRecord")
 internal class EventRecordTest {
@@ -21,9 +21,9 @@ internal class EventRecordTest {
     EventMetadata(
       stateType = "Customer",
       stateId = id,
-      eventId = ulidFunction.invoke(),
-      correlationId = ulidFunction.invoke(),
-      causationId = ulidFunction.invoke(),
+      eventId = UUID.randomUUID(),
+      correlationId = UUID.randomUUID(),
+      causationId = UUID.randomUUID(),
       eventSequence = 1,
       version = 1,
       eventType = CustomerRegistered::class.java.simpleName,
@@ -43,10 +43,5 @@ internal class EventRecordTest {
     val eventRecordAsJson = eventRecord.toJsonObject()
     val jsonArray = list.toJsonArray()
     assertThat(eventRecordAsJson).isEqualTo(jsonArray.first())
-  }
-
-  companion object {
-    val ulidGenerator = Ulid()
-    val ulidFunction = { ulidGenerator.next() }
   }
 }

@@ -245,7 +245,7 @@ internal class SubscriptionComponent( // TODO refactor
       log.debug("justReschedule - Rescheduled to next {} milliseconds", options.interval)
     }
 
-    fun project(eventsList: List<EventRecord>): Future<Void> {
+    fun publish(eventsList: List<EventRecord>): Future<Void> {
       log.debug("Found {} new events. The first is {} and last is {}", eventsList.size,
         eventsList.first().metadata.eventSequence,
         eventsList.last().metadata.eventSequence
@@ -298,7 +298,7 @@ internal class SubscriptionComponent( // TODO refactor
           registerNoNewEvents()
           succeededFuture()
         } else {
-          project(eventsList)
+          publish(eventsList)
             .onSuccess {
               registerSuccess(eventsList.last().metadata.eventSequence)
             }

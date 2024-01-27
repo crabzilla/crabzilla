@@ -63,8 +63,8 @@ sealed interface CustomerCommand {
   ) : CustomerCommand
 }
 
-sealed class Customer {
-  object Initial : Customer() {
+sealed interface Customer {
+  object Initial : Customer {
     fun create(
       id: String,
       name: String,
@@ -85,7 +85,7 @@ sealed class Customer {
     fun rename(name: String): List<CustomerRenamed> = listOf(CustomerRenamed(name))
   }
 
-  data class Active(val id: String, val name: String, val reason: String) : Customer(), CustomerProfile {
+  data class Active(val id: String, val name: String, val reason: String) : Customer, CustomerProfile {
     fun deactivate(reason: String): List<CustomerEvent> {
       return listOf(CustomerDeactivated(reason))
     }
@@ -95,7 +95,7 @@ sealed class Customer {
     }
   }
 
-  data class Inactive(val id: String, val name: String, val reason: String? = null) : Customer(), CustomerProfile {
+  data class Inactive(val id: String, val name: String, val reason: String? = null) : Customer, CustomerProfile {
     fun activate(reason: String): List<CustomerEvent> {
       if (reason == "because I want it") {
         throw IllegalArgumentException("Reason cannot be = [$reason], please be polite.")

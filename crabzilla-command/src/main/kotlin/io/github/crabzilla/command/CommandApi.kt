@@ -9,14 +9,11 @@ import io.vertx.sqlclient.SqlConnection
 import kotlin.reflect.KClass
 
 interface CommandComponent<C : Any> {
-  // TODO command should have a metadata with it's ID, causation and correlation
   fun handle(
     stateId: String,
     command: C,
     versionPredicate: ((Int) -> Boolean)? = null,
   ): Future<EventMetadata>
-
-  fun withinTransaction(f: (SqlConnection) -> Future<EventMetadata>): Future<EventMetadata>
 
   fun handle(
     conn: SqlConnection,

@@ -46,7 +46,8 @@ internal class CustomerSpecsTest {
     TestSpecification(session)
       .whenCommand(RegisterAndActivateCustomer(id, "c1", reason = "cool"))
       .then {
-        assertThat(it.currentState()).isEqualTo(Customer.Active(id, "c1", reason = "cool"))
+        val expectedState = Customer.Active(id, "c1", reason = "cool")
+        assertThat(it.currentState()).isEqualTo(expectedState)
       }
       .then {
         val expectedEvents = listOf(CustomerRegistered(id, "c1"), CustomerActivated("cool"))

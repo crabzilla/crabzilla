@@ -26,7 +26,7 @@ class HandlingUnitOfWorkIT : AbstractCommandIT() {
     val cmd1 = RegisterAndActivateCustomer(id1, "c1", "is needed")
     val id2 = UUID.randomUUID().toString()
     val cmd2 = RegisterAndActivateCustomer(id2, "c2", "is needed")
-    commandComponent
+    context
       .withinTransaction { tx ->
         commandComponent.handle(tx, id1, cmd1)
           .compose { commandComponent.handle(tx, id2, cmd2) }
@@ -54,7 +54,7 @@ class HandlingUnitOfWorkIT : AbstractCommandIT() {
     val id = UUID.randomUUID().toString()
     val cmd1 = RegisterAndActivateCustomer(id, "c1", "is needed")
     val cmd2 = RegisterAndActivateCustomer(id, "c1", "is needed")
-    commandComponent
+    context
       .withinTransaction { tx ->
         commandComponent.handle(tx, id, cmd1)
           .compose { commandComponent.handle(tx, id, cmd2) }

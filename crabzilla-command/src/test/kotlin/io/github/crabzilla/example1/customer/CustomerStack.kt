@@ -92,6 +92,8 @@ class CustomerEventsSerDer : JsonObjectSerDer<CustomerEvent> {
   }
 }
 
+// TODO use https://vertx.io/docs/vertx-sql-client-templates/java/#_anemic_json_parameters_mapping instead
+// and handle only CustomerRegistered since is to check for PK
 class CustomersEventProjector : EventProjector {
   private val serDer = CustomerEventsSerDer()
 
@@ -102,27 +104,30 @@ class CustomersEventProjector : EventProjector {
     val (payload, _, id) = eventRecord.extract()
     return when (val event = serDer.fromJson(payload)) {
       is CustomerRegistered ->
-        insert(conn, id, event.name)
+        CustomersWriteDao.insert(conn, id, event.name, false)
       is CustomerActivated ->
-        updateStatus(conn, id, true)
+        CustomersWriteDao.updateStatus(conn, id, true)
       is CustomerDeactivated ->
-        updateStatus(conn, id, false)
+        CustomersWriteDao.updateStatus(conn, id, false)
       is CustomerRenamed -> TODO()
     }
   }
+}
 
-  private fun insert(
+object CustomersWriteDao {
+  fun insert(
     conn: SqlConnection,
     id: String,
     name: String,
+    isActive: Boolean,
   ): Future<Void> {
     return conn
       .preparedQuery("INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3)")
-      .execute(Tuple.of(id, name, false))
+      .execute(Tuple.of(id, name, isActive))
       .mapEmpty()
   }
 
-  private fun updateStatus(
+  fun updateStatus(
     conn: SqlConnection,
     id: String,
     isActive: Boolean,

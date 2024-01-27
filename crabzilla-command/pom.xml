@@ -33,18 +33,11 @@
 
     <!-- test -->
 
-    <dependency>
-      <scope>test</scope>
-      <groupId>dev.shamil</groupId>
-      <artifactId>ulid4j</artifactId>
-      <version>1.0</version>
-    </dependency>
-
-    <dependency>
-      <scope>test</scope>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-json-jackson</artifactId>
-    </dependency>
+<!--    <dependency>-->
+<!--      <scope>test</scope>-->
+<!--      <groupId>io.github.crabzilla</groupId>-->
+<!--      <artifactId>crabzilla-json-jackson</artifactId>-->
+<!--    </dependency>-->
 
   </dependencies>
 
