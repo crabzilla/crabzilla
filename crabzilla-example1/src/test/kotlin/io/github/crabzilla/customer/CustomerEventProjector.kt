@@ -1,7 +1,10 @@
 package io.github.crabzilla.customer
 
-import EventProjector
-import EventRecord
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.github.crabzilla.context.EventProjector
+import io.github.crabzilla.context.EventRecord
 import io.github.crabzilla.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.customer.CustomerEvent.CustomerRegistered
@@ -11,6 +14,7 @@ import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 
 class CustomerEventProjector : EventProjector {
+  private val json: ObjectMapper = jacksonObjectMapper().findAndRegisterModules().enable(SerializationFeature.INDENT_OUTPUT)
   private val serDer = JacksonJsonObjectSerDer(json, clazz = CustomerEvent::class)
 
   override fun project(

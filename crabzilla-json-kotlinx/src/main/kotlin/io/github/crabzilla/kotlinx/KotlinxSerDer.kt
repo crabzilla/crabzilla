@@ -1,6 +1,6 @@
 package io.github.crabzilla.kotlinx
 
-import JsonObjectSerDer
+import io.github.crabzilla.context.JsonObjectSerDer
 import io.vertx.core.json.JsonObject
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json

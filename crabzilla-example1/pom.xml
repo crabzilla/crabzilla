@@ -16,7 +16,7 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-command</artifactId>
+      <artifactId>crabzilla-pg-handler</artifactId>
     </dependency>
 
     <dependency>

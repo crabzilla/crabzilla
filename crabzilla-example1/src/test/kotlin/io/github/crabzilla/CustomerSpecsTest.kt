@@ -1,6 +1,6 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.core.CommandsSession
+import io.github.crabzilla.core.CrabzillaCommandsSession
 import io.github.crabzilla.core.TestSpecification
 import io.github.crabzilla.customer.Customer
 import io.github.crabzilla.customer.CustomerCommand
@@ -25,11 +25,11 @@ import java.util.*
 @DisplayName("Customer scenarios : unit tests")
 internal class CustomerSpecsTest {
   private val id: String = UUID.randomUUID().toString()
-  private lateinit var session: CommandsSession<CustomerCommand, Customer, CustomerEvent>
+  private lateinit var session: CrabzillaCommandsSession<CustomerCommand, Customer, CustomerEvent>
 
   @BeforeEach
   fun setup() {
-    session = CommandsSession(Customer.Initial, customerEventHandler, customerCommandHandler)
+    session = CrabzillaCommandsSession(Customer.Initial, customerEventHandler, customerCommandHandler)
   }
 
   @Test

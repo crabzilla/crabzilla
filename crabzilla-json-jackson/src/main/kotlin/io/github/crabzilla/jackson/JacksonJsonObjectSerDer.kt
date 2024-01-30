@@ -1,7 +1,7 @@
 package io.github.crabzilla.jackson
 
-import JsonObjectSerDer
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.crabzilla.context.JsonObjectSerDer
 import io.vertx.core.json.JsonObject
 import kotlin.reflect.KClass
 

@@ -2,47 +2,51 @@ CREATE DATABASE crabzilla OWNER user1;
 
 \connect crabzilla ;
 
--- TODO WIP
+CREATE TYPE stream_status AS ENUM ('OPEN', 'CLOSED', 'MIGRATED');
 
--- CREATE TABLE streams (
---     id VARCHAR(100) NOT NULL,
---     state_type VARCHAR(100) NOT NULL,
---     state_id VARCHAR(100) NOT NULL, --
---     UNIQUE (id)
--- );
---
--- CREATE INDEX state_id ON streams USING HASH (state_id);
--- CREATE INDEX state_type ON streams USING HASH (state_type);
+CREATE TABLE streams (
+    id INT GENERATED ALWAYS AS IDENTITY (cache 10) UNIQUE,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    state_type VARCHAR(100) NOT NULL,
+    state_id VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    status stream_status NOT NULL DEFAULT 'OPEN',
+    migrated_to_stream_id INT NULL REFERENCES streams (id)
+);
+
+CREATE INDEX state_id ON streams USING HASH (state_id);
+CREATE INDEX state_type ON streams USING HASH (state_type);
 
 CREATE TABLE events (
-      id UUID NOT NULL UNIQUE, --
-      sequence BIGINT GENERATED ALWAYS AS IDENTITY UNIQUE,
-      event_type VARCHAR(100) NOT NULL,
-      event_payload JSON NOT NULL,
---       stream_id VARCHAR(100) NOT NULL REFERENCES streams (id),
-     state_type VARCHAR(36) NOT NULL,
-     state_id VARCHAR(36) NOT NULL, --
-      version INTEGER NOT NULL,
-      causation_id UUID NOT NULL REFERENCES events (id), --
-      correlation_id UUID NOT NULL REFERENCES events (id), --
-      UNIQUE (state_id, version)
-     )
-     -- PARTITION BY HASH (state_type)
-     ;
+  id UUID NOT NULL UNIQUE, --
+  sequence BIGINT GENERATED ALWAYS AS IDENTITY (cache 10) UNIQUE,
+  event_type VARCHAR(100) NOT NULL,
+  event_payload JSON NOT NULL,
+  stream_id INT NOT NULL REFERENCES streams (id),
+  version INT NOT NULL,
+  causation_id UUID NOT NULL REFERENCES events (id),
+  correlation_id UUID NOT NULL REFERENCES events (id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+  UNIQUE (stream_id, version)
+ )
+;
 
-CREATE INDEX state_id ON events USING HASH (state_id);
-CREATE INDEX state_type ON events USING HASH (state_type);
--- CREATE INDEX sequence_idx ON events USING BRIN (sequence);
+CREATE INDEX stream_id ON events USING HASH (stream_id);
 -- CREATE INDEX event_type ON events USING HASH (event_type);
+-- CREATE INDEX sequence_idx ON events USING BRIN (sequence);
 
 CREATE TABLE commands (
-  state_id VARCHAR(36) NOT NULL, -- should be command_id
-  causation_id UUID NULL REFERENCES events (id), --
-  correlation_id UUID NULL REFERENCES events (id), --
-  cmd_payload JSON NOT NULL
+  command_id UUID NOT NULL UNIQUE,
+  stream_id INT NOT NULL REFERENCES streams (id),
+  causation_id UUID NULL REFERENCES events (id),
+  correlation_id UUID NULL REFERENCES events (id),
+  command_payload JSON NOT NULL,
+  command_metadata JSON NULL,
+  -- TODO command_name?
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 CREATE TABLE subscriptions (
-                             name VARCHAR(100) PRIMARY KEY NOT NULL,
-                             sequence BIGINT
+ name VARCHAR(100) PRIMARY KEY NOT NULL,
+ sequence BIGINT
 );

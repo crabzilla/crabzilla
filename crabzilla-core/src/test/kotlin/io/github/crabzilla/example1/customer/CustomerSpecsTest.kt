@@ -1,6 +1,6 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.CommandsSession
+import io.github.crabzilla.core.CrabzillaCommandsSession
 import io.github.crabzilla.core.TestSpecification
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
@@ -18,13 +18,13 @@ import org.junit.jupiter.api.Test
 import java.util.*
 
 @DisplayName("Customer scenarios")
-internal class CustomerSpecsTest {
+class CustomerSpecsTest {
   private val id: String = UUID.randomUUID().toString()
-  private lateinit var session: CommandsSession<CustomerCommand, Customer, CustomerEvent>
+  private lateinit var session: CrabzillaCommandsSession<CustomerCommand, Customer, CustomerEvent>
 
   @BeforeEach
   fun setup() {
-    session = CommandsSession(Customer.Initial, customerEventHandler, customerCommandHandler)
+    session = CrabzillaCommandsSession(Customer.Initial, customerEventHandler, customerCommandHandler)
   }
 
   @Test

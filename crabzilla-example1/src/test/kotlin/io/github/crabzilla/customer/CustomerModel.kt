@@ -64,7 +64,7 @@ sealed interface CustomerCommand {
 }
 
 sealed interface Customer {
-  object Initial : Customer {
+  data object Initial : Customer {
     fun create(
       id: String,
       name: String,
