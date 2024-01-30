@@ -10,16 +10,16 @@
 
   <properties>
 
-    <java.version>11</java.version>
+    <java.version>17</java.version>
 
-    <vertx.version>4.3.7</vertx.version>
-    <kotlin.version>1.7.20</kotlin.version>
-    <serialization.version>1.4.1</serialization.version>
-    <jackson.version>2.14.1</jackson.version>
-    <slf4j.version>1.7.25</slf4j.version>
+    <vertx.version>4.5.1</vertx.version>
+    <kotlin.version>1.9.22</kotlin.version>
+    <serialization.version>1.6.2</serialization.version>
+    <jackson.version>2.16.1</jackson.version>
+    <slf4j.version>2.0.11</slf4j.version>
 
     <!-- tests-->
-    <junit-jupiter.version>5.8.2</junit-jupiter.version>
+    <junit-jupiter.version>5.10.1</junit-jupiter.version>
 
     <!-- etc-->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -70,9 +70,12 @@
 
   <modules>
     <module>crabzilla-core</module>
+    <module>crabzilla-pg-context</module>
+    <module>crabzilla-pg-handler</module>
+<!--    <module>crabzilla-subscription</module>-->
     <module>crabzilla-json-kotlinx</module>
     <module>crabzilla-json-jackson</module>
-    <module>crabzilla-stack</module>
+    <module>crabzilla-example1</module>
     <module>coverage-report</module>
   </modules>
 
@@ -102,9 +105,21 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-stack</artifactId>
+        <artifactId>crabzilla-pg-context</artifactId>
         <version>${project.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>io.github.crabzilla</groupId>
+        <artifactId>crabzilla-pg-handler</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+<!--      <dependency>-->
+<!--        <groupId>io.github.crabzilla</groupId>-->
+<!--        <artifactId>crabzilla-subscription</artifactId>-->
+<!--        <version>${project.version}</version>-->
+<!--      </dependency>-->
 
       <!-- vertx -->
 
@@ -224,7 +239,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.2.3</version>
+      <version>1.4.12</version>
       <scope>test</scope>
     </dependency>
 
@@ -260,6 +275,9 @@
             <goals>
               <goal>compile</goal>
             </goals>
+            <configuration>
+              <args> -Xcontext-receivers</args>
+            </configuration>
           </execution>
           <execution>
             <id>test-compile</id>
@@ -400,20 +418,20 @@
         </executions>
       </plugin>
 
-<!--      <plugin>-->
-<!--        <groupId>com.github.gantsign.maven</groupId>-->
-<!--        <artifactId>ktlint-maven-plugin</artifactId>-->
-<!--        <version>1.13.0</version>-->
-<!--        <executions>-->
-<!--          <execution>-->
-<!--            <id>format-and-check</id>-->
-<!--            <goals>-->
-<!--              <goal>format</goal>-->
-<!--              <goal>check</goal>-->
-<!--            </goals>-->
-<!--          </execution>-->
-<!--        </executions>-->
-<!--      </plugin>-->
+      <plugin>
+        <groupId>com.github.gantsign.maven</groupId>
+        <artifactId>ktlint-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>format-and-check</id>
+            <goals>
+              <goal>format</goal>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
     </plugins>
 

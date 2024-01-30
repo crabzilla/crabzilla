@@ -23,7 +23,7 @@ To handle your Command in a non-blocking way, Crabzilla will :
 . Validate your Command using your implementation of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/CommandValidator.kt[CommandValidator].
 . Lock the target State instance using https://www.postgresql.org/docs/13/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks].
 . Retrieve the target Snapshot using streams to avoid consuming all events at once.
-. Handle your Command and snapshot state using your implementations of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/CommandHandler.kt[CommandHandler] and https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/EventHandler.kt[EventHandler]:
+. Handle your Command and streamSnapshot state using your implementations of https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/CommandHandler.kt[CommandHandler] and https://github.com/crabzilla/crabzilla/blob/main/crabzilla-core/src/main/kotlin/io/github/crabzilla/core/command/EventHandler.kt[EventHandler]:
 . Persist (within a db transaction)
 .. Optionally persist your command as JSON to commands table.
 .. Persist the resulting events + metadata as JSON to events table.

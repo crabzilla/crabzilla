@@ -7,3 +7,6 @@ indent_size = 2
 trim_trailing_whitespace = true
 end_of_line = lf
 insert_final_newline = true
+
+[*.{kt,kts}]
+ij_kotlin_packages_to_use_import_on_demand = java.util.*

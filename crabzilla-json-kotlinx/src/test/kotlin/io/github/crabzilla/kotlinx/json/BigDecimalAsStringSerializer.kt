@@ -12,10 +12,15 @@ import java.math.BigDecimal
 @Serializer(forClass = BigDecimal::class)
 object BigDecimalAsStringSerializer : KSerializer<BigDecimal> {
   override val descriptor = PrimitiveSerialDescriptor("decimal", PrimitiveKind.STRING)
+
   override fun deserialize(decoder: Decoder): BigDecimal {
     return BigDecimal(decoder.decodeString())
   }
-  override fun serialize(encoder: Encoder, value: BigDecimal) {
+
+  override fun serialize(
+    encoder: Encoder,
+    value: BigDecimal,
+  ) {
     encoder.encodeString(value.toPlainString())
   }
 }
