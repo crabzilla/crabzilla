@@ -3,6 +3,7 @@ package io.github.crabzilla.customer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.github.crabzilla.TestRepository
 import io.github.crabzilla.context.CrabzillaContextImpl
 import io.github.crabzilla.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.customer.CustomerCommand.DeactivateCustomer
@@ -20,6 +21,7 @@ fun main() {
   val json: ObjectMapper = jacksonObjectMapper().findAndRegisterModules().enable(SerializationFeature.INDENT_OUTPUT)
   val vertx = Vertx.vertx()
   val context = CrabzillaContextImpl(vertx, TestRepository.DATABASE_CONFIG)
+  val testRepository = TestRepository(context.pgPool)
 
   val config =
     CrabzillaHandlerConfig(
@@ -31,23 +33,19 @@ fun main() {
     )
 
   with(CrabzillaHandlerImpl(context, config)) {
-    with(TargetStream(stateType = "Customer", stateId = UUID.randomUUID().toString())) {
-      handle(this, RegisterCustomer(customerId = this.stateId, name = "customer1"))
-        .compose { handle(this, ActivateCustomer("because it's needed")) }
-        .compose { handle(this, DeactivateCustomer("because it's not needed")) }
-        .compose { handle(this, ActivateCustomer("because it's needed")) }
-        .compose { handle(this, DeactivateCustomer("because it's not needed")) }
-        .compose { handle(this, ActivateCustomer("because it's needed")) }
-    }
-      .onFailure { it.printStackTrace() }
-      .onSuccess {
-        val testRepository = TestRepository(context.pgPool)
-        testRepository
-          .getAllEvents()
-          .onSuccess { events -> events.forEach { println(it) } }
-          .onFailure { it.printStackTrace() }
-      }
+    val id = UUID.randomUUID()
+    val ts = TargetStream(name = "Customer.$id")
+    testRepository.cleanDatabase()
+      .compose { handle(ts, RegisterCustomer(customerId = id.toString(), name = "customer1")) }
+      .compose { handle(ts, ActivateCustomer("because it's needed")) }
+      .compose { handle(ts, DeactivateCustomer("because it's not needed")) }
+//        .compose { handle(this, ActivateCustomer("because it's needed")) }
+//        .compose { handle(this, DeactivateCustomer("because it's not needed")) }
+//        .compose { handle(this, ActivateCustomer("because it's needed")) }
   }
-
-  println("*** bye")
+    .onFailure { it.printStackTrace() }
+    .onSuccess {
+      testRepository.printOverview()
+        .onFailure { it.printStackTrace() }
+    }
 }

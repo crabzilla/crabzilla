@@ -35,7 +35,7 @@ internal class StreamRepository<S : Any, E : Any>(
   private val log = LoggerFactory.getLogger("${StreamRepository::class.java.simpleName}-${targetStream.stateType}")
 
   fun getStreamId(): Future<Int> {
-    val params = Tuple.of(targetStream.stateType, targetStream.stateId, targetStream.name)
+    val params = Tuple.of(targetStream.name)
     log.debug("Will get stream {}", targetStream.name)
     return conn.preparedQuery(SQL_GET_STREAM)
       .execute(params)
@@ -194,9 +194,7 @@ internal class StreamWriter<S : Any, E : Any>(
     const val SQL_GET_STREAM = """
          SELECT id
            FROM streams
-          WHERE state_type = $1
-            AND state_id = $2
-            AND name = $3
+          WHERE name = $1
     """
     const val SQL_INSERT_STREAM = """
       INSERT

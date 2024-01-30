@@ -3,10 +3,9 @@ package io.github.crabzilla.customer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.github.crabzilla.TestRepository
 import io.github.crabzilla.context.CrabzillaContextImpl
 import io.github.crabzilla.context.EventMetadata
-import io.github.crabzilla.customer.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.handler.CrabzillaHandlerConfig
 import io.github.crabzilla.handler.CrabzillaHandlerImpl
@@ -22,6 +21,7 @@ fun main() {
   val json: ObjectMapper = jacksonObjectMapper().findAndRegisterModules().enable(SerializationFeature.INDENT_OUTPUT)
   val vertx = Vertx.vertx()
   val context = CrabzillaContextImpl(vertx, TestRepository.DATABASE_CONFIG)
+  val testRepository = TestRepository(context.pgPool)
 
   val config =
     CrabzillaHandlerConfig(
@@ -36,25 +36,18 @@ fun main() {
     fun handleCurried(targetStream: TargetStream): (CustomerCommand) -> Future<EventMetadata> {
       return { command -> handle(targetStream, command) }
     }
-    with(TargetStream(stateType = "Customer", stateId = UUID.randomUUID().toString())) {
+    val id = UUID.randomUUID()
+    with(TargetStream(name = "Customer.$id")) {
       val handle = handleCurried(this)
-      handle(RegisterCustomer(customerId = this.stateId, name = "customer1"))
-        .compose { handle(ActivateCustomer("because it's needed")) }
-        .compose { handle(DeactivateCustomer("because it's not needed")) }
-        .compose { handle(ActivateCustomer("because it's needed")) }
-        .compose { handle(DeactivateCustomer("because it's not needed")) }
-        .compose { handle(ActivateCustomer("because it's needed")) }
+      testRepository.cleanDatabase()
+        .compose { handle(RegisterCustomer(customerId = id.toString(), name = "customer1")) }
+//        .compose { handle(ActivateCustomer("because it's needed")) }
+//        .compose { handle(DeactivateCustomer("because it's not needed")) }
     }
       .onFailure { it.printStackTrace() }
       .onSuccess {
-        val testRepository = TestRepository(context.pgPool)
-        testRepository
-          .getAllEvents()
-          .onSuccess { events -> events.forEach { println(it) } }
+        testRepository.printOverview()
           .onFailure { it.printStackTrace() }
-          .onComplete {
-            println("*** bye")
-          }
       }
   }
 }

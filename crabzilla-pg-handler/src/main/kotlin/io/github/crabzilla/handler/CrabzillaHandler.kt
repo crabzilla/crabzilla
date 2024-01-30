@@ -24,8 +24,8 @@ interface CrabzillaHandler<C : Any> {
 }
 
 data class TargetStream(
-  val stateType: String,
-  val stateId: String,
+  val stateType: String? = null,
+  val stateId: String? = null,
   val name: String = "$stateType@$stateId",
   val mustBeNew: Boolean = false,
 )

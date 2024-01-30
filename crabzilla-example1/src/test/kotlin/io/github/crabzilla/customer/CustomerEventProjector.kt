@@ -24,11 +24,11 @@ class CustomerEventProjector : EventProjector {
     val (payload, _, id) = eventRecord.extract()
     return when (val event = serDer.fromJson(payload)) {
       is CustomerRegistered ->
-        insert(conn, id, event.name)
+        insert(conn, id!!, event.name)
       is CustomerActivated ->
-        updateStatus(conn, id, true)
+        updateStatus(conn, id!!, true)
       is CustomerDeactivated ->
-        updateStatus(conn, id, false)
+        updateStatus(conn, id!!, false)
       is CustomerEvent.CustomerRenamed -> TODO()
     }
   }

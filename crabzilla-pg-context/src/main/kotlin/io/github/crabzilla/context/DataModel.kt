@@ -6,8 +6,8 @@ import java.util.*
 
 data class EventMetadata(
   val streamId: Int,
-  val stateType: String,
-  val stateId: String,
+  val stateType: String?,
+  val stateId: String?,
   val eventId: UUID,
   val correlationId: UUID,
   val causationId: UUID,

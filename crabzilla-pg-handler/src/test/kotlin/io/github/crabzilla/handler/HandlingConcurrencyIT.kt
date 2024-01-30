@@ -10,6 +10,7 @@ import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.pgclient.impl.PgPoolOptions
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.data.Percentage
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -98,7 +99,7 @@ class HandlingConcurrencyIT : AbstractCommandIT() {
           log.info("Callables ${callables.size}, successes: ${succeeded.size}")
           tc.verify {
             assertEquals(futures.size, callables.size)
-            assertThat(callables.size - failures.size).isEqualTo(1)
+            assertThat(callables.size - failures.size).isCloseTo(1, Percentage.withPercentage(99.0))
             promise.complete(null)
           }.failing<Void> {
             promise.fail(it)
