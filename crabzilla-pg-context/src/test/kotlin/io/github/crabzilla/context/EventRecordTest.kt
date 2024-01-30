@@ -1,8 +1,6 @@
-package io.github.crabzilla
+package io.github.crabzilla.context
 
 import CustomerEventsSerDer
-import io.github.crabzilla.context.EventMetadata
-import io.github.crabzilla.context.EventRecord
 import io.github.crabzilla.context.EventRecord.Companion.fromJsonObject
 import io.github.crabzilla.context.EventRecord.Companion.toJsonArray
 import io.github.crabzilla.example1.customer.CustomerEvent
@@ -12,7 +10,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.util.*
 
-@DisplayName("Serializing io.github.crabzilla.context.EventRecord")
+@DisplayName("Serializing EventRecord")
 class EventRecordTest {
   private val id: String = "c2aeadc1-d6b5-4df6-82a4-7dec4f1df429"
   private val event = CustomerRegistered(id, "John") as CustomerEvent
