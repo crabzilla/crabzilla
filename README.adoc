@@ -9,13 +9,11 @@ ifndef::sourcedir[:sourcedir: ../../main/java]
 :toclevels: 4
 
 
-https://www.oracle.com/java/[image:https://img.shields.io/badge/Java-11-purple.svg[Vertx]]
-https://kotlinlang.org/[image:https://img.shields.io/badge/Kotlin-1.7.20-purple.svg[Vertx]]
-https://vertx.io[image:https://img.shields.io/badge/vert.x-4.3.7-purple.svg[Vertx]]
+https://www.oracle.com/java/[image:https://img.shields.io/badge/Java-17-purple.svg[Vertx]]
+https://kotlinlang.org/[image:https://img.shields.io/badge/Kotlin-1.9.22-purple.svg[Vertx]]
+https://vertx.io[image:https://img.shields.io/badge/vert.x-4.5.1-purple.svg[Vertx]]
 https://github.com/crabzilla/crabzilla/actions/workflows/blank.yml[image:https://github.com/crabzilla/crabzilla/actions/workflows/blank.yml/badge.svg[CI]]
 https://codecov.io/gh/crabzilla/crabzilla[image:https://codecov.io/gh/crabzilla/crabzilla/branch/main/graph/badge.svg[codecov]]
-https://frontend.code-inspector.com/public/project/24241/crabzilla/dashboard[image:https://api.codiga.io/project/24241/score/svg[image]]
-https://frontend.code-inspector.com/public/project/24241/crabzilla/dashboard[image:https://api.codiga.io/project/24241/status/svg[image]]
 https://jitpack.io/#io.github.crabzilla/crabzilla[image:https://jitpack.io/v/io.github.crabzilla/crabzilla.svg[Jitpack]]
 
 == Objectives
@@ -41,45 +39,5 @@ To express your domain model.
 ** given events, when command, then assertion
 ** given commands or events in any order, then assertion
 
-== crabzilla-stack
+== WIP
 
-=== Command
-
-Your commands are consistently handled:
-
-** Before handling a command, your state ID is pessimistically locked using https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS[Postgres Advisory Locks]. This helps to increase consistency.
-** After a successful command, your subscription will be notified (even in another machine) by using https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify]. This helps to be reactive via Postgres and hopefully reduce eventual consistency delay.
-** You can optionally project the command events to view model within the same database transaction. This helps set based validation.
-** You can optionally handle commands against more than 1 instance of a state type within the same database transaction. For example, transferring $ from account1 to account2. This helps to use https://martinfowler.com/eaaCatalog/unitOfWork.html[UnitOfWork]
-
-Your commands and events are serialized to `JSON` and stored into `Postgres`
-
-** Using your own https://github.com/crabzilla/crabzilla/blob/main/crabzilla-stack/src/main/kotlin/io/github/crabzilla/stack/JsonObjectSerDer.kt[JsonObjectSerDer] implementation.
-** Using `crabzilla-json-kotlinx` implementation based on https://kotlinlang.org/docs/serialization.html[Kotlin serialization] .
-** Using `crabzilla-json-jackson`  implementation based on https://github.com/FasterXML/jackson-module-kotlin[Jackson Kotlin Module].
-
-=== Subscription
-
-After handling your commands and appending the respective events, you can use any mechanism to publish your events: CDC, pooling WAL or events table, etc. Optionally, you can use Crabzilla subscription. It pulls events table periodically. Events are consumed in strict order using `events.sequence` column.
-
-** Your subscription can be triggered via https://www.postgresql.org/docs/current/sql-notify.html[Postgres notify] mechanism. It will become in `greedy` state.
-** You can consume your events in plain https://vertx.io/docs/apidocs/io/vertx/core/json/JsonObject.html[JsonObject] objects. You can use `crabzilla-json-jackson` or `crabzilla-json-kotlinx` implementations within your EventProjector implementations.
-** For each subscription, you can specify:
-*** what events to subscribe, filtering by state type (aggregate root) or event type.
-*** a very simple interval policy resulting in an exponential backoff behavior. Crabzilla applies a jitter from 0 up to 1 second.
-*** a sink:
-**** to your view models in Postgres by implementing https://github.com/crabzilla/crabzilla/blob/main/crabzilla-stack/src/main/kotlin/io/github/crabzilla/stack/EventProjector.kt[EventProjector]. It is `at most once` since the update on both view model and `subscriptions.sequence` column occurs within the same database transaction.
-**** to Vertx EventBus. You must handle idempotency.
-***** using request reply (at least once).
-***** using blocking request reply (at least once).
-***** using publishing (no guaranties).
-
-== Example applications (a work in progress)
-
-https://github.com/crabzilla/accounts-quarkus[accounts-quarkus] A full implementation of the example app using Quarkus and Jackson.
-
-https://github.com/crabzilla/accounts-vertx[accounts-vertx] A partial implementation of the example app using Vertx and Kotlin Serialization.
-
-== Status
-
-Seems like it's finally reaching stable status ;)
