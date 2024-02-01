@@ -9,13 +9,14 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.MountableFile
 
 @ExtendWith(VertxExtension::class)
-open class AbstractCommandIT {
+open class AbstractCrabzillaHandlerIT {
   var dbConfig: JsonObject
 
   init {
@@ -26,7 +27,6 @@ open class AbstractCommandIT {
         .put("uri", dbUri)
         .put("username", DB_USERNAME)
         .put("password", DB_PASSWORD)
-    println(dbConfig.encodePrettily())
   }
 
   lateinit var context: CrabzillaContext
@@ -42,7 +42,14 @@ open class AbstractCommandIT {
     crabzillaHandler = CrabzillaHandlerImpl(context, customerConfig)
     testRepository = TestRepository(context.pgPool)
 
-    TestRepository.cleanDatabase(context.pgPool)
+    testRepository.cleanDatabase()
+      .onFailure { tc.failNow(it) }
+      .onSuccess { tc.completeNow() }
+  }
+
+  @AfterEach
+  fun after(tc: VertxTestContext) {
+    testRepository.overview()
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }

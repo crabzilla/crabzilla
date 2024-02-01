@@ -16,7 +16,7 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Persisting events")
-class PersistingEventsIT : AbstractCommandIT() {
+class PersistingEventsIT : AbstractCrabzillaHandlerIT() {
   @Test
   @DisplayName("appending 1 command with 2 events results in version 2 ")
   fun s1(
@@ -27,9 +27,6 @@ class PersistingEventsIT : AbstractCommandIT() {
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
     crabzillaHandler.handle(targetStream1, cmd)
-      .compose {
-        testRepository.overview()
-      }
       .onFailure { tc.failNow(it) }
       .onSuccess {
         testRepository.scanEvents(0, 10)
@@ -74,9 +71,6 @@ class PersistingEventsIT : AbstractCommandIT() {
       .onSuccess {
         val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
         crabzillaHandler.handle(targetStream1, cmd2)
-          .compose {
-            testRepository.overview()
-          }
           .onFailure { err -> tc.failNow(err) }
           .onSuccess {
             testRepository.scanEvents(0, 10)

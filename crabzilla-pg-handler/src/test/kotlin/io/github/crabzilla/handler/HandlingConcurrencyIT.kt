@@ -25,11 +25,7 @@ import java.util.concurrent.TimeUnit
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Handling concurrent commands")
-class HandlingConcurrencyIT : AbstractCommandIT() {
-  companion object {
-    private val log = LoggerFactory.getLogger(HandlingConcurrencyIT::class.java)
-  }
-
+class HandlingConcurrencyIT : AbstractCrabzillaHandlerIT() {
   @Test
   fun `when many concurrent RenameCustomer commands against same version, at least 1 will succeed`(
     vertx: Vertx,
@@ -112,5 +108,8 @@ class HandlingConcurrencyIT : AbstractCommandIT() {
           tc.failNow(it)
         }
       }
+  }
+  companion object {
+    private val log = LoggerFactory.getLogger(HandlingConcurrencyIT::class.java)
   }
 }

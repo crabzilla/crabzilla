@@ -14,7 +14,7 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Causation and correlation")
-class CausationAndCorrelationIT : AbstractCommandIT() {
+class CausationAndCorrelationIT : AbstractCrabzillaHandlerIT() {
   @Test
   fun `when handling handle 4 commands, causation and correlation are correct`(
     vertx: Vertx,
@@ -42,10 +42,6 @@ class CausationAndCorrelationIT : AbstractCommandIT() {
         testRepository.scanEvents(0, 1000)
           .onFailure { tc.failNow(it) }
           .onSuccess { list ->
-            println("--- Events")
-            list.forEach {
-              println(it)
-            }
             tc.verify {
               assertEquals(4, list.size)
 

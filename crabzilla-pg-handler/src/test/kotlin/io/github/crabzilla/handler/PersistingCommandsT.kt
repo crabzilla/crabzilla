@@ -16,7 +16,7 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Persisting commands")
-class PersistingCommandsT : AbstractCommandIT() {
+class PersistingCommandsT : AbstractCrabzillaHandlerIT() {
   @Test
   fun `it can persist 1 command`(
     tc: VertxTestContext,
@@ -31,14 +31,6 @@ class PersistingCommandsT : AbstractCommandIT() {
       .onFailure { tc.failNow(it) }
       .onSuccess { pair ->
         val (commands, events) = pair
-        println("--- Commands")
-        for (c in commands) {
-          println(c.encodePrettily())
-        }
-        println("--- Events")
-        for (e in events) {
-          println(e.encodePrettily())
-        }
         tc.verify {
           assertThat(commands.size).isEqualTo(1)
           assertThat(events.size).isEqualTo(2)
@@ -67,14 +59,6 @@ class PersistingCommandsT : AbstractCommandIT() {
       .compose { commands -> testRepository.scanEvents(0L, 10).map { Pair(commands, it) } }
       .onSuccess { pair ->
         val (commands, events) = pair
-        println("--- Commands")
-        for (c in commands) {
-          println(c.encodePrettily())
-        }
-        println("--- Events")
-        for (c in events) {
-          println(c.encodePrettily())
-        }
         tc.verify {
           assertThat(commands.size).isEqualTo(1)
           assertThat(events.size).isEqualTo(2)
@@ -106,14 +90,6 @@ class PersistingCommandsT : AbstractCommandIT() {
       .onFailure { tc.failNow(it) }
       .onSuccess { pair ->
         val (commands, events) = pair
-        println("--- Commands")
-        for (c in commands) {
-          println(c.encodePrettily())
-        }
-        println("--- Events")
-        for (c in events) {
-          println(c.encodePrettily())
-        }
         tc.verify {
           assertThat(commands.size).isEqualTo(2)
           assertThat(events.size).isEqualTo(3)

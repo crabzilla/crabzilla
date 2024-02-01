@@ -5,8 +5,8 @@ import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
-import io.vertx.sqlclient.SqlClient
 import io.vertx.sqlclient.Tuple
+import org.slf4j.LoggerFactory
 
 class TestRepository(private val pgPool: Pool) {
   fun overview(): Future<JsonObject> {
@@ -20,8 +20,8 @@ class TestRepository(private val pgPool: Pool) {
               .put("streams", it.second)
               .put("events", it.first)
           }.onComplete {
-            println("-------------------------- NOW")
-            println(it.result().encodePrettily())
+            logger.info("Crabzilla state overview --------------------------")
+            logger.info(it.result().encodePrettily())
           }
       }
   }
@@ -79,7 +79,14 @@ class TestRepository(private val pgPool: Pool) {
       }
   }
 
+  fun cleanDatabase(): Future<Void> {
+    return pgPool.query("truncate streams, events, commands, customer_summary restart identity").execute()
+      .compose { pgPool.query("update subscriptions set sequence = 0").execute() }
+      .mapEmpty()
+  }
+
   companion object {
+    private val logger = LoggerFactory.getLogger(TestRepository::class.java)
     private const val SELECT_AFTER_OFFSET =
       """
       SELECT *
@@ -88,11 +95,5 @@ class TestRepository(private val pgPool: Pool) {
       ORDER BY sequence
       limit $2
     """
-
-    fun cleanDatabase(sqlClient: SqlClient): Future<Void> {
-      return sqlClient.query("truncate streams, events, commands, customer_summary restart identity").execute()
-        .compose { sqlClient.query("update subscriptions set sequence = 0").execute() }
-        .mapEmpty()
-    }
   }
 }
