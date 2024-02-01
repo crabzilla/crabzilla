@@ -6,16 +6,16 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.context.CrabzillaContextImpl
 import io.github.crabzilla.context.EventMetadata
+import io.github.crabzilla.context.TargetStream
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerCommandHandler
 import io.github.crabzilla.example1.customer.customerEventHandler
-import io.github.crabzilla.handler.CrabzillaHandlerConfig
-import io.github.crabzilla.handler.CrabzillaHandlerImpl
-import io.github.crabzilla.handler.TargetStream
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
+import io.github.crabzilla.writer.CrabzillaWriterConfig
+import io.github.crabzilla.writer.CrabzillaWriterImpl
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import java.util.*
@@ -27,7 +27,7 @@ fun main() {
   val testRepository = TestRepository(context.pgPool)
 
   val config =
-    CrabzillaHandlerConfig(
+    CrabzillaWriterConfig(
       initialState = Customer.Initial,
       eventHandler = customerEventHandler,
       commandHandler = customerCommandHandler,
@@ -36,7 +36,7 @@ fun main() {
       eventProjector = CustomerEventProjector(),
     )
 
-  with(CrabzillaHandlerImpl(context, config)) {
+  with(CrabzillaWriterImpl(context, config)) {
     fun handleCurried(targetStream: TargetStream): (CustomerCommand) -> Future<EventMetadata> {
       return { command -> handle(targetStream, command) }
     }

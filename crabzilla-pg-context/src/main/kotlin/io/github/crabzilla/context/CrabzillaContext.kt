@@ -62,6 +62,22 @@ interface CrabzillaContext {
   }
 }
 
+data class TargetStream(
+  val stateType: String? = null,
+  val stateId: String? = null,
+  val name: String = "$stateType@$stateId",
+  val mustBeNew: Boolean = false,
+)
+
+/**
+ * A convention used is the property "type" within JsonObject to figure out what is the type - polymorphism
+ */
+interface JsonObjectSerDer<T : Any> {
+  fun toJson(instance: T): JsonObject
+
+  fun fromJson(json: JsonObject): T
+}
+
 /**
  * To project events within a transaction
  */
@@ -72,11 +88,11 @@ interface EventProjector {
   ): Future<Void>
 }
 
-/**
- * A convention used is the property "type" within JsonObject to figure out what is the type - polymorphism
- */
-interface JsonObjectSerDer<T : Any> {
-  fun toJson(instance: T): JsonObject
+sealed class CrabzillaWriterException(override val message: String, override val cause: Throwable? = null) :
+  RuntimeException(message, cause) {
+  class StreamMustBeNewException(message: String) : CrabzillaWriterException(message)
 
-  fun fromJson(json: JsonObject): T
+  class StreamCantBeLockedException(message: String) : CrabzillaWriterException(message)
+
+  class BusinessException(message: String, cause: Throwable) : CrabzillaWriterException(message, cause)
 }

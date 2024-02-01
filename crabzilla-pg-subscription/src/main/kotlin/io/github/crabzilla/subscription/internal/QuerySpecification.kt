@@ -2,6 +2,8 @@ package io.github.crabzilla.subscription.internal
 
 internal object QuerySpecification {
 
+
+  // TODO join with streams table
   private const val QUERY = """
     SELECT event_type, state_type, state_id, event_payload, sequence, id, causation_id, correlation_id, version
       FROM events

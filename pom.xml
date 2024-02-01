@@ -25,8 +25,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <kotlin.compiler.incremental>false</kotlin.compiler.incremental>
 
-    <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-    <maven-failsafe-plugin.version>2.22.2</maven-failsafe-plugin.version>
+    <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
+    <maven-failsafe-plugin.version>3.2.5</maven-failsafe-plugin.version>
 
     <asciidoctor.maven.plugin.version>2.1.0</asciidoctor.maven.plugin.version>
     <asciidoctorj.pdf.version>1.5.4</asciidoctorj.pdf.version>
@@ -71,7 +71,8 @@
   <modules>
     <module>crabzilla-core</module>
     <module>crabzilla-pg-context</module>
-    <module>crabzilla-pg-handler</module>
+    <module>crabzilla-pg-streams</module>
+    <module>crabzilla-pg-writer</module>
 <!--    <module>crabzilla-subscription</module>-->
     <module>crabzilla-json-kotlinx</module>
     <module>crabzilla-json-jackson</module>
@@ -111,7 +112,13 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-pg-handler</artifactId>
+        <artifactId>crabzilla-pg-streams</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.github.crabzilla</groupId>
+        <artifactId>crabzilla-pg-writer</artifactId>
         <version>${project.version}</version>
       </dependency>
 

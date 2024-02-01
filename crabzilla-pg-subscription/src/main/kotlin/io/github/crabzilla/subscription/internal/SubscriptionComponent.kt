@@ -292,6 +292,9 @@ internal class SubscriptionComponent( // TODO refactor
       return succeededFuture()
     }
     isBusy.set(true)
+    // TODO withTransaction on scan and project events sink
+    // TODO break this component into one impl per sink
+
     return scanEvents()
       .compose { eventsList ->
         if (eventsList.isEmpty()) {

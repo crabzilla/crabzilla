@@ -55,7 +55,7 @@ sealed class CustomerCommand {
 }
 
 sealed class Customer {
-  object Initial : Customer() {
+  data object Initial : Customer() {
     fun create(
       id: UUID,
       name: String,
