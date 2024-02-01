@@ -8,9 +8,9 @@ import io.github.crabzilla.context.EventProjector
 import io.github.crabzilla.context.EventRecord
 import io.github.crabzilla.context.TargetStream
 import io.github.crabzilla.core.CrabzillaCommandsSession
-import io.github.crabzilla.streams.StreamRepository
+import io.github.crabzilla.streams.StreamRepositoryImpl
 import io.github.crabzilla.streams.StreamSnapshot
-import io.github.crabzilla.streams.StreamWriter
+import io.github.crabzilla.streams.StreamWriterImpl
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
@@ -76,8 +76,8 @@ class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
       return sqlConnection.preparedQuery(SQL_APPEND_CMD).execute(params).mapEmpty()
     }
 
-    val streamRepository =
-      StreamRepository(
+    val streamRepositoryImpl =
+      StreamRepositoryImpl(
         conn = sqlConnection,
         targetStream = targetStream,
         initialState = config.initialState,
@@ -85,15 +85,15 @@ class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
         eventSerDer = config.eventSerDer,
       )
 
-    return streamRepository.getStreamId()
+    return streamRepositoryImpl.getStreamId()
       .compose { streamId ->
         val params = Tuple.of(targetStream.stateType, targetStream.stateId, targetStream.name)
-        if (streamId != StreamRepository.NO_STREAM && targetStream.mustBeNew) {
+        if (streamId != StreamRepositoryImpl.NO_STREAM && targetStream.mustBeNew) {
           throw CrabzillaWriterException.StreamMustBeNewException("Stream ${targetStream.name} must be new")
         }
-        if (streamId == StreamRepository.NO_STREAM) {
+        if (streamId == StreamRepositoryImpl.NO_STREAM) {
           log.debug("Will create stream {}", targetStream.name)
-          sqlConnection.preparedQuery(StreamWriter.SQL_INSERT_STREAM)
+          sqlConnection.preparedQuery(StreamWriterImpl.SQL_INSERT_STREAM)
             .execute(params)
             .map { it.first().getInteger("id") }
         } else {
@@ -102,7 +102,7 @@ class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
       }
       .compose { streamId ->
         val streamWriter =
-          StreamWriter<S, E>(
+          StreamWriterImpl<S, E>(
             conn = sqlConnection,
             targetStream = targetStream,
             streamId = streamId,
@@ -112,7 +112,7 @@ class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
         streamWriter.lockTargetStream()
           .compose {
             log.debug("Stream locked {}", streamId)
-            streamRepository.getSnapshot(streamId)
+            streamRepositoryImpl.getSnapshot(streamId)
               .compose { snapshot ->
                 log.debug("Got snapshot {}", snapshot)
                 try {

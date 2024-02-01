@@ -4,6 +4,13 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import java.util.*
 
+data class TargetStream(
+  val stateType: String? = null,
+  val stateId: String? = null,
+  val name: String = "$stateType@$stateId",
+  val mustBeNew: Boolean = false,
+)
+
 data class EventMetadata(
   val streamId: Int,
   val stateType: String?,

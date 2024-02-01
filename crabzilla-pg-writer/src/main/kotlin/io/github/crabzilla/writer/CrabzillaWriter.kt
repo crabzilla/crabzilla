@@ -35,6 +35,6 @@ data class CrabzillaWriterConfig<S : Any, C : Any, E : Any>(
   val commandHandler: (S, C) -> List<E>,
   val eventSerDer: JsonObjectSerDer<E>,
   val commandSerDer: JsonObjectSerDer<C>? = null,
-  // TODO consider an optional state serder
+  // TODO consider an optional state serder: NO, only on stream module (to migrate the stream)
   val eventProjector: EventProjector? = null,
 )

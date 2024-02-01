@@ -62,13 +62,6 @@ interface CrabzillaContext {
   }
 }
 
-data class TargetStream(
-  val stateType: String? = null,
-  val stateId: String? = null,
-  val name: String = "$stateType@$stateId",
-  val mustBeNew: Boolean = false,
-)
-
 /**
  * A convention used is the property "type" within JsonObject to figure out what is the type - polymorphism
  */
