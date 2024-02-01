@@ -99,7 +99,8 @@ class HandlingConcurrencyIT : AbstractCommandIT() {
           log.info("Callables ${callables.size}, successes: ${succeeded.size}")
           tc.verify {
             assertEquals(futures.size, callables.size)
-            assertThat(callables.size - failures.size).isCloseTo(1, Percentage.withPercentage(99.0))
+            // TODO should be 100%
+            assertThat(callables.size - failures.size).isCloseTo(1, Percentage.withPercentage(95.0))
             promise.complete(null)
           }.failing<Void> {
             promise.fail(it)

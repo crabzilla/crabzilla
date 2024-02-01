@@ -1,7 +1,5 @@
 package io.github.crabzilla.handler
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.vertx.core.Vertx
@@ -25,13 +23,6 @@ class PersistingEventsIT : AbstractCommandIT() {
     tc: VertxTestContext,
     vertx: Vertx,
   ) {
-    // TODO WIP to migrate a stream to another stream leveraging previous state
-    val customer = Customer.Active(UUID.randomUUID(), "c1", "cust#1")
-    val objectMapper = ObjectMapper().writerWithDefaultPrettyPrinter()
-    println(customer::class.java.simpleName)
-    println(objectMapper.writeValueAsString(customer))
-    // TODO end
-
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
