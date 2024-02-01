@@ -2,6 +2,7 @@ package io.github.crabzilla.handler
 
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
+import io.github.crabzilla.example1.customer.customerConfig
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -107,6 +108,38 @@ class PersistingCommandsT : AbstractCrabzillaHandlerIT() {
           assertThat(cmdAsJsonFroDb2.getString("type")).isEqualTo("DeactivateCustomer")
           tc.completeNow()
         }
+      }
+  }
+
+  @Test
+  fun `it can persist 1 command without body`(
+    tc: VertxTestContext,
+    vertx: Vertx,
+  ) {
+    // notice we removed the commandSerDer
+    crabzillaHandler = CrabzillaHandlerImpl(context, customerConfig.copy(commandSerDer = null))
+
+    val customerId1 = UUID.randomUUID()
+    val targetStream = TargetStream(stateType = "Customer", stateId = customerId1.toString())
+    val cmd = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
+
+    crabzillaHandler.handle(targetStream, cmd)
+      .compose { testRepository.getCommands() }
+      .compose { commands -> testRepository.scanEvents(0L, 10).map { Pair(commands, it) } }
+      .onFailure { tc.failNow(it) }
+      .onSuccess { pair ->
+        val (commands, events) = pair
+        tc.verify {
+          assertThat(commands.size).isEqualTo(1)
+          assertThat(events.size).isEqualTo(2)
+          val rowAsJson = commands.first()
+          assertThat(rowAsJson.getString("causation_id")).isNull()
+          assertThat(rowAsJson.getString("correlation_id")).isNull()
+          val cmdAsJsonFroDb = rowAsJson.getJsonObject("command_payload", null)
+          assertThat(cmdAsJsonFroDb).isNull()
+          assertThat(rowAsJson.getJsonObject("command_metadata")).isNull()
+        }
+        tc.completeNow()
       }
   }
 }

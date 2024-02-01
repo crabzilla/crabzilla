@@ -38,7 +38,7 @@ CREATE TABLE commands (
   stream_id INT NOT NULL REFERENCES streams (id),
   causation_id UUID NULL REFERENCES events (id),
   correlation_id UUID NULL REFERENCES events (id),
-  command_payload JSON NOT NULL,
+  command_payload JSON NULL,
   command_metadata JSON NULL,
   -- TODO command_name?
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL

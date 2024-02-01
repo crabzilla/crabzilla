@@ -58,7 +58,7 @@ class CrabzillaHandlerImpl<S : Any, C : Any, E : Any>(
     fun appendCommand(
       causationId: UUID?,
       correlationId: UUID?,
-      cmdAsJson: JsonObject,
+      cmdAsJson: JsonObject?,
       streamId: Int,
     ): Future<Void> {
       log.debug("Will append command {} as {} metadata {}", command, cmdAsJson, commandMetadata)
@@ -153,18 +153,14 @@ class CrabzillaHandlerImpl<S : Any, C : Any, E : Any>(
         }
       }.compose {
         val (snapshot, _, appendedEvents) = it
-        if (config.commandSerDer == null) {
-          succeededFuture(appendedEvents.last().metadata)
-        } else {
-          val cmdAsJson = config.commandSerDer.toJson(command)
-          appendCommand(
-            causationId = snapshot.causationId,
-            correlationId = snapshot.correlationId,
-            cmdAsJson = cmdAsJson,
-            streamId = snapshot.streamId,
-          )
-            .map { appendedEvents.last().metadata }
-        }
+        val cmdAsJson = config.commandSerDer?.toJson(command)
+        appendCommand(
+          causationId = snapshot.causationId,
+          correlationId = snapshot.correlationId,
+          cmdAsJson = cmdAsJson,
+          streamId = snapshot.streamId,
+        )
+          .map { appendedEvents.last().metadata }
       }
       .onSuccess {
         val query = "NOTIFY $POSTGRES_NOTIFICATION_CHANNEL, '${targetStream.stateType}'"
