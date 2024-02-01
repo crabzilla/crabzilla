@@ -5,17 +5,17 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.context.CrabzillaContextImpl
-import io.github.crabzilla.customer.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.customer.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerEvent
+import io.github.crabzilla.example1.customer.customerCommandHandler
+import io.github.crabzilla.example1.customer.customerEventHandler
 import io.github.crabzilla.handler.CrabzillaHandlerConfig
 import io.github.crabzilla.handler.CrabzillaHandlerImpl
 import io.github.crabzilla.handler.TargetStream
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
 import io.vertx.core.Vertx
 import java.util.*
-
-// TODO https://www.profissionaisti.com.br/apache-kafka-kubernetes-zookeeper/
 
 fun main() {
   val json: ObjectMapper = jacksonObjectMapper().findAndRegisterModules().enable(SerializationFeature.INDENT_OUTPUT)
@@ -36,9 +36,9 @@ fun main() {
     val id = UUID.randomUUID()
     val ts = TargetStream(name = "Customer.$id")
     testRepository.cleanDatabase()
-      .compose { handle(ts, RegisterCustomer(customerId = id.toString(), name = "customer1")) }
-      .compose { handle(ts, ActivateCustomer("because it's needed")) }
-      .compose { handle(ts, DeactivateCustomer("because it's not needed")) }
+      .compose { handle(ts, CustomerCommand.RegisterCustomer(customerId = id, name = "customer1")) }
+      .compose { handle(ts, CustomerCommand.ActivateCustomer("because it's needed")) }
+      .compose { handle(ts, CustomerCommand.DeactivateCustomer("because it's not needed")) }
 //        .compose { handle(this, ActivateCustomer("because it's needed")) }
 //        .compose { handle(this, DeactivateCustomer("because it's not needed")) }
 //        .compose { handle(this, ActivateCustomer("because it's needed")) }

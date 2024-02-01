@@ -1,4 +1,4 @@
-CREATE DATABASE crabzilla OWNER user1;
+-- CREATE DATABASE crabzilla OWNER user1;
 
 \connect crabzilla ;
 

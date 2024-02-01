@@ -5,9 +5,10 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.github.crabzilla.context.EventProjector
 import io.github.crabzilla.context.EventRecord
-import io.github.crabzilla.customer.CustomerEvent.CustomerActivated
-import io.github.crabzilla.customer.CustomerEvent.CustomerDeactivated
-import io.github.crabzilla.customer.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.example1.customer.CustomerEvent
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
 import io.vertx.core.Future
 import io.vertx.sqlclient.SqlConnection

@@ -1,30 +1,25 @@
-package io.github.crabzilla
+package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.CrabzillaCommandsSession
 import io.github.crabzilla.core.TestSpecification
-import io.github.crabzilla.customer.Customer
-import io.github.crabzilla.customer.CustomerCommand
-import io.github.crabzilla.customer.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.customer.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.customer.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.customer.CustomerCommand.RenameCustomer
-import io.github.crabzilla.customer.CustomerEvent
-import io.github.crabzilla.customer.CustomerEvent.CustomerActivated
-import io.github.crabzilla.customer.CustomerEvent.CustomerDeactivated
-import io.github.crabzilla.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.customer.CustomerEvent.CustomerRenamed
-import io.github.crabzilla.customer.customerCommandHandler
-import io.github.crabzilla.customer.customerEventHandler
+import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RenameCustomer
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRenamed
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.util.*
 
-@DisplayName("Customer scenarios : unit tests")
-internal class CustomerSpecsTest {
-  private val id: String = UUID.randomUUID().toString()
+@DisplayName("Customer scenarios")
+class CustomerSpecsTest {
+  private val id = UUID.randomUUID()
   private lateinit var session: CrabzillaCommandsSession<CustomerCommand, Customer, CustomerEvent>
 
   @BeforeEach

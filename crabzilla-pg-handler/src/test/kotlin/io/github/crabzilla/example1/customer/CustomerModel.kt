@@ -40,14 +40,14 @@ sealed interface CustomerCommand {
 
 sealed class Customer {
   data object Initial : Customer() {
-    fun create(
+    fun register(
       id: UUID,
       name: String,
     ): List<CustomerEvent> {
       return listOf(CustomerRegistered(id = id, name = name))
     }
 
-    fun createAndActivate(
+    fun registerAndActivate(
       id: UUID,
       name: String,
       reason: String,
@@ -114,9 +114,9 @@ val customerCommandHandler: (state: Customer, command: CustomerCommand) -> List<
     is Customer.Initial -> {
       when (command) {
         is RegisterCustomer ->
-          state.create(id = command.customerId, name = command.name)
+          state.register(id = command.customerId, name = command.name)
         is RegisterAndActivateCustomer ->
-          state.createAndActivate(id = command.customerId, name = command.name, reason = command.reason)
+          state.registerAndActivate(id = command.customerId, name = command.name, reason = command.reason)
         else -> throw buildException(state, command)
       }
     }

@@ -10,19 +10,20 @@ import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRenamed
+import java.util.*
 
 sealed interface CustomerEvent {
-  data class CustomerRegistered(val id: String, val name: String) : CustomerEvent
-
-  data class CustomerRenamed(val name: String) : CustomerEvent
+  data class CustomerRegistered(val id: UUID, val name: String) : CustomerEvent
 
   data class CustomerActivated(val reason: String) : CustomerEvent
 
   data class CustomerDeactivated(val reason: String) : CustomerEvent
+
+  data class CustomerRenamed(val name: String) : CustomerEvent
 }
 
 sealed interface CustomerCommand {
-  data class RegisterCustomer(val customerId: String, val name: String) : CustomerCommand
+  data class RegisterCustomer(val customerId: UUID, val name: String) : CustomerCommand
 
   data class RenameCustomer(val name: String) : CustomerCommand
 
@@ -31,7 +32,7 @@ sealed interface CustomerCommand {
   data class DeactivateCustomer(val reason: String) : CustomerCommand
 
   data class RegisterAndActivateCustomer(
-    val customerId: String,
+    val customerId: UUID,
     val name: String,
     val reason: String,
   ) : CustomerCommand
@@ -39,15 +40,15 @@ sealed interface CustomerCommand {
 
 sealed class Customer {
   data object Initial : Customer() {
-    fun create(
-      id: String,
+    fun register(
+      id: UUID,
       name: String,
     ): List<CustomerEvent> {
       return listOf(CustomerRegistered(id = id, name = name))
     }
 
-    fun createAndActivate(
-      id: String,
+    fun registerAndActivate(
+      id: UUID,
       name: String,
       reason: String,
     ): List<CustomerEvent> {
@@ -59,7 +60,7 @@ sealed class Customer {
     fun rename(name: String): List<CustomerRenamed> = listOf(CustomerRenamed(name))
   }
 
-  data class Active(val id: String, val name: String, val reason: String) : Customer(), CustomerProfile {
+  data class Active(val id: UUID, val name: String, val reason: String) : Customer(), CustomerProfile {
     fun deactivate(reason: String): List<CustomerEvent> {
       return listOf(CustomerDeactivated(reason))
     }
@@ -69,7 +70,7 @@ sealed class Customer {
     }
   }
 
-  data class Inactive(val id: String, val name: String, val reason: String? = null) : Customer(), CustomerProfile {
+  data class Inactive(val id: UUID, val name: String, val reason: String? = null) : Customer(), CustomerProfile {
     fun activate(reason: String): List<CustomerEvent> {
       if (reason == "because I want it") {
         throw IllegalArgumentException("Reason cannot be = [$reason], please be polite.")
@@ -113,9 +114,9 @@ val customerCommandHandler: (state: Customer, command: CustomerCommand) -> List<
     is Customer.Initial -> {
       when (command) {
         is RegisterCustomer ->
-          state.create(id = command.customerId, name = command.name)
+          state.register(id = command.customerId, name = command.name)
         is RegisterAndActivateCustomer ->
-          state.createAndActivate(id = command.customerId, name = command.name, reason = command.reason)
+          state.registerAndActivate(id = command.customerId, name = command.name, reason = command.reason)
         else -> throw buildException(state, command)
       }
     }

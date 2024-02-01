@@ -35,8 +35,8 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Docker for Postgress
-        run: docker-compose up -d
+#      - name: Docker for Postgress
+#        run: docker-compose up -d
 
       - name: Build and test
         run: mvn clean verify

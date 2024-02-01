@@ -19,7 +19,7 @@ import java.util.*
 
 @DisplayName("Customer scenarios")
 class CustomerSpecsTest {
-  private val id: String = UUID.randomUUID().toString()
+  private val id = UUID.randomUUID()
   private lateinit var session: CrabzillaCommandsSession<CustomerCommand, Customer, CustomerEvent>
 
   @BeforeEach

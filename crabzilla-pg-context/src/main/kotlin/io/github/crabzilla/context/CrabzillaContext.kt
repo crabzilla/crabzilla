@@ -31,7 +31,7 @@ interface CrabzillaContext {
 
     fun toPgConnectionOptions(pgConfig: JsonObject): PgConnectOptions {
       val options = PgConnectOptions()
-      val uri = URI.create(pgConfig.getString("url"))
+      val uri = URI.create(pgConfig.getString("uri"))
       options.host = uri.host
       options.port = uri.port
       options.database = uri.path.replace("/", "")

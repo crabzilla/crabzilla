@@ -94,11 +94,5 @@ class TestRepository(private val pgPool: Pool) {
         .compose { sqlClient.query("update subscriptions set sequence = 0").execute() }
         .mapEmpty()
     }
-
-    val testDbConfig: JsonObject =
-      JsonObject()
-        .put("url", "postgresql://localhost:5432/crabzilla")
-        .put("username", "user1")
-        .put("password", "pwd1")
   }
 }
