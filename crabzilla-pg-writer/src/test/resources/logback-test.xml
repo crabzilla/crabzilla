@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false">
+
+    <!--    <conversionRule conversionWord="vcl"-->
+    <!--                    converterClass="io.reactiverse.contextual.logging.LogbackConverter"/>-->
+
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <charset>UTF-8</charset>
+            <!--        <pattern>%d %-4relative [%thread] %-5level [%vcl{commandId}] %logger{35} - %msg%n</pattern>-->
+            <pattern>%d %-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <logger name="io.netty" level="WARN"/>
+    <logger name="io.mockk" level="WARN"/>
+    <logger name="org.testcontainers" level="INFO"/>
+    <!-- The following logger can be used for containers logs since 1.18.0 -->
+    <logger name="tc" level="INFO"/>
+    <logger name="com.github.dockerjava" level="INFO"/>
+    <logger name="com.github.dockerjava.zerodep.shaded.org.apache.hc.client5.http.wire" level="OFF"/>
+
+</configuration>
