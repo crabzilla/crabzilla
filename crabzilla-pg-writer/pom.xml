@@ -33,7 +33,7 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-pg-streams</artifactId>
+      <artifactId>crabzilla-pg-stream</artifactId>
     </dependency>
 
     <!-- test -->

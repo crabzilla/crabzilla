@@ -21,7 +21,7 @@
     <version>v0.5.7</version>
   </parent>
 
-  <artifactId>crabzilla-pg-streams</artifactId>
+  <artifactId>crabzilla-pg-stream</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>

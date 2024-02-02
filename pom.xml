@@ -71,7 +71,7 @@
   <modules>
     <module>crabzilla-core</module>
     <module>crabzilla-pg-context</module>
-    <module>crabzilla-pg-streams</module>
+    <module>crabzilla-pg-stream</module>
     <module>crabzilla-pg-writer</module>
 <!--    <module>crabzilla-subscription</module>-->
     <module>crabzilla-json-kotlinx</module>
@@ -112,7 +112,7 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-pg-streams</artifactId>
+        <artifactId>crabzilla-pg-stream</artifactId>
         <version>${project.version}</version>
       </dependency>
 

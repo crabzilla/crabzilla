@@ -104,6 +104,7 @@ class PersistingCommandsT : AbstractCrabzillaWriterIT() {
           assertThat(cmdAsJsonFroDb1.getString("type")).isEqualTo("RegisterAndActivateCustomer")
 
           val rowAsJson2 = commands[1]
+          assertThat(rowAsJson2.getString("command_id")).isNotNull()
           assertThat(rowAsJson2.getString("causation_id")).isEqualTo(events[1].getString("id"))
           assertThat(rowAsJson2.getString("correlation_id")).isEqualTo(events[1].getString("correlation_id"))
           val cmdAsJsonFroDb2 = rowAsJson2.getJsonObject("command_payload")
@@ -134,12 +135,13 @@ class PersistingCommandsT : AbstractCrabzillaWriterIT() {
         tc.verify {
           assertThat(commands.size).isEqualTo(1)
           assertThat(events.size).isEqualTo(2)
-          val rowAsJson = commands.first()
-          assertThat(rowAsJson.getString("causation_id")).isNull()
-          assertThat(rowAsJson.getString("correlation_id")).isNull()
-          val cmdAsJsonFroDb = rowAsJson.getJsonObject("command_payload", null)
-          assertThat(cmdAsJsonFroDb).isNull()
-          assertThat(rowAsJson.getJsonObject("command_metadata")).isNull()
+          val command = commands.first()
+          assertThat(command.getString("command_id")).isNotNull()
+          assertThat(command.getString("causation_id")).isNull()
+          assertThat(command.getString("correlation_id")).isNull()
+          val commandPayload = command.getJsonObject("command_payload", null)
+          assertThat(commandPayload).isNull()
+          assertThat(command.getJsonObject("command_metadata")).isNull()
         }
         tc.completeNow()
       }

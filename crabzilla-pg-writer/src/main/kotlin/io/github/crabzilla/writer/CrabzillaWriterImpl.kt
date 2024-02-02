@@ -8,9 +8,9 @@ import io.github.crabzilla.context.EventProjector
 import io.github.crabzilla.context.EventRecord
 import io.github.crabzilla.context.TargetStream
 import io.github.crabzilla.core.CrabzillaCommandsSession
-import io.github.crabzilla.streams.StreamRepositoryImpl
-import io.github.crabzilla.streams.StreamSnapshot
-import io.github.crabzilla.streams.StreamWriterImpl
+import io.github.crabzilla.stream.StreamRepositoryImpl
+import io.github.crabzilla.stream.StreamSnapshot
+import io.github.crabzilla.stream.StreamWriterImpl
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
@@ -29,7 +29,7 @@ class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
   override fun handle(
     targetStream: TargetStream,
     command: C,
-    commandMetadata: CommandMetadata?,
+    commandMetadata: CommandMetadata,
   ): Future<EventMetadata> {
     return context.withinTransaction { conn: SqlConnection ->
       handleWithinTransaction(conn, targetStream, command, commandMetadata)
@@ -40,7 +40,7 @@ class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
     sqlConnection: SqlConnection,
     targetStream: TargetStream,
     command: C,
-    commandMetadata: CommandMetadata?,
+    commandMetadata: CommandMetadata,
   ): Future<EventMetadata> {
     fun projectEvents(
       appendedEvents: List<EventRecord>,
@@ -66,12 +66,12 @@ class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
       log.debug("Will append command {} as {} metadata {}", command, cmdAsJson, commandMetadata)
       val params =
         Tuple.of(
-          commandMetadata?.commandId ?: context.uuidFunction.invoke(),
+          commandMetadata.commandId ?: context.uuidFunction.invoke(),
           causationId,
           correlationId,
           cmdAsJson,
           streamId,
-          commandMetadata?.metadata,
+          commandMetadata.metadata,
         )
       return sqlConnection.preparedQuery(SQL_APPEND_CMD).execute(params).mapEmpty()
     }

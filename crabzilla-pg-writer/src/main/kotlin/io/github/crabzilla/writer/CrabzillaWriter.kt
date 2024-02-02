@@ -9,25 +9,25 @@ import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
 import java.util.*
 
+data class CommandMetadata(
+  val commandId: UUID = UUID.randomUUID(),
+  val metadata: JsonObject? = null,
+)
+
 interface CrabzillaWriter<C : Any> {
   fun handle(
     targetStream: TargetStream,
     command: C,
-    commandMetadata: CommandMetadata? = null,
+    commandMetadata: CommandMetadata = CommandMetadata(),
   ): Future<EventMetadata>
 
   fun handleWithinTransaction(
     sqlConnection: SqlConnection,
     targetStream: TargetStream,
     command: C,
-    commandMetadata: CommandMetadata? = null,
+    commandMetadata: CommandMetadata = CommandMetadata(),
   ): Future<EventMetadata>
 }
-
-data class CommandMetadata(
-  val commandId: UUID = UUID.randomUUID(),
-  val metadata: JsonObject? = null,
-)
 
 data class CrabzillaWriterConfig<S : Any, C : Any, E : Any>(
   val initialState: S,

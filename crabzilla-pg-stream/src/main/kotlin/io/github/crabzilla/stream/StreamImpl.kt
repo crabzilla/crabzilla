@@ -1,4 +1,4 @@
-package io.github.crabzilla.streams
+package io.github.crabzilla.stream
 
 import io.github.crabzilla.context.CrabzillaWriterException
 import io.github.crabzilla.context.EventMetadata

@@ -1,4 +1,4 @@
-package io.github.crabzilla.streams
+package io.github.crabzilla.stream
 
 import io.github.crabzilla.context.EventRecord
 import io.vertx.core.Future
