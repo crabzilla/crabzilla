@@ -21,12 +21,12 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-json-kotlinx</artifactId>
+      <artifactId>crabzilla-pg-context</artifactId>
     </dependency>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-json-jackson</artifactId>
+      <artifactId>crabzilla-pg-streams</artifactId>
     </dependency>
 
     <dependency>
@@ -38,6 +38,16 @@
 <!--      <groupId>io.github.crabzilla</groupId>-->
 <!--      <artifactId>crabzilla-subscription</artifactId>-->
 <!--    </dependency>-->
+
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-json-kotlinx</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-json-jackson</artifactId>
+    </dependency>
 
   </dependencies>
 
