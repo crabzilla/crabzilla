@@ -34,6 +34,7 @@ class PersistingCommandsT : AbstractCrabzillaWriterIT() {
         tc.verify {
           assertThat(commands.size).isEqualTo(1)
           val command = commands.first()
+          assertThat(command.getString("command_id")).isNotNull()
           assertThat(command.getString("causation_id")).isNull()
           assertThat(command.getString("correlation_id")).isNull()
           val cmdPayload = command.getJsonObject("command_payload")
@@ -52,7 +53,8 @@ class PersistingCommandsT : AbstractCrabzillaWriterIT() {
     val customerId1 = UUID.randomUUID()
     val targetStream = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
-    val cmdMetadata = CommandMetadata(metadata = JsonObject().put("campaign", "black-friday-2024").put("user", "Peter"))
+    val cmdMetadata =
+      CommandMetadata(commandId = UUID.randomUUID(), metadata = JsonObject().put("campaign", "black-friday-2024").put("user", "Peter"))
     crabzillaWriter.handle(targetStream, cmd, cmdMetadata)
       .compose { testRepository.getCommands() }
       .compose { commands -> testRepository.getEvents(0L, 10).map { Pair(commands, it) } }
@@ -62,6 +64,7 @@ class PersistingCommandsT : AbstractCrabzillaWriterIT() {
           assertThat(commands.size).isEqualTo(1)
           assertThat(events.size).isEqualTo(2)
           val rowAsJson = commands.first()
+          assertThat(rowAsJson.getString("command_id")).isEqualTo(cmdMetadata.commandId)
           assertThat(rowAsJson.getString("causation_id")).isNull()
           assertThat(rowAsJson.getString("correlation_id")).isNull()
           val cmdAsJsonFroDb = rowAsJson.getJsonObject("command_payload")
@@ -94,6 +97,7 @@ class PersistingCommandsT : AbstractCrabzillaWriterIT() {
           assertThat(events.size).isEqualTo(3)
 
           val rowAsJson1 = commands.first()
+          assertThat(rowAsJson1.getString("command_id")).isNotNull()
           assertThat(rowAsJson1.getString("causation_id")).isNull()
           assertThat(rowAsJson1.getString("correlation_id")).isNull()
           val cmdAsJsonFroDb1 = rowAsJson1.getJsonObject("command_payload")
