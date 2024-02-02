@@ -99,8 +99,8 @@ class CustomersEventProjector : EventProjector {
     conn: SqlConnection,
     eventRecord: EventRecord,
   ): Future<Void> {
-    val (payload, _, idAsString) = eventRecord.extract()
-    val idAsUUID = UUID.fromString(idAsString)
+    val (payload, metadata) = eventRecord.extract()
+    val idAsUUID = UUID.fromString(metadata.stateId)
     return when (val event = serDer.fromJson(payload)) {
       is CustomerRegistered ->
         conn

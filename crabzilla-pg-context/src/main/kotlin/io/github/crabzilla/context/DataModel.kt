@@ -9,12 +9,20 @@ data class TargetStream(
   val stateId: String? = null,
   val name: String = "$stateType@$stateId",
   val mustBeNew: Boolean = false,
-)
+) {
+  fun stateType(): String {
+    return stateType ?: name.split("@")[0]
+  }
+
+  fun stateId(): String {
+    return stateId ?: name.split("@")[1]
+  }
+}
 
 data class EventMetadata(
   val streamId: Int,
-  val stateType: String?,
-  val stateId: String?,
+  val stateType: String,
+  val stateId: String,
   val eventId: UUID,
   val correlationId: UUID,
   val causationId: UUID,
@@ -65,5 +73,5 @@ data class EventRecord(val metadata: EventMetadata, val payload: JsonObject) {
       .put("eventPayload", payload)
   }
 
-  fun extract() = Triple(payload, metadata, metadata.stateId)
+  fun extract() = Pair(payload, metadata)
 }

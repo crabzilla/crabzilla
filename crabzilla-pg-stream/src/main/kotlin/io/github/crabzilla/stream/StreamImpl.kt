@@ -163,8 +163,8 @@ class StreamWriterImpl<S : Any, E : Any>(
           val eventMetadata =
             EventMetadata(
               streamId = streamId,
-              stateType = targetStream.stateType,
-              stateId = targetStream.stateId,
+              stateType = targetStream.stateType(),
+              stateId = targetStream.stateId(),
               eventId = eventId,
               correlationId = correlationId,
               causationId = eventId,

@@ -45,7 +45,7 @@ fun main() {
       return { command -> handle(targetStream, command) }
     }
     val id = UUID.randomUUID()
-    with(TargetStream(name = "Customer.$id")) {
+    with(TargetStream(name = "Customer@$id")) {
       val handle = handleCurried(this)
       testRepository.cleanDatabase()
         .compose { handle(RegisterCustomer(customerId = id, name = "customer1")) }

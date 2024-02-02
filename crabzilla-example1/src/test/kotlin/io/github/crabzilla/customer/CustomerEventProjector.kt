@@ -13,6 +13,7 @@ import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
 import io.vertx.core.Future
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
+import java.util.UUID
 
 class CustomerEventProjector : EventProjector {
   private val json: ObjectMapper = jacksonObjectMapper().findAndRegisterModules().enable(SerializationFeature.INDENT_OUTPUT)
@@ -22,21 +23,22 @@ class CustomerEventProjector : EventProjector {
     conn: SqlConnection,
     eventRecord: EventRecord,
   ): Future<Void> {
-    val (payload, _, id) = eventRecord.extract()
+    val (payload, metadata) = eventRecord.extract()
+    val id = UUID.fromString(metadata.stateId)
     return when (val event = serDer.fromJson(payload)) {
       is CustomerRegistered ->
-        insert(conn, id!!, event.name)
+        insert(conn, id, event.name)
       is CustomerActivated ->
-        updateStatus(conn, id!!, true)
+        updateStatus(conn, id, true)
       is CustomerDeactivated ->
-        updateStatus(conn, id!!, false)
+        updateStatus(conn, id, false)
       is CustomerEvent.CustomerRenamed -> TODO()
     }
   }
 
   private fun insert(
     conn: SqlConnection,
-    id: String,
+    id: UUID,
     name: String,
   ): Future<Void> {
     return conn
@@ -47,7 +49,7 @@ class CustomerEventProjector : EventProjector {
 
   private fun updateStatus(
     conn: SqlConnection,
-    id: String,
+    id: UUID,
     isActive: Boolean,
   ): Future<Void> {
     return conn

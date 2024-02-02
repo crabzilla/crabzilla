@@ -57,6 +57,7 @@ class PersistingStreams : AbstractCrabzillaWriterIT() {
       }
   }
 
+  // TODO add a test for mandatory @ within stream name
   @Test
   fun `it name can be specified too`(
     tc: VertxTestContext,

@@ -38,7 +38,7 @@ fun main() {
 
   with(CrabzillaWriterImpl(context, config)) {
     val id = UUID.randomUUID()
-    val ts = TargetStream(name = "Customer.$id")
+    val ts = TargetStream(name = "Customer@$id")
     testRepository.cleanDatabase()
       .compose { handle(ts, CustomerCommand.RegisterCustomer(customerId = id, name = "customer1")) }
       .compose { handle(ts, CustomerCommand.ActivateCustomer("because it's needed")) }
