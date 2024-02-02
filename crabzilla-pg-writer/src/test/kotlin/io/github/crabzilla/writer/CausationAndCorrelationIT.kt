@@ -15,7 +15,7 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Causation and correlation")
-class CausationAndCorrelationIT : AbstractCrabzillaHandlerIT() {
+class CausationAndCorrelationIT : AbstractCrabzillaWriterIT() {
   @Test
   fun `when handling handle 4 commands, causation and correlation are correct`(
     vertx: Vertx,

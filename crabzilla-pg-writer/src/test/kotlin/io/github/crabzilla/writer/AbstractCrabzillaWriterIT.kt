@@ -16,7 +16,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.MountableFile
 
 @ExtendWith(VertxExtension::class)
-open class AbstractCrabzillaHandlerIT {
+open class AbstractCrabzillaWriterIT {
   var dbConfig: JsonObject
 
   init {

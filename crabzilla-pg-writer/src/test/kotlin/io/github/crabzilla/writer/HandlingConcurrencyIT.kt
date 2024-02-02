@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Handling concurrent commands")
-class HandlingConcurrencyIT : AbstractCrabzillaHandlerIT() {
+class HandlingConcurrencyIT : AbstractCrabzillaWriterIT() {
   @Test
   fun `when many concurrent RenameCustomer commands against same version, at least 1 will succeed`(
     vertx: Vertx,

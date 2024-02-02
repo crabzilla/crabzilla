@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Notifying postgres")
-class NotifyingPostgresIT : AbstractCrabzillaHandlerIT() {
+class NotifyingPostgresIT : AbstractCrabzillaWriterIT() {
   @Test
   fun `it can notify Postgres`(
     vertx: Vertx,

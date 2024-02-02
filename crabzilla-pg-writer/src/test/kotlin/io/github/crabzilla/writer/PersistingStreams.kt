@@ -17,7 +17,7 @@ import java.util.*
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PersistingStreams : AbstractCrabzillaHandlerIT() {
+class PersistingStreams : AbstractCrabzillaWriterIT() {
   @Test
   @DisplayName("migrating streams - TODO ")
   @Disabled

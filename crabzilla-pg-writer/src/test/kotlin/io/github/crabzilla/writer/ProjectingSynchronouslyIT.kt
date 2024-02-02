@@ -22,7 +22,7 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Projecting to view model synchronously")
-class ProjectingSynchronouslyIT : AbstractCrabzillaHandlerIT() {
+class ProjectingSynchronouslyIT : AbstractCrabzillaWriterIT() {
   @Test
   fun `it can project to view model synchronously`(
     vertx: Vertx,

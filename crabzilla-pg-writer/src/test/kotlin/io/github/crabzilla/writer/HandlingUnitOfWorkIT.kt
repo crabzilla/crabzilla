@@ -15,7 +15,7 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Handling Unit Of Work")
-class HandlingUnitOfWorkIT : AbstractCrabzillaHandlerIT() {
+class HandlingUnitOfWorkIT : AbstractCrabzillaWriterIT() {
   // https://martinfowler.com/eaaCatalog/unitOfWork.html
   // https://stackoverflow.com/questions/49288197/stream-aggregate-relationship-in-an-event-sourced-system
 

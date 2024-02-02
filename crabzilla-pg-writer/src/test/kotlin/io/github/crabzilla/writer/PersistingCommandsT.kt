@@ -18,7 +18,7 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Persisting commands")
-class PersistingCommandsT : AbstractCrabzillaHandlerIT() {
+class PersistingCommandsT : AbstractCrabzillaWriterIT() {
   @Test
   fun `it can persist 1 command`(
     tc: VertxTestContext,

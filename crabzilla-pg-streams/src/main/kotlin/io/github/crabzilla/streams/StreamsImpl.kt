@@ -21,7 +21,7 @@ class StreamRepositoryImpl<S : Any, E : Any>(
   private val targetStream: TargetStream,
   private val initialState: S,
   private val eventSerDer: JsonObjectSerDer<E>,
-  private val eventHandler: (S, E) -> S
+  private val eventHandler: (S, E) -> S,
 ) : StreamRepository<S> {
   private val log = LoggerFactory.getLogger("${StreamRepositoryImpl::class.java.simpleName}-${targetStream.stateType}")
 

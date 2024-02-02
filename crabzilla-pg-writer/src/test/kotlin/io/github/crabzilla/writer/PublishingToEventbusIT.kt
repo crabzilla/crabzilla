@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Publishing to eventbus")
 @Disabled
-class PublishingToEventbusIT : AbstractCrabzillaHandlerIT() {
+class PublishingToEventbusIT : AbstractCrabzillaWriterIT() {
   @Test
   fun `it can publish to eventbus`(
     vertx: Vertx,

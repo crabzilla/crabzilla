@@ -17,7 +17,7 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Persisting events")
-class PersistingEventsIT : AbstractCrabzillaHandlerIT() {
+class PersistingEventsIT : AbstractCrabzillaWriterIT() {
   @Test
   @DisplayName("appending 1 command with 2 events results in version 2 ")
   fun s1(

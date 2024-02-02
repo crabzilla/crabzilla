@@ -93,11 +93,5 @@ class TestRepository(private val pgPool: Pool) {
       ORDER BY sequence
       limit $2
     """
-
-    val DATABASE_CONFIG: JsonObject =
-      JsonObject()
-        .put("url", "postgresql://localhost:5432/crabzilla")
-        .put("username", "user1")
-        .put("password", "pwd1")
   }
 }
