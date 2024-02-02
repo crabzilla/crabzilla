@@ -1,5 +1,6 @@
 package io.github.crabzilla.writer
 
+import io.github.crabzilla.context.CrabzillaRuntimeException
 import io.github.crabzilla.context.EventMetadata
 import io.github.crabzilla.context.EventProjector
 import io.github.crabzilla.context.JsonObjectSerDer
@@ -38,3 +39,5 @@ data class CrabzillaWriterConfig<S : Any, C : Any, E : Any>(
   // TODO consider an optional state serder: NO, only on stream module (to migrate the stream)
   val eventProjector: EventProjector? = null,
 )
+
+class BusinessException(message: String, cause: Throwable) : CrabzillaRuntimeException(message, cause)

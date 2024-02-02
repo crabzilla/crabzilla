@@ -81,11 +81,5 @@ interface EventProjector {
   ): Future<Void>
 }
 
-sealed class CrabzillaWriterException(override val message: String, override val cause: Throwable? = null) :
-  RuntimeException(message, cause) {
-  class StreamMustBeNewException(message: String) : CrabzillaWriterException(message)
-
-  class StreamCantBeLockedException(message: String) : CrabzillaWriterException(message)
-
-  class BusinessException(message: String, cause: Throwable) : CrabzillaWriterException(message, cause)
-}
+open class CrabzillaRuntimeException(override val message: String, override val cause: Throwable? = null) :
+  RuntimeException(message, cause)

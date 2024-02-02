@@ -1,5 +1,6 @@
 package io.github.crabzilla.stream
 
+import io.github.crabzilla.context.CrabzillaRuntimeException
 import io.github.crabzilla.context.EventRecord
 import io.vertx.core.Future
 import java.util.*
@@ -28,3 +29,7 @@ interface StreamWriter<S : Any, E : Any> {
     events: List<E>,
   ): Future<List<EventRecord>>
 }
+
+class StreamMustBeNewException(message: String) : CrabzillaRuntimeException(message)
+
+class StreamCantBeLockedException(message: String) : CrabzillaRuntimeException(message)

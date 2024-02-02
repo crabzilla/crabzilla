@@ -2,12 +2,12 @@ package io.github.crabzilla.writer
 
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
-import io.github.crabzilla.context.CrabzillaWriterException
 import io.github.crabzilla.context.EventMetadata
 import io.github.crabzilla.context.EventProjector
 import io.github.crabzilla.context.EventRecord
 import io.github.crabzilla.context.TargetStream
 import io.github.crabzilla.core.CrabzillaCommandsSession
+import io.github.crabzilla.stream.StreamMustBeNewException
 import io.github.crabzilla.stream.StreamRepositoryImpl
 import io.github.crabzilla.stream.StreamSnapshot
 import io.github.crabzilla.stream.StreamWriterImpl
@@ -89,7 +89,7 @@ class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
       .compose { streamId ->
         val params = Tuple.of(targetStream.stateType, targetStream.stateId, targetStream.name)
         if (streamId != StreamRepositoryImpl.NO_STREAM && targetStream.mustBeNew) {
-          throw CrabzillaWriterException.StreamMustBeNewException("Stream ${targetStream.name} must be new")
+          throw StreamMustBeNewException("Stream ${targetStream.name} must be new")
         }
         if (streamId == StreamRepositoryImpl.NO_STREAM) {
           log.debug("Will create stream {}", targetStream.name)
@@ -126,7 +126,7 @@ class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
                   session.handle(command)
                   succeededFuture(Pair(snapshot, session))
                 } catch (e: Exception) {
-                  val error = CrabzillaWriterException.BusinessException(e.message ?: "Unknown", e)
+                  val error = BusinessException(e.message ?: "Unknown", e)
                   failedFuture(error)
                 }
               }

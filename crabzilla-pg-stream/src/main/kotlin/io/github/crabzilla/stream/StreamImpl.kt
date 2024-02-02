@@ -1,6 +1,5 @@
 package io.github.crabzilla.stream
 
-import io.github.crabzilla.context.CrabzillaWriterException
 import io.github.crabzilla.context.EventMetadata
 import io.github.crabzilla.context.EventRecord
 import io.github.crabzilla.context.JsonObjectSerDer
@@ -115,7 +114,7 @@ class StreamWriterImpl<S : Any, E : Any>(
         if (pgRow.first().getBoolean("locked")) {
           Future.succeededFuture(streamId)
         } else {
-          Future.failedFuture(CrabzillaWriterException.StreamCantBeLockedException("Stream $streamId can't be locked"))
+          Future.failedFuture(StreamCantBeLockedException("Stream $streamId can't be locked"))
         }
       }
   }
