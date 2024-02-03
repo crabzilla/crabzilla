@@ -55,7 +55,7 @@ class HandlingViewEffects : AbstractCrabzillaWriterIT() {
       }
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        testRepository.getAllCustomers()
+        testRepository.getCustomers()
           .onFailure { tc.failNow(it) }
           .onSuccess { customersList ->
             tc.verify {
@@ -94,13 +94,13 @@ class HandlingViewEffects : AbstractCrabzillaWriterIT() {
       }
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        testRepository.getAllCustomers()
+        testRepository.getCustomers()
           .onFailure { tc.failNow(it) }
           .onSuccess { customersList ->
             tc.verify {
               assertThat(customersList.size).isEqualTo(1)
               val json = customersList.first()
-              assertThat(json.getString("id")).isEqualTo(targetStream1.stateId)
+              assertThat(json.getString("id")).isEqualTo(targetStream1.stateId())
               assertThat(json.getString("name")).isEqualTo(cmd1.name)
               assertThat(json.getBoolean("is_active")).isEqualTo(false)
               tc.completeNow()
@@ -146,13 +146,13 @@ class HandlingViewEffects : AbstractCrabzillaWriterIT() {
       }
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        testRepository.getAllCustomers()
+        testRepository.getCustomers()
           .onFailure { tc.failNow(it) }
           .onSuccess { customersList ->
             tc.verify {
               assertThat(customersList.size).isEqualTo(1)
               val json = customersList.first()
-              assertThat(json.getString("id")).isEqualTo(targetStream1.stateId)
+              assertThat(json.getString("id")).isEqualTo(targetStream1.stateId())
               assertThat(json.getString("name")).isEqualTo(cmd1.name)
               assertThat(json.getBoolean("is_active")).isEqualTo(false)
               latch.await(2, TimeUnit.SECONDS)

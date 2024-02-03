@@ -49,7 +49,7 @@ open class AbstractCrabzillaWriterIT {
 
   @AfterEach
   fun after(tc: VertxTestContext) {
-    testRepository.overview()
+    testRepository.printOverview()
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }

@@ -26,6 +26,7 @@ object PgTestContainer {
       }
 
   fun pgConfig(): JsonObject {
+    postgresqlContainer.start()
     val dbUri: String = postgresqlContainer.jdbcUrl.substringAfter("jdbc:")
     return JsonObject()
       .put("uri", dbUri)

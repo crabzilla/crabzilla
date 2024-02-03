@@ -4,6 +4,8 @@ import io.github.crabzilla.context.EventMetadata
 import io.github.crabzilla.context.EventRecord
 import io.github.crabzilla.context.JsonObjectSerDer
 import io.github.crabzilla.context.TargetStream
+import io.github.crabzilla.stream.StreamRepository.Companion.NO_STREAM
+import io.github.crabzilla.stream.StreamRepository.Companion.QUERY_MAX_STREAM_SIZE
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.sqlclient.PreparedStatement
@@ -22,7 +24,7 @@ class StreamRepositoryImpl<S : Any, E : Any>(
   private val eventSerDer: JsonObjectSerDer<E>,
   private val eventHandler: (S, E) -> S,
 ) : StreamRepository<S> {
-  private val log = LoggerFactory.getLogger("${StreamRepositoryImpl::class.java.simpleName}-${targetStream.stateType}")
+  private val log = LoggerFactory.getLogger("${StreamRepositoryImpl::class.java.simpleName}-${targetStream.stateType()}")
 
   override fun getStreamId(): Future<Int> {
     val params = Tuple.of(targetStream.name)
@@ -83,9 +85,7 @@ class StreamRepositoryImpl<S : Any, E : Any>(
         promise.future()
       }
   }
-
   companion object {
-    const val NO_STREAM = -1
     private const val SQL_GET_EVENTS_BY_STREAM_ID =
       """
       SELECT id, event_type, event_payload, version, causation_id, correlation_id
@@ -93,7 +93,6 @@ class StreamRepositoryImpl<S : Any, E : Any>(
        WHERE stream_id = $1
        ORDER BY sequence
     """
-    private const val QUERY_MAX_STREAM_SIZE = 1000
   }
 }
 
@@ -104,7 +103,7 @@ class StreamWriterImpl<S : Any, E : Any>(
   private val uuidFunction: () -> UUID,
   private val eventSerDer: JsonObjectSerDer<E>,
 ) : StreamWriter<S, E> {
-  private val log = LoggerFactory.getLogger("${StreamWriterImpl::class.java.simpleName}-${targetStream.stateType}")
+  private val log = LoggerFactory.getLogger("${StreamWriterImpl::class.java.simpleName}-${targetStream.stateType()}")
 
   override fun lockTargetStream(): Future<Int> {
     return conn

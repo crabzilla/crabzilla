@@ -33,7 +33,7 @@ class HandlingConcurrencyIT : AbstractCrabzillaWriterIT() {
     tc: VertxTestContext,
   ) {
     val targetStream = TargetStream(stateType = "Customer", stateId = UUID.randomUUID().toString())
-    val cmd = RegisterCustomer(UUID.fromString(targetStream.stateId), "good customer")
+    val cmd = RegisterCustomer(UUID.fromString(targetStream.stateId()), "good customer")
     crabzillaWriter.handle(targetStream, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {

@@ -30,7 +30,7 @@ class PersistingEventsIT : AbstractCrabzillaWriterIT() {
     crabzillaWriter.handle(targetStream1, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        testRepository.getEvents()
+        testRepository.getEvents(0, 1000)
           .onFailure { it2 -> tc.failNow(it2) }
           .onSuccess { eventsList ->
             tc.verify {
@@ -74,7 +74,7 @@ class PersistingEventsIT : AbstractCrabzillaWriterIT() {
         crabzillaWriter.handle(targetStream1, cmd2)
           .onFailure { err -> tc.failNow(err) }
           .onSuccess {
-            testRepository.getEvents()
+            testRepository.getEvents(0, 1000)
               .onFailure { err -> tc.failNow(err) }
               .onSuccess { eventsList: List<JsonObject> ->
                 tc.verify {

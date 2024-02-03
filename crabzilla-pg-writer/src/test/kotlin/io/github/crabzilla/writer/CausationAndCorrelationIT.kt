@@ -40,7 +40,7 @@ class CausationAndCorrelationIT : AbstractCrabzillaWriterIT() {
 //      }
       .onFailure { tc.failNow(it) }
       .onSuccess {
-        testRepository.getEvents()
+        testRepository.getEvents(0, 1000)
           .onFailure { tc.failNow(it) }
           .onSuccess { list ->
             tc.verify {

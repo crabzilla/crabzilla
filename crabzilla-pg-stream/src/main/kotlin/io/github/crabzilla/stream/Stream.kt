@@ -19,6 +19,11 @@ interface StreamRepository<S : Any> {
   fun getStreamId(): Future<Int>
 
   fun getSnapshot(streamId: Int): Future<StreamSnapshot<S>>
+
+  companion object {
+    const val NO_STREAM = -1
+    const val QUERY_MAX_STREAM_SIZE = 1000
+  }
 }
 
 interface StreamWriter<S : Any, E : Any> {

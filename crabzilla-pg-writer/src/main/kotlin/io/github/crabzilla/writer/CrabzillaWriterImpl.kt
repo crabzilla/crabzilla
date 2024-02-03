@@ -7,6 +7,7 @@ import io.github.crabzilla.context.EventsProjector
 import io.github.crabzilla.context.TargetStream
 import io.github.crabzilla.core.CrabzillaCommandsSession
 import io.github.crabzilla.stream.StreamMustBeNewException
+import io.github.crabzilla.stream.StreamRepository.Companion.NO_STREAM
 import io.github.crabzilla.stream.StreamRepositoryImpl
 import io.github.crabzilla.stream.StreamSnapshot
 import io.github.crabzilla.stream.StreamWriterImpl
@@ -71,11 +72,11 @@ class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
 
     return streamRepositoryImpl.getStreamId()
       .compose { streamId ->
-        val params = Tuple.of(targetStream.stateType, targetStream.stateId, targetStream.name)
-        if (streamId != StreamRepositoryImpl.NO_STREAM && targetStream.mustBeNew) {
+        val params = Tuple.of(targetStream.stateType(), targetStream.stateId(), targetStream.name)
+        if (streamId != NO_STREAM && targetStream.mustBeNew) {
           throw StreamMustBeNewException("Stream ${targetStream.name} must be new")
         }
-        if (streamId == StreamRepositoryImpl.NO_STREAM) {
+        if (streamId == NO_STREAM) {
           log.debug("Will create stream {}", targetStream.name)
           sqlConnection.preparedQuery(StreamWriterImpl.SQL_INSERT_STREAM)
             .execute(params)
@@ -150,7 +151,7 @@ class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
           .map { appendedEvents.last().metadata }
       }
       .onSuccess {
-        val query = "NOTIFY $POSTGRES_NOTIFICATION_CHANNEL, '${targetStream.stateType}'"
+        val query = "NOTIFY $POSTGRES_NOTIFICATION_CHANNEL, '${targetStream.stateType()}'"
         sqlConnection.preparedQuery(query).execute()
           .onSuccess { log.debug("Notified postgres: $query") }
         log.debug("Transaction committed")

@@ -6,26 +6,32 @@ import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
-import org.slf4j.LoggerFactory
 
 class TestRepository(private val pgPool: Pool) {
-  fun overview(
-    afterSequence: Long = 0,
-    numberOfRows: Int = 1_000,
-  ): Future<JsonObject> {
+  fun cleanDatabase(): Future<Void> {
+    return pgPool.query("truncate streams, events, commands, customer_summary restart identity").execute()
+      .compose { pgPool.query("update subscriptions set sequence = 0").execute() }
+      .mapEmpty()
+  }
+
+  fun printOverview(): Future<JsonObject> {
     return getStreams()
-      .flatMap { streams ->
-        getEvents(afterSequence, numberOfRows).map { Pair(streams, it) }
-          .flatMap { pair -> getCommands().map { Triple(pair.first, pair.second, it) } }
-          .map {
-            JsonObject()
-              .put("commands", it.third)
-              .put("streams", it.first)
-              .put("events", it.second)
-          }.onSuccess {
-            logger.info("Crabzilla state overview --------------------------")
-            logger.info(it.encodePrettily())
-          }
+      .map { JsonObject().put("streams", it) }
+      .compose { json ->
+        getEvents(0, 1000).map { json.put("events", it) }
+      }
+      .compose { json ->
+        getCommands().map { json.put("commands", it) }
+      }
+      .compose { json ->
+        getSubscriptions().map { json.put("subscriptions", it) }
+      }
+      .compose { json ->
+        getCustomers().map { json.put("customers-view", it) }
+      }
+      .onComplete {
+        println("-------------------------- Crabzilla state overview")
+        println(it.result().encodePrettily())
       }
   }
 
@@ -36,31 +42,37 @@ class TestRepository(private val pgPool: Pool) {
         rowSet.map {
           it.toJson()
         }
+      }.map {
+        it ?: emptyList()
       }
   }
 
   fun getEvents(
-    afterSequence: Long = 0,
-    numberOfRows: Int = 1_000,
+    afterSequence: Long,
+    numberOfRows: Int,
   ): Future<List<JsonObject>> {
     return pgPool.withConnection { client ->
-      client.prepare(SELECT_AFTER_OFFSET)
+      client.prepare(SQL_SELECT_AFTER_OFFSET)
         .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(afterSequence, numberOfRows)) }
         .map { rowSet ->
           rowSet.map {
             it.toJson()
           }
+        }.map {
+          it ?: emptyList()
         }
     }
   }
 
-  fun getAllCustomers(): Future<List<JsonObject>> {
+  fun getCustomers(): Future<List<JsonObject>> {
     return pgPool.query("SELECT * FROM customer_summary")
       .execute()
       .map { rowSet ->
         rowSet.map {
           it.toJson()
         }
+      }.map {
+        it ?: emptyList()
       }
   }
 
@@ -71,10 +83,24 @@ class TestRepository(private val pgPool: Pool) {
         rowSet.map {
           it.toJson()
         }
+      }.map {
+        it ?: emptyList()
       }
   }
 
-  fun getSubscriptions(name: String): Future<Long> {
+  fun getSubscriptions(): Future<List<JsonObject>> {
+    return pgPool.query("SELECT * FROM subscriptions ORDER BY name")
+      .execute()
+      .map { rowSet ->
+        rowSet.map {
+          it.toJson()
+        }
+      }.map {
+        it ?: emptyList()
+      }
+  }
+
+  fun getSubscription(name: String): Future<Long> {
     return pgPool.query("SELECT sequence FROM subscriptions where name = '$name'")
       .execute()
       .map { rowSet: RowSet<Row> ->
@@ -82,15 +108,8 @@ class TestRepository(private val pgPool: Pool) {
       }
   }
 
-  fun cleanDatabase(): Future<Void> {
-    return pgPool.query("truncate streams, events, commands, customer_summary restart identity").execute()
-      .compose { pgPool.query("update subscriptions set sequence = 0").execute() }
-      .mapEmpty()
-  }
-
   companion object {
-    private val logger = LoggerFactory.getLogger(TestRepository::class.java)
-    private const val SELECT_AFTER_OFFSET =
+    private const val SQL_SELECT_AFTER_OFFSET =
       """
       SELECT *
       FROM events

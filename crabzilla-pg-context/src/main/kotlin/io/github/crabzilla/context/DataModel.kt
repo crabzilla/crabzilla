@@ -5,8 +5,8 @@ import io.vertx.core.json.JsonObject
 import java.util.*
 
 data class TargetStream(
-  val stateType: String? = null,
-  val stateId: String? = null,
+  private val stateType: String? = null,
+  private val stateId: String? = null,
   val name: String = "$stateType@$stateId",
   val mustBeNew: Boolean = false,
 ) {
@@ -21,8 +21,8 @@ data class TargetStream(
 
 data class EventMetadata(
   val streamId: Int,
-  val stateType: String,
-  val stateId: String,
+  val stateType: String?,
+  val stateId: String?,
   val eventId: UUID,
   val correlationId: UUID,
   val causationId: UUID,

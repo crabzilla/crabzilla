@@ -131,7 +131,7 @@ class SubscriptionIT : AbstractSubscriptionTest() {
       }.compose {
         api.handle()
       }.compose {
-        testRepository.getAllCustomers()
+        testRepository.getCustomers()
       }.onFailure {
         tc.failNow(it)
       }.onSuccess {
@@ -240,7 +240,7 @@ class SubscriptionIT : AbstractSubscriptionTest() {
       }.compose {
         api.handle()
       }.compose {
-        testRepository.getAllCustomers()
+        testRepository.getCustomers()
       }.onFailure {
         tc.failNow(it)
       }.onSuccess {

@@ -48,9 +48,9 @@ class PersistingStreams : AbstractCrabzillaWriterIT() {
         tc.verify {
           assertThat(streams.size).isEqualTo(1)
           val stream = streams.first()
-          assertThat(stream.getString("state_type")).isEqualTo(targetStream.stateType)
-          assertThat(stream.getString("state_id")).isEqualTo(targetStream.stateId)
-          assertThat(stream.getString("name")).isEqualTo("Customer@${targetStream.stateId}")
+          assertThat(stream.getString("state_type")).isEqualTo(targetStream.stateType())
+          assertThat(stream.getString("state_id")).isEqualTo(targetStream.stateId())
+          assertThat(stream.getString("name")).isEqualTo("Customer@${targetStream.stateId()}")
           assertThat(stream.getString("status")).isEqualTo("OPEN")
         }
         tc.completeNow()
@@ -73,8 +73,8 @@ class PersistingStreams : AbstractCrabzillaWriterIT() {
         tc.verify {
           assertThat(streams.size).isEqualTo(1)
           val stream = streams.first()
-          assertThat(stream.getString("state_type")).isEqualTo(targetStream.stateType)
-          assertThat(stream.getString("state_id")).isEqualTo(targetStream.stateId)
+          assertThat(stream.getString("state_type")).isEqualTo(targetStream.stateType())
+          assertThat(stream.getString("state_id")).isEqualTo(targetStream.stateId())
           assertThat(stream.getString("name")).isEqualTo("customer@123")
           assertThat(stream.getString("status")).isEqualTo("OPEN")
         }
@@ -98,8 +98,8 @@ class PersistingStreams : AbstractCrabzillaWriterIT() {
             tc.verify {
               assertThat(streams.size).isEqualTo(1)
               val stream = streams.first()
-              assertThat(stream.getString("state_type")).isEqualTo(targetStream.stateType)
-              assertThat(stream.getString("state_id")).isEqualTo(targetStream.stateId)
+              assertThat(stream.getString("state_type")).isEqualTo(targetStream.stateType())
+              assertThat(stream.getString("state_id")).isEqualTo(targetStream.stateId())
               assertThat(stream.getString("name")).isEqualTo("customer@123")
               assertThat(stream.getString("status")).isEqualTo("OPEN")
             }
