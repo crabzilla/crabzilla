@@ -1,5 +1,6 @@
 package io.github.crabzilla.subscription
 
+import io.github.crabzilla.context.CrabzillaRuntimeException
 import io.github.crabzilla.context.EventRecord
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future
@@ -52,3 +53,5 @@ data class SubscriptionSpec(
   val eventTypes: List<String> = listOf(),
   val discardEventIf: ((EventRecord) -> Boolean)? = { false },
 )
+
+class SubscriptionCantBeLockedException(message: String) : CrabzillaRuntimeException(message)

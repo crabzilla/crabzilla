@@ -76,9 +76,10 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
         if (streamId != NO_STREAM && targetStream.mustBeNew) {
           throw StreamMustBeNewException("Stream ${targetStream.name} must be new")
         }
+        succeededFuture(streamId)
         if (streamId == NO_STREAM) {
           log.debug("Will create stream {}", targetStream.name)
-          sqlConnection.preparedQuery(StreamWriterImpl.SQL_INSERT_STREAM)
+          sqlConnection.preparedQuery(SQL_INSERT_STREAM)
             .execute(params)
             .map { it.first().getInteger("id") }
         } else {
@@ -161,6 +162,11 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
   }
 
   companion object {
+    private const val SQL_INSERT_STREAM = """
+      INSERT
+        INTO streams (state_type, state_id, name)
+      VALUES ($1, $2, $3) RETURNING id
+    """
     private const val SQL_APPEND_CMD =
       """ INSERT INTO commands (command_id, causation_id, correlation_id, command_payload, stream_id, command_metadata)
           VALUES ($1, $2, $3, $4, $5, $6)"""

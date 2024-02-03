@@ -2,6 +2,7 @@ package io.github.crabzilla.subscription.internal
 
 import io.github.crabzilla.context.EventMetadata
 import io.github.crabzilla.context.EventRecord
+import io.github.crabzilla.subscription.SubscriptionCantBeLockedException
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Row
@@ -28,8 +29,16 @@ internal class SubscriptionDao(
   }
 
   fun lockSubscription(): Future<Void> {
-    return Future.succeededFuture()
-    TODO()
+    return sqlConnection
+      .preparedQuery(SQL_LOCK)
+      .execute(Tuple.of("subscriptions_table".hashCode(), name.hashCode()))
+      .compose { pgRow ->
+        if (pgRow.first().getBoolean("locked")) {
+          Future.succeededFuture()
+        } else {
+          Future.failedFuture(SubscriptionCantBeLockedException("Subscription $name can't be locked"))
+        }
+      }
   }
 
   fun scanPendingEvents(numberOfRows: Int): Future<List<EventRecord>> {
@@ -67,6 +76,9 @@ internal class SubscriptionDao(
   }
 
   companion object {
+    private const val SQL_LOCK =
+      """ SELECT pg_try_advisory_xact_lock($1, $2) as locked
+      """
     private const val SQL_SELECT_OFFSETS = """
       WITH subscription_offset AS (
         SELECT sequence as subscription_offset FROM subscriptions WHERE name = $1

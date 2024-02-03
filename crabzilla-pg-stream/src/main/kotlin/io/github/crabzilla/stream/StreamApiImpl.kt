@@ -185,11 +185,6 @@ class StreamWriterImpl<S : Any, E : Any>(
            FROM streams
           WHERE name = $1
     """
-    const val SQL_INSERT_STREAM = """
-      INSERT
-        INTO streams (state_type, state_id, name)
-      VALUES ($1, $2, $3) RETURNING id
-    """
     private const val SQL_LOCK =
       """ SELECT pg_try_advisory_xact_lock($1, $2) as locked
       """
