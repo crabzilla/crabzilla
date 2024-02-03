@@ -71,13 +71,19 @@ interface JsonObjectSerDer<T : Any> {
   fun fromJson(json: JsonObject): T
 }
 
-/**
- * To project events within a transaction
- */
-interface EventProjector {
-  fun project(
-    conn: SqlConnection,
+interface ViewEffect {
+  fun handleEffect(
+    sqlConnection: SqlConnection,
     eventRecord: EventRecord,
+  ): Future<JsonObject>
+}
+
+interface ViewTrigger {
+  fun checkCondition(viewAsJson: JsonObject): Boolean
+
+  fun handleTrigger(
+    sqlConnection: SqlConnection,
+    viewAsJson: JsonObject,
   ): Future<Void>
 }
 

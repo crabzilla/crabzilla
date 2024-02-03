@@ -21,28 +21,33 @@
     <version>v0.5.7</version>
   </parent>
 
-  <artifactId>crabzilla-subscription</artifactId>
+  <artifactId>crabzilla-pg-subscription</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-postgres</artifactId>
+      <artifactId>crabzilla-pg-context</artifactId>
     </dependency>
 
     <!-- test -->
 
     <dependency>
       <scope>test</scope>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-command</artifactId>
+      <groupId>com.fasterxml.jackson.module</groupId>
+      <artifactId>jackson-module-kotlin</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>dev.shamil</groupId>
-      <artifactId>ulid4j</artifactId>
-      <version>1.0</version>
+      <scope>test</scope>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-pg-writer</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
       <scope>test</scope>
     </dependency>
 

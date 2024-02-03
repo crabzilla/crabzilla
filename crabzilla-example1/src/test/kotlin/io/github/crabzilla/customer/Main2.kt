@@ -37,7 +37,7 @@ fun main() {
       commandHandler = customerCommandHandler,
       eventSerDer = JacksonJsonObjectSerDer(json, clazz = CustomerEvent::class),
       commandSerDer = JacksonJsonObjectSerDer(json, clazz = CustomerCommand::class),
-      eventProjector = CustomerEventProjector(),
+      viewEffect = CustomersViewEffect(),
     )
 
   with(CrabzillaWriterImpl(context, config)) {

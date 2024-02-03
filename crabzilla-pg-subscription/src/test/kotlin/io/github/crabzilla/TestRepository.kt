@@ -2,44 +2,54 @@ package io.github.crabzilla
 
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
-import io.vertx.pgclient.PgPool
+import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
+import org.slf4j.LoggerFactory
 
-// TODO decouple from example1 and make it a library scope class
-class TestRepository(private val pgPool: PgPool) {
-
-  companion object {
-    private const val selectAfterOffset =
-      """
-      SELECT *
-      FROM events
-      WHERE sequence > $1
-      ORDER BY sequence
-      limit $2
-    """
+class TestRepository(private val pgPool: Pool) {
+  fun overview(
+    afterSequence: Long = 0,
+    numberOfRows: Int = 1_000,
+  ): Future<JsonObject> {
+    return getStreams()
+      .flatMap { streams ->
+        getEvents(afterSequence, numberOfRows).map { Pair(streams, it) }
+          .flatMap { pair -> getCommands().map { Triple(pair.first, pair.second, it) } }
+          .map {
+            JsonObject()
+              .put("commands", it.third)
+              .put("streams", it.first)
+              .put("events", it.second)
+          }.onSuccess {
+            logger.info("Crabzilla state overview --------------------------")
+            logger.info(it.encodePrettily())
+          }
+      }
   }
 
-  fun scanEvents(afterSequence: Long, numberOfRows: Int): Future<List<JsonObject>> {
+  fun getStreams(): Future<List<JsonObject>> {
+    return pgPool.query("select * from streams")
+      .execute()
+      .map { rowSet ->
+        rowSet.map {
+          it.toJson()
+        }
+      }
+  }
+
+  fun getEvents(
+    afterSequence: Long = 0,
+    numberOfRows: Int = 1_000,
+  ): Future<List<JsonObject>> {
     return pgPool.withConnection { client ->
-      client.prepare(selectAfterOffset)
+      client.prepare(SELECT_AFTER_OFFSET)
         .compose { preparedStatement -> preparedStatement.query().execute(Tuple.of(afterSequence, numberOfRows)) }
-        .map { rowSet: RowSet<Row> ->
-          rowSet.iterator().asSequence().map { row: Row ->
-            val json = JsonObject()
-            val payload = row.getJsonObject("event_payload")
-            payload.put("type", row.getString("event_type"))
-            json.put("sequence", row.getLong("sequence"))
-            json.put("event_payload", payload)
-            json.put("state_type", row.getString("state_type"))
-            json.put("state_id", row.getUUID("state_id").toString())
-            json.put("version", row.getInteger("version"))
-            json.put("id", row.getString("id").toString())
-            json.put("causation_id", row.getString("causation_id")?.toString())
-            json.put("correlation_id", row.getString("correlation_id").toString())
-            json
-          }.toList()
+        .map { rowSet ->
+          rowSet.map {
+            it.toJson()
+          }
         }
     }
   }
@@ -47,37 +57,46 @@ class TestRepository(private val pgPool: PgPool) {
   fun getAllCustomers(): Future<List<JsonObject>> {
     return pgPool.query("SELECT * FROM customer_summary")
       .execute()
-      .map { rowSet: RowSet<Row> ->
-        rowSet.iterator().asSequence().map { row: Row ->
-          val json = JsonObject()
-          json.put("id", row.getUUID("id").toString())
-          json.put("name", row.getString("name"))
-          json.put("is_active", row.getBoolean("is_active"))
-          json
-        }.toList()
+      .map { rowSet ->
+        rowSet.map {
+          it.toJson()
+        }
       }
   }
 
-  fun getAllCommands(): Future<List<JsonObject>> {
+  fun getCommands(): Future<List<JsonObject>> {
     return pgPool.query("SELECT * FROM commands")
       .execute()
-      .map { rowSet: RowSet<Row> ->
-        rowSet.iterator().asSequence().map { row: Row ->
-          val json = JsonObject()
-          json.put("state_id", row.getUUID("state_id").toString())
-          json.put("causation_id", row.getString("causation_id").toString())
-          json.put("last_causation_id", row.getString("last_causation_id").toString())
-          json.put("cmd_payload", row.getJsonObject("cmd_payload"))
-          json
-        }.toList()
+      .map { rowSet ->
+        rowSet.map {
+          it.toJson()
+        }
       }
   }
 
-  fun getProjections(name: String): Future<Long> {
+  fun getSubscriptions(name: String): Future<Long> {
     return pgPool.query("SELECT sequence FROM subscriptions where name = '$name'")
       .execute()
       .map { rowSet: RowSet<Row> ->
         rowSet.first().getLong(0)
       }
+  }
+
+  fun cleanDatabase(): Future<Void> {
+    return pgPool.query("truncate streams, events, commands, customer_summary restart identity").execute()
+      .compose { pgPool.query("update subscriptions set sequence = 0").execute() }
+      .mapEmpty()
+  }
+
+  companion object {
+    private val logger = LoggerFactory.getLogger(TestRepository::class.java)
+    private const val SELECT_AFTER_OFFSET =
+      """
+      SELECT *
+      FROM events
+      WHERE sequence > $1
+      ORDER BY sequence
+      limit $2
+    """
   }
 }

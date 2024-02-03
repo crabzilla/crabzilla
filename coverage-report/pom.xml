@@ -34,10 +34,10 @@
       <artifactId>crabzilla-pg-writer</artifactId>
     </dependency>
 
-<!--    <dependency>-->
-<!--      <groupId>io.github.crabzilla</groupId>-->
-<!--      <artifactId>crabzilla-subscription</artifactId>-->
-<!--    </dependency>-->
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-pg-subscription</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>

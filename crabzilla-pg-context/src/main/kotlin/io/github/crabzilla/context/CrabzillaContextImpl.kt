@@ -8,6 +8,7 @@ import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.pubsub.PgSubscriber
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.SqlConnection
+import org.slf4j.LoggerFactory
 import java.util.*
 
 class CrabzillaContextImpl(
@@ -25,5 +26,33 @@ class CrabzillaContextImpl(
 
   override fun withinTransaction(commandOperation: (SqlConnection) -> Future<EventMetadata>): Future<EventMetadata> {
     return pgPool.withTransaction(commandOperation)
+  }
+}
+
+class EventsProjector(
+  private val sqlConnection: SqlConnection,
+  private val viewEffect: ViewEffect,
+  private val viewTrigger: ViewTrigger? = null,
+) {
+  fun projectEvents(appendedEvents: List<EventRecord>): Future<JsonObject?> {
+    logger.debug("Will project {} events", appendedEvents.size)
+    val initialFuture = Future.succeededFuture<JsonObject>()
+    return appendedEvents.fold(
+      initialFuture,
+    ) { currentFuture: Future<JsonObject>, appendedEvent: EventRecord ->
+      currentFuture.compose {
+        viewEffect.handleEffect(sqlConnection, appendedEvent)
+      }
+    }.onSuccess { viewAsJson ->
+      if (viewTrigger != null) {
+        if (viewTrigger.checkCondition(viewAsJson)) {
+          viewTrigger.handleTrigger(sqlConnection, viewAsJson)
+        }
+      }
+    }
+  }
+
+  companion object {
+    private val logger = LoggerFactory.getLogger(EventsProjector::class::java.name)
   }
 }

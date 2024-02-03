@@ -1,18 +1,23 @@
-package io.github.crabzilla.example1.customer
+package io.github.crabzilla.customer
 
 import io.github.crabzilla.context.EventRecord
 import io.github.crabzilla.context.JsonObjectSerDer
 import io.github.crabzilla.context.ViewEffect
 import io.github.crabzilla.context.ViewTrigger
+import io.github.crabzilla.example1.customer.Customer
+import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RenameCustomer
+import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRenamed
+import io.github.crabzilla.example1.customer.customerCommandHandler
+import io.github.crabzilla.example1.customer.customerEventHandler
 import io.github.crabzilla.writer.CrabzillaWriterConfig
 import io.vertx.core.Future
 import io.vertx.core.eventbus.EventBus

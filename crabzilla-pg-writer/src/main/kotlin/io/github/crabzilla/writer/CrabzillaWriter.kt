@@ -2,9 +2,10 @@ package io.github.crabzilla.writer
 
 import io.github.crabzilla.context.CrabzillaRuntimeException
 import io.github.crabzilla.context.EventMetadata
-import io.github.crabzilla.context.EventProjector
 import io.github.crabzilla.context.JsonObjectSerDer
 import io.github.crabzilla.context.TargetStream
+import io.github.crabzilla.context.ViewEffect
+import io.github.crabzilla.context.ViewTrigger
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
@@ -36,8 +37,9 @@ data class CrabzillaWriterConfig<S : Any, C : Any, E : Any>(
   val commandHandler: (S, C) -> List<E>,
   val eventSerDer: JsonObjectSerDer<E>,
   val commandSerDer: JsonObjectSerDer<C>? = null,
-  // TODO consider an optional state serder: NO, only on stream module (to migrate the stream)
-  val eventProjector: EventProjector? = null,
+  // TODO consider an optional state serder (on stream module (to migrate the stream))
+  val viewEffect: ViewEffect? = null,
+  val viewTrigger: ViewTrigger? = null,
 )
 
 class BusinessException(message: String, cause: Throwable) : CrabzillaRuntimeException(message, cause)

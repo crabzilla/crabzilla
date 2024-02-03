@@ -24,6 +24,7 @@ import java.util.*
   JsonSubTypes.Type(CustomerRegistered::class, name = "CustomerRegistered"),
   JsonSubTypes.Type(CustomerActivated::class, name = "CustomerActivated"),
   JsonSubTypes.Type(CustomerDeactivated::class, name = "CustomerDeactivated"),
+  JsonSubTypes.Type(CustomerRenamed::class, name = "CustomerRenamed"),
 )
 sealed interface CustomerEvent {
   data class CustomerRegistered(val id: UUID, val name: String) : CustomerEvent

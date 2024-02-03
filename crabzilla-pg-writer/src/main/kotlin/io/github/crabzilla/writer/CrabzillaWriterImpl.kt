@@ -3,8 +3,7 @@ package io.github.crabzilla.writer
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.context.EventMetadata
-import io.github.crabzilla.context.EventProjector
-import io.github.crabzilla.context.EventRecord
+import io.github.crabzilla.context.EventsProjector
 import io.github.crabzilla.context.TargetStream
 import io.github.crabzilla.core.CrabzillaCommandsSession
 import io.github.crabzilla.stream.StreamMustBeNewException
@@ -42,21 +41,6 @@ class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
     command: C,
     commandMetadata: CommandMetadata,
   ): Future<EventMetadata> {
-    fun projectEvents(
-      appendedEvents: List<EventRecord>,
-      eventProjector: EventProjector,
-    ): Future<Void> {
-      log.debug("Will project {} events", appendedEvents.size)
-      val initialFuture = succeededFuture<Void>()
-      return appendedEvents.fold(
-        initialFuture,
-      ) { currentFuture: Future<Void>, appendedEvent: EventRecord ->
-        currentFuture.compose {
-          eventProjector.project(sqlConnection, appendedEvent)
-        }
-      }.mapEmpty()
-    }
-
     fun appendCommand(
       causationId: UUID?,
       correlationId: UUID?,
@@ -144,13 +128,14 @@ class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
       .compose { triple ->
         val (_, _, appendedEvents) = triple
         log.debug("Events appended {}", appendedEvents)
-        if (config.eventProjector != null) {
-          projectEvents(appendedEvents, config.eventProjector)
+        if (config.viewEffect != null) {
+          EventsProjector(sqlConnection, config.viewEffect, config.viewTrigger)
+            .projectEvents(appendedEvents)
             .onSuccess {
               log.debug("Events projected")
             }.map { triple }
         } else {
-          log.debug("EventProjector is null, skipping projecting events")
+          log.debug("ViewEffect is null, skipping projecting events")
           succeededFuture(triple)
         }
       }.compose {

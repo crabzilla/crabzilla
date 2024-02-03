@@ -64,7 +64,7 @@ class PersistingCommandsT : AbstractCrabzillaWriterIT() {
           assertThat(commands.size).isEqualTo(1)
           assertThat(events.size).isEqualTo(2)
           val rowAsJson = commands.first()
-          assertThat(rowAsJson.getString("command_id")).isEqualTo(cmdMetadata.commandId)
+          assertThat(UUID.fromString(rowAsJson.getString("command_id"))).isEqualTo(cmdMetadata.commandId)
           assertThat(rowAsJson.getString("causation_id")).isNull()
           assertThat(rowAsJson.getString("correlation_id")).isNull()
           val cmdAsJsonFroDb = rowAsJson.getJsonObject("command_payload")

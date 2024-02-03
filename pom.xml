@@ -73,7 +73,7 @@
     <module>crabzilla-pg-context</module>
     <module>crabzilla-pg-stream</module>
     <module>crabzilla-pg-writer</module>
-<!--    <module>crabzilla-subscription</module>-->
+    <module>crabzilla-pg-subscription</module>
     <module>crabzilla-json-kotlinx</module>
     <module>crabzilla-json-jackson</module>
     <module>crabzilla-example1</module>
@@ -122,11 +122,11 @@
         <version>${project.version}</version>
       </dependency>
 
-<!--      <dependency>-->
-<!--        <groupId>io.github.crabzilla</groupId>-->
-<!--        <artifactId>crabzilla-subscription</artifactId>-->
-<!--        <version>${project.version}</version>-->
-<!--      </dependency>-->
+      <dependency>
+        <groupId>io.github.crabzilla</groupId>
+        <artifactId>crabzilla-pg-subscription</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- vertx -->
 
