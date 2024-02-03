@@ -15,7 +15,7 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Handling Unit Of Work")
-class HandlingUnitOfWorkIT : AbstractCrabzillaWriterIT() {
+class HandlingUnitOfWorkIT : AbstractWriterApiIT() {
   // https://martinfowler.com/eaaCatalog/unitOfWork.html
   // https://stackoverflow.com/questions/49288197/stream-aggregate-relationship-in-an-event-sourced-system
 
@@ -34,8 +34,8 @@ class HandlingUnitOfWorkIT : AbstractCrabzillaWriterIT() {
 
     context
       .withinTransaction { tx ->
-        crabzillaWriter.handleWithinTransaction(tx, targetStream1, cmd1)
-          .compose { crabzillaWriter.handleWithinTransaction(tx, targetStream2, cmd2) }
+        writerApi.handleWithinTransaction(tx, targetStream1, cmd1)
+          .compose { writerApi.handleWithinTransaction(tx, targetStream2, cmd2) }
       }
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -63,8 +63,8 @@ class HandlingUnitOfWorkIT : AbstractCrabzillaWriterIT() {
     val cmd2 = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
     context
       .withinTransaction { tx ->
-        crabzillaWriter.handleWithinTransaction(tx, targetStream1, cmd1)
-          .compose { crabzillaWriter.handleWithinTransaction(tx, targetStream1, cmd2) }
+        writerApi.handleWithinTransaction(tx, targetStream1, cmd1)
+          .compose { writerApi.handleWithinTransaction(tx, targetStream1, cmd2) }
           .onComplete {
             testRepository.getEvents(0, 1000)
               .onFailure { tc.failNow(it) }

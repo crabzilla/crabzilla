@@ -5,8 +5,8 @@ import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContextImpl
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.customerConfig
-import io.github.crabzilla.writer.CrabzillaWriter
-import io.github.crabzilla.writer.CrabzillaWriterImpl
+import io.github.crabzilla.writer.WriterApi
+import io.github.crabzilla.writer.WriterApiImpl
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -32,7 +32,7 @@ open class AbstractSubscriptionTest {
   }
 
   lateinit var context: CrabzillaContext
-  lateinit var writer: CrabzillaWriter<CustomerCommand>
+  lateinit var writer: WriterApi<CustomerCommand>
   lateinit var testRepository: TestRepository
 
   @BeforeEach
@@ -41,7 +41,7 @@ open class AbstractSubscriptionTest {
     tc: VertxTestContext,
   ) {
     context = CrabzillaContextImpl(vertx, dbConfig)
-    writer = CrabzillaWriterImpl(context, customerConfig)
+    writer = WriterApiImpl(context, customerConfig)
     testRepository = TestRepository(context.pgPool)
 
     testRepository.cleanDatabase()

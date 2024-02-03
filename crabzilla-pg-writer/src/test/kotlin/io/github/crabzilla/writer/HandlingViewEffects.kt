@@ -27,14 +27,14 @@ import java.util.concurrent.TimeUnit
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Projecting to view model synchronously")
-class HandlingViewEffects : AbstractCrabzillaWriterIT() {
+class HandlingViewEffects : AbstractWriterApiIT() {
   @Test
   fun `without a viewEffect, customers table is empty`(
     vertx: Vertx,
     tc: VertxTestContext,
   ) {
     val customerConfig =
-      CrabzillaWriterConfig(
+      WriterConfig(
         initialState = Customer.Initial,
         eventHandler = customerEventHandler,
         commandHandler = customerCommandHandler,
@@ -42,7 +42,7 @@ class HandlingViewEffects : AbstractCrabzillaWriterIT() {
         eventSerDer = CustomerEventSerDer(),
       )
 
-    val writer = CrabzillaWriterImpl(context, customerConfig)
+    val writer = WriterApiImpl(context, customerConfig)
 
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
@@ -72,7 +72,7 @@ class HandlingViewEffects : AbstractCrabzillaWriterIT() {
     tc: VertxTestContext,
   ) {
     val customerConfig =
-      CrabzillaWriterConfig(
+      WriterConfig(
         initialState = Customer.Initial,
         eventHandler = customerEventHandler,
         commandHandler = customerCommandHandler,
@@ -81,7 +81,7 @@ class HandlingViewEffects : AbstractCrabzillaWriterIT() {
         viewEffect = CustomersViewEffect(),
       )
 
-    val writer = CrabzillaWriterImpl(context, customerConfig)
+    val writer = WriterApiImpl(context, customerConfig)
 
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
@@ -115,7 +115,7 @@ class HandlingViewEffects : AbstractCrabzillaWriterIT() {
     tc: VertxTestContext,
   ) {
     val customerConfig =
-      CrabzillaWriterConfig(
+      WriterConfig(
         initialState = Customer.Initial,
         eventHandler = customerEventHandler,
         commandHandler = customerCommandHandler,
@@ -125,7 +125,7 @@ class HandlingViewEffects : AbstractCrabzillaWriterIT() {
         viewTrigger = CustomerViewTrigger(vertx.eventBus()),
       )
 
-    val writer = CrabzillaWriterImpl(context, customerConfig)
+    val writer = WriterApiImpl(context, customerConfig)
 
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())

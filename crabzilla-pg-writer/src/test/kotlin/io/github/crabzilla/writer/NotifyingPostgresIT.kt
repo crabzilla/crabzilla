@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Notifying postgres")
-class NotifyingPostgresIT : AbstractCrabzillaWriterIT() {
+class NotifyingPostgresIT : AbstractWriterApiIT() {
   @Test
   fun `it can notify Postgres`(
     vertx: Vertx,
@@ -40,7 +40,7 @@ class NotifyingPostgresIT : AbstractCrabzillaWriterIT() {
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd = CustomerCommand.RegisterAndActivateCustomer(customerId1, "c1", "is needed")
-    crabzillaWriter.handle(targetStream1, cmd)
+    writerApi.handle(targetStream1, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         val callable =

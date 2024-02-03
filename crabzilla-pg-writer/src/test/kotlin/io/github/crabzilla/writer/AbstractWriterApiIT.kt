@@ -16,7 +16,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.MountableFile
 
 @ExtendWith(VertxExtension::class)
-open class AbstractCrabzillaWriterIT {
+open class AbstractWriterApiIT {
   var dbConfig: JsonObject
 
   init {
@@ -30,7 +30,7 @@ open class AbstractCrabzillaWriterIT {
   }
 
   lateinit var context: CrabzillaContext
-  lateinit var crabzillaWriter: CrabzillaWriter<CustomerCommand>
+  lateinit var writerApi: WriterApi<CustomerCommand>
   lateinit var testRepository: TestRepository
 
   @BeforeEach
@@ -39,7 +39,7 @@ open class AbstractCrabzillaWriterIT {
     tc: VertxTestContext,
   ) {
     context = CrabzillaContextImpl(vertx, dbConfig)
-    crabzillaWriter = CrabzillaWriterImpl(context, customerConfig)
+    writerApi = WriterApiImpl(context, customerConfig)
     testRepository = TestRepository(context.pgPool)
 
     testRepository.cleanDatabase()

@@ -17,7 +17,7 @@ import java.util.*
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PersistingStreams : AbstractCrabzillaWriterIT() {
+class PersistingStreams : AbstractWriterApiIT() {
   @Test
   @DisplayName("migrating streams - TODO ")
   @Disabled
@@ -41,7 +41,7 @@ class PersistingStreams : AbstractCrabzillaWriterIT() {
     val customerId1 = UUID.randomUUID()
     val targetStream = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd = CustomerCommand.RegisterAndActivateCustomer(customerId1, "c1", "is needed")
-    crabzillaWriter.handle(targetStream, cmd)
+    writerApi.handle(targetStream, cmd)
       .compose { testRepository.getStreams() }
       .onFailure { tc.failNow(it) }
       .onSuccess { streams ->
@@ -66,7 +66,7 @@ class PersistingStreams : AbstractCrabzillaWriterIT() {
     val customerId1 = UUID.randomUUID()
     val targetStream = TargetStream(name = "customer@123", stateType = "Customer", stateId = customerId1.toString())
     val cmd = CustomerCommand.RegisterAndActivateCustomer(customerId1, "c1", "is needed")
-    crabzillaWriter.handle(targetStream, cmd)
+    writerApi.handle(targetStream, cmd)
       .compose { testRepository.getStreams() }
       .onFailure { tc.failNow(it) }
       .onSuccess { streams ->
@@ -90,8 +90,8 @@ class PersistingStreams : AbstractCrabzillaWriterIT() {
     val customerId1 = UUID.randomUUID()
     val targetStream = TargetStream(name = "customer@123", mustBeNew = true)
     val cmd = CustomerCommand.RegisterAndActivateCustomer(customerId1, "c1", "is needed")
-    crabzillaWriter.handle(targetStream, cmd)
-      .compose { crabzillaWriter.handle(targetStream, cmd) }
+    writerApi.handle(targetStream, cmd)
+      .compose { writerApi.handle(targetStream, cmd) }
       .onFailure {
         testRepository.getStreams()
           .onSuccess { streams ->

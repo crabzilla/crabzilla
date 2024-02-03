@@ -4,7 +4,7 @@ import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import org.slf4j.LoggerFactory
 
-class SubscriptionFactoryImpl : SubscriptionApiFactory {
+internal class SubscriptionFactoryImpl : SubscriptionApiFactory {
   companion object {
     private val log = LoggerFactory.getLogger(SubscriptionApiImpl::class.java)
   }

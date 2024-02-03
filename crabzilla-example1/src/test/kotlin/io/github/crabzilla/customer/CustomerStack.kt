@@ -4,7 +4,6 @@ import io.github.crabzilla.context.EventRecord
 import io.github.crabzilla.context.JsonObjectSerDer
 import io.github.crabzilla.context.ViewEffect
 import io.github.crabzilla.context.ViewTrigger
-import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
@@ -16,24 +15,12 @@ import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRenamed
-import io.github.crabzilla.example1.customer.customerCommandHandler
-import io.github.crabzilla.example1.customer.customerEventHandler
-import io.github.crabzilla.writer.CrabzillaWriterConfig
 import io.vertx.core.Future
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import java.util.*
-
-val customerConfig =
-  CrabzillaWriterConfig(
-    initialState = Customer.Initial,
-    eventHandler = customerEventHandler,
-    commandHandler = customerCommandHandler,
-    eventSerDer = CustomerEventSerDer(),
-    commandSerDer = CustomerCommandSerDer(),
-  )
 
 class CustomerCommandSerDer : JsonObjectSerDer<CustomerCommand> {
   override fun toJson(instance: CustomerCommand): JsonObject {

@@ -15,7 +15,7 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Causation and correlation")
-class CausationAndCorrelationIT : AbstractCrabzillaWriterIT() {
+class CausationAndCorrelationIT : AbstractWriterApiIT() {
   @Test
   fun `when handling handle 4 commands, causation and correlation are correct`(
     vertx: Vertx,
@@ -27,10 +27,10 @@ class CausationAndCorrelationIT : AbstractCrabzillaWriterIT() {
     val cmd2 = CustomerCommand.ActivateCustomer("is needed")
     val cmd3 = CustomerCommand.DeactivateCustomer("is not needed anymore")
     val cmd4 = CustomerCommand.ActivateCustomer("is needed again")
-    crabzillaWriter.handle(targetStream, cmd1)
-      .compose { crabzillaWriter.handle(targetStream, cmd2) }
-      .compose { crabzillaWriter.handle(targetStream, cmd3) }
-      .compose { crabzillaWriter.handle(targetStream, cmd4) }
+    writerApi.handle(targetStream, cmd1)
+      .compose { writerApi.handle(targetStream, cmd2) }
+      .compose { writerApi.handle(targetStream, cmd3) }
+      .compose { writerApi.handle(targetStream, cmd4) }
 //    handler
 //      .withinTransaction { tx ->
 //        handler.handle(tx, id, cmd1)

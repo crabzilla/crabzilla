@@ -22,13 +22,13 @@ import java.util.concurrent.atomic.AtomicReference
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Publishing to eventbus")
 @Disabled
-class PublishingToEventbusIT : AbstractCrabzillaWriterIT() {
+class PublishingToEventbusIT : AbstractWriterApiIT() {
   @Test
   fun `it can publish to eventbus`(
     vertx: Vertx,
     tc: VertxTestContext,
   ) {
-    val commander = CrabzillaWriterImpl(context, customerConfig)
+    val commander = WriterApiImpl(context, customerConfig)
     val jsonMessage = AtomicReference<JsonObject>()
     val latch = CountDownLatch(2)
     vertx.eventBus().consumer<JsonObject>("MY_TOPIC") { msg ->

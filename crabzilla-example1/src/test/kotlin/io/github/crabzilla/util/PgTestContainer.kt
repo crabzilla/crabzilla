@@ -1,4 +1,4 @@
-package io.github.crabzilla
+package io.github.crabzilla.util
 
 import io.vertx.core.json.JsonObject
 import org.testcontainers.containers.PostgreSQLContainer

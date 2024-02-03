@@ -16,7 +16,7 @@ data class CommandMetadata(
   val metadata: JsonObject? = null,
 )
 
-interface CrabzillaWriter<C : Any> {
+interface WriterApi<C : Any> {
   fun handle(
     targetStream: TargetStream,
     command: C,
@@ -31,7 +31,7 @@ interface CrabzillaWriter<C : Any> {
   ): Future<EventMetadata>
 }
 
-data class CrabzillaWriterConfig<S : Any, C : Any, E : Any>(
+data class WriterConfig<S : Any, C : Any, E : Any>(
   val initialState: S,
   val eventHandler: (S, E) -> S,
   val commandHandler: (S, C) -> List<E>,

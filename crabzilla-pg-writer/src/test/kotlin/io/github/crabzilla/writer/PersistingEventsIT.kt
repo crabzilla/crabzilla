@@ -17,7 +17,7 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Persisting events")
-class PersistingEventsIT : AbstractCrabzillaWriterIT() {
+class PersistingEventsIT : AbstractWriterApiIT() {
   @Test
   @DisplayName("appending 1 command with 2 events results in version 2 ")
   fun s1(
@@ -27,7 +27,7 @@ class PersistingEventsIT : AbstractCrabzillaWriterIT() {
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
-    crabzillaWriter.handle(targetStream1, cmd)
+    writerApi.handle(targetStream1, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         testRepository.getEvents(0, 1000)
@@ -67,11 +67,11 @@ class PersistingEventsIT : AbstractCrabzillaWriterIT() {
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd1 = RegisterAndActivateCustomer(customerId1, "customer#1", "is needed")
-    crabzillaWriter.handle(targetStream1, cmd1)
+    writerApi.handle(targetStream1, cmd1)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         val cmd2 = CustomerCommand.DeactivateCustomer("it's not needed anymore")
-        crabzillaWriter.handle(targetStream1, cmd2)
+        writerApi.handle(targetStream1, cmd2)
           .onFailure { err -> tc.failNow(err) }
           .onSuccess {
             testRepository.getEvents(0, 1000)

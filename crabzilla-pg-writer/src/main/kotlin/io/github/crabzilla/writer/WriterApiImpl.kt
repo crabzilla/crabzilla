@@ -20,11 +20,11 @@ import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.util.*
 
-class CrabzillaWriterImpl<S : Any, C : Any, E : Any>(
+class WriterApiImpl<S : Any, C : Any, E : Any>(
   private val context: CrabzillaContext,
-  private val config: CrabzillaWriterConfig<S, C, E>,
-) : CrabzillaWriter<C> {
-  private val log = LoggerFactory.getLogger(CrabzillaWriterImpl::class.java)
+  private val config: WriterConfig<S, C, E>,
+) : WriterApi<C> {
+  private val log = LoggerFactory.getLogger(WriterApiImpl::class.java)
 
   override fun handle(
     targetStream: TargetStream,

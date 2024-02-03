@@ -13,7 +13,7 @@ import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRenamed
-import io.github.crabzilla.writer.CrabzillaWriterConfig
+import io.github.crabzilla.writer.WriterConfig
 import io.vertx.core.Future
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.json.JsonObject
@@ -22,7 +22,7 @@ import io.vertx.sqlclient.Tuple
 import java.util.*
 
 val customerConfig =
-  CrabzillaWriterConfig(
+  WriterConfig(
     initialState = Customer.Initial,
     eventHandler = customerEventHandler,
     commandHandler = customerCommandHandler,

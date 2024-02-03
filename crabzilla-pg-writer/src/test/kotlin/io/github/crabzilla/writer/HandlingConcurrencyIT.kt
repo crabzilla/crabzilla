@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Handling concurrent commands")
-class HandlingConcurrencyIT : AbstractCrabzillaWriterIT() {
+class HandlingConcurrencyIT : AbstractWriterApiIT() {
   @Test
   fun `when many concurrent RenameCustomer commands against same version, at least 1 will succeed`(
     vertx: Vertx,
@@ -34,7 +34,7 @@ class HandlingConcurrencyIT : AbstractCrabzillaWriterIT() {
   ) {
     val targetStream = TargetStream(stateType = "Customer", stateId = UUID.randomUUID().toString())
     val cmd = RegisterCustomer(UUID.fromString(targetStream.stateId()), "good customer")
-    crabzillaWriter.handle(targetStream, cmd)
+    writerApi.handle(targetStream, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         vertx.executeBlocking<Void> { promise ->
@@ -43,7 +43,7 @@ class HandlingConcurrencyIT : AbstractCrabzillaWriterIT() {
           val cmd2 = CustomerCommand.RenameCustomer("new name")
           val callables = mutableSetOf<Callable<Future<EventMetadata>>>()
           for (i: Int in 1..concurrencyLevel) {
-            callables.add(Callable { crabzillaWriter.handle(targetStream, cmd2) })
+            callables.add(Callable { writerApi.handle(targetStream, cmd2) })
           }
           val futures = executorService.invokeAll(callables)
           executorService.awaitTermination(3, TimeUnit.SECONDS)
@@ -78,7 +78,7 @@ class HandlingConcurrencyIT : AbstractCrabzillaWriterIT() {
     val customerId = UUID.randomUUID()
     val targetStream = TargetStream(stateType = "Customer", stateId = customerId.toString())
     val cmd = RegisterCustomer(customerId, "good customer")
-    crabzillaWriter.handle(targetStream, cmd)
+    writerApi.handle(targetStream, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         vertx.executeBlocking<Void> { promise ->
@@ -87,7 +87,7 @@ class HandlingConcurrencyIT : AbstractCrabzillaWriterIT() {
           val cmd2 = ActivateCustomer("whatsoever")
           val callables = mutableSetOf<Callable<Future<EventMetadata>>>()
           for (i: Int in 1..concurrencyLevel) {
-            callables.add(Callable { crabzillaWriter.handle(targetStream, cmd2) })
+            callables.add(Callable { writerApi.handle(targetStream, cmd2) })
           }
           val futures = executorService.invokeAll(callables)
           executorService.awaitTermination(3, TimeUnit.SECONDS)

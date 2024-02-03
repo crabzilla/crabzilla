@@ -18,7 +18,7 @@ import java.util.*
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Persisting commands")
-class PersistingCommandsT : AbstractCrabzillaWriterIT() {
+class PersistingCommandsT : AbstractWriterApiIT() {
   @Test
   fun `it can persist 1 command`(
     tc: VertxTestContext,
@@ -27,7 +27,7 @@ class PersistingCommandsT : AbstractCrabzillaWriterIT() {
     val customerId1 = UUID.randomUUID()
     val targetStream = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
-    crabzillaWriter.handle(targetStream, cmd)
+    writerApi.handle(targetStream, cmd)
       .compose { testRepository.getCommands() }
       .onFailure { tc.failNow(it) }
       .onSuccess { commands ->
@@ -55,7 +55,7 @@ class PersistingCommandsT : AbstractCrabzillaWriterIT() {
     val cmd = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
     val cmdMetadata =
       CommandMetadata(commandId = UUID.randomUUID(), metadata = JsonObject().put("campaign", "black-friday-2024").put("user", "Peter"))
-    crabzillaWriter.handle(targetStream, cmd, cmdMetadata)
+    writerApi.handle(targetStream, cmd, cmdMetadata)
       .compose { testRepository.getCommands() }
       .compose { commands -> testRepository.getEvents(0L, 10).map { Pair(commands, it) } }
       .onSuccess { pair ->
@@ -85,8 +85,8 @@ class PersistingCommandsT : AbstractCrabzillaWriterIT() {
     val cmd1 = RegisterAndActivateCustomer(customerId1, "customer#2", "is needed")
     val cmd2 = DeactivateCustomer("it's not needed anymore")
 
-    crabzillaWriter.handle(targetStream, cmd1)
-      .compose { crabzillaWriter.handle(targetStream, cmd2) }
+    writerApi.handle(targetStream, cmd1)
+      .compose { writerApi.handle(targetStream, cmd2) }
       .compose { testRepository.getCommands() }
       .compose { commands -> testRepository.getEvents(0L, 10).map { Pair(commands, it) } }
       .onFailure { tc.failNow(it) }
@@ -120,13 +120,13 @@ class PersistingCommandsT : AbstractCrabzillaWriterIT() {
     vertx: Vertx,
   ) {
     // notice we removed the commandSerDer
-    crabzillaWriter = CrabzillaWriterImpl(context, customerConfig.copy(commandSerDer = null))
+    writerApi = WriterApiImpl(context, customerConfig.copy(commandSerDer = null))
 
     val customerId1 = UUID.randomUUID()
     val targetStream = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
 
-    crabzillaWriter.handle(targetStream, cmd)
+    writerApi.handle(targetStream, cmd)
       .compose { testRepository.getCommands() }
       .compose { commands -> testRepository.getEvents(0L, 10).map { Pair(commands, it) } }
       .onFailure { tc.failNow(it) }
