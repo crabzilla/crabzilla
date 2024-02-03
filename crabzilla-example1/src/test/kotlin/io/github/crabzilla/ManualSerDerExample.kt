@@ -40,11 +40,11 @@ fun main() {
     fun handleCurried(targetStream: TargetStream): (CustomerCommand) -> Future<EventMetadata> {
       return { command -> handle(targetStream, command) }
     }
-    val id = UUID.randomUUID()
-    with(TargetStream(name = "Customer@$id")) {
+    val customerId = UUID.randomUUID()
+    with(TargetStream(name = "Customer@$customerId")) {
       val handle = handleCurried(this)
       testRepository.cleanDatabase()
-        .compose { handle(RegisterCustomer(customerId = id, name = "customer1")) }
+        .compose { handle(RegisterCustomer(customerId = customerId, name = "customer1")) }
         .compose { handle(ActivateCustomer("because it's needed")) }
         .compose { handle(DeactivateCustomer("because it's not needed")) }
     }

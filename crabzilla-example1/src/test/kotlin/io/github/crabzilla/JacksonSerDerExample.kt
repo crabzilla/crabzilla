@@ -58,17 +58,17 @@ fun main() {
 
   subscriptionApi.deploy()
     .andThen {
-      val writer = getWriter()
+      val writerApi = getWriter()
 
-      with(writer) {
-        val id = UUID.randomUUID()
-        val ts = TargetStream(name = "Customer@$id")
+      with(writerApi) {
+        val customerId = UUID.randomUUID()
+        val targetStream = TargetStream(name = "Customer@$customerId")
         testRepository.cleanDatabase()
-          .compose { handle(ts, CustomerCommand.RegisterCustomer(customerId = id, name = "customer1")) }
-          .compose { handle(ts, ActivateCustomer("because it's needed")) }
-          .compose { handle(ts, DeactivateCustomer("because it's not needed")) }
-          .compose { handle(ts, ActivateCustomer("because it's needed")) }
-          .compose { handle(ts, DeactivateCustomer("because it's not needed")) }
+          .compose { handle(targetStream, CustomerCommand.RegisterCustomer(customerId = customerId, name = "customer1")) }
+          .compose { handle(targetStream, ActivateCustomer("because it's needed")) }
+          .compose { handle(targetStream, DeactivateCustomer("because it's not needed")) }
+          .compose { handle(targetStream, ActivateCustomer("because it's needed")) }
+          .compose { handle(targetStream, DeactivateCustomer("because it's not needed")) }
       }
         .compose { subscriptionApi.handle() } // to force it to work since it's async
         .onFailure { it.printStackTrace() }
