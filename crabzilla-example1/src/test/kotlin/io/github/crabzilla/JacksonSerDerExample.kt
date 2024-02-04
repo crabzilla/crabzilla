@@ -11,6 +11,7 @@ import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent
 import io.github.crabzilla.example1.customer.customerCommandHandler
 import io.github.crabzilla.example1.customer.customerEventHandler
@@ -56,15 +57,14 @@ fun main() {
 
   val subscriptionApi = getSubscription()
 
-  subscriptionApi.deploy()
+  getSubscription().deploy()
     .andThen {
       val writerApi = getWriter()
-
       with(writerApi) {
         val customerId = UUID.randomUUID()
         val targetStream = TargetStream(name = "Customer@$customerId")
         testRepository.cleanDatabase()
-          .compose { handle(targetStream, CustomerCommand.RegisterCustomer(customerId = customerId, name = "customer1")) }
+          .compose { handle(targetStream, RegisterCustomer(customerId = customerId, name = "customer1")) }
           .compose { handle(targetStream, ActivateCustomer("because it's needed")) }
           .compose { handle(targetStream, DeactivateCustomer("because it's not needed")) }
           .compose { handle(targetStream, ActivateCustomer("because it's needed")) }

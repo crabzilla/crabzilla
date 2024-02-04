@@ -26,13 +26,6 @@
 
     <!-- test -->
 
-    <dependency>
-      <groupId>dev.shamil</groupId>
-      <artifactId>ulid4j</artifactId>
-      <version>1.0</version>
-      <scope>test</scope>
-    </dependency>
-
   </dependencies>
 
 </project>

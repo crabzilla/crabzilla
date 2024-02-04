@@ -11,27 +11,30 @@
   <properties>
 
     <java.version>17</java.version>
-
-    <vertx.version>4.5.1</vertx.version>
     <kotlin.version>1.9.22</kotlin.version>
     <serialization.version>1.6.2</serialization.version>
     <jackson.version>2.16.1</jackson.version>
     <slf4j.version>2.0.11</slf4j.version>
 
+    <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+    <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+    <quarkus.platform.version>3.7.1</quarkus.platform.version>
+
     <!-- tests-->
     <junit-jupiter.version>5.10.1</junit-jupiter.version>
 
     <!-- etc-->
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <kotlin.compiler.incremental>false</kotlin.compiler.incremental>
-
+    <compiler-plugin.version>3.12.1</compiler-plugin.version>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <skipITs>false</skipITs>
     <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
     <maven-failsafe-plugin.version>3.2.5</maven-failsafe-plugin.version>
-
     <asciidoctor.maven.plugin.version>2.1.0</asciidoctor.maven.plugin.version>
     <asciidoctorj.pdf.version>1.5.4</asciidoctorj.pdf.version>
     <asciidoctorj.version>2.1.0</asciidoctorj.version>
-
     <maven.jacoco.plugin.version>0.8.11</maven.jacoco.plugin.version>
     <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
     <sonar.jacoco.reportPath>${project.build.directory}/coverage-reports/jacoco.exec</sonar.jacoco.reportPath>
@@ -128,12 +131,12 @@
         <version>${project.version}</version>
       </dependency>
 
-      <!-- vertx -->
+      <!-- quarkus -->
 
       <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-stack-depchain</artifactId>
-        <version>${vertx.version}</version>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>${quarkus.platform.artifact-id}</artifactId>
+        <version>${quarkus.platform.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -141,9 +144,8 @@
       <!-- kotlin -->
 
       <dependency>
-        <groupId>org.jetbrains.kotlin</groupId>
-        <artifactId>kotlin-stdlib</artifactId>
-        <version>${kotlin.version}</version>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-kotlin</artifactId>
       </dependency>
 
       <dependency>
@@ -155,22 +157,8 @@
       <!-- jackson -->
 
       <dependency>
-        <groupId>com.fasterxml.jackson.module</groupId>
-        <artifactId>jackson-module-kotlin</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jsr310</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-
-      <!--	Java 8 Datatypes	-->
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jdk8</artifactId>
-        <version>${jackson.version}</version>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-jackson</artifactId>
       </dependency>
 
       <!-- test -->
@@ -211,16 +199,6 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-junit5</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-service-factory</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-config</artifactId>
       <scope>test</scope>
     </dependency>
 

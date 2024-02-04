@@ -52,7 +52,7 @@ class HandlingConcurrencyIT : AbstractWriterApiIT() {
           log.info("Callables ${callables.size}, successes: ${succeeded.size}")
           tc.verify {
             assertEquals(futures.size, callables.size)
-            assertThat(succeeded.size).isGreaterThan(0)
+            assertThat(succeeded.size).isGreaterThanOrEqualTo(1)
             for (f in failures) {
               log.info("${f.cause().javaClass.simpleName}, ${f.cause().message}")
               assertThat(f.cause().javaClass.simpleName).isIn("StreamCantBeLockedException", "PgException")
