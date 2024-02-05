@@ -3,16 +3,16 @@ package io.github.crabzilla
 import io.github.crabzilla.context.CrabzillaContextImpl
 import io.github.crabzilla.context.EventMetadata
 import io.github.crabzilla.context.TargetStream
-import io.github.crabzilla.customer.CustomerCommandSerDer
-import io.github.crabzilla.customer.CustomerEventSerDer
-import io.github.crabzilla.customer.CustomerViewTrigger
-import io.github.crabzilla.customer.CustomersAsyncViewEffect
-import io.github.crabzilla.customer.CustomersSyncViewEffect
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.CustomerCommandSerDer
+import io.github.crabzilla.example1.customer.CustomerEventSerDer
+import io.github.crabzilla.example1.customer.CustomersViewEffect
+import io.github.crabzilla.example1.customer.CustomersViewTrigger
+import io.github.crabzilla.example1.customer.CustomersWriteViewEffect
 import io.github.crabzilla.example1.customer.customerCommandHandler
 import io.github.crabzilla.example1.customer.customerEventHandler
 import io.github.crabzilla.subscription.SubscriptionApi
@@ -42,7 +42,7 @@ fun main() {
         commandHandler = customerCommandHandler,
         eventSerDer = CustomerEventSerDer(),
         commandSerDer = CustomerCommandSerDer(),
-        viewEffect = CustomersSyncViewEffect(),
+        viewEffect = CustomersWriteViewEffect(),
       )
     return WriterApiImpl(context, config)
   }
@@ -51,12 +51,12 @@ fun main() {
     return SubscriptionComponentImpl(
       crabzillaContext = context,
       spec = SubscriptionSpec(subscriptionName),
-      viewEffect = CustomersAsyncViewEffect(),
-      viewTrigger = CustomerViewTrigger(vertx.eventBus()),
+      viewEffect = CustomersViewEffect(),
+      viewTrigger = CustomersViewTrigger(vertx.eventBus()),
     ).extractApi()
   }
 
-  vertx.eventBus().consumer<JsonObject>(CustomerViewTrigger.EVENTBUS_ADDRESS) { msg ->
+  vertx.eventBus().consumer<JsonObject>(CustomersViewTrigger.EVENTBUS_ADDRESS) { msg ->
     val viewAsJson = msg.body()
     println("**** triggered since this customer id not active anymore: " + viewAsJson.encodePrettily())
   }

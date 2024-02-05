@@ -1,4 +1,4 @@
-package io.github.crabzilla.subscription // package io.github.crabzilla.stack.subscription
+package io.github.crabzilla.subscription
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.github.crabzilla.context.TargetStream
@@ -6,8 +6,8 @@ import io.github.crabzilla.context.ViewTrigger
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.customer.CustomerViewTrigger
 import io.github.crabzilla.example1.customer.CustomersViewEffect
+import io.github.crabzilla.example1.customer.CustomersViewTrigger
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -233,14 +233,14 @@ class SubscriptionIT : AbstractSubscriptionTest() {
     var viewAsJson = JsonObject()
     var customerView: CustomerView? = null
     val latch = CountDownLatch(1)
-    vertx.eventBus().consumer<JsonObject>(CustomerViewTrigger.EVENTBUS_ADDRESS) { msg ->
+    vertx.eventBus().consumer<JsonObject>(CustomersViewTrigger.EVENTBUS_ADDRESS) { msg ->
       viewAsJson = msg.body()
       customerView = viewAsJson.mapTo(CustomerView::class.java)
       println("**** triggered since this customer id not active anymore: " + msg.body().encodePrettily())
       latch.countDown()
     }
 
-    val api = api(CustomerViewTrigger(vertx.eventBus()))
+    val api = api(CustomersViewTrigger(vertx.eventBus()))
     api.deploy()
       .compose {
         val targetStream1 = TargetStream(stateType = "Customer", stateId = CUSTOMER_ID.toString())

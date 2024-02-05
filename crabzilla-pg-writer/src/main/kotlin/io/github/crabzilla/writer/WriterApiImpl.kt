@@ -3,7 +3,6 @@ package io.github.crabzilla.writer
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.context.EventMetadata
-import io.github.crabzilla.context.EventsProjector
 import io.github.crabzilla.context.TargetStream
 import io.github.crabzilla.core.CrabzillaCommandsSession
 import io.github.crabzilla.stream.StreamMustBeNewException
@@ -51,7 +50,7 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
       log.debug("Will append command {} as {} metadata {}", command, cmdAsJson, commandMetadata)
       val params =
         Tuple.of(
-          commandMetadata.commandId ?: context.uuidFunction.invoke(),
+          commandMetadata.commandId,
           causationId,
           correlationId,
           cmdAsJson,
@@ -128,11 +127,15 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
           }
       }
       .compose { triple ->
-        val (_, _, appendedEvents) = triple
+        val (_, session, appendedEvents) = triple
+        val events =
+          appendedEvents.mapIndexed { index, eventRecord ->
+            Pair(eventRecord.metadata, session.appliedEvents()[index])
+          }
         log.debug("Events appended {}", appendedEvents)
         if (config.viewEffect != null) {
-          EventsProjector(sqlConnection, config.viewEffect, config.viewTrigger)
-            .projectEvents(appendedEvents)
+          EventProjector(sqlConnection, config.viewEffect, config.viewTrigger)
+            .handle(events)
             .onSuccess {
               log.debug("Events projected")
             }.map { triple }

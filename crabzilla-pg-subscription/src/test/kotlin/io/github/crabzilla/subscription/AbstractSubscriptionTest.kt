@@ -3,10 +3,16 @@ package io.github.crabzilla.subscription
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContextImpl
+import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
-import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.example1.customer.CustomerCommandSerDer
+import io.github.crabzilla.example1.customer.CustomerEventSerDer
+import io.github.crabzilla.example1.customer.CustomersWriteViewEffect
+import io.github.crabzilla.example1.customer.customerCommandHandler
+import io.github.crabzilla.example1.customer.customerEventHandler
 import io.github.crabzilla.writer.WriterApi
 import io.github.crabzilla.writer.WriterApiImpl
+import io.github.crabzilla.writer.WriterConfig
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -34,6 +40,16 @@ open class AbstractSubscriptionTest {
   lateinit var context: CrabzillaContext
   lateinit var writer: WriterApi<CustomerCommand>
   lateinit var testRepository: TestRepository
+
+  val customerConfig =
+    WriterConfig(
+      initialState = Customer.Initial,
+      eventHandler = customerEventHandler,
+      commandHandler = customerCommandHandler,
+      eventSerDer = CustomerEventSerDer(),
+      commandSerDer = CustomerCommandSerDer(),
+      viewEffect = CustomersWriteViewEffect(),
+    )
 
   @BeforeEach
   fun setup(

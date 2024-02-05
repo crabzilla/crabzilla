@@ -6,9 +6,9 @@ import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommandSerDer
 import io.github.crabzilla.example1.customer.CustomerEventSerDer
-import io.github.crabzilla.example1.customer.CustomerViewTrigger
-import io.github.crabzilla.example1.customer.CustomerViewTrigger.Companion.VIEW_TRIGGER_EVENTBUS_ADDRESS
-import io.github.crabzilla.example1.customer.CustomersViewEffect
+import io.github.crabzilla.example1.customer.CustomersViewTrigger
+import io.github.crabzilla.example1.customer.CustomersViewTrigger.Companion.EVENTBUS_ADDRESS
+import io.github.crabzilla.example1.customer.CustomersWriteViewEffect
 import io.github.crabzilla.example1.customer.customerCommandHandler
 import io.github.crabzilla.example1.customer.customerEventHandler
 import io.vertx.core.Vertx
@@ -23,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -78,7 +79,7 @@ class HandlingViewEffects : AbstractWriterApiIT() {
         commandHandler = customerCommandHandler,
         commandSerDer = CustomerCommandSerDer(),
         eventSerDer = CustomerEventSerDer(),
-        viewEffect = CustomersViewEffect(),
+        viewEffect = CustomersWriteViewEffect(),
       )
 
     val writer = WriterApiImpl(context, customerConfig)
@@ -121,8 +122,8 @@ class HandlingViewEffects : AbstractWriterApiIT() {
         commandHandler = customerCommandHandler,
         commandSerDer = CustomerCommandSerDer(),
         eventSerDer = CustomerEventSerDer(),
-        viewEffect = CustomersViewEffect(),
-        viewTrigger = CustomerViewTrigger(vertx.eventBus()),
+        viewEffect = CustomersWriteViewEffect(),
+        viewTrigger = CustomersViewTrigger(vertx.eventBus()),
       )
 
     val writer = WriterApiImpl(context, customerConfig)
@@ -133,10 +134,10 @@ class HandlingViewEffects : AbstractWriterApiIT() {
     val cmd2 = DeactivateCustomer("it's not needed anymore")
 
     val latch = CountDownLatch(1)
-    var viewAsJson = JsonObject()
-    vertx.eventBus().consumer<JsonObject>(VIEW_TRIGGER_EVENTBUS_ADDRESS) { msg ->
-      viewAsJson = msg.body()
-      println("**** triggered since this customer id not active anymore: " + viewAsJson.encodePrettily())
+    val viewAsJson = AtomicReference<JsonObject?>(null)
+    vertx.eventBus().consumer<JsonObject>(EVENTBUS_ADDRESS) { msg ->
+      viewAsJson.set(msg.body())
+      println("**** triggered since this customer id not active anymore: " + viewAsJson.get()!!.encodePrettily())
       latch.countDown()
     }
 
@@ -156,7 +157,7 @@ class HandlingViewEffects : AbstractWriterApiIT() {
               assertThat(json.getString("name")).isEqualTo(cmd1.name)
               assertThat(json.getBoolean("is_active")).isEqualTo(false)
               latch.await(2, TimeUnit.SECONDS)
-              assertThat(viewAsJson).isEqualTo(json)
+              assertThat(viewAsJson.get()).isEqualTo(json)
               tc.completeNow()
             }
           }

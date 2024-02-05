@@ -130,8 +130,8 @@ class StreamWriterImpl<S : Any, E : Any>(
     val tuples: List<Tuple> =
       events.mapIndexed { index, event ->
         correlationIds[index] = streamSnapshot.correlationId ?: causationIds[0]
-        val eventAsJsonObject = eventSerDer.toJson(event)
         val eventId = eventIds[index]
+        val eventAsJsonObject = eventSerDer.toJson(event)
         val type = eventAsJsonObject.getString("type")
         if (index == 0) {
           causationIds[0] = streamSnapshot.causationId ?: eventIds[0]
@@ -169,7 +169,7 @@ class StreamWriterImpl<S : Any, E : Any>(
               causationId = eventId,
               eventSequence = sequence,
               version = currentVersion,
-              tuples[index].getString(0),
+              eventType = tuples[index].getString(0),
             )
           appendedEventList.add(EventRecord(eventMetadata, eventPayload))
           rs = rs!!.next()

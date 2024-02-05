@@ -3,8 +3,12 @@ package io.github.crabzilla.writer
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContextImpl
+import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
-import io.github.crabzilla.example1.customer.customerConfig
+import io.github.crabzilla.example1.customer.CustomerCommandSerDer
+import io.github.crabzilla.example1.customer.CustomerEventSerDer
+import io.github.crabzilla.example1.customer.customerCommandHandler
+import io.github.crabzilla.example1.customer.customerEventHandler
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -32,6 +36,15 @@ open class AbstractWriterApiIT {
   lateinit var context: CrabzillaContext
   lateinit var writerApi: WriterApi<CustomerCommand>
   lateinit var testRepository: TestRepository
+
+  val customerConfig =
+    WriterConfig(
+      initialState = Customer.Initial,
+      eventHandler = customerEventHandler,
+      commandHandler = customerCommandHandler,
+      eventSerDer = CustomerEventSerDer(),
+      commandSerDer = CustomerCommandSerDer(),
+    )
 
   @BeforeEach
   fun setup(

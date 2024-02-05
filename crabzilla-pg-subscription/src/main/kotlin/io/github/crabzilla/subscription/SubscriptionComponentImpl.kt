@@ -3,8 +3,6 @@ package io.github.crabzilla.subscription
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.context.EventRecord
-import io.github.crabzilla.context.EventsProjector
-import io.github.crabzilla.context.ViewEffect
 import io.github.crabzilla.context.ViewTrigger
 import io.github.crabzilla.subscription.internal.QuerySpecification
 import io.github.crabzilla.subscription.internal.SubscriptionDao
@@ -24,7 +22,7 @@ class SubscriptionComponentImpl(
   val crabzillaContext: CrabzillaContext,
   val spec: SubscriptionSpec,
   private val config: SubscriptionConfig = SubscriptionConfig(),
-  private val viewEffect: ViewEffect,
+  private val viewEffect: SubscriptionApiViewEffect,
   private val viewTrigger: ViewTrigger? = null,
   // TODO perhaps a FailurePolice in order to decide what to do when N failures, etc
 ) : SubscriptionComponent {
@@ -162,7 +160,7 @@ class SubscriptionComponentImpl(
   private fun action(): Future<Void> {
     fun registerNoNewEvents() {
       greedy.set(false)
-      val jitter = ((0..5).random() * 200)
+      val jitter = config.jitterFunction.invoke()
       val nextInterval = min(config.maxInterval, config.interval * backOff.incrementAndGet() + jitter)
       crabzillaContext.vertx.setTimer(nextInterval, handler())
       log.debug("registerNoNewEvents - Rescheduled to next {} milliseconds", nextInterval)
@@ -170,7 +168,7 @@ class SubscriptionComponentImpl(
 
     fun registerFailure(throwable: Throwable) {
       greedy.set(false)
-      val jitter = ((0..5).random() * 200)
+      val jitter = config.jitterFunction.invoke()
       val nextInterval = min(config.maxInterval, (config.interval * failures.incrementAndGet()) + jitter)
       crabzillaContext.vertx.setTimer(nextInterval, handler())
       log.error("registerFailure - Rescheduled to next {} milliseconds", nextInterval, throwable)
@@ -202,8 +200,8 @@ class SubscriptionComponentImpl(
         eventsList.last().metadata.eventSequence,
       )
 
-      return EventsProjector(subscriptionDao.sqlConnection, viewEffect, viewTrigger)
-        .projectEvents(eventsList)
+      return EventRecordProjector(subscriptionDao.sqlConnection, viewEffect, viewTrigger)
+        .handle(eventsList)
         .compose { subscriptionDao.updateOffset(spec.subscriptionName, eventsList.last().metadata.eventSequence) }
     }
 

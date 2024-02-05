@@ -29,9 +29,10 @@ class TestRepository(private val pgPool: Pool) {
       .compose { json ->
         getCustomers().map { json.put("customers-view", it) }
       }
-      .onComplete {
+      .compose {
         println("-------------------------- Crabzilla state overview")
-        println(it.result().encodePrettily())
+        println(it.encodePrettily())
+        Future.succeededFuture(it)
       }
   }
 

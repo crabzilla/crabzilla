@@ -1,11 +1,5 @@
 package io.github.crabzilla.example1.customer
 
-import io.github.crabzilla.core.buildException
-import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RenameCustomer
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
@@ -20,22 +14,6 @@ sealed interface CustomerEvent {
   data class CustomerDeactivated(val reason: String) : CustomerEvent
 
   data class CustomerRenamed(val name: String) : CustomerEvent
-}
-
-sealed interface CustomerCommand {
-  data class RegisterCustomer(val customerId: UUID, val name: String) : CustomerCommand
-
-  data class RenameCustomer(val name: String) : CustomerCommand
-
-  data class ActivateCustomer(val reason: String) : CustomerCommand
-
-  data class DeactivateCustomer(val reason: String) : CustomerCommand
-
-  data class RegisterAndActivateCustomer(
-    val customerId: UUID,
-    val name: String,
-    val reason: String,
-  ) : CustomerCommand
 }
 
 sealed class Customer {
@@ -104,36 +82,6 @@ val customerEventHandler: (Customer, CustomerEvent) -> Customer = { state: Custo
         is CustomerActivated -> state.toActive(reason = event.reason)
         is CustomerRenamed -> state.copy(name = event.name)
         else -> state
-      }
-    }
-  }
-}
-
-val customerCommandHandler: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->
-  when (state) {
-    is Customer.Initial -> {
-      when (command) {
-        is RegisterCustomer ->
-          state.register(id = command.customerId, name = command.name)
-        is RegisterAndActivateCustomer ->
-          state.registerAndActivate(id = command.customerId, name = command.name, reason = command.reason)
-        else -> throw buildException(state, command)
-      }
-    }
-    is Customer.Active -> {
-      when (command) {
-        is DeactivateCustomer -> state.deactivate(reason = command.reason)
-        is RenameCustomer -> state.rename(command.name)
-        else -> throw buildException(state, command)
-      }
-    }
-    is Customer.Inactive -> {
-      when (command) {
-        is ActivateCustomer -> {
-          state.activate(reason = command.reason)
-        }
-        is RenameCustomer -> state.rename(command.name)
-        else -> throw buildException(state, command)
       }
     }
   }

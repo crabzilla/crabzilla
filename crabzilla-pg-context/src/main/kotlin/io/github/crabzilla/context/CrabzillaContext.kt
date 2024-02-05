@@ -71,13 +71,6 @@ interface JsonObjectSerDer<T : Any> {
   fun fromJson(json: JsonObject): T
 }
 
-interface ViewEffect {
-  fun handleEffect(
-    sqlConnection: SqlConnection,
-    eventRecord: EventRecord,
-  ): Future<JsonObject?>
-}
-
 interface ViewTrigger {
   fun checkCondition(viewAsJson: JsonObject): Boolean
 
