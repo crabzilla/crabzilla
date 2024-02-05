@@ -5,8 +5,9 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.github.crabzilla.context.CrabzillaContextImpl
 import io.github.crabzilla.context.TargetStream
-import io.github.crabzilla.context.ViewTrigger
-import io.github.crabzilla.customer.CustomersViewEffect
+import io.github.crabzilla.customer.CustomerViewTrigger
+import io.github.crabzilla.customer.CustomersAsyncViewEffect
+import io.github.crabzilla.customer.CustomersSyncViewEffect
 import io.github.crabzilla.example1.customer.Customer
 import io.github.crabzilla.example1.customer.CustomerCommand
 import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
@@ -25,6 +26,7 @@ import io.github.crabzilla.writer.WriterApi
 import io.github.crabzilla.writer.WriterApiImpl
 import io.github.crabzilla.writer.WriterConfig
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonObject
 import java.util.*
 
 fun main() {
@@ -42,17 +44,23 @@ fun main() {
         commandHandler = customerCommandHandler,
         eventSerDer = JacksonJsonObjectSerDer(objectMapper, clazz = CustomerEvent::class),
         commandSerDer = JacksonJsonObjectSerDer(objectMapper, clazz = CustomerCommand::class),
+        viewEffect = CustomersSyncViewEffect(),
       )
     return WriterApiImpl(context, config)
   }
 
-  fun getSubscription(viewTrigger: ViewTrigger? = null): SubscriptionApi {
+  fun getSubscription(): SubscriptionApi {
     return SubscriptionComponentImpl(
       crabzillaContext = context,
       spec = SubscriptionSpec(subscriptionName),
-      viewEffect = CustomersViewEffect(),
-      viewTrigger = viewTrigger,
+      viewEffect = CustomersAsyncViewEffect(),
+      viewTrigger = CustomerViewTrigger(vertx.eventBus()),
     ).extractApi()
+  }
+
+  vertx.eventBus().consumer<JsonObject>(CustomerViewTrigger.EVENTBUS_ADDRESS) { msg ->
+    val viewAsJson = msg.body()
+    println("**** triggered since this customer id not active anymore: " + viewAsJson.encodePrettily())
   }
 
   val subscriptionApi = getSubscription()

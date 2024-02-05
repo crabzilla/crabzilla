@@ -100,7 +100,7 @@ class CustomersViewEffect : ViewEffect {
   override fun handleEffect(
     sqlConnection: SqlConnection,
     eventRecord: EventRecord,
-  ): Future<JsonObject> {
+  ): Future<JsonObject?> {
     val (payload, metadata) = eventRecord.extract()
     val idAsUUID = UUID.fromString(metadata.stateId)
     return when (val event = serDer.fromJson(payload)) {
@@ -122,7 +122,7 @@ class CustomersViewEffect : ViewEffect {
       conn: SqlConnection,
       id: UUID,
       isActive: Boolean,
-    ): Future<JsonObject> {
+    ): Future<JsonObject?> {
       return conn
         .preparedQuery("UPDATE customer_summary set is_active = $2 WHERE id = $1 RETURNING * ")
         .execute(Tuple.of(id, isActive))

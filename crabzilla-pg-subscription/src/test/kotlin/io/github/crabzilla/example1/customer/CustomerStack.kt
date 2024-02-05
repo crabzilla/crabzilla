@@ -100,7 +100,7 @@ class CustomersViewEffect : ViewEffect {
   override fun handleEffect(
     sqlConnection: SqlConnection,
     eventRecord: EventRecord,
-  ): Future<JsonObject> {
+  ): Future<JsonObject?> {
     val (payload, metadata) = eventRecord.extract()
     val idAsUUID = UUID.fromString(metadata.stateId)
     return when (val event = serDer.fromJson(payload)) {
@@ -122,7 +122,7 @@ class CustomersViewEffect : ViewEffect {
       conn: SqlConnection,
       id: UUID,
       isActive: Boolean,
-    ): Future<JsonObject> {
+    ): Future<JsonObject?> {
       return conn
         .preparedQuery("UPDATE customer_summary set is_active = $2 WHERE id = $1 RETURNING * ")
         .execute(Tuple.of(id, isActive))
@@ -140,10 +140,10 @@ class CustomerViewTrigger(private val eventBus: EventBus) : ViewTrigger {
     sqlConnection: SqlConnection,
     viewAsJson: JsonObject,
   ): Future<Void> {
-    return eventBus.request<Void>(VIEW_TRIGGER_EVENTBUS_ADDRESS, viewAsJson).mapEmpty()
+    return eventBus.request<Void>(EVENTBUS_ADDRESS, viewAsJson).mapEmpty()
   }
 
   companion object {
-    const val VIEW_TRIGGER_EVENTBUS_ADDRESS = "customer-view-trigger-handler"
+    const val EVENTBUS_ADDRESS = "customer-view-trigger-handler"
   }
 }

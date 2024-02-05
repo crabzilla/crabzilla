@@ -1,8 +1,10 @@
 package io.github.crabzilla.subscription // package io.github.crabzilla.stack.subscription
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.github.crabzilla.context.TargetStream
 import io.github.crabzilla.context.ViewTrigger
-import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.CustomerViewTrigger
 import io.github.crabzilla.example1.customer.CustomersViewEffect
@@ -222,10 +224,18 @@ class SubscriptionIT : AbstractSubscriptionTest() {
     tc: VertxTestContext,
     vertx: Vertx,
   ) {
+    data class CustomerView(
+      @JsonProperty("id") val id: UUID,
+      @JsonProperty("name") val name: String,
+      @JsonProperty("is_active") val isActive: Boolean,
+    )
+
     var viewAsJson = JsonObject()
+    var customerView: CustomerView? = null
     val latch = CountDownLatch(1)
-    vertx.eventBus().consumer<JsonObject>(CustomerViewTrigger.VIEW_TRIGGER_EVENTBUS_ADDRESS) { msg ->
+    vertx.eventBus().consumer<JsonObject>(CustomerViewTrigger.EVENTBUS_ADDRESS) { msg ->
       viewAsJson = msg.body()
+      customerView = viewAsJson.mapTo(CustomerView::class.java)
       println("**** triggered since this customer id not active anymore: " + msg.body().encodePrettily())
       latch.countDown()
     }
@@ -235,8 +245,8 @@ class SubscriptionIT : AbstractSubscriptionTest() {
       .compose {
         val targetStream1 = TargetStream(stateType = "Customer", stateId = CUSTOMER_ID.toString())
         writer.handle(targetStream1, RegisterCustomer(CUSTOMER_ID, "cust#$CUSTOMER_ID"))
-          .compose { writer.handle(targetStream1, CustomerCommand.ActivateCustomer("because yes")) }
-          .compose { writer.handle(targetStream1, CustomerCommand.DeactivateCustomer("because yes")) }
+          .compose { writer.handle(targetStream1, ActivateCustomer("because yes")) }
+          .compose { writer.handle(targetStream1, DeactivateCustomer("because yes")) }
       }.compose {
         api.handle()
       }.compose {
@@ -247,6 +257,7 @@ class SubscriptionIT : AbstractSubscriptionTest() {
         if (it.size == 1) { // only 1 customer expected
           latch.await(2, TimeUnit.SECONDS)
           assertThat(viewAsJson).isEqualTo(it.first())
+          assertThat(customerView).isEqualTo(CustomerView(CUSTOMER_ID, "cust#$CUSTOMER_ID", false))
           tc.completeNow()
         } else {
           tc.failNow("Nothing projected")

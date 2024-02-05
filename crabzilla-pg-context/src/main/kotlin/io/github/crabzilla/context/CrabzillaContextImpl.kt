@@ -14,7 +14,7 @@ import java.util.*
 class CrabzillaContextImpl(
   override val vertx: Vertx,
   private val pgConfig: JsonObject,
-  override val uuidFunction: () -> UUID = { UUID.randomUUID() },
+  override val uuidFunction: () -> UUID = { UUID.randomUUID() }
 ) : CrabzillaContext {
   override val pgPool: Pool by lazy {
     toPgPool(vertx, toPgConnectionOptions(pgConfig))
@@ -32,19 +32,19 @@ class CrabzillaContextImpl(
 class EventsProjector(
   private val sqlConnection: SqlConnection,
   private val viewEffect: ViewEffect,
-  private val viewTrigger: ViewTrigger? = null,
+  private val viewTrigger: ViewTrigger? = null
 ) {
   fun projectEvents(appendedEvents: List<EventRecord>): Future<JsonObject?> {
     logger.debug("Will project {} events", appendedEvents.size)
-    val initialFuture = Future.succeededFuture<JsonObject>()
+    val initialFuture = Future.succeededFuture<JsonObject?>()
     return appendedEvents.fold(
       initialFuture,
-    ) { currentFuture: Future<JsonObject>, appendedEvent: EventRecord ->
+    ) { currentFuture: Future<JsonObject?>, appendedEvent: EventRecord ->
       currentFuture.compose {
         viewEffect.handleEffect(sqlConnection, appendedEvent)
       }
     }.onSuccess { viewAsJson ->
-      if (viewTrigger != null) {
+      if (viewAsJson != null && viewTrigger != null) {
         if (viewTrigger.checkCondition(viewAsJson)) {
           viewTrigger.handleTrigger(sqlConnection, viewAsJson)
         }

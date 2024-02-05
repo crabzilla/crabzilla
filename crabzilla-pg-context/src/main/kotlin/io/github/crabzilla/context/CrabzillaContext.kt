@@ -75,7 +75,7 @@ interface ViewEffect {
   fun handleEffect(
     sqlConnection: SqlConnection,
     eventRecord: EventRecord,
-  ): Future<JsonObject>
+  ): Future<JsonObject?>
 }
 
 interface ViewTrigger {
