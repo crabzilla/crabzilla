@@ -11,6 +11,21 @@ import io.vertx.sqlclient.SqlConnection
 import org.slf4j.LoggerFactory
 import java.util.*
 
+data class TargetStream(
+  private val stateType: String? = null,
+  private val stateId: String? = null,
+  val name: String = "$stateType@$stateId",
+  val mustBeNew: Boolean = false,
+) {
+  fun stateType(): String {
+    return stateType ?: name.split("@")[0]
+  }
+
+  fun stateId(): String {
+    return stateId ?: name.split("@")[1]
+  }
+}
+
 data class CommandMetadata(
   val commandId: UUID = UUID.randomUUID(),
   val metadata: JsonObject? = null,
