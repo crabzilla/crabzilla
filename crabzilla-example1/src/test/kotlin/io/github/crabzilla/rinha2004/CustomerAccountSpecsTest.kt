@@ -5,6 +5,7 @@ import io.github.crabzilla.core.TestSpecification
 import io.github.crabzilla.rinha2004.CustomerAccountCommand.CommitNewDeposit
 import io.github.crabzilla.rinha2004.CustomerAccountCommand.CommitNewWithdraw
 import io.github.crabzilla.rinha2004.CustomerAccountCommand.RegisterNewAccount
+import io.github.crabzilla.rinha2004.CustomerAccountEvent.CustomerAccountRegistered
 import io.github.crabzilla.rinha2004.CustomerAccountEvent.WithdrawCommitted
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -33,7 +34,7 @@ class CustomerAccountSpecsTest {
       .then { // assert events
         assertThat(it.appliedEvents()).isEqualTo(
           listOf(
-            CustomerAccountEvent.CustomerAccountRegistered(
+            CustomerAccountRegistered(
               id,
               limit = 10,
               balance = 5,
@@ -54,7 +55,7 @@ class CustomerAccountSpecsTest {
       .then { // assert events
         assertThat(it.appliedEvents()).isEqualTo(
           listOf(
-            CustomerAccountEvent.CustomerAccountRegistered(
+            CustomerAccountRegistered(
               id,
               limit = 10,
               balance = 5,
@@ -80,7 +81,7 @@ class CustomerAccountSpecsTest {
       .then { // assert events
         assertThat(it.appliedEvents()).isEqualTo(
           listOf(
-            CustomerAccountEvent.CustomerAccountRegistered(
+            CustomerAccountRegistered(
               id,
               limit = 50,
               balance = 100,
@@ -111,7 +112,7 @@ class CustomerAccountSpecsTest {
         // assert events
         assertThat(it.appliedEvents()).isEqualTo(
           listOf(
-            CustomerAccountEvent.CustomerAccountRegistered(
+            CustomerAccountRegistered(
               id,
               limit = 0,
               balance = 5,
