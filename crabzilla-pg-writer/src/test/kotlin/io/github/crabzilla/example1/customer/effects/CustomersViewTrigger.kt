@@ -1,4 +1,4 @@
-package io.github.crabzilla.example1.customer
+package io.github.crabzilla.example1.customer.effects
 
 import io.github.crabzilla.context.ViewTrigger
 import io.vertx.core.Future

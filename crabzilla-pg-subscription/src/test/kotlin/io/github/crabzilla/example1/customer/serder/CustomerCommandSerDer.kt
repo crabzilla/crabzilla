@@ -1,6 +1,7 @@
-package io.github.crabzilla.example1.customer
+package io.github.crabzilla.example1.customer.serder
 
 import io.github.crabzilla.context.JsonObjectSerDer
+import io.github.crabzilla.example1.customer.model.CustomerCommand
 import io.vertx.core.json.JsonObject
 import java.util.*
 

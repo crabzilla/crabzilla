@@ -7,8 +7,8 @@ CREATE TYPE stream_status AS ENUM ('OPEN', 'CLOSED', 'MIGRATED');
 CREATE TABLE streams (
     id INT GENERATED ALWAYS AS IDENTITY (cache 10) UNIQUE,
     name VARCHAR(100) NOT NULL UNIQUE,
-    state_type VARCHAR(100) NULL,
-    state_id VARCHAR(100) NULL,
+    state_type VARCHAR(100) NOT NULL,
+    state_id VARCHAR(100) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     status stream_status NOT NULL DEFAULT 'OPEN',
     migrated_to_stream_id INT NULL REFERENCES streams (id)

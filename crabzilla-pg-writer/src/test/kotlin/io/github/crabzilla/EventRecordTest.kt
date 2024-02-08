@@ -4,9 +4,9 @@ import io.github.crabzilla.context.EventMetadata
 import io.github.crabzilla.context.EventRecord
 import io.github.crabzilla.context.EventRecord.Companion.fromJsonObject
 import io.github.crabzilla.context.EventRecord.Companion.toJsonArray
-import io.github.crabzilla.example1.customer.CustomerEvent
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.example1.customer.CustomerEventSerDer
+import io.github.crabzilla.example1.customer.model.CustomerEvent
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.example1.customer.serder.CustomerEventSerDer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test

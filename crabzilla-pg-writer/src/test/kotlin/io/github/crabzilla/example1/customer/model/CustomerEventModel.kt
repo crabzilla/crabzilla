@@ -1,9 +1,9 @@
-package io.github.crabzilla.example1.customer
+package io.github.crabzilla.example1.customer.model
 
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRenamed
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerActivated
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerDeactivated
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRenamed
 import java.util.*
 
 sealed interface CustomerEvent {

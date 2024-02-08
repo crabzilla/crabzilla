@@ -5,17 +5,16 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.github.crabzilla.context.CrabzillaContextImpl
 import io.github.crabzilla.context.TargetStream
-import io.github.crabzilla.example1.customer.Customer
-import io.github.crabzilla.example1.customer.CustomerCommand
-import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.customer.CustomerEvent
-import io.github.crabzilla.example1.customer.CustomersViewEffect
-import io.github.crabzilla.example1.customer.CustomersViewTrigger
-import io.github.crabzilla.example1.customer.CustomersWriteViewEffect
-import io.github.crabzilla.example1.customer.customerCommandHandler
-import io.github.crabzilla.example1.customer.customerEventHandler
+import io.github.crabzilla.example1.customer.effects.CustomersViewEffect
+import io.github.crabzilla.example1.customer.effects.CustomersViewTrigger
+import io.github.crabzilla.example1.customer.effects.CustomersWriteViewEffect
+import io.github.crabzilla.example1.customer.model.Customer
+import io.github.crabzilla.example1.customer.model.CustomerCommand
+import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.model.CustomerEvent
+import io.github.crabzilla.example1.customer.model.customerCommandHandler
+import io.github.crabzilla.example1.customer.model.customerEventHandler
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
 import io.github.crabzilla.subscription.SubscriptionApi
 import io.github.crabzilla.subscription.SubscriptionComponentImpl
@@ -74,9 +73,9 @@ fun main() {
         testRepository.cleanDatabase()
           .compose { handle(targetStream, RegisterCustomer(customerId = customerId, name = "customer1")) }
           .compose { handle(targetStream, ActivateCustomer("because it's needed")) }
-          .compose { handle(targetStream, DeactivateCustomer("because it's not needed")) }
+          .compose { handle(targetStream, CustomerCommand.DeactivateCustomer("because it's not needed")) }
           .compose { handle(targetStream, ActivateCustomer("because it's needed")) }
-          .compose { handle(targetStream, DeactivateCustomer("because it's not needed")) }
+          .compose { handle(targetStream, CustomerCommand.DeactivateCustomer("because it's not needed")) }
       }
         .compose { subscriptionApi.handle() } // to force it to work since it's async
         .onFailure { it.printStackTrace() }

@@ -145,13 +145,17 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
         }
       }.compose {
         val (snapshot, _, appendedEvents) = it
-        val cmdAsJson = config.commandSerDer?.toJson(command)
-        appendCommand(
-          causationId = snapshot.causationId,
-          correlationId = snapshot.correlationId,
-          cmdAsJson = cmdAsJson,
-          streamId = snapshot.streamId,
-        )
+        if (config.persistCommands != false) {
+          val cmdAsJson = config.commandSerDer?.toJson(command)
+          appendCommand(
+            causationId = snapshot.causationId,
+            correlationId = snapshot.correlationId,
+            cmdAsJson = cmdAsJson,
+            streamId = snapshot.streamId,
+          )
+        } else {
+          succeededFuture()
+        }
           .map { appendedEvents.last().metadata }
       }
       .onSuccess {

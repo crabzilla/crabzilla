@@ -2,9 +2,9 @@ package io.github.crabzilla.writer
 
 import io.github.crabzilla.context.EventMetadata
 import io.github.crabzilla.context.TargetStream
-import io.github.crabzilla.example1.customer.CustomerCommand
-import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand
+import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterCustomer
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension

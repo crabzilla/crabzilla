@@ -1,8 +1,8 @@
 package io.github.crabzilla.writer
 
 import io.github.crabzilla.context.TargetStream
-import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -141,6 +141,32 @@ class PersistingCommandsT : AbstractWriterApiIT() {
           val commandPayload = command.getJsonObject("command_payload", null)
           assertThat(commandPayload).isNull()
           assertThat(command.getJsonObject("command_metadata")).isNull()
+        }
+        tc.completeNow()
+      }
+  }
+
+  @Test
+  fun `it can skip persisting command`(
+    tc: VertxTestContext,
+    vertx: Vertx,
+  ) {
+    // notice we disabled persistCommands flag
+    writerApi = WriterApiImpl(context, customerConfig.copy(persistCommands = false))
+
+    val customerId1 = UUID.randomUUID()
+    val targetStream = TargetStream(stateType = "Customer", stateId = customerId1.toString())
+    val cmd = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
+
+    writerApi.handle(targetStream, cmd)
+      .compose { testRepository.getCommands() }
+      .compose { commands -> testRepository.getEvents(0L, 10).map { Pair(commands, it) } }
+      .onFailure { tc.failNow(it) }
+      .onSuccess { pair ->
+        val (commands, events) = pair
+        tc.verify {
+          assertThat(commands.size).isEqualTo(0)
+          assertThat(events.size).isEqualTo(2)
         }
         tc.completeNow()
       }

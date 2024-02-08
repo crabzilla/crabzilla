@@ -1,16 +1,16 @@
 package io.github.crabzilla.writer
 
 import io.github.crabzilla.context.TargetStream
-import io.github.crabzilla.example1.customer.Customer
-import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommandSerDer
-import io.github.crabzilla.example1.customer.CustomerEventSerDer
-import io.github.crabzilla.example1.customer.CustomersViewTrigger
-import io.github.crabzilla.example1.customer.CustomersViewTrigger.Companion.EVENTBUS_ADDRESS
-import io.github.crabzilla.example1.customer.CustomersWriteViewEffect
-import io.github.crabzilla.example1.customer.customerCommandHandler
-import io.github.crabzilla.example1.customer.customerEventHandler
+import io.github.crabzilla.example1.customer.effects.CustomersViewTrigger
+import io.github.crabzilla.example1.customer.effects.CustomersViewTrigger.Companion.EVENTBUS_ADDRESS
+import io.github.crabzilla.example1.customer.effects.CustomersWriteViewEffect
+import io.github.crabzilla.example1.customer.model.Customer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer
+import io.github.crabzilla.example1.customer.model.customerCommandHandler
+import io.github.crabzilla.example1.customer.model.customerEventHandler
+import io.github.crabzilla.example1.customer.serder.CustomerCommandSerDer
+import io.github.crabzilla.example1.customer.serder.CustomerEventSerDer
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension

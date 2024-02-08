@@ -1,22 +1,11 @@
-package io.github.crabzilla.example1.customer
+package io.github.crabzilla.example1.customer.model
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRenamed
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerActivated
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerDeactivated
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRenamed
 import java.util.*
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
-@JsonSubTypes(
-  JsonSubTypes.Type(CustomerRegistered::class, name = "CustomerRegistered"),
-  JsonSubTypes.Type(CustomerActivated::class, name = "CustomerActivated"),
-  JsonSubTypes.Type(CustomerDeactivated::class, name = "CustomerDeactivated"),
-  JsonSubTypes.Type(CustomerRenamed::class, name = "CustomerRenamed"),
-)
 sealed interface CustomerEvent {
   data class CustomerRegistered(val id: UUID, val name: String) : CustomerEvent
 

@@ -2,7 +2,7 @@ package io.github.crabzilla.writer
 
 import io.github.crabzilla.context.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.context.TargetStream
-import io.github.crabzilla.example1.customer.CustomerCommand
+import io.github.crabzilla.example1.customer.model.CustomerCommand
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext

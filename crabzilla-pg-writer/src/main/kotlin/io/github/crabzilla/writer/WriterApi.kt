@@ -64,6 +64,7 @@ data class WriterConfig<S : Any, C : Any, E : Any>(
   // TODO consider an optional state serder (on stream module (to migrate the stream))
   val viewEffect: WriteApiEventViewEffect<E>? = null,
   val viewTrigger: ViewTrigger? = null,
+  val persistCommands: Boolean? = true,
 )
 
 class BusinessException(message: String, cause: Throwable) : CrabzillaRuntimeException(message, cause)
