@@ -8,6 +8,7 @@ import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import java.util.*
 
 @DisplayName("Serializing EventRecord")
@@ -26,6 +27,7 @@ class EventRecordTest {
       eventSequence = 1,
       version = 1,
       eventType = CustomerRegistered::class.java.simpleName,
+      createdAt = Instant.now(),
     )
 
   @Test

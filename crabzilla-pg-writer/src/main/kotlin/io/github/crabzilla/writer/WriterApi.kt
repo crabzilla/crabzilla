@@ -51,8 +51,14 @@ interface WriteApiEventViewEffect<E> {
     sqlConnection: SqlConnection,
     eventMetadata: EventMetadata,
     event: E,
-    // TODO consider a state param since it's available
   ): Future<JsonObject?>
+}
+
+interface StateEffect<S> {
+  fun handle(
+    id: String,
+    state: S,
+  ): Future<Void>
 }
 
 data class WriterConfig<S : Any, C : Any, E : Any>(
@@ -65,6 +71,7 @@ data class WriterConfig<S : Any, C : Any, E : Any>(
   val viewEffect: WriteApiEventViewEffect<E>? = null,
   val viewTrigger: ViewTrigger? = null,
   val persistCommands: Boolean? = true,
+  val stateEffect: StateEffect<S>? = null,
 )
 
 class BusinessException(message: String, cause: Throwable) : CrabzillaRuntimeException(message, cause)
@@ -75,8 +82,7 @@ internal class EventProjector<E>(
   private val viewTrigger: ViewTrigger? = null,
 ) {
   fun handle(appendedEvents: List<Pair<EventMetadata, E>>): Future<JsonObject?> {
-    logger.debug("Will project {} events", appendedEvents.size)
-    logger.debug("Will project {}", appendedEvents)
+    logger.debug("Will project {} events: {} ", appendedEvents.size, appendedEvents)
     val initialFuture = Future.succeededFuture<JsonObject?>()
     return appendedEvents.fold(
       initialFuture,

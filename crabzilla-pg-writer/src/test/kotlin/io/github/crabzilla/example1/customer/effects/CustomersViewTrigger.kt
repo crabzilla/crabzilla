@@ -15,7 +15,13 @@ class CustomersViewTrigger(private val eventBus: EventBus) : ViewTrigger {
     sqlConnection: SqlConnection,
     viewAsJson: JsonObject,
   ): Future<Void> {
-    return eventBus.request<Void>(EVENTBUS_ADDRESS, viewAsJson).mapEmpty()
+    // notice you can use publish instead of request/reply
+    val result = eventBus.request<Void>(EVENTBUS_ADDRESS, viewAsJson)
+    if (result.failed()) {
+      throw result.cause()
+    } else {
+      return Future.succeededFuture()
+    }
   }
 
   companion object {

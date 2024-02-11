@@ -35,6 +35,13 @@
       <artifactId>postgresql</artifactId>
     </dependency>
 
+    <dependency>
+      <scope>test</scope>
+      <groupId>io.kotest</groupId>
+      <artifactId>kotest-assertions-core-jvm</artifactId>
+      <version>4.0.7</version>
+    </dependency>
+
   </dependencies>
 
 </project>

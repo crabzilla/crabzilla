@@ -10,6 +10,7 @@ import io.vertx.sqlclient.RowStream
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
+import java.time.LocalDateTime
 import java.util.*
 
 class StreamRepositoryImpl<S : Any, E : Any>(
@@ -45,6 +46,7 @@ class StreamRepositoryImpl<S : Any, E : Any>(
         var latestVersion = 0
         var lastCausationId: UUID? = null
         var lastCorrelationId: UUID? = null
+        var createdAt: LocalDateTime
         var error: Throwable? = null
         // Fetch QUERY_MAX_STREAM_SIZE rows at a time
         val stream: RowStream<Row> = pq.createStream(StreamRepository.QUERY_MAX_STREAM_SIZE, Tuple.of(streamId))
@@ -53,6 +55,8 @@ class StreamRepositoryImpl<S : Any, E : Any>(
           latestVersion = row.getInteger("version")
           lastCausationId = row.getUUID("id")
           lastCorrelationId = row.getUUID("correlation_id")
+          // TODO
+          createdAt = row.getLocalDateTime("created_at")
           log.debug(
             "Found event version {}, causationId {}, correlationId {}",
             latestVersion,
@@ -84,7 +88,7 @@ class StreamRepositoryImpl<S : Any, E : Any>(
   companion object {
     private const val SQL_GET_EVENTS_BY_STREAM_ID =
       """
-      SELECT id, event_type, event_payload, version, causation_id, correlation_id
+      SELECT id, event_type, event_payload, version, causation_id, correlation_id, created_at
         FROM events
        WHERE stream_id = $1
        ORDER BY sequence

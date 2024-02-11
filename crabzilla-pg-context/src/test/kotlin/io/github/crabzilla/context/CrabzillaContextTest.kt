@@ -1,6 +1,6 @@
 package io.github.crabzilla.context
 
-import io.github.crabzilla.example1.customer.CustomerEvent
+import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.testcontainers.containers.PostgreSQLContainer
+import java.time.Instant
 import java.util.*
 
 @DisplayName("Instantiating CrabzillaContext")
@@ -48,7 +49,8 @@ class CrabzillaContextTest {
             causationId = UUID.randomUUID(),
             eventSequence = 1,
             version = 1,
-            eventType = CustomerEvent.CustomerRegistered::class.java.simpleName,
+            eventType = CustomerRegistered::class.java.simpleName,
+            createdAt = Instant.now(),
           )
         eventMetadata
       }

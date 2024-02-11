@@ -10,6 +10,7 @@ import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
+import java.time.ZoneOffset
 import java.util.*
 
 class StreamWriterImpl<S : Any, E : Any>(
@@ -70,7 +71,9 @@ class StreamWriterImpl<S : Any, E : Any>(
       .onSuccess { rowSet ->
         var rs: RowSet<Row>? = rowSet
         List(tuples.size) { index ->
-          val sequence = rs!!.iterator().next().getLong("sequence")
+          val row = rs!!.iterator().next()
+          val sequence = row.getLong("sequence")
+          val instant = row.getLocalDateTime("created_at")
           val correlationId = tuples[index].getUUID(CORRELATION_ID_INDEX)
           val currentVersion = tuples[index].getInteger(CURRENT_VERSION_INDEX)
           val eventId = tuples[index].getUUID(EVENT_ID_INDEX)
@@ -86,6 +89,7 @@ class StreamWriterImpl<S : Any, E : Any>(
               eventSequence = sequence,
               version = currentVersion,
               eventType = tuples[index].getString(0),
+              instant.toInstant(ZoneOffset.UTC),
             )
           appendedEventList.add(EventRecord(eventMetadata, eventPayload))
           rs = rs!!.next()
@@ -107,7 +111,7 @@ class StreamWriterImpl<S : Any, E : Any>(
     private const val SQL_APPEND_EVENT =
       """ INSERT
             INTO events (event_type, causation_id, correlation_id, event_payload, version, id, stream_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7) returning sequence"""
+          VALUES ($1, $2, $3, $4, $5, $6, $7) returning sequence, created_at"""
     private const val CORRELATION_ID_INDEX = 2
     private const val EVENT_PAYLOAD_INDEX = 3
     private const val CURRENT_VERSION_INDEX = 4

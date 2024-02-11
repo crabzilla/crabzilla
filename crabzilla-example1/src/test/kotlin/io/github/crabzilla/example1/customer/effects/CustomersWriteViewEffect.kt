@@ -15,12 +15,13 @@ class CustomersWriteViewEffect : WriteApiEventViewEffect<CustomerEvent> {
     eventMetadata: EventMetadata,
     event: CustomerEvent,
   ): Future<JsonObject?> {
-    val viewStateAsJson: Future<JsonObject?> by lazy { // no matter how many events, this is called just once
+    // since this handle only one event, no matter how many events more within same session, this is called just once
+    val viewStateAsJson: Future<JsonObject?> by lazy {
       sqlConnection
         .preparedQuery("SELECT * FROM customer_summary WHERE id = $1")
         .execute(Tuple.of(UUID.fromString(eventMetadata.stateId)))
         .map {
-          it.first().toJson()
+          if (it.size() == 0) null else it.first().toJson()
         }
     }
 
@@ -30,7 +31,7 @@ class CustomersWriteViewEffect : WriteApiEventViewEffect<CustomerEvent> {
           .preparedQuery("INSERT INTO customer_summary (id, name, is_active) VALUES ($1, $2, $3) RETURNING *")
           .execute(Tuple.of(event.id, event.name, false))
           .map {
-            it.first().toJson()
+            if (it.size() == 0) null else it.first().toJson()
           }
       else ->
         viewStateAsJson

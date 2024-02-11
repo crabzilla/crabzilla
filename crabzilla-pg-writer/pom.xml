@@ -38,6 +38,12 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-cache</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <!--    <dependency>-->
     <!--      <scope>test</scope>-->
     <!--      <groupId>io.github.crabzilla</groupId>-->

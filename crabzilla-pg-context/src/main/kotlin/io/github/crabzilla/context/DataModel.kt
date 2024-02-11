@@ -2,6 +2,7 @@ package io.github.crabzilla.context
 
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
+import java.time.Instant
 import java.util.*
 
 data class TargetStream(
@@ -21,14 +22,15 @@ data class TargetStream(
 
 data class EventMetadata(
   val streamId: Int,
-  val stateType: String?,
-  val stateId: String?,
+  val stateType: String,
+  val stateId: String,
   val eventId: UUID,
   val correlationId: UUID,
   val causationId: UUID,
   val eventSequence: Long,
   val version: Int,
   val eventType: String,
+  val createdAt: Instant,
 ) {
   fun toJsonObject(): JsonObject {
     return JsonObject()
@@ -41,6 +43,7 @@ data class EventMetadata(
       .put("correlationId", this.correlationId.toString())
       .put("version", this.version)
       .put("eventType", this.eventType)
+      .put("createdAt", this.createdAt)
   }
 }
 
@@ -63,6 +66,7 @@ data class EventRecord(val metadata: EventMetadata, val payload: JsonObject) {
           eventSequence = asJsonObject.getLong("eventSequence"),
           version = asJsonObject.getInteger("version"),
           eventType = asJsonObject.getString("eventType"),
+          createdAt = asJsonObject.getInstant("createdAt"),
         )
       return EventRecord(eventMetadata, asJsonObject.getJsonObject("eventPayload"))
     }

@@ -9,6 +9,7 @@ import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
+import java.time.Instant
 
 internal class SubscriptionDao(
   val sqlConnection: SqlConnection,
@@ -58,6 +59,7 @@ internal class SubscriptionDao(
               eventSequence = row.getLong("sequence"),
               version = row.getInteger("version"),
               eventType = row.getString("event_type"),
+              createdAt = Instant.now(),
             )
           val jsonObject = JsonObject(row.getValue("event_payload").toString())
           EventRecord(eventMetadata, jsonObject)

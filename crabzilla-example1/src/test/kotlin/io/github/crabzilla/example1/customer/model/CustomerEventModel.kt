@@ -28,6 +28,11 @@ sealed interface CustomerEvent {
 }
 
 sealed class Customer {
+  // TODO what a component is needed within this context? For example, a LocalDateTime or UUID generator:
+  // use Java SPI factories? Does it work with Quarkus?
+  // https://www.youtube.com/watch?v=Qhfiq_1eWM8
+  // https://www.youtube.com/watch?v=TVdFAftHzPE
+
   data object Initial : Customer() {
     fun register(
       id: UUID,

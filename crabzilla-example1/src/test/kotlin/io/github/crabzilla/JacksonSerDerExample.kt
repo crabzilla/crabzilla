@@ -11,6 +11,7 @@ import io.github.crabzilla.example1.customer.effects.CustomersWriteViewEffect
 import io.github.crabzilla.example1.customer.model.Customer
 import io.github.crabzilla.example1.customer.model.CustomerCommand
 import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.model.CustomerEvent
 import io.github.crabzilla.example1.customer.model.customerCommandHandler
@@ -73,9 +74,9 @@ fun main() {
         testRepository.cleanDatabase()
           .compose { handle(targetStream, RegisterCustomer(customerId = customerId, name = "customer1")) }
           .compose { handle(targetStream, ActivateCustomer("because it's needed")) }
-          .compose { handle(targetStream, CustomerCommand.DeactivateCustomer("because it's not needed")) }
+          .compose { handle(targetStream, DeactivateCustomer("because it's not needed")) }
           .compose { handle(targetStream, ActivateCustomer("because it's needed")) }
-          .compose { handle(targetStream, CustomerCommand.DeactivateCustomer("because it's not needed")) }
+          .compose { handle(targetStream, DeactivateCustomer("because it's not needed")) }
       }
         .compose { subscriptionApi.handle() } // to force it to work since it's async
         .onFailure { it.printStackTrace() }

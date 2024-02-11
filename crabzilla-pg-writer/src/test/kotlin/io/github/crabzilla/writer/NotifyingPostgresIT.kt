@@ -2,7 +2,7 @@ package io.github.crabzilla.writer
 
 import io.github.crabzilla.context.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.context.TargetStream
-import io.github.crabzilla.example1.customer.model.CustomerCommand
+import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -39,7 +39,7 @@ class NotifyingPostgresIT : AbstractWriterApiIT() {
     }
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
-    val cmd = CustomerCommand.RegisterAndActivateCustomer(customerId1, "c1", "is needed")
+    val cmd = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
     writerApi.handle(targetStream1, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {

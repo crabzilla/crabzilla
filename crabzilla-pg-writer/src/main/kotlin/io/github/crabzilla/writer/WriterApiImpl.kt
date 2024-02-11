@@ -69,6 +69,8 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
         eventSerDer = config.eventSerDer,
       )
 
+    lateinit var state: S
+
     return streamRepositoryImpl.getStreamId()
       .compose { streamId ->
         val params = Tuple.of(targetStream.stateType(), targetStream.stateId(), targetStream.name)
@@ -144,7 +146,7 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
           succeededFuture(triple)
         }
       }.compose {
-        val (snapshot, _, appendedEvents) = it
+        val (snapshot, session, appendedEvents) = it
         if (config.persistCommands != false) {
           val cmdAsJson = config.commandSerDer?.toJson(command)
           appendCommand(
@@ -155,10 +157,15 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
           )
         } else {
           succeededFuture()
+        }.andThen {
+          state = session.currentState()
         }
           .map { appendedEvents.last().metadata }
       }
       .onSuccess {
+        // notify state listener
+        config.stateEffect?.handle(it.stateId, state)
+        // notify postgres
         val query = "NOTIFY $POSTGRES_NOTIFICATION_CHANNEL, '${targetStream.stateType()}'"
         sqlConnection.preparedQuery(query).execute()
           .onSuccess { log.debug("Notified postgres: $query") }
