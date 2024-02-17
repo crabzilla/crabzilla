@@ -109,7 +109,7 @@ sealed class Customer {
   }
 }
 
-val customerEventHandler: (Customer, CustomerEvent) -> Customer = { state: Customer, event: CustomerEvent ->
+val customerEvolveFunction: (Customer, CustomerEvent) -> Customer = { state: Customer, event: CustomerEvent ->
   when (state) {
     is Customer.Initial -> {
       when (event) {

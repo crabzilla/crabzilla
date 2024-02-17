@@ -3,103 +3,79 @@ package io.github.crabzilla.writer
 import io.github.crabzilla.context.CrabzillaRuntimeException
 import io.github.crabzilla.context.EventMetadata
 import io.github.crabzilla.context.JsonObjectSerDer
-import io.github.crabzilla.context.TargetStream
 import io.github.crabzilla.context.ViewTrigger
+import io.github.crabzilla.stream.StreamSnapshot
+import io.github.crabzilla.stream.TargetStream
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
-import org.slf4j.LoggerFactory
 import java.util.*
 
-data class TargetStream(
-  private val stateType: String? = null,
-  private val stateId: String? = null,
-  val name: String = "$stateType@$stateId",
-  val mustBeNew: Boolean = false,
-) {
-  fun stateType(): String {
-    return stateType ?: name.split("@")[0]
+// to be implemented by models
+
+interface InitialStateFactory<S : Any> {
+  fun get(): S
+}
+
+sealed interface ViewEffect<S : Any, E : Any> {
+  interface EventStateViewEffect<S : Any, E : Any> : ViewEffect<S, E> {
+    fun handle(
+      sqlConnection: SqlConnection,
+      event: E,
+      state: S,
+      eventMetadata: EventMetadata,
+    ): Future<JsonObject?>
   }
 
-  fun stateId(): String {
-    return stateId ?: name.split("@")[1]
+  interface WriteResultViewEffect<S : Any, E : Any> : ViewEffect<S, E> {
+    fun handle(
+      sqlConnection: SqlConnection,
+      result: WriteResult<S, E>,
+    ): Future<JsonObject?>
   }
 }
+
+// crabzilla api
 
 data class CommandMetadata(
   val commandId: UUID = UUID.randomUUID(),
   val metadata: JsonObject? = null,
 )
 
-interface WriterApi<C : Any> {
+data class WriteResult<S : Any, E : Any>(
+  val snapshot: StreamSnapshot<S>,
+  val events: List<E>,
+  val metadata: List<EventMetadata>,
+)
+
+interface WriterApi<S : Any, C : Any, E : Any> {
+  fun withinTransaction(commandOperation: (SqlConnection) -> Future<WriteResult<S, E>>): Future<WriteResult<S, E>>
+
   fun handle(
     targetStream: TargetStream,
     command: C,
     commandMetadata: CommandMetadata = CommandMetadata(),
-  ): Future<EventMetadata>
+  ): Future<WriteResult<S, E>>
 
   fun handleWithinTransaction(
     sqlConnection: SqlConnection,
     targetStream: TargetStream,
     command: C,
     commandMetadata: CommandMetadata = CommandMetadata(),
-  ): Future<EventMetadata>
-}
-
-interface WriteApiEventViewEffect<E> {
-  fun handle(
-    sqlConnection: SqlConnection,
-    eventMetadata: EventMetadata,
-    event: E,
-  ): Future<JsonObject?>
-}
-
-interface StateEffect<S> {
-  fun handle(
-    id: String,
-    state: S,
-  ): Future<Void>
+  ): Future<WriteResult<S, E>>
 }
 
 data class WriterConfig<S : Any, C : Any, E : Any>(
-  val initialState: S,
-  val eventHandler: (S, E) -> S,
-  val commandHandler: (S, C) -> List<E>,
+  val initialStateFactory: InitialStateFactory<S>,
+  val evolveFunction: (S, E) -> S,
+  val decideFunction: (S, C) -> List<E>,
   val eventSerDer: JsonObjectSerDer<E>,
   val commandSerDer: JsonObjectSerDer<C>? = null,
-  // TODO consider an optional state serder (on stream module (to migrate the stream))
-  val viewEffect: WriteApiEventViewEffect<E>? = null,
+  val viewEffect: ViewEffect<S, E>? = null,
   val viewTrigger: ViewTrigger? = null,
-  val persistCommands: Boolean? = true,
-  val stateEffect: StateEffect<S>? = null,
+  val persistEvents: Boolean? = true,
+  val persistCommands: Boolean? = commandSerDer != null,
+  val notifyPostgres: Boolean = true,
 )
 
 class BusinessException(message: String, cause: Throwable) : CrabzillaRuntimeException(message, cause)
-
-internal class EventProjector<E>(
-  private val sqlConnection: SqlConnection,
-  private val viewEffect: WriteApiEventViewEffect<E>,
-  private val viewTrigger: ViewTrigger? = null,
-) {
-  fun handle(appendedEvents: List<Pair<EventMetadata, E>>): Future<JsonObject?> {
-    logger.debug("Will project {} events: {} ", appendedEvents.size, appendedEvents)
-    val initialFuture = Future.succeededFuture<JsonObject?>()
-    return appendedEvents.fold(
-      initialFuture,
-    ) { currentFuture: Future<JsonObject?>, appendedEvent: Pair<EventMetadata, E> ->
-      currentFuture.compose {
-        viewEffect.handle(sqlConnection, appendedEvent.first, appendedEvent.second)
-      }
-    }.onSuccess { viewAsJson ->
-      if (viewAsJson != null && viewTrigger != null) {
-        if (viewTrigger.checkCondition(viewAsJson)) {
-          viewTrigger.handleTrigger(sqlConnection, viewAsJson)
-        }
-      }
-    }
-  }
-
-  companion object {
-    private val logger = LoggerFactory.getLogger(EventProjector::class::java.name)
-  }
-}

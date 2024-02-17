@@ -7,6 +7,7 @@ import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerActivat
 import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRenamed
+import io.github.crabzilla.writer.InitialStateFactory
 import java.util.*
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -78,7 +79,7 @@ sealed class Customer {
   }
 }
 
-val customerEventHandler: (Customer, CustomerEvent) -> Customer = { state: Customer, event: CustomerEvent ->
+val customerEvolveFunction: (Customer, CustomerEvent) -> Customer = { state: Customer, event: CustomerEvent ->
   when (state) {
     is Customer.Initial -> {
       when (event) {
@@ -100,5 +101,11 @@ val customerEventHandler: (Customer, CustomerEvent) -> Customer = { state: Custo
         else -> state
       }
     }
+  }
+}
+
+class CustomerInitialStateFactory : InitialStateFactory<Customer> {
+  override fun get(): Customer {
+    return Customer.Initial
   }
 }

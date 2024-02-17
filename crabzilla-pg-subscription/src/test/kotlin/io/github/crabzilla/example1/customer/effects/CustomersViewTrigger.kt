@@ -6,7 +6,8 @@ import io.vertx.core.eventbus.EventBus
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
 
-class CustomersViewTrigger(private val eventBus: EventBus) : ViewTrigger {
+class CustomersViewTrigger(private val eventBus: EventBus) :
+  ViewTrigger {
   override fun checkCondition(viewAsJson: JsonObject): Boolean {
     return viewAsJson.getBoolean("is_active") == false
   }

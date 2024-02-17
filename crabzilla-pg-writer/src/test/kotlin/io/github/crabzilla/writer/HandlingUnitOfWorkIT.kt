@@ -1,7 +1,7 @@
 package io.github.crabzilla.writer
 
-import io.github.crabzilla.context.TargetStream
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer
+import io.github.crabzilla.stream.TargetStream
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -32,7 +32,7 @@ class HandlingUnitOfWorkIT : AbstractWriterApiIT() {
     val targetStream2 = TargetStream(stateType = "Customer", stateId = customerId2.toString())
     val cmd2 = RegisterAndActivateCustomer(customerId2, "c2", "is needed")
 
-    context
+    writerApi
       .withinTransaction { tx ->
         writerApi.handleWithinTransaction(tx, targetStream1, cmd1)
           .compose { writerApi.handleWithinTransaction(tx, targetStream2, cmd2) }
@@ -61,7 +61,7 @@ class HandlingUnitOfWorkIT : AbstractWriterApiIT() {
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd1 = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
     val cmd2 = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
-    context
+    writerApi
       .withinTransaction { tx ->
         writerApi.handleWithinTransaction(tx, targetStream1, cmd1)
           .compose { writerApi.handleWithinTransaction(tx, targetStream1, cmd2) }

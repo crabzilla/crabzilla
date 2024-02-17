@@ -5,21 +5,6 @@ import io.vertx.core.json.JsonObject
 import java.time.Instant
 import java.util.*
 
-data class TargetStream(
-  private val stateType: String? = null,
-  private val stateId: String? = null,
-  val name: String = "$stateType@$stateId",
-  val mustBeNew: Boolean = false,
-) {
-  fun stateType(): String {
-    return stateType ?: name.split("@")[0]
-  }
-
-  fun stateId(): String {
-    return stateId ?: name.split("@")[1]
-  }
-}
-
 data class EventMetadata(
   val streamId: Int,
   val stateType: String,

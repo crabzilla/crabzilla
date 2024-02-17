@@ -1,7 +1,6 @@
 package io.github.crabzilla.stream
 
 import io.github.crabzilla.context.JsonObjectSerDer
-import io.github.crabzilla.context.TargetStream
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.sqlclient.PreparedStatement
@@ -10,7 +9,6 @@ import io.vertx.sqlclient.RowStream
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
-import java.time.LocalDateTime
 import java.util.*
 
 class StreamRepositoryImpl<S : Any, E : Any>(
@@ -46,7 +44,7 @@ class StreamRepositoryImpl<S : Any, E : Any>(
         var latestVersion = 0
         var lastCausationId: UUID? = null
         var lastCorrelationId: UUID? = null
-        var createdAt: LocalDateTime
+//        var createdAt: LocalDateTime
         var error: Throwable? = null
         // Fetch QUERY_MAX_STREAM_SIZE rows at a time
         val stream: RowStream<Row> = pq.createStream(StreamRepository.QUERY_MAX_STREAM_SIZE, Tuple.of(streamId))
@@ -55,8 +53,7 @@ class StreamRepositoryImpl<S : Any, E : Any>(
           latestVersion = row.getInteger("version")
           lastCausationId = row.getUUID("id")
           lastCorrelationId = row.getUUID("correlation_id")
-          // TODO
-          createdAt = row.getLocalDateTime("created_at")
+//          createdAt = row.getLocalDateTime("created_at")
           log.debug(
             "Found event version {}, causationId {}, correlationId {}",
             latestVersion,

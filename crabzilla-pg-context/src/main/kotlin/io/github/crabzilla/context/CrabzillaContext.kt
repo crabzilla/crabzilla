@@ -24,8 +24,6 @@ interface CrabzillaContext {
 
   fun newPgSubscriber(): PgSubscriber
 
-  fun withinTransaction(commandOperation: (SqlConnection) -> Future<EventMetadata>): Future<EventMetadata>
-
   companion object {
     const val POSTGRES_NOTIFICATION_CHANNEL = "crabzilla_channel"
 

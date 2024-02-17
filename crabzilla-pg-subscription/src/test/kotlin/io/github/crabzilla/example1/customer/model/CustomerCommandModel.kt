@@ -24,7 +24,7 @@ sealed interface CustomerCommand {
   ) : CustomerCommand
 }
 
-val customerCommandHandler: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->
+val customerDecideFunction: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->
   when (state) {
     is Customer.Initial -> {
       when (command) {

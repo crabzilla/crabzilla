@@ -39,9 +39,9 @@ class CustomerAccountSpecsTest {
   fun setup() {
     session =
       CrabzillaCommandsSession(
-        originalState = CustomerAccount(id = 0, limit = 0, balance = 0),
-        eventHandler = customerAcctEventHandler,
-        commandHandler = customerAcctCommandHandler,
+        initialState = CustomerAccount(id = 0, limit = 0, balance = 0),
+        evolveFunction = customerAcctEventHandler,
+        decideFunction = customerAcctCommandHandler,
       )
   }
 

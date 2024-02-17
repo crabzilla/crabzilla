@@ -1,8 +1,8 @@
 package io.github.crabzilla.writer
 
 import io.github.crabzilla.context.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
-import io.github.crabzilla.context.TargetStream
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer
+import io.github.crabzilla.stream.TargetStream
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -48,6 +48,41 @@ class NotifyingPostgresIT : AbstractWriterApiIT() {
             tc.verify {
               assertTrue(latch.await(4, TimeUnit.SECONDS))
               assertThat(stateTypeMsg.get()).isEqualTo("Customer")
+            }
+          }
+        vertx.executeBlocking(callable)
+          .onSuccess { tc.completeNow() }
+          .onFailure { tc.failNow(it) }
+      }
+  }
+
+  @Test
+  fun `it can NOT notify Postgres`(
+    vertx: Vertx,
+    tc: VertxTestContext,
+  ) {
+    val stateTypeMsg = AtomicReference<String>(null)
+    val pgSubscriber = context.newPgSubscriber()
+    pgSubscriber.connect().onSuccess {
+      pgSubscriber.channel(POSTGRES_NOTIFICATION_CHANNEL)
+        .handler { stateType ->
+          stateTypeMsg.set(stateType)
+        }
+    }
+
+    val configWithoutPgNotify = customerConfig.copy(notifyPostgres = false)
+    val writerApi = WriterApiImpl(context, configWithoutPgNotify)
+
+    val customerId1 = UUID.randomUUID()
+    val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
+    val cmd = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
+    writerApi.handle(targetStream1, cmd)
+      .onFailure { tc.failNow(it) }
+      .onSuccess {
+        val callable =
+          Callable {
+            tc.verify {
+              assertThat(stateTypeMsg.get()).isEqualTo(null)
             }
           }
         vertx.executeBlocking(callable)

@@ -5,7 +5,7 @@
 
   <groupId>io.github.crabzilla</groupId>
   <artifactId>crabzilla</artifactId>
-  <version>v0.5.7</version>
+  <version>0.7.0</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -18,7 +18,7 @@
 
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.7.1</quarkus.platform.version>
+    <quarkus.platform.version>3.7.2</quarkus.platform.version>
 
     <!-- tests-->
     <junit-jupiter.version>5.10.1</junit-jupiter.version>

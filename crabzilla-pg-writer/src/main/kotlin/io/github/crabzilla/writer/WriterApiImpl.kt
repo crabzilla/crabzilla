@@ -2,14 +2,14 @@ package io.github.crabzilla.writer
 
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
-import io.github.crabzilla.context.EventMetadata
-import io.github.crabzilla.context.TargetStream
 import io.github.crabzilla.core.CrabzillaCommandsSession
 import io.github.crabzilla.stream.StreamMustBeNewException
 import io.github.crabzilla.stream.StreamRepository.Companion.NO_STREAM
 import io.github.crabzilla.stream.StreamRepositoryImpl
 import io.github.crabzilla.stream.StreamSnapshot
 import io.github.crabzilla.stream.StreamWriterImpl
+import io.github.crabzilla.stream.TargetStream
+import io.github.crabzilla.writer.internal.EventProjector
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture
@@ -22,15 +22,15 @@ import java.util.*
 class WriterApiImpl<S : Any, C : Any, E : Any>(
   private val context: CrabzillaContext,
   private val config: WriterConfig<S, C, E>,
-) : WriterApi<C> {
+) : WriterApi<S, C, E> {
   private val log = LoggerFactory.getLogger(WriterApiImpl::class.java)
 
   override fun handle(
     targetStream: TargetStream,
     command: C,
     commandMetadata: CommandMetadata,
-  ): Future<EventMetadata> {
-    return context.withinTransaction { conn: SqlConnection ->
+  ): Future<WriteResult<S, E>> {
+    return withinTransaction { conn: SqlConnection ->
       handleWithinTransaction(conn, targetStream, command, commandMetadata)
     }
   }
@@ -40,7 +40,7 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
     targetStream: TargetStream,
     command: C,
     commandMetadata: CommandMetadata,
-  ): Future<EventMetadata> {
+  ): Future<WriteResult<S, E>> {
     fun appendCommand(
       causationId: UUID?,
       correlationId: UUID?,
@@ -60,16 +60,22 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
       return sqlConnection.preparedQuery(SQL_APPEND_CMD).execute(params).mapEmpty()
     }
 
+    fun notifyPostgres(): Future<Void>? {
+      // notify postgres
+      val query = "NOTIFY $POSTGRES_NOTIFICATION_CHANNEL, '${targetStream.stateType()}'"
+      return sqlConnection.preparedQuery(query).execute()
+        .mapEmpty<Void>()
+        .onSuccess { log.debug("Notified postgres: $query") }
+    }
+
     val streamRepositoryImpl =
       StreamRepositoryImpl(
         conn = sqlConnection,
         targetStream = targetStream,
-        initialState = config.initialState,
-        eventHandler = config.eventHandler,
+        initialState = config.initialStateFactory.get(),
+        eventHandler = config.evolveFunction,
         eventSerDer = config.eventSerDer,
       )
-
-    lateinit var state: S
 
     return streamRepositoryImpl.getStreamId()
       .compose { streamId ->
@@ -107,8 +113,8 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
                   val session =
                     CrabzillaCommandsSession(
                       snapshot.state,
-                      commandHandler = config.commandHandler,
-                      eventHandler = config.eventHandler,
+                      decideFunction = config.decideFunction,
+                      evolveFunction = config.evolveFunction,
                     )
                   session.handle(command)
                   succeededFuture(Pair(snapshot, session))
@@ -129,15 +135,22 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
           }
       }
       .compose { triple ->
-        val (_, session, appendedEvents) = triple
-        val events =
-          appendedEvents.mapIndexed { index, eventRecord ->
-            Pair(eventRecord.metadata, session.appliedEvents()[index])
-          }
+        val (snapshot, session, appendedEvents) = triple
+
+        val lastEvent = appendedEvents.last()
+        val newSnapshot =
+          StreamSnapshot(
+            streamId = snapshot.streamId,
+            state = session.currentState(),
+            version = lastEvent.metadata.version,
+            causationId = lastEvent.metadata.causationId,
+            correlationId = lastEvent.metadata.correlationId,
+          )
+        val result = WriteResult(newSnapshot, session.appliedEvents(), appendedEvents.map { it.metadata })
         log.debug("Events appended {}", appendedEvents)
         if (config.viewEffect != null) {
           EventProjector(sqlConnection, config.viewEffect, config.viewTrigger)
-            .handle(events)
+            .handle(result)
             .onSuccess {
               log.debug("Events projected")
             }.map { triple }
@@ -157,22 +170,30 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
           )
         } else {
           succeededFuture()
-        }.andThen {
-          state = session.currentState()
         }
-          .map { appendedEvents.last().metadata }
+          .map {
+            val lastEvent = appendedEvents.last()
+            val newSnapshot =
+              StreamSnapshot(
+                streamId = snapshot.streamId,
+                state = session.currentState(),
+                version = lastEvent.metadata.version,
+                causationId = lastEvent.metadata.causationId,
+                correlationId = lastEvent.metadata.correlationId,
+              )
+            WriteResult(newSnapshot, session.appliedEvents(), appendedEvents.map { it.metadata })
+          }
       }
       .onSuccess {
-        // notify state listener
-        config.stateEffect?.handle(it.stateId, state)
-        // notify postgres
-        val query = "NOTIFY $POSTGRES_NOTIFICATION_CHANNEL, '${targetStream.stateType()}'"
-        sqlConnection.preparedQuery(query).execute()
-          .onSuccess { log.debug("Notified postgres: $query") }
+        if (config.notifyPostgres) notifyPostgres()
         log.debug("Transaction committed")
       }.onFailure {
         log.debug("Transaction aborted {}", it.message)
       }
+  }
+
+  override fun withinTransaction(commandOperation: (SqlConnection) -> Future<WriteResult<S, E>>): Future<WriteResult<S, E>> {
+    return context.pgPool.withTransaction(commandOperation)
   }
 
   companion object {

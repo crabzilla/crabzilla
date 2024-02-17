@@ -1,15 +1,15 @@
-package io.github.crabzilla.example1.customer
+package io.github.crabzilla.example1.customer.model
 
 import io.github.crabzilla.core.buildException
-import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RenameCustomer
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRenamed
+import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.RenameCustomer
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerActivated
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerDeactivated
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRenamed
 import java.util.*
 
 sealed interface CustomerEvent {
@@ -84,7 +84,7 @@ sealed class Customer {
   }
 }
 
-val customerEventHandler: (Customer, CustomerEvent) -> Customer = { state: Customer, event: CustomerEvent ->
+val customerEvolveFunction: (Customer, CustomerEvent) -> Customer = { state: Customer, event: CustomerEvent ->
   when (state) {
     is Customer.Initial -> {
       when (event) {
@@ -109,7 +109,7 @@ val customerEventHandler: (Customer, CustomerEvent) -> Customer = { state: Custo
   }
 }
 
-val customerCommandHandler: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->
+val customerDeciderFunction: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->
   when (state) {
     is Customer.Initial -> {
       when (command) {

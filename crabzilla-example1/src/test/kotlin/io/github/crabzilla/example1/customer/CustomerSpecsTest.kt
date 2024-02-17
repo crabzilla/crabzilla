@@ -7,12 +7,15 @@ import io.github.crabzilla.example1.customer.model.CustomerCommand
 import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.RenameCustomer
 import io.github.crabzilla.example1.customer.model.CustomerEvent
 import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.example1.customer.model.customerCommandHandler
-import io.github.crabzilla.example1.customer.model.customerEventHandler
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRenamed
+import io.github.crabzilla.example1.customer.model.customerDecideFunction
+import io.github.crabzilla.example1.customer.model.customerEvolveFunction
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -26,12 +29,7 @@ class CustomerSpecsTest {
 
   @BeforeEach
   fun setup() {
-    session =
-      CrabzillaCommandsSession(
-        Customer.Initial,
-        customerEventHandler,
-        customerCommandHandler,
-      )
+    session = CrabzillaCommandsSession(Customer.Initial, customerEvolveFunction, customerDecideFunction)
   }
 
   @Test
@@ -46,13 +44,7 @@ class CustomerSpecsTest {
   @Test
   fun `given a RegisterAndActivateCustomer command, the state and events are correct`() {
     TestSpecification(session)
-      .whenCommand(
-        RegisterAndActivateCustomer(
-          id,
-          "c1",
-          reason = "cool",
-        ),
-      )
+      .whenCommand(RegisterAndActivateCustomer(id, "c1", reason = "cool"))
       .then {
         val expectedState = Customer.Active(id, "c1", reason = "cool")
         assertThat(it.currentState()).isEqualTo(expectedState)
@@ -66,7 +58,7 @@ class CustomerSpecsTest {
   @Test
   fun `given a RegisterCustomer command, the state and events are correct`() {
     TestSpecification(session)
-      .whenCommand(CustomerCommand.RegisterCustomer(id, "c1"))
+      .whenCommand(RegisterCustomer(id, "c1"))
       .then {
         assertThat(it.appliedEvents()).isEqualTo(listOf(CustomerRegistered(id, "c1")))
       }.then {
@@ -76,10 +68,10 @@ class CustomerSpecsTest {
 
   @Test
   fun `given a RegisterCustomer and RenameCustomer commands, the state and events are correct`() {
-    val expectedEvents = listOf(CustomerRegistered(id, "c1"), CustomerEvent.CustomerRenamed("c1-renamed"))
+    val expectedEvents = listOf(CustomerRegistered(id, "c1"), CustomerRenamed("c1-renamed"))
     TestSpecification(session)
-      .whenCommand(CustomerCommand.RegisterCustomer(id, "c1"))
-      .whenCommand(CustomerCommand.RenameCustomer("c1-renamed"))
+      .whenCommand(RegisterCustomer(id, "c1"))
+      .whenCommand(RenameCustomer("c1-renamed"))
       .then {
         assertThat(it.appliedEvents()).isEqualTo(expectedEvents)
       }.then {

@@ -1,25 +1,27 @@
 package io.github.crabzilla
 
 import io.github.crabzilla.context.CrabzillaContextImpl
-import io.github.crabzilla.context.EventMetadata
-import io.github.crabzilla.context.TargetStream
+import io.github.crabzilla.example1.customer.effects.CustomerWriteResultViewEffect
 import io.github.crabzilla.example1.customer.effects.CustomersViewEffect
 import io.github.crabzilla.example1.customer.effects.CustomersViewTrigger
-import io.github.crabzilla.example1.customer.effects.CustomersWriteViewEffect
 import io.github.crabzilla.example1.customer.model.Customer
 import io.github.crabzilla.example1.customer.model.CustomerCommand
 import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.customer.model.customerCommandHandler
-import io.github.crabzilla.example1.customer.model.customerEventHandler
+import io.github.crabzilla.example1.customer.model.CustomerEvent
+import io.github.crabzilla.example1.customer.model.CustomerInitialStateFactory
+import io.github.crabzilla.example1.customer.model.customerDecideFunction
+import io.github.crabzilla.example1.customer.model.customerEvolveFunction
 import io.github.crabzilla.example1.customer.serder.CustomerCommandSerDer
 import io.github.crabzilla.example1.customer.serder.CustomerEventSerDer
+import io.github.crabzilla.stream.TargetStream
 import io.github.crabzilla.subscription.SubscriptionApi
 import io.github.crabzilla.subscription.SubscriptionComponentImpl
 import io.github.crabzilla.subscription.SubscriptionSpec
 import io.github.crabzilla.util.PgTestContainer.pgConfig
 import io.github.crabzilla.util.TestRepository
+import io.github.crabzilla.writer.WriteResult
 import io.github.crabzilla.writer.WriterApi
 import io.github.crabzilla.writer.WriterApiImpl
 import io.github.crabzilla.writer.WriterConfig
@@ -34,15 +36,15 @@ fun main() {
   val testRepository = TestRepository(context.pgPool)
   val subscriptionName = "crabzilla.example1.customer.SimpleProjector"
 
-  fun getWriter(): WriterApi<CustomerCommand> {
+  fun getWriter(): WriterApi<Customer, CustomerCommand, CustomerEvent> {
     val config =
       WriterConfig(
-        initialState = Customer.Initial,
-        eventHandler = customerEventHandler,
-        commandHandler = customerCommandHandler,
+        initialStateFactory = CustomerInitialStateFactory(),
+        evolveFunction = customerEvolveFunction,
+        decideFunction = customerDecideFunction,
         eventSerDer = CustomerEventSerDer(),
         commandSerDer = CustomerCommandSerDer(),
-        viewEffect = CustomersWriteViewEffect(),
+        viewEffect = CustomerWriteResultViewEffect(),
       )
     return WriterApiImpl(context, config)
   }
@@ -66,7 +68,7 @@ fun main() {
   getSubscription().deploy()
     .andThen {
       with(getWriter()) {
-        fun handleCurried(targetStream: TargetStream): (CustomerCommand) -> Future<EventMetadata> {
+        fun handleCurried(targetStream: TargetStream): (CustomerCommand) -> Future<WriteResult<Customer, CustomerEvent>> {
           return { command -> handle(targetStream, command) }
         }
         val customerId = UUID.randomUUID()

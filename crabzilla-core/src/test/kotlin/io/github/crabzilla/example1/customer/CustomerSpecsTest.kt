@@ -2,15 +2,20 @@ package io.github.crabzilla.example1.customer
 
 import io.github.crabzilla.core.CrabzillaCommandsSession
 import io.github.crabzilla.core.TestSpecification
-import io.github.crabzilla.example1.customer.CustomerCommand.ActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.DeactivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RegisterCustomer
-import io.github.crabzilla.example1.customer.CustomerCommand.RenameCustomer
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerActivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerDeactivated
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.example1.customer.CustomerEvent.CustomerRenamed
+import io.github.crabzilla.example1.customer.model.Customer
+import io.github.crabzilla.example1.customer.model.CustomerCommand
+import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.model.CustomerCommand.RenameCustomer
+import io.github.crabzilla.example1.customer.model.CustomerEvent
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerActivated
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerDeactivated
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRegistered
+import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRenamed
+import io.github.crabzilla.example1.customer.model.customerDeciderFunction
+import io.github.crabzilla.example1.customer.model.customerEvolveFunction
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -24,7 +29,7 @@ class CustomerSpecsTest {
 
   @BeforeEach
   fun setup() {
-    session = CrabzillaCommandsSession(Customer.Initial, customerEventHandler, customerCommandHandler)
+    session = CrabzillaCommandsSession(Customer.Initial, customerEvolveFunction, customerDeciderFunction)
   }
 
   @Test

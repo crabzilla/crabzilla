@@ -5,8 +5,10 @@ import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContextImpl
 import io.github.crabzilla.example1.customer.model.Customer
 import io.github.crabzilla.example1.customer.model.CustomerCommand
-import io.github.crabzilla.example1.customer.model.customerCommandHandler
-import io.github.crabzilla.example1.customer.model.customerEventHandler
+import io.github.crabzilla.example1.customer.model.CustomerEvent
+import io.github.crabzilla.example1.customer.model.CustomerInitialStateFactory
+import io.github.crabzilla.example1.customer.model.customerDecideFunction
+import io.github.crabzilla.example1.customer.model.customerEvolveFunction
 import io.github.crabzilla.example1.customer.serder.CustomerCommandSerDer
 import io.github.crabzilla.example1.customer.serder.CustomerEventSerDer
 import io.vertx.core.Vertx
@@ -34,14 +36,14 @@ open class AbstractWriterApiIT {
   }
 
   lateinit var context: CrabzillaContext
-  lateinit var writerApi: WriterApi<CustomerCommand>
+  lateinit var writerApi: WriterApi<Customer, CustomerCommand, CustomerEvent>
   lateinit var testRepository: TestRepository
 
   val customerConfig =
     WriterConfig(
-      initialState = Customer.Initial,
-      eventHandler = customerEventHandler,
-      commandHandler = customerCommandHandler,
+      initialStateFactory = CustomerInitialStateFactory(),
+      evolveFunction = customerEvolveFunction,
+      decideFunction = customerDecideFunction,
       eventSerDer = CustomerEventSerDer(),
       commandSerDer = CustomerCommandSerDer(),
     )

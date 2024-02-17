@@ -58,7 +58,7 @@ sealed class Customer {
   }
 }
 
-val customerEventHandler: (Customer, CustomerEvent) -> Customer = { state: Customer, event: CustomerEvent ->
+val customerEvolveFunction: (Customer, CustomerEvent) -> Customer = { state: Customer, event: CustomerEvent ->
   if (state is Customer.Initial && event is CustomerRegistered) {
     Customer.Inactive(id = event.id, name = event.name)
   } else if (state is Customer.Inactive && event is CustomerActivated) {
@@ -84,7 +84,7 @@ sealed interface CustomerCommand {
   ) : CustomerCommand
 }
 
-val customerCommandHandler: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->
+val customerDecideFunction: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->
   if (command is RegisterCustomer && state is Customer.Initial) {
     Customer.Initial.create(id = command.customerId, name = command.name)
   } else if (command is RegisterAndActivateCustomer && state is Customer.Initial) {

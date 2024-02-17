@@ -9,8 +9,8 @@ import io.vertx.sqlclient.Tuple
 
 class TestRepository(private val pgPool: Pool) {
   fun cleanDatabase(): Future<Void> {
-    return pgPool.query("truncate streams, events, commands, customer_summary restart identity").execute()
-      .compose { pgPool.query("update subscriptions set sequence = 0").execute() }
+    return pgPool.preparedQuery(SQL_TRUNCATE_ALL).execute()
+      .compose { pgPool.preparedQuery(SQL_UPDATE_SUBSCRIPTIONS).execute() }
       .mapEmpty()
   }
 
@@ -27,7 +27,7 @@ class TestRepository(private val pgPool: Pool) {
         getSubscriptions().map { json.put("subscriptions", it) }
       }
       .compose { json ->
-        getCustomers().map { json.put("customers-view", it) }
+        getCustomers().map { json.put("customers-summary", it) }
       }
       .onComplete {
         println("-------------------------- Crabzilla state overview")
@@ -36,7 +36,7 @@ class TestRepository(private val pgPool: Pool) {
   }
 
   fun getStreams(): Future<List<JsonObject>> {
-    return pgPool.query("select * from streams")
+    return pgPool.preparedQuery(SQL_STREAMS)
       .execute()
       .map { rowSet ->
         rowSet.map {
@@ -65,7 +65,7 @@ class TestRepository(private val pgPool: Pool) {
   }
 
   fun getCustomers(): Future<List<JsonObject>> {
-    return pgPool.query("SELECT * FROM customer_summary")
+    return pgPool.preparedQuery(SQL_CUSTOMERS)
       .execute()
       .map { rowSet ->
         rowSet.map {
@@ -77,7 +77,7 @@ class TestRepository(private val pgPool: Pool) {
   }
 
   fun getCommands(): Future<List<JsonObject>> {
-    return pgPool.query("SELECT * FROM commands")
+    return pgPool.preparedQuery(SQL_COMMANDS)
       .execute()
       .map { rowSet ->
         rowSet.map {
@@ -89,7 +89,7 @@ class TestRepository(private val pgPool: Pool) {
   }
 
   fun getSubscriptions(): Future<List<JsonObject>> {
-    return pgPool.query("SELECT * FROM subscriptions ORDER BY name")
+    return pgPool.preparedQuery(SQL_SUBSCRIPTIONS)
       .execute()
       .map { rowSet ->
         rowSet.map {
@@ -101,14 +101,26 @@ class TestRepository(private val pgPool: Pool) {
   }
 
   fun getSubscription(name: String): Future<Long> {
-    return pgPool.query("SELECT sequence FROM subscriptions where name = '$name'")
-      .execute()
+    return pgPool.preparedQuery(SQL_SUBSCRIPTION)
+      .execute(Tuple.of(name))
       .map { rowSet: RowSet<Row> ->
         rowSet.first().getLong(0)
       }
   }
 
   companion object {
+    private const val SQL_TRUNCATE_ALL = "TRUNCATE streams, events, commands, customer_summary RESTART IDENTITY"
+
+    private const val SQL_UPDATE_SUBSCRIPTIONS = "UPDATE subscriptions SET sequence = 0"
+
+    private const val SQL_STREAMS = "SELECT * FROM streams"
+
+    private const val SQL_CUSTOMERS = "SELECT * FROM customer_summary"
+
+    private const val SQL_COMMANDS = "SELECT * FROM commands"
+
+    private const val SQL_SUBSCRIPTIONS = "SELECT * FROM subscriptions ORDER BY name"
+
     private const val SQL_SELECT_AFTER_OFFSET =
       """
       SELECT *
@@ -117,5 +129,7 @@ class TestRepository(private val pgPool: Pool) {
       ORDER BY sequence
       limit $2
     """
+
+    private const val SQL_SUBSCRIPTION = "SELECT sequence FROM subscriptions WHERE name = $1"
   }
 }

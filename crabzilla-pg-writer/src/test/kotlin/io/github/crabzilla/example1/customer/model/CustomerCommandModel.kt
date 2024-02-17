@@ -1,6 +1,8 @@
 package io.github.crabzilla.example1.customer.model
 
 import io.github.crabzilla.core.buildException
+import io.github.crabzilla.example1.customer.model.Customer.Initial
+import io.github.crabzilla.example1.customer.model.Customer.Initial.registerAndActivate
 import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer
@@ -24,14 +26,14 @@ sealed interface CustomerCommand {
   ) : CustomerCommand
 }
 
-val customerCommandHandler: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->
+val customerDecideFunction: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->
   when (state) {
-    is Customer.Initial -> {
+    is Initial -> {
       when (command) {
         is RegisterCustomer ->
-          Customer.Initial.register(id = command.customerId, name = command.name)
+          Initial.register(id = command.customerId, name = command.name)
         is RegisterAndActivateCustomer ->
-          Customer.Initial.registerAndActivate(id = command.customerId, name = command.name, reason = command.reason)
+          registerAndActivate(id = command.customerId, name = command.name, reason = command.reason)
         else -> throw buildException(state, command)
       }
     }

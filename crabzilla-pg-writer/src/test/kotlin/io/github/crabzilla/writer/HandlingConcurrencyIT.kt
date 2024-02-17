@@ -1,10 +1,11 @@
 package io.github.crabzilla.writer
 
-import io.github.crabzilla.context.EventMetadata
-import io.github.crabzilla.context.TargetStream
+import io.github.crabzilla.example1.customer.model.Customer
 import io.github.crabzilla.example1.customer.model.CustomerCommand
 import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.example1.customer.model.CustomerEvent
+import io.github.crabzilla.stream.TargetStream
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -41,7 +42,7 @@ class HandlingConcurrencyIT : AbstractWriterApiIT() {
           val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 200
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = CustomerCommand.RenameCustomer("new name")
-          val callables = mutableSetOf<Callable<Future<EventMetadata>>>()
+          val callables = mutableSetOf<Callable<Future<WriteResult<Customer, CustomerEvent>>>>()
           for (i: Int in 1..concurrencyLevel) {
             callables.add(Callable { writerApi.handle(targetStream, cmd2) })
           }
@@ -85,7 +86,7 @@ class HandlingConcurrencyIT : AbstractWriterApiIT() {
           val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 100
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = ActivateCustomer("whatsoever")
-          val callables = mutableSetOf<Callable<Future<EventMetadata>>>()
+          val callables = mutableSetOf<Callable<Future<WriteResult<Customer, CustomerEvent>>>>()
           for (i: Int in 1..concurrencyLevel) {
             callables.add(Callable { writerApi.handle(targetStream, cmd2) })
           }

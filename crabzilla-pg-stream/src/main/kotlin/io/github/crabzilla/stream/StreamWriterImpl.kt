@@ -3,7 +3,6 @@ package io.github.crabzilla.stream
 import io.github.crabzilla.context.EventMetadata
 import io.github.crabzilla.context.EventRecord
 import io.github.crabzilla.context.JsonObjectSerDer
-import io.github.crabzilla.context.TargetStream
 import io.vertx.core.Future
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet

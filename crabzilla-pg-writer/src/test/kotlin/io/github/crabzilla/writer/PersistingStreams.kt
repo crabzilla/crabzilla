@@ -1,9 +1,9 @@
 package io.github.crabzilla.writer
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.crabzilla.context.TargetStream
 import io.github.crabzilla.example1.customer.model.Customer
 import io.github.crabzilla.example1.customer.model.CustomerCommand
+import io.github.crabzilla.stream.TargetStream
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext

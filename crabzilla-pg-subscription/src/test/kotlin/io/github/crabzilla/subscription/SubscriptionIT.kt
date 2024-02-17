@@ -1,13 +1,12 @@
 package io.github.crabzilla.subscription
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.github.crabzilla.context.TargetStream
-import io.github.crabzilla.context.ViewTrigger
 import io.github.crabzilla.example1.customer.effects.CustomersViewEffect
 import io.github.crabzilla.example1.customer.effects.CustomersViewTrigger
 import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterCustomer
+import io.github.crabzilla.stream.TargetStream
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -26,7 +25,7 @@ import java.util.concurrent.TimeUnit
 @ExtendWith(VertxExtension::class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class SubscriptionIT : AbstractSubscriptionTest() {
-  fun api(viewTrigger: ViewTrigger? = null): SubscriptionApi {
+  fun api(viewTrigger: io.github.crabzilla.context.ViewTrigger? = null): SubscriptionApi {
     return SubscriptionComponentImpl(
       crabzillaContext = context,
       spec = SubscriptionSpec(SUBSCRIPTION_1),
