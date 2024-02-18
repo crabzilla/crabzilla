@@ -4,9 +4,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>io.github.crabzilla</groupId>
+    <groupId>io.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.7.0</version>
+    <version>0.7.1</version>
   </parent>
 
   <artifactId>coverage-report</artifactId>
@@ -15,37 +15,37 @@
   <dependencies>
 
     <dependency>
-      <groupId>io.github.crabzilla</groupId>
+      <groupId>io.crabzilla</groupId>
       <artifactId>crabzilla-core</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>io.github.crabzilla</groupId>
+      <groupId>io.crabzilla</groupId>
       <artifactId>crabzilla-pg-context</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>io.github.crabzilla</groupId>
+      <groupId>io.crabzilla</groupId>
       <artifactId>crabzilla-pg-stream</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>io.github.crabzilla</groupId>
+      <groupId>io.crabzilla</groupId>
       <artifactId>crabzilla-pg-writer</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>io.github.crabzilla</groupId>
+      <groupId>io.crabzilla</groupId>
       <artifactId>crabzilla-pg-subscription</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>io.github.crabzilla</groupId>
+      <groupId>io.crabzilla</groupId>
       <artifactId>crabzilla-json-kotlinx</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>io.github.crabzilla</groupId>
+      <groupId>io.crabzilla</groupId>
       <artifactId>crabzilla-json-jackson</artifactId>
     </dependency>
 

@@ -3,9 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>io.github.crabzilla</groupId>
+  <groupId>io.crabzilla</groupId>
   <artifactId>crabzilla</artifactId>
-  <version>0.7.0</version>
+  <version>0.7.1</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -90,43 +90,43 @@
       <!-- own -->
 
       <dependency>
-        <groupId>io.github.crabzilla</groupId>
+        <groupId>io.crabzilla</groupId>
         <artifactId>crabzilla-core</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>io.github.crabzilla</groupId>
+        <groupId>io.crabzilla</groupId>
         <artifactId>crabzilla-json-kotlinx</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>io.github.crabzilla</groupId>
+        <groupId>io.crabzilla</groupId>
         <artifactId>crabzilla-json-jackson</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>io.github.crabzilla</groupId>
+        <groupId>io.crabzilla</groupId>
         <artifactId>crabzilla-pg-context</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>io.github.crabzilla</groupId>
+        <groupId>io.crabzilla</groupId>
         <artifactId>crabzilla-pg-stream</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>io.github.crabzilla</groupId>
+        <groupId>io.crabzilla</groupId>
         <artifactId>crabzilla-pg-writer</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>io.github.crabzilla</groupId>
+        <groupId>io.crabzilla</groupId>
         <artifactId>crabzilla-pg-subscription</artifactId>
         <version>${project.version}</version>
       </dependency>

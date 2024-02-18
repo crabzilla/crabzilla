@@ -4,9 +4,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>io.github.crabzilla</groupId>
+    <groupId>io.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.7.0</version>
+    <version>0.7.1</version>
   </parent>
 
   <artifactId>crabzilla-pg-subscription</artifactId>
@@ -15,7 +15,7 @@
   <dependencies>
 
     <dependency>
-      <groupId>io.github.crabzilla</groupId>
+      <groupId>io.crabzilla</groupId>
       <artifactId>crabzilla-pg-context</artifactId>
     </dependency>
 
@@ -29,7 +29,7 @@
 
     <dependency>
       <scope>test</scope>
-      <groupId>io.github.crabzilla</groupId>
+      <groupId>io.crabzilla</groupId>
       <artifactId>crabzilla-pg-writer</artifactId>
     </dependency>
 
