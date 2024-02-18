@@ -2,7 +2,7 @@ package io.github.crabzilla.writer
 
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
-import io.github.crabzilla.core.CrabzillaCommandsSession
+import io.github.crabzilla.core.Session
 import io.github.crabzilla.stream.StreamMustBeNewException
 import io.github.crabzilla.stream.StreamRepository.Companion.NO_STREAM
 import io.github.crabzilla.stream.StreamRepositoryImpl
@@ -111,12 +111,12 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
                 try {
                   log.debug("Will handle command {} on state {}", command, snapshot)
                   val session =
-                    CrabzillaCommandsSession(
+                    Session(
                       snapshot.state,
                       decideFunction = config.decideFunction,
                       evolveFunction = config.evolveFunction,
                     )
-                  session.handle(command)
+                  session.decide(command)
                   succeededFuture(Pair(snapshot, session))
                 } catch (e: Exception) {
                   val error = BusinessException(e.message ?: "Unknown", e)
@@ -124,7 +124,7 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
                 }
               }
               .compose { pair ->
-                val (streamSnapshot: StreamSnapshot<S>, session: CrabzillaCommandsSession<C, S, E>) = pair
+                val (streamSnapshot: StreamSnapshot<S>, session: Session<C, S, E>) = pair
                 log.debug("Command handled")
                 streamWriter.appendEvents(
                   streamSnapshot = streamSnapshot,

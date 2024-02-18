@@ -1,6 +1,5 @@
 package io.github.crabzilla.example1.customer.model
 
-import io.github.crabzilla.core.buildException
 import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer
@@ -109,7 +108,7 @@ val customerEvolveFunction: (Customer, CustomerEvent) -> Customer = { state: Cus
   }
 }
 
-val customerDeciderFunction: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->
+val customerDecideFunction: (state: Customer, command: CustomerCommand) -> List<CustomerEvent> = { state, command ->
   when (state) {
     is Customer.Initial -> {
       when (command) {
@@ -137,4 +136,14 @@ val customerDeciderFunction: (state: Customer, command: CustomerCommand) -> List
       }
     }
   }
+}
+
+fun <S, C> buildException(
+  state: S,
+  command: C,
+): IllegalStateException {
+  return IllegalStateException(
+    "Illegal transition. " +
+      "state: ${state!!::class.java.simpleName} command: ${command!!::class.java.simpleName}",
+  )
 }

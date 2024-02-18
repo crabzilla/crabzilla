@@ -6,7 +6,7 @@
    <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.7.3</version>
+    <version>0.7.4</version>
   </parent>
 
   <artifactId>crabzilla-pg-context</artifactId>

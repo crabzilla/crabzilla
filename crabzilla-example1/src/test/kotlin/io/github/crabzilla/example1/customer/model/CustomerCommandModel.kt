@@ -3,7 +3,6 @@ package io.github.crabzilla.example1.customer.model
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import io.github.crabzilla.core.buildException
 import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer
@@ -64,4 +63,14 @@ val customerDecideFunction: (state: Customer, command: CustomerCommand) -> List<
       }
     }
   }
+}
+
+fun <S, C> buildException(
+  state: S,
+  command: C,
+): IllegalStateException {
+  return IllegalStateException(
+    "Illegal transition. " +
+      "state: ${state!!::class.java.simpleName} command: ${command!!::class.java.simpleName}",
+  )
 }
