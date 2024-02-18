@@ -4,9 +4,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>io.crabzilla</groupId>
+    <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.7.1</version>
+    <version>0.7.0</version>
   </parent>
 
   <artifactId>crabzilla-pg-writer</artifactId>
@@ -15,12 +15,12 @@
   <dependencies>
 
     <dependency>
-      <groupId>io.crabzilla</groupId>
+      <groupId>io.github.crabzilla</groupId>
       <artifactId>crabzilla-core</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>io.crabzilla</groupId>
+      <groupId>io.github.crabzilla</groupId>
       <artifactId>crabzilla-pg-stream</artifactId>
     </dependency>
 
@@ -46,7 +46,7 @@
 
     <!--    <dependency>-->
     <!--      <scope>test</scope>-->
-    <!--      <groupId>io.crabzilla</groupId>-->
+    <!--      <groupId>io.github.crabzilla</groupId>-->
     <!--      <artifactId>crabzilla-json-jackson</artifactId>-->
     <!--    </dependency>-->
 
