@@ -4,9 +4,9 @@ import io.github.crabzilla.example1.customer.effects.CustomerEventStateViewEffec
 import io.github.crabzilla.example1.customer.effects.CustomerViewTrigger
 import io.github.crabzilla.example1.customer.effects.CustomerViewTrigger.Companion.EVENTBUS_ADDRESS
 import io.github.crabzilla.example1.customer.effects.CustomerWriteResultViewEffect
+import io.github.crabzilla.example1.customer.model.Customer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer
-import io.github.crabzilla.example1.customer.model.CustomerInitialStateFactory
 import io.github.crabzilla.example1.customer.model.customerDecideFunction
 import io.github.crabzilla.example1.customer.model.customerEvolveFunction
 import io.github.crabzilla.example1.customer.serder.CustomerCommandSerDer
@@ -37,7 +37,7 @@ class HandlingViewEffects : AbstractWriterApiIT() {
   ) {
     val customerConfig =
       WriterConfig(
-        initialStateFactory = CustomerInitialStateFactory(),
+        initialState = Customer.Initial,
         evolveFunction = customerEvolveFunction,
         decideFunction = customerDecideFunction,
         commandSerDer = CustomerCommandSerDer(),
@@ -75,7 +75,7 @@ class HandlingViewEffects : AbstractWriterApiIT() {
   ) {
     val customerConfig =
       WriterConfig(
-        initialStateFactory = CustomerInitialStateFactory(),
+        initialState = Customer.Initial,
         evolveFunction = customerEvolveFunction,
         decideFunction = customerDecideFunction,
         commandSerDer = CustomerCommandSerDer(),
@@ -118,7 +118,7 @@ class HandlingViewEffects : AbstractWriterApiIT() {
   ) {
     val customerConfig =
       WriterConfig(
-        initialStateFactory = CustomerInitialStateFactory(),
+        initialState = Customer.Initial,
         evolveFunction = customerEvolveFunction,
         decideFunction = customerDecideFunction,
         commandSerDer = CustomerCommandSerDer(),
@@ -161,7 +161,7 @@ class HandlingViewEffects : AbstractWriterApiIT() {
   ) {
     val customerConfig =
       WriterConfig(
-        initialStateFactory = CustomerInitialStateFactory(),
+        initialState = Customer.Initial,
         evolveFunction = customerEvolveFunction,
         decideFunction = customerDecideFunction,
         commandSerDer = CustomerCommandSerDer(),

@@ -13,10 +13,6 @@ import java.util.*
 
 // to be implemented by models
 
-interface InitialStateFactory<S : Any> {
-  fun get(): S
-}
-
 sealed interface ViewEffect<S : Any, E : Any> {
   interface EventStateViewEffect<S : Any, E : Any> : ViewEffect<S, E> {
     fun handle(
@@ -66,7 +62,7 @@ interface WriterApi<S : Any, C : Any, E : Any> {
 }
 
 data class WriterConfig<S : Any, C : Any, E : Any>(
-  val initialStateFactory: InitialStateFactory<S>,
+  val initialState: S,
   val evolveFunction: (S, E) -> S,
   val decideFunction: (S, C) -> List<E>,
   val eventSerDer: JsonObjectSerDer<E>,

@@ -10,7 +10,6 @@ import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCusto
 import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterCustomer
 import io.github.crabzilla.example1.customer.model.CustomerEvent
-import io.github.crabzilla.example1.customer.model.CustomerInitialStateFactory
 import io.github.crabzilla.example1.customer.model.customerDecideFunction
 import io.github.crabzilla.example1.customer.model.customerEvolveFunction
 import io.github.crabzilla.example1.customer.serder.CustomerCommandSerDer
@@ -39,7 +38,7 @@ fun main() {
   fun getWriter(): WriterApi<Customer, CustomerCommand, CustomerEvent> {
     val config =
       WriterConfig(
-        initialStateFactory = CustomerInitialStateFactory(),
+        initialState = Customer.Initial,
         evolveFunction = customerEvolveFunction,
         decideFunction = customerDecideFunction,
         eventSerDer = CustomerEventSerDer(),

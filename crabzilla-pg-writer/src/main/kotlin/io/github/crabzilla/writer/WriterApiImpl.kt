@@ -72,7 +72,7 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
       StreamRepositoryImpl(
         conn = sqlConnection,
         targetStream = targetStream,
-        initialState = config.initialStateFactory.get(),
+        initialState = config.initialState,
         eventHandler = config.evolveFunction,
         eventSerDer = config.eventSerDer,
       )

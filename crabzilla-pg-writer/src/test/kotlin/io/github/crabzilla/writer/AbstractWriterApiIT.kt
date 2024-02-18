@@ -6,7 +6,6 @@ import io.github.crabzilla.context.CrabzillaContextImpl
 import io.github.crabzilla.example1.customer.model.Customer
 import io.github.crabzilla.example1.customer.model.CustomerCommand
 import io.github.crabzilla.example1.customer.model.CustomerEvent
-import io.github.crabzilla.example1.customer.model.CustomerInitialStateFactory
 import io.github.crabzilla.example1.customer.model.customerDecideFunction
 import io.github.crabzilla.example1.customer.model.customerEvolveFunction
 import io.github.crabzilla.example1.customer.serder.CustomerCommandSerDer
@@ -41,7 +40,7 @@ open class AbstractWriterApiIT {
 
   val customerConfig =
     WriterConfig(
-      initialStateFactory = CustomerInitialStateFactory(),
+      initialState = Customer.Initial,
       evolveFunction = customerEvolveFunction,
       decideFunction = customerDecideFunction,
       eventSerDer = CustomerEventSerDer(),
