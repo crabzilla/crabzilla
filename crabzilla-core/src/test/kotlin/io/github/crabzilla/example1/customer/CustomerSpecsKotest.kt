@@ -16,19 +16,25 @@ import io.github.crabzilla.example1.customer.model.customerEvolveFunction
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.equals.shouldBeEqual
+import java.time.LocalDateTime
 import java.util.*
 
 class CustomerSpecsKotest : BehaviorSpec({
   val id = UUID.randomUUID()
+  val today = LocalDateTime.now()
   val session =
     Session(
       initialState = Customer.Initial,
       evolveFunction = customerEvolveFunction,
       decideFunction = customerDecideFunction,
+      injectorFunction = { customer ->
+        customer.timeGenerator = { today }
+        customer
+      },
     )
 
   Given("a CustomerRegistered event") {
-    val event = CustomerRegistered(id, "c1")
+    val event = CustomerRegistered(id, "c1", today)
     When("it's applied") {
       session.reset().evolve(event)
       Then("the state is correct") {
@@ -46,7 +52,7 @@ class CustomerSpecsKotest : BehaviorSpec({
       }
       Then("the events are correct") {
         session.appliedEvents() shouldBeEqual
-          listOf(CustomerRegistered(id, "c1"), CustomerActivated("cool"))
+          listOf(CustomerRegistered(id, "c1", today), CustomerActivated("cool"))
       }
     }
   }
@@ -60,7 +66,7 @@ class CustomerSpecsKotest : BehaviorSpec({
       }
       Then("the events are correct") {
         session.appliedEvents() shouldBeEqual
-          listOf(CustomerRegistered(id, "c1"))
+          listOf(CustomerRegistered(id, "c1", today))
       }
     }
   }
@@ -76,7 +82,7 @@ class CustomerSpecsKotest : BehaviorSpec({
         }
         Then("the events are correct") {
           session.appliedEvents() shouldBeEqual
-            listOf(CustomerRegistered(id, "c1"), CustomerRenamed("c1-renamed"))
+            listOf(CustomerRegistered(id, "c1", today), CustomerRenamed("c1-renamed"))
         }
       }
       When("it is renamed again") {
@@ -88,7 +94,7 @@ class CustomerSpecsKotest : BehaviorSpec({
       Then("the events are correct") {
         session.appliedEvents() shouldBeEqual
           listOf(
-            CustomerRegistered(id, "c1"),
+            CustomerRegistered(id, "c1", today),
             CustomerRenamed("c1-renamed"), CustomerRenamed("new name"),
           )
       }

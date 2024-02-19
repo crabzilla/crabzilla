@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.MountableFile
+import java.time.LocalDateTime
 
 @ExtendWith(VertxExtension::class)
 open class AbstractWriterApiIT {
@@ -43,6 +44,10 @@ open class AbstractWriterApiIT {
       initialState = Customer.Initial,
       evolveFunction = customerEvolveFunction,
       decideFunction = customerDecideFunction,
+      injectorFunction = { customer ->
+        customer.timeGenerator = { TODAY }
+        customer
+      },
       eventSerDer = CustomerEventSerDer(),
       commandSerDer = CustomerCommandSerDer(),
     )
@@ -69,6 +74,9 @@ open class AbstractWriterApiIT {
   }
 
   companion object {
+    @JvmStatic
+    protected val TODAY: LocalDateTime = LocalDateTime.now()
+
     private const val PG_DOCKER_IMAGE = "postgres:16"
     private const val DB_NAME = "crabzilla"
     private const val DB_USERNAME = "user1"

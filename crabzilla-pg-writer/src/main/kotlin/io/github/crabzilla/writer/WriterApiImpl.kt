@@ -115,6 +115,7 @@ class WriterApiImpl<S : Any, C : Any, E : Any>(
                       snapshot.state,
                       decideFunction = config.decideFunction,
                       evolveFunction = config.evolveFunction,
+                      injectorFunction = config.injectorFunction,
                     )
                   session.decide(command)
                   succeededFuture(Pair(snapshot, session))

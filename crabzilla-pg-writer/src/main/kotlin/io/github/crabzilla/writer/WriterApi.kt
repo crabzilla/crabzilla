@@ -65,6 +65,7 @@ data class WriterConfig<S : Any, C : Any, E : Any>(
   val initialState: S,
   val evolveFunction: (S, E) -> S,
   val decideFunction: (S, C) -> List<E>,
+  val injectorFunction: ((S) -> S)? = null,
   val eventSerDer: JsonObjectSerDer<E>,
   val commandSerDer: JsonObjectSerDer<C>? = null,
   val viewEffect: ViewEffect<S, E>? = null,

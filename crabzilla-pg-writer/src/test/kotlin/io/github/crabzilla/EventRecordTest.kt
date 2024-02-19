@@ -11,12 +11,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.Instant
+import java.time.LocalDateTime
 import java.util.*
 
 @DisplayName("Serializing io.github.crabzilla.context.EventRecord")
 class EventRecordTest {
   private val id = UUID.randomUUID()
-  private val event = CustomerRegistered(id, "John") as CustomerEvent
+  private val event = CustomerRegistered(id, "John", LocalDateTime.now()) as CustomerEvent
   private val eventAsJson = CustomerEventSerDer().toJson(event)
   private val eventMetadata =
     EventMetadata(

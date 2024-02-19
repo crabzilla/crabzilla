@@ -3,6 +3,9 @@ package io.github.crabzilla.example1.customer.serder
 import io.github.crabzilla.context.JsonObjectSerDer
 import io.github.crabzilla.example1.customer.model.CustomerEvent
 import io.vertx.core.json.JsonObject
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.*
 
 class CustomerEventSerDer : JsonObjectSerDer<CustomerEvent> {
@@ -12,6 +15,7 @@ class CustomerEventSerDer : JsonObjectSerDer<CustomerEvent> {
         CustomerEvent.CustomerRegistered(
           UUID.fromString(json.getString("id")),
           json.getString("name"),
+          LocalDateTime.ofInstant(json.getInstant("date"), ZoneId.systemDefault()),
         )
       "CustomerActivated" -> CustomerEvent.CustomerActivated(json.getString("reason"))
       "CustomerDeactivated" -> CustomerEvent.CustomerDeactivated(json.getString("reason"))
@@ -23,7 +27,9 @@ class CustomerEventSerDer : JsonObjectSerDer<CustomerEvent> {
   override fun toJson(instance: CustomerEvent): JsonObject {
     val json = JsonObject().put("type", instance::class.simpleName)
     return when (instance) {
-      is CustomerEvent.CustomerRegistered -> json.put("id", instance.id).put("name", instance.name)
+      is CustomerEvent.CustomerRegistered ->
+        json.put("id", instance.id)
+          .put("name", instance.name).put("date", Instant.now())
       is CustomerEvent.CustomerActivated -> json.put("reason", instance.reason)
       is CustomerEvent.CustomerDeactivated -> json.put("reason", instance.reason)
       is CustomerEvent.CustomerRenamed -> json.put("name", instance.name)

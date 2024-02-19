@@ -3,6 +3,7 @@ package io.github.crabzilla.writer
 import io.github.crabzilla.example1.customer.model.Customer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.DeactivateCustomer
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer
+import io.github.crabzilla.example1.customer.model.CustomerEvent
 import io.github.crabzilla.stream.TargetStream
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -38,6 +39,13 @@ class AssertingWriterResult : AbstractWriterApiIT() {
           val expectedState = Customer.Inactive(customerId1, cmd1.name, "it's not needed anymore")
           assertThat(result.snapshot.state).isEqualTo(expectedState)
           assertThat(result.snapshot.version).isEqualTo(3)
+          val expectedEvents =
+            listOf(
+              CustomerEvent.CustomerRegistered(id = customerId1, name = "customer#1", date = TODAY),
+              CustomerEvent.CustomerActivated(reason = "is needed"),
+              CustomerEvent.CustomerDeactivated(reason = "it's not needed anymore"),
+            )
+          assertThat(result.events).isEqualTo(expectedEvents)
           tc.completeNow()
         }
       }

@@ -9,10 +9,11 @@ import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerActivat
 import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRegistered
 import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRenamed
+import java.time.LocalDateTime
 import java.util.*
 
 sealed interface CustomerEvent {
-  data class CustomerRegistered(val id: UUID, val name: String) : CustomerEvent
+  data class CustomerRegistered(val id: UUID, val name: String, val date: LocalDateTime) : CustomerEvent
 
   data class CustomerActivated(val reason: String) : CustomerEvent
 
@@ -38,12 +39,14 @@ sealed interface CustomerCommand {
 }
 
 sealed class Customer {
+  var timeGenerator: (() -> LocalDateTime) = { LocalDateTime.now() }
+
   data object Initial : Customer() {
     fun register(
       id: UUID,
       name: String,
     ): List<CustomerEvent> {
-      return listOf(CustomerRegistered(id = id, name = name))
+      return listOf(CustomerRegistered(id = id, name = name, date = timeGenerator.invoke()))
     }
 
     fun registerAndActivate(
@@ -51,7 +54,10 @@ sealed class Customer {
       name: String,
       reason: String,
     ): List<CustomerEvent> {
-      return listOf(CustomerRegistered(id = id, name = name), CustomerActivated(reason = reason))
+      return listOf(
+        CustomerRegistered(id = id, name = name, date = timeGenerator.invoke()),
+        CustomerActivated(reason = reason),
+      )
     }
   }
 
