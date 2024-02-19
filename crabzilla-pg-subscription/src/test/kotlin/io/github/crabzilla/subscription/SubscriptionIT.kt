@@ -70,7 +70,7 @@ class SubscriptionIT : AbstractSubscriptionTest() {
       .compose { api.pause() }
       .compose {
         val targetStream1 = TargetStream(stateType = "Customer", stateId = CUSTOMER_ID.toString())
-        writer.handle(targetStream1, RegisterCustomer(CUSTOMER_ID, "cust#$CUSTOMER_ID"))
+        commandHandler.handle(targetStream1, RegisterCustomer(CUSTOMER_ID, "cust#$CUSTOMER_ID"))
       }.compose {
         api.status()
       }
@@ -98,7 +98,7 @@ class SubscriptionIT : AbstractSubscriptionTest() {
     api.deploy()
       .compose {
         val targetStream1 = TargetStream(stateType = "Customer", stateId = CUSTOMER_ID.toString())
-        writer.handle(targetStream1, RegisterCustomer(CUSTOMER_ID, "cust#$CUSTOMER_ID"))
+        commandHandler.handle(targetStream1, RegisterCustomer(CUSTOMER_ID, "cust#$CUSTOMER_ID"))
       }.compose {
         api.handle()
       }.compose {
@@ -128,7 +128,7 @@ class SubscriptionIT : AbstractSubscriptionTest() {
     api.deploy()
       .compose {
         val targetStream1 = TargetStream(stateType = "Customer", stateId = CUSTOMER_ID.toString())
-        writer.handle(targetStream1, RegisterCustomer(CUSTOMER_ID, "cust#$CUSTOMER_ID"))
+        commandHandler.handle(targetStream1, RegisterCustomer(CUSTOMER_ID, "cust#$CUSTOMER_ID"))
       }.compose {
         api.handle()
       }.compose {
@@ -154,7 +154,7 @@ class SubscriptionIT : AbstractSubscriptionTest() {
     api.deploy()
       .compose {
         val targetStream1 = TargetStream(stateType = "Customer", stateId = CUSTOMER_ID.toString())
-        writer.handle(targetStream1, RegisterCustomer(CUSTOMER_ID, "cust#$CUSTOMER_ID"))
+        commandHandler.handle(targetStream1, RegisterCustomer(CUSTOMER_ID, "cust#$CUSTOMER_ID"))
       }
       .compose {
         api.pause()
@@ -189,7 +189,7 @@ class SubscriptionIT : AbstractSubscriptionTest() {
     api.deploy()
       .compose {
         val targetStream1 = TargetStream(stateType = "Customer", stateId = CUSTOMER_ID.toString())
-        writer.handle(targetStream1, RegisterCustomer(CUSTOMER_ID, "cust#$CUSTOMER_ID"))
+        commandHandler.handle(targetStream1, RegisterCustomer(CUSTOMER_ID, "cust#$CUSTOMER_ID"))
       }
       .compose {
         api.pause()
@@ -243,9 +243,9 @@ class SubscriptionIT : AbstractSubscriptionTest() {
     api.deploy()
       .compose {
         val targetStream1 = TargetStream(stateType = "Customer", stateId = CUSTOMER_ID.toString())
-        writer.handle(targetStream1, RegisterCustomer(CUSTOMER_ID, "cust#$CUSTOMER_ID"))
-          .compose { writer.handle(targetStream1, ActivateCustomer("because yes")) }
-          .compose { writer.handle(targetStream1, DeactivateCustomer("because yes")) }
+        commandHandler.handle(targetStream1, RegisterCustomer(CUSTOMER_ID, "cust#$CUSTOMER_ID"))
+          .compose { commandHandler.handle(targetStream1, ActivateCustomer("because yes")) }
+          .compose { commandHandler.handle(targetStream1, DeactivateCustomer("because yes")) }
       }.compose {
         api.handle()
       }.compose {

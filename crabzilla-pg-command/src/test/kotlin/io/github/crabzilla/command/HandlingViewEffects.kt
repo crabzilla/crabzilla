@@ -44,16 +44,16 @@ class HandlingViewEffects : AbstractCommandHandlerIT() {
         eventSerDer = CustomerEventSerDer(),
       )
 
-    val writer = CommandHandlerImpl(context, customerConfig)
+    val commandHandler2 = CommandHandlerImpl(context, customerConfig)
 
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd1 = RegisterAndActivateCustomer(customerId1, "customer#1", "is needed")
     val cmd2 = DeactivateCustomer("it's not needed anymore")
 
-    writer.handle(targetStream1, cmd1)
+    commandHandler2.handle(targetStream1, cmd1)
       .compose {
-        writer.handle(targetStream1, cmd2)
+        commandHandler2.handle(targetStream1, cmd2)
       }
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -83,16 +83,16 @@ class HandlingViewEffects : AbstractCommandHandlerIT() {
         viewEffect = CustomerGivenEachEventViewEffect(),
       )
 
-    val writer = CommandHandlerImpl(context, customerConfig)
+    val commandHandler2 = CommandHandlerImpl(context, customerConfig)
 
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd1 = RegisterAndActivateCustomer(customerId1, "customer#1", "is needed")
     val cmd2 = DeactivateCustomer("it's not needed anymore")
 
-    writer.handle(targetStream1, cmd1)
+    commandHandler2.handle(targetStream1, cmd1)
       .compose {
-        writer.handle(targetStream1, cmd2)
+        commandHandler2.handle(targetStream1, cmd2)
       }
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -126,16 +126,16 @@ class HandlingViewEffects : AbstractCommandHandlerIT() {
         viewEffect = CustomerGivenAllEventsViewEffect(),
       )
 
-    val writer = CommandHandlerImpl(context, customerConfig)
+    val commandHandler2 = CommandHandlerImpl(context, customerConfig)
 
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd1 = RegisterAndActivateCustomer(customerId1, "customer#1", "is needed")
     val cmd2 = DeactivateCustomer("it's not needed anymore")
 
-    writer.handle(targetStream1, cmd1)
+    commandHandler2.handle(targetStream1, cmd1)
       .compose {
-        writer.handle(targetStream1, cmd2)
+        commandHandler2.handle(targetStream1, cmd2)
       }
       .onFailure { tc.failNow(it) }
       .onSuccess {
@@ -170,7 +170,7 @@ class HandlingViewEffects : AbstractCommandHandlerIT() {
         viewTrigger = CustomerViewTrigger(vertx.eventBus()),
       )
 
-    val writer = CommandHandlerImpl(context, customerConfig)
+    val commandHandler2 = CommandHandlerImpl(context, customerConfig)
 
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
@@ -185,9 +185,9 @@ class HandlingViewEffects : AbstractCommandHandlerIT() {
       latch.countDown()
     }
 
-    writer.handle(targetStream1, cmd1)
+    commandHandler2.handle(targetStream1, cmd1)
       .compose {
-        writer.handle(targetStream1, cmd2)
+        commandHandler2.handle(targetStream1, cmd2)
       }
       .onFailure { tc.failNow(it) }
       .onSuccess {

@@ -40,7 +40,7 @@ open class AbstractSubscriptionTest {
   }
 
   lateinit var context: CrabzillaContext
-  lateinit var writer: CommandHandler<Customer, CustomerCommand, CustomerEvent>
+  lateinit var commandHandler: CommandHandler<Customer, CustomerCommand, CustomerEvent>
   lateinit var testRepository: TestRepository
 
   val customerConfig =
@@ -60,7 +60,7 @@ open class AbstractSubscriptionTest {
     tc: VertxTestContext,
   ) {
     context = CrabzillaContextImpl(vertx, dbConfig)
-    writer = CommandHandlerImpl(context, customerConfig)
+    commandHandler = CommandHandlerImpl(context, customerConfig)
     testRepository = TestRepository(context.pgPool)
 
     val verticle = PgNotifierVerticle(pgPool = context.pgPool, 100)
