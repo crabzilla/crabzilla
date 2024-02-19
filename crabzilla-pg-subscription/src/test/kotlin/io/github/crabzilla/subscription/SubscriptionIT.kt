@@ -1,6 +1,7 @@
 package io.github.crabzilla.subscription
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import io.github.crabzilla.context.ViewTrigger
 import io.github.crabzilla.example1.customer.effects.CustomersViewEffect
 import io.github.crabzilla.example1.customer.effects.CustomersViewTrigger
 import io.github.crabzilla.example1.customer.model.CustomerCommand.ActivateCustomer
@@ -25,12 +26,16 @@ import java.util.concurrent.TimeUnit
 @ExtendWith(VertxExtension::class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class SubscriptionIT : AbstractSubscriptionTest() {
-  fun api(viewTrigger: io.github.crabzilla.context.ViewTrigger? = null): SubscriptionApi {
+  fun api(
+    viewTrigger: ViewTrigger? = null,
+    subscriptionConfig: SubscriptionConfig = SubscriptionConfig(),
+  ): SubscriptionApi {
     return SubscriptionComponentImpl(
       crabzillaContext = context,
       spec = SubscriptionSpec(SUBSCRIPTION_1),
       viewEffect = CustomersViewEffect(),
       viewTrigger = viewTrigger,
+      config = subscriptionConfig,
     ).extractApi()
   }
 
@@ -264,6 +269,33 @@ class SubscriptionIT : AbstractSubscriptionTest() {
       }
   }
 
+  @Test
+  @Order(5)
+  fun `no new events`(
+    tc: VertxTestContext,
+    vertx: Vertx,
+  ) {
+    val api = api(subscriptionConfig = SubscriptionConfig().copy(initialInterval = 0, interval = 5, maxInterval = 10))
+    api.deploy()
+      .compose {
+        api.handle()
+      }
+      .compose {
+        api.status()
+      }
+      .onFailure { tc.failNow(it) }
+      .onSuccess { json ->
+        tc.verify {
+          assertEquals(false, json.getBoolean("paused"))
+          assertEquals(false, json.getBoolean("busy"))
+          assertEquals(false, json.getBoolean("greedy"))
+          assertEquals(0L, json.getLong("currentOffset"))
+          assertEquals(0L, json.getLong("failures"))
+          assertEquals(1L, json.getLong("backOff"))
+          tc.completeNow()
+        }
+      }
+  }
   companion object {
     private val CUSTOMER_ID: UUID = UUID.randomUUID()
   }

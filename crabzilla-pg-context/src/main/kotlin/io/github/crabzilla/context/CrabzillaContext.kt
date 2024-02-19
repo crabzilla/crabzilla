@@ -1,6 +1,5 @@
 package io.github.crabzilla.context
 
-import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgBuilder
@@ -8,7 +7,6 @@ import io.vertx.pgclient.PgConnectOptions
 import io.vertx.pgclient.pubsub.PgSubscriber
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.PoolOptions
-import io.vertx.sqlclient.SqlConnection
 import java.net.URI
 import java.util.*
 
@@ -59,24 +57,3 @@ interface CrabzillaContext {
     //  .setEventLoopSize(4)
   }
 }
-
-/**
- * A convention used is the property "type" within JsonObject to figure out what is the type - polymorphism
- */
-interface JsonObjectSerDer<T : Any> {
-  fun toJson(instance: T): JsonObject
-
-  fun fromJson(json: JsonObject): T
-}
-
-interface ViewTrigger {
-  fun checkCondition(viewAsJson: JsonObject): Boolean
-
-  fun handleTrigger(
-    sqlConnection: SqlConnection,
-    viewAsJson: JsonObject,
-  ): Future<Void>
-}
-
-open class CrabzillaRuntimeException(override val message: String, override val cause: Throwable? = null) :
-  RuntimeException(message, cause)
