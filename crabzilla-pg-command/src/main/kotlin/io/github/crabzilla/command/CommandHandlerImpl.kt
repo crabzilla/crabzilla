@@ -1,5 +1,6 @@
-package io.github.crabzilla.writer
+package io.github.crabzilla.command
 
+import io.github.crabzilla.command.internal.EventProjector
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.core.Session
@@ -9,7 +10,6 @@ import io.github.crabzilla.stream.StreamRepositoryImpl
 import io.github.crabzilla.stream.StreamSnapshot
 import io.github.crabzilla.stream.StreamWriterImpl
 import io.github.crabzilla.stream.TargetStream
-import io.github.crabzilla.writer.internal.EventProjector
 import io.vertx.core.Future
 import io.vertx.core.Future.failedFuture
 import io.vertx.core.Future.succeededFuture

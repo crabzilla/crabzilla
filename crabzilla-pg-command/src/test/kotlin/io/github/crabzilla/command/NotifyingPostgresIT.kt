@@ -1,4 +1,4 @@
-package io.github.crabzilla.writer
+package io.github.crabzilla.command
 
 import io.github.crabzilla.context.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
 import io.github.crabzilla.example1.customer.model.CustomerCommand.RegisterAndActivateCustomer

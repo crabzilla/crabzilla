@@ -3,6 +3,9 @@ package io.github.crabzilla
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.github.crabzilla.command.CommandHandler
+import io.github.crabzilla.command.CommandHandlerConfig
+import io.github.crabzilla.command.CommandHandlerImpl
 import io.github.crabzilla.context.CrabzillaContextImpl
 import io.github.crabzilla.example1.customer.effects.CustomerGivenAllEventsViewEffect
 import io.github.crabzilla.example1.customer.effects.CustomersViewEffect
@@ -22,9 +25,6 @@ import io.github.crabzilla.subscription.SubscriptionComponentImpl
 import io.github.crabzilla.subscription.SubscriptionSpec
 import io.github.crabzilla.util.PgTestContainer.pgConfig
 import io.github.crabzilla.util.TestRepository
-import io.github.crabzilla.writer.CommandHandler
-import io.github.crabzilla.writer.CommandHandlerConfig
-import io.github.crabzilla.writer.CommandHandlerImpl
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import java.util.*

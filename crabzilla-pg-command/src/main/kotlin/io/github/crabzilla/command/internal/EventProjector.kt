@@ -1,9 +1,9 @@
-package io.github.crabzilla.writer.internal
+package io.github.crabzilla.command.internal
 
+import io.github.crabzilla.command.CommandHandlerResult
+import io.github.crabzilla.command.ViewEffect
 import io.github.crabzilla.context.EventMetadata
 import io.github.crabzilla.context.ViewTrigger
-import io.github.crabzilla.writer.CommandHandlerResult
-import io.github.crabzilla.writer.ViewEffect
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection

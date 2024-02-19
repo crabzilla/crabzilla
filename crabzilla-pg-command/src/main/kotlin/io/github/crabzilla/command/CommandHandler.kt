@@ -1,4 +1,4 @@
-package io.github.crabzilla.writer
+package io.github.crabzilla.command
 
 import io.github.crabzilla.context.CrabzillaRuntimeException
 import io.github.crabzilla.context.EventMetadata

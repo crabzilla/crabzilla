@@ -1,10 +1,10 @@
 package io.github.crabzilla.example1.customer.effects
 
+import io.github.crabzilla.command.ViewEffect.GivenEachEventViewEffect
 import io.github.crabzilla.context.EventMetadata
 import io.github.crabzilla.example1.customer.model.Customer
 import io.github.crabzilla.example1.customer.model.CustomerEvent
 import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRegistered
-import io.github.crabzilla.writer.ViewEffect.GivenEachEventViewEffect
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection

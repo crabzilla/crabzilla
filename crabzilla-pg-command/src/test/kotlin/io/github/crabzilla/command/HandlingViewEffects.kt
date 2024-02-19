@@ -1,4 +1,4 @@
-package io.github.crabzilla.writer
+package io.github.crabzilla.command
 
 import io.github.crabzilla.example1.customer.effects.CustomerGivenAllEventsViewEffect
 import io.github.crabzilla.example1.customer.effects.CustomerGivenEachEventViewEffect

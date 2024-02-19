@@ -1,4 +1,4 @@
-package io.github.crabzilla.writer
+package io.github.crabzilla.command
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.crabzilla.example1.customer.model.Customer

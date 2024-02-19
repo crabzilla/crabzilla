@@ -1,6 +1,9 @@
 package io.github.crabzilla.subscription
 
 import io.github.crabzilla.TestRepository
+import io.github.crabzilla.command.CommandHandler
+import io.github.crabzilla.command.CommandHandlerConfig
+import io.github.crabzilla.command.CommandHandlerImpl
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContextImpl
 import io.github.crabzilla.example1.customer.effects.CustomerGivenEachEventViewEffect
@@ -11,9 +14,6 @@ import io.github.crabzilla.example1.customer.model.customerDecideFunction
 import io.github.crabzilla.example1.customer.model.customerEvolveFunction
 import io.github.crabzilla.example1.customer.serder.CustomerCommandSerDer
 import io.github.crabzilla.example1.customer.serder.CustomerEventSerDer
-import io.github.crabzilla.writer.CommandHandler
-import io.github.crabzilla.writer.CommandHandlerConfig
-import io.github.crabzilla.writer.CommandHandlerImpl
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
