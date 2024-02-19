@@ -37,10 +37,14 @@ class NotifyingPostgresIT : AbstractCommandHandlerIT() {
           latch.countDown()
         }
     }
+
+    val configWithPgNotify = customerConfig.copy(notifyPostgres = true)
+    val commandHandler2 = CommandHandlerImpl(context, configWithPgNotify)
+
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
-    commandHandler.handle(targetStream1, cmd)
+    commandHandler2.handle(targetStream1, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         val callable =
@@ -70,13 +74,10 @@ class NotifyingPostgresIT : AbstractCommandHandlerIT() {
         }
     }
 
-    val configWithoutPgNotify = customerConfig.copy(notifyPostgres = false)
-    val writerApi = CommandHandlerImpl(context, configWithoutPgNotify)
-
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
     val cmd = RegisterAndActivateCustomer(customerId1, "c1", "is needed")
-    writerApi.handle(targetStream1, cmd)
+    commandHandler.handle(targetStream1, cmd)
       .onFailure { tc.failNow(it) }
       .onSuccess {
         val callable =

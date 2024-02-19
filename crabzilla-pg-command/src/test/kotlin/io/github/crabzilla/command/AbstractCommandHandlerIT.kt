@@ -63,6 +63,7 @@ open class AbstractCommandHandlerIT {
       eventSerDer = CustomerEventSerDer(),
       commandSerDer = CustomerCommandSerDer(),
       snapshotCache = cache,
+      notifyPostgres = false,
     )
 
   @BeforeEach
