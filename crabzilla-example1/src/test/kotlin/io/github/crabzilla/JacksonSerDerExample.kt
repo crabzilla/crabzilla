@@ -36,7 +36,7 @@ fun main() {
   val testRepository = TestRepository(context.pgPool)
   val subscriptionName = "crabzilla.example1.customer.SimpleProjector"
 
-  fun getWriter(): CommandHandler<Customer, CustomerCommand, CustomerEvent> {
+  fun getCommandHandler(): CommandHandler<Customer, CustomerCommand, CustomerEvent> {
     val config =
       CommandHandlerConfig(
         initialState = Customer.Initial,
@@ -67,8 +67,8 @@ fun main() {
 
   getSubscription().deploy()
     .andThen {
-      val writerApi = getWriter()
-      with(writerApi) {
+      val commandHandler = getCommandHandler()
+      with(commandHandler) {
         val customerId = UUID.randomUUID()
         val targetStream = TargetStream(name = "Customer@$customerId")
         testRepository.cleanDatabase()

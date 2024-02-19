@@ -9,7 +9,7 @@ import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
 import org.slf4j.LoggerFactory
 
-// TODO subscription should work with queries against view: ViewSubscription vs EventSubscriptions
+// TODO subscription should ALSO work with queries against view: ViewSubscription vs EventSubscriptions
 
 interface SubscriptionComponent {
   fun extractApi(): SubscriptionApi
@@ -43,7 +43,7 @@ data class SubscriptionConfig(
   val maxNumberOfRows: Int = DEFAULT_NUMBER_ROWS,
   val maxInterval: Long = DEFAULT_MAX_INTERVAL,
   val metricsInterval: Long = DEFAULT_MAX_INTERVAL,
-  val jitterFunction: () -> Int = { ((0..5).random() * 1000) },
+  val jitterFunction: () -> Int = { ((0..10).random() * 1000) },
 ) {
   companion object {
     private const val DEFAULT_INITIAL_INTERVAL = 15_000L

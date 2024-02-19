@@ -35,7 +35,7 @@ fun main() {
   val testRepository = TestRepository(context.pgPool)
   val subscriptionName = "crabzilla.example1.customer.SimpleProjector"
 
-  fun getWriter(): CommandHandler<Customer, CustomerCommand, CustomerEvent> {
+  fun getCommandHandler(): CommandHandler<Customer, CustomerCommand, CustomerEvent> {
     val config =
       CommandHandlerConfig(
         initialState = Customer.Initial,
@@ -66,7 +66,7 @@ fun main() {
 
   getSubscription().deploy()
     .andThen {
-      with(getWriter()) {
+      with(getCommandHandler()) {
         fun handleCurried(targetStream: TargetStream): (CustomerCommand) -> Future<CommandHandlerResult<Customer, CustomerEvent>> {
           return { command -> handle(targetStream, command) }
         }

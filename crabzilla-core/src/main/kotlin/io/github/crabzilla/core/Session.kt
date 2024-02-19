@@ -6,7 +6,8 @@ class Session<C, S, E>(
   private val decideFunction: (S, C) -> List<E>,
   private val injectorFunction: ((S) -> S)? = null,
 ) {
-  private var currentState: S = initialState
+  private var currentState: S =
+    if (injectorFunction == null) initialState else injectorFunction.invoke(initialState)
   private val appliedEvents = mutableListOf<E>()
 
   fun reset(): Session<C, S, E> {
@@ -16,7 +17,6 @@ class Session<C, S, E>(
   }
 
   fun decide(command: C): Session<C, S, E> {
-    injectorFunction?.invoke(currentState)
     val resultingEvents = decideFunction.invoke(currentState, command)
     evolve(resultingEvents)
     return this
@@ -26,7 +26,7 @@ class Session<C, S, E>(
     return evolve(events.toList())
   }
 
-  fun evolve(events: List<E>): Session<C, S, E> {
+  private fun evolve(events: List<E>): Session<C, S, E> {
     events.forEach { domainEvent ->
       currentState = evolveFunction.invoke(currentState, domainEvent)
       appliedEvents.add(domainEvent)

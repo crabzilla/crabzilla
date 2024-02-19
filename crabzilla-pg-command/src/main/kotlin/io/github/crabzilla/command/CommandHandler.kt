@@ -11,7 +11,7 @@ import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
 import java.util.*
 
-// to be implemented by models
+// to be optionally implemented by use cases
 
 sealed interface ViewEffect<S : Any, E : Any> {
   interface GivenEachEventViewEffect<S : Any, E : Any> : ViewEffect<S, E> {
