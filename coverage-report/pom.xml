@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.github.crabzilla</groupId>
     <artifactId>crabzilla</artifactId>
-    <version>0.7.5</version>
+    <version>0.7.6</version>
   </parent>
 
   <artifactId>coverage-report</artifactId>
@@ -31,7 +31,7 @@
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-pg-writer</artifactId>
+      <artifactId>crabzilla-pg-command</artifactId>
     </dependency>
 
     <dependency>

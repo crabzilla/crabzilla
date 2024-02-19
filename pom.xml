@@ -5,7 +5,7 @@
 
   <groupId>io.github.crabzilla</groupId>
   <artifactId>crabzilla</artifactId>
-  <version>0.7.5</version>
+  <version>0.7.6</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -75,7 +75,7 @@
     <module>crabzilla-core</module>
     <module>crabzilla-pg-context</module>
     <module>crabzilla-pg-stream</module>
-    <module>crabzilla-pg-writer</module>
+    <module>crabzilla-pg-command</module>
     <module>crabzilla-pg-subscription</module>
     <module>crabzilla-json-kotlinx</module>
     <module>crabzilla-json-jackson</module>
@@ -121,7 +121,7 @@
 
       <dependency>
         <groupId>io.github.crabzilla</groupId>
-        <artifactId>crabzilla-pg-writer</artifactId>
+        <artifactId>crabzilla-pg-command</artifactId>
         <version>${project.version}</version>
       </dependency>
 

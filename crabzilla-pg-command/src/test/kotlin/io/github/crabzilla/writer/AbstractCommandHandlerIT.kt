@@ -1,9 +1,8 @@
-package io.github.crabzilla.subscription
+package io.github.crabzilla.writer
 
 import io.github.crabzilla.TestRepository
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContextImpl
-import io.github.crabzilla.example1.customer.effects.CustomerGivenEachEventViewEffect
 import io.github.crabzilla.example1.customer.model.Customer
 import io.github.crabzilla.example1.customer.model.CustomerCommand
 import io.github.crabzilla.example1.customer.model.CustomerEvent
@@ -11,9 +10,6 @@ import io.github.crabzilla.example1.customer.model.customerDecideFunction
 import io.github.crabzilla.example1.customer.model.customerEvolveFunction
 import io.github.crabzilla.example1.customer.serder.CustomerCommandSerDer
 import io.github.crabzilla.example1.customer.serder.CustomerEventSerDer
-import io.github.crabzilla.writer.CommandHandler
-import io.github.crabzilla.writer.CommandHandlerConfig
-import io.github.crabzilla.writer.CommandHandlerImpl
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
@@ -23,9 +19,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.MountableFile
+import java.time.LocalDateTime
 
 @ExtendWith(VertxExtension::class)
-open class AbstractSubscriptionTest {
+open class AbstractCommandHandlerIT {
   var dbConfig: JsonObject
 
   init {
@@ -39,7 +36,7 @@ open class AbstractSubscriptionTest {
   }
 
   lateinit var context: CrabzillaContext
-  lateinit var writer: CommandHandler<Customer, CustomerCommand, CustomerEvent>
+  lateinit var commandHandler: CommandHandler<Customer, CustomerCommand, CustomerEvent>
   lateinit var testRepository: TestRepository
 
   val customerConfig =
@@ -47,9 +44,12 @@ open class AbstractSubscriptionTest {
       initialState = Customer.Initial,
       evolveFunction = customerEvolveFunction,
       decideFunction = customerDecideFunction,
+      injectorFunction = { customer ->
+        customer.timeGenerator = { TODAY }
+        customer
+      },
       eventSerDer = CustomerEventSerDer(),
       commandSerDer = CustomerCommandSerDer(),
-      viewEffect = CustomerGivenEachEventViewEffect(),
     )
 
   @BeforeEach
@@ -58,7 +58,7 @@ open class AbstractSubscriptionTest {
     tc: VertxTestContext,
   ) {
     context = CrabzillaContextImpl(vertx, dbConfig)
-    writer = CommandHandlerImpl(context, customerConfig)
+    commandHandler = CommandHandlerImpl(context, customerConfig)
     testRepository = TestRepository(context.pgPool)
 
     testRepository.cleanDatabase()
@@ -74,6 +74,9 @@ open class AbstractSubscriptionTest {
   }
 
   companion object {
+    @JvmStatic
+    protected val TODAY: LocalDateTime = LocalDateTime.now()
+
     private const val PG_DOCKER_IMAGE = "postgres:16"
     private const val DB_NAME = "crabzilla"
     private const val DB_USERNAME = "user1"
@@ -93,6 +96,5 @@ open class AbstractSubscriptionTest {
             "/docker-entrypoint-initdb.d/example1.sql",
           )
         }
-    val SUBSCRIPTION_1 = "crabzilla.example1.customer.SimpleProjector"
   }
 }

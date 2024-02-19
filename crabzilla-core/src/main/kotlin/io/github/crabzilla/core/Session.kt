@@ -30,7 +30,9 @@ class Session<C, S, E>(
     events.forEach { domainEvent ->
       currentState = evolveFunction.invoke(currentState, domainEvent)
       appliedEvents.add(domainEvent)
-      currentState = if (injectorFunction == null) currentState else injectorFunction.invoke(currentState)
+      if (injectorFunction != null) {
+        currentState = injectorFunction.invoke(currentState)
+      }
     }
     return this
   }

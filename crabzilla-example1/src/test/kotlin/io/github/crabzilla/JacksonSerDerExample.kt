@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.github.crabzilla.context.CrabzillaContextImpl
-import io.github.crabzilla.example1.customer.effects.CustomerWriteResultViewEffect
+import io.github.crabzilla.example1.customer.effects.CustomerGivenAllEventsViewEffect
 import io.github.crabzilla.example1.customer.effects.CustomersViewEffect
 import io.github.crabzilla.example1.customer.effects.CustomersViewTrigger
 import io.github.crabzilla.example1.customer.model.Customer
@@ -22,9 +22,9 @@ import io.github.crabzilla.subscription.SubscriptionComponentImpl
 import io.github.crabzilla.subscription.SubscriptionSpec
 import io.github.crabzilla.util.PgTestContainer.pgConfig
 import io.github.crabzilla.util.TestRepository
-import io.github.crabzilla.writer.WriterApi
-import io.github.crabzilla.writer.WriterApiImpl
-import io.github.crabzilla.writer.WriterConfig
+import io.github.crabzilla.writer.CommandHandler
+import io.github.crabzilla.writer.CommandHandlerConfig
+import io.github.crabzilla.writer.CommandHandlerImpl
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import java.util.*
@@ -36,17 +36,17 @@ fun main() {
   val testRepository = TestRepository(context.pgPool)
   val subscriptionName = "crabzilla.example1.customer.SimpleProjector"
 
-  fun getWriter(): WriterApi<Customer, CustomerCommand, CustomerEvent> {
+  fun getWriter(): CommandHandler<Customer, CustomerCommand, CustomerEvent> {
     val config =
-      WriterConfig(
+      CommandHandlerConfig(
         initialState = Customer.Initial,
         evolveFunction = customerEvolveFunction,
         decideFunction = customerDecideFunction,
         eventSerDer = JacksonJsonObjectSerDer(objectMapper, clazz = CustomerEvent::class),
         commandSerDer = JacksonJsonObjectSerDer(objectMapper, clazz = CustomerCommand::class),
-        viewEffect = CustomerWriteResultViewEffect(),
+        viewEffect = CustomerGivenAllEventsViewEffect(),
       )
-    return WriterApiImpl(context, config)
+    return CommandHandlerImpl(context, config)
   }
 
   fun getSubscription(): SubscriptionApi {

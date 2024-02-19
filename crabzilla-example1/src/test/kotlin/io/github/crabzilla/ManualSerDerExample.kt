@@ -1,7 +1,7 @@
 package io.github.crabzilla
 
 import io.github.crabzilla.context.CrabzillaContextImpl
-import io.github.crabzilla.example1.customer.effects.CustomerWriteResultViewEffect
+import io.github.crabzilla.example1.customer.effects.CustomerGivenAllEventsViewEffect
 import io.github.crabzilla.example1.customer.effects.CustomersViewEffect
 import io.github.crabzilla.example1.customer.effects.CustomersViewTrigger
 import io.github.crabzilla.example1.customer.model.Customer
@@ -20,10 +20,10 @@ import io.github.crabzilla.subscription.SubscriptionComponentImpl
 import io.github.crabzilla.subscription.SubscriptionSpec
 import io.github.crabzilla.util.PgTestContainer.pgConfig
 import io.github.crabzilla.util.TestRepository
-import io.github.crabzilla.writer.WriteResult
-import io.github.crabzilla.writer.WriterApi
-import io.github.crabzilla.writer.WriterApiImpl
-import io.github.crabzilla.writer.WriterConfig
+import io.github.crabzilla.writer.CommandHandler
+import io.github.crabzilla.writer.CommandHandlerConfig
+import io.github.crabzilla.writer.CommandHandlerImpl
+import io.github.crabzilla.writer.CommandHandlerResult
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -35,17 +35,17 @@ fun main() {
   val testRepository = TestRepository(context.pgPool)
   val subscriptionName = "crabzilla.example1.customer.SimpleProjector"
 
-  fun getWriter(): WriterApi<Customer, CustomerCommand, CustomerEvent> {
+  fun getWriter(): CommandHandler<Customer, CustomerCommand, CustomerEvent> {
     val config =
-      WriterConfig(
+      CommandHandlerConfig(
         initialState = Customer.Initial,
         evolveFunction = customerEvolveFunction,
         decideFunction = customerDecideFunction,
         eventSerDer = CustomerEventSerDer(),
         commandSerDer = CustomerCommandSerDer(),
-        viewEffect = CustomerWriteResultViewEffect(),
+        viewEffect = CustomerGivenAllEventsViewEffect(),
       )
-    return WriterApiImpl(context, config)
+    return CommandHandlerImpl(context, config)
   }
 
   fun getSubscription(): SubscriptionApi {
@@ -67,7 +67,7 @@ fun main() {
   getSubscription().deploy()
     .andThen {
       with(getWriter()) {
-        fun handleCurried(targetStream: TargetStream): (CustomerCommand) -> Future<WriteResult<Customer, CustomerEvent>> {
+        fun handleCurried(targetStream: TargetStream): (CustomerCommand) -> Future<CommandHandlerResult<Customer, CustomerEvent>> {
           return { command -> handle(targetStream, command) }
         }
         val customerId = UUID.randomUUID()

@@ -9,14 +9,19 @@
     <version>0.7.6</version>
   </parent>
 
-  <artifactId>crabzilla-pg-subscription</artifactId>
+  <artifactId>crabzilla-pg-command</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
 
     <dependency>
       <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-pg-context</artifactId>
+      <artifactId>crabzilla-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.github.crabzilla</groupId>
+      <artifactId>crabzilla-pg-stream</artifactId>
     </dependency>
 
     <!-- test -->
@@ -28,16 +33,22 @@
     </dependency>
 
     <dependency>
-      <scope>test</scope>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-pg-command</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-cache</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!--    <dependency>-->
+    <!--      <scope>test</scope>-->
+    <!--      <groupId>io.github.crabzilla</groupId>-->
+    <!--      <artifactId>crabzilla-json-jackson</artifactId>-->
+    <!--    </dependency>-->
 
   </dependencies>
 
