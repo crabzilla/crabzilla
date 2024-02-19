@@ -32,6 +32,7 @@ CREATE TABLE events (
 ;
 
 CREATE INDEX stream_id ON events USING HASH (stream_id);
+CREATE INDEX version_idx ON events USING BRIN(version);
 
 CREATE TABLE commands (
   command_id UUID NOT NULL UNIQUE,

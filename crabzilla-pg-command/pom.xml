@@ -24,6 +24,16 @@
       <artifactId>crabzilla-pg-stream</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+    </dependency>
+
+<!--    <dependency>-->
+<!--      <groupId>io.quarkus</groupId>-->
+<!--      <artifactId>quarkus-cache</artifactId>-->
+<!--    </dependency>-->
+
     <!-- test -->
 
     <dependency>
@@ -35,12 +45,6 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-cache</artifactId>
       <scope>test</scope>
     </dependency>
 

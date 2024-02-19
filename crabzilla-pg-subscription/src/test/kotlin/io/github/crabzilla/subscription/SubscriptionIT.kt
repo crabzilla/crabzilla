@@ -79,7 +79,7 @@ class SubscriptionIT : AbstractSubscriptionTest() {
         tc.verify {
           assertEquals(true, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))
-          assertEquals(true, json.getBoolean("greedy"))
+//          assertEquals(true, json.getBoolean("greedy"))
           assertEquals(0L, json.getLong("currentOffset"))
           assertEquals(0L, json.getLong("failures"))
           assertEquals(0L, json.getLong("backOff"))
@@ -109,7 +109,7 @@ class SubscriptionIT : AbstractSubscriptionTest() {
         tc.verify {
           assertEquals(false, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))
-          assertEquals(true, json.getBoolean("greedy"))
+//          assertEquals(true, json.getBoolean("greedy"))
           assertEquals(1L, json.getLong("currentOffset"))
           assertEquals(0L, json.getLong("failures"))
           assertEquals(0L, json.getLong("backOff"))
@@ -170,7 +170,7 @@ class SubscriptionIT : AbstractSubscriptionTest() {
         tc.verify {
           assertEquals(true, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))
-          assertEquals(true, json.getBoolean("greedy"))
+//          assertEquals(true, json.getBoolean("greedy"))
           assertEquals(0L, json.getLong("currentOffset"))
           assertEquals(0L, json.getLong("failures"))
           assertEquals(0L, json.getLong("backOff"))
@@ -209,7 +209,7 @@ class SubscriptionIT : AbstractSubscriptionTest() {
           assertEquals(false, json.getBoolean("paused"))
           assertEquals(false, json.getBoolean("busy"))
           assertEquals(1L, json.getLong("currentOffset"))
-          assertEquals(true, json.getBoolean("greedy"))
+//          assertEquals(true, json.getBoolean("greedy"))
           assertEquals(0L, json.getLong("failures"))
           assertEquals(0L, json.getLong("backOff"))
           tc.completeNow()

@@ -30,7 +30,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <skipITs>false</skipITs>
-    <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
     <maven-failsafe-plugin.version>3.2.5</maven-failsafe-plugin.version>
     <asciidoctor.maven.plugin.version>2.1.0</asciidoctor.maven.plugin.version>
     <asciidoctorj.pdf.version>1.5.4</asciidoctorj.pdf.version>
@@ -246,9 +246,15 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.4.12</version>
+      <version>1.5.0</version>
       <scope>test</scope>
     </dependency>
+
+<!--    <dependency>-->
+<!--      <groupId>org.jboss.slf4j</groupId>-->
+<!--      <artifactId>slf4j-jboss-logmanager</artifactId>-->
+<!--      <scope>test</scope>-->
+<!--    </dependency>-->
 
   </dependencies>
 
@@ -299,8 +305,14 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${maven-surefire-plugin.version}</version>
         <configuration>
+<!--          <systemPropertyVariables>-->
+<!--            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager> 1-->
+<!--            <quarkus.log.level>DEBUG</quarkus.log.level>  2-->
+<!--            <maven.home>${maven.home}</maven.home>-->
+<!--          </systemPropertyVariables>-->
+<!--          <argLine>-Djava.util.logging.manager=org.jboss.logmanager.LogManager</argLine>-->
           <!-- Sets the VM argument line used when unit tests are run. -->
-          <argLine>${surefireArgLine}</argLine>
+          <!--          <argLine>${surefireArgLine}</argLine>-->
           <excludes>
             <exclude>**/IT*.java</exclude>
           </excludes>

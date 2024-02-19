@@ -27,7 +27,7 @@ class CustomerSpecsKotest : BehaviorSpec({
       initialState = Customer.Initial,
       evolveFunction = customerEvolveFunction,
       decideFunction = customerDecideFunction,
-      injectorFunction = { customer ->
+      injectFunction = { customer ->
         customer.timeGenerator = { today }
         customer
       },

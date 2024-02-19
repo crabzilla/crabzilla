@@ -35,19 +35,26 @@ class StreamRepositoryImpl<S : Any, E : Any>(
       }
   }
 
-  override fun getSnapshot(streamId: Int): Future<StreamSnapshot<S>> {
+  override fun getSnapshot(
+    streamId: Int,
+    fromSnapshot: StreamSnapshot<S>?,
+  ): Future<StreamSnapshot<S>> {
     val promise = Promise.promise<StreamSnapshot<S>>()
     return conn
       .prepare(SQL_GET_EVENTS_BY_STREAM_ID)
       .compose { pq: PreparedStatement ->
-        var state: S = initialState
-        var latestVersion = 0
-        var lastCausationId: UUID? = null
-        var lastCorrelationId: UUID? = null
-//        var createdAt: LocalDateTime
+        val s =
+          fromSnapshot
+            ?: StreamSnapshot(streamId, initialState, 0, null, null)
+        var state: S = s.state
+        var latestVersion = s.version
+        var lastCausationId: UUID? = s.causationId
+        var lastCorrelationId: UUID? = s.correlationId
+        // var createdAt: LocalDateTime
         var error: Throwable? = null
         // Fetch QUERY_MAX_STREAM_SIZE rows at a time
-        val stream: RowStream<Row> = pq.createStream(StreamRepository.QUERY_MAX_STREAM_SIZE, Tuple.of(streamId))
+        val stream: RowStream<Row> =
+          pq.createStream(StreamRepository.QUERY_MAX_STREAM_SIZE, Tuple.of(streamId, latestVersion))
         // Use the stream
         stream.handler { row: Row ->
           latestVersion = row.getInteger("version")
@@ -82,12 +89,14 @@ class StreamRepositoryImpl<S : Any, E : Any>(
         promise.future()
       }
   }
+
   companion object {
     private const val SQL_GET_EVENTS_BY_STREAM_ID =
       """
       SELECT id, event_type, event_payload, version, causation_id, correlation_id, created_at
         FROM events
        WHERE stream_id = $1
+         AND version > $2
        ORDER BY sequence
     """
   }

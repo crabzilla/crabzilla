@@ -4,10 +4,10 @@ class Session<C, S, E>(
   private val initialState: S,
   private val evolveFunction: (S, E) -> S,
   private val decideFunction: (S, C) -> List<E>,
-  private val injectorFunction: ((S) -> S)? = null,
+  private val injectFunction: ((S) -> S)? = null,
 ) {
   private var currentState: S =
-    if (injectorFunction == null) initialState else injectorFunction.invoke(initialState)
+    if (injectFunction == null) initialState else injectFunction.invoke(initialState)
   private val appliedEvents = mutableListOf<E>()
 
   fun reset(): Session<C, S, E> {
@@ -30,8 +30,8 @@ class Session<C, S, E>(
     events.forEach { domainEvent ->
       currentState = evolveFunction.invoke(currentState, domainEvent)
       appliedEvents.add(domainEvent)
-      if (injectorFunction != null) {
-        currentState = injectorFunction.invoke(currentState)
+      if (injectFunction != null) {
+        currentState = injectFunction.invoke(currentState)
       }
     }
     return this

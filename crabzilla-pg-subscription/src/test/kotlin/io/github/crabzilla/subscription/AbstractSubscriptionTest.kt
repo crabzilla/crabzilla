@@ -6,6 +6,7 @@ import io.github.crabzilla.command.CommandHandlerConfig
 import io.github.crabzilla.command.CommandHandlerImpl
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.CrabzillaContextImpl
+import io.github.crabzilla.context.PgNotifierVerticle
 import io.github.crabzilla.example1.customer.effects.CustomerGivenEachEventViewEffect
 import io.github.crabzilla.example1.customer.model.Customer
 import io.github.crabzilla.example1.customer.model.CustomerCommand
@@ -14,11 +15,11 @@ import io.github.crabzilla.example1.customer.model.customerDecideFunction
 import io.github.crabzilla.example1.customer.model.customerEvolveFunction
 import io.github.crabzilla.example1.customer.serder.CustomerCommandSerDer
 import io.github.crabzilla.example1.customer.serder.CustomerEventSerDer
+import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.testcontainers.containers.PostgreSQLContainer
@@ -50,6 +51,7 @@ open class AbstractSubscriptionTest {
       eventSerDer = CustomerEventSerDer(),
       commandSerDer = CustomerCommandSerDer(),
       viewEffect = CustomerGivenEachEventViewEffect(),
+      notifyPostgres = true,
     )
 
   @BeforeEach
@@ -61,20 +63,23 @@ open class AbstractSubscriptionTest {
     writer = CommandHandlerImpl(context, customerConfig)
     testRepository = TestRepository(context.pgPool)
 
+    val verticle = PgNotifierVerticle(pgPool = context.pgPool, 100)
+
     testRepository.cleanDatabase()
+      .andThen { vertx.deployVerticle(verticle, DeploymentOptions().setInstances(1)) }
       .onFailure { tc.failNow(it) }
       .onSuccess { tc.completeNow() }
   }
 
-  @AfterEach
-  fun after(tc: VertxTestContext) {
-    testRepository.printOverview()
-      .onFailure { tc.failNow(it) }
-      .onSuccess { tc.completeNow() }
-  }
+//  @AfterEach
+//  fun after(tc: VertxTestContext) {
+//    testRepository.printOverview()
+//      .onFailure { tc.failNow(it) }
+//      .onSuccess { tc.completeNow() }
+//  }
 
   companion object {
-    private const val PG_DOCKER_IMAGE = "postgres:16"
+    private const val PG_DOCKER_IMAGE = "postgres:15"
     private const val DB_NAME = "crabzilla"
     private const val DB_USERNAME = "user1"
     private const val DB_PASSWORD = "pwd1"
@@ -93,6 +98,6 @@ open class AbstractSubscriptionTest {
             "/docker-entrypoint-initdb.d/example1.sql",
           )
         }
-    val SUBSCRIPTION_1 = "crabzilla.example1.customer.SimpleProjector"
+    const val SUBSCRIPTION_1 = "crabzilla.example1.customer.SimpleProjector"
   }
 }

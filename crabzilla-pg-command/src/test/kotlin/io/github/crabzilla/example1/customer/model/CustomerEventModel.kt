@@ -1,5 +1,6 @@
 package io.github.crabzilla.example1.customer.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerActivated
 import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerDeactivated
 import io.github.crabzilla.example1.customer.model.CustomerEvent.CustomerRegistered
@@ -18,6 +19,7 @@ sealed interface CustomerEvent {
 }
 
 sealed class Customer {
+  @JsonIgnore
   var timeGenerator: (() -> LocalDateTime) = { LocalDateTime.now() }
 
   data object Initial : Customer() {

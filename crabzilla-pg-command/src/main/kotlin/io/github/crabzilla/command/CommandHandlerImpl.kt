@@ -2,7 +2,7 @@ package io.github.crabzilla.command
 
 import io.github.crabzilla.command.internal.EventProjector
 import io.github.crabzilla.context.CrabzillaContext
-import io.github.crabzilla.context.CrabzillaContext.Companion.POSTGRES_NOTIFICATION_CHANNEL
+import io.github.crabzilla.context.PgNotifierVerticle
 import io.github.crabzilla.core.Session
 import io.github.crabzilla.stream.StreamMustBeNewException
 import io.github.crabzilla.stream.StreamRepository.Companion.NO_STREAM
@@ -23,7 +23,7 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
   private val context: CrabzillaContext,
   private val config: CommandHandlerConfig<S, C, E>,
 ) : CommandHandler<S, C, E> {
-  private val log = LoggerFactory.getLogger(CommandHandlerImpl::class.java)
+  private val logger = LoggerFactory.getLogger(CommandHandlerImpl::class.java)
 
   override fun handle(
     targetStream: TargetStream,
@@ -47,7 +47,7 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
       cmdAsJson: JsonObject?,
       streamId: Int,
     ): Future<Void> {
-      log.debug("Will append command {} as {} metadata {}", command, cmdAsJson, commandMetadata)
+      logger.debug("Will append command {} as {} metadata {}", command, cmdAsJson, commandMetadata)
       val params =
         Tuple.of(
           commandMetadata.commandId,
@@ -58,14 +58,6 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
           commandMetadata.metadata,
         )
       return sqlConnection.preparedQuery(SQL_APPEND_CMD).execute(params).mapEmpty()
-    }
-
-    fun notifyPostgres(): Future<Void>? {
-      // notify postgres
-      val query = "NOTIFY $POSTGRES_NOTIFICATION_CHANNEL, '${targetStream.stateType()}'"
-      return sqlConnection.preparedQuery(query).execute()
-        .mapEmpty<Void>()
-        .onSuccess { log.debug("Notified postgres: $query") }
     }
 
     val streamRepositoryImpl =
@@ -85,7 +77,7 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
         }
         succeededFuture(streamId)
         if (streamId == NO_STREAM) {
-          log.debug("Will create stream {}", targetStream.name)
+          logger.debug("Will create stream {}", targetStream.name)
           sqlConnection.preparedQuery(SQL_INSERT_STREAM)
             .execute(params)
             .map { it.first().getInteger("id") }
@@ -104,18 +96,20 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
           )
         streamWriter.lockTargetStream()
           .compose {
-            log.debug("Stream locked {}", streamId)
-            streamRepositoryImpl.getSnapshot(streamId)
+            logger.info("Stream locked {}", streamId)
+            val cachedSnapshot = config.snapshotCache?.getIfPresent(streamId)
+            logger.debug("Got cached snapshot {}", cachedSnapshot)
+            streamRepositoryImpl.getSnapshot(streamId, cachedSnapshot)
               .compose { snapshot ->
-                log.debug("Got snapshot {}", snapshot)
+                logger.debug("Got snapshot {}", snapshot)
                 try {
-                  log.debug("Will handle command {} on state {}", command, snapshot)
+                  logger.debug("Will handle command {} on state {}", command, snapshot)
                   val session =
                     Session(
                       snapshot.state,
                       decideFunction = config.decideFunction,
                       evolveFunction = config.evolveFunction,
-                      injectorFunction = config.injectorFunction,
+                      injectFunction = config.injectFunction,
                     )
                   session.decide(command)
                   succeededFuture(Pair(snapshot, session))
@@ -126,7 +120,7 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
               }
               .compose { pair ->
                 val (streamSnapshot: StreamSnapshot<S>, session: Session<C, S, E>) = pair
-                log.debug("Command handled")
+                logger.debug("Command handled")
                 streamWriter.appendEvents(
                   streamSnapshot = streamSnapshot,
                   events = session.appliedEvents(),
@@ -148,15 +142,15 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
             correlationId = lastEvent.metadata.correlationId,
           )
         val result = CommandHandlerResult(newSnapshot, session.appliedEvents(), appendedEvents.map { it.metadata })
-        log.debug("Events appended {}", appendedEvents)
+        logger.debug("Events appended {}", appendedEvents)
         if (config.viewEffect != null) {
           EventProjector(sqlConnection, config.viewEffect, config.viewTrigger)
             .handle(result)
             .onSuccess {
-              log.debug("Events projected")
+              logger.debug("Events projected")
             }.map { triple }
         } else {
-          log.debug("ViewEffect is null, skipping projecting events")
+          logger.debug("ViewEffect is null, skipping projecting events")
           succeededFuture(triple)
         }
       }.compose {
@@ -186,10 +180,16 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
           }
       }
       .onSuccess {
-        if (config.notifyPostgres) notifyPostgres()
-        log.debug("Transaction committed")
+        if (config.snapshotCache != null) {
+          config.snapshotCache.put(it.snapshot.streamId, it.snapshot)
+        }
+        if (config.notifyPostgres) {
+          context.vertx.eventBus()
+            .publish(PgNotifierVerticle.PG_NOTIFIER_ADD_ENDPOINT, targetStream.stateType())
+        }
+        logger.debug("Transaction committed")
       }.onFailure {
-        log.debug("Transaction aborted {}", it.message)
+        logger.debug("Transaction aborted {}", it.message)
       }
   }
 
