@@ -39,7 +39,7 @@ class HandlingConcurrencyIT : AbstractCommandHandlerIT() {
       .onFailure { tc.failNow(it) }
       .onSuccess {
         vertx.executeBlocking<Void> { promise ->
-          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 200
+          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 1000
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = CustomerCommand.RenameCustomer("new name")
           val callables = mutableSetOf<Callable<Future<CommandHandlerResult<Customer, CustomerEvent>>>>()
@@ -83,7 +83,7 @@ class HandlingConcurrencyIT : AbstractCommandHandlerIT() {
       .onFailure { tc.failNow(it) }
       .onSuccess {
         vertx.executeBlocking<Void> { promise ->
-          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 100
+          val concurrencyLevel = PgPoolOptions.DEFAULT_MAX_SIZE + 1000
           val executorService = Executors.newFixedThreadPool(concurrencyLevel)
           val cmd2 = ActivateCustomer("whatsoever")
           val callables = mutableSetOf<Callable<Future<CommandHandlerResult<Customer, CustomerEvent>>>>()
@@ -97,8 +97,7 @@ class HandlingConcurrencyIT : AbstractCommandHandlerIT() {
           log.info("Callables ${callables.size}, successes: ${succeeded.size}")
           tc.verify {
             assertEquals(futures.size, callables.size)
-            // TODO should be 100%
-            assertThat(callables.size - failures.size).isCloseTo(1, Percentage.withPercentage(99.9))
+            assertThat(callables.size - failures.size).isCloseTo(1, Percentage.withPercentage(100.0))
             promise.complete(null)
           }.failing<Void> {
             promise.fail(it)
