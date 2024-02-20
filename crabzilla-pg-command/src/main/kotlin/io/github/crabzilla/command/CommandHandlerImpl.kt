@@ -41,6 +41,8 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
     command: C,
     commandMetadata: CommandMetadata,
   ): Future<CommandHandlerResult<S, E>> {
+    logger.debug("Will handle a new command for stream {}", targetStream.name)
+
     fun appendCommand(
       causationId: UUID?,
       correlationId: UUID?,
@@ -96,12 +98,12 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
           )
         streamWriter.lockTargetStream()
           .compose {
-            logger.info("Stream locked {}", streamId)
+            logger.debug("Stream locked {}", streamId)
             val cachedSnapshot = config.snapshotCache?.getIfPresent(streamId)
             logger.debug("Got cached snapshot version {}", cachedSnapshot?.version)
             streamRepositoryImpl.getSnapshot(streamId, cachedSnapshot)
               .compose { snapshot ->
-                logger.debug("Got last snapshot version {}", snapshot.version)
+                logger.debug("Got latest snapshot version {}", snapshot.version)
                 try {
                   logger.trace("Will handle command {} on state {}", command, snapshot.state)
                   val session =
