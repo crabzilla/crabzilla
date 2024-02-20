@@ -1,6 +1,6 @@
 package io.github.crabzilla.command
 
-import io.github.crabzilla.command.internal.EventProjector
+import io.github.crabzilla.command.internal.ViewEffectHandler
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.PgNotifierVerticle
 import io.github.crabzilla.core.Session
@@ -47,7 +47,7 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
       cmdAsJson: JsonObject?,
       streamId: Int,
     ): Future<Void> {
-      logger.debug("Will append command {} as {} metadata {}", command, cmdAsJson, commandMetadata)
+      logger.trace("Will append command {} as {} metadata {}", command, cmdAsJson, commandMetadata)
       val params =
         Tuple.of(
           commandMetadata.commandId,
@@ -98,12 +98,12 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
           .compose {
             logger.info("Stream locked {}", streamId)
             val cachedSnapshot = config.snapshotCache?.getIfPresent(streamId)
-            logger.debug("Got cached snapshot {}", cachedSnapshot)
+            logger.debug("Got cached snapshot version {}", cachedSnapshot?.version)
             streamRepositoryImpl.getSnapshot(streamId, cachedSnapshot)
               .compose { snapshot ->
-                logger.debug("Got snapshot {}", snapshot)
+                logger.debug("Got last snapshot version {}", snapshot.version)
                 try {
-                  logger.debug("Will handle command {} on state {}", command, snapshot)
+                  logger.trace("Will handle command {} on state {}", command, snapshot.state)
                   val session =
                     Session(
                       snapshot.state,
@@ -142,9 +142,9 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
             correlationId = lastEvent.metadata.correlationId,
           )
         val result = CommandHandlerResult(newSnapshot, session.appliedEvents(), appendedEvents.map { it.metadata })
-        logger.debug("Events appended {}", appendedEvents)
+        logger.debug("{} events appended", appendedEvents.size)
         if (config.viewEffect != null) {
-          EventProjector(sqlConnection, config.viewEffect, config.viewTrigger)
+          ViewEffectHandler(sqlConnection, config.viewEffect, config.viewTrigger)
             .handle(result)
             .onSuccess {
               logger.debug("Events projected")
@@ -189,7 +189,7 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
         }
         logger.debug("Transaction committed")
       }.onFailure {
-        logger.debug("Transaction aborted {}", it.message)
+        logger.error("Transaction aborted {}", it.message)
       }
   }
 

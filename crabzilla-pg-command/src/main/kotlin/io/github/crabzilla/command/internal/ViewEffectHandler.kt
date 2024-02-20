@@ -9,7 +9,7 @@ import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
 import org.slf4j.LoggerFactory
 
-internal class EventProjector<S : Any, E : Any>(
+internal class ViewEffectHandler<S : Any, E : Any>(
   private val sqlConnection: SqlConnection,
   private val viewEffect: ViewEffect<S, E>,
   private val viewTrigger: ViewTrigger? = null,
@@ -52,6 +52,6 @@ internal class EventProjector<S : Any, E : Any>(
   }
 
   companion object {
-    private val logger = LoggerFactory.getLogger(EventProjector::class::java.name)
+    private val logger = LoggerFactory.getLogger(ViewEffectHandler::class::java.name)
   }
 }
