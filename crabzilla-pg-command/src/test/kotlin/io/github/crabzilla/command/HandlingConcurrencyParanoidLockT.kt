@@ -28,13 +28,13 @@ import java.util.concurrent.TimeUnit
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Handling concurrent commands with row level lock")
-class HandlingConcurrencyRowLockIT : AbstractCommandHandlerIT() {
+class HandlingConcurrencyParanoidLockT : AbstractCommandHandlerIT() {
   @Test
   fun `when many concurrent RenameCustomer commands against same version, at least 1 will succeed`(
     vertx: Vertx,
     tc: VertxTestContext,
   ) {
-    val config = customerConfig.copy(lockingImplementation = StreamWriterLockEnum.PG_ROW_LEVEL)
+    val config = customerConfig.copy(lockingImplementation = StreamWriterLockEnum.BOTH_ONLY_THE_PARANOID_SURVIVE)
     val commandHandler2 = CommandHandlerImpl(context, config)
 
     val targetStream = TargetStream(stateType = "Customer", stateId = UUID.randomUUID().toString())
@@ -80,7 +80,7 @@ class HandlingConcurrencyRowLockIT : AbstractCommandHandlerIT() {
     vertx: Vertx,
     tc: VertxTestContext,
   ) {
-    val config = customerConfig.copy(lockingImplementation = StreamWriterLockEnum.PG_ROW_LEVEL)
+    val config = customerConfig.copy(lockingImplementation = StreamWriterLockEnum.BOTH_ONLY_THE_PARANOID_SURVIVE)
     val commandHandler2 = CommandHandlerImpl(context, config)
 
     val customerId = UUID.randomUUID()
@@ -118,6 +118,6 @@ class HandlingConcurrencyRowLockIT : AbstractCommandHandlerIT() {
       }
   }
   companion object {
-    private val logger = LoggerFactory.getLogger(HandlingConcurrencyRowLockIT::class.java)
+    private val logger = LoggerFactory.getLogger(HandlingConcurrencyParanoidLockT::class.java)
   }
 }

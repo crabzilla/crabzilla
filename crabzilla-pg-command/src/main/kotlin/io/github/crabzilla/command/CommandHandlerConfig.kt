@@ -18,5 +18,5 @@ data class CommandHandlerConfig<S : Any, C : Any, E : Any>(
   val persistCommands: Boolean? = commandSerDer != null,
   val notifyPostgres: Boolean = true,
   val snapshotCache: Cache<Int, StreamSnapshot<S>>? = null,
-  val lockPolice: StreamWriterLockEnum = StreamWriterLockEnum.PG_ADVISORY_LOCKS,
+  val lockingImplementation: StreamWriterLockEnum = StreamWriterLockEnum.PG_ADVISORY,
 )

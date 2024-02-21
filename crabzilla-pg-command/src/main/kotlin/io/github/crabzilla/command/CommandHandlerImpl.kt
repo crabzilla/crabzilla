@@ -98,7 +98,7 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
             uuidFunction = context.uuidFunction,
             eventSerDer = config.eventSerDer,
           )
-        streamWriter.lockTargetStream(config.lockPolice)
+        streamWriter.lockTargetStream(config.lockingImplementation)
           .compose {
             if (logger.isDebugEnabled) logger.debug("Stream locked {}", streamId)
             val cachedSnapshot = config.snapshotCache?.getIfPresent(streamId)

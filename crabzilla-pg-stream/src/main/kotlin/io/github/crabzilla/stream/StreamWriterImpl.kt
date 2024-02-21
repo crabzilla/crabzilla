@@ -19,29 +19,35 @@ class StreamWriterImpl<S : Any, E : Any>(
   private val uuidFunction: () -> UUID,
   private val eventSerDer: JsonObjectSerDer<E>,
 ) : StreamWriter<S, E> {
-  override fun lockTargetStream(lockType: StreamWriterLockEnum): Future<Int> {
-    return when (lockType) {
-      StreamWriterLockEnum.PG_ADVISORY_LOCKS ->
-        conn
-          .preparedQuery(SQL_ADVISORY_LOCK)
-          .execute(Tuple.of("streams_table".hashCode(), streamId.hashCode()))
-          .compose { pgRow ->
-            if (pgRow.first().getBoolean("locked")) {
-              Future.succeededFuture(streamId)
-            } else {
-              Future.failedFuture(StreamCantBeLockedException("Stream $streamId can't be locked using $lockType"))
-            }
+  override fun lockTargetStream(lockingImplementation: StreamWriterLockEnum): Future<Int> {
+    fun pgAdvisoryLock(): Future<Int> {
+      return conn
+        .preparedQuery(SQL_ADVISORY_LOCK)
+        .execute(Tuple.of("streams_table".hashCode(), streamId.hashCode()))
+        .compose { pgRow ->
+          if (pgRow.first().getBoolean("locked")) {
+            Future.succeededFuture(streamId)
+          } else {
+            Future.failedFuture(StreamCantBeLockedException("Stream $streamId can't be locked using $lockingImplementation"))
           }
-      StreamWriterLockEnum.PG_ROW_LEVEL ->
-        conn.preparedQuery(SQL_ROW_LOCK)
-          .execute(Tuple.of(streamId))
-          .compose { pgRow ->
-            if (pgRow.size() == 1) {
-              Future.succeededFuture(streamId)
-            } else {
-              Future.failedFuture(StreamCantBeLockedException("Stream $streamId can't be locked using $lockType"))
-            }
+        }
+    }
+
+    fun rowLevelLock(): Future<Int> {
+      return conn.preparedQuery(SQL_ROW_LOCK)
+        .execute(Tuple.of(streamId))
+        .compose { pgRow ->
+          if (pgRow.size() == 1) {
+            Future.succeededFuture(streamId)
+          } else {
+            Future.failedFuture(StreamCantBeLockedException("Stream $streamId can't be locked using $lockingImplementation"))
           }
+        }
+    }
+    return when (lockingImplementation) {
+      StreamWriterLockEnum.PG_ADVISORY -> pgAdvisoryLock()
+      StreamWriterLockEnum.PG_ROW_LEVEL -> rowLevelLock()
+      StreamWriterLockEnum.BOTH_ONLY_THE_PARANOID_SURVIVE -> pgAdvisoryLock().compose { rowLevelLock() }
     }
   }
 
