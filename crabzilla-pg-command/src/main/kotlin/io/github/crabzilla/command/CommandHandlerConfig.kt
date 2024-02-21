@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache
 import io.github.crabzilla.context.JsonObjectSerDer
 import io.github.crabzilla.context.ViewTrigger
 import io.github.crabzilla.stream.StreamSnapshot
+import io.github.crabzilla.stream.StreamWriterLockEnum
 
 data class CommandHandlerConfig<S : Any, C : Any, E : Any>(
   val initialState: S,
@@ -14,8 +15,8 @@ data class CommandHandlerConfig<S : Any, C : Any, E : Any>(
   val commandSerDer: JsonObjectSerDer<C>? = null,
   val viewEffect: ViewEffect<S, E>? = null,
   val viewTrigger: ViewTrigger? = null,
-  val persistEvents: Boolean? = true,
   val persistCommands: Boolean? = commandSerDer != null,
   val notifyPostgres: Boolean = true,
   val snapshotCache: Cache<Int, StreamSnapshot<S>>? = null,
+  val lockPolice: StreamWriterLockEnum = StreamWriterLockEnum.PG_ADVISORY_LOCKS,
 )

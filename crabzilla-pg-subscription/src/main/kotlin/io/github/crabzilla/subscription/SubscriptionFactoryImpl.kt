@@ -5,13 +5,9 @@ import io.vertx.core.Promise
 import org.slf4j.LoggerFactory
 
 internal class SubscriptionFactoryImpl : SubscriptionApiFactory {
-  companion object {
-    private val log = LoggerFactory.getLogger(SubscriptionApiImpl::class.java)
-  }
-
   override fun create(subscriptionComponent: SubscriptionComponentImpl): SubscriptionApi {
     with(subscriptionComponent) {
-      log.info("Creating subscription ${spec.subscriptionName}")
+      logger.info("Creating subscription ${spec.subscriptionName}")
       val verticle =
         object : AbstractVerticle() {
           private lateinit var subscription: SubscriptionComponentImpl
@@ -20,7 +16,7 @@ internal class SubscriptionFactoryImpl : SubscriptionApiFactory {
             subscription = subscriptionComponent
             subscription.start()
               .onSuccess {
-                log.info("Subscription [${spec.subscriptionName}] started")
+                logger.info("Subscription [${spec.subscriptionName}] started")
                 promise.complete()
               }
               .onFailure { promise.fail(it) }
@@ -28,5 +24,9 @@ internal class SubscriptionFactoryImpl : SubscriptionApiFactory {
         }
       return SubscriptionApiImpl(crabzillaContext.vertx, spec.subscriptionName, verticle)
     }
+  }
+
+  companion object {
+    private val logger = LoggerFactory.getLogger(SubscriptionApiImpl::class.java)
   }
 }

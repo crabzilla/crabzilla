@@ -18,12 +18,9 @@ class StreamRepositoryImpl<S : Any, E : Any>(
   private val eventSerDer: JsonObjectSerDer<E>,
   private val eventHandler: (S, E) -> S,
 ) : StreamRepository<S> {
-  private val log =
-    LoggerFactory.getLogger("${StreamRepositoryImpl::class.java.simpleName}-${targetStream.stateType()}")
-
   override fun getStreamId(): Future<Int> {
     val params = Tuple.of(targetStream.name)
-    log.debug("Will get stream {}", targetStream.name)
+    if (logger.isDebugEnabled) logger.debug("Will get stream {}", targetStream.name)
     return conn.preparedQuery(StreamWriterImpl.SQL_GET_STREAM)
       .execute(params)
       .map {
@@ -43,14 +40,12 @@ class StreamRepositoryImpl<S : Any, E : Any>(
     return conn
       .prepare(SQL_GET_EVENTS_BY_STREAM_ID)
       .compose { pq: PreparedStatement ->
-        val s =
-          fromSnapshot
-            ?: StreamSnapshot(streamId, initialState, 0, null, null)
-        var state: S = s.state
-        var latestVersion = s.version
-        var lastCausationId: UUID? = s.causationId
-        var lastCorrelationId: UUID? = s.correlationId
-        // var createdAt: LocalDateTime
+        val snapshot =
+          fromSnapshot ?: StreamSnapshot(streamId, initialState, 0, null, null)
+        var state: S = snapshot.state
+        var latestVersion = snapshot.version
+        var lastCausationId: UUID? = snapshot.causationId
+        var lastCorrelationId: UUID? = snapshot.correlationId
         var error: Throwable? = null
         // Fetch QUERY_MAX_STREAM_SIZE rows at a time
         val stream: RowStream<Row> =
@@ -60,22 +55,25 @@ class StreamRepositoryImpl<S : Any, E : Any>(
           latestVersion = row.getInteger("version")
           lastCausationId = row.getUUID("id")
           lastCorrelationId = row.getUUID("correlation_id")
-//          createdAt = row.getLocalDateTime("created_at")
-          log.debug(
-            "Found event version {}, causationId {}, correlationId {}",
-            latestVersion,
-            lastCausationId,
-            lastCorrelationId,
-          )
+          if (logger.isDebugEnabled) {
+            if (logger.isTraceEnabled) {
+              logger.trace(
+                "Found event version {}, causationId {}, correlationId {}",
+                latestVersion,
+                lastCausationId,
+                lastCorrelationId,
+              )
+            }
+          }
           state =
             eventHandler
               .invoke(state, eventSerDer.fromJson(row.getJsonObject("event_payload")))
-          log.debug("State {}", state)
+          if (logger.isDebugEnabled) logger.debug("State {}", state)
         }
         stream.exceptionHandler { error = it }
         stream.endHandler {
           stream.close()
-          log.debug("End of stream")
+          if (logger.isDebugEnabled) logger.debug("End of stream")
           if (error != null) {
             promise.fail(error)
           } else {
@@ -99,5 +97,7 @@ class StreamRepositoryImpl<S : Any, E : Any>(
          AND version > $2
        ORDER BY sequence
     """
+
+    private val logger = LoggerFactory.getLogger(StreamRepository::class.java)
   }
 }

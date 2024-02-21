@@ -30,24 +30,36 @@ class AssertingWriterResult : AbstractCommandHandlerIT() {
     val cmd2 = DeactivateCustomer("it's not needed anymore")
 
     commandHandler.handle(targetStream1, cmd1)
-      .compose {
-        commandHandler.handle(targetStream1, cmd2)
-      }
-      .onFailure { tc.failNow(it) }
       .onSuccess { result ->
         tc.verify {
-          val expectedState = Customer.Inactive(customerId1, cmd1.name, "it's not needed anymore")
+          val expectedState = Customer.Active(customerId1, cmd1.name, reason = "is needed")
           assertThat(result.snapshot.state).isEqualTo(expectedState)
-          assertThat(result.snapshot.version).isEqualTo(3)
+          assertThat(result.snapshot.version).isEqualTo(2)
           val expectedEvents =
             listOf(
               CustomerEvent.CustomerRegistered(id = customerId1, name = "customer#1", date = TODAY),
               CustomerEvent.CustomerActivated(reason = "is needed"),
-              CustomerEvent.CustomerDeactivated(reason = "it's not needed anymore"),
             )
           assertThat(result.events).isEqualTo(expectedEvents)
           tc.completeNow()
         }
+      }
+      .compose {
+        commandHandler.handle(targetStream1, cmd2)
+          .onFailure { tc.failNow(it) }
+          .onSuccess { result ->
+            tc.verify {
+              val expectedState = Customer.Inactive(customerId1, cmd1.name, "it's not needed anymore")
+              assertThat(result.snapshot.state).isEqualTo(expectedState)
+              assertThat(result.snapshot.version).isEqualTo(3)
+              val expectedEvents =
+                listOf(
+                  CustomerEvent.CustomerDeactivated(reason = "it's not needed anymore"),
+                )
+              assertThat(result.events).isEqualTo(expectedEvents)
+              tc.completeNow()
+            }
+          }
       }
   }
 }

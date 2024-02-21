@@ -1,5 +1,7 @@
 package io.github.crabzilla.command
 
+import io.github.crabzilla.command.internal.GivenAllEventsViewEffectHandler
+import io.github.crabzilla.command.internal.GivenEachEventViewEffectHandler
 import io.github.crabzilla.command.internal.ViewEffectHandler
 import io.github.crabzilla.context.CrabzillaContext
 import io.github.crabzilla.context.PgNotifierVerticle
@@ -41,7 +43,7 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
     command: C,
     commandMetadata: CommandMetadata,
   ): Future<CommandHandlerResult<S, E>> {
-    logger.debug("Will handle a new command for stream {}", targetStream.name)
+    if (logger.isDebugEnabled) logger.debug("Will handle a new command for stream {}", targetStream.name)
 
     fun appendCommand(
       causationId: UUID?,
@@ -49,7 +51,7 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
       cmdAsJson: JsonObject?,
       streamId: Int,
     ): Future<Void> {
-      logger.trace("Will append command {} as {} metadata {}", command, cmdAsJson, commandMetadata)
+      if (logger.isTraceEnabled) logger.trace("Will append command {} as {} metadata {}", command, cmdAsJson, commandMetadata)
       val params =
         Tuple.of(
           commandMetadata.commandId,
@@ -79,7 +81,7 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
         }
         succeededFuture(streamId)
         if (streamId == NO_STREAM) {
-          logger.debug("Will create stream {}", targetStream.name)
+          if (logger.isDebugEnabled) logger.debug("Will create stream {}", targetStream.name)
           sqlConnection.preparedQuery(SQL_INSERT_STREAM)
             .execute(params)
             .map { it.first().getInteger("id") }
@@ -96,16 +98,16 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
             uuidFunction = context.uuidFunction,
             eventSerDer = config.eventSerDer,
           )
-        streamWriter.lockTargetStream()
+        streamWriter.lockTargetStream(config.lockPolice)
           .compose {
-            logger.debug("Stream locked {}", streamId)
+            if (logger.isDebugEnabled) logger.debug("Stream locked {}", streamId)
             val cachedSnapshot = config.snapshotCache?.getIfPresent(streamId)
-            logger.debug("Got cached snapshot version {}", cachedSnapshot?.version)
+            if (logger.isDebugEnabled) logger.debug("Got cached snapshot version {}", cachedSnapshot?.version)
             streamRepositoryImpl.getSnapshot(streamId, cachedSnapshot)
               .compose { snapshot ->
-                logger.debug("Got latest snapshot version {}", snapshot.version)
+                if (logger.isDebugEnabled) logger.debug("Got latest snapshot version {}", snapshot.version)
                 try {
-                  logger.trace("Will handle command {} on state {}", command, snapshot.state)
+                  if (logger.isTraceEnabled) logger.trace("Will handle command {} on state {}", command, snapshot.state)
                   val session =
                     Session(
                       snapshot.state,
@@ -122,7 +124,7 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
               }
               .compose { pair ->
                 val (streamSnapshot: StreamSnapshot<S>, session: Session<C, S, E>) = pair
-                logger.debug("Command handled")
+                if (logger.isDebugEnabled) logger.debug("Command handled")
                 streamWriter.appendEvents(
                   streamSnapshot = streamSnapshot,
                   events = session.appliedEvents(),
@@ -144,15 +146,30 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
             correlationId = lastEvent.metadata.correlationId,
           )
         val result = CommandHandlerResult(newSnapshot, session.appliedEvents(), appendedEvents.map { it.metadata })
-        logger.debug("{} events appended", appendedEvents.size)
+        if (logger.isDebugEnabled) logger.debug("{} events appended", appendedEvents.size)
         if (config.viewEffect != null) {
-          ViewEffectHandler(sqlConnection, config.viewEffect, config.viewTrigger)
+          val viewEffectHandler: ViewEffectHandler<S, E> =
+            when (config.viewEffect) {
+              is ViewEffect.GivenAllEventsViewEffect ->
+                GivenAllEventsViewEffectHandler(
+                  sqlConnection,
+                  config.viewEffect,
+                  config.viewTrigger,
+                )
+              is ViewEffect.GivenEachEventViewEffect ->
+                GivenEachEventViewEffectHandler(
+                  sqlConnection,
+                  config.viewEffect,
+                  config.viewTrigger,
+                )
+            }
+          viewEffectHandler
             .handle(result)
             .onSuccess {
-              logger.debug("Events projected")
+              if (logger.isDebugEnabled) logger.debug("Events projected")
             }.map { triple }
         } else {
-          logger.debug("ViewEffect is null, skipping projecting events")
+          if (logger.isDebugEnabled) logger.debug("ViewEffect is null, skipping projecting events")
           succeededFuture(triple)
         }
       }.compose {
@@ -189,7 +206,7 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
           context.vertx.eventBus()
             .publish(PgNotifierVerticle.PG_NOTIFIER_ADD_ENDPOINT, targetStream.stateType())
         }
-        logger.debug("Transaction committed")
+        if (logger.isDebugEnabled) logger.debug("Transaction committed")
       }.onFailure {
         logger.error("Transaction aborted {}", it.message)
       }

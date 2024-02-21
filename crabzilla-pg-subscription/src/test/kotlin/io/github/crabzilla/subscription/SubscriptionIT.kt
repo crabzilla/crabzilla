@@ -275,7 +275,7 @@ class SubscriptionIT : AbstractSubscriptionTest() {
     tc: VertxTestContext,
     vertx: Vertx,
   ) {
-    val api = api(subscriptionConfig = SubscriptionConfig().copy(initialInterval = 0, interval = 5, maxInterval = 10))
+    val api = api(subscriptionConfig = SubscriptionConfig().copy(initialInterval = 1, interval = 5, maxInterval = 10))
     api.deploy()
       .compose {
         api.handle()

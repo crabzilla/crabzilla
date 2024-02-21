@@ -19,26 +19,38 @@ class StreamWriterImpl<S : Any, E : Any>(
   private val uuidFunction: () -> UUID,
   private val eventSerDer: JsonObjectSerDer<E>,
 ) : StreamWriter<S, E> {
-  private val log = LoggerFactory.getLogger("${StreamWriterImpl::class.java.simpleName}-${targetStream.stateType()}")
-
-  override fun lockTargetStream(): Future<Int> {
-    return conn
-      .preparedQuery(SQL_LOCK)
-      .execute(Tuple.of("streams_table".hashCode(), streamId.hashCode()))
-      .compose { pgRow ->
-        if (pgRow.first().getBoolean("locked")) {
-          Future.succeededFuture(streamId)
-        } else {
-          Future.failedFuture(StreamCantBeLockedException("Stream $streamId can't be locked"))
-        }
-      }
+  override fun lockTargetStream(lockType: StreamWriterLockEnum): Future<Int> {
+    return when (lockType) {
+      StreamWriterLockEnum.PG_ADVISORY_LOCKS ->
+        conn
+          .preparedQuery(SQL_ADVISORY_LOCK)
+          .execute(Tuple.of("streams_table".hashCode(), streamId.hashCode()))
+          .compose { pgRow ->
+            if (pgRow.first().getBoolean("locked")) {
+              Future.succeededFuture(streamId)
+            } else {
+              Future.failedFuture(StreamCantBeLockedException("Stream $streamId can't be locked using $lockType"))
+            }
+          }
+      StreamWriterLockEnum.PG_ROW_LEVEL ->
+        conn
+          .preparedQuery(SQL_ROW_LOCK)
+          .execute(Tuple.of(streamId))
+          .compose { pgRow ->
+            if (pgRow.size() == 1) {
+              Future.succeededFuture(streamId)
+            } else {
+              Future.failedFuture(StreamCantBeLockedException("Stream $streamId can't be locked using $lockType"))
+            }
+          }
+    }
   }
 
   override fun appendEvents(
     streamSnapshot: StreamSnapshot<S>,
     events: List<E>,
   ): Future<List<EventRecord>> {
-    log.debug("Will append events {}", events)
+    if (logger.isTraceEnabled) logger.trace("Will append events {}", events)
     var resultingVersion = streamSnapshot.version
     val eventIds = events.map { uuidFunction.invoke() }
     val causationIds = eventIds.toMutableList()
@@ -99,13 +111,17 @@ class StreamWriterImpl<S : Any, E : Any>(
   }
 
   companion object {
+    private val logger = LoggerFactory.getLogger(StreamWriterImpl::class.java)
     const val SQL_GET_STREAM = """
          SELECT id
            FROM streams
           WHERE name = $1
     """
-    private const val SQL_LOCK =
+    private const val SQL_ADVISORY_LOCK =
       """ SELECT pg_try_advisory_xact_lock($1, $2) as locked
+      """
+    private const val SQL_ROW_LOCK =
+      """ SELECT id FROM streams WHERE id = $1 FOR UPDATE
       """
     private const val SQL_APPEND_EVENT =
       """ INSERT

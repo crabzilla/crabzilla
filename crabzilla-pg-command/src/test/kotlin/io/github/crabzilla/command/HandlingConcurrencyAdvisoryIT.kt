@@ -26,8 +26,8 @@ import java.util.concurrent.TimeUnit
 
 @ExtendWith(VertxExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DisplayName("Handling concurrent commands")
-class HandlingConcurrencyIT : AbstractCommandHandlerIT() {
+@DisplayName("Handling concurrent commands with Postgres Advisory locks")
+class HandlingConcurrencyAdvisoryIT : AbstractCommandHandlerIT() {
   @Test
   fun `when many concurrent RenameCustomer commands against same version, at least 1 will succeed`(
     vertx: Vertx,
@@ -50,12 +50,12 @@ class HandlingConcurrencyIT : AbstractCommandHandlerIT() {
           executorService.awaitTermination(3, TimeUnit.SECONDS)
           val failures = futures.map { it.get() }.filter { it.failed() }
           val succeeded = futures.map { it.get() }.filter { it.succeeded() }
-          log.info("Callables ${callables.size}, successes: ${succeeded.size}")
+          logger.info("Callables ${callables.size}, successes: ${succeeded.size}")
           tc.verify {
             assertEquals(futures.size, callables.size)
             assertThat(succeeded.size).isGreaterThanOrEqualTo(1)
             for (f in failures) {
-              log.info("${f.cause().javaClass.simpleName}, ${f.cause().message}")
+              logger.info("${f.cause().javaClass.simpleName}, ${f.cause().message}")
               assertThat(f.cause().javaClass.simpleName).isIn("StreamCantBeLockedException", "PgException")
             }
             promise.complete(null)
@@ -94,7 +94,7 @@ class HandlingConcurrencyIT : AbstractCommandHandlerIT() {
           executorService.awaitTermination(3, TimeUnit.SECONDS)
           val failures = futures.map { it.get() }.filter { it.failed() }
           val succeeded = futures.map { it.get() }.filter { it.succeeded() }
-          log.info("Callables ${callables.size}, successes: ${succeeded.size}")
+          logger.info("Callables ${callables.size}, successes: ${succeeded.size}")
           tc.verify {
             assertEquals(futures.size, callables.size)
             assertThat(callables.size - failures.size).isCloseTo(1, Percentage.withPercentage(100.0))
@@ -111,6 +111,6 @@ class HandlingConcurrencyIT : AbstractCommandHandlerIT() {
       }
   }
   companion object {
-    private val log = LoggerFactory.getLogger(HandlingConcurrencyIT::class.java)
+    private val logger = LoggerFactory.getLogger(HandlingConcurrencyAdvisoryIT::class.java)
   }
 }

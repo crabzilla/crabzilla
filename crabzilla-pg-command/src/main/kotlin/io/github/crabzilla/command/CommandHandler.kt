@@ -4,10 +4,6 @@ import io.github.crabzilla.stream.TargetStream
 import io.vertx.core.Future
 import io.vertx.sqlclient.SqlConnection
 
-// to be optionally implemented by use cases
-
-// crabzilla api
-
 interface CommandHandler<S : Any, C : Any, E : Any> {
   fun withinTransaction(commandOperation: (SqlConnection) -> Future<CommandHandlerResult<S, E>>): Future<CommandHandlerResult<S, E>>
 
