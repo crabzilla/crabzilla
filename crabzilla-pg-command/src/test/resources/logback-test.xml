@@ -14,11 +14,11 @@
     </encoder>
   </appender>
 
-  <root level="DEBUG">
+  <root level="INFO">
     <appender-ref ref="STDOUT"/>
   </root>
 
-  <logger name="io.github.crabzilla" level="DEBUG"/>
+  <logger name="io.github.crabzilla" level="INFO"/>
   <logger name="io.netty" level="WARN"/>
   <logger name="io.mockk" level="WARN"/>
   <logger name="org.testcontainers" level="INFO"/>

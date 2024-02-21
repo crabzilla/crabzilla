@@ -33,8 +33,7 @@ class StreamWriterImpl<S : Any, E : Any>(
             }
           }
       StreamWriterLockEnum.PG_ROW_LEVEL ->
-        conn
-          .preparedQuery(SQL_ROW_LOCK)
+        conn.preparedQuery(SQL_ROW_LOCK)
           .execute(Tuple.of(streamId))
           .compose { pgRow ->
             if (pgRow.size() == 1) {
@@ -121,7 +120,7 @@ class StreamWriterImpl<S : Any, E : Any>(
       """ SELECT pg_try_advisory_xact_lock($1, $2) as locked
       """
     private const val SQL_ROW_LOCK =
-      """ SELECT id FROM streams WHERE id = $1 FOR UPDATE
+      """ SELECT id FROM streams WHERE id = $1 FOR UPDATE NOWAIT
       """
     private const val SQL_APPEND_EVENT =
       """ INSERT
