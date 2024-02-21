@@ -35,7 +35,7 @@ class HandlingViewEffects : AbstractCommandHandlerIT() {
     vertx: Vertx,
     tc: VertxTestContext,
   ) {
-    val customerConfig =
+    val customerConfig2 =
       CommandHandlerConfig(
         initialState = Customer.Initial,
         evolveFunction = customerEvolveFunction,
@@ -44,7 +44,7 @@ class HandlingViewEffects : AbstractCommandHandlerIT() {
         eventSerDer = CustomerEventSerDer(),
       )
 
-    val commandHandler2 = CommandHandlerImpl(context, customerConfig)
+    val commandHandler2 = CommandHandlerImpl(context, customerConfig2)
 
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
@@ -69,11 +69,11 @@ class HandlingViewEffects : AbstractCommandHandlerIT() {
   }
 
   @Test
-  fun `with a CustomerEventStateViewEffect, customers table has 1 customer`(
+  fun `with a CustomerGivenEachEventViewEffect, customers table has 1 customer`(
     vertx: Vertx,
     tc: VertxTestContext,
   ) {
-    val customerConfig =
+    val customerConfig2 =
       CommandHandlerConfig(
         initialState = Customer.Initial,
         evolveFunction = customerEvolveFunction,
@@ -83,7 +83,7 @@ class HandlingViewEffects : AbstractCommandHandlerIT() {
         viewEffect = CustomerGivenEachEventViewEffect(),
       )
 
-    val commandHandler2 = CommandHandlerImpl(context, customerConfig)
+    val commandHandler2 = CommandHandlerImpl(context, customerConfig2)
 
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
@@ -112,11 +112,11 @@ class HandlingViewEffects : AbstractCommandHandlerIT() {
   }
 
   @Test
-  fun `with a CustomerWriteResultViewEffect, customers table has 1 customer`(
+  fun `with a CustomerGivenAllEventsViewEffect, customers table has 1 customer`(
     vertx: Vertx,
     tc: VertxTestContext,
   ) {
-    val customerConfig =
+    val customerConfig2 =
       CommandHandlerConfig(
         initialState = Customer.Initial,
         evolveFunction = customerEvolveFunction,
@@ -126,7 +126,7 @@ class HandlingViewEffects : AbstractCommandHandlerIT() {
         viewEffect = CustomerGivenAllEventsViewEffect(),
       )
 
-    val commandHandler2 = CommandHandlerImpl(context, customerConfig)
+    val commandHandler2 = CommandHandlerImpl(context, customerConfig2)
 
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
@@ -159,7 +159,7 @@ class HandlingViewEffects : AbstractCommandHandlerIT() {
     vertx: Vertx,
     tc: VertxTestContext,
   ) {
-    val customerConfig =
+    val customerConfig2 =
       CommandHandlerConfig(
         initialState = Customer.Initial,
         evolveFunction = customerEvolveFunction,
@@ -170,7 +170,7 @@ class HandlingViewEffects : AbstractCommandHandlerIT() {
         viewTrigger = CustomerViewTrigger(vertx.eventBus()),
       )
 
-    val commandHandler2 = CommandHandlerImpl(context, customerConfig)
+    val commandHandler2 = CommandHandlerImpl(context, customerConfig2)
 
     val customerId1 = UUID.randomUUID()
     val targetStream1 = TargetStream(stateType = "Customer", stateId = customerId1.toString())
