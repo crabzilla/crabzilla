@@ -25,8 +25,6 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
   private val context: CrabzillaContext,
   private val config: CommandHandlerConfig<S, C, E>,
 ) : CommandHandler<S, C, E> {
-  private val logger = LoggerFactory.getLogger(CommandHandlerImpl::class.java)
-
   override fun handle(
     targetStream: TargetStream,
     command: C,
@@ -219,6 +217,7 @@ class CommandHandlerImpl<S : Any, C : Any, E : Any>(
   }
 
   companion object {
+    private val logger = LoggerFactory.getLogger(CommandHandlerImpl::class.java)
     private const val SQL_INSERT_STREAM = """
       INSERT
         INTO streams (state_type, state_id, name)
